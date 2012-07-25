@@ -655,7 +655,7 @@ function gotoSiteSurvey(){
 							<option value="wpawpa2" <% nvram_match("wl_auth_mode_x", "wpawpa2","selected"); %>>WPA-Auto-Enterprise</option>
 							<option value="radius"  <% nvram_match("wl_auth_mode_x", "radius", "selected"); %>>Radius with 802.1x</option>
 				  		</select>
-					<div id="wl_nmode_x_hint"  style="display:none;color:#FC0"><#WLANConfig11n_automode_limition_hint#></div>				 		
+					<div id="wl_nmode_x_hint"  style="display:none;"><#WLANConfig11n_automode_limition_hint#></div>				 		
 	  				<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
     			</td>
   		</tr>

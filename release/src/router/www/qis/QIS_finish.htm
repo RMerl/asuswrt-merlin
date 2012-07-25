@@ -304,7 +304,7 @@ function QKfinish_load_body(){
 	// Connection Status
 	$("#mac_item")[0].innerHTML = "MAC";
 	$("#mac")[0].innerHTML = '<% nvram_get("et0macaddr"); %>';
-	$("#wantype_item")[0].innerHTML = "WAN type";
+	$("#wantype_item")[0].innerHTML = "<#Layer3Forwarding_x_ConnectionType_itemname#>";
 	
 	if(wanlink_type() == "dhcp")
 		var wanlink_type_conv = "<#BOP_ctype_title1#>";
@@ -502,7 +502,7 @@ function submitenter(myfield,e)
 
 	<!-- WAN -->
 	<tr class="reItem">
-		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;">WAN</td>	
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_3#></td>	
 	</tr>
 	<tr class="reItem">
 	  <th width="180"><span id="wantype_item"></span></th>
@@ -519,7 +519,7 @@ function submitenter(myfield,e)
 
 	<!-- LAN -->
 	<tr class="reItem">
-		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;">LAN</td>	
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_2#></td>	
 	</tr>
 	<tr class="reItem">
 	  <th width="180"><span id="lanip_item"></span></th>

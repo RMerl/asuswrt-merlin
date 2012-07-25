@@ -28,25 +28,25 @@ var wans_lanport = '<% nvram_get("wans_lanport"); %>';
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
 var manual_stb = rc_support.search("manual_stb");
 
-function change_isp_selection(){
-        var cur_isp = document.form.switch_wantag.value;
-        var isp_array;
-        var value_array;
+function initial(){
+	if (dsl_support != -1) {
+		document.form.action_script.value = "reboot";		
+		document.form.action_wait.value = "<% get_default_reboot_time(); %>";				
+	}
+	show_menu();
+	if(dsl_support == -1) {	
+		ISP_Profile_Selection(original_switch_wantag);
+	}
+	document.form.switch_stb_x.value = original_switch_stb_x;	
 
-        free_options(document.form.switch_wantag);
+	disable_udpxy();
+	
+	if(Rawifi_support == -1)	//rawifi platform without this item, by Viz 2012.01
+		$('enable_eff_multicast_forward').style.display="";		
 
-        if(manual_stb == -1){
-                isp_array = new Array("None", "Unifi-Home", "Unifi-Business", "Singtel-MIO", "singtel-Others", "M1-Fiber");
-                value_array = new Array("none", "unifi_home", "unifi_biz", "singtel_mio", "singtel_others", "m1_fiber");
-        }
-        else{
-                isp_array = new Array("None", "Unifi-Home", "Unifi-Business", "Singtel-MIO", "singtel-Others", "M1-Fiber", "Manual");
-                value_array = new Array("none", "unifi_home", "unifi_biz", "singtel_mio", "singtel_others", "m1_fiber", "manual");
-        }
-
-        add_options_x2(document.form.switch_wantag, isp_array, value_array, cur_isp);
+	if(parent.rc_support.search("manual_stb") == -1)
+		document.form.switch_wantag.remove(6);
 }
-
 
 function load_ISP_profile() {
         if(document.form.switch_wantag.value == "unifi_home") {
@@ -201,25 +201,6 @@ function validForm(){
         }
 	}
 	return true;
-}
-
-function initial(){
-	if (dsl_support != -1) {
-		document.form.action_script.value = "reboot";		
-		document.form.action_wait.value = "<% get_default_reboot_time(); %>";				
-	}
-	show_menu();
-	change_isp_selection();
-	if(dsl_support == -1) {	
-		ISP_Profile_Selection(original_switch_wantag);
-	}
-	document.form.switch_stb_x.value = original_switch_stb_x;	
-	
-	disable_udpxy();
-	
-	if(Rawifi_support == -1)	//rawifi platform without this item, by Viz 2012.01
-		$('enable_eff_multicast_forward').style.display="";
-		
 }
 
 function applyRule(){
@@ -416,29 +397,29 @@ function add_options_value(o, str, arr, orig){
 		</td>
 		</tr>
 		<tr id="wan_iptv_x">
-	  	<th width="30%">IPTV STB Port:</th>
+	  	<th width="30%">IPTV STB Port</th>
 	  	<td>LAN4</td>
 		</tr>
 		<tr id="wan_voip_x">
-	  	<th width="30%">VoIP Port:</th>
+	  	<th width="30%">VoIP Port</th>
 	  	<td>LAN3</td>
 		</tr>
 		<tr id="wan_internet_x">
-	  	<th width="30%">Internet:</th>
+	  	<th width="30%">Internet</th>
 	  	<td>
 			VID&nbsp;<input type="text" name="switch_wan0tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan0tagid"); %>">&nbsp;&nbsp;&nbsp;&nbsp;
 			PRIO&nbsp;<input type="text" name="switch_wan0prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan0prio"); %>">
 	  	</td>
 		</tr>
 	    	<tr id="wan_iptv_port4_x">
-	    	<th width="30%">IPTV (LAN port 4):</th>
+	    	<th width="30%">IPTV (LAN port 4)</th>
 	  	<td>
 			VID&nbsp;<input type="text" name="switch_wan1tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan1tagid"); %>">&nbsp;&nbsp;&nbsp;&nbsp;
 			PRIO&nbsp;<input type="text" name="switch_wan1prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan1prio"); %>">
 	  	</td>
 		</tr>
 		<tr id="wan_voip_port3_x">
-	  	<th width="30%">VoIP (LAN port 3):</th>
+	  	<th width="30%">VoIP (LAN port 3)</th>
 	  	<td>
 			VID&nbsp;<input type="text" name="switch_wan2tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan2tagid"); %>">&nbsp;&nbsp;&nbsp;&nbsp;
 			PRIO&nbsp;<input type="text" name="switch_wan2prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan2prio"); %>">

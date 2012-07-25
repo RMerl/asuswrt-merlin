@@ -70,7 +70,7 @@ static pid_t pid_dnsmasq = -1;
 
 #define logs(s) syslog(LOG_NOTICE, s)
 
-
+#if 0
 static char
 *make_var(char *prefix, int index, char *name)
 {
@@ -86,11 +86,11 @@ static char
 	return buf;
 }
 
-
 static int is_wet(int idx, int unit, int subunit, void *param)
 {
 	return nvram_match(wl_nvname("mode", unit, subunit), "wet");
 }
+#endif
 
 void create_passwd(void)
 {
@@ -184,26 +184,20 @@ void start_dnsmasq()
 {
 	FILE *f;
 	const char *nv;
-	char buf[512];
 	char lan[24];
 	const char *router_ip;
 	const char *lan_ifname;
 	char sdhcp_lease[32];
 	char *e;
 	int n;
-	char *mac, *ip, *name;
 	char *p;
-	int ipn;
-	char ipbuf[32];
-	FILE *hf;
 	int dhcp_start;
 	int dhcp_count;
 	int dhcp_lease;
 	int do_dhcpd;
-	int do_dns;
 
-        FILE *fp;
-        char tmp1[32], tmp2[32], prefix[] = "wanXXXXXXXXXX_";
+	FILE *fp;
+	char prefix[] = "wanXXXXXXXXXX_";
 
 	TRACE_PT("begin\n");
 
@@ -216,7 +210,7 @@ void start_dnsmasq()
 #ifdef RTCONFIG_WIRELESSREPEATER		
 	&& nvram_get_int("sw_mode")!=SW_MODE_REPEATER
 #endif
-        ) return;
+	) return;
 
 	int unit = wan_primary_ifunit();
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
@@ -295,16 +289,16 @@ void start_dnsmasq()
 		if (nvram_get_int("dhcpd_auth") >= 0) {
 			fprintf(f, "dhcp-authoritative\n");
 		}
-                if (((nv = nvram_get("dhcp_gateway_x")) != NULL) && (*nv) && (strcmp(nv, "0.0.0.0") != 0)) {
-                        fprintf(f, "dhcp-option=3,%s\n", nv);
-                }
+		if (((nv = nvram_get("dhcp_gateway_x")) != NULL) && (*nv) && (strcmp(nv, "0.0.0.0") != 0)) {
+			fprintf(f, "dhcp-option=3,%s\n", nv);
+		}
 		else {
 			fprintf(f, "dhcp-option=3, %s\n", router_ip);
 		}
 
-                if (((nv = nvram_get("dhcp_dns1_x")) != NULL) && (*nv) && (strcmp(nv, "0.0.0.0") != 0)) {
-                        fprintf(f, "dhcp-option=6,%s\n", nv);
-                }
+		if (((nv = nvram_get("dhcp_dns1_x")) != NULL) && (*nv) && (strcmp(nv, "0.0.0.0") != 0)) {
+			fprintf(f, "dhcp-option=6,%s\n", nv);
+		}
 
 		if (((nv = nvram_get("lan_domain")) != NULL) && (*nv) && (strcmp(nv, "0.0.0.0") != 0)) {
 			fprintf(f, "dhcp-option=15,%s\n", nv);
@@ -327,10 +321,10 @@ void start_dnsmasq()
 	}
 
 	//static IP MAC binding
-        if (nvram_match("dhcp_static_x","1"))
-        {
+	if (nvram_match("dhcp_static_x","1"))
+	{
 		fprintf(f,"read-ethers\n");
-                write_static_leases("/etc/ethers");
+		write_static_leases("/etc/ethers");
 	}
 #ifdef RTCONFIG_OPENVPN
 	write_vpn_dnsmasq_config(f);
@@ -570,9 +564,8 @@ void stop_ipv6_tunnel(void)
 void start_dhcp6s(void)
 {
 	FILE *f;
-	char *prefix;
 	char *argv[] = { "dhcp6s", "-c", "/etc/dhcp6s.conf", nvram_safe_get("lan_ifname"), NULL, NULL };
-	int pid, argc, service;
+	int pid, argc;
 	char *p = NULL;
 
 	if (getpid() != 1) {
@@ -619,12 +612,34 @@ void start_dhcp6s(void)
 
 		argc = 4;
 		if (nvram_get_int("ipv6_debug")) {
-			argv[argc++] = "-dD";
+			argv[argc++] = "-D";
 		}
 		argv[argc] = NULL;
 
 		_eval(argv, NULL, 0, &pid);
 	}
+}
+
+int
+start_ipv6aide()
+{
+	char *ipv6aide_argv[] = {"ipv6aide", NULL};
+	pid_t pid;
+
+	if ((get_ipv6_service() == IPV6_NATIVE_DHCP) &&
+		!nvram_match("ipv6_comcast", "0"))
+		return _eval(ipv6aide_argv, NULL, 0, &pid);
+
+	return 0;
+}
+
+int
+stop_ipv6aide()
+{
+	if (pids("ipv6aide"))
+		killall("ipv6aide", SIGTERM);
+
+	return 0;
 }
 
 static pid_t pid_radvd = -1;
@@ -647,6 +662,9 @@ void start_radvd(void)
 
 	stop_dhcp6s();
 	start_dhcp6s();
+
+	stop_ipv6aide();
+	start_ipv6aide();
 
 	if (ipv6_enabled() && nvram_get_int("ipv6_radvd")) {
 		service = get_ipv6_service();
@@ -673,14 +691,16 @@ void start_radvd(void)
 
 		// Create radvd.conf
 		if ((f = fopen("/etc/radvd.conf", "w")) == NULL) return;
-
+#if 0
 		ip = (char *)ipv6_router_address(NULL);
+#else
+		ip = getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 1) ? : "";
+#endif
 #if 0
 		do_dns = (*ip);
 #else
 		do_dns = 0;
 #endif
-
 		fprintf(f,
 			"interface %s\n"
 			"{\n"
@@ -712,9 +732,9 @@ void start_radvd(void)
 			mtu ? " AdvLinkMTU " : "", mtu ? : "", mtu ? ";\n" : "",
 			prefix,
 			do_6to4 | do_6rd ? "  AdvValidLifetime 300;\n  AdvPreferredLifetime 120;\n" : "",
-		        do_6to4 | do_6rd ? "  Base6to4Interface " : "",
-		        do_6to4 | do_6rd ? get_wanface()  : "",
-		        do_6to4 | do_6rd ? ";\n" : "");
+			do_6to4 | do_6rd ? "  Base6to4Interface " : "",
+			do_6to4 | do_6rd ? get_wanface()  : "",
+			do_6to4 | do_6rd ? ";\n" : "");
 
 		if (do_dns) {
 			fprintf(f, " RDNSS %s {};\n", ip);
@@ -759,9 +779,9 @@ void start_radvd(void)
 
 		// Start radvd
 		argc = 1;
+		argv[argc++] = "-u";
+		argv[argc++] = "admin";
 		if (nvram_get_int("ipv6_debug")) {
-			argv[argc++] = "-u";
-			argv[argc++] = "admin";
 			argv[argc++] = "-d";
 			argv[argc++] = "5";
 		}
@@ -782,6 +802,7 @@ void stop_radvd(void)
 	}
 
 	stop_dhcp6s();
+	stop_ipv6aide();
 
 	pid_radvd = -1;
 	killall_tk("radvd");
@@ -842,7 +863,7 @@ int no_need_to_start_wps()
 {
 	if (nvram_match("wps_band", "0"))
 	{
-		if (    nvram_match("wl0_auth_mode_x", "shared") ||
+		if (	nvram_match("wl0_auth_mode_x", "shared") ||
 			nvram_match("wl0_auth_mode_x", "wpa") ||
 			nvram_match("wl0_auth_mode_x", "wpa2") ||
 			nvram_match("wl0_auth_mode_x", "wpawpa2") ||
@@ -855,7 +876,7 @@ int no_need_to_start_wps()
 	}
 	else
 	{
-		if (    nvram_match("wl1_auth_mode_x", "shared") ||
+		if (	nvram_match("wl1_auth_mode_x", "shared") ||
 			nvram_match("wl1_auth_mode_x", "wpa") ||
 			nvram_match("wl1_auth_mode_x", "wpa2") ||
 			nvram_match("wl1_auth_mode_x", "wpawpa2") ||
@@ -1171,7 +1192,7 @@ exec_8021x_start(int band, int is_iNIC)
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", band);
 
-        if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa") ||
+	if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa") ||
 		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa2") ||
 		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpawpa2") ||
 		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius"))
@@ -1205,7 +1226,7 @@ start_8021x()
 			else
 				exec_8021x_start(1, 0);
 		}
-        }
+	}
 
 	return 0;
 }
@@ -1251,7 +1272,7 @@ stop_8021x()
 			else
 				exec_8021x_stop(1, 0);
 		}
-        }
+	}
 
 	return 0;
 }
@@ -1280,7 +1301,6 @@ void write_static_leases(char *file)
 	FILE *fp;
 	char *nv, *nvp, *b;
 	char *mac, *ip;
-	char buf[32];
 
 	fp=fopen(file, "w");
 
@@ -1366,7 +1386,7 @@ start_dhcpd(void)
 	}
 #if 0
 	if (!nvram_match(strcat_r(prefix, "proto", tmp), "static") && nvram_match(strcat_r(prefix, "dnsenable_x", tmp), "1"))
-        {
+	{
 		foreach(word, ((strlen(nvram_safe_get(strcat_r(prefix, "dns", tmp))) > 0) ? nvram_safe_get(tmp):
 			nvram_safe_get(strcat_r(prefix, "xdns", tmp))), next)
 		{
@@ -1375,12 +1395,12 @@ start_dhcpd(void)
 			logmessage("dhcpd", "add option dns: %s", word);
 		}
 
-                if (!auto_dns && (nvram_match("dhcp_dns1_x", "") || !nvram_match("dhcp_dns1_x", "8.8.8.8")))
-                {
-                        fprintf(fp, "option dns 8.8.8.8\n");
-                        logmessage("dhcpd", "add option dns: %s", "8.8.8.8");
-                }
-        }
+		if (!auto_dns && (nvram_match("dhcp_dns1_x", "") || !nvram_match("dhcp_dns1_x", "8.8.8.8")))
+		{
+			fprintf(fp, "option dns 8.8.8.8\n");
+			logmessage("dhcpd", "add option dns: %s", "8.8.8.8");
+		}
+	}
 #endif
 	fprintf(fp, "option lease %s\n", nvram_safe_get("dhcp_lease"));
 
@@ -1435,10 +1455,10 @@ start_dns(void)
 	char word[256], *next;
 	char *dns_list;
 	int unit;
-	char tmp1[32], tmp2[32], prefix[] = "wanXXXXXXXXXX_";
+	char tmp1[32], prefix[] = "wanXXXXXXXXXX_";
 
-        if (pids("dproxy"))
-                return restart_dns();
+	if (pids("dproxy"))
+		return restart_dns();
 
 	_dprintf("start_dns()\n");
 
@@ -1542,7 +1562,7 @@ start_dns(void)
 		fprintf(fp, "::1 localhost6.localdomain6 localhost6\n");
 		s = ipv6_router_address(NULL);
 		if (*s) fprintf(fp, "%s %s\n", s, nvram_safe_get("lan_hostname"));
-        }
+	}
 #endif
 
 	fclose(fp);	
@@ -1553,10 +1573,10 @@ start_dns(void)
 void
 stop_dns(void)
 {
-        int delay_count = 10;
+	int delay_count = 10;
 
 	if (pids("dproxy"))
-		killall("dproxy", SIGKILL);                
+		killall("dproxy", SIGKILL);
 
 	while (pids("dproxy") && (delay_count-- > 0))
 		sleep(1);
@@ -1567,13 +1587,13 @@ stop_dns(void)
 int 
 restart_dns()
 {
-        FILE *fp = NULL;
+	FILE *fp = NULL;
 
-        if (pids("dproxy") && (fp = fopen("/tmp/dproxy.conf", "r")))
-        {
-                fclose(fp);
+	if (pids("dproxy") && (fp = fopen("/tmp/dproxy.conf", "r")))
+	{
+		fclose(fp);
 		return killall("dproxy", SIGHUP);
-        }
+	}
 
 	stop_dns();
 	return start_dns();
@@ -1895,7 +1915,7 @@ _dprintf("%s:\n", __FUNCTION__);
 
 int 
 start_misc(void)
-{ 
+{
 	char *infosvr_argv[] = {"infosvr", "br0", NULL};
 	char *watchdog_argv[] = {"watchdog", NULL};
 #ifdef RTCONFIG_FANCTRL
@@ -1948,7 +1968,7 @@ int
 chpass(char *user, char *pass)
 {
 	char cmdbuf[128];
-	FILE *fp;
+//	FILE *fp;
 
 	if (!user)
 		user = "admin";
@@ -1977,7 +1997,7 @@ chpass(char *user, char *pass)
 int 
 start_telnetd()
 {
-	char *telnetd_argv[] = {"telnetd", NULL};
+//	char *telnetd_argv[] = {"telnetd", NULL};
 	FILE *fp;
 
 	if (getpid() != 1) {
@@ -2020,7 +2040,7 @@ stop_telnetd()
 int 
 run_telnetd()
 {
-	char *telnetd_argv[] = {"telnetd", NULL};
+//	char *telnetd_argv[] = {"telnetd", NULL};
 
 	if (pids("telnetd"))
 		killall_tk("telnetd");
@@ -2096,11 +2116,11 @@ stop_rstats(void)
 void
 start_rstats(int new)
 {
-        if (!is_routing_enabled()) return;
+	if (!is_routing_enabled()) return;
 	
-        stop_rstats();
-        if (new) xstart("rstats", "--new");
-        else xstart("rstats");
+	stop_rstats();
+	if (new) xstart("rstats", "--new");
+	else xstart("rstats");
 }
 
 void
@@ -2366,7 +2386,7 @@ start_services(void)
 #endif
 	start_wps();
 #ifdef RTCONFIG_BCMWL6
-        start_acsd();
+	start_acsd();
 #endif
 
 #ifdef RTCONFIG_DNSMASQ
@@ -2484,9 +2504,9 @@ int start_wanduck(void)
 {	
 	char *argv[] = {"/sbin/wanduck", NULL};
 	pid_t pid;
+#if 0
 	int sw_mode = nvram_get_int("sw_mode");
 
-#if 0
 	if(sw_mode != SW_MODE_ROUTER && sw_mode != SW_MODE_REPEATER)
 		return -1;
 #endif
@@ -2722,7 +2742,6 @@ again:
 		if(action&RC_SERVICE_START) {
 			char upgrade_file[64];
 			char *webs_state_info;
-			int  ptr;
 
 			webs_state_info = nvram_safe_get("webs_state_info");
 
@@ -3007,7 +3026,7 @@ again:
 #ifdef CONFIG_BCMWL5
 	else if (strcmp(script, "set_wltxpower") == 0) {
 		set_wltxpower();
-        }
+	}
 #endif
 #ifdef RTCONFIG_FANCTRL
 	else if (strcmp(script, "fanctrl") == 0) {
@@ -3276,10 +3295,10 @@ _dprintf("restart_nas_services(%d): test 12.\n", getpid());
 	{
 		asusddns_reg_domain(0);
 	}
-        else if (strcmp(script, "adm_asusddns_register") == 0)
-        {
-                asusddns_reg_domain(1);
-        }
+	else if (strcmp(script, "adm_asusddns_register") == 0)
+	{
+		asusddns_reg_domain(1);
+	}
 	else if (strcmp(script, "httpd") == 0)
 	{
 		if(action&RC_SERVICE_STOP) stop_httpd();
@@ -3361,13 +3380,13 @@ _dprintf("restart_nas_services(%d): test 12.\n", getpid());
 		}
 	}
 	else if (strcmp(script, "logger") == 0)
-	{ 
+	{
 		if(action&RC_SERVICE_STOP) stop_logger();
 		if(action&RC_SERVICE_START) start_logger();
 	}
 #ifdef RTCONFIG_CROND
 	else if (strcmp(script, "crond") == 0)
-	{ 
+	{
 		if(action&RC_SERVICE_STOP) stop_cron();
 		if(action&RC_SERVICE_START) start_cron();
 	}
@@ -3376,7 +3395,7 @@ _dprintf("restart_nas_services(%d): test 12.\n", getpid());
 	{
 		if(action&RC_SERVICE_START)
 		{
-			char wan_ifname[16];
+//			char wan_ifname[16];
 
 #ifdef RTCONFIG_RALINK
 			reinit_hwnat();
@@ -3552,19 +3571,19 @@ _dprintf("restart_nas_services(%d): test 12.\n", getpid());
 		// TODO: function to force ppp connection
 	}
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
-        else if (strcmp(script, "pptpd") == 0)
-        {
-                if(action&RC_SERVICE_STOP) stop_pptpd();
-                if(action&RC_SERVICE_START) {
+	else if (strcmp(script, "pptpd") == 0)
+	{
+		if(action&RC_SERVICE_STOP) stop_pptpd();
+		if(action&RC_SERVICE_START) {
 			start_pptpd();
 			start_firewall(wan_primary_ifunit(), 0);
 		}
-        }
+	}
 #endif
 #ifdef RTCONFIG_ISP_METER
-        else if (strcmp(script, "isp_meter") == 0) {
-                _dprintf("%s: isp_meter: %s\n", __FUNCTION__, cmd[1]);
-                if(strcmp(cmd[1], "down")==0) {
+	else if (strcmp(script, "isp_meter") == 0) {
+		_dprintf("%s: isp_meter: %s\n", __FUNCTION__, cmd[1]);
+		if(strcmp(cmd[1], "down")==0) {
 			stop_wan_if(0);
 			update_wan_state("wan0_", WAN_STATE_STOPPED, WAN_STOPPED_REASON_METER_LIMIT);
 		}
@@ -3572,7 +3591,7 @@ _dprintf("restart_nas_services(%d): test 12.\n", getpid());
 			_dprintf("notify wan up!\n");
 			start_wan_if(0);
 		}
-        }
+	}
 #endif
 	else if (strcmp(script, "nat_rules") == 0) {
 		if(action&RC_SERVICE_STOP){
@@ -3744,7 +3763,7 @@ int run_app_script(const char *pkg_name, const char *pkg_action){
 
 void start_nat_rules() {
 	// all rules applied directly according to currently status, wanduck help to triger those not cover by normal flow
-	if(nvram_match("x_Setting", "0")){      
+	if(nvram_match("x_Setting", "0")){
 		stop_nat_rules();
 		return;
 	}
@@ -3806,8 +3825,12 @@ void set_acs_ifnames()
 
 		if (nvram_match(strcat_r(prefix, "radio", tmp), "1") &&
 			nvram_match(strcat_r(prefix, "mode", tmp), "ap") &&
-			nvram_match(strcat_r(prefix, "chanspec", tmp), "0"))
+			(	nvram_match(strcat_r(prefix, "chanspec", tmp), "0") ||
+				nvram_match(strcat_r(prefix, "bw", tmp), "0")))
 		{
+			if (nvram_match(strcat_r(prefix, "bw", tmp), "0"))
+				nvram_set(strcat_r(prefix, "chanspec", tmp), "0");
+
 			if (strlen(acs_ifnames))
 				sprintf(acs_ifnames, "%s %s", acs_ifnames, word);
 			else
@@ -3835,13 +3858,13 @@ start_acsd(void)
 		ret = eval("/usr/sbin/acsd");
 	}
 
-        return ret;
+	return ret;
 }
 
 int
 stop_acsd(void)
 {
-        int ret = eval("killall", "acsd");
-        return ret;
+	int ret = eval("killall", "acsd");
+	return ret;
 }
 #endif

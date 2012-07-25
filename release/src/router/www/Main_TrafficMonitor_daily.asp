@@ -89,8 +89,8 @@ function redraw()
 
 	grid = '<table width="730px" class="FormTable_NWM">'; 
 	grid += "<tr><th style=\"height:30px;\"><#Date#></th>";
-	grid += "<th><#Downlink#></th>";
-	grid += "<th><#Uplink#></th>";
+	grid += "<th><#tm_reception#></th>";
+	grid += "<th><#tm_transmission#></th>";
 	grid += "<th><#Total#></th></tr>";
 	
 	for (i = 0; i < daily_history.length-1; ++i) {
@@ -196,21 +196,8 @@ function switchPage(page){
 											<option value="2"><#menu4_2_2#></option>
 											<option value="3" selected><#menu4_2_3#></option>
 											<option value="4">Monthly</option>
-
-										</select>&nbsp;&nbsp;&nbsp;
-			    					<select class="input_option" style="width:100px" onchange='changeDate(this, "ymd")' id='dafm'>
-			    						<option value=0><#Date#>:</option>
-			    						<option value=0>yyyy-mm-dd</option>
-			    						<option value=1>mm-dd-yyyy</option>
-			    						<option value=2>mmm dd, yyyy</option>
-			    						<option value=3>dd.mm.yyyy</option>
-			    					</select>	
-			    					<select style="width:80px" class="input_option" onchange='changeScale(this)' id='scale'>
-			    						<option value=0><#Scale#>:</option>
-			    						<option value=0>KB</option>
-			    						<option value=1>MB</option>
-			    						<option value=2 selected>GB</option>
-			    					</select>
+										</select>
+			    					
 									</div>
 								</td>
         			</tr>
@@ -218,30 +205,57 @@ function switchPage(page){
         			<tr>
           				<td height="20"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
-
-        			<!--tr>
-          				<td height="30" align="left" valign="middle" >
-										<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc#></p></div>
-          				</td>
-        			</tr-->
-
 						<tr>
+							<td bgcolor="#4D595D">
+								<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+									<thead>
+										<tr>
+											<td colspan="2"><#t2BC#></td>
+										</tr>
+									</thead>
+									<tbody>
+										<tr class='even'>
+											<th width="40%"><#Date#></th>
+											<td>
+												<select class="input_option" style="width:130px" onchange='changeDate(this, "ymd")' id='dafm'>
+													<option value=0>yyyy-mm-dd</option>
+													<option value=1>mm-dd-yyyy</option>
+													<option value=2>mmm, dd, yyyy</option>
+													<option value=3>dd.mm.yyyy</option>
+												</select>
+											</td>
+										</tr>
+										<tr class='even'>
+											<th width="40%"><#Scale#></th>
+											<td>
+												<select style="width:70px" class="input_option" onchange='changeScale(this)' id='scale'>
+													<option value=0>KB</option>
+													<option value=1>MB</option>
+													<option value=2 selected>GB</option>
+												</select>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</td>
+						</tr>
+						<tr >
 							<td>		
 								<div id='bwm-daily-grid' style='float:left'></div>
 							</td>
 						</tr>
 
-	     					<tr>
+	     					<tr >
 	      					<td bgcolor="#4D595D">
-	      						<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+	      						<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >
 	      						<thead>	
 	      						<tr>
 	      							<td colspan="2" id="TriggerList" style="text-align:left;"><#Last30days#> <span style="color:#FFF;background-color:transparent;" id='last-dates'></span></td>
 	      						</tr>
 	      						</thead>
 	      	      				<tbody>
-	      						<tr class='even'><th width="40%"><#Downlink#></th><td id='last-dn'>-</td></tr>
-	      						<tr class='odd'><th width="40%"><#Uplink#></th><td id='last-up'>-</td></tr>
+	      						<tr class='even'><th width="40%"><#tm_reception#></th><td id='last-dn'>-</td></tr>
+	      						<tr class='odd'><th width="40%"><#tm_transmission#></th><td id='last-up'>-</td></tr>
 	      						<tr class='footer'><th width="40%"><#Total#></th><td id='last-total'>-</td></tr>
 	      						</tbody>	
 	      						</table>

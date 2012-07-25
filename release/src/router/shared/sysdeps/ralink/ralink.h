@@ -24,7 +24,7 @@
 #define URE	"apcli0"
 
 #define ETHER_ADDR_LEN		6
-#define MAX_NUMBER_OF_MAC	32
+#define MAX_NUMBER_OF_MAC	64
 
 #define MODE_CCK		0
 #define MODE_OFDM		1
@@ -192,24 +192,22 @@ typedef enum _RT_802_11_PHY_MODE {
 #define OFFSET_FAIL_DEV_LOG	0x4ffe0	//bit operation for max 100
 #define OFFSET_SERIAL_NUMBER	0x4fff0
 
-#define SR3
-
 #define RA_LED_ON		0	// low active (all 5xx series)
 #define RA_LED_OFF		1
 
-#define RA_LED_POWER	0
-#define RA_LED_USB		24
-#ifndef SR3
-#define RA_BTN_RESET	25
+#define	RA_LED_POWER		0
+#define	RA_LED_USB		24
+#ifdef	RTCONFIG_N56U_SR2
+#define	RA_BTN_RESET		25
 #else
-#define RA_BTN_RESET	13
+#define	RA_BTN_RESET		13
 #endif
-#define RA_BTN_WPS		26
-#define RA_LED_WAN		27
-#ifndef SR3
-#define RA_LED_LAN		31
+#define	RA_BTN_WPS		26
+#define	RA_LED_WAN		27
+#ifdef	RTCONFIG_N56U_SR2
+#define	RA_LED_LAN		31
 #else
-#define RA_LED_LAN		19
+#define	RA_LED_LAN		19
 #endif
 /*
 #define RTN13U_SW1	9

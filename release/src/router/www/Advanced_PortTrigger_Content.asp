@@ -319,11 +319,11 @@ function trigger_validate_duplicate(o, v, l, off){
 		  			</thead>
 		  
     	      <tr>
-							<th><#IPConnection_autofwDesc_itemname#></th>
+				<th><#IPConnection_autofwDesc_itemname#></th>
             	<th><#IPConnection_autofwOutPort_itemname#></th>
-            	<th><#IPConnection_autofwOutProto_itemname#></th>
+            	<th><#IPConnection_VServerProto_itemname#></th>
             	<th><#IPConnection_autofwInPort_itemname#></th>
-            	<th><#IPConnection_autofwInProto_itemname#></th>            
+            	<th><#IPConnection_VServerProto_itemname#></th>            
             	<th>Add / Delete</th>
   	        </tr>
           

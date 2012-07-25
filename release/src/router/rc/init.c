@@ -589,7 +589,18 @@ restore_defaults(void)
 
 	/* Restore defaults if told to or OS has changed */
 	if(!restore_defaults)
+	{
 		restore_defaults = !nvram_match("restore_defaults", "0");
+#ifdef RTCONFIG_RALINK
+		/* upgrade from firmware 1.x.x.x */
+		if ((get_model() == MODEL_RTN56U) &&
+			(nvram_get("HT_AutoBA") != NULL))
+		{
+			nvram_unset("HT_AutoBA");
+			restore_defaults = 1;
+		}
+#endif
+	}
 
 	if (restore_defaults) {
 		fprintf(stderr, "\n## Restoring defaults... ##\n");
@@ -998,16 +1009,24 @@ int init_nvram(void)
 		// it is virtual id only for ui control
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
 		nvram_set("wl1_vifnames", "wl1.1 wl1.2 wl1.3");
+#ifdef RTCONFIG_N56U_SR2
+		nvram_set_int("btn_rst_gpio", 25);
+#else
 		nvram_set_int("btn_rst_gpio", 13|GPIO_ACTIVE_LOW);
+#endif
 		nvram_set_int("btn_wps_gpio", 26|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 0|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wps_gpio", 0|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_usb_gpio", 24|GPIO_ACTIVE_LOW);
+#ifdef RTCONFIG_N56U_SR2
+		nvram_set_int("led_lan_gpio", 31|GPIO_ACTIVE_LOW);
+#else
 		nvram_set_int("led_lan_gpio", 19|GPIO_ACTIVE_LOW);
+#endif
 		nvram_set_int("led_wan_gpio", 27|GPIO_ACTIVE_LOW);
-
+#ifndef RTCONFIG_N56U_SR2
 		eval("8367m", "11");		// for SR3 LAN LED
-
+#endif
 		nvram_set("ehci_ports", "1-1 1-2");
 		nvram_set("ohci_ports", "2-1 2-2");
 		if(!nvram_get("ct_max")) 
@@ -1286,6 +1305,8 @@ int init_nvram(void)
 		nvram_set_int("led_usb_gpio", 0xff);
 		nvram_set("ehci_ports", "1-2 1-1");
 		nvram_set("ohci_ports", "2-2 2-1");
+                nvram_set("boardflags", "0x310");
+                nvram_set("sb/1/boardflags", "0x310");
 		if(!nvram_get("ct_max")) 
 			nvram_set("ct_max", "300000");
 		add_rc_support("2.4G update usbX2 mssid");
@@ -1492,7 +1513,6 @@ int init_nvram(void)
 #endif
  
 #ifdef RTCONFIG_IPV6
-	nvram_set("ipv6_get_dns", "");
 	add_rc_support("ipv6");
 #endif
 
@@ -1742,7 +1762,9 @@ POOL_MOUNT_ROOT,
 	f_write_string("/proc/sys/kernel/panic_on_oops", "3", 0, 0);
 
 	// be precise about vm commit
+#ifdef CONFIG_BCMWL5
 	f_write_string("/proc/sys/vm/overcommit_memory", "2", 0, 0);
+#endif
 
 #ifdef RTCONFIG_IPV6
 	// disable IPv6 by default on all interfaces
@@ -2025,11 +2047,10 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 				}
 				else {
 					dbG("System boot up success %d times\n", boot_check);
-					ate_commit_bootlog("2");
-					sleep(5);
 					setAllLedOn();
-				}
-			}
+					ate_commit_bootlog("2");
+                                }
+                        }
 			nvram_set("success_start_service", "1");
 
 			force_free_caches();		

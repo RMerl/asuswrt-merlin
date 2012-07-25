@@ -27,7 +27,7 @@
 #include "sys-socket.h"
 #include "version.h"
 
-#define DBE 1
+#define DBE 0
 #include "nvram_control.h"
 
 int http_response_write_header(server *srv, connection *con) {
@@ -530,18 +530,18 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 			log_error_write(srv, __FILE__, __LINE__,  "sb", "Rel-Path     :", con->physical.rel_path);
 			log_error_write(srv, __FILE__, __LINE__,  "sb", "Path         :", con->physical.path);
 		}
-				
+		
 		switch(r = plugins_call_handle_physical(srv, con)) {
-		case HANDLER_GO_ON:
-			break;
-		case HANDLER_FINISHED:
-		case HANDLER_COMEBACK:
-		case HANDLER_WAIT_FOR_EVENT:
-		case HANDLER_ERROR:
-			return r;
-		default:
-			log_error_write(srv, __FILE__, __LINE__, "");
-			break;
+			case HANDLER_GO_ON:
+				break;
+			case HANDLER_FINISHED:
+			case HANDLER_COMEBACK:
+			case HANDLER_WAIT_FOR_EVENT:
+			case HANDLER_ERROR:
+				return r;
+			default:
+				log_error_write(srv, __FILE__, __LINE__, "");
+				break;
 		}
 		
 		if (con->conf.log_request_handling) {
@@ -551,7 +551,7 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 			log_error_write(srv, __FILE__, __LINE__,  "sb", "Path         :", con->physical.path);
 		}
 	}
-
+	
 	/*
 	 * Noone catched away the file from normal path of execution yet (like mod_access)
 	 *
@@ -562,13 +562,12 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 		char *pathinfo = NULL;
 		int found = 0;
 		stat_cache_entry *sce = NULL;
-
+		
 		if (con->conf.log_request_handling) {
 			log_error_write(srv, __FILE__, __LINE__,  "s",  "-- handling physical path");
 			log_error_write(srv, __FILE__, __LINE__,  "sb", "Path         :", con->physical.path);
 		}
 		
-		//if ( HANDLER_ERROR != stat_cache_get_entry(srv, con, con->physical.path, &sce)) {
 		if ( HANDLER_ERROR != stat_cache_get_entry(srv, con, smbc_wrapper_physical_url_path(srv, con), &sce)) {
 			/* file exists */
 
@@ -590,7 +589,6 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 			};
 #endif
 			if (S_ISDIR(sce->st.st_mode)) {
-Cdbg(DBE, "con->uri.path->ptr=[%s], con->uri.path->ptr[con->uri.path->used - 2]=[%c]", con->uri.path->ptr, con->uri.path->ptr[con->uri.path->used - 2]);				
 				if (con->uri.path->ptr[con->uri.path->used - 2] != '/') {
 					/* redirect to .../ */
 
@@ -607,7 +605,8 @@ Cdbg(DBE, "con->uri.path->ptr=[%s], con->uri.path->ptr[con->uri.path->used - 2]=
 
 
 			}
-		} else {		
+		} 
+		else {		
 			switch (errno) {
 			case EACCES:
 				con->http_status = 403;
@@ -634,7 +633,6 @@ Cdbg(DBE, "con->uri.path->ptr=[%s], con->uri.path->ptr[con->uri.path->used - 2]=
 				break;
 			default:
 				/* we have no idea what happend. let's tell the user so. */
-				Cdbg(DBE, "ssssssssssss");
 				con->http_status = 500;
 				buffer_reset(con->physical.path);
 				

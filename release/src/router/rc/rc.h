@@ -193,6 +193,7 @@ extern int start_zcip(char *wan_ifname);
 extern int dhcp6c_state_main(int argc, char **argv);
 extern void start_dhcp6c(void);
 extern void stop_dhcp6c(void);
+extern int ipv6aide_main(int argc, char *argv[]);
 #endif
 
 // auth.c

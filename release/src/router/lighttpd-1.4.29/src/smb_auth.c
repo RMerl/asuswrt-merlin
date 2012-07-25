@@ -374,7 +374,7 @@ smbc_wrapper_lseek(connection* con, int fd, off_t offset, int whence)
 int smbc_wrapper_parse_path(connection* con, char *pWorkgroup, char *pServer, char *pShare, char *pPath){
 	if(con->mode== SMB_BASIC||con->mode== SMB_NTLM){
 		smbc_parse_path(con->physical.path->ptr, pWorkgroup, pServer, pShare, pPath);
-		
+
 		//- Jerry add: replace '\\' to '/'
 		do{
 			char buff[4096];
@@ -388,26 +388,24 @@ int smbc_wrapper_parse_path(connection* con, char *pWorkgroup, char *pServer, ch
 int smbc_wrapper_parse_path2(connection* con, char *pWorkgroup, char *pServer, char *pShare, char *pPath){
 	
 	if(con->mode== SMB_BASIC||con->mode== SMB_NTLM){
+
 		smbc_parse_path(con->physical_auth_url->ptr, pWorkgroup, pServer, pShare, pPath);
 
 		int len = strlen(pPath)+1;
-		Cdbg(1,"pPath=%s, len=%d", pPath, strlen(pPath));
 		
 		char* buff = (char*)malloc(len);
 		memset(buff, '\0', len);
+		
 		do{	
 			strcpy( pPath, replace_str(&pPath[0],"\\","/", buff) );
 		}while(strstr(pPath,"\\")!=NULL);
-
+		
 		free(buff);
-		/*
-		//- Jerry add: replace '\\' to '/'
-		do{			
-			char buff[4096];
-			strcpy( pPath, replace_str(&pPath[0],"\\","/", (char *)&buff[0]) );
-			Cdbg(1,"2pPath=%s, len=%d", pPath, strlen(pPath));
-		}while(strstr(pPath,"\\")!=NULL);
-		*/
+
+		Cdbg(DBE,"pServer=%s, len=%d", pServer, strlen(pServer));
+		Cdbg(DBE,"pShare=%s, len=%d", pShare, strlen(pShare));
+		Cdbg(DBE,"pPath=%s, len=%d", pPath, strlen(pPath));
+		
 	}
 
 	return 1;

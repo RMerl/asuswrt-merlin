@@ -239,6 +239,9 @@ int check_tc_firmware_crc()
 	char buf[4096];
 	int new_modem_trx_ver;
 	int curr_modem_trx_ver;
+	unsigned char bBuf[4096];
+	unsigned char tag[] = {0x3C, 0x23, 0x24, 0x3E};	//<#$>
+	int bBufsize = sizeof(bBuf);
 
 	if (update_tc_fw == 0) return 0;
 	
@@ -259,7 +262,95 @@ int check_tc_firmware_crc()
 	fread(buf, 1, 0x100, fpSrc);
 
 	printf("TC FW VER : %c%c%c , %s , %s\n",buf[0],buf[1],buf[2],TC_DSL_FW_VER,TC_DSL_FW_VER_FROM_MODEM);
+
+
+	//read tcfw.bin and find the driver ras info, date ...
+	fseek(fpSrc, 0xF000, SEEK_SET);
+	fread(bBuf, 1, bBufsize, fpSrc);
 	
+	int read_idx = bBufsize;
+	while (read_idx--) {
+		if(bBuf[read_idx] == tag[3])
+			if(bBuf[--read_idx] == tag[2])
+				if(bBuf[--read_idx] == tag[1])
+					if(bBuf[--read_idx] == tag[0])
+						break;
+					else
+						continue;
+				else
+					continue;
+			else
+				continue;
+		else
+			continue;
+	}
+	printf("bin date: %s\n", (char*)bBuf+read_idx-14);
+	printf("bin ras: %s\n", (char*)bBuf+read_idx+4);
+	
+	fseek(fpSrc, 0x0100, SEEK_SET);
+	
+	//check Annex mode
+#ifdef DSL_N55U_ANNEX_B
+	if(bBuf[read_idx+14] != 'B') {	//ASUS_Annex'B'_..
+		if(bBuf[read_idx+9] != '1') {	//check for the old ras info ASUS_1020
+			RetVal = -1;
+			goto exit;
+		}
+	}
+#else
+	if(bBuf[read_idx+14] != 'A') {	//ASUS_ANNEX'A'IJLM_..
+		if(bBuf[read_idx+9] != '1') {	//check for the old ras info ASUS_1020
+			RetVal = -1;
+			goto exit;
+		}
+	}
+#endif
+	//check driver release date
+		// /tmp/adsl # cat tc_ver_info.txt
+		// Bootbase:VTC_SPI_BR1.6 | 2010/7/30
+		// RAS:ASUS_ANNEXAIJLM_20120423
+		// System:3.6.18.0(BE.C3)3.16.18.0| 2011/10/31   20111031_v012  [Oct 31 2011 12:53:59]
+	FILE *fpCur;
+	char ver_info_buf[256];
+	int line_idx = 3;
+	int ver_idx = 0;
+	fpCur = fopen("/tmp/adsl/tc_ver_info.txt", "r");
+	if(fpCur != NULL) {
+		while(line_idx--)
+			fgets(ver_info_buf, 256, fpCur);
+		fclose(fpCur);
+		while(++ver_idx < 256) {
+			if(ver_info_buf[ver_idx] == 0x7C) {
+				*(ver_info_buf + ver_idx + 12) = '\0';
+				printf("cur date: %s\n", ver_info_buf+ver_idx+2);
+				if(!strncmp(ver_info_buf+ver_idx+2, (char*)bBuf+read_idx-14, 10))
+					update_tc_fw = 0;
+				else
+					update_tc_fw = 1;
+				break;
+			}else
+				continue;
+		}
+	}
+	
+	//check RAS
+	fpCur = fopen("/tmp/adsl/tc_ras_ver.txt", "r");
+	if(fpCur != NULL) {
+		fgets(ver_info_buf, 256, fpCur);
+		fclose(fpCur);
+		printf("cur ras: %s\n", ver_info_buf);
+#ifdef DSL_N55U_ANNEX_B
+		if(!strncmp(ver_info_buf, (char*)bBuf+read_idx+4, 20))	//ASUS_AnnexB_20111031
+#else
+		if(!strncmp(ver_info_buf, (char*)bBuf+read_idx+4, 24))	//ASUS_ANNEXAIJLM_20120423
+#endif		
+			update_tc_fw = 0;
+		else
+			update_tc_fw = 1;
+	}
+	printf("update tc fw or not: %d (0 is not)\n", update_tc_fw);
+	
+#if 0	//disable by Sam, 2012/07/12
 	
 // There are two firmware on single TRX.  One is router firmware and the other is modem firmware.
 // Router firmware could upgrade or downgrade depends on end-user. 
@@ -369,6 +460,7 @@ int check_tc_firmware_crc()
 			update_tc_fw = 0;
 		}
 	}
+#endif	//#if 0
 
 	printf("tcfw magic : %x %x %x\n",buf[4],buf[5],buf[6]);
 

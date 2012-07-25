@@ -642,7 +642,7 @@ function applyRule(){
 			<table id="basic_config" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 				  <thead>
 				  <tr>
-						<td colspan="2"><#ipv6_basic_config#></td>
+						<td colspan="2"><#t2BC#></td>
 				  </tr>
 				  </thead>		
 
@@ -818,7 +818,7 @@ function applyRule(){
 				  </tr>
 				  </thead>		
 					<tr style="display:none;">
-						<th>Get DNS Automatically ?</th>
+						<th>Get DNS Automatically</th>
 		     		<td>
 								<input type="radio" name="ipv6_dnsenable" class="input" value="1" onclick="showInputfield2('ipv6_dnsenable', this.value);" <% nvram_match("ipv6_dnsenable", "1","checked"); %>><#btn_Enable#>
 								<input type="radio" name="ipv6_dnsenable" class="input" value="0" onclick="showInputfield2('ipv6_dnsenable', this.value);" <% nvram_match("ipv6_dnsenable", "0","checked"); %>><#btn_disable#>

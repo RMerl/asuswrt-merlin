@@ -1,3 +1,5 @@
+include ../../common.mak
+
 #
 # $Id: Makefile 241182 2011-02-17 21:50:03Z $
 #

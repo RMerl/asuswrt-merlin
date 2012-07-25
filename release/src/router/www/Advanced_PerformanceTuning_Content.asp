@@ -263,7 +263,8 @@ function getCookie(c_name)
 									  <div>&nbsp;</div>
 									  <div class="formfonttitle"><#menu5_6_adv#> - Performance tuning</div>
 									  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-									  <div class="formfontdesc"><#PerformaceTuning_desc#></div>
+									  <!--div class="formfontdesc"><#PerformaceTuning_desc#></div-->
+									  <div class="formfontdesc">Fine tune the radio power to enhance/decrease the coverage and change the cooler spin mode.Please note: If the output power is increased for long distance signal transmission, the client also need to use high power card to get the best performance.</div>
 									</td>
 								</tr>
 

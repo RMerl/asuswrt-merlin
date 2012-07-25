@@ -3,7 +3,8 @@ body {
 margin:0;
 padding:0;
 overflow-y: hidden;
-font-family:"Segoe UI";
+font-family:"Segoe UI",Arial;
+font-weight:lighter;
 min-width:695px;
 background-color:#014051;
 }
@@ -121,7 +122,7 @@ overflow: hidden;
 }
 
 #header_region #logo{
-background-position: 0 0;
+background-position: -30px 0;
 width:300px;
 height:55px;
 margin-top:9px;
@@ -153,7 +154,7 @@ margin:0;
 padding:0;
 float:left;
 overflow: hidden;
-width:25%;
+width:300px;
 height:100%;
 }
 
@@ -198,7 +199,8 @@ font-size:20px;
 height:100%;
 cursor:point;
 white-space:nowrap;
-font-family:"Segoe UI";
+font-family:"Segoe UI",Arial;
+font-weight:lighter;
 }
 
 #hostview .host_item #hostname p{ 
@@ -264,7 +266,8 @@ height:30px;
 }
 
 #bottom_region p {
-font-family:"Segoe UI";
+font-family:"Segoe UI",Arial;
+font-weight:lighter;
 font-size:10pt;
 line-height:20px;
 padding-left:10px;
@@ -280,7 +283,8 @@ position: relative;
 top: 5px;
 left: 60px;
 font-size:12px;
-font-family:"Segoe UI";
+font-family:"Segoe UI",Arial;
+font-weight:lighter;
 }
 /*--------------------------------------*/
 
@@ -303,16 +307,21 @@ overflow: hidden;
 background-color:#404040;
 position: relative;
 top: 20px;
-font-size:90%;
-font-weight: bold;
 color:#fff;
 }
 
 #toolbar #urlregion-url{
 float:left;
-width:80%;
+/*width:80%;*/
 height:100%;
+font-size:14px;
 white-space:nowrap;
+}
+
+#toolbar #urlregion-url #openurl{
+padding-left:10px;
+margin: 0;
+padding-top: 10px;
 }
 
 #main_right_container #fileview{
@@ -350,7 +359,8 @@ display:none;
 }
 /*--------------------------------------*/
 #fileview p {
-font-family:"Segoe UI";
+font-family:"Segoe UI",Arial;
+font-weight:lighter;
 font-size:10pt;
 line-height:20px;
 margin-top:0;
@@ -433,6 +443,38 @@ cursor:pointer;
 background-position: -320px -235px;
 }
 
+#fileview .docfileDiv {
+background-position: -560px -175px;
+cursor:pointer;
+}
+#fileview .docfileDiv.select {
+background-position: -560px -235px;
+}
+
+#fileview .pptfileDiv {
+background-position: -480px -175px;
+cursor:pointer;
+}
+#fileview .pptfileDiv.select {
+background-position: -480px -235px;
+}
+
+#fileview .xlsfileDiv {
+background-position: -640px -175px;
+cursor:pointer;
+}
+#fileview .xlsfileDiv.select {
+background-position: -640px -235px;
+}
+
+#fileview .pdffileDiv {
+background-position: -720px -175px;
+cursor:pointer;
+}
+#fileview .pdffileDiv.select {
+background-position: -720px -235px;
+}
+
 .reg .ssettingDiv.sicon {
 background-position: -256px -5px;
 width:20px;
@@ -460,7 +502,8 @@ height:40px;
 }
 
 .albuminfo a#list_item {
-font-family:"Segoe UI";
+font-family:"Segoe UI",Arial;
+font-weight:lighter;
 font-size:11pt;
 color:#fff;
 text-align:center;
@@ -479,46 +522,13 @@ height:100%;
 /*--------------------------------------*/
 
 /*--Bottom Region------------------------------------*/
-#bottomRegion #setting{
-width:100%;
-height:100%;
-right:0;
-float: left;
-padding:0px;
-margin:0px;
-}
-
-#setting .reg, .lan{
+.lan{
 font-size: 75%;
 padding: 6px 5px 0;
-color:#6E6E6E;
+color:#fff;
 text-align:right;
-margin-right: 20px;
 float:right;
-}
-
-#setting .reg{
-padding: 10px 5px 0;
-}
-#setting #menu_lan{
-border:#59788A; 
-background:#878B8C;
-color:#FFFFFF;
-}
-
-#setting .reg .prompt{
-position: relative;
-padding: 0 7px 0 0;
-margin-right: 5px;
-border-right: solid 1px #6E6E6E;
-}
-#setting .reg .logout, .rescan{
-cursor:pointer;
-color:#6E6E6E;
-}
-#setting .reg .logout:hover, .rescan:hover{
-color:#005599;
-text-decoration:underline;
+margin-right: 20px;
 }
 /*--------------------------------------*/
 
@@ -619,12 +629,24 @@ background-position: -240px -55px;
 background-position: -280px -55px;
 }
 
+#btnPlayImage .ticon:hover{
+background-position: -560px -55px;
+}
+
+#btnPlayImage .ticon{
+background-position: -600px -55px;
+}
+
 #btnRefresh .ticon{
 background-position: 0 -95px;
 }
 
 #btnSetting .ticon{
 background-position: -80px -95px;
+}
+
+#btnLogout .ticon{
+background-position: -160px -95px;
 }
 
 #btnConfig .ticon{
@@ -691,9 +713,11 @@ font-size:100%;
 }
 
 a#url_path:hover{
-color:#ff0000;
+/*color:#000;*/
+background-color:#7C7C7C;
+border:1px #fff solid;
 cursor:pointer;
-text-decoration:underline;
+/*text-decoration:underline;*/
 }
 /*--------------------------------------*/
 
@@ -725,7 +749,7 @@ width:580px;
 
 #help_1 #help_image{
 background-position: 0 -415px;
-width:336px;
+width:250px;
 height:70px;
 position: relative;
 top: 80px;

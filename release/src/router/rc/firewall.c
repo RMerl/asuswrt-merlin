@@ -1918,11 +1918,6 @@ TRACE_PT("writing Parental Control\n");
 	}
 #endif
 
-#ifdef RTCONFIG_IPV6
-	if (ipv6_enabled())
-	fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n", logaccept);
-#endif
-
 	if (!nvram_match("fw_enable_x", "1"))
 	{
 #ifndef RTCONFIG_PARENTALCTRL
@@ -1952,7 +1947,7 @@ TRACE_PT("writing Parental Control\n");
 			,logdrop, logaccept, "ACCEPT", lan_if, logdrop);
 #ifdef RTCONFIG_IPV6
 			if (ipv6_enabled())
-			fprintf(fp_ipv6, "-A INPUT -m state --state INVALID -j %s\n"
+			fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
@@ -1970,7 +1965,7 @@ TRACE_PT("writing Parental Control\n");
 			,logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
 #ifdef RTCONFIG_IPV6
 			if (ipv6_enabled())
-			fprintf(fp_ipv6, "-A INPUT -m state --state INVALID -j %s\n"
+			fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
@@ -2145,16 +2140,20 @@ TRACE_PT("writing Parental Control\n");
 // oleg patch ~
 	/* Drop the wrong state, INVALID, packets */
 	fprintf(fp, "-A FORWARD -m state --state INVALID -j %s\n", logdrop);
+#if 0
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled())
 	fprintf(fp_ipv6, "-A FORWARD -m state --state INVALID -j %s\n", logdrop);
 #endif
+#endif
 	if (strlen(macaccept)>0)
 	{
 		fprintf(fp, "-A %s -m state --state INVALID -j %s\n", macaccept, logdrop);
+#if 0
 #ifdef RTCONFIG_IPV6
 		if (ipv6_enabled())
 		fprintf(fp_ipv6, "-A %s -m state --state INVALID -j %s\n", macaccept, logdrop);
+#endif
 #endif
 	}
 
@@ -2227,7 +2226,7 @@ TRACE_PT("writing Parental Control\n");
 
 		// default policy: DROP
 		// if logging
-			fprintf(fp_ipv6, "-A INPUT -j %s\n", logdrop);
+		fprintf(fp_ipv6, "-A INPUT -j %s\n", logdrop);
 
 
 		fprintf(fp_ipv6, "-A OUTPUT -m rt --rt-type 0 -j %s\n", logdrop);
@@ -2786,11 +2785,6 @@ TRACE_PT("writing Parental Control\n");
 	}
 #endif
 
-#ifdef RTCONFIG_IPV6
-	if (ipv6_enabled())
-	fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n", logaccept);
-#endif
-
 	if (!nvram_match("fw_enable_x", "1"))
 	{
 #ifndef RTCONFIG_PARENTALCTRL
@@ -2820,7 +2814,7 @@ TRACE_PT("writing Parental Control\n");
 			,logdrop, logaccept, "ACCEPT", lan_if, logdrop);
 #ifdef RTCONFIG_IPV6
 			if (ipv6_enabled())
-			fprintf(fp_ipv6, "-A INPUT -m state --state INVALID -j %s\n"
+			fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
@@ -2838,7 +2832,7 @@ TRACE_PT("writing Parental Control\n");
 			,logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
 #ifdef RTCONFIG_IPV6
 			if (ipv6_enabled())
-			fprintf(fp_ipv6, "-A INPUT -m state --state INVALID -j %s\n"
+			fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
@@ -3042,16 +3036,20 @@ TRACE_PT("writing Parental Control\n");
 // oleg patch ~
 	/* Drop the wrong state, INVALID, packets */
 	fprintf(fp, "-A FORWARD -m state --state INVALID -j %s\n", logdrop);
+#if 0
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled())
 	fprintf(fp_ipv6, "-A FORWARD -m state --state INVALID -j %s\n", logdrop);
 #endif
+#endif
 	if (strlen(macaccept)>0)
 	{
 		fprintf(fp, "-A %s -m state --state INVALID -j %s\n", macaccept, logdrop);
+#if 0
 #ifdef RTCONFIG_IPV6
 		if (ipv6_enabled())
 		fprintf(fp_ipv6, "-A %s -m state --state INVALID -j %s\n", macaccept, logdrop);
+#endif
 #endif
 	}		
 
@@ -3124,7 +3122,7 @@ TRACE_PT("writing Parental Control\n");
 
 		// default policy: DROP
 		// if logging
-			fprintf(fp_ipv6, "-A INPUT -j %s\n", logdrop);
+		fprintf(fp_ipv6, "-A INPUT -j %s\n", logdrop);
 
 
 		fprintf(fp_ipv6, "-A OUTPUT -m rt --rt-type 0 -j %s\n", logdrop);

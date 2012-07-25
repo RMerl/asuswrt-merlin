@@ -6,6 +6,9 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="stylesheet" type="text/css" href="../form_style.css">
 <link rel="stylesheet" type="text/css" href="qis_style.css">
+<script type="text/JavaScript" src="/state.js"></script>
+<script type="text/JavaScript" src="/general.js"></script>
+<script type="text/JavaScript" src="/form.js"></script>
 <style>
 span{
 	border:0px solid #FFFFFF;
@@ -41,12 +44,12 @@ function submitForm(){
 
 function gotoHome(){
 	if (w_Setting == "0") {
-		alert("<#QIS_recommand_encryption#>");	
+		alert("<#QIS_recommand_encryption#>");
 		location.href = '/qis/QIS_wireless.htm';
 	}
 	else {
 		parent.location.href = '/index.asp';
-	}	
+	}
 }
 
 </script>
@@ -64,7 +67,7 @@ function gotoHome(){
 <input type="hidden" name="dsltmp_qis_vci" value="<% nvram_get("dsltmp_cfg_vci"); %>">
 <input type="hidden" name="dsltmp_qis_proto" value="bridge">
 <input type="hidden" name="dsltmp_qis_encap" value="<% nvram_get("dsltmp_cfg_encap"); %>">
-<input type="hidden" name="dsltmp_qis_pppoe_username" value="">
+<!--<input type="hidden" name="dsltmp_qis_pppoe_username" value="">
 <input type="hidden" name="dsltmp_qis_pppoe_passwd" value="">
 <input type="hidden" name="dsltmp_qis_pppoe_dial_on_demand" value="0">
 <input type="hidden" name="dsltmp_qis_pppoe_idletime" value="0">
@@ -78,12 +81,13 @@ function gotoHome(){
 <input type="hidden" name="dsltmp_qis_gateway" value="0.0.0.0">
 <input type="hidden" name="dsltmp_qis_dnsenable" value="1">
 <input type="hidden" name="dsltmp_qis_dns1" value="">
-<input type="hidden" name="dsltmp_qis_dns2" value="">
-<input type="hidden" name="dsltmp_qis_svc_cat" value="0">
-<input type="hidden" name="dsltmp_qis_pcr" value="0">
+<input type="hidden" name="dsltmp_qis_dns2" value="">-->
+<input type="hidden" name="dsltmp_qis_svc_cat" value="1">
+<input type="hidden" name="dsltmp_qis_pcr" value="1887">
 <input type="hidden" name="dsltmp_qis_scr" value="0">
 <input type="hidden" name="dsltmp_qis_mbs" value="0">
 <input type="hidden" name="dsltmp_qis_dsl_pvc_set" value="1">
+<input type="hidden" name="dsltmp_qis_pppoe_relay" value="1">
 
 <div class="QISmain">
 	<div class="formfonttitle" style="padding:0 0 0 10;" id="FailReason"><#Manual_Setting_Title#></div>
@@ -93,7 +97,7 @@ function gotoHome(){
 				<img onclick="gotoHome();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
 			</td>
 		</tr>
-	</table>		
+	</table>
 	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img style="width: 700px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 	<br/>
 

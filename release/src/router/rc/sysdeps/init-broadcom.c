@@ -315,9 +315,12 @@ void init_switch()
 #endif
 	) {
 		nvram_set("ctf_disable", "1");
+		nvram_set("pktc_disable", "1");
 	}
-	else nvram_set("ctf_disable", "0");
-
+	else {
+		nvram_set("ctf_disable", "0");
+		nvram_set("pktc_disable", "0");
+	}
         // ctf must be loaded prior to any other modules 
 	if (nvram_get_int("ctf_disable") == 0)
 		modprobe("ctf");
@@ -612,42 +615,42 @@ void chanspec_fix(int unit)
 	if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))	// 2.4G
 	{
 		if (nvram_match(strcat_r(prefix, "bw_cap", tmp), "3"))
-		{
-        		for (i = 0; i < (sizeof(chanspec_40m)/sizeof(chanspec_40m[0])); i++)
-			{
-        			if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_40m[i])) return;
-			}
-		}
+			goto BAND_2G_BW_40M;
 		else
+			goto BAND_2G_BW_20M;
+BAND_2G_BW_40M:
+        	for (i = 0; i < (sizeof(chanspec_40m)/sizeof(chanspec_40m[0])); i++)
 		{
-        		for (i = 0; i < (sizeof(chanspec_20m)/sizeof(chanspec_20m[0])); i++)
-			{
-        			if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_20m[i])) return;
-			}
+        		if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_40m[i])) return;
+		}
+BAND_2G_BW_20M:
+        	for (i = 0; i < (sizeof(chanspec_20m)/sizeof(chanspec_20m[0])); i++)
+		{
+        		if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_20m[i])) return;
 		}
 	}
 	else
 	{
 		if (nvram_match(strcat_r(prefix, "bw_cap", tmp), "7"))
-		{
-        		for (i = 0; i < (sizeof(chanspec_5g_80m)/sizeof(chanspec_5g_80m[0])); i++)
-			{
-				if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_5g_80m[i])) return;
-			}
-		}
+			goto BAND_5G_BW_80M;
 		else if (nvram_match(strcat_r(prefix, "bw_cap", tmp), "3"))
-		{
-        		for (i = 0; i < (sizeof(chanspec_5g_40m)/sizeof(chanspec_5g_40m[0])); i++)
-			{
-        			if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_5g_40m[i])) return;
-			}
-		}
+			goto BAND_5G_BW_40M;
 		else
+			goto BAND_5G_BW_20M;
+BAND_5G_BW_80M:
+        	for (i = 0; i < (sizeof(chanspec_5g_80m)/sizeof(chanspec_5g_80m[0])); i++)
 		{
-        		for (i = 0; i < (sizeof(chanspec_5g_20m)/sizeof(chanspec_5g_20m[0])); i++)
-			{
-        			if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_5g_20m[i])) return;
-			}
+			if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_5g_80m[i])) return;
+		}
+BAND_5G_BW_40M:
+        	for (i = 0; i < (sizeof(chanspec_5g_40m)/sizeof(chanspec_5g_40m[0])); i++)
+		{
+        		if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_5g_40m[i])) return;
+		}
+BAND_5G_BW_20M:
+        	for (i = 0; i < (sizeof(chanspec_5g_20m)/sizeof(chanspec_5g_20m[0])); i++)
+		{
+        		if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_5g_20m[i])) return;
 		}
 	}
 
@@ -1484,6 +1487,14 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nmode", tmp), "0");
 		}
 #endif
+
+		strcpy(tmp2, nvram_safe_get(strcat_r(prefix, "chanspec", tmp)));
+		if ((nvp = strchr(tmp2, '/')) || (nvp = strchr(tmp2, 'l'))
+			|| (nvp = strchr(tmp2, 'u')))
+		{
+			*nvp = '\0';
+			nvram_set(strcat_r(prefix, "chanspec", tmp), tmp2);
+		}
 	}
 	else
 	{

@@ -155,6 +155,9 @@
 	background-color:#475a5f;
 	color:#FFCC00;
 }
+.FormTable td span#wl_nmode_x_hint{
+	margin-top:3px;
+}
 
 /* for Table (for Add List) */
 .FormTable_table{
@@ -221,7 +224,7 @@
 
 /* for NWM */
 .FormTable_NWM{
-	margin-top:10px;
+	/*margin-top:10px;*/
 	font-size:12px;
 	font-family:Arial, Helvetica, sans-serif;
 	border: 1px solid #222;

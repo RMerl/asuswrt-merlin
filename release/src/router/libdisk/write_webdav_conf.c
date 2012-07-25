@@ -101,16 +101,18 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "\".htm\" => \"text/html\",\n");
 	fprintf(fp, "\".css\" => \"text/css\",\n");
 	fprintf(fp, "\".js\" => \"text/javascript\",\n");
-	fprintf(fp, "\".txt\" => \"text/plain\",\n");
-	fprintf(fp, "\".jpg\" => \"image/jpeg\",\n");
-	fprintf(fp, "\".gif\" => \"image/gif\",\n");
-	fprintf(fp, "\".png\" => \"image/png\",\n");
-	fprintf(fp, "\".pdf\" => \"application/pdf\",\n");
-	fprintf(fp, "\".mp4\" => \"video/mp4\",\n");
-	fprintf(fp, "\".m4v\" => \"video/mp4\",\n");
-	fprintf(fp, "\".wmv\" => \"video/wmv\",\n");
-	fprintf(fp, "\".mp3\" => \"audio/mpeg\",\n");
-	fprintf(fp, "\".mov\" => \"video/mov\"");
+	//fprintf(fp, "\".txt\" => \"text/plain\",\n");
+	//fprintf(fp, "\".jpg\" => \"image/jpeg\",\n");
+	//fprintf(fp, "\".gif\" => \"image/gif\",\n");
+	//fprintf(fp, "\".png\" => \"image/png\",\n");
+	//fprintf(fp, "\".pdf\" => \"application/pdf\",\n");
+	//fprintf(fp, "\".mp4\" => \"video/mp4\",\n");
+	//fprintf(fp, "\".m4v\" => \"video/mp4\",\n");
+	//fprintf(fp, "\".wmv\" => \"video/wmv\",\n");
+	//fprintf(fp, "\".mp3\" => \"audio/mpeg\",\n");
+	//fprintf(fp, "\".avi\" => \"video/avi\",\n");
+	//fprintf(fp, "\".mov\" => \"video/mov\"");
+	fprintf(fp, "\"\" => \"application/x-octet-stream\"");
 	fprintf(fp, ")\n");
 
 	// **** Index file names **** //

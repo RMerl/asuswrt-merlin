@@ -137,7 +137,7 @@ tabtitle[2] = new Array("", "<#menu5_3_1#>", "Dual WAN", "<#menu5_3_3#>", "<#men
 tabtitle[3] = new Array("", "<#UPnPMediaServer#>", "<#menu5_4_1#>", "<#menu5_4_2#>", "<#menu5_4_3#>");
 tabtitle[4] = new Array("", "IPv6");
 tabtitle[5] = new Array("", "<#BOP_isp_heart_item#>", "<#vpn_Adv#>");
-tabtitle[6] = new Array("", "<#menu5_5_1#>", "<#menu5_5_2#>", "<#menu5_5_5#>", "<#menu5_5_3#>", "<#menu5_5_4#>");
+tabtitle[6] = new Array("", "<#menu5_1_1#>", "<#menu5_5_2#>", "<#menu5_5_5#>", "<#menu5_5_3#>", "<#menu5_5_4#>");
 tabtitle[7] = new Array("", "<#menu5_6_1#>", "<#menu5_6_2#>", "<#menu5_6_3#>", "<#menu5_6_4#>", "Performance tuning", "<#menu_dsl_setting#>");
 tabtitle[8] = new Array("", "<#menu5_7_2#>", "<#menu5_7_3#>", "<#menu5_7_4#>", "<#menu5_7_5#>", "<#menu5_7_6#>", "<#menu_dsl_log#>","Connections");
 tabtitle[9] = new Array("", "QoS", "<#traffic_monitor#>");
@@ -154,10 +154,9 @@ tablink[6] = new Array("", "Advanced_BasicFirewall_Content.asp", "Advanced_URLFi
 tablink[7] = new Array("", "Advanced_OperationMode_Content.asp", "Advanced_System_Content.asp", "Advanced_FirmwareUpgrade_Content.asp", "Advanced_SettingBackup_Content.asp", "Advanced_PerformanceTuning_Content.asp", "Advanced_ADSL_Content.asp");
 tablink[8] = new Array("", "Main_LogStatus_Content.asp", "Main_DHCPStatus_Content.asp", "Main_WStatus_Content.asp", "Main_IPTStatus_Content.asp", "Main_RouteStatus_Content.asp", "Main_AdslStatus_Content.asp", "Main_ConnStatus_Content.asp");
 tablink[9] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Advanced_QOSUserSpec_Content.asp");
-tablink[10] = new Array("", "Main_WOL.asp", "Main_OtherSettings.asp", "Main_AdmStatus_Content.asp");
 
 //Level 2 Menu
-menuL2_title = new Array("", "<#menu5_1#>", "<#menu5_2#>", "<#menu5_3#>", "<#menu5_4#>", "IPv6", "<#BOP_isp_heart_item#>", "<#menu5_5#>", "<#menu5_6#>", "<#menu5_7#>");
+menuL2_title = new Array("", "<#menu5_1#>", "<#menu5_2#>", "<#menu5_3#>", "<#menu5_4#>", "IPv6", "<#BOP_isp_heart_item#>", "<#menu5_5#>", "<#menu5_6#>", "<#System_Log#>");
 menuL2_link  = new Array("", tablink[0][1], tablink[1][1], tablink[2][1], tablink[3][1], tablink[4][1], tablink[5][1], tablink[6][1], tablink[7][1], tablink[8][1]);
 
 //Level 1 Menu
@@ -257,7 +256,6 @@ function remove_url(){
 	}
 
 	if(cloudsync_support == -1) {
-		// Cloud Sync
 		menuL1_title[6]="";
 		menuL1_link[6]="";
 	}
@@ -518,7 +516,7 @@ function show_menu(){
 	}	
 
 	// Feature
-	menu1_code += '<div class="m0_r" style="margin-top:10px;" id="option0"><table width="192px" height="37px"><tr><td><#menu5_5_1#></td></tr></table></div>\n';
+	menu1_code += '<div class="m0_r" style="margin-top:10px;" id="option0"><table width="192px" height="37px"><tr><td><#menu5_1_1#></td></tr></table></div>\n';
 	for(i = 1; i <= menuL1_title.length-2; i++){
 		if(menuL1_title[i] == ""){
 			calculate_height--;
@@ -532,7 +530,7 @@ function show_menu(){
 		  menu1_code += '<div class="menu" id="option'+i+'" onclick="location.href=\''+menuL1_link[i]+'\'" style="cursor:pointer;"><table><tr><td><div id="index_img'+i+'"></div></td><td><div id="menu_string" style="width:120px;">'+menuL1_title[i]+'</div></td></tr></table></div>\n';
 		}
 	}
-	menu1_code += '<div class="m0_r" style="margin-top:10px;" id="option0">'+'<table width="192px" height="37px"><tr><td><#menu5_title#></td></tr></table></div>\n'; 	
+	menu1_code += '<div class="m0_r" style="margin-top:10px;" id="option0">'+'<table width="192px" height="37px"><tr><td><#menu5#></td></tr></table></div>\n'; 	
 	$("mainMenu").innerHTML = menu1_code;
 
 	// Advanced
@@ -620,36 +618,18 @@ function addOnlineHelp(obj, keywordArray){
 		faqLang.TW = "zh-tw";
 		faqLang.CN = "zh-cn";
 		faqLang.FR = "fr-fr";
-		faqLang.DE = "de-de";
-		faqLang.RU = "ru-ru";
-		faqLang.BR = "pt-br";
-		faqLang.CZ = "cs-cz";
-		faqLang.PL = "pl-pl";
-		faqLang.TH = "th-th";
 		faqLang.ES = "es-es";
 	}		
 	if(keywordArray[0] == "ASUSWRT" && keywordArray[1] == "lpr"){
 		faqLang.TW = "zh-tw";
 		faqLang.CN = "zh-cn";
 		faqLang.FR = "fr-fr";
-		faqLang.DE = "de-de";
-		faqLang.RU = "ru-ru";
-		faqLang.BR = "pt-br";
-		faqLang.CZ = "cs-cz";
-		faqLang.PL = "pl-pl";
-		faqLang.TH = "th-th";
 		faqLang.ES = "es-es";
 	}
 	if(keywordArray[0] == "mac" && keywordArray[1] == "lpr"){
 		faqLang.TW = "zh-tw";
 		faqLang.CN = "zh-cn";
 		faqLang.FR = "fr-fr";
-		faqLang.DE = "de-de";
-		faqLang.RU = "ru-ru";
-		faqLang.BR = "pt-br";
-		faqLang.CZ = "cs-cz";
-		faqLang.PL = "pl-pl";
-		faqLang.TH = "th-th";
 		faqLang.ES = "es-es";
 	}
 	if(keywordArray[0] == "monopoly" && keywordArray[1] == "mode"){

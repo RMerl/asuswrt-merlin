@@ -44,6 +44,10 @@ endif
 RM = rm -f
 INSTALL = install
 
+ifeq ($(RTAC66U), y)
+        CFLAGS += -DRTN66U
+endif
+
 ifeq ($(RTN66U), y)
         CFLAGS += -DRTN66U
 endif

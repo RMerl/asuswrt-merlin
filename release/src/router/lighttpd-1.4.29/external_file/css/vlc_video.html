@@ -15,13 +15,12 @@ html{
 }
 </style>
 <script type='text/javascript' src='/smb/js/tools.js'></script>
-<script type='text/javascript' src='/smb/js/VLCcontrols/jquery-vlc.js'></script>
 <script type="text/javascript">
 var m = new lang();
 var g_storage = new myStorage();
+var g_this_video = "";
 
-function getUrlVars()
-{
+function getUrlVars(){
     var vars = [], hash;
     var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
     for(var i = 0; i < hashes.length; i++)
@@ -81,13 +80,34 @@ function getInternetExplorerVersion(){
    return rv;
 }
 
-$("document").ready(function() {
+function closeWindow(){
+	parent.closeJqmWindow(0);
+}
+
+$(document).keydown(function(e) {
+	alert(e.keyCode);
+    if (e.keyCode == 27) return false;
+});
+
+function init(){
+	document.write("<body width='100%' height='100%' style='margin:0px;padding:0px;background-color:#000;text-align:center'>");
+	document.write("<span style='color:#fff;font-size:20px'>Loading....</span>");
+	document.write("</body>");
+	
+	setTimeout(function(){
+		createVLC();
+	},500);
+}
+
+function createVLC() {
+	
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
 	
 	var this_showbutton = getUrlVars()["showbutton"];
 	var this_video = getUrlVars()["v"];
+	g_this_video = this_video;
 	
 	var val = navigator.userAgent.toLowerCase();
 	var isIE = false;
@@ -131,101 +151,54 @@ $("document").ready(function() {
 		return;
 	}
 	
-	if(isIE){
+	var vlc_width = "655px";
+	var vlc_height = "470px";
+			
+	if(this_showbutton==1){
+		vlc_width = "655px";
+		vlc_height = "450px";
+	}
+	
+	document.write("<body width='100%' height='100%' style='margin:0px;padding:0px'>");
+	
+	document.write("<OBJECT classid='clsid:9BE31822-FDAD-461B-AD51-BE1D1C159921'");
+	document.write(" codebase='http://download.videolan.org/pub/videolan/vlc/last/win32/axvlc.cab'");
+	document.write(" id='vlcPlayer' name='vlcPlayer' width='" + vlc_width + "' height='" + vlc_height + "'>");
+	document.write("<param name='ShowDisplay' value='True'/>"); 
+	document.write("<param name='AutoLoop' value='False'/>");
+	document.write("<param name='AutoPlay' value='True'/>");
+	document.write("<param name='ToolBar' value='True'/>");
+	
+	document.write("<embed type='application/x-vlc-plugin'");
+	document.write(" pluginspage='http://www.videolan.org'");
+	document.write(" width='" + vlc_width + "' height='" + vlc_height + "' id='vlcPlayer2' name='vlcPlayer2'/>");
 		
-		/*if(getInternetExplorerVersion()<=8){
-			document.write("<body width='100%' height='100%' style='margin:0px;padding:0px'>");
-			document.write("<OBJECT classid='clsid:9BE31822-FDAD-461B-AD51-BE1D1C159921'");
-			document.write(" codebase='http://downloads.videolan.org/pub/videolan/vlc/latest/win32/axvlc.cab'");
-			document.write(" id='vlcPlayer' name='vlcPlayer' width='100%' height='100%'>");
-			document.write("<param name='Src' value='");
-			document.write(this_video);
-			document.write("'/>");
-			document.write("<param name='ShowDisplay' value='True'/>"); 
-			document.write("<param name='AutoLoop' value='False'/>");
-			document.write("<param name='AutoPlay' value='True'/>");
-			document.write("<param name='ToolBar' value='True'/>");
-			document.write("</OBJECT>");
-			document.write("</body>");
-		}
-		else*///{
-			
-			document.write("<body width='100%' height='100%' style='margin:0px;padding:0px'>");
-			document.write("<OBJECT classid='clsid:E23FE9C6-778E-49D4-B537-38FCDE4887D8'");
-			document.write(" codebase='http://downloads.videolan.org/pub/videolan/vlc/latest/win32/axvlc.cab'");
-			document.write(" id='vlcPlayer' name='vlcPlayer' width='100%' height='100%'>");
-			document.write("<param name='Src' value='");
-			document.write(this_video);
-			document.write("'/>");
-			document.write("<param name='ShowDisplay' value='True'/>"); 
-			document.write("<param name='AutoLoop' value='False'/>");
-			document.write("<param name='AutoPlay' value='True'/>");
-			document.write("<param name='ToolBar' value='True'/>");
-			document.write("</OBJECT>");
-			document.write("</body>");
-			
-			//http://192.168.123.125:8082/AICLOUD1492337110/HELLRAISER%20_6_%20HELLSEEKER%20%5B2002%5D.avi
-		//}
+	document.write("</OBJECT>");
+	
+	if(this_showbutton==1){
+		document.write("<div width='100%'><button id='btnClose' style='position: relative;float:right;right:5px;' onclick='parent.closeJqmWindow(0);'>close</button><div>");			
 	}
-	else{		
-		document.write("<body width='100%' height='100%' style='margin:0px;padding:0px'>");
-		document.write("<embed type='application/x-vlc-plugin'");
-		document.write(" pluginspage='http://www.videolan.org'");
-		document.write(" src='");
-		document.write(this_video);
 		
-		if(this_showbutton==1){
-			document.write("' width='100%' height='94%' id='vlcPlayer' name='vlcPlayer'/>");
-			document.write("<div width='100%'><button id='btnClose' style='position: relative;float:right;right:5px;' onclick='parent.closeJqmWindow(0);'>close</button><div>");			
-		}
-		else
-			document.write("' width='100%' height='100%' id='vlcPlayer' name='vlcPlayer'/>");
-			
-		document.write("</body>");
+	document.write("</body>");
+	
+	var vlc;
+	if(isIE)
+		vlc = document.getElementById("vlcPlayer");
+	else
+		vlc = document.getElementById("vlcPlayer2");		
+	
+	if(vlc){
+		var id = vlc.playlist.add(this_video);
+		vlc.playlist.playItem(id);
+		
+		//- Full Screen
+		//vlc.video.toggleFullscreen();
 	}
-	/*
-	var vlcPlayer = document.getElementById("vlcPlayer");	
-	if(vlcPlayer){	
-		//alert("b");	
-		//var id = vlcPlayer.playlist.add(this_video);
-		//alert(id);
-		//vlcPlayer.playlist.playItem(id);
-		//vlcPlayer.pause();\
-		//vlcPlayer.fullscreen();
-		//alert("sds");
-		//vlcPlayer.video.toggleFullscreen();
-		//vlcPlayer.pause();
-	}
-	*/
 	
 	$('button#btnClose').text(m.getString("btn_close"));
-});
-
-function closeWindow(){
-	parent.closeJqmWindow(0);
 }
-
-$(document).keydown(function(e) {
-	alert(e.keyCode);
-    if (e.keyCode == 27) return false;
-});
 
 </script>
 </head>
-<body id='main' width='100%' height='100%' style='margin:0px;padding:0px'>
-	<!--
-	<div id='vlc1' width='100%' height='100%'/>
-	
-			<OBJECT classid='clsid:E23FE9C6-778E-49D4-B537-38FCDE4887D8'
-			codebase='http://downloads.videolan.org/pub/videolan/vlc/latest/win32/axvlc.cab'
-			 id='vlcPlayer' name='vlcPlayer' width='100%' height='94%'>
-			<param name='Src' value='http://192.168.123.125:8082/AICLOUD1492337110/HELLRAISER%20_6_%20HELLSEEKER%20%5B2002%5D.avi'/>
-			<param name='ShowDisplay' value='True'/>
-			<param name='AutoLoop' value='False'/>
-			<param name='AutoPlay' value='True'/>
-			<param name='ToolBar' value='True'/>
-			</OBJECT>
-			<div width='100%'><button style='position: relative;float:right;right:5px;' onclick='parent.closeJqmWindow(0);'>close</button><div>
-			-->
-</body>
+<script language="Javascript">init();</script>
 </html>

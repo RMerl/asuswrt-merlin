@@ -538,12 +538,14 @@ int dhcp6c_state_main(int argc, char **argv)
 	}
 
 	if (env2nv("new_domain_name_servers", "ipv6_get_dns")) {
+		TRACE_PT("ipv6_get_dns=%s\n", nvram_safe_get("ipv6_get_dns"));
 #ifdef OVERWRITE_DNS
 		update_resolvconf();
 #else
 		add_ns(NULL);
 #endif
 	}
+
 #if 0
 	// wait for RA
 	if (!is_intf_up(get_wan6face())) return 0;
@@ -560,7 +562,6 @@ int dhcp6c_state_main(int argc, char **argv)
 	start_radvd();
 	start_httpd();
 
-	TRACE_PT("ipv6_get_dns=%s\n", nvram_safe_get("ipv6_get_dns"));
 	TRACE_PT("end\n");
 	return 0;
 }
@@ -578,23 +579,27 @@ void start_dhcp6c(void)
 {
 	FILE *f;
 	int prefix_len;
-	char *wan6face;
+	char *wan6face = get_wan6face();
 	char *argv[] = { "dhcp6c", "-T", "LL", NULL, NULL, NULL };
 	int argc;
 	char iaid_str[9] = {0};
 	int i, j;
 	unsigned long iaid = 0;
 	char *mac;
+	char *lan_ifname = nvram_safe_get("lan_ifname");
+	char tmpstr[128];
 
 	TRACE_PT("begin\n");
 
 	// Check if turned on
 	if (get_ipv6_service() != IPV6_NATIVE_DHCP) return;
 
+	if (!wan6face || (strlen(wan6face) <= 0)) return;
+
 	prefix_len = 64 - (nvram_get_int("ipv6_prefix_length") ? : 64);
 	if (prefix_len < 0)
 		prefix_len = 0;
-	wan6face = get_wan6face();
+
 	// generate IAID from last 7 digits of WAN MAC addresss
 	mac = nvram_safe_get("wan0_hwaddr");
 	for (i = 7, j = 0; i < 17; i++) {
@@ -638,11 +643,15 @@ void start_dhcp6c(void)
 			wan6face,
 			iaid,
 			iaid,
-			nvram_safe_get("lan_ifname"),
+			lan_ifname,
 			prefix_len,
 			iaid);
 		fclose(f);
 	}
+
+	sprintf(tmpstr, "ip -6 addr flush scope global dev %s; "
+		"ip -6 route flush root 2000::/3 dev %s", lan_ifname, lan_ifname);
+	system(tmpstr);
 
 	argc = 3;
 	if (nvram_get_int("ipv6_debug"))
@@ -660,8 +669,6 @@ void stop_dhcp6c(void)
 
 	killall("dhcp6c-event", SIGTERM);
 	killall_tk("dhcp6c");
-
-	nvram_set("ipv6_get_dns", "");
 
 	TRACE_PT("end\n");
 }

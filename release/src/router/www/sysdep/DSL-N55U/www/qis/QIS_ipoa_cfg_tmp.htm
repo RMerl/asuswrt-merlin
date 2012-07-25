@@ -129,14 +129,14 @@ function gotoHome() {
 <input type="hidden" name="dsltmp_qis_vci" id="dsltmp_qis_vci" value="<% nvram_get("dsltmp_cfg_vci"); %>">
 <input type="hidden" name="dsltmp_qis_proto" id="dsltmp_qis_proto" value="ipoa">
 <input type="hidden" name="dsltmp_qis_encap" id="dsltmp_qis_encap" value="<% nvram_get("dsltmp_cfg_encap"); %>">
-<input type="hidden" name="dsltmp_qis_pppoe_username" id="dsltmp_qis_pppoe_username" value="">
+<!--<input type="hidden" name="dsltmp_qis_pppoe_username" id="dsltmp_qis_pppoe_username" value="">
 <input type="hidden" name="dsltmp_qis_pppoe_passwd" id="dsltmp_qis_pppoe_passwd" value="">
 <input type="hidden" name="dsltmp_qis_pppoe_dial_on_demand" id="dsltmp_qis_pppoe_dial_on_demand" value="0">
 <input type="hidden" name="dsltmp_qis_pppoe_idletime" id="dsltmp_qis_pppoe_idletime" value="0">
 <input type="hidden" name="dsltmp_qis_pppoe_mtu" id="dsltmp_qis_pppoe_mtu" value="1492">
 <input type="hidden" name="dsltmp_qis_pppoe_mru" id="dsltmp_qis_pppoe_mru" value="1492">
 <input type="hidden" name="dsltmp_qis_pppoe_service" id="dsltmp_qis_pppoe_service" value="">
-<input type="hidden" name="dsltmp_qis_pppoe_options" id="dsltmp_qis_pppoe_options" value="">
+<input type="hidden" name="dsltmp_qis_pppoe_options" id="dsltmp_qis_pppoe_options" value="">-->
 <input type="hidden" name="dsltmp_qis_DHCPClient" id="dsltmp_qis_DHCPClient" value="1">
 <input type="hidden" name="dsltmp_qis_ipaddr" id="dsltmp_qis_ipaddr" value="0.0.0.0">
 <input type="hidden" name="dsltmp_qis_netmask" id="dsltmp_qis_netmask" value="0.0.0.0">
@@ -144,11 +144,12 @@ function gotoHome() {
 <input type="hidden" name="dsltmp_qis_dnsenable" id="dsltmp_qis_dnsenable" value="1">
 <input type="hidden" name="dsltmp_qis_dns1" id="dsltmp_qis_dns1" value="">
 <input type="hidden" name="dsltmp_qis_dns2" id="dsltmp_qis_dns2" value="">
-<input type="hidden" name="dsltmp_qis_svc_cat" id="dsltmp_qis_svc_cat" value="0">
-<input type="hidden" name="dsltmp_qis_pcr" id="dsltmp_qis_pcr" value="0">
+<input type="hidden" name="dsltmp_qis_svc_cat" id="dsltmp_qis_svc_cat" value="1">
+<input type="hidden" name="dsltmp_qis_pcr" id="dsltmp_qis_pcr" value="1887">
 <input type="hidden" name="dsltmp_qis_scr" id="dsltmp_qis_scr" value="0">
 <input type="hidden" name="dsltmp_qis_mbs" id="dsltmp_qis_mbs" value="0">
 <input type="hidden" name="dsltmp_qis_dsl_pvc_set" value="1">
+<input type="hidden" name="dsltmp_qis_pppoe_relay" value="0">
 
 <div class="QISmain">
 	<div class="formfonttitle" style="padding:0 0 0 10;" id="FailReason"><#Manual_Setting_Title#></div>

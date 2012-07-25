@@ -974,10 +974,12 @@ static smb_info_t *smbdav_get_smb_info_from_pool(server *srv, connection *con, p
 	if(ds==NULL){
 		return NULL;
 	}
+	
 	char pWorkgroup[30]={0};
 	char pServer[64]={0};
-	char pShare[128]={0};
-	char pPath[128]={0};
+	char pShare[1280]={0};
+	char pPath[1280]={0};
+	
 	smbc_wrapper_parse_path2(con, pWorkgroup, pServer, pShare, pPath);
 
 	buffer* buffer_server = buffer_init();
@@ -987,18 +989,13 @@ static smb_info_t *smbdav_get_smb_info_from_pool(server *srv, connection *con, p
 	buffer* buffer_share = buffer_init();
 	if(pShare[0] != '\0')
 		buffer_append_string(buffer_share,pShare);
-
-	int count = 0;
 	
+	int count = 0;
+		
 	for (c = p->smb_info_list; c; c = c->next) {
-		count++;
-	}
-	Cdbg(DBE, "count = %d", count);
-	count = 0;
-	for (c = p->smb_info_list; c; c = c->next) {
+		
 		count++;
 		
-		Cdbg(DBE, "%d, c->server=[%s], buffer_server=[%s]", count, c->server->ptr, buffer_server->ptr);
 		if(!buffer_is_equal(c->server, buffer_server))
 			continue;
 
@@ -1013,7 +1010,12 @@ static smb_info_t *smbdav_get_smb_info_from_pool(server *srv, connection *con, p
 		Cdbg(DBE, "%d, c->user_agent=[%s], user_agent=[%s]", count, c->user_agent->ptr, ds->value->ptr);
 		if(!buffer_is_equal(c->user_agent, ds->value))
 			continue;
-		
+
+		Cdbg(DBE, "return %d, c->server=[%s]", count, c->server->ptr);
+
+		buffer_free(buffer_server);
+		buffer_free(buffer_share);
+	
 		return c;
 	}
 
@@ -1045,14 +1047,15 @@ static void copy_smb_info(connection *con, smb_info_t *smb_info)
 	buffer_copy_string_buffer(con->smb_info->src_ip, smb_info->src_ip);
 }
 
-static void connection_smb_info_init(server *srv, connection *con, plugin_data *p) 
+static int connection_smb_info_init(server *srv, connection *con, plugin_data *p) 
 {
 	UNUSED(srv);
-	
+
 	char pWorkgroup[30]={0};
 	char pServer[64]={0};
 	char pShare[1280]={0};
 	char pPath[1280]={0};
+		
 	smbc_wrapper_parse_path2(con, pWorkgroup, pServer, pShare, pPath);
 	
 	buffer* bworkgroup = buffer_init();
@@ -1060,7 +1063,7 @@ static void connection_smb_info_init(server *srv, connection *con, plugin_data *
 	buffer* bshare = buffer_init();
 	buffer* bpath = buffer_init();
 	URI_QUERY_TYPE qflag = SMB_FILE_QUERY;
-	//Cdbg(DBE, "connection_smb_info_init...");
+	
 	if(pWorkgroup[0] != '\0')
 		buffer_copy_string(bworkgroup, pWorkgroup);
 	
@@ -1071,6 +1074,11 @@ static void connection_smb_info_init(server *srv, connection *con, plugin_data *
 		}
 		else{
 			Cdbg(DBE, "fail to smbc_check_connectivity....");
+			buffer_free(bworkgroup);
+			buffer_free(bserver);
+			buffer_free(bshare);
+			buffer_free(bpath);
+			return 0;
 		}
 	} else {
 		if(qflag == SMB_FILE_QUERY) {
@@ -1222,6 +1230,7 @@ static void connection_smb_info_init(server *srv, connection *con, plugin_data *
 	
 	if( ds && 
 	    ( strstr( ds->value->ptr, "Mozilla" ) || con->mode == SMB_NTLM ) ){
+	    
 		//- From browser, like IE, Chrome, Firefox, Safari		
 		if(smb_info = smbdav_get_smb_info_from_pool(srv, con, p)){ 
 			Cdbg(DBE, "Get smb_info from pool smb_info->qflag=[%d], smb_info->user=[%s], smb_info->pass=[%s]", 
@@ -1237,7 +1246,7 @@ static void connection_smb_info_init(server *srv, connection *con, plugin_data *
 			smb_info->path = buffer_init();
 			smb_info->user_agent = buffer_init();
 			smb_info->src_ip = buffer_init();			
-
+			
 			if(con->mode == SMB_NTLM){
 				smb_info->cli = smbc_cli_initialize();
 				if(!buffer_is_empty(bserver)){
@@ -1275,7 +1284,7 @@ static void connection_smb_info_init(server *srv, connection *con, plugin_data *
 			buffer_reset(con->smb_info->user_agent);
 			buffer_reset(con->smb_info->src_ip);
 		}*/
-
+		
 		smb_info = calloc(1, sizeof(smb_info_t));
 		smb_info->username = buffer_init();
 		smb_info->password = buffer_init();
@@ -1288,8 +1297,7 @@ static void connection_smb_info_init(server *srv, connection *con, plugin_data *
 		
 		con->smb_info = smb_info;
 	}
-
-
+	
 	con->smb_info->auth_time = time(NULL);	
 	con->smb_info->auth_right = 0;
 
@@ -1316,6 +1324,7 @@ static void connection_smb_info_init(server *srv, connection *con, plugin_data *
 	buffer_free(bpath);
 #endif
 
+	return 1;
 }
 
 static void connection_smb_info_url_patch(server *srv, connection *con)
@@ -1467,7 +1476,10 @@ static int do_connection_auth(server *srv, connection *con)
 	
 	//Cdbg(DBE, "con->physical_auth_url = %s", con->physical_auth_url->ptr);
 
-	connection_smb_info_init(srv, con, p);
+	if( connection_smb_info_init(srv, con, p) == 0 ){
+		Cdbg(DBE,"Fail to connection_smb_info_init!");
+		return HANDLER_FINISHED;
+	}
 	
 	if(con->mode == SMB_NTLM) {
 		//try to get NTLM authentication information from HTTP request

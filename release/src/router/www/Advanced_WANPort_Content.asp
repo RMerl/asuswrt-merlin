@@ -728,12 +728,12 @@ function del_Row(obj){
 	    		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
 					  <thead>
 					  <tr>
-						<td colspan="2">Enable Routing rules for dual WAN?</td>
+						<td colspan="2">Enable Routing rules for dual WAN</td>
 					  </tr>
 					  </thead>		
 
           	<tr>
-            	<th>Enable the Routing rules?</th>
+            	<th>Enable the Routing rules</th>
             	<td>
 						  		<input type="radio" value="1" name="wans_routing_enable" class="content_input_fd" <% nvram_match("wans_routing_enable", "1", "checked"); %>><#checkbox_Yes#>
 		 							<input type="radio" value="0" name="wans_routing_enable" class="content_input_fd" <% nvram_match("wans_routing_enable", "0", "checked"); %>><#checkbox_No#>

@@ -29,64 +29,6 @@
 #include "usb_info.h"
 #include "disk_io_tools.h"
 
-extern char *read_whole_file(const char *target){
-	FILE *fp;
-	char *buffer, *new_str;
-	int i;
-	unsigned int read_bytes = 0;
-	unsigned int each_size = 1024;
-
-	if((fp = fopen(target, "r")) == NULL)
-		return NULL;
-
-	buffer = (char *)malloc(sizeof(char)*each_size);
-	if(buffer == NULL){
-		usb_dbg("No memory \"buffer\".\n");
-		fclose(fp);
-		return NULL;
-	}
-	memset(buffer, 0, each_size);
-
-	while ((i = fread(buffer+read_bytes, each_size*sizeof(char), 1, fp)) == 1){
-		read_bytes += each_size;
-		new_str = (char *)malloc(sizeof(char)*(each_size+read_bytes));
-		if(new_str == NULL){
-			usb_dbg("No memory \"new_str\".\n");
-			free(buffer);
-			fclose(fp);
-			return NULL;
-		}
-		memset(new_str, 0, sizeof(char)*(each_size+read_bytes));
-		memcpy(new_str, buffer, read_bytes);
-
-		free(buffer);
-		buffer = new_str;
-	}
-
-	fclose(fp);
-	return buffer;
-}
-
-extern char *get_line_from_buffer(const char *buf, char *line, const int line_size){
-	int buf_len, len;
-	char *ptr;
-
-	if(buf == NULL || (buf_len = strlen(buf)) <= 0)
-		return NULL;
-
-	if((ptr = strchr(buf, '\n')) == NULL)
-		ptr = (char *)(buf+buf_len);
-
-	if((len = ptr-buf) < 0)
-		len = buf-ptr;
-	++len; // include '\n'.
-
-	memset(line, 0, line_size);
-	strncpy(line, buf, len);
-
-	return line;
-}
-
 /*extern int mkdir_if_none(char *dir){
 	DIR *dp = opendir(dir);
 	if(dp != NULL){

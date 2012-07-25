@@ -733,8 +733,10 @@ int SetAdslType(int EnumAdslTypeValue, int FromAteCmd)
     SendCmdAndWaitResp(pRespBuf, MAX_RESP_BUF_SIZE, pRespLen, MAX_RESP_BUF_NUM, &RespPktNum, m_AdslMacAddr,
         MAC_RTS_CONSOLE_CMD, (PUCHAR)SHOW_ADSL, GET_LEN(SHOW_ADSL),0);         
         
-    int i;        
-    BOOLEAN SetNewValue = FALSE;
+    int i;
+    
+    /* Paul comment 2012/7/17, just issue set adsltype again, in order to have the Annex mode stick to that adsl type. */
+    /*BOOLEAN SetNewValue = FALSE;
     for(i=0; i<RespPktNum; i++)
     {
         scanner_set(GET_RESP_STR(pRespBuf[i]), GET_RESP_LEN(*pRespLen[i]));
@@ -771,13 +773,13 @@ int SetAdslType(int EnumAdslTypeValue, int FromAteCmd)
                 }
             }
         }
-    }        
+    }
     
     if (SetNewValue == FALSE)
     {
         //printf("Old value equal to new value. skip\n");    
         return 0;
-    }
+    }*/
     
     sprintf(InputCmd, "%d", EnumAdslTypeValue);
     strcpy(UserCmd, SET_ADSL_TYPE);

@@ -1777,7 +1777,11 @@ enum {
 
 static int radio_toggle(int idx, int unit, int subunit, void *param)
 {
-	if (!nvram_get_int(wl_nvname("radio", unit, 0))) return 0;
+
+	/* TODO: Now, radio on/off according to nvram wl0_radio and wl1_radio */
+	/* TODO: watchdog do timecheck_item to make radio ON/OFF */
+
+	//if (!nvram_get_int(wl_nvname("radio", unit, 0))) return 0;
 
 	int *op = param;
 

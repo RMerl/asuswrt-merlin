@@ -52,7 +52,7 @@
 #define WEBDAV_FILE_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define WEBDAV_DIR_MODE  S_IRWXU | S_IRWXG | S_IRWXO
 
-#define DBG_ENABLE_MOD_SMBDAV 1
+#define DBG_ENABLE_MOD_SMBDAV 0
 #define DBE	DBG_ENABLE_MOD_SMBDAV
 
 /* plugin config for all request/connections */
@@ -883,7 +883,8 @@ static int webdav_get_live_property(server *srv, connection *con, plugin_data *p
 		} else if (0 == strcmp(prop_name, "getlastmodified")) {
 			//buffer_append_string_len(b,CONST_STR_LEN("<D:getlastmodified ns0:dt=\"dateTime.rfc1123\">"));
 			buffer_append_string_len(b,CONST_STR_LEN("<D:getlastmodified>"));
-			strftime(mtime_buf, sizeof(mtime_buf), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&(sce->st.st_mtime)));
+			//strftime(mtime_buf, sizeof(mtime_buf), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&(sce->st.st_mtime)));
+			strftime(mtime_buf, sizeof(mtime_buf), "%Y/%m/%d %H:%M:%S", localtime(&(sce->st.st_mtime)));
 			buffer_append_string(b, mtime_buf);
 			buffer_append_string_len(b, CONST_STR_LEN("</D:getlastmodified>"));
 			found = 1;
@@ -1580,6 +1581,8 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		//- Computer Name
 		buffer_append_string_len(b, CONST_STR_LEN("\" computername=\"WebDAV"));
 	#endif
+
+		buffer_append_string_len(b, CONST_STR_LEN("\" isusb=\"1"));
 	
 		buffer_append_string_len(b,CONST_STR_LEN("\">\n"));
 			
@@ -3030,12 +3033,12 @@ propmatch_cleanup:
 
 		b = chunkqueue_get_append_buffer(con->write_queue);
 
-		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("<result>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("<sharelink>\n"));
+		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<result>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<sharelink>"));
 		buffer_append_string_buffer(b,buffer_result_share_link);
-		buffer_append_string_len(b,CONST_STR_LEN("</sharelink>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("</result>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("</sharelink>"));
+		buffer_append_string_len(b,CONST_STR_LEN("</result>"));
 
 		con->file_finished = 1;
 

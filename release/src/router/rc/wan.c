@@ -1198,13 +1198,6 @@ TRACE_PT("3g end.\n");
 		wan_proto = nvram_get(strcat_r(prefix, "proto", tmp));
 		if (!wan_proto || !strcmp(wan_proto, "disabled")) {
 			update_wan_state(prefix, WAN_STATE_DISABLED, 0);
-		
-#ifdef RTCONFIG_DSL
-			// by Chen-I, to remain running pppoe relay if dsl is bridge mode
-			snprintf(prefix, sizeof(prefix), "dsl%d_", unit);
-			if(strcmp(nvram_safe_get(strcat_r(prefix, "proto", tmp)),"bridge") && unit == wan_primary_ifunit())
-				start_pppoe_relay(wan_ifname);
-#endif
 			return;
 		}
 
@@ -1742,10 +1735,11 @@ add_ns(char *wan_ifname)
 	int table;
 	char cmd[2048];
 	char fopen_flag[] = "r+";
+#if 0
 #ifdef RTCONFIG_IPV6
 	int ipv6_only = 0;
 #endif
-
+#endif
 	/* Figure out nvram variable name prefix for this i/f */
 	/*unit = wan_primary_ifunit();
 	if (wan_prefix(wan_ifname, prefix) < 0 ||
@@ -1774,8 +1768,10 @@ cprintf("%s: Couldn't get %s's prefix.\n", __FUNCTION__, wan_ifname);
 			return -1;
 		}
 	}
+#if 0
 #ifdef RTCONFIG_IPV6
 	else ipv6_only = 1;
+#endif
 #endif
 
 //	if (nvram_match(strcat_r(prefix, "proto", tmp), "static") ||
@@ -1796,7 +1792,7 @@ cprintf("%s: Couldn't get %s's prefix.\n", __FUNCTION__, wan_ifname);
 		perror("/tmp/resolv.conf");
 		return errno;
 	}
-
+#if 0
 #ifdef RTCONFIG_IPV6
 	char ipv6_dns_str[1024];
 	memset(ipv6_dns_str, 0, 1024);
@@ -1847,7 +1843,7 @@ cprintf("%s: Couldn't get %s's prefix.\n", __FUNCTION__, wan_ifname);
 
 	if (ipv6_only) goto FCLOSE;
 #endif
-
+#endif
 	wanx_dns = nvram_safe_get(strcat_r(prefix, "dns", tmp));
 	wanx_xdns = nvram_safe_get(strcat_r(prefix, "xdns", tmp2));
 cprintf("%s: wanx_dns=%s, wanx_xdns=%s.\n", __FUNCTION__, wanx_dns, wanx_xdns);
@@ -1901,8 +1897,10 @@ del_ns(char *wan_ifname)
 	int match;
 	int table;
 	char cmd[2048];
+#if 0
 #ifdef RTCONFIG_IPV6
 	int ipv6_only = 0;
+#endif
 #endif
 	int ret = 0;
 
@@ -1929,8 +1927,10 @@ cprintf("%s: wan_ifname=%s, unit=%d.\n", __FUNCTION__, wan_ifname, unit);
 #endif
 		}
 	}
+#if 0
 #ifdef RTCONFIG_IPV6
 	else ipv6_only = 1;
+#endif
 #endif
 
 	lock = file_lock("resolv");
@@ -1948,7 +1948,7 @@ cprintf("%s: wan_ifname=%s, unit=%d.\n", __FUNCTION__, wan_ifname, unit);
 		perror("fopen /tmp/resolv.tmp");
 		return errno;
 	}
-
+#if 0
 #ifdef RTCONFIG_IPV6
 	char ipv6_dns_str[1024];
 	memset(ipv6_dns_str, 0, 1024);
@@ -2005,7 +2005,7 @@ cprintf("%s: wan_ifname=%s, unit=%d.\n", __FUNCTION__, wan_ifname, unit);
 
 	if (ipv6_only) goto FCLOSE;
 #endif
-
+#endif
 	wanx_dns = nvram_safe_get(strcat_r(prefix, "dns", tmp));
 	wanx_xdns = nvram_safe_get(strcat_r(prefix, "xdns", tmp2));
 cprintf("%s: wanx_dns=%s, wanx_xdns=%s.\n", __FUNCTION__, wanx_dns, wanx_xdns);
@@ -2099,7 +2099,8 @@ void wan6_up(const char *wan_ifname)
 
 	int service = get_ipv6_service();
 
-	if (!strlen(wan_ifname) || (service == IPV6_DISABLED))
+	if (!wan_ifname || (strlen(wan_ifname) <= 0) ||
+		(service == IPV6_DISABLED))
 		return;
 
 	switch (service) {
@@ -2209,7 +2210,9 @@ void wan6_down(const char *wan_ifname)
 void start_wan6(void)
 {
 	// support wan_unit=0 first
-	// call wan6_up directly	
+	// call wan6_up directly
+	if ((!strncmp(nvram_safe_get("ipv6_ifdev"), "eth", 3) ||
+		((get_ipv6_service() != IPV6_NATIVE) && (get_ipv6_service() != IPV6_NATIVE_DHCP))))
 	wan6_up(get_wan6face());
 }
 

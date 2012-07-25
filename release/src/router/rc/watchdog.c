@@ -269,20 +269,17 @@ void btn_check(void)
 
 	if (btn_pressed != 0) return;
 
-	if (button_pressed(BTN_WPS) && nvram_match("btn_ez_radiotoggle", "1"))
-	{
-		if (btn_pressed_toggle_radio == 0  )
-		{
+	// Added WPS button radio toggle option
+	if (button_pressed(BTN_WPS) && nvram_match("btn_ez_radiotoggle", "1")){
+		if (btn_pressed_toggle_radio == 0){
 			eval("radio","toggle");
 			btn_pressed_toggle_radio = 1;
 			return;
 		}
 	}
-	else
-	{
+	else{
 		btn_pressed_toggle_radio = 0;
 	}
-
 
 	if (btn_pressed_setup < BTNSETUP_START)
 	{
@@ -551,6 +548,13 @@ void timecheck(void)
 
 	// radio on/off
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+		/* TODO: when wl_radio = 0, not to do timecheck_item */
+		if (!nvram_get_int(wl_nvname("radio", unit, 0))){
+			item++;
+			unit++;
+			continue;
+		}
+
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 		svcDate = nvram_safe_get(strcat_r(prefix, "radio_date_x", tmp));
 		svcTime = nvram_safe_get(strcat_r(prefix, "radio_time_x", tmp));

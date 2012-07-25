@@ -222,30 +222,44 @@ function loadData()
 			if (h.tx_max > xx_max) xx_max = h.tx_max;
 
 			if (i == "WIRELESS1")
-				t = 'Wireless (5GHz)';
+				t = '<#tm_wireless#> (5GHz)';
 			else if (i == "WIRELESS0")
-				t = 'Wireless (2.4GHz)';
+				t = '<#tm_wireless#> (2.4GHz)';
 			else if (i == "WIRED")
-				t = 'Wired';
+				t = '<#tm_wired#>';
 			else if (i == "BRIDGE")				
 				t = 'LAN';
 			else if (i == "INTERNET")
-				t = 'Internet';
+				t = '<#Internet#>';
 			else if (i.search("WIRELESS") > -1 && i.search(".") > -1)
 				t = 'NotUsed';
 			else
 				t = i;			
  
-			if(t != "LAN" && t != "NotUsed") // hide Tabs
-				tabs.push(['speed-tab-' + i, t]);
+			if(t != "LAN" && t != "NotUsed"){ // hide Tabs
+				if(i == "INTERNET")
+					tabs[0] = ['speed-tab-' + i, t];
+				else if	(i == "WIRED")
+					tabs[1] = ['speed-tab-' + i, t];
+				else if	(i == "WIRELESS0")
+					tabs[2] = ['speed-tab-' + i, t];
+				else if	(i == "WIRELESS1")
+					tabs[3] = ['speed-tab-' + i, t];			
+				else if	(i == "BRIDGE")
+					tabs[4] = ['speed-tab-' + i, t];	
+					
+			//	tabs.push(['speed-tab-' + i, t]);
+
+			
+			}
 		}
 
-		tabs = tabs.sort(
+		/*tabs = tabs.sort(
 			function(a, b) {
 				if (a[1] < b[1]) return -1;
 				if (a[1] > b[1]) return 1;
 				return 0;
-			});
+			});*/
 	}
 
 	if (tabs.length == old.length) {

@@ -161,7 +161,7 @@ function ddns_load_body(){
   else if(ddns_return_code == 'update,407')
     alert("<#LANHostConfig_x_DDNS_alarm_11#>");
   else if(ddns_return_code =='no_change')
-    alert(Untranslated.ddns_nochange);
+    alert("<#LANHostConfig_x_DDNS_alarm_nochange#>");
   /*else if(ddns_return_code =='ddns_query')
     alert("<#LANHostConfig_x_DDNSHostnameCheck_buttonname#>");*/
   else if(ddns_return_code !='')

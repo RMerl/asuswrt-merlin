@@ -986,8 +986,6 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 		return (get_nat_vserver_table(eid, wp, 0, NULL));
 	else if (strcmp(file, "route.log")==0)
 		return (ej_route_table(eid, wp, 0, NULL));
-	else if (strcmp(file, "client_list.log")==0)
-		return (ej_getclientlist(eid, wp, 0, NULL));
 	else if (strcmp(file, "wps_info.log")==0)
 	{
 		if (nvram_match("wps_band", "0"))
@@ -1182,44 +1180,6 @@ ej_lan_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
 
 
 //2008.08 magic {
-extern char *read_whole_file(const char *target){
-	FILE *fp = fopen(target, "r");
-	char *buffer, *new_str;
-	int i;
-	unsigned int read_bytes = 0;
-	unsigned int each_size = 1024;
-	
-	if (fp == NULL)
-		return NULL;
-	
-	buffer = (char *)malloc(sizeof(char)*each_size+read_bytes);
-	if (buffer == NULL){
-		csprintf("No memory \"buffer\".\n");
-		fclose(fp);
-		return NULL;
-	}
-	memset(buffer, 0, sizeof(char)*each_size+read_bytes);
-	
-	while ((i = fread(buffer+read_bytes, each_size * sizeof(char), 1, fp)) == each_size){
-		read_bytes += each_size;
-		new_str = (char *)malloc(sizeof(char)*each_size+read_bytes);
-		if (new_str == NULL){
-			csprintf("No memory \"new_str\".\n");
-			free(buffer);
-			fclose(fp);
-			return NULL;
-		}
-		memset(new_str, 0, sizeof(char)*each_size+read_bytes);
-		memcpy(new_str, buffer, read_bytes);
-		
-		free(buffer);
-		buffer = new_str;
-	}
-	
-	fclose(fp);
-	return buffer;
-}
-
 static char post_buf[10000] = { 0 };
 static char post_buf_backup[10000] = { 0 };
 
@@ -2470,80 +2430,6 @@ _dprintf("^^^^ dproxy:: ej_lan_leases ^^^^\n");
 }
 #endif
 
-#include <net/route.h>
-
-#ifndef RTF_UP
-/* Keep this in sync with /usr/src/linux/include/linux/route.h */
-#define RTF_UP          0x0001  /* route usable                 */
-#define RTF_GATEWAY     0x0002  /* destination is a gateway     */
-#define RTF_HOST        0x0004  /* host entry (net otherwise)   */
-#define RTF_REINSTATE   0x0008  /* reinstate route after tmout  */
-#define RTF_DYNAMIC     0x0010  /* created dyn. (by redirect)   */
-#define RTF_MODIFIED    0x0020  /* modified dyn. (by redirect)  */
-#endif
-
-static const unsigned flagvals[] = { /* Must agree with flagchars[]. */
-	RTF_GATEWAY,
-	RTF_HOST,
-	RTF_REINSTATE,
-	RTF_DYNAMIC,
-	RTF_MODIFIED,
-	RTF_DEFAULT,
-	RTF_ADDRCONF,
-	RTF_CACHE
-};
-
-#define IPV6_MASK (RTF_GATEWAY|RTF_HOST|RTF_DEFAULT|RTF_ADDRCONF|RTF_CACHE)
-
-static const char flagchars[] =
-	"GHRDM"
-	"DAC"
-;
-const char str_default[] = "default";
-
-static void set_flags(char *flagstr, int flags)
-{
-	int i;
-
-	*flagstr++ = 'U';
-
-	for (i = 0; (*flagstr = flagchars[i]) != 0; i++) {
-		if (flags & flagvals[i]) {
-			++flagstr;
-		}
-	}
-}
-
-char* INET6_rresolve(struct sockaddr_in6 *sin6, int numeric)
-{
-	char name[128];
-	int s;
-
-	if (sin6->sin6_family != AF_INET6) {
-		fprintf(stderr, "rresolve: unsupported address family %d!",
-				  sin6->sin6_family);
-		errno = EAFNOSUPPORT;
-		return NULL;
-	}
-	if (numeric & 0x7FFF) {
-		inet_ntop(AF_INET6, &sin6->sin6_addr, name, sizeof(name));
-		return strdup(name);
-	}
-	if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
-		if (numeric & 0x8000)
-			return strdup(str_default);
-		return strdup("*");
-	}
-
-	s = getnameinfo((struct sockaddr *) sin6, sizeof(struct sockaddr_in6),
-				name, sizeof(name), NULL, 0, 0);
-	if (s) {
-		perror("getnameinfo failed");
-		return NULL;
-	}
-	return strdup(name);
-}
-
 static void INET6_displayroutes(webs_t wp)
 {
 	char addr6[128], *naddr6;
@@ -2606,7 +2492,7 @@ static void INET6_displayroutes(webs_t wp)
 			continue;
 		}
 
-		set_flags(flags, (iflags & IPV6_MASK));
+		ipv6_set_flags(flags, (iflags & IPV6_MASK));
 
 		r = 0;
 		do {
@@ -4517,7 +4403,7 @@ struct mime_handler mime_handlers[] = {
 	
 	{ "**.js",  "text/javascript", no_cache_IE7, NULL, do_ej, do_auth },
 	{ "**.cab", "text/txt", NULL, NULL, do_file, do_auth },
-	{ "**.CFG", "text/txt", NULL, NULL, do_prf_file, do_auth },
+	{ "**.CFG", "application/force-download", NULL, NULL, do_prf_file, do_auth },
 	
 	{ "apply.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
 	{ "applyapp.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },

@@ -92,6 +92,10 @@ ifeq ($(RTCONFIG_DSL),y)
 OBJS += dsl.o
 endif
 
+ifeq ($(RTCONFIG_IPV6),y)
+OBJS += ipv6aide.o
+endif
+
 ifeq ($(RTCONFIG_SHP),y)
 export CFLAGS += -DMEDIA_REVIEW
 endif
@@ -142,6 +146,7 @@ endif
 
 ifeq ($(RTCONFIG_IPV6),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc dhcp6c-state
+	@cd $(INSTALLDIR)/sbin && ln -sf rc ipv6aide
 endif
 
 #	ifeq ($(RTCONFIG_HEARTBEAT),y)

@@ -427,7 +427,7 @@ function set_pptpd_broadcast(obj){
 								<tr>
 								  <td bgcolor="#4D595D" valign="top">
 								  <div>&nbsp;</div>
-								  <div class="formfonttitle"><#BOP_isp_heart_item#> - <#vpn_setting#></div>
+								  <div class="formfonttitle"><#BOP_isp_heart_item#> - <#t2BC#></div>
 								  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 								  <div class="formfontdesc"><#PPTP_desc#></div>
 								  <div class="formfontdesc"><#PPTP_desc2#> <% nvram_get("wan0_ipaddr"); %></div>
@@ -439,7 +439,7 @@ function set_pptpd_broadcast(obj){
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 									  	<thead>
 									  		<tr>
-												<td colspan="3" id="GWStatic"><#vpn_setting#></td>
+												<td colspan="3" id="GWStatic"><#t2BC#></td>
 									  		</tr>
 									  	</thead>
 										

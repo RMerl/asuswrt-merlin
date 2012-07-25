@@ -115,8 +115,7 @@ function detect_firmware(){
       						}
       						else{		//miss-match model FW
       								$('update_scan').style.display="none";
-      								/*$('update_states').innerHTML="<#connect_failed#>";*/
-      								$('update_states').innerHTML="Not support";
+      								$('update_states').innerHTML="<#unavailable_update#>";
       								return;
       						}
 								}
@@ -190,7 +189,7 @@ function detect_httpd(){
     						$('loading_block1').style.display = "none";
     						$('loading_block2').style.display = "none";
     						$('loading_block3').style.display = "";
-    						$('loading_block3').innerHTML = "<div style='margin-left:15px;font-size:12pt;'>"+Untranslated.reboot_manually+"</div>";
+    						$('loading_block3').innerHTML = "<div style='margin-left:15px;font-size:12pt;'><#Firm_reboot_manually#></div>";
     				}
     		},
 
@@ -351,6 +350,5 @@ function detect_httpd(){
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">
 </form>
-<form name="hint_form"></form>
 </body>
 </html>

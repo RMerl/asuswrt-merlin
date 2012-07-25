@@ -2,7 +2,11 @@ all:
 
 install: all
 	install -d $(INSTALLDIR)/usr/sbin
-ifeq ($(RTN66U), y)
+ifeq ($(RTAC66U), y)
+	install lld2d.rtac66u $(INSTALLDIR)/usr/sbin/lld2d
+	install icon.rtn66u.ico $(INSTALLDIR)/usr/sbin/icon.ico
+	install icon.large.rtn66u.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
+else ifeq ($(RTN66U), y)
 	install lld2d.rtn66u $(INSTALLDIR)/usr/sbin/lld2d
 	install icon.rtn66u.ico $(INSTALLDIR)/usr/sbin/icon.ico
 	install icon.large.rtn66u.ico $(INSTALLDIR)/usr/sbin/icon.large.ico

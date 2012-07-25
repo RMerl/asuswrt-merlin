@@ -133,6 +133,7 @@ var cloud_status = "";
 var cloud_obj = "";
 var cloud_msg = "";
 var curRule = -1;
+var enable_cloudsync = '<% nvram_get("enable_cloudsync"); %>';
 
 <% cloud_status(); %>
 
@@ -254,7 +255,9 @@ function showcloud_synclist(){
 	var code = "";
 
 	code +='<table width="99%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="cloud_synclist_table">';
-	if(cloud_synclist_array == "")
+	if(enable_cloudsync == '0')
+		code +='<tr height="55px"><td style="color:#FFCC00;" colspan="6"><#nosmart_sync#></td>';
+	else if(cloud_synclist_array == "")
 		code +='<tr height="55px"><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td>';
 	else{
 		for(var i = 0; i < cloud_synclist_row.length; i++){
@@ -981,14 +984,10 @@ function confirm_temp(){
 									</td>
 									<td>&nbsp;&nbsp;</td>
 									<td>
-										<span>
-											To start smart sync, you need to sign up an <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asuswebstorage.com/" target="_blank">ASUS webstorage</a> account, then enable cloud disk and smart sync. ( Make sure that you have plug-in an USB storage into this router)
-											<br />
-											Open AiCloud APP. Choose a specific folder in cloud disk that you want to sync with ASUS web storage, then follow the steps show in the app.
-										</span>
-										<!--br/>
-										<br/>
-										<img src="/images/cloudsync/SmartSync.png" width="400px" style="margin-left:50px;"-->
+										<div style="padding:10px;width:95%;font-style:italic;font-size:14px;word-break:break-all;">
+												<#smart_sync1#><br />
+												<#smart_sync2#>											
+										</div>
 									</td>
 								</tr>
 							</table>
@@ -1003,7 +1002,7 @@ function confirm_temp(){
 
     					<tr>
       					<th width="10%"><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,2);"-->Provider<!--/a--></th>
-    						<th width="25%">User Name</a></th>
+    						<th width="25%"><#PPPConnection_UserName_itemname#></a></th>
       					<th width="10%">Rule</a></th>
       					<th width="30%">Folder</th>
       					<th width="15%">Status</th>

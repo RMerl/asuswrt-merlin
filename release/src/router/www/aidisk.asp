@@ -307,7 +307,6 @@ function getASUSDDNS_enable(){
 			<iframe id="sub_frame" src="" width="760px" height="710px" frameborder="0" scrolling="no" style="position:relative;-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px;"></iframe>
 		</td>
 		<td id="help_td" style="width:15px;" align="center" valign="top">
-			<form name="hint_form"></form>
 			<div id="helpicon"></div>
 			<div id="hintofPM" style="display:none;">
 				<table width="100%" cellpadding="0" cellspacing="1" class="Help" bgcolor="#999999">

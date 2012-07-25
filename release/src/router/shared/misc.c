@@ -48,7 +48,7 @@ extern char *read_whole_file(const char *target){
 	}
 	memset(buffer, 0, each_size);
 
-	while ((i = fread(buffer+read_bytes, each_size * sizeof(char), 1, fp)) == each_size){
+	while ((i = fread(buffer+read_bytes, each_size * sizeof(char), 1, fp)) == 1){
 		read_bytes += each_size;
 		new_str = (char *)malloc(sizeof(char)*(each_size+read_bytes));
 		if(new_str == NULL){
@@ -229,6 +229,161 @@ const char *ipv6_router_address(struct in6_addr *in6addr)
 
 	return addr6;
 }
+
+static const unsigned flagvals[] = { /* Must agree with flagchars[]. */
+	RTF_GATEWAY,
+	RTF_HOST,
+	RTF_REINSTATE,
+	RTF_DYNAMIC,
+	RTF_MODIFIED,
+	RTF_DEFAULT,
+	RTF_ADDRCONF,
+	RTF_CACHE
+};
+
+static const char flagchars[] =
+	"GHRDM"
+	"DAC"
+;
+const char str_default[] = "default";
+
+void ipv6_set_flags(char *flagstr, int flags)
+{
+	int i;
+
+	*flagstr++ = 'U';
+
+	for (i = 0; (*flagstr = flagchars[i]) != 0; i++) {
+		if (flags & flagvals[i]) {
+			++flagstr;
+		}
+	}
+}
+
+char* INET6_rresolve(struct sockaddr_in6 *sin6, int numeric)
+{
+	char name[128];
+	int s;
+
+	if (sin6->sin6_family != AF_INET6) {
+		fprintf(stderr, "rresolve: unsupported address family %d!",
+				  sin6->sin6_family);
+		errno = EAFNOSUPPORT;
+		return NULL;
+	}
+	if (numeric & 0x7FFF) {
+		inet_ntop(AF_INET6, &sin6->sin6_addr, name, sizeof(name));
+		return strdup(name);
+	}
+	if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
+		if (numeric & 0x8000)
+			return strdup(str_default);
+		return strdup("*");
+	}
+
+	s = getnameinfo((struct sockaddr *) sin6, sizeof(struct sockaddr_in6),
+				name, sizeof(name), NULL, 0, 0);
+	if (s) {
+		perror("getnameinfo failed");
+		return NULL;
+	}
+	return strdup(name);
+}
+
+const char *ipv6_gateway_address()
+{
+	char addr6[128], *naddr6;
+	/* In addr6x, we store both 40-byte ':'-delimited ipv6 addresses.
+	 * We read the non-delimited strings into the tail of the buffer
+	 * using fscanf and then modify the buffer by shifting forward
+	 * while inserting ':'s and the nul terminator for the first string.
+	 * Hence the strings are at addr6x and addr6x+40.  This generates
+	 * _much_ less code than the previous (upstream) approach. */
+	char addr6x[80];
+	char iface[16], flags[16];
+	int iflags, metric, refcnt, use, prefix_len, slen;
+	struct sockaddr_in6 snaddr6;
+	int ret = 0;
+	static char buf[INET6_ADDRSTRLEN];
+	int found = 0;
+
+	FILE *fp = fopen("/proc/net/ipv6_route", "r");
+
+	memset(buf, 0, sizeof(buf));
+
+	while (1) {
+		int r;
+		r = fscanf(fp, "%32s%x%*s%x%32s%x%x%x%x%s\n",
+				addr6x+14, &prefix_len, &slen, addr6x+40+7,
+				&metric, &use, &refcnt, &iflags, iface);
+		if (r != 9) {
+			if ((r < 0) && feof(fp)) { /* EOF with no (nonspace) chars read. */
+				break;
+			}
+ ERROR:
+			perror("fscanf");
+			return buf;
+		}
+
+		/* Do the addr6x shift-and-insert changes to ':'-delimit addresses.
+		 * For now, always do this to validate the proc route format, even
+		 * if the interface is down. */
+		{
+			int i = 0;
+			char *p = addr6x+14;
+
+			do {
+				if (!*p) {
+					if (i == 40) { /* nul terminator for 1st address? */
+						addr6x[39] = 0;	/* Fixup... need 0 instead of ':'. */
+						++p;	/* Skip and continue. */
+						continue;
+					}
+					goto ERROR;
+				}
+				addr6x[i++] = *p++;
+				if (!((i+1) % 5)) {
+					addr6x[i++] = ':';
+				}
+			} while (i < 40+28+7);
+		}
+
+		if (!(iflags & RTF_UP)) { /* Skip interfaces that are down. */
+			continue;
+		}
+
+		ipv6_set_flags(flags, (iflags & IPV6_MASK));
+
+		r = 0;
+		do {
+			inet_pton(AF_INET6, addr6x + r,
+					  (struct sockaddr *) &snaddr6.sin6_addr);
+			snaddr6.sin6_family = AF_INET6;
+			naddr6 = INET6_rresolve((struct sockaddr_in6 *) &snaddr6,
+						   0x0fff /* Apparently, upstream never resolves. */
+						   );
+
+			if (!r) {			/* 1st pass */
+				snprintf(addr6, sizeof(addr6), "%s/%d", naddr6, prefix_len);
+				r += 40;
+				free(naddr6);
+			} else {			/* 2nd pass */
+				if (!strcmp(addr6, "::/0") && !strcmp(flags, "UGDA")
+					&& !strcmp(get_wan6face(), iface))
+				{
+					found = 1;
+					snprintf(buf, sizeof(buf), "%s %s", naddr6, iface);
+				}
+				free(naddr6);
+				if (found)
+					return buf;
+				break;
+			}
+		} while (1);
+	}
+
+	return buf;
+}
 #endif
 
 int wl_client(int unit, int subunit)
@@ -256,16 +411,20 @@ int foreach_wif(int include_vifs, void *param,
 		if (nvifname_to_osifname(name, ifname, sizeof(ifname)) != 0)
 			continue;
 
+#ifdef CONFIG_BCMWL5
 		if (wl_probe(ifname) || wl_ioctl(ifname, WLC_GET_INSTANCE, &unit, sizeof(unit)))
 			continue;
+#endif
 
 		// Convert eth name to wl name
 		if (osifname_to_nvifname(name, ifname, sizeof(ifname)) != 0)
 			continue;
 
+#ifdef CONFIG_BCMWL5
 		// Slave intefaces have a '.' in the name
 		if (strchr(ifname, '.') && !include_vifs)
 			continue;
+#endif
 
 		if (get_ifname_unit(ifname, &unit, &subunit) < 0)
 			continue;
@@ -716,8 +875,7 @@ int backup_tx;
 uint32 netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2)
 {
 	char word[100], word1[100], *next, *next1;
-	char prefix[32];
-	char *ssid, tmp[100];
+	char tmp[100];
 	char modelvlan[32];
 	int i, j, model;
 
@@ -822,6 +980,11 @@ int free_caches(const char *clean_mode, const int clean_time, const unsigned int
 	FILE *fp;
 	char memdata[256] = {0};
 	unsigned int memfree = 0;
+
+	/* Paul add 2012/7/17, skip free caches for DSL model. */
+	#ifdef RTCONFIG_DSL
+		return 0;
+	#endif
 
 	if(!clean_mode || clean_time <= 0)
 		return -1;

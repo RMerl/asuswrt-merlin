@@ -52,6 +52,22 @@ enum {
 	IPV6_6RD,
 	IPV6_MANUAL
 };
+
+#ifndef RTF_UP
+/* Keep this in sync with /usr/src/linux/include/linux/route.h */
+#define RTF_UP          0x0001  /* route usable                 */
+#define RTF_GATEWAY     0x0002  /* destination is a gateway     */
+#define RTF_HOST        0x0004  /* host entry (net otherwise)   */
+#define RTF_REINSTATE   0x0008  /* reinstate route after tmout  */
+#define RTF_DYNAMIC     0x0010  /* created dyn. (by redirect)   */
+#define RTF_MODIFIED    0x0020  /* modified dyn. (by redirect)  */
+#endif
+#ifndef RTF_DEFAULT
+#define	RTF_DEFAULT	0x00010000	/* default - learned via ND	*/
+#define	RTF_ADDRCONF	0x00040000	/* addrconf route - RA		*/
+#define	RTF_CACHE	0x01000000	/* cache entry			*/
+#endif
+#define IPV6_MASK (RTF_GATEWAY|RTF_HOST|RTF_DEFAULT|RTF_ADDRCONF|RTF_CACHE)
 #endif
 
 enum {
@@ -96,6 +112,8 @@ extern int get_wan_proto(void);
 extern int get_ipv6_service(void);
 #define ipv6_enabled()	(get_ipv6_service() != IPV6_DISABLED)
 extern const char *ipv6_router_address(struct in6_addr *in6addr);
+extern void ipv6_set_flags(char *flagstr, int flags);
+extern const char *ipv6_gateway_address();
 #else
 #define ipv6_enabled()	(0)
 #endif

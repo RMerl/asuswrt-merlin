@@ -328,14 +328,14 @@ function goQIS(){
 </tr>
 <tr>
     <td style="padding:5px 10px 5px 15px;">
-    		<p class="formfonttitle_nwm"><#HSDPAConfig_Subnetmask_itemname#></p>
+    		<p class="formfonttitle_nwm"><#IPConnection_x_ExternalSubnetMask_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;"><% nvram_get("lan_netmask"); %></p>
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
 </tr>
 <tr>
     <td style="padding:5px 10px 5px 15px;">
-    		<p class="formfonttitle_nwm"><#HSDPAConfig_DefGateway_itemname#></p>
+    		<p class="formfonttitle_nwm"><#IPConnection_x_ExternalGateway_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;"><% nvram_get("lan_gateway"); %></p>
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>

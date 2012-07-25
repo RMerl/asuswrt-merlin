@@ -169,7 +169,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML=Untranslated.illegal_MAC;		
+		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";		
 		$("check_mac").style.display = "";
 		return false;		
 	}else{

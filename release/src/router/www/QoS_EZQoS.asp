@@ -158,7 +158,7 @@ function submitQoS(){
      		   					<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
 											<!--option><#switchpage#></option-->
 											<option value="1" selected><#qos_automatic_mode#></option>
-											<option value="2">User define QoS rules</option>
+											<option value="2"><#user_def_qos#></option>
 										</select>	    
 									</div>
 								</td>

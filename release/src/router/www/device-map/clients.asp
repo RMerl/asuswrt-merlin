@@ -260,7 +260,7 @@ function showclient_list(list){
 				client_list_col[1] = retHostName(client_list_col[3]);
 
 			if(client_list_col[1].length > 16){
-				overlib_str += "<p><#BOP_account_user_item#></p>" + client_list_col[1];
+				overlib_str += "<p><#PPPConnection_UserName_itemname#></p>" + client_list_col[1];
 				client_list_col[1] = client_list_col[1].substring(0, 13);
 				client_list_col[1] += "...";
 			}

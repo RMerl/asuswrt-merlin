@@ -7,7 +7,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
 <meta name="svg.render.forceflash" content="false" />	
 
-<title><#Web_Title#> - <#menu4_2#> : <#menu4_2_2#></title>
+<title><#Web_Title#> - <#traffic_monitor#> : <#menu4_2_2#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
@@ -271,7 +271,7 @@ function Zoom(func){
         	    
   		     				<tr>
 							<td>
-				    	 			<table width="735px"   border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_NWM">
+				    	 			<table width="735px"   border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_NWM" style="margin-top:10px">
 						  		<tr>
 						  			<th style="text-align:center;width:160px;height:25px;"><#Network#></th>
 						  			<th style="text-align:center;width:160px;height:25px;"><#Current#></th>
@@ -281,18 +281,7 @@ function Zoom(func){
 						  		</tr>
 						  		<tr>
 						  			<td style="text-align:center; background-color:#111;">
-										<div id='rx-sel'><#Downlink#>
-											<!--ul id="navigation-1"><b><#Downlink#></b><b style='border-bottom: 4px solid; display: none;' id='rx-name'></b>
-   												<li><a  title="Choose Color"><img src="images/arrow-top.gif" style="width:14px;height:14px;margin-center:40px;" ></a>
-      												<ul class="navigation-2">
-         													<li><a title="Orange" style="background-color:#FF9000;" onclick="switchColorRX(0)"></a></li>
-         													<li><a title="Blue" style="background-color:#3CF;" onclick="switchColorRX(1)"></a></li>
-         													<li><a title="Black" style="background-color:#000000;" onclick="switchColorRX(2)"></a></li>
-         													<li><a title="Red" style="background-color:#dd0000;" onclick="switchColorRX(3)"></a></li>
-         													<li><a title="Gray" style="background-color:#999999;" onclick="switchColorRX(4)"></a></li>
-         													<li><a title="Green" style="background-color:#118811;"onclick="switchColorRX(5)"></a></li>
-      												</ul>
-   												</li-->
+										<div id='rx-sel'><#tm_reception#>										
 											</ul>
 										</div>
 						  			</td>
@@ -305,27 +294,13 @@ function Zoom(func){
 						    		
 						    		<tr>
 						    			<td style="text-align:center; background-color:#111;">
-										<div id='tx-sel'><#Uplink#>
-											<!--ul id="navigation-1"><b><#Uplink#></b><b style='border-bottom: 4px solid; display: none;' id='tx-name'></b>
-   												<li><a  title="Choose Color"><img src="images/arrow-top.gif" style="width:14px;height:14px;margin-left:40px;" ></a>
-      												<ul class="navigation-2">
-         													<li><a title="Orange" style="background-color:#FF9000;" onclick="switchColorTX(0)"></a></li>
-         													<li><a title="Blue" style="background-color:#3CF;" onclick="switchColorTX(1)"></a></li>
-         													<li><a title="Black" style="background-color:#000000;" onclick="switchColorTX(2)"></a></li>
-         													<li><a title="Red" style="background-color:#dd0000;" onclick="switchColorTX(3)"></a></li>
-         													<li><a title="Gray" style="background-color:#999999;" onclick="switchColorTX(4)"></a></li>
-         													<li><a title="Green" style="background-color:#118811;"onclick="switchColorTX(5)"></a></li>
-      												</ul>
-   												</li>
-											</ul-->
-										</div>              			                            
-						    			</td>
-						    			
-						  			<td style="text-align:center;font-weight: bold; background-color:#111;"><span id='tx-current' style="color:#3CF;"></span></td>
-									<td style="text-align:center; background-color:#111;" id='tx-avg'></td>
-									<td style="text-align:center; background-color:#111;" id='tx-max'></td>
-									<td style="text-align:center; background-color:#111;" id='tx-total'></td>
-								</tr>
+											<div id='tx-sel'><#tm_transmission#></div> 																			             			                            
+						    			</td>						    			
+										<td style="text-align:center;font-weight: bold; background-color:#111;"><span id='tx-current' style="color:#3CF;"></span></td>
+										<td style="text-align:center; background-color:#111;" id='tx-avg'></td>
+										<td style="text-align:center; background-color:#111;" id='tx-max'></td>
+										<td style="text-align:center; background-color:#111;" id='tx-total'></td>
+									</tr>
 								</table>
 							</td>
 						</tr>

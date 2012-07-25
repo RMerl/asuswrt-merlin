@@ -139,11 +139,12 @@ function gotoHome() {
 <input type="hidden" name="dsltmp_qis_dnsenable" value="1">
 <input type="hidden" name="dsltmp_qis_dns1" value="">
 <input type="hidden" name="dsltmp_qis_dns2" value="">
-<input type="hidden" name="dsltmp_qis_svc_cat" value="0">
-<input type="hidden" name="dsltmp_qis_pcr" value="0">
+<input type="hidden" name="dsltmp_qis_svc_cat" value="1">
+<input type="hidden" name="dsltmp_qis_pcr" value="1887">
 <input type="hidden" name="dsltmp_qis_scr" value="0">
 <input type="hidden" name="dsltmp_qis_mbs" value="0">
 <input type="hidden" name="dsltmp_qis_dsl_pvc_set" value="1">
+<input type="hidden" name="dsltmp_qis_pppoe_relay" value="0">
 
 <div class="QISmain">
 	<div class="formfonttitle" style="padding:0 0 0 10;">PPPoE/PPPoA</div>
@@ -165,13 +166,13 @@ function gotoHome() {
      <br><br>
   </tr>
   <tr>
-	<th width="120"><#BOP_account_user_item#></th>
+	<th width="120"><#PPPConnection_UserName_itemname#></th>
 	<td>
 	  <input type="text" name="dsltmp_qis_pppoe_username" value="" maxlength="64" size="36"/>
 	</td>
   </tr>
   <tr>
-	<th width="120"><#BOP_account_pass_item#></th>
+	<th width="120"><#PPPConnection_Password_itemname#></th>
 	<td>
 	  <input type="password" name="dsltmp_qis_pppoe_passwd" value="" maxlength="32" size="36"/>
 	</td>

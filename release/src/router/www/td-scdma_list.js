@@ -1,7 +1,7 @@
 ﻿function show_tdscdma_country_list(){
 	countrylist = new Array();
-	countrylist[0] = new Array("China", "CN");
-	countrylist[1] = new Array("Manual", "");
+	countrylist.push(["China", "CN"]);
+	countrylist.push(["Manual", ""]);
 
 	var got_country = 0;
 	free_options($("isp_countrys"));

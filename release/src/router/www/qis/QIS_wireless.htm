@@ -80,21 +80,22 @@ function submitForm(){
 				}		
 		}
 
-	if(!validate_string_ssid(document.form.wl0_ssid))
-		return false;
+		if(!validate_string_ssid(document.form.wl0_ssid))
+			return false;
 
-	if(document.form.wl0_wpa_psk.value.length > 0){
-		document.form.wl0_auth_mode_x.value = "psk2";
-		if(!validate_psk(document.form.wl0_wpa_psk))
-				return false;
+		if(document.form.wl0_wpa_psk.value.length > 0){
+			document.form.wl0_auth_mode_x.value = "psk2";
+			if(!validate_psk(document.form.wl0_wpa_psk))
+					return false;
 		}else
-				document.form.wl0_auth_mode_x.value = "open";
+			document.form.wl0_auth_mode_x.value = "open";
 
 	}else{
 		/* use previous settings */		
 		document.form.wl0_ssid.value = decodeURIComponent("<% nvram_char_to_ascii("", "wl0_ssid"); %>");
 		document.form.wl0_wpa_psk.value = decodeURIComponent("<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>");
-		document.form.wl0_auth_mode_x.value = "<% nvram_get("wl0_auth_mode_x"); %>";		
+		document.form.wl0_auth_mode_x.value = "<% nvram_get("wl0_auth_mode_x"); %>";
+		
 	}	
 	
 	
@@ -307,12 +308,22 @@ function submitenter(myfield,e)
 <input type="hidden" name="wl0_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_ssid"); %>">
 <input type="hidden" name="wl0_auth_mode_x" id="wl0_auth_mode_x" value="">
 <input type="hidden" name="wl0_crypto" id="wl0_crypto" value="aes">
-<input type="hidden" name="wl0_wep_x" id="wl0_wep_x" value="0">
+<input type="hidden" name="wl0_wep_x" id="wl0_wep_x" value="<% nvram_get("wl0_wep_x"); %>">
+<input type="hidden" name="wl0_key" id="wl0_key" value="<% nvram_get("wl0_key"); %>">
+<input type="hidden" name="wl0_key1" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_key1"); %>">
+<input type="hidden" name="wl0_key2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_key2"); %>">
+<input type="hidden" name="wl0_key3" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_key3"); %>">
+<input type="hidden" name="wl0_key4" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_key4"); %>">
 <input type="hidden" name="wl0_wpa_mode" id="wl0_wpa_mode" value="0">
 <input type="hidden" name="wl1_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_ssid"); %>">
 <input type="hidden" name="wl1_auth_mode_x" id="wl1_auth_mode_x" value="">
 <input type="hidden" name="wl1_crypto" id="wl1_crypto" value="aes">
-<input type="hidden" name="wl1_wep_x" id="wl1_wep_x" value="0">
+<input type="hidden" name="wl1_wep_x" id="wl1_wep_x" value="<% nvram_get("wl1_wep_x"); %>">
+<input type="hidden" name="wl1_key" id="wl0_key" value="<% nvram_get("wl1_key"); %>">
+<input type="hidden" name="wl1_key1" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_key1"); %>">
+<input type="hidden" name="wl1_key2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_key2"); %>">
+<input type="hidden" name="wl1_key3" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_key3"); %>">
+<input type="hidden" name="wl1_key4" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_key4"); %>">
 <input type="hidden" name="wl1_wpa_mode" id="wl1_wpa_mode" value="0">
 <!-- lan -->
 <input type="hidden" name="lan_ipaddr" value="" disabled>

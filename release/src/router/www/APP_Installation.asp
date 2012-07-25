@@ -208,7 +208,7 @@ function check_appstate(){
 			installPercent = installPercent + 3.5;		
 		}
 		else
-			$("apps_state_desc").innerHTML = "Please Wait...";
+			$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>...";
 	}
 	else if(apps_state_enable != 2 && apps_state_enable != ""){
 		errorcode = "apps_state_enable = " + apps_state_enable;
@@ -222,7 +222,7 @@ function check_appstate(){
             $("apps_state_desc").innerHTML = "Enable error!";
 		else{
 			$("loadingicon").style.display = "";
-			$("apps_state_desc").innerHTML = "Please wait...";
+			$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>...";
 		}
 	}
 	else if(apps_state_update != 2 && apps_state_update != ""){
@@ -308,7 +308,7 @@ function check_appstate(){
 	}
 	else{
 		$("loadingicon").style.display = "";
-		$("apps_state_desc").innerHTML = "Please wait...";
+		$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>...";
 	}
 	
 	if(apps_state_error != 0){
@@ -564,7 +564,7 @@ function show_partition(){
 		htmlcode += '<tr height="360px"><td colspan="2"><span class="app_name" style="line-height:100%"><#no_usb_found#></span></td></tr>\n';
 
 	$("partition_div").innerHTML = htmlcode;
-	$("usbHint").innerHTML = Untranslated.appInstall_partition;
+	$("usbHint").innerHTML = "<#DM_Install_partition#>";
 	calHeight(1);
 }
 

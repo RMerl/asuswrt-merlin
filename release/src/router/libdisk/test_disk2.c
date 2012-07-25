@@ -185,7 +185,7 @@ extern char *read_whole_file(const char *target) {
 	}
 	memset(buffer, 0, sizeof(char)*each_size+read_bytes);
 	
-	while ((i = fread(buffer+read_bytes, each_size * sizeof(char), 1, fp)) == each_size){
+	while ((i = fread(buffer+read_bytes, each_size * sizeof(char), 1, fp)) == 1){
 		read_bytes += each_size;
 		new_str = (char *)malloc(sizeof(char)*each_size+read_bytes);
 		if (new_str == NULL) {

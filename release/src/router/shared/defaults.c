@@ -478,6 +478,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "ctf_disable",		"0"		},
 	{ "ctf_disable_force", 		"0"		},
 #endif
+#ifdef RTCONFIG_BCMWL6
+	{ "pktc_disable", 		"0"		},
+#endif
 
 	// NVRAM for start_lan: 
 // LAN H/W parameters
@@ -697,8 +700,12 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl_vci", ""},
 	{ "dsl_encap", ""},
 	{ "dsl_proto", ""},
-	{ "dsl_svc_cat", ""},
-	{ "dsl_pcr", ""},
+	
+	/* Paul modify 2012/7/13, set default Service Category to UBR with PCR, with PCR set to maximum allowed value 1887. *
+	 * In order to fix DL/UL throughput issue with some QoS-enabled PVC, it should not affect QoS-disabled PVC. */
+	{ "dsl_svc_cat", "1"},
+	{ "dsl_pcr", "1887"},
+	
 	{ "dsl_scr", ""},
 	{ "dsl_mbs", ""},
 // those PVC need to init first so that QIS internet/IPTV PVC setting could write to NVRAM
@@ -856,8 +863,13 @@ struct nvram_tuple router_defaults[] = {
 	{ "fw_pt_l2tp", "1" },
 	{ "fw_pt_ipsec", "1" },
 #else
+#ifdef RTCONFIG_DSL /* Paul add 2012/7/20, enable L2TP and IPSec Passthrough by default for DSL model. */
+	{ "fw_pt_l2tp", "1" },
+	{ "fw_pt_ipsec", "1" },
+#else
 	{ "fw_pt_l2tp", "0" },
 	{ "fw_pt_ipsec", "0" },
+#endif
 #endif
 	{ "fw_pt_rtsp", "1" },
 	{ "fw_pt_pppoerelay", "0"},
@@ -1199,7 +1211,7 @@ struct nvram_tuple router_defaults[] = {
 #endif
 	{ "ipv6_get_dns",	""		},	// DNS IP address which get by dhcp6c
 	{ "ipv6_dnsenable",	"1"		},
-	{ "ipv6_debug",		"1"		},
+	{ "ipv6_debug",		"0"		},
 #endif
 
 	{ "web_redirect", 	"1"		},      // Only NOLINK is redirected in default, it is overwrited in init_nvram			

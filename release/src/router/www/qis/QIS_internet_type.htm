@@ -57,6 +57,9 @@ function QKinternettype_load_body(){
 		document.getElementById("ruisp_btn").style.display = "";
 		
 	document.getElementById("ff123").focus();
+
+	if(parent.rc_support.search("manual_stb") == -1)
+		document.applyForm.switch_wantag.remove(6);
 }
 
 function inputCCtrl4(o, flag){
@@ -101,7 +104,7 @@ function submitForm(){
 	else{
 		document.applyForm.wan_proto.value = "dhcp";
 		parent.document.QKform.wan_dhcpenable_x.value = 1;
-		parent.document.QKform.wan_dnsenable_x.value = 1;		
+		parent.document.QKform.wan_dnsenable_x.value = 1;
 		document.applyForm.next_page.value = "QIS_internet_isp.htm";
 	}
 	
@@ -332,7 +335,7 @@ function focus_radio(obj){
   <table id="tblsetting" class="QISform2" style="width:400px;margin-left:110px" border=0 align="left" cellpadding="2" cellspacing="0"> 
   	<tr>
 		  <td align="center"><input type="radio" id="d1" name="x_WANType" value="0" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
-		  <td class="wan_type_title"><label for="d1"><#BOP_ctype_title1#> (DHCP):</label></td>
+		  <td class="wan_type_title"><label for="d1"><#BOP_ctype_title1#> (DHCP)</label></td>
 		</tr>
 		<tr>
 		  <td align="center"></td>
@@ -340,7 +343,7 @@ function focus_radio(obj){
 		</tr>
 		<tr>
 		  <td align="center"><input type="radio" id="d2" name="x_WANType" value="1" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
-		  <td class="wan_type_title"><label for="d2">PPPoE: </label></td>
+		  <td class="wan_type_title"><label for="d2">PPPoE </label></td>
 		</tr>
 		<tr>
 		  <td align="center"></td>
@@ -349,7 +352,7 @@ function focus_radio(obj){
 
 		<tr>
 		  <td align="center"><input type="radio" id="d3" name="x_WANType" value="4" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
-		  <td class="wan_type_title"><label for="d3"><#BOP_ctype_title5#>:</label></td>
+		  <td class="wan_type_title"><label for="d3"><#BOP_ctype_title5#></label></td>
 		</tr>
 		<tr>
 		  <td align="center"></td>
@@ -357,7 +360,7 @@ function focus_radio(obj){
 		</tr>
 		<tr>
 			<td align="center"><input type="radio" id="d4" name="x_WANType" value="2" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
-			<td class="wan_type_title"><label for="d4">PPTP:</label></td>
+			<td class="wan_type_title"><label for="d4">PPTP</label></td>
 		</tr>
 		<tr>
 			<td align="center"></td>
@@ -365,7 +368,7 @@ function focus_radio(obj){
 		</tr>
 		<tr>
 			<td align="center"><input type="radio" id="d5" name="x_WANType" value="3" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
-			<td class="wan_type_title"><label for="d5">L2TP: </label></td>
+			<td class="wan_type_title"><label for="d5">L2TP </label></td>
 		</tr>
 		<tr>
 		  <td align="center"></td>
@@ -413,9 +416,11 @@ function focus_radio(obj){
 
 		<span id="wan_iptv_x">
 		<p style="margin-top:5px;"><span style="color:#66CCFF;">IPTV STB Port: </span><b>LAN4</b></p>
-
+		</span>
+		
 		<span id="wan_voip_x">
 		<p><span style="color:#66CCFF;">VoIP Port: </span><b>LAN3</b></p>
+		</span>
 
 		<span id="wan_internet_x">
   	<p style="margin-top:5px;color:#66CCFF;">Internet:</p>

@@ -411,7 +411,7 @@ function Ctrl_LANIPList(obj){
 					<th><a href="javascript:void(0);" onClick="openHint(6,2);"><div class="table_text"><#RouterConfig_GWStaticMask_itemname#></div></a></th>
 					<th><a href="javascript:void(0);" onClick="openHint(6,3);"><div class="table_text"><#RouterConfig_GWStaticGW_itemname#></div></a></th>
 					<th><a href="javascript:void(0);" onClick="openHint(6,4);"><div class="table_text"><#RouterConfig_GWStaticMT_itemname#></div></a></th>
-					<th><a href="javascript:void(0);" onClick="openHint(6,5);"><div class="table_text"><#RouterConfig_GWStaticIF_itemname#></div></a></th>
+					<th><a href="javascript:void(0);" onClick="openHint(6,5);"><div class="table_text"><#wan_interface#></div></a></th>
 					<th>Add / Delete</th>					
 			  </tr>
 			  

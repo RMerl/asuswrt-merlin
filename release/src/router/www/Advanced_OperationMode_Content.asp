@@ -142,7 +142,7 @@ $j("#Senario").css("background", "url(/images/New_ui/ap.jpg) center");
 
 <body onload="initial();" onunLoad="return unload_body();">
 <div id="TopBanner"></div>
-<div id="hiddenMask" class="popup_bg">
+<div id="hiddenMask" class="popup_bg" style="z-index:10000;">
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center">
 		<tr>
 		<td>
@@ -244,7 +244,6 @@ $j("#Senario").css("background", "url(/images/New_ui/ap.jpg) center");
 	</tr>
 </table>
 </form>
-<form name="hint_form"></form>
 <div id="footer"></div>
 </body>
 </html>

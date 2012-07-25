@@ -111,6 +111,7 @@ function disable_dsl_pvc() {
 	document.form.dslx_dnsenable.disabled = true;
 	document.form.dslx_dns1.disabled = true;
 	document.form.dslx_dns2.disabled = true;
+	document.form.fw_pt_pppoerelay.disabled = true;	
 }
 
 function setIptvPvc(idx) {
@@ -412,7 +413,7 @@ function gotoHome(){
 <input type="hidden" name="dslx_pppoe_service" value="<% nvram_get("dsltmp_qis_pppoe_service"); %>">
 <input type="hidden" name="dslx_pppoe_ac" value="">
 <input type="hidden" name="dslx_pppoe_options" value="<% nvram_get("dsltmp_qis_pppoe_options"); %>">
-<input type="hidden" name="dslx_pppoe_relay" value="">
+<input type="hidden" name="dslx_pppoe_relay" value=""> 
 <input type="hidden" name="dslx_hwaddr" value="<% nvram_get("dsltmp_qis_hwaddr"); %>">
 <input type="hidden" name="dslx_DHCPClient" value="<% nvram_get("dsltmp_qis_DHCPClient"); %>">
 <input type="hidden" name="dslx_ipaddr" value="<% nvram_get("dsltmp_qis_ipaddr"); %>">
@@ -421,6 +422,7 @@ function gotoHome(){
 <input type="hidden" name="dslx_dnsenable" value="<% nvram_get("dsltmp_qis_dnsenable"); %>">
 <input type="hidden" name="dslx_dns1" value="<% nvram_get("dsltmp_qis_dns1"); %>">
 <input type="hidden" name="dslx_dns2" value="<% nvram_get("dsltmp_qis_dns2"); %>">
+<input type="hidden" name="fw_pt_pppoerelay" value="<% nvram_get("dsltmp_qis_pppoe_relay"); %>"> 
 <!-- clear set flag after submit -->
 <input type="hidden" name="dsltmp_qis_admin_passwd_set" value="0">
 <input type="hidden" name="dsltmp_qis_dsl_pvc_set" value="0">

@@ -628,16 +628,17 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit, const char *ifn
 
 	ret+=websWrite(wp, "Channel		: %d\n", channel);
 
-	char data[2048];
-	memset(data, 0, 2048);
+	char data[16384];
+	memset(data, 0, sizeof(data));
 	wrq3.u.data.pointer = data;
-	wrq3.u.data.length = 2048;
+	wrq3.u.data.length = sizeof(data);
 	wrq3.u.data.flags = 0;
 
 	if (wl_ioctl(ifname, RTPRIV_IOCTL_GET_MAC_TABLE, &wrq3) < 0)
 		return ret;
 
 	RT_802_11_MAC_TABLE* mp=(RT_802_11_MAC_TABLE*)wrq3.u.data.pointer;
+	RT_802_11_MAC_TABLE_2G* mp_2g=(RT_802_11_MAC_TABLE_2G*)wrq3.u.data.pointer;
 	int i;
 
 	ret+=websWrite(wp, "\nStations List			   \n");
@@ -646,6 +647,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit, const char *ifn
 			   "MAC", "PSM", "PhyMode", "BW", "MCS", "SGI", "STBC", "Rate", "Connect Time");
 
 	int hr, min, sec;
+	if (!strcmp(ifname, WIF_5G))
 	for (i=0;i<mp->Num;i++)
 	{
                 hr = mp->Entry[i].ConnectedTime/3600;
@@ -666,59 +668,29 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit, const char *ifn
 				hr, min, sec
 		);
 	}
-
-	return ret;
-}
-
-int
-ej_getclientlist(int eid, webs_t wp, int argc, char_t **argv)
-{
-#if 0
-	int i, ret = 0;
-
-	struct iwreq wrq0;
-	struct iwreq wrq1;
-
-	if (wl_ioctl(WIF, SIOCGIWAP, &wrq0) < 0)
+	else
+	for (i=0;i<mp_2g->Num;i++)
 	{
-		ret+=websWrite(wp, "Radio is disabled\n");
-		return ret;
-	}
+                hr = mp_2g->Entry[i].ConnectedTime/3600;
+                min = (mp_2g->Entry[i].ConnectedTime % 3600)/60;
+                sec = mp_2g->Entry[i].ConnectedTime - hr*3600 - min*60;
 
-	char data[2048];
-	memset(data, 0, 2048);
-	wrq1.u.data.pointer = data;
-	wrq1.u.data.length = 2048;
-	wrq1.u.data.flags = 0;
-	char MAC_asus[13];
-	char MAC[18];
-	memset(MAC_asus, 0, 13);
-	memset(MAC, 0 ,18);
-
-	if (wl_ioctl(WIF, RTPRIV_IOCTL_GET_MAC_TABLE, &wrq1) < 0)
-		return ret;
-
-	RT_802_11_MAC_TABLE* mp=(RT_802_11_MAC_TABLE*)wrq1.u.data.pointer;
-
-	for (i=0;i<mp->Num;i++)
-	{
-		sprintf(MAC_asus, "%02X%02X%02X%02X%02X%02X",
-				mp->Entry[i].Addr[0], mp->Entry[i].Addr[1],
-				mp->Entry[i].Addr[2], mp->Entry[i].Addr[3],
-				mp->Entry[i].Addr[4], mp->Entry[i].Addr[5]
+		ret+=websWrite(wp, "%02X:%02X:%02X:%02X:%02X:%02X %s %-7s %s %-03d %s %s  %-03dM %02d:%02d:%02d\n",
+				mp_2g->Entry[i].Addr[0], mp_2g->Entry[i].Addr[1],
+				mp_2g->Entry[i].Addr[2], mp_2g->Entry[i].Addr[3],
+				mp_2g->Entry[i].Addr[4], mp_2g->Entry[i].Addr[5],
+				mp_2g->Entry[i].Psm ? "Yes" : "NO ",
+				GetPhyMode(mp_2g->Entry[i].TxRate.field.MODE),
+				GetBW(mp_2g->Entry[i].TxRate.field.BW),
+				mp_2g->Entry[i].TxRate.field.MCS,
+				mp_2g->Entry[i].TxRate.field.ShortGI ? "Yes" : "NO ",
+				mp_2g->Entry[i].TxRate.field.STBC ? "Yes" : "NO ",
+				getRate_2g(mp_2g->Entry[i].TxRate),
+				hr, min, sec
 		);
-	sprintf(MAC, "%02X:%02X:%02X:%02X:%02X:%02X",
-				mp->Entry[i].Addr[0], mp->Entry[i].Addr[1],
-				mp->Entry[i].Addr[2], mp->Entry[i].Addr[3],
-				mp->Entry[i].Addr[4], mp->Entry[i].Addr[5]
-		);
-		ret+=websWrite(wp, "<option class=\"content_input_fd\" value=\"%s\">%s</option>", MAC_asus, MAC);
 	}
 
 	return ret;
-#else
-	return 0;
-#endif
 }
 
 typedef struct PACKED _WSC_CONFIGURED_VALUE {
@@ -1037,7 +1009,7 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv)
 {
 	struct iwreq wrq;
 	int i, firstRow;
-	char data[4096];
+	char data[16384];
 	char mac[ETHER_ADDR_STR_LEN];	
 	RT_802_11_MAC_TABLE *mp;
 	RT_802_11_MAC_TABLE_2G *mp2;
@@ -1046,9 +1018,9 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv)
 	memset(mac, 0, sizeof(mac));
 	
 	/* query wl for authenticated sta list */
-	memset(data, 0, 4096);
+	memset(data, 0, sizeof(data));
 	wrq.u.data.pointer = data;
-	wrq.u.data.length = 4096;
+	wrq.u.data.length = sizeof(data);
 	wrq.u.data.flags = 0;	
 	if (wl_ioctl(WIF_2G, RTPRIV_IOCTL_GET_MAC_TABLE, &wrq) < 0)
 		goto exit;
@@ -1077,9 +1049,9 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv)
 	}
 
 	/* query wl for authenticated sta list */
-	memset(data, 0, 4096);
+	memset(data, 0, sizeof(data));
 	wrq.u.data.pointer = data;
-	wrq.u.data.length = 4096;
+	wrq.u.data.length = sizeof(data);
 	wrq.u.data.flags = 0;	
 	if (wl_ioctl(WIF_5G, RTPRIV_IOCTL_GET_MAC_TABLE, &wrq) < 0)
 		goto exit;

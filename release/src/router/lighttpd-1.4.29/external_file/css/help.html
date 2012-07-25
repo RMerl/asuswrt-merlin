@@ -8,6 +8,14 @@ html{
 	margin:0px;
 	padding:0px;
 }
+#errorpage {
+    width: 100%; 
+    height: 100%; 
+    position: absolute; 
+    left: 0px; 
+    top: 0px; 
+    z-index: 0;
+}
 </style>
 <script type='text/javascript' src='/smb/js/tools.js'></script>
 <script type="text/javascript">
@@ -32,21 +40,23 @@ $("document").ready(function() {
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
 	
-	var this_showbutton = getUrlVars()["showbutton"];
+	var this_showbutton = getUrlVars()["showbutton"];		
+	var bg_img_file = "help_en.png";
+	if(lan=="zh-tw")
+		bg_img_file = "help_zh-tw.png";
 	
-	var bg_img_file = "help_" + lan + ".jpg";
-		
 	document.write("<body width='100%' height='100%' style='margin:0px;padding:0px'>");		
 		
-	if(this_showbutton==1)	
-		document.write("<div id='errorpage' style='overflow:none;background-image:url("+bg_img_file+");background-repeat:no-repeat;width:100%; height:94%'>");
+	if(this_showbutton==1)
+		document.write("<div id='errorpage' style='width:100%;height:94%;position: absolute;left: 0px;top: 0px;z-index: 0;'>");
 	else
-		document.write("<div id='errorpage' style='background-image:url("+bg_img_file+");background-repeat:no-repeat;width:100%; height:100%'>");
-		
-	document.write("</div></body>");
+		document.write("<div id='errorpage' style='width:100%;height: 100%;position: absolute;left: 0px;top: 0px;z-index: 0;'>");
+  document.write("<img src='" + bg_img_file + "' class='stretch' alt='' style='width:100%;height:100%' />");
+			
+	document.write("</div>");
 		
 	if(this_showbutton==1){
-		document.write("<div width='100%'><button id='btnClose' style='position: relative;float:right;right:5px;' onclick='parent.closeJqmWindow(0);'>close</button><div>");			
+		document.write("<div width='100%' style='position:absolute;bottom:0px;right:0px;'><button id='btnClose' style='position: relative;float:right;right:5px;' onclick='parent.closeJqmWindow(0);'>close</button><div>");			
 	}
 		
 	document.write("</body>");

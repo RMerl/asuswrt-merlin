@@ -624,7 +624,7 @@ function confirm_temp(){
    		<div class="upnp_button_table"> 
    		<table cellspacing="1">
    			<tr>
-        	<th>Enable DLNA Media Server:</th>
+        	<th>Enable DLNA Media Server</th>
         	<td>
         			<div class="left" style="width:94px; position:relative; left:3%;" id="radio_dms_enable"></div>
 							<div class="clear"></div>
@@ -645,7 +645,7 @@ function confirm_temp(){
        	</tr>
 
    			<tr>
-        	<th>Enable iTunes Server:</th>
+        	<th><#BasicConfig_EnableiTunesServer_itemname#></th>
         	<td>
         			<div class="left" style="width:94px; position:relative; left:3%;" id="radio_daapd_enable"></div>
 							<div class="clear"></div>

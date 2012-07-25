@@ -418,9 +418,9 @@ function showfilter_lwlist(){
         					<tr>
           						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(10,2);"><#FirewallConfig_LanWanActiveTime_itemname#></a></th>
           						<td>
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_starthour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 0);">:
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_startmin" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 1);">-
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_endhour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 2);">:
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_starthour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 0);"> :
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_startmin" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 1);"> -
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_endhour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 2);"> :
 								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_endmin" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 3);">		  
 		  					</td>
         					</tr>
@@ -434,9 +434,9 @@ function showfilter_lwlist(){
 							<tr>
           						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(10,2);"><#FirewallConfig_LanWanActiveTime_itemname#></a></th>
           						<td>
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_starthour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 0);">:
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_startmin" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 1);">-
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_endhour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 2);">:
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_starthour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 0);"> :
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_startmin" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 1);"> -
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_endhour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 2);"> :
 								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_endmin" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 3);">		  
 		  					</td>
         					</tr>
@@ -460,7 +460,7 @@ function showfilter_lwlist(){
             					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,2);"><#FirewallConfig_LanWanSrcPort_itemname#></a></th>
             					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,3);"><#FirewallConfig_LanWanDstIP_itemname#></a></th>
             					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,2);"><#FirewallConfig_LanWanDstPort_itemname#></a></th>
-            					<th><#FirewallConfig_LanWanProFlag_itemname#></th>
+            					<th><#IPConnection_VServerProto_itemname#></th>
             					<th>Add / Delete</th>
           					</tr>
           					<tr>

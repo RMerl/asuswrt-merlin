@@ -77,6 +77,8 @@ function QKInternet_load_body(){
 		blocking("showserver", false);
 		blocking("showhwaddr", true);
 		document.form.prev_page.value = "QIS_internet_type.htm";
+		document.form.wan_dnsenable_x[0].checked = 0;
+		document.form.wan_dnsenable_x[1].checked = 1;
 	}
 	else{	// wan_proto == dhcp
 		blocking("showip", false);
@@ -234,10 +236,12 @@ function set_default_state(){
 		if(wan_proto != original_wan_proto){
 			document.form.wan_dnsenable_x[0].checked = 1;
 			document.form.wan_dnsenable_x[1].checked = 0;
+			show_dnsenable(document.form.wan_dnsenable_x[0].checked);
 		}
 		else{
 			document.form.wan_dnsenable_x[0].checked = parent_DNSenable;
 			document.form.wan_dnsenable_x[1].checked = !parent_DNSenable;
+			show_dnsenable(document.form.wan_dnsenable_x[0].checked);
 		}
 	}
 	
@@ -576,8 +580,7 @@ function validForm(){
 	}	
 	
 	if((now_flag != "auto_way_static" && now_flag != "auto_way")
-			&& (document.form.wan_proto.value == "pptp"
-					|| document.form.wan_proto.value == "l2tp")){
+			&& (document.form.wan_proto.value == "pptp" || document.form.wan_proto.value == "l2tp")){
 		if(document.form.wan_heartbeat_x.value.length <= 0){
 			alert("<#QIS_internet_vpn_alert#>");
 			document.form.wan_heartbeat_x.focus();
@@ -622,10 +625,9 @@ function submitForm(){
 			document.form.switch_wan2tagid.value = parent.document.QKform.switch_wan2tagid.value;
 			document.form.switch_wan2prio.value = parent.document.QKform.switch_wan2prio.value;
 			document.form.switch_stb_x.value = parent.document.QKform.switch_stb_x.value;
-
   		if(original_switch_wantag != document.form.switch_wantag.value){
 					document.form.action_script.value	= "reboot";
-					document.form.action_wait.value	= "35";
+					document.form.action_wait.value	= "50";
 					$("loadHint").style.display = "";
 					$("nextButton").style.display = "none";
 					$("prevButton").style.display = "none";
@@ -658,7 +660,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML=Untranslated.illegal_MAC;
+		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
 		$("check_mac").style.display = "";
 		return false;		
 	}else{

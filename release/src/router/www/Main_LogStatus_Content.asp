@@ -63,7 +63,6 @@ function clearLog(){
 
 <body onload="show_menu();load_body();showclock(); showbootTime();" onunLoad="return unload_body();">
 <div id="TopBanner"></div>
-
 <div id="Loading" class="popup_bg"></div>
 
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
@@ -84,81 +83,76 @@ function clearLog(){
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>
-    	<td valign="top" width="202">
+		<td valign="top" width="202">
 			<div id="mainMenu"></div>
 			<div id="subMenu"></div>
-		</td>
-		
+		</td>	
 		<td valign="top">
-			<div id="tabMenu" class="submenuBlock"></div>
-			
+			<div id="tabMenu" class="submenuBlock"></div>		
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
-					<td align="left" valign="top">
-						
-			<table width="760px" border="0" cellpadding="5" cellspacing="0" bordercolor="#6b8fa3"  class="FormTitle" id="FormTitle">		
-			<tr>
-		  		<td bgcolor="#4D595D" colspan="3" valign="top">
-		  			<div>&nbsp;</div>
-		  			<div class="formfonttitle"><#System_Log#> - <#menu5_7_2#></div>
-		  			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  			<div class="formfontdesc"><#GeneralLog_title#></div>
-
-						<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+					<td align="left" valign="top">				
+						<table width="760px" border="0" cellpadding="5" cellspacing="0" bordercolor="#6b8fa3"  class="FormTitle" id="FormTitle">		
 							<tr>
-								<th width="20%"><#General_x_SystemTime_itemname#></th>
-								<td>
-									<input type="text" id="system_time" name="system_time" size="40" class="devicepin" value="" readonly="1" style="font-size:12px;">
-								</td>										
-							</tr>
-							<tr>
-								<th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(12, 1);"--><#General_x_SystemUpTime_itemname#></a></th>
-								<td><span id="boot_days"></span> <#Day#> <span id="boot_hours"></span> <#Hour#> <span id="boot_minutes"></span> <#Minute#> <span id="boot_seconds"></span> <#Second#></td>
+								<td bgcolor="#4D595D" colspan="3" valign="top">
+									<div>&nbsp;</div>
+									<div class="formfonttitle"><#System_Log#> - <#menu5_7_2#></div>
+									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div class="formfontdesc"><#GeneralLog_title#></div>
+									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+										<tr>
+											<th width="20%"><#General_x_SystemTime_itemname#></th>
+											<td>
+												<input type="text" id="system_time" name="system_time" size="40" class="devicepin" value="" readonly="1" style="font-size:12px;">
+											</td>										
+										</tr>
+										<tr>
+											<th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(12, 1);"--><#General_x_SystemUpTime_itemname#></a></th>
+											<td><span id="boot_days"></span> <#Day#> <span id="boot_hours"></span> <#Hour#> <span id="boot_minutes"></span> <#Minute#> <span id="boot_seconds"></span> <#Second#></td>
+										</tr>
+									</table>
+									<div style="margin-top:8px">
+										<textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("syslog.log","syslog.sh"); %></textarea>
+									</div>
+									<div>
+									<table class="apply_gen">
+										<tr class="apply_gen" valign="top">
+											<td width="40%" align="right">
+												<form method="post" name="form1" action="apply.cgi">
+													<input type="hidden" name="current_page" value="Main_LogStatus_Content.asp">
+													<input type="hidden" name="action_mode" value=" Clear ">
+													<input type="hidden" name="next_host" value="">
+													<input type="submit" onClick="document.form1.next_host.value = location.host; onSubmitCtrl(this, ' Clear ')" value="<#CTL_clear#>" class="button_gen">
+												</form>
+											</td>	
+											<td width="20%" align="center">
+												<form method="post" name="form2" action="syslog.cgi">
+													<input type="hidden" name="next_host" value="">
+													<input type="submit" onClick="document.form2.next_host.value = location.host; onSubmitCtrl(this, ' Save ')" value="<#CTL_onlysave#>" class="button_gen">
+												</form>
+											</td>	
+											<td width="40%" align="left" >
+											<form method="post" name="form3" action="apply.cgi">
+												<input type="hidden" name="current_page" value="Main_LogStatus_Content.asp">
+												<input type="hidden" name="action_mode" value=" Refresh ">
+												<input type="hidden" name="next_host" value="">
+												<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
+											</form>
+											</td>	
+										</tr>
+									</table>
+									</div>
+								</td>
 							</tr>
 						</table>
-						<div style="margin-top:8px">
-							<textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("syslog.log","syslog.sh"); %></textarea>
-						</div>
 					</td>
-			</tr>
-
-			<tr class="apply_gen" valign="top">
-				<td width="40%" align="right">
-					<form method="post" name="form1" action="apply.cgi">
-						<input type="hidden" name="current_page" value="Main_LogStatus_Content.asp">
-						<input type="hidden" name="action_mode" value=" Clear ">
-						<input type="hidden" name="next_host" value="">
-						<!--input type="button" onClick="clearLog();" value="<#CTL_clear#>" class="button"-->
-						<input type="submit" onClick="document.form1.next_host.value = location.host; onSubmitCtrl(this, ' Clear ')" value="<#CTL_clear#>" class="button_gen">
-					</form>
-				</td>	
-				<td width="20%" align="center">
-					<form method="post" name="form2" action="syslog.cgi">
-						<input type="hidden" name="next_host" value="">
-						<input type="submit" onClick="document.form2.next_host.value = location.host; onSubmitCtrl(this, ' Save ')" value="<#CTL_onlysave#>" class="button_gen">
-					</form>
-				</td>	
-				<td width="40%" align="left" >
-					<form method="post" name="form3" action="apply.cgi">
-						<input type="hidden" name="current_page" value="Main_LogStatus_Content.asp">
-						<input type="hidden" name="action_mode" value=" Refresh ">
-						<input type="hidden" name="next_host" value="">
-						<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
-						<!--input type="submit" onClick="document.form3.next_host.value = location.host; onSubmitCtrl(this, ' Refresh ')" value="<#CTL_refresh#>" class="button"-->
-					</form>
-				</td>	
-			</tr>
+				</tr>
 			</table>
+			<!--===================================Ending of Main Content===========================================-->
 		</td>
-
+		<td width="10" align="center" valign="top"></td>
 	</tr>
 </table>
-      <!--===================================Ending of Main Content===========================================-->
-</td>
-      <td width="10" align="center" valign="top"></td>
-  </tr>
-</table>
 <div id="footer"></div>
-		</form>
 </body>
 </html>

@@ -1,0 +1,140 @@
+.barousel{
+position:relative;
+margin-bottom:0px;
+width:500px;
+height:401px;
+border-top:3px solid #000;
+}
+.barousel_image{
+position:absolute;
+z-index:10;
+width:100%;
+height:100%;
+}
+.barousel_image img{
+position:absolute;
+display:none;    
+border:none;
+}
+.barousel_image img.default{    
+display:block;
+}
+.barousel_image img.current{
+z-index:10;
+}
+.barousel_image img.previous{
+z-index:5;
+}
+.transparent{
+-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+filter: alpha(opacity=70);
+-moz-opacity:0.7;
+-khtml-opacity: 0.7;
+opacity: 0.7;
+}
+.barousel_content{
+position:absolute;
+padding:0 0 0 18px;    
+/*z-index:50;*/
+background-color: #4D4D4D;
+color:#fff;
+width:100%;
+height:50px;
+bottom:0px;
+left:0px;
+}
+.barousel_content div{
+display:none;    
+}
+.barousel_content div.default{
+display:block;    
+}
+.barousel_content p{
+font-size:13px;
+font-weight:normal; 
+line-height:17px;   
+}
+
+.barousel_content p.header{
+font-size:18px;
+font-weight:normal;
+line-height:18px;
+color:#fff;
+}
+.barousel_content a,
+.barousel_content a:hover{
+color:#fff55b;
+background-color:transparent !important;
+}
+.barousel_nav{
+position:absolute;
+padding:3px 3px 0px 0;
+height:100%;
+bottom:0;
+z-index:100;
+width:100%;
+}
+.barousel_nav .counter{
+font-size:18px;
+color: white;
+position: absolute;
+right: 10px;
+bottom: 10px;
+}
+.barousel_nav .nav_btn_icon{
+background:transparent url("style-metro.png") no-repeat top left;
+}
+.barousel_nav .nav_btn{
+background-color: #4D4D4D;
+}
+.barousel_nav .nav_btn:hover{
+background-color: #B3B2B2;
+}
+.barousel_nav .nav_btn_icon a{
+display:block;
+width:100%;
+height:100%;
+font-size:0;
+line-height:0;
+text-decoration:none;    
+}
+.barousel_nav .prev{
+background-position: -360px -295px;
+width: 40px;
+height: 60px;
+position: absolute;
+left: 0;
+top: 50%;	
+}
+.barousel_nav .next{
+background-position: -320px -295px;
+width: 40px;
+height: 60px;
+position: absolute;
+right: 0;
+top: 50%;	
+}
+.barousel_nav .close{
+background-position: -400px -295px;
+width: 40px;
+height: 60px;
+position: absolute;
+right: 0;
+top: 0;	
+}
+.barousel_nav .play{
+background-position: -320px -295px;
+width: 40px;
+height: 60px;
+position: absolute;
+left: 50%;
+bottom: 0px;	
+}
+.barousel_nav .pause{
+background-position: -440px -295px;
+width: 40px;
+height: 60px;
+position: absolute;
+left: 50%;
+bottom: 0px;	
+}

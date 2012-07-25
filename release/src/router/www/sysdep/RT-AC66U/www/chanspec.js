@@ -14,7 +14,7 @@ function wl_chanspec_list_change(){
 	cur = '<% nvram_get("wl_chanspec"); %>';
 
 	if (phytype == "a") {	// a mode
-		chanspecs = new Array(1); 
+		chanspecs = new Array(0); 
 	} 
 	else if (phytype == "n") { // n mode
 		if (band == "1") { // - 5 GHz
@@ -89,7 +89,7 @@ function wl_chanspec_list_change(){
 		}
 	} 
 	else { // b/g mode 
-		chanspecs = new Array(1);
+		chanspecs = new Array(0);
 	}
 
 	if(chanspecs[0] == 0 && chanspecs.length == 1)

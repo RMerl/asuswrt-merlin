@@ -192,21 +192,36 @@ int check_imagefile(char *fname)
 int get_radio(int unit, int subunit)
 {
 	uint32 n;
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 
-	// TODO
-	return 1;
+	if (subunit > 0)
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
+	else
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+	// TODO: retrieve radio status through driver ioctl
+	return nvram_match(strcat_r(prefix, "radio", tmp), "1");
 }
 
 void set_radio(int on, int unit, int subunit)
 {
 	uint32 n;
+	char tmpstr[32];
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 
 	// TODO: replace hardcoded 
 	// TODO: handle subunit
 	if(unit==0)
 		doSystem("iwpriv %s set RadioOn=%d", WIF_2G, on);
 	else doSystem("iwpriv %s set RadioOn=%d", WIF, on);
+
+	if (subunit > 0)
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
+	else
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+	sprintf(tmpstr, "%d", on);
+        nvram_set(strcat_r(prefix, "radio", tmp),  tmpstr);
+	nvram_commit();
 }
-
-
 

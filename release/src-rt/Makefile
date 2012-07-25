@@ -291,6 +291,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_LOCALE2012/d" $(1); \
 		echo "RTCONFIG_LOCALE2012=y" >>$(1); \
 	fi; \
+	if [ "$(N56U_SR2)" = "y" ]; then \
+		sed -i "/RTCONFIG_N56U_SR2/d" $(1); \
+		echo "RTCONFIG_N56U_SR2=y" >>$(1); \
+	fi; \
 	if [ "$(SFP)" = "y" ]; then \
 		sed -i "/RTCONFIG_SFP/d" $(1); \
 		echo "RTCONFIG_SFP=y" >>$(1); \
@@ -776,6 +780,12 @@ define KernelConfig
 		echo "CONFIG_LOCALE2012=y" >>$(1); \
 	else \
 		echo "# CONFIG_LOCALE2012 is not set" >>$(1); \
+	fi; \
+	sed -i "/CONFIG_N56U_SR2/d" $(1); \
+	if [ "$(N56U_SR2)" = "y" ]; then \
+		echo "CONFIG_N56U_SR2=y" >>$(1); \
+	else \
+		echo "# CONFIG_N56U_SR2 is not set" >>$(1); \
 	fi \
 	)
 	$(call platformKernelConfig, $(1))

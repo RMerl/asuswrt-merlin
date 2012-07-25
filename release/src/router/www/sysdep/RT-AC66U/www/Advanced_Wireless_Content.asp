@@ -39,8 +39,6 @@ function initial(){
 	show_menu();
 	load_body();	
 	genBWTable('<% nvram_get("wl_unit"); %>');
-	// insertExtChannelOption();
-	wl_chanspec_list_change();
 
 	if(sw_mode == 2 && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
 		_change_wl_unit('<% nvram_get("wl_unit"); %>');
@@ -89,19 +87,23 @@ function initial(){
 }
 
 function change_wl_nmode(o){
-	if(window.top.isBand() == 'b' || o.value=='0' || o.value=='3')
+	if(o.value=='1') /* Jerry5: to be verified */
 		inputCtrl(document.form.wl_gmode_check, 0);
 	else
 		inputCtrl(document.form.wl_gmode_check, 1);
 
-	if(o.value == "2"){
+	/*
+	// Legacy: a/b/g 
+	if(o.value == "2"){ 
 		document.form.wl_bw[1].selected = true;
 		inputCtrl(document.form.wl_bw, 0);
 		document.form.wl_bw.value = 1;
-		document.form.wl_bw.disabled = 0;
+		document.form.wl_bw.disabled = 0; // commit wl_bw
 	}
-	else
+	// N 
+	else 
 		inputCtrl(document.form.wl_bw, 1);
+	*/
 
 	if(o.value == "3"){
 		document.form.wl_wme.value = "on";
@@ -115,12 +117,16 @@ function change_wl_nmode(o){
 function genBWTable(_unit){
 	cur = '<% nvram_get("wl_bw"); %>';
 
-	if(_unit == 0){
-		var bws = new Array(0, 1, 2)
+	if(document.form.wl_nmode_x.value == 2){
+		var bws = new Array("1");
+		var bwsDesc = new Array("20 MHz");
+	}
+	else if(_unit == 0){
+		var bws = new Array(0, 1, 2);
 		var bwsDesc = new Array("Auto", "20 MHz", "40 MHz");
 	}
 	else{
-		var bws = new Array(0, 1, 2, 3)
+		var bws = new Array(0, 1, 2, 3);
 		var bwsDesc = new Array("Auto", "20 MHz", "40 MHz", "80 MHz");
 	}
 
@@ -133,6 +139,7 @@ function genBWTable(_unit){
 			document.form.wl_bw[i].selected = true;
 		}
 	}
+	wl_chanspec_list_change();
 }
 
 function mbss_display_ctrl(){
@@ -191,7 +198,6 @@ function applyRule(){
 
 		if(sw_mode == 2)
 			document.form.action_wait.value = "5";
-
 		document.form.submit();
 	}
 }

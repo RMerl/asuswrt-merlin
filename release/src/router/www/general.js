@@ -1420,10 +1420,20 @@ function automode_hint(){ //Lock add 2009.11.05 for 54Mbps limitation in auto mo
 	  (document.form.wl_auth_mode_x.value == "open" && document.form.wl_wep_x.value != 0) ||
 	  (document.form.wl_auth_mode_x.value == "shared" && (document.form.wl_wep_x.value == 1 || document.form.wl_wep_x.value == 2) ) || 
 	  (document.form.wl_auth_mode_x.value == "psk" && document.form.wl_crypto.value == "tkip") ){
+
 		if(document.form.current_page.value == "Advanced_Wireless_Content.asp" || document.form.current_page.value == "device-map/router.asp")
 			$("wl_nmode_x_hint").style.display = "block";
+
+		if(psta_support != -1){
+			document.form.wl_bw.length = 1;
+			document.form.wl_bw[0] = new Option("20 MHz", 1);
+			wl_chanspec_list_change();
+		}
 	}
 	else{
+		if(psta_support != -1 && document.form.wl_bw){
+			genBWTable('<% nvram_get("wl_unit"); %>');
+		}
 		if(document.form.current_page.value == "Advanced_Wireless_Content.asp" || document.form.current_page.value == "device-map/router.asp")
 			$("wl_nmode_x_hint").style.display = "none";
 	}	
@@ -1456,8 +1466,6 @@ function nmode_limitation(){ //Lock add 2009.11.05 for TKIP limitation in n mode
 		}
 		wl_auth_mode_change(0);
 	}
-	//document.form.wl_wpa_psk.focus();
-	//document.form.wl_wpa_psk.select();
 }
 
 function change_common(o, s, v){

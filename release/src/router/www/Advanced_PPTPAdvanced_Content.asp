@@ -38,8 +38,8 @@ var pptpd_wins2_orig = '<% nvram_get("pptpd_wins2"); %>';
 var origin_lan_ip = '<% nvram_get("lan_ipaddr"); %>';
 var lan_ip_subnet = origin_lan_ip.split(".")[0]+"."+origin_lan_ip.split(".")[1]+"."+origin_lan_ip.split(".")[2]+".";
 var lan_ip_end = parseInt(origin_lan_ip.split(".")[3]);
-var alert_max = Untranslated.vpn_clients_max;
-var alert_over = Untranslated.vpn_clients_over;
+var alert_max = "<#vpn_max_clients#>";
+var alert_over = "<#vlaue_haigher_than#> ";
 
 var dhcp_enable = '<% nvram_get("dhcp_enable_x"); %>';
 var pool_start = '<% nvram_get("dhcp_start"); %>';
@@ -498,7 +498,7 @@ function check_dns_wins(){
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 									  	<thead>
 									  		<tr>
-												<td colspan="3" id="GWStatic"><#vpn_setting#></td>
+												<td colspan="3" id="GWStatic"><#t2BC#></td>
 									  		</tr>
 									  	</thead>
 										

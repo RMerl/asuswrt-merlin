@@ -43,50 +43,45 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
-  <tr>
-    <td width="17">&nbsp;</td>
-    <td valign="top" width="202">
-      <div id="mainMenu"></div>
-      <div id="subMenu"></div></td>
-    <td valign="top">
-	<div id="tabMenu" class="submenuBlock"></div>
-      
-      <!--===================================Beginning of Main Content===========================================-->
-      <table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
-        <tr>
-          <td valign="top">
-            <table width="760px" border="0" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTitle" id="FormTitle">
-		<tbody>
-		<tr bgcolor="#4D595D">
-		  <td valign="top">
-		  <div>&nbsp;</div>
-		  <div class="formfonttitle"><#System_Log#> - <#menu5_7_3#></div>
-		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  <div class="formfontdesc"><#DHCPlease_title#></div>
-			<div style="margin-top:8px">   
-				<textarea cols="63" rows="25" readonly="readonly" wrap=off style="font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("leases.log", "leases.sh"); %></textarea>
-			</div>
-			</td><!--==magic 2008.11 del name ,if there are name, when the form was sent, the textarea also will be sent==-->
-              </tr>
-              
-			  <tr class="apply_gen" valign="top">
-			  	<td>
-			  		<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
-			  	</td>
-			  </tr>
-
-	</tbody>		  
-	</table>
-			</form>
-			</td>
-
-        </tr>
-      </table>
-      <!--===================================Ending of Main Content===========================================-->
-    </td>
-    <td width="10" align="center" valign="top">&nbsp;</td>
-  </tr>
+	<tr>
+		<td width="17">&nbsp;</td>
+		<td valign="top" width="202">
+			<div id="mainMenu"></div>
+			<div id="subMenu"></div>
+		</td>
+		<td valign="top">
+			<div id="tabMenu" class="submenuBlock"></div>     
+			<!--===================================Beginning of Main Content===========================================-->
+				<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
+					<tr>
+						<td valign="top">
+							<table width="760px" border="0" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTitle" id="FormTitle">
+								<tbody>
+								<tr bgcolor="#4D595D">
+									<td valign="top">
+										<div>&nbsp;</div>
+										<div class="formfonttitle"><#System_Log#> - <#menu5_7_3#></div>
+										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+										<div class="formfontdesc"><#DHCPlease_title#></div>
+										<div style="margin-top:8px">   
+											<textarea cols="63" rows="25" readonly="readonly" wrap=off style="font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("leases.log", "leases.sh"); %></textarea>
+										</div>
+										<div class="apply_gen">
+											<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
+										</div>
+									</td><!--==magic 2008.11 del name ,if there are name, when the form was sent, the textarea also will be sent==-->
+								</tr>
+								</tbody>		  
+							</table>	
+						</td>
+					</tr>
+				</table>
+			<!--===================================Ending of Main Content===========================================-->
+		</td>
+		<td width="10" align="center" valign="top">&nbsp;</td>
+	</tr>
 </table>
 <div id="footer"></div>
+</form>
 </body>
 </html>

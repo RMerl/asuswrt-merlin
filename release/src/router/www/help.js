@@ -1,13 +1,5 @@
-﻿var Untranslated = {	
-	illegal_MAC : 'It\'s an illegal MAC address!',
-	vpn_clients_max : 'VPN server only allows max 10 clients!',
-	vpn_clients_over : 'This value should be higher than ',
-	QKSet_detect_timeout : 'Detect time out! Do you want to restart internet detector?',
-	QoS_invalid_bandwidth : 'Invalid bandwidth period!',
+﻿var Untranslated = {
 	wireless_psk_fillin : 'Please type password',
-	reboot_manually : 'Firmware upgrade is done. Please reboot <Router> manually.',
-	ddns_nochange : 'Both hostname & IP address have not changed since the last update.',
-	fw_not_support : 'Not support',
 	Adj_dst : 'Manual daylight saving time'
 };
 
@@ -68,15 +60,15 @@ helptitle[3] = [["", ""],
 // LAN
 helptitle[4] = [["", ""],
 				["<#LANHostConfig_IPRouters_itemname#>", "lan_ipaddr"],
-				["<#LANHostConfig_SubnetMask_itemname#>", "lan_netmask"],
-				["<#LANHostConfig_x_Gateway_itemname#>", "lan_gateway"]];
+				["<#IPConnection_x_ExternalSubnetMask_itemname#>", "lan_netmask"],
+				["<#IPConnection_x_ExternalGateway_itemname#>", "lan_gateway"]];
 helptitle[5] = [["", ""],
 			 	["<#LANHostConfig_DHCPServerConfigurable_itemname#>", "dhcp_enable_x"],
 				["<#LANHostConfig_DomainName_itemname#>", "lan_domain"],
 				["<#LANHostConfig_MinAddress_itemname#>", "dhcp_start"],
 				["<#LANHostConfig_MaxAddress_itemname#>", "dhcp_end"],
 				["<#LANHostConfig_LeaseTime_itemname#>", "dhcp_lease"],
-				["<#LANHostConfig_x_LGateway_itemname#>", "dhcp_gateway_x"],
+				["<#IPConnection_x_ExternalGateway_itemname#>", "dhcp_gateway_x"],
 				["<#LANHostConfig_x_LDNSServer1_itemname#>", "dhcp_dns1_x"],
 				["<#LANHostConfig_x_WINSServer_itemname#>", "dhcp_wins_x"],
 				["<#LANHostConfig_ManualDHCPEnable_itemname#>", "dhcp_static_x"],
@@ -88,7 +80,7 @@ helptitle[6] = [["", ""],
 				["<#RouterConfig_GWStaticMask_itemname#>", "sr_netmask_x_0"],
 				["<#RouterConfig_GWStaticGW_itemname#>", "sr_gateway_x_0"],
 				["<#RouterConfig_GWStaticMT_itemname#>", "sr_matric_x_0"],
-				["<#RouterConfig_GWStaticIF_itemname#>", "sr_if_x_0"],
+				["<#wan_interface#>", "sr_if_x_0"],
 				["<#RouterConfig_IPTV_itemname#>"]];
 // WAN
 helptitle[7] = [["", ""],

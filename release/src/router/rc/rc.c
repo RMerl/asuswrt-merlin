@@ -227,6 +227,7 @@ static const applets_t applets[] = {
 	{ "zcip",			zcip_wan			},
 #ifdef RTCONFIG_IPV6
 	{ "dhcp6c-state",		dhcp6c_state_main		},
+	{ "ipv6aide",			ipv6aide_main			},
 #endif
 	{ "halt",			reboothalt_main			},
 	{ "reboot",			reboothalt_main			},

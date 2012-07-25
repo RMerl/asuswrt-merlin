@@ -170,7 +170,7 @@ function save_options(){
 		var download_bw_max = eval("document.form.download_bw_max_"+j);
 
 		if(parseInt(upload_bw_max.value) < parseInt(upload_bw_min.value)){
-			alert(Untranslated.QoS_invalid_bandwidth);
+			alert("<#QoS_invalid_period#>");
 			upload_bw_max.focus();
 			return false;
 		}
@@ -213,11 +213,12 @@ function validForm(){
 		parse_port="";
 		return false;
 	}	
-	
-	if(document.form.qos_max_transferred_x_0.value < document.form.qos_min_transferred_x_0.value){
-		document.form.qos_max_transferred_x_0.focus();
-		alert(Untranslated.vpn_clients_over+document.form.qos_min_transferred_x_0.value);	
-		return false;
+		
+	if(document.form.qos_max_transferred_x_0.value.length > 0 
+	   && document.form.qos_max_transferred_x_0.value < document.form.qos_min_transferred_x_0.value){
+				document.form.qos_max_transferred_x_0.focus();
+				alert("<#vlaue_haigher_than#> "+document.form.qos_min_transferred_x_0.value);	
+				return false;
 	}
 	
 	return true;
@@ -819,7 +820,7 @@ function valid_IPorMAC(obj){
     					return false;
     			}else if(!legal_hwaddr.test(obj.value)){
     					obj.focus();
-    					alert(Untranslated.illegal_MAC);					
+    					alert("<#IPConnection_x_illegal_mac#>");					
     					return false;
     			}else
     					return true;
@@ -883,7 +884,7 @@ function valid_IPorMAC(obj){
 	   					<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
 								<!--option><#switchpage#></option-->
 								<option value="1"><#qos_automatic_mode#></option>
-								<option value="2" selected>User define QoS rules</option>
+								<option value="2" selected><#user_def_qos#></option>
 							</select>	    
 						</div>
 		  			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
@@ -934,7 +935,7 @@ function valid_IPorMAC(obj){
 								<th><#BM_UserList1#></th>
 								<th><a href="javascript:void(0);" onClick="openHint(18,6);"><div class="table_text">Source IP or MAC</div></a></th>
 								<th><a href="javascript:void(0);" onClick="openHint(18,4);"><div class="table_text"><#BM_UserList3#></div></a></th>
-								<th><div class="table_text">Protocol</div></th>
+								<th><div class="table_text"><#IPConnection_VServerProto_itemname#></div></th>
 								<th><a href="javascript:void(0);" onClick="openHint(18,5);"><div class="table_text"><div class="table_text">Transferred</div></a></th>
 								<th><#BM_UserList4#></th>
 								<th>Add / Delete</th>
@@ -1046,7 +1047,7 @@ function valid_IPorMAC(obj){
 												<table width="100%" border="0" cellpadding="4" cellspacing="0" style="font-size:12px; border-collapse: collapse;border:0;">
 												<thead>	
 												<tr>
-													<td colspan="4" ><#upload_bandwidth#>:</td>
+													<td colspan="4" ><#upload_bandwidth#></td>
 												</tr>
 												<tr style="height: 55px;">
 													<th style="width:22%;line-height:15px;color:#FFFFFF;"><#upload_prio#></th>
@@ -1132,7 +1133,7 @@ function valid_IPorMAC(obj){
 												<table width="100%" border="0" cellpadding="4" cellspacing="0" style="font-size:12px; border-collapse: collapse;border:0;">
 												<thead>
 												<tr>
-													<td colspan="3"><#download_bandwidth#>:</td>
+													<td colspan="3"><#download_bandwidth#></td>
 												</tr>
 												<tr style="height: 55px;">
 													<th style="width:31%;line-height:15px;color:#FFFFFF;"><#download_prio#></th>

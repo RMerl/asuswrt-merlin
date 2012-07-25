@@ -147,10 +147,12 @@ void convert_dsl_wan()
 			nvram_set("wan0_proto","static");
 		}
 		else if (nvram_match("dsl0_proto","bridge")) {
-			// by Chen-I to disable wan complete3ly
 			// disable nat
-			// nvram_set("wan0_nat_x","0");	
-			nvram_set("wan0_proto", "disabled");	
+			nvram_set("wan0_nat_x","0");
+			
+			/* Paul add 2012/7/13, for Bridge connection type wan0_proto set to dhcp, and dsl_proto set as bridge */
+			nvram_set("wan0_proto","dhcp");
+			nvram_set("dsl_proto","bridge");
 		}
 		else if (nvram_match("dsl0_proto","mer")) {
 			if (nvram_match("dslx_DHCPClient","1")) {
@@ -171,10 +173,8 @@ void convert_dsl_wan()
 			nvram_set("wan1_proto","static");
 		}
 		else if (nvram_match("dsl0_proto","bridge")) {
-			// by Chen-I to disable wan completely
 			// disable nat
-			// nvram_set("wan1_nat_x","0");	
-			nvram("wan1_proto", "disabled");
+			nvram_set("wan1_nat_x","0");		
 		}
 		else if (nvram_match("dsl0_proto","mer")) {
 			if (nvram_match("dslx_DHCPClient","1")) {

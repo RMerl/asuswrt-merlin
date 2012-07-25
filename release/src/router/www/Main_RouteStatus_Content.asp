@@ -45,44 +45,40 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
   <tr>
     <td width="17">&nbsp;</td>
     <td valign="top" width="202">
-      <div  id="mainMenu"></div>
-      <div  id="subMenu"></div></td>
+		<div  id="mainMenu"></div>
+		<div  id="subMenu"></div>
+	</td>
     <td valign="top">
-	<div id="tabMenu" class="submenuBlock"></div>
-      <!--===================================Beginning of Main Content===========================================-->
-      <table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
-        <tr>
-          <td valign="top" >          
-            <table width="760px" border="0" cellpadding="5" cellspacing="0" bordercolor="#6b8fa3"  class="FormTitle" id="FormTitle">
-		  <tr bgcolor="#4D595D">
-		  	<td valign="top">
-		  		<div>&nbsp;</div>
-		  		<div class="formfonttitle"><#System_Log#> - <#menu5_7_6#></div>
-		  		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-				  <div class="formfontdesc"><#Route_title#></div>
-					<div style="margin-top:8px">   
-						<textarea style="width:98%; font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;" cols="63" rows="25" readonly="readonly" wrap=off><% nvram_dump("route.log","route.sh"); %></textarea><!--==magic 2008.11 del name ,if there are name, when the form was sent, the textarea also will be sent==-->
-					</div>	
+		<div id="tabMenu" class="submenuBlock"></div>
+		<!--===================================Beginning of Main Content===========================================-->
+		<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
+			<tr>
+				<td valign="top" >          
+					<table width="760px" border="0" cellpadding="5" cellspacing="0" bordercolor="#6b8fa3"  class="FormTitle" id="FormTitle">
+						<tr bgcolor="#4D595D">
+							<td valign="top">
+								<div>&nbsp;</div>
+								<div class="formfonttitle"><#System_Log#> - <#menu5_7_6#></div>
+								<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+								<div class="formfontdesc"><#Route_title#></div>
+								<div style="margin-top:8px">   
+									<textarea style="width:98%; font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;" cols="63" rows="25" readonly="readonly" wrap=off><% nvram_dump("route.log","route.sh"); %></textarea><!--==magic 2008.11 del name ,if there are name, when the form was sent, the textarea also will be sent==-->
+								</div>
+								<div class="apply_gen">
+									<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
+								</div>
+							</td>
+						</tr>
+					</table>
 				</td>
-      </tr>
-			<tr class="apply_gen" valign="top" height="115px">
-			  <td>
-			  	<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
-			  	</td>
-			  </tr>
-			</table>
-			</td>
-
-
-        </tr>
-      </table>
-      <!--===================================Ending of Main Content===========================================-->
+			</tr>
+		</table>
+		<!--===================================Ending of Main Content===========================================-->
     </td>
     <td width="10" align="center" valign="top">&nbsp;</td>
   </tr>
 </table>
 <div id="footer"></div>
 </form>
-<form name="hint_form"></form>
 </body>
 </html>

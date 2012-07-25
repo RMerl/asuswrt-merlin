@@ -35,13 +35,18 @@ $("document").ready(function() {
 	while( this_url.indexOf('%3Cbr%3E') != -1 )
 		this_url = this_url.replace('%3Cbr%3E','\n');
 	
+	while( this_url.indexOf('<br>') != -1 )
+		this_url = this_url.replace('<br>','\n');
+		
 	var content = "";
 	
 	content += m.getString('msg_sharelink_desc1');
 	content += 	this_url;
 	content += m.getString('msg_sharelink_desc2');
 		
-	$("#sharelink").text(content);
+	//$("#sharelink").html(content);
+	
+	$("#sharelink").val(content);
 	
 	select_all();
 });
@@ -83,7 +88,7 @@ function select_all(){
 					<span id='desc'></span>
 				</td></tr>
 				<td><tr>				  
-					<textarea name="sharelink" id="sharelink" style="height:400px;width:570px"></textarea>
+					<textarea name="sharelink" id="sharelink" style="height:400px;width:570px" wrap="off"></textarea>
 				</td></tr>				
 			</table>  
     </td>    

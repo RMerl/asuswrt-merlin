@@ -254,8 +254,18 @@ void set_radio(int on, int unit, int subunit)
 {
 	uint32 n;
 	char tmpstr[32];
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 
 	//_dprintf("set radio %x %x %x %s\n", on, unit, subunit, nvram_safe_get(wl_nvname("ifname", unit, subunit)));
+
+	if (subunit > 0)
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
+	else
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+	sprintf(tmpstr, "%d", on);
+	nvram_set(strcat_r(prefix, "radio", tmp),  tmpstr);
+	nvram_commit();
 
 	if(subunit>0) {
 		sprintf(tmpstr, "%d", subunit);

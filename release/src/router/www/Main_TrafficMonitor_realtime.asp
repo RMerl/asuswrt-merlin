@@ -6,7 +6,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
 <meta name="svg.render.forceflash" content="false" />	
-<title><#Web_Title#> - <#menu4_2#> : <#menu4_2_1#></title>
+<title><#Web_Title#> - <#traffic_monitor#> : <#menu4_2_1#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
@@ -233,7 +233,7 @@ function switchPage(page){
 
   		     				<tr>
 							<td >
-				    	 	<table width="735px" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_NWM">
+				    	 	<table width="735px" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_NWM" style="margin-top:10px">
 						  		<tr>
 						  			<th style="text-align:center; width:160px;height:25px;"><#Network#></th>
 						  			<th style="text-align:center; width:160px;"><#Current#></th>
@@ -244,8 +244,7 @@ function switchPage(page){
 
 						  		<tr>
 						  			<td style="text-align:center; background-color:#111;">
-										<div id='rx-sel'><#Downlink#>
-										</div>
+										<div id='rx-sel'><#tm_reception#></div>										
 						  			</td>
 						  			
 						  			<td style="text-align:center;font-weight: bold; background-color:#111;"><span id='rx-current' style="color:#FF9000;"></span></td>
@@ -256,10 +255,9 @@ function switchPage(page){
 						    		
 						    		<tr>
 						    			<td style="text-align:center; background-color:#111;">
-									<div id='tx-sel'><#Uplink#>
-									</div>               			
+											<div id='tx-sel'><#tm_transmission#></div>  											             			
               							</td>   
-						  		<td style="text-align:center;font-weight: bold; background-color:#111;"><span id='tx-current' style="color:#3CF;"></span></td>
+									<td style="text-align:center;font-weight: bold; background-color:#111;"><span id='tx-current' style="color:#3CF;"></span></td>
 									<td style="text-align:center; background-color:#111;" id='tx-avg'></td>
 									<td style="text-align:center; background-color:#111;" id='tx-max'></td>
 									<td style="text-align:center; background-color:#111;" id='tx-total'></td>

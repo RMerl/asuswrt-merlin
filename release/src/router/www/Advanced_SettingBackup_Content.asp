@@ -186,7 +186,5 @@ function uploadSetting(){
 <input type="hidden" name="action_mode" value="Restore">
 <input type="hidden" name="next_page" value="">
 </form>
-
-<form name="hint_form"></form>
 </body>
 </html>

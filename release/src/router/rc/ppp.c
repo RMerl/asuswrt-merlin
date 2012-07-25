@@ -33,6 +33,10 @@
 #include <shutils.h>
 #include <rc.h>
 
+#ifdef RTCONFIG_IPV6
+static int wait_ppp_count = 0;
+#endif
+
 /*
 * parse ifname to retrieve unit #
 */
@@ -162,6 +166,10 @@ ipdown_main(int argc, char **argv)
 	if(LINKNAME == NULL || strlen(LINKNAME) <= 0)
 		return 0;
 
+#ifdef RTCONFIG_IPV6
+        wait_ppp_count = -2;
+#endif
+
 	unit = atoi(LINKNAME+3);
 _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 
@@ -185,9 +193,27 @@ int ip6up_main(int argc, char **argv)
 {
 	char *wan_ifname = safe_getenv("IFNAME");
 
-	wan6_up(wan_ifname);
-	
-	start_firewall(0, 0);
+	if (!wan_ifname || strlen(wan_ifname) <= 0)
+		return 0;
+
+        switch (get_ipv6_service()) {
+                case IPV6_NATIVE:
+                case IPV6_NATIVE_DHCP:
+			wait_ppp_count = 10;
+			while ((!is_intf_up(wan_ifname) || !getifaddr(wan_ifname, AF_INET6, 0))
+				&& (wait_ppp_count-- > 0))
+				sleep(1);
+			break;
+		default:
+			wait_ppp_count = 0;
+			break;
+	}
+
+	if (wait_ppp_count != -2)
+	{
+		wan6_up(wan_ifname);	
+		start_firewall(0, 0);
+	}
 
 	return 0;
 }
@@ -195,6 +221,8 @@ int ip6up_main(int argc, char **argv)
 int ip6down_main(int argc, char **argv)
 {
 	char *wan_ifname = safe_getenv("IFNAME");
+
+	wait_ppp_count = -2;
 
 	wan6_down(wan_ifname);
 

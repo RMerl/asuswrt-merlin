@@ -29,7 +29,6 @@ function initial(){
 
 <body onload="initial();" >
 <div id="TopBanner"></div>
-
 <div id="Loading" class="popup_bg"></div>
 
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
@@ -47,50 +46,42 @@ function initial(){
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
-  <tr>
-    <td width="17">&nbsp;</td>
-    <td valign="top" width="202">
-      <div id="mainMenu"></div>
-      <div id="subMenu"></div></td>
-    <td valign="top">
-	  <div id="tabMenu" class="submenuBlock"></div>
-      
-      <!--===================================Beginning of Main Content===========================================-->
-      <table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
-        <tr>
-          <td valign="top" >           
-            <table width="760px" border="0" cellpadding="5" cellspacing="0" bordercolor="#6b8fa3" class="FormTitle" id="FormTitle">
-		  <tr bgcolor="#4D595D">
-		  	<td valign="top">
-		  		<div>&nbsp;</div>
-		  		<div class="formfonttitle"><#System_Log#> - <#menu5_7_4#></div>
-		  		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-				  <div class="formfontdesc"><#WLLog_title#></div>
-					<div style="margin-top:8px"> 
-						<textarea  cols="63" rows="30" style="width=90%; font-family:'Courier New', Courier, mono; font-size:13px; background:#475A5F;color:#FFFFFF" readonly="readonly" wrap=VIRTUAL><% nvram_dump("wlan11b_2g.log","wlan11b.sh"); %></textarea>
-					</div>
-				</td>
-			</tr>
-
-        <tr class="apply_gen" valign="top" height="60px">
-			  <td>
-					<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
-			  </td>
-	   </tr>
-				
-					</table>
-			   </td>
-              	</tr>
-            </table>
-			</form>
-			</td>
-
-			</tr>
-		  </table>
-      <!--===================================Ending of Main Content===========================================-->
-    </td>
-  </tr>
+	<tr>
+		<td width="17">&nbsp;</td>
+		<td valign="top" width="202">
+			<div id="mainMenu"></div>
+			<div id="subMenu"></div>
+		</td>
+		<td valign="top">
+			<div id="tabMenu" class="submenuBlock"></div>   
+		<!-- ===================================Beginning of Main Content===========================================-->
+			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
+				<tr>
+					<td valign="top" >           
+						<table width="760px" border="0" cellpadding="5" cellspacing="0" bordercolor="#6b8fa3" class="FormTitle" id="FormTitle">
+							<tr bgcolor="#4D595D">
+								<td valign="top">
+									<div>&nbsp;</div>
+									<div class="formfonttitle"><#System_Log#> - <#menu5_7_4#></div>
+									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div class="formfontdesc"><#WLLog_title#></div>
+									<div style="margin-top:8px"> 
+										<textarea  cols="63" rows="30" style="width=90%; font-family:'Courier New', Courier, mono; font-size:13px; background:#475A5F;color:#FFFFFF" readonly="readonly" wrap=VIRTUAL><% nvram_dump("wlan11b_2g.log","wlan11b.sh"); %></textarea>
+									</div>
+									<div class="apply_gen">
+										<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen" >
+									</div>
+								</td>
+							</tr>		
+						</table>
+					</td>
+				</tr>
+			</table>
+		<!--===================================Ending of Main Content===========================================-->			
+		</td>	  		
+	</tr>
 </table>
 <div id="footer"></div>
+</form>
 </body>
 </html>

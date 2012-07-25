@@ -63,7 +63,7 @@ function getWANStatus(){
 					--RetryCountDown;
 
 				if(RetryCountDown < 1){
-					if(confirm(Untranslated.QKSet_detect_timeout)){
+					if(confirm("<#QIS_detect_timeout#>")){
 						RetryCountDown = 5;
 						getWANStatus();
 					}

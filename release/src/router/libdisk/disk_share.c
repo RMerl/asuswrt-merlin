@@ -1212,7 +1212,7 @@ extern int mod_account(const char *const account, const char *const new_account,
 		usb_dbg("\"%s\" is not existed.\n", account);
 		return -1;
 	}
-	if(new_account != NULL && test_if_exist_account(new_account)){
+	if(new_account != NULL && strcmp(account, new_account) && test_if_exist_account(new_account)){
 		usb_dbg("\"%s\" is already created.\n", new_account);
 		return -1;
 	}

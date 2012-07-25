@@ -29,16 +29,16 @@
 /* on linux 2.4.29 + debian/ubuntu we have crashes if this is enabled */
 #undef HAVE_POSIX_FADVISE
 
-#define DBE 0
+#define DBE 1
 
 int network_write_chunkqueue_linuxsendfile(server *srv, connection *con, int fd, chunkqueue *cq) {
 	chunk *c;
 	size_t chunks_written = 0;
 
-Cdbg(DBE, "enter..mode=[%d]", con->mode);
+Cdbg(DBE, "enter..con->mode=[%d]", con->mode);
 	for(c = cq->first; c; c = c->next, chunks_written++) {
 		int chunk_finished = 0;
-Cdbg(DBE, "\t type=[%d]", c->type);
+Cdbg(DBE, "\t c->type=[%d]", c->type);
 		switch(c->type) {
 		case MEM_CHUNK: {
 			char * offset;
@@ -139,6 +139,8 @@ Cdbg(DBE, "num_chunks = %d", num_chunks);
 			ssize_t r;
 			off_t offset;
 			size_t toSend;
+			Cdbg(DBE, "FILE_CHUNK...");
+			
 			stat_cache_entry *sce = NULL;
 Cdbg(DBE, "\t\tfilename=[%s]", c->file.name->ptr);
 			offset = c->file.start + c->offset;
@@ -244,6 +246,8 @@ Cdbg(DBE, "\t\tfilename=[%s]", c->file.name->ptr);
 			size_t toSend;
 			stat_cache_entry *sce = NULL;
 
+			Cdbg(DBE, "SMB_CHUNK...");
+			
 			//#define BUFF_SIZE 2*1024
 
 			//- 256K
@@ -259,21 +263,23 @@ Cdbg(DBE, "\t\tfilename=[%s]", c->file.name->ptr);
 			   BUFF_SIZE : c->file.length - c->offset ;
 
 			/* open file if not already opened */
-Cdbg(DBE, " fn =[%s]", c->file.name->ptr);			
+			Cdbg(DBE, " fn =[%s]", c->file.name->ptr);	
+			
 			if (-1 == c->file.fd) {
-				Cdbg(DBE, "start to open file[%s]", c->file.name->ptr);
-				//if (-1 == (c->file.fd = smbc_wrapper_open(con,c->file.name->ptr, O_RDONLY, 0755))) {
+				Cdbg(DBE, "start to open file...");
 				if (-1 == (c->file.fd = smbc_wrapper_open(con,c->file.name->ptr, O_RDONLY, 0755))) {
 					log_error_write(srv, __FILE__, __LINE__, "ss", "open failed: ", strerror(errno));
 					return -1;
 				}
 			}
 
-Cdbg(DBE, "c->file.fd=[%d], fn =[%s], offset =%lli, to send=%d", c->file.fd, c->file.name->ptr, offset, toSend);			
+			Cdbg(DBE, "c->file.fd=[%d], offset =%lli, to send=%d, c->file.length=%d", c->file.fd, offset, toSend, c->file.length);			
+			
 			smbc_wrapper_lseek(con, c->file.fd, offset, SEEK_SET );		
-//			r = smbc_wrapper_read(con,c->file.fd, buff, sizeof(buff));
+
 			r = smbc_wrapper_read(con, c->file.fd, buff, toSend);
-Cdbg(DBE, "toSend=[%d], errno=[%d]", toSend, errno);			
+
+			Cdbg(DBE, "toSend=[%d], errno=[%d]", toSend, errno);			
 
 			//if (-1 == (r = sendfile(fd, c->file.fd, &offset, toSend))) {
 			if (toSend == -1||r<0) {
@@ -315,11 +321,14 @@ Cdbg(DBE, "toSend=[%d], errno=[%d]", toSend, errno);
 				errno = oerrno;
 				return -2;
 			}
+
 			r = write(fd, buff, toSend);
-Cdbg(DBE, "write [%d] bytes, fd=%d", r, fd);
+
+			Cdbg(DBE, "write [%d] bytes, fd=%d", r, fd);
+			
 			if(r<=0) {
 				//write error??
-			   Cdbg(DBE,"errno =%d -> %s",errno,strerror(errno));
+			   	Cdbg(DBE,"errno =%d -> %s",errno,strerror(errno));
 				smbc_wrapper_close(con,c->file.fd);
 				return -1;
 			}
@@ -327,6 +336,8 @@ Cdbg(DBE, "write [%d] bytes, fd=%d", r, fd);
 			c->offset += r;
 			cq->bytes_out += r;
 
+			Cdbg(DBE, "c->offset=[%d], c->file.length=[%d]", c->offset, c->file.length);
+			
 			if (c->offset == c->file.length) {
 				chunk_finished = 1;
 

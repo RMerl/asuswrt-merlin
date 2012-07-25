@@ -18,6 +18,9 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
+if('<% nvram_get("start_aicloud"); %>' != '1')
+	location.href = "cloud__main.asp";
+
 var $j = jQuery.noConflict();
 
 <% login_state_hook(); %>
@@ -156,7 +159,7 @@ function inet_network(ip_str){
 													<#step_use_aicloud#>
 												  <ol style="-webkit-margin-after: 0em;word-break:normal;">
 										        <li style="margin-bottom:7px;">
-															<#download_aicloud#> 
+															<#download_aicloud#><br> 
 															<a href="http://event.asus.com/2012/nw/aicloud/edm/" target="_blank"><img border="0" src="/images/cloudsync/googleplay.png" width="100px"></a>
 															<a href="http://event.asus.com/2012/nw/aicloud/edm/" target="_blank"><img src="/images/cloudsync/AppStore.png" border="0"  width="100px"></a>
 														</li>
@@ -180,8 +183,13 @@ function inet_network(ip_str){
 												  <ul style="-webkit-margin-after: 0em;word-break:normal;">
 										        <li style="margin-top:-5px;">
 															<span>
-																<#aicloud_bandwidth1#>&nbsp;
-																<#aicloud_bandwidth2#>&nbsp;
+																<#aicloud_bandwidth1#><br>
+																<ul>	
+																	<li><#aicloud_bandwidth2_1#></li>
+																	<li><#aicloud_bandwidth2_2#></li>
+																	<li><#aicloud_bandwidth2_3#></li>
+																	<li><#aicloud_bandwidth2_4#></li>
+																</ul>			
 	       												<#aicloud_bandwidth3#>
 															</span>
 														</li>
@@ -215,7 +223,7 @@ function inet_network(ip_str){
 
 									    <td>
 												<div style="padding:10px;width:95%;font-style:italic;font-size:14px;word-break:break-all;">
-													<#aicloud_disk1#>
+													<#aicloud_disk1#>&nbsp
 													<#aicloud_disk2#><br />
 													<div id="accessMethod"></div>
 													<!--br>

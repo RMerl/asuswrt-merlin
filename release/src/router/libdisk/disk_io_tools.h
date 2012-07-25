@@ -39,8 +39,6 @@ typedef unsigned long long u64;
 
 #define WWW_MOUNT_ROOT "/www"
 
-extern char *read_whole_file(const char *target);
-extern char *get_line_from_buffer(const char *buf, char *line, const int line_size);
 extern int mkdir_if_none(const char *dir);
 extern int delete_file_or_dir(char *target);
 

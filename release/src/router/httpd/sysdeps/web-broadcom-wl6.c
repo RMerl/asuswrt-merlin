@@ -1793,19 +1793,10 @@ ej_wps_info(int eid, webs_t wp, int argc, char_t **argv)
 	return wl_wps_info(eid, wp, argc, argv, 1);
 }
 
-
 int
 ej_wps_info_2g(int eid, webs_t wp, int argc, char_t **argv)
 {
 	return wl_wps_info(eid, wp, argc, argv, 0);
-}
-
-int
-ej_getclientlist(int eid, webs_t wp, int argc, char_t **argv)
-{
-// TODO: implement real dualband handler
-//
-	return 0;
 }
 
 /* Dump NAT table <tr><td>destination</td><td>MAC</td><td>IP</td><td>expires</td></tr> format */

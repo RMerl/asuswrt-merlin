@@ -17,6 +17,11 @@
 int getStorageStatus(STORAGE_INFO_T *st)
 {
 	memset(st, sizeof(st), 0);
+
+	if(nvram_get_int("sw_mode")!=SW_MODE_ROUTER) {
+		return 0;
+	}
+
 	st->MagicWord = EXTEND_MAGIC;
 	st->ExtendCap = EXTEND_CAP_WEBDAV;
 	if(nvram_get_int("enable_webdav")) 	
