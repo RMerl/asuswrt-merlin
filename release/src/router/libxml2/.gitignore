@@ -61,3 +61,6 @@ libxml2.spec
 python/setup.py
 python/.deps/
 xml2-config
+aclocal.m4
+configure
+

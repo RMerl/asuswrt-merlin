@@ -15,3 +15,5 @@ msvc++/Makefile
 config.h.in~
 compact.c
 autom4te.cache
+frametype.c
+
