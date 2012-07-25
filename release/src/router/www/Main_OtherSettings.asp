@@ -238,7 +238,6 @@ function done_validating(action){
 						<th>TCP connections limit</th>
 						<td>
 							<input type="text" maxlength="6" class="input_12_table" name="ct_max" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 256, 300000)" value="<% nvram_get("ct_max"); %>">
-							<span>Default: 300000</span>
 						</td>
 						</tr>
 
