@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.157.12 (24-July-2012)
+Asuswrt-Merlin - build 3.0.0.3.162.13 (25-July-2012)
 ====================================================
 
 About
@@ -217,7 +217,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.3.157.12:
+3.0.0.3.162.13:
+   - NEW: Rebased on 3.0.0.3.162.
+
+
+3.0.0.3.157.12 Beta:
 This is based on unreleased Asus code, which they have 
 graciously provided me with.
 
