@@ -135,7 +135,7 @@ IsAuthorizedValidated(struct upnphttp * h, const char * action)
 	ParseNameValue(h->req_buf + h->req_contentoff, h->req_contentlen, &data);
 	id = GetValueFromNameValueList(&data, "DeviceID");
 	if (!id)
-		id = strstr(h->req_buf + h->req_contentoff, "<DeviceID>");
+		id = strstr(h->req_buf + h->req_contentoff, "<DeviceID");
 	if(id)
 	{
 		bodylen = snprintf(body, sizeof(body), resp,
@@ -578,7 +578,7 @@ parse_sort_criteria(char *sortCriteria, int *error)
 		}
 		else
 		{
-			DPRINTF(E_DEBUG, L_HTTP, "No order specified [%s]\n", item);
+			DPRINTF(E_ERROR, L_HTTP, "No order specified [%s]\n", item);
 			*error = -1;
 			goto unhandled_order;
 		}
@@ -605,7 +605,7 @@ parse_sort_criteria(char *sortCriteria, int *error)
 		}
 		else
 		{
-			DPRINTF(E_DEBUG, L_HTTP, "Unhandled SortCriteria [%s]\n", item);
+			DPRINTF(E_ERROR, L_HTTP, "Unhandled SortCriteria [%s]\n", item);
 			*error = -1;
 			if( i )
 			{
@@ -920,7 +920,7 @@ callback(void *args, int argc, char **argv, char **azColName)
 				ret = strcatf(str, "&lt;upnp:album&gt;%s&lt;/upnp:album&gt;", "[No Keywords]");
 
 			/* EVA2000 doesn't seem to handle embedded thumbnails */
-			if( passed_args->client != ENetgearEVA2000 && tn && atoi(tn) ) {
+			if( !(passed_args->flags & FLAG_RESIZE_THUMBS) && tn && atoi(tn) ) {
 				ret = strcatf(str, "&lt;upnp:albumArtURI&gt;"
 				                   "http://%s:%d/Thumbnails/%s.jpg"
 			        	           "&lt;/upnp:albumArtURI&gt;",
@@ -934,31 +934,28 @@ callback(void *args, int argc, char **argv, char **azColName)
 		}
 		if( passed_args->filter & FILTER_RES ) {
 			mime_to_ext(mime, ext);
-			if( (passed_args->client == EFreeBox) && tn && atoi(tn) ) {
-				ret = strcatf(str, "&lt;res protocolInfo=\"http-get:*:%s:%s\"&gt;"
-				                   "http://%s:%d/Thumbnails/%s.jpg"
-				                   "&lt;/res&gt;",
-				                   mime, "DLNA.ORG_PN=JPEG_TN", lan_addr[passed_args->iface].str,
-				                   runtime_vars.port, detailID);
-			}
 			add_res(size, duration, bitrate, sampleFrequency, nrAudioChannels,
 			        resolution, dlna_buf, mime, detailID, ext, passed_args);
-			if( (*mime == 'i') && (passed_args->client != EFreeBox) ) {
-				int srcw = atoi(strsep(&resolution, "x"));
-				int srch = atoi(resolution);
-				if( !dlna_pn ) {
-					add_resized_res(srcw, srch, 4096, 4096, "JPEG_LRG", detailID, passed_args);
+			if( *mime == 'i' ) {
+				int srcw, srch;
+				if( resolution && (sscanf(resolution, "%dx%d", &srcw, &srch) == 2) )
+				{
+					if( srcw > 4096 || srch > 4096 )
+						add_resized_res(srcw, srch, 4096, 4096, "JPEG_LRG", detailID, passed_args);
+					if( srcw > 1024 || srch > 768 )
+						add_resized_res(srcw, srch, 1024, 768, "JPEG_MED", detailID, passed_args);
+					if( srcw > 640 || srch > 480 )
+						add_resized_res(srcw, srch, 640, 480, "JPEG_SM", detailID, passed_args);
 				}
-				if( !dlna_pn || !strncmp(dlna_pn, "JPEG_L", 6) || !strncmp(dlna_pn, "JPEG_M", 6) ) {
-					add_resized_res(srcw, srch, 640, 480, "JPEG_SM", detailID, passed_args);
-				}
-				if( tn && atoi(tn) ) {
+				if( !(passed_args->flags & FLAG_RESIZE_THUMBS) && tn && atoi(tn) ) {
 					ret = strcatf(str, "&lt;res protocolInfo=\"http-get:*:%s:%s\"&gt;"
 					                   "http://%s:%d/Thumbnails/%s.jpg"
 					                   "&lt;/res&gt;",
 					                   mime, "DLNA.ORG_PN=JPEG_TN;DLNA.ORG_CI=1", lan_addr[passed_args->iface].str,
 					                   runtime_vars.port, detailID);
 				}
+				else
+					add_resized_res(srcw, srch, 160, 160, "JPEG_TN", detailID, passed_args);
 			}
 			else if( *mime == 'v' ) {
 				switch( passed_args->client ) {
@@ -1068,6 +1065,7 @@ callback(void *args, int argc, char **argv, char **azColName)
 		/* If the client calls for BrowseMetadata on root, we have to include our "upnp:searchClass"'s, unless they're filtered out */
 		if( (passed_args->requested == 1) && (strcmp(id, "0") == 0) )
 		{
+			ret = strcatf(str, " searchable=\"1\"");
 			if( passed_args->filter & FILTER_UPNP_SEARCHCLASS )
 			{
 				ret = strcatf(str, "&gt;"
@@ -1283,7 +1281,7 @@ BrowseContentDirectory(struct upnphttp * h, const char * action)
 			}
 		}
 		/* If it's a DLNA client, return an error for bad sort criteria */
-		if( (args.flags & FLAG_DLNA) && ret < 0 )
+		if( ret < 0 && ((args.flags & FLAG_DLNA) || GETFLAG(DLNA_STRICT_MASK)) )
 		{
 			SoapError(h, 709, "Unsupported or invalid sort criteria");
 			goto browse_error;
@@ -1296,12 +1294,14 @@ BrowseContentDirectory(struct upnphttp * h, const char * action)
 		DPRINTF(E_DEBUG, L_HTTP, "Browse SQL: %s\n", sql);
 		ret = sqlite3_exec(db, sql, callback, (void *) &args, &zErrMsg);
 	}
-	sqlite3_free(sql);
 	if( (ret != SQLITE_OK) && (zErrMsg != NULL) )
 	{
 		DPRINTF(E_WARN, L_HTTP, "SQL error: %s\nBAD SQL: %s\n", zErrMsg, sql);
 		sqlite3_free(zErrMsg);
+		SoapError(h, 709, "Unsupported or invalid sort criteria");
+		goto browse_error;
 	}
+	sqlite3_free(sql);
 	/* Does the object even exist? */
 	if( !totalMatches )
 	{
@@ -1495,7 +1495,7 @@ SearchContentDirectory(struct upnphttp * h, const char * action)
 #endif
 		orderBy = parse_sort_criteria(SortCriteria, &ret);
 	/* If it's a DLNA client, return an error for bad sort criteria */
-	if( (args.flags & FLAG_DLNA) && ret < 0 )
+	if( ret < 0 && ((args.flags & FLAG_DLNA) || GETFLAG(DLNA_STRICT_MASK)) )
 	{
 		SoapError(h, 709, "Unsupported or invalid sort criteria");
 		goto search_error;

@@ -43,6 +43,10 @@
 #include "albumart.h"
 #include "log.h"
 
+#ifndef AV_LOG_PANIC
+#define AV_LOG_PANIC AV_LOG_FATAL
+#endif
+
 int valid_cache = 0;
 
 struct virtual_item

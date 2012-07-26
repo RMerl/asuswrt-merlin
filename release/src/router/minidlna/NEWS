@@ -1,3 +1,14 @@
+1.0.25 - Released 13-July-2012
+--------------------------------
+- Fix a couple crash bugs on malformed WAV files.
+- Forcibly tweak the model number for Xbox360 clients, or they might ignore us.
+- Enable all network interfaces by default if none were specified.
+- Add flag to force downscaled thumbnails rather than using embedded ones.
+- Add DirecTV client detection, and fix image resolution issue.
+- Add support for the latest ffmpeg/libav library versions.
+- Fix a potential crash on requests for a resize of a non-existent image.
+- Make DeviceID checking more permissive for Sagem Radio.
+
 1.0.24 - Released 14-Feb-2012
 --------------------------------
 - Fix playlist browsing with no SortOrder specified.

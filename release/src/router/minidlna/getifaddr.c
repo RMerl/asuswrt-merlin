@@ -42,13 +42,13 @@
 #include <sys/sockio.h>
 #endif
 
+#include "upnpglobalvars.h"
 #include "getifaddr.h"
 #include "log.h"
 
 int
 getifaddr(const char * ifname, char * buf, int len)
 {
-	/* SIOCGIFADDR struct ifreq *  */
 	int s;
 	struct ifreq ifr;
 	int ifrlen;
@@ -60,13 +60,14 @@ getifaddr(const char * ifname, char * buf, int len)
 	s = socket(PF_INET, SOCK_DGRAM, 0);
 	if(s < 0)
 	{
-		DPRINTF(E_ERROR, L_GENERAL, "socket(PF_INET, SOCK_DGRAM): %s\n", strerror(errno));
+		DPRINTF(E_ERROR, L_GENERAL, "socket: %s\n", strerror(errno));
 		return -1;
 	}
 	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
 	if(ioctl(s, SIOCGIFADDR, &ifr, &ifrlen) < 0)
 	{
-		DPRINTF(E_ERROR, L_GENERAL, "ioctl(s, SIOCGIFADDR, ...): %s\n", strerror(errno));
+		/* Interface is up but has no address (unconfigured) */
+		DPRINTF(E_INFO, L_GENERAL, "SIOCGIFADDR %s: %s\n", ifname, strerror(errno));
 		close(s);
 		return -1;
 	}
@@ -100,53 +101,54 @@ getifaddr(const char * ifname, char * buf, int len)
 }
 
 int
-getsysaddr(char * buf, int len)
+getsysaddrs(void)
 {
-	int i;
 	int s = socket(PF_INET, SOCK_STREAM, 0);
 	struct sockaddr_in addr;
-	struct ifreq ifr;
-	uint32_t mask;
-	int ret = -1;
+	struct ifconf ifc;
+	struct ifreq *ifr;
+	char buf[8192];
+	int n, i;
 
-	for (i=1; i > 0; i++)
+	memset(&ifc, '\0', sizeof(ifc));
+	ifc.ifc_buf = buf;
+	ifc.ifc_len = sizeof(buf);
+
+	if( ioctl(s, SIOCGIFCONF, &ifc) < 0 )
 	{
-		ifr.ifr_ifindex = i;
-		if( ioctl(s, SIOCGIFNAME, &ifr) < 0 )
-			break;
-		if(ioctl(s, SIOCGIFADDR, &ifr, sizeof(struct ifreq)) < 0)
+		DPRINTF(E_ERROR, L_GENERAL, "SIOCGIFCONF: %s\n", strerror(errno));
+		close(s);
+		return -1;
+	}
+
+	n = ifc.ifc_len / sizeof(struct ifreq);
+	for (i=0; i < n; i++)
+	{
+		ifr = &ifc.ifc_req[i];
+		if( ioctl(s, SIOCGIFFLAGS, ifr) < 0 ||
+		    ifr->ifr_ifru.ifru_flags & IFF_LOOPBACK)
 			continue;
-		memcpy(&addr, &ifr.ifr_addr, sizeof(addr));
-		if(strncmp(inet_ntoa(addr.sin_addr), "127.", 4) == 0)
+		if( ioctl(s, SIOCGIFADDR, ifr) < 0 )
 			continue;
-		if(ioctl(s, SIOCGIFNETMASK, &ifr, sizeof(struct ifreq)) < 0)
-			continue;
-		if(!inet_ntop(AF_INET, &addr.sin_addr, buf, len))
+		memcpy(&addr, &(ifr->ifr_addr), sizeof(addr));
+		memcpy(&lan_addr[n_lan_addr].addr, &addr.sin_addr, sizeof(lan_addr[n_lan_addr].addr));
+		if( !inet_ntop(AF_INET, &addr.sin_addr, lan_addr[n_lan_addr].str, sizeof(lan_addr[0].str)) )
 		{
 			DPRINTF(E_ERROR, L_GENERAL, "inet_ntop(): %s\n", strerror(errno));
 			close(s);
+			continue;
+		}
+		if(ioctl(s, SIOCGIFNETMASK, ifr) < 0)
+			continue;
+		memcpy(&addr, &(ifr->ifr_addr), sizeof(addr));
+		memcpy(&lan_addr[n_lan_addr].mask, &addr.sin_addr, sizeof(addr));
+		n_lan_addr++;
+		if (n_lan_addr >= MAX_LAN_ADDR)
 			break;
-		}
-		ret = 0;
-
-		memcpy(&addr, &ifr.ifr_netmask, sizeof(addr));
-		mask = ntohl(addr.sin_addr.s_addr);
-		for (i = 0; i < 32; i++)
-		{
-			if ((mask >> i) & 1)
-				break;
-		}
-		mask = 32 - i;
-		if (mask)
-		{
-			i = strlen(buf);
-			snprintf(buf+i, len-i, "/%u", mask);
-		}
-		break;
 	}
 	close(s);
 
-	return(ret);
+	return(n_lan_addr);
 }
 
 int

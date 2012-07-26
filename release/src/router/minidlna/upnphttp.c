@@ -86,6 +86,12 @@
 
 #include "icons.c"
 
+enum event_type {
+        E_INVALID,
+        E_SUBSCRIBE,
+        E_RENEW
+};
+
 struct upnphttp * 
 New_upnphttp(int s)
 {
@@ -208,9 +214,6 @@ ParseHttpHeaders(struct upnphttp * h)
 					n++;
 				h->req_Callback = p + 1;
 				h->req_CallbackLen = MAX(0, n - 1);
-				/* Verify callback validity */
-				if(strncmp(h->req_Callback, "http://", 7) != 0)
-					h->req_Callback = NULL;
 			}
 			else if(strncasecmp(line, "SID", 3)==0)
 			{
@@ -342,6 +345,7 @@ ParseHttpHeaders(struct upnphttp * h)
 				else if(strstrc(p, "fbxupnpav/", '\r'))
 				{
 					h->req_client = EFreeBox;
+					h->reqflags |= FLAG_RESIZE_THUMBS;
 				}
 				else if(strncmp(p, "SMP8634", 7)==0)
 				{
@@ -362,6 +366,12 @@ ParseHttpHeaders(struct upnphttp * h)
 				{
 					h->req_client = ENetgearEVA2000;
 					h->reqflags |= FLAG_MS_PFS;
+					h->reqflags |= FLAG_RESIZE_THUMBS;
+				}
+				else if(strstrc(p, "DIRECTV ", '\r'))
+				{
+					h->req_client = EDirecTV;
+					h->reqflags |= FLAG_RESIZE_THUMBS;
 				}
 				else if(strstrc(p, "UPnP/1.0 DLNADOC/1.50 Intel_SDK_for_UPnP_devices/1.2", '\r'))
 				{
@@ -739,74 +749,119 @@ ProcessHTTPPOST_upnphttp(struct upnphttp * h)
 	}
 }
 
+static int
+check_event(struct upnphttp *h)
+{
+	enum event_type type;
+
+	if (h->req_Callback)
+	{
+		if (h->req_SID || !h->req_NT)
+		{
+			BuildResp2_upnphttp(h, 400, "Bad Request",
+				            "<html><body>Bad request</body></html>", 37);
+			type = E_INVALID;
+		}
+		else if (strncmp(h->req_Callback, "http://", 7) != 0 ||
+		         strncmp(h->req_NT, "upnp:event", h->req_NTLen) != 0)
+		{
+			/* Missing or invalid CALLBACK : 412 Precondition Failed.
+			 * If CALLBACK header is missing or does not contain a valid HTTP URL,
+			 * the publisher must respond with HTTP error 412 Precondition Failed*/
+			BuildResp2_upnphttp(h, 412, "Precondition Failed", 0, 0);
+			type = E_INVALID;
+		}
+		else
+			type = E_SUBSCRIBE;
+	}
+	else if (h->req_SID)
+	{
+		/* subscription renew */
+		if (h->req_NT)
+		{
+			BuildResp2_upnphttp(h, 400, "Bad Request",
+				            "<html><body>Bad request</body></html>", 37);
+			type = E_INVALID;
+		}
+		else
+			type = E_RENEW;
+	}
+	else
+	{
+		BuildResp2_upnphttp(h, 412, "Precondition Failed", 0, 0);
+		type = E_INVALID;
+	}
+
+	return type;
+}
+
 static void
 ProcessHTTPSubscribe_upnphttp(struct upnphttp * h, const char * path)
 {
 	const char * sid;
+	enum event_type type;
 	DPRINTF(E_DEBUG, L_HTTP, "ProcessHTTPSubscribe %s\n", path);
 	DPRINTF(E_DEBUG, L_HTTP, "Callback '%.*s' Timeout=%d\n",
 	       h->req_CallbackLen, h->req_Callback, h->req_Timeout);
 	DPRINTF(E_DEBUG, L_HTTP, "SID '%.*s'\n", h->req_SIDLen, h->req_SID);
-	if((!h->req_Callback && !h->req_SID) ||
-	   strncmp(h->req_NT, "upnp:event", h->req_NTLen) != 0) {
-		/* Missing or invalid CALLBACK : 412 Precondition Failed.
-		 * If CALLBACK header is missing or does not contain a valid HTTP URL,
-		 * the publisher must respond with HTTP error 412 Precondition Failed*/
-		BuildResp2_upnphttp(h, 412, "Precondition Failed", 0, 0);
-		SendResp_upnphttp(h);
-		CloseSocket_upnphttp(h);
-	} else {
-	/* - add to the subscriber list
-	 * - respond HTTP/x.x 200 OK 
-	 * - Send the initial event message */
-	/* Server:, SID:; Timeout: Second-(xx|infinite) */
-		if(h->req_Callback) {
-			if(!h->req_NT || strncmp(h->req_NT, "upnp:event", h->req_NTLen) != 0) {
-				BuildResp2_upnphttp(h, 400, "Bad Request",
-					            "<html><body>Bad request</body></html>", 37);
-			} else {
-				sid = upnpevents_addSubscriber(path, h->req_Callback,
-				                               h->req_CallbackLen, h->req_Timeout);
-				h->respflags = FLAG_TIMEOUT;
-				if(sid) {
-					DPRINTF(E_DEBUG, L_HTTP, "generated sid=%s\n", sid);
-					h->respflags |= FLAG_SID;
-					h->req_SID = sid;
-					h->req_SIDLen = strlen(sid);
-				}
-				BuildResp_upnphttp(h, 0, 0);
-			}
-		} else {
-			/* subscription renew */
-			/* Invalid SID
-412 Precondition Failed. If a SID does not correspond to a known,
-un-expired subscription, the publisher must respond
-with HTTP error 412 Precondition Failed. */
-			if(renewSubscription(h->req_SID, h->req_SIDLen, h->req_Timeout) < 0) {
-				BuildResp2_upnphttp(h, 412, "Precondition Failed", 0, 0);
-			} else {
-				/* A DLNA device must enforce a 5 minute timeout */
-				h->respflags = FLAG_TIMEOUT;
-				h->req_Timeout = 300;
-				h->respflags |= FLAG_SID;
-				BuildResp_upnphttp(h, 0, 0);
-			}
+
+	type = check_event(h);
+	if (type == E_SUBSCRIBE)
+	{
+		/* - add to the subscriber list
+		 * - respond HTTP/x.x 200 OK 
+		 * - Send the initial event message */
+		/* Server:, SID:; Timeout: Second-(xx|infinite) */
+		sid = upnpevents_addSubscriber(path, h->req_Callback,
+		                               h->req_CallbackLen, h->req_Timeout);
+		h->respflags = FLAG_TIMEOUT;
+		if (sid)
+		{
+			DPRINTF(E_DEBUG, L_HTTP, "generated sid=%s\n", sid);
+			h->respflags |= FLAG_SID;
+			h->req_SID = sid;
+			h->req_SIDLen = strlen(sid);
 		}
-		SendResp_upnphttp(h);
-		CloseSocket_upnphttp(h);
+		BuildResp_upnphttp(h, 0, 0);
 	}
+	else if (type == E_RENEW)
+	{
+		/* subscription renew */
+		if (renewSubscription(h->req_SID, h->req_SIDLen, h->req_Timeout) < 0)
+		{
+			/* Invalid SID
+			   412 Precondition Failed. If a SID does not correspond to a known,
+			   un-expired subscription, the publisher must respond
+			   with HTTP error 412 Precondition Failed. */
+			BuildResp2_upnphttp(h, 412, "Precondition Failed", 0, 0);
+		}
+		else
+		{
+			/* A DLNA device must enforce a 5 minute timeout */
+			h->respflags = FLAG_TIMEOUT;
+			h->req_Timeout = 300;
+			h->respflags |= FLAG_SID;
+			BuildResp_upnphttp(h, 0, 0);
+		}
+	}
+	SendResp_upnphttp(h);
+	CloseSocket_upnphttp(h);
 }
 
 static void
 ProcessHTTPUnSubscribe_upnphttp(struct upnphttp * h, const char * path)
 {
+	enum event_type type;
 	DPRINTF(E_DEBUG, L_HTTP, "ProcessHTTPUnSubscribe %s\n", path);
 	DPRINTF(E_DEBUG, L_HTTP, "SID '%.*s'\n", h->req_SIDLen, h->req_SID);
 	/* Remove from the list */
-	if(upnpevents_removeSubscriber(h->req_SID, h->req_SIDLen) < 0) {
-		BuildResp2_upnphttp(h, 412, "Precondition Failed", 0, 0);
-	} else {
-		BuildResp_upnphttp(h, 0, 0);
+	type = check_event(h);
+	if (type != E_INVALID)
+	{
+		if(upnpevents_removeSubscriber(h->req_SID, h->req_SIDLen) < 0)
+			BuildResp2_upnphttp(h, 412, "Precondition Failed", 0, 0);
+		else
+			BuildResp_upnphttp(h, 0, 0);
 	}
 	SendResp_upnphttp(h);
 	CloseSocket_upnphttp(h);
@@ -924,12 +979,21 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
 		if(strcmp(ROOTDESC_PATH, HttpUrl) == 0)
 		{
 			/* If it's a Xbox360, we might need a special friendly_name to be recognized */
-			if( (h->req_client == EXbox) && !strchr(friendly_name, ':') )
+			if( h->req_client == EXbox )
 			{
-				i = strlen(friendly_name);
-				snprintf(friendly_name+i, FRIENDLYNAME_MAX_LEN-i, ": 1");
+				char model_sav[2];
+				i = 0;
+				memcpy(model_sav, modelnumber, 2);
+				strcpy(modelnumber, "1");
+				if( !strchr(friendly_name, ':') )
+				{
+					i = strlen(friendly_name);
+					snprintf(friendly_name+i, FRIENDLYNAME_MAX_LEN-i, ": 1");
+				}
 				sendXMLdesc(h, genRootDesc);
-				friendly_name[i] = '\0';
+				if( i )
+					friendly_name[i] = '\0';
+				memcpy(modelnumber, model_sav, 2);
 			}
 			else if( h->reqflags & FLAG_SAMSUNG_TV )
 			{
@@ -1553,9 +1617,9 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	time_t curtime = time(NULL);
 	int width=640, height=480, dstw, dsth, size;
 	int srcw, srch;
-	unsigned char * data = NULL;
-	char *path, *file_path;
-	char *resolution;
+	unsigned char *data = NULL;
+	char *path, *file_path = NULL;
+	char *resolution = NULL;
 	char *key, *val;
 	char *saveptr, *item=NULL;
 	int rotate;
@@ -1569,16 +1633,18 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	id = strtoll(object, &saveptr, 10);
 	snprintf(buf, sizeof(buf), "SELECT PATH, RESOLUTION, ROTATION from DETAILS where ID = '%lld'", id);
 	ret = sql_get_table(db, buf, &result, &rows, NULL);
-	if( (ret != SQLITE_OK) )
+	if( ret != SQLITE_OK )
 	{
-		DPRINTF(E_ERROR, L_HTTP, "Didn't find valid file for %lld!\n", id);
 		Send500(h);
 		return;
 	}
-	file_path = result[3];
-	resolution = result[4];
-	rotate = result[5] ? atoi(result[5]) : 0;
-	if( !rows || !file_path || !resolution || (access(file_path, F_OK) != 0) )
+	if( rows )
+	{
+		file_path = result[3];
+		resolution = result[4];
+		rotate = result[5] ? atoi(result[5]) : 0;
+	}
+	if( !file_path || !resolution || (access(file_path, F_OK) != 0) )
 	{
 		DPRINTF(E_WARN, L_HTTP, "%s not found, responding ERROR 404\n", object);
 		sqlite3_free_table(result);
@@ -1808,9 +1874,8 @@ SendResp_dlnafile(struct upnphttp * h, char * object)
 	{
 		snprintf(buf, sizeof(buf), "SELECT PATH, MIME, DLNA_PN from DETAILS where ID = '%lld'", id);
 		ret = sql_get_table(db, buf, &result, &rows, NULL);
-		if( (ret != SQLITE_OK) )
+		if( ret != SQLITE_OK )
 		{
-			DPRINTF(E_ERROR, L_HTTP, "Didn't find valid file for %lld!\n", id);
 			Send500(h);
 			return;
 		}
@@ -2000,4 +2065,5 @@ error:
 	if( !newpid )
 		_exit(0);
 #endif
+	return;
 }

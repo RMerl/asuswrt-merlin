@@ -91,6 +91,40 @@ enum audio_profiles {
 	PROFILE_AUDIO_AMR
 };
 
+static inline int
+lav_open(AVFormatContext **ctx, const char *filename)
+{
+	int ret;
+#if LIBAVFORMAT_VERSION_INT >= ((53<<16)+(2<<8)+0)
+	ret = avformat_open_input(ctx, filename, NULL, NULL);
+	if (ret == 0)
+        	avformat_find_stream_info(*ctx, NULL);
+#else
+	ret = av_open_input_file(ctx, filename, NULL, 0, NULL);
+	if (ret == 0)
+		av_find_stream_info(*ctx);
+#endif
+	return ret;
+}
+
+static inline void
+lav_close(AVFormatContext *ctx)
+{
+#if LIBAVFORMAT_VERSION_INT >= ((53<<16)+(2<<8)+0)
+	avformat_close_input(&ctx);
+#else
+	av_close_input_file(ctx);
+#endif
+}
+
+#if LIBAVFORMAT_VERSION_INT >= ((52<<16)+(31<<8)+0)
+# if LIBAVUTIL_VERSION_INT < ((51<<16)+(5<<8)+0)
+#define AV_DICT_IGNORE_SUFFIX AV_METADATA_IGNORE_SUFFIX
+#define av_dict_get av_metadata_get
+typedef AVMetadataTag AVDictionaryEntry;
+# endif
+#endif
+
 /* This function shamelessly copied from libdlna */
 #define MPEG_TS_SYNC_CODE 0x47
 #define MPEG_TS_PACKET_LENGTH 188
@@ -701,16 +735,12 @@ GetVideoMetadata(const char * path, char * name)
 	//DEBUG DPRINTF(E_DEBUG, L_METADATA, " * size: %jd\n", file.st_size);
 
 	av_register_all();
-	#if LIBAVFORMAT_VERSION_INT >= ((53<<16)+(2<<8)+0)
-	if( avformat_open_input(&ctx, path, NULL, NULL) != 0 )
-	#else
-	if( av_open_input_file(&ctx, path, NULL, 0, NULL) != 0 )
-	#endif
+	ret = lav_open(&ctx, path);
+	if( ret != 0 )
 	{
 		DPRINTF(E_WARN, L_METADATA, "Opening %s failed!\n", path);
 		return 0;
 	}
-	av_find_stream_info(ctx);
 	//dump_format(ctx, 0, NULL, 0);
 	for( i=0; i<ctx->nb_streams; i++)
 	{
@@ -732,7 +762,7 @@ GetVideoMetadata(const char * path, char * name)
 	/* This must not be a video file. */
 	if( !vc )
 	{
-		av_close_input_file(ctx);
+		lav_close(ctx);
 		if( !is_audio(path) )
 			DPRINTF(E_DEBUG, L_METADATA, "File %s does not contain a video stream.\n", basename(path));
 		return 0;
@@ -1514,10 +1544,10 @@ GetVideoMetadata(const char * path, char * name)
 	{
 		if( ctx->metadata )
 		{
-			AVMetadataTag *tag = NULL;
+			AVDictionaryEntry *tag = NULL;
 
 			//DEBUG DPRINTF(E_DEBUG, L_METADATA, "Metadata:\n");
-			while( (tag = av_metadata_get(ctx->metadata, "", tag, AV_METADATA_IGNORE_SUFFIX)) )
+			while( (tag = av_dict_get(ctx->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)) )
 			{
 				//DEBUG DPRINTF(E_DEBUG, L_METADATA, "  %-16s: %s\n", tag->key, tag->value);
 				if( strcmp(tag->key, "title") == 0 )
@@ -1534,7 +1564,7 @@ GetVideoMetadata(const char * path, char * name)
 	#endif
 	#endif
 video_no_dlna:
-	av_close_input_file(ctx);
+	lav_close(ctx);
 
 #ifdef TIVO_SUPPORT
 	if( ends_with(path, ".TiVo") && is_tivo_file(path) )
