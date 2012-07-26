@@ -16,7 +16,7 @@ alternative for those who prefer to stay closer to the original firmware.
 
 The list of changes (so far):
 
-- Based on the source code of release 3.0.0.3.157 (unreleased by Asus)
+- Based on the source code of release 3.0.0.3.162
 - WakeOnLan web interface (with user-entered preset targets)
 - Persistent JFFS partition
 - User scripts that run on specific events
@@ -32,8 +32,8 @@ The list of changes (so far):
 - Allows tweaking TCP/UDP connection tracking timeouts
 - CIFS client support (for mounting remote SMB share on the router)
 - Layer7 iptables matching
-- User-defined options for DHCP requests (required by some ISPs)
-- Name field to the DHCP reservation list
+- User-defined options for WAN DHCP queries (required by some ISPs)
+- Name field on the DHCP reservation list
 - Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
 - Dual WAN support (both failover and load balancing supported) (EXPERIMENTAL)
 
@@ -121,7 +121,7 @@ or both.  You can also change the https port to a different one
 You can configure the router so pressing the WPS button will 
 toggle the radio on/off instead of starting WPS mode.
 The option to enable this feature can be found on the 
-Tools page, under the Other Settings tab.
+Administration page, on the System tab.
 
 
 * Crond *
@@ -199,13 +199,6 @@ the time Asus finishes developping and testing it.
 
 
 
-Notes
------
-To make it simple to determine which version you are running, I am simply 
-appending another digit to determine my build version.  
-For example, 3.0.0.3.108 becomes 3.0.0.3.108.1.
-
-
 Source code
 -----------
 The source code with all my modifications can be found 
@@ -219,6 +212,8 @@ History
 -------
 3.0.0.3.162.13:
    - NEW: Rebased on 3.0.0.3.162.
+   - CHANGED: Switched to WPS radio toggle code Asus added,
+              now on the Administration -> System tab.
 
 
 3.0.0.3.157.12 Beta:
