@@ -269,6 +269,11 @@ extern void stop_lpd();
 extern void start_u2ec();
 extern void stop_u2ec();
 int ejusb_main(int argc, const char *argv[]);
+
+#ifdef LINUX26
+extern int start_sd_idle(void);
+extern int stop_sd_idle(void);
+#endif
 #endif
 
 #ifdef RTCONFIG_CIFS

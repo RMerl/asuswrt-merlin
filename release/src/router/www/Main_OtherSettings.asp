@@ -77,6 +77,12 @@ function initConntrackValues(){
 }
 
 
+function checkTimeoutValue(o) {
+
+	if (o.value == 0) return true;
+	return validate_number_range(o, 300, 43200);
+}
+
 function applyRule(){
 
 	showLoading();
@@ -101,6 +107,9 @@ function applyRule(){
 		document.form.tcp_last_ack.value +" 0";
 
 	document.form.ct_udp_timeout.value = document.form.udp_unreplied.value + " "+document.form.udp_assured.value;
+
+	if (document.form.usb_idle_timeout.value != <% nvram_get("usb_idle_timeout"); %>)
+		document.form.action_script.value += ";restart_sdidle";
 
 	document.form.submit();
 }
@@ -219,6 +228,13 @@ function done_validating(action){
 							<input type="radio" name="webui_resolve_conn" class="input" value="0" <% nvram_match_x("", "webui_resolve_conn", "0", "checked"); %>><#checkbox_No#>
 						</td>
 	                                </tr>
+
+					<tr>
+						<th>Disk spindown idle time (in seconds):<br><i>Enter &quot;0&quot; to disable</i></th>
+						<td>
+							<input type="text" maxlength="6" class="input_12_table"name="usb_idle_timeout" onKeyPress="return is_number(this,event);" onblur="checkTimeoutValue(this);"value="<% nvram_get("usb_idle_timeout"); %>">
+						</td>
+					</tr>
 				</table>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">

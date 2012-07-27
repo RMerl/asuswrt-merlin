@@ -105,6 +105,7 @@ obj-$(RTCONFIG_HTTPS) += mssl
 ifeq ($(RTCONFIG_USB),y)
 #obj-y += p910nd
 obj-y += scsi-idle
+obj-y += sd-idle
 obj-y += libusb10
 obj-y += libusb
 obj-y += libusb-0.1.12
@@ -1882,6 +1883,16 @@ netstat-nat: netstat-nat/stamp-h1
 
 netstat-nat: netstat-nat/Makefile
 	$(MAKE) -C netstat-nat
+
+sd-idle: sd-idle/sd-idle-2.6
+	cd sd-idle && \
+	CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
+	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -fPIC" \
+	$(CC) sd-idle-2.6.c -o sd-idle-2.6
+
+sd-idle-install: sd-idle-2.6
+	install -D sd-idle/sd-idle-2.6 $(INSTALLDIR)/sd-idle/usr/sbin/sd-idle-2.6
+	$(STRIP) -s $(INSTALLDIR)/sd-idle/usr/sbin/sd-idle-2.6
 
 #
 # Generic rules

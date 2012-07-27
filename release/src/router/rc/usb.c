@@ -2406,3 +2406,23 @@ void webdav_account_default(void)
 }
 #endif
 
+#ifdef LINUX26
+int start_sd_idle(void) {
+	int ret = 0;
+	int idle_timeout = nvram_get_int("usb_idle_timeout");
+	char tmp[12];
+
+	if (idle_timeout != 0) {
+		sprintf(tmp,"%d",idle_timeout);
+		ret = eval("/usr/sbin/sd-idle-2.6" , "-i" , tmp);
+	}
+	return ret;
+}
+
+int stop_sd_idle(void) {
+	int ret = eval("killall","sd-idle-2.6");
+	return ret;
+}
+
+#endif
+

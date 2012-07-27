@@ -3617,6 +3617,18 @@ _dprintf("restart_nas_services(%d): test 12.\n", getpid());
 		setup_udp_timeout(TRUE);
 //            start_firewall(wan_primary_ifunit(), 0);
 	}
+#ifdef RTCONFIG_USB
+#ifdef LINUX26
+        else if (strcmp(script, "sdidle") == 0) {
+                if(action&RC_SERVICE_STOP){
+                        stop_sd_idle();
+                }
+                if(action&RC_SERVICE_START){
+                        start_sd_idle();
+                }
+	}
+#endif
+#endif
 	else
 	{
 		fprintf(stderr,

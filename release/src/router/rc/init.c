@@ -1910,6 +1910,9 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			fd = file_lock("usb");	// hold off automount processing
 			start_usb();
 			start_usbled();
+#ifdef LINUX26
+			start_sd_idle();
+#endif
 			file_unlock(fd);	// allow to process usb hotplug events
 			/*
 			 * On RESTART some partitions can stay mounted if they are busy at the moment.
