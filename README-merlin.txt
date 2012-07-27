@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.162.13 (25-July-2012)
+Asuswrt-Merlin - build 3.0.0.3.162.14 (XX-July-2012)
 ====================================================
 
 About
@@ -36,6 +36,7 @@ The list of changes (so far):
 - Name field on the DHCP reservation list
 - Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
 - Dual WAN support (both failover and load balancing supported) (EXPERIMENTAL)
+- Disk spindown after user-configurable inactivity timeout
 
 
 Installation
@@ -210,6 +211,13 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.3.162.14:
+   - NEW: Spin down disks after (user-configurable) inactivity timeout
+          (using Jeff Gibbons' sd-idle-2.6)
+   - CHANGED: Upgraded to MiniDLNA 1.0.25 (changelog:
+              http://sourceforge.net/projects/minidlna/files/minidlna/1.0.25/)
+
+
 3.0.0.3.162.13:
    - NEW: Rebased on 3.0.0.3.162.
    - CHANGED: Switched to WPS radio toggle code Asus added,
