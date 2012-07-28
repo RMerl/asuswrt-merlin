@@ -77,12 +77,6 @@ function initConntrackValues(){
 }
 
 
-function checkTimeoutValue(o) {
-
-	if (o.value == 0) return true;
-	return validate_number_range(o, 300, 43200);
-}
-
 function applyRule(){
 
 	showLoading();
@@ -130,8 +124,8 @@ function done_validating(action){
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
-<input type="hidden" name="current_page" value="Main_OtherSettings.asp">
-<input type="hidden" name="next_page" value="Main_OtherSettings.asp">
+<input type="hidden" name="current_page" value="Tools_OtherSettings.asp">
+<input type="hidden" name="next_page" value="Tools_OtherSettings.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
@@ -230,9 +224,9 @@ function done_validating(action){
 	                                </tr>
 
 					<tr>
-						<th>Disk spindown idle time (in seconds):<br><i>Enter &quot;0&quot; to disable</i></th>
+						<th>Disk spindown idle time (in seconds)</th>
 						<td>
-							<input type="text" maxlength="6" class="input_12_table"name="usb_idle_timeout" onKeyPress="return is_number(this,event);" onblur="checkTimeoutValue(this);"value="<% nvram_get("usb_idle_timeout"); %>">
+							<input type="text" maxlength="6" class="input_12_table"name="usb_idle_timeout" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 43200)"value="<% nvram_get("usb_idle_timeout"); %>">
 						</td>
 					</tr>
 				</table>

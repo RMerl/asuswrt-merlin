@@ -32,8 +32,8 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
-<input type="hidden" name="current_page" value="Main_RunCmd.asp">
-<input type="hidden" name="next_page" value="Main_RunCmd.asp">
+<input type="hidden" name="current_page" value="Tools_RunCmd.asp">
+<input type="hidden" name="next_page" value="Tools_RunCmd.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">

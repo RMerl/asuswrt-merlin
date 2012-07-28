@@ -154,7 +154,7 @@ tablink[6] = new Array("", "Advanced_BasicFirewall_Content.asp", "Advanced_URLFi
 tablink[7] = new Array("", "Advanced_OperationMode_Content.asp", "Advanced_System_Content.asp", "Advanced_FirmwareUpgrade_Content.asp", "Advanced_SettingBackup_Content.asp", "Advanced_PerformanceTuning_Content.asp", "Advanced_ADSL_Content.asp");
 tablink[8] = new Array("", "Main_LogStatus_Content.asp", "Main_DHCPStatus_Content.asp", "Main_WStatus_Content.asp", "Main_IPTStatus_Content.asp", "Main_RouteStatus_Content.asp", "Main_AdslStatus_Content.asp", "Main_ConnStatus_Content.asp");
 tablink[9] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Advanced_QOSUserSpec_Content.asp");
-tablink[10] = new Array("", "Main_WOL.asp", "Main_OtherSettings.asp", "Main_RunCmd.asp");
+tablink[10] = new Array("", "Tools_WOL.asp", "Tools_OtherSettings.asp", "Tools_RunCmd.asp");
 
 //Level 2 Menu
 menuL2_title = new Array("", "<#menu5_1#>", "<#menu5_2#>", "<#menu5_3#>", "<#menu5_4#>", "IPv6", "<#BOP_isp_heart_item#>", "<#menu5_5#>", "<#menu5_6#>", "<#System_Log#>");
@@ -481,8 +481,8 @@ function show_menu(){
 			L2 = traffic_L2_dx; 
 			L3 = 1;
 		}
-		else if(current_url.indexOf("Main_WOL") == 0){
-			L1 = 9;
+		else if(current_url.indexOf("Tools_") == 0){
+			L1 = 7;
 			L2 = 11;
 			L3 = 1;
 		}
@@ -494,6 +494,10 @@ function show_menu(){
 		}
 	}
 	//end
+
+	// tools
+	if(current_url.indexOf("Tools_") == 0)
+		L1 = 7;
 
 	// cloud
 	if(current_url.indexOf("cloud") == 0)
@@ -523,7 +527,7 @@ function show_menu(){
 			calculate_height--;
 			continue;
 		}
-		else if(L1 == i && (L2 <= 0 || L2 == traffic_L2_dx)){
+		else if(L1 == i && (L2 <= 0 || L2 == traffic_L2_dx || L1 ==  7)){
 		  //menu1_code += '<div class="m'+i+'_r" id="option'+i+'">'+'<table><tr><td><img border="0" width="50px" height="50px" src="images/New_ui/icon_index_'+i+'.png" style="margin-top:-3px;"/></td><td><div style="width:120px;">'+menuL1_title[i]+'</div></td></tr></table></div>\n';
 		  menu1_code += '<div class="m'+i+'_r" id="option'+i+'">'+'<table><tr><td><div id="index_img'+i+'"></div></td><td><div id="menu_string'+i+'" style="width:120px;">'+menuL1_title[i]+'</div></td></tr></table></div>\n';
 		}

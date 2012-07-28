@@ -9,7 +9,7 @@
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
 
-<title><#Web_Title#> - WakeOnLan</title>
+<title><#Web_Title#> - <#menu5_2_2#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <style>
@@ -339,8 +339,8 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
-<input type="hidden" name="current_page" value="Main_WOL.asp">
-<input type="hidden" name="next_page" value="Main_WOL.asp">
+<input type="hidden" name="current_page" value="Tools_WOL.asp">
+<input type="hidden" name="next_page" value="Tools_WOL.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
