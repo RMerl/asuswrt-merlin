@@ -115,6 +115,8 @@ int ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv);
 
 extern int ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv);
 
+extern int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t **argv);
+
 #define wan_prefix(unit, prefix)	snprintf(prefix, sizeof(prefix), "wan%d_", unit)
 /*
 #define csprintf(fmt, args...) do{\
@@ -7057,6 +7059,7 @@ struct ej_handler ej_handlers[] = {
 	{ "wlc_psta_state", ej_wl_auth_psta},
 #endif	
 	{ "get_default_reboot_time", ej_get_default_reboot_time},	
+	{ "sysinfo",  ej_show_sysinfo},
 	{ NULL, NULL }
 };
 
@@ -7219,4 +7222,60 @@ ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv)
 	return retval;
 }
 
+
+#include <sys/sysinfo.h>
+
+int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
+{
+        char *type;
+	char result[200];
+	int retval = 0;
+	struct sysinfo sys;
+
+	strcpy(result,"None");
+
+        if (ejArgs(argc, argv, "%s", &type) < 1) {
+                websError(wp, 400, "Insufficient args\n");
+                return retval;
+        }
+
+        if (type) {
+		if (strcmp(type,"cpu.model") == 0) {
+			strncpy(result,"Some Broadcom",200);
+		} else if(strcmp(type,"memory.total") == 0) {
+			sysinfo(&sys);
+			sprintf(result,"%ld",(sys.totalram/1024));
+                } else if(strcmp(type,"memory.free") == 0) {
+                        sysinfo(&sys);
+                        sprintf(result,"%ld",(sys.freeram/1024));
+                } else if(strcmp(type,"memory.buffer") == 0) {
+                        sysinfo(&sys);
+                        sprintf(result,"%ld",(sys.bufferram/1024));
+                } else if(strcmp(type,"memory.swap.total") == 0) {
+                        sysinfo(&sys);
+                        sprintf(result,"%ld",(sys.totalswap/1024));
+                } else if(strcmp(type,"memory.swap.used") == 0) {
+                        sysinfo(&sys);
+                        sprintf(result,"%ld",((sys.totalswap - sys.freeswap) / 1024));
+		} else if(strcmp(type,"cpu.load.1") == 0) {
+			sysinfo(&sys);
+			sprintf(result,"%.2f",(sys.loads[0] / (float)(1<<SI_LOAD_SHIFT)));
+		} else if(strcmp(type,"cpu.load.5") == 0) {
+			sysinfo(&sys);
+			sprintf(result,"%.2f",(sys.loads[1] / (float)(1<<SI_LOAD_SHIFT)));
+		} else if(strcmp(type,"cpu.load.15") == 0) {
+			sysinfo(&sys);
+			sprintf(result,"%.2f",(sys.loads[2] / (float)(1<<SI_LOAD_SHIFT)));
+		} else if(strcmp(type,"nvram.total") == 0) {
+			sprintf(result,"%d",NVRAM_SPACE);
+                } else {
+			strcpy(result,"Not implemented");
+		}
+
+	}
+
+        retval += websWrite(wp, result);
+        return retval;
+
+}
 
