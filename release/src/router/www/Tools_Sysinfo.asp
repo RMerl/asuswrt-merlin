@@ -115,7 +115,7 @@ function initial()
 					<tr>
 						<th>CPU Frequency</th>
 						<td>
-							<% sysinfo("cpu.freq"); %>
+							<% sysinfo("cpu.freq"); %> MHz
 						</td>
 					</tr>
 					<tr>
@@ -205,15 +205,9 @@ bordercolor="#6b8fa3"  class="FormTable">
                                                 </tr>
                                         </thead>
                                         <tr>
-                                                <th>NAT connections</th>
+                                                <th>Connections</th>
                                                 <td>
-                                                        <% sysinfo("conn.nat"); %>
-                                                </td>
-					</tr>
-                                        <tr>
-                                                <th>Local connections</th>
-                                                <td>
-                                                        <% sysinfo("conn.local"); %>
+                                                        <% sysinfo("conn.total"); %> / <% sysinfo("conn.max"); %>
                                                 </td>
                                                 </tr>
 

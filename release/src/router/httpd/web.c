@@ -7241,7 +7241,30 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
         if (type) {
 		if (strcmp(type,"cpu.model") == 0) {
-			strncpy(result,"Some Broadcom",200);
+
+			FILE* fp;
+			char buffer[1024];
+			size_t bytes_read;
+			char *tmp;
+
+			fp = fopen ("/proc/cpuinfo", "r");
+			bytes_read = fread(buffer, 1, sizeof (buffer), fp);
+			fclose (fp);
+
+			if (bytes_read != 0 && bytes_read != sizeof (buffer)) {
+				buffer[bytes_read] = '\0';
+
+				tmp = strstr(buffer, "system type");
+				if (tmp)
+					sscanf(tmp, "system type  :  %[^\n]", result);
+			}
+		} else if(strcmp(type,"cpu.freq") == 0) {
+			char *tmp;
+
+			tmp = nvram_get("clkfreq");
+			if (tmp)
+				sscanf(tmp,"%[^,]s", result);
+
 		} else if(strcmp(type,"memory.total") == 0) {
 			sysinfo(&sys);
 			sprintf(result,"%ld",(sys.totalram/1024));
@@ -7268,6 +7291,28 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			sprintf(result,"%.2f",(sys.loads[2] / (float)(1<<SI_LOAD_SHIFT)));
 		} else if(strcmp(type,"nvram.total") == 0) {
 			sprintf(result,"%d",NVRAM_SPACE);
+		} else if(strcmp(type,"conn.total") == 0) {
+			char tmp[8];
+			FILE* fp;
+//			fp = fopen ("/proc/net/nf_conntrack", "r");
+			fp = fopen ("/proc/sys/net/ipv4/netfilter/ip_conntrack_count", "r");
+			if (fp) {
+				if (fgets(tmp, sizeof(tmp), fp) != NULL) {
+					sprintf(result,"%s", tmp);
+					fclose(fp);
+				}
+			}
+		} else if(strcmp(type,"conn.max") == 0) {
+			char tmp[8];
+			FILE* fp;
+			fp = fopen ("/proc/sys/net/ipv4/netfilter/ip_conntrack_max", "r");
+			if (fp) {
+				if (fgets(tmp, sizeof(tmp), fp) != NULL) {
+					sprintf(result,"%s", tmp);
+					fclose(fp);
+				}
+			}
+
                 } else {
 			strcpy(result,"Not implemented");
 		}
