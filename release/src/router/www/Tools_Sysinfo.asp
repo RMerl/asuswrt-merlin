@@ -95,7 +95,7 @@ function initial()
 					<tr>
 						<th>NVRAM usage</th>
 						<td>
-							<% sysinfo("nvram.used"); %> / <% sysinfo("nvram.total"); %> bytes
+							<% sysinfo("nvram.used"); %>&nbsp;/ <% sysinfo("nvram.total"); %> bytes
 				</table>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -139,14 +139,14 @@ bordercolor="#6b8fa3"  class="FormTable">
  					<tr>
 						<th>Total</th>
 						<td>
-							 <% sysinfo("memory.total"); %>&nbsp;KB
+							 <% sysinfo("memory.total"); %>&nbsp;MB
 						</td>
 						</tr>
 
 						<tr>
 							<th>Free</th>
 							<td>
-								 <% sysinfo("memory.free"); %>&nbsp;KB
+								 <% sysinfo("memory.free"); %>&nbsp;MB
 							</td>
                         
 						</tr>
@@ -154,14 +154,14 @@ bordercolor="#6b8fa3"  class="FormTable">
  						<tr>
 							<th>Buffers</th>
 							<td>
- 								 <% sysinfo("memory.buffer"); %>&nbsp;KB
+ 								 <% sysinfo("memory.buffer"); %>&nbsp;MB
 							</td>
 						</tr>
 
                                         <tr>
                                                 <th>Swap usage</th>
                                                 <td>
-                                                        <% sysinfo("memory.swap.used"); %> / <% sysinfo("memory.swap.total"); %>&nbsp;KB
+                                                        <% sysinfo("memory.swap.used"); %> / <% sysinfo("memory.swap.total"); %>&nbsp;MB
                                                 </td>
                                                 </tr>
 				</table>
@@ -207,7 +207,7 @@ bordercolor="#6b8fa3"  class="FormTable">
                                         <tr>
                                                 <th>Connections</th>
                                                 <td>
-                                                        <% sysinfo("conn.total"); %> / <% sysinfo("conn.max"); %>
+                                                        <% sysinfo("conn.total"); %>&nbsp;/ <% sysinfo("conn.max"); %>
                                                 </td>
                                                 </tr>
 

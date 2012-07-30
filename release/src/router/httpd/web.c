@@ -7224,6 +7224,8 @@ ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv)
 
 
 #include <sys/sysinfo.h>
+#include <sys/statvfs.h>
+#define MBYTES 1024 / 1024
 
 int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 {
@@ -7231,6 +7233,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 	char result[200];
 	int retval = 0;
 	struct sysinfo sys;
+	char *tmp;
 
 	strcpy(result,"None");
 
@@ -7241,45 +7244,35 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
         if (type) {
 		if (strcmp(type,"cpu.model") == 0) {
+			char *buffer = read_whole_file("/proc/cpuinfo");
 
-			FILE* fp;
-			char buffer[1024];
-			size_t bytes_read;
-			char *tmp;
-
-			fp = fopen ("/proc/cpuinfo", "r");
-			bytes_read = fread(buffer, 1, sizeof (buffer), fp);
-			fclose (fp);
-
-			if (bytes_read != 0 && bytes_read != sizeof (buffer)) {
-				buffer[bytes_read] = '\0';
-
+			if (buffer) {
 				tmp = strstr(buffer, "system type");
 				if (tmp)
 					sscanf(tmp, "system type  :  %[^\n]", result);
+				free(buffer);
 			}
-		} else if(strcmp(type,"cpu.freq") == 0) {
-			char *tmp;
 
+		} else if(strcmp(type,"cpu.freq") == 0) {
 			tmp = nvram_get("clkfreq");
 			if (tmp)
 				sscanf(tmp,"%[^,]s", result);
 
 		} else if(strcmp(type,"memory.total") == 0) {
 			sysinfo(&sys);
-			sprintf(result,"%ld",(sys.totalram/1024));
+			sprintf(result,"%.2f",(sys.totalram/(float)MBYTES));
                 } else if(strcmp(type,"memory.free") == 0) {
                         sysinfo(&sys);
-                        sprintf(result,"%ld",(sys.freeram/1024));
+                        sprintf(result,"%.2f",(sys.freeram/(float)MBYTES));
                 } else if(strcmp(type,"memory.buffer") == 0) {
                         sysinfo(&sys);
-                        sprintf(result,"%ld",(sys.bufferram/1024));
+                        sprintf(result,"%.2f",(sys.bufferram/(float)MBYTES));
                 } else if(strcmp(type,"memory.swap.total") == 0) {
                         sysinfo(&sys);
-                        sprintf(result,"%ld",(sys.totalswap/1024));
+                        sprintf(result,"%.2f",(sys.totalswap/(float)MBYTES));
                 } else if(strcmp(type,"memory.swap.used") == 0) {
                         sysinfo(&sys);
-                        sprintf(result,"%ld",((sys.totalswap - sys.freeswap) / 1024));
+                        sprintf(result,"%.2f",((sys.totalswap - sys.freeswap) / (float)MBYTES));
 		} else if(strcmp(type,"cpu.load.1") == 0) {
 			sysinfo(&sys);
 			sprintf(result,"%.2f",(sys.loads[0] / (float)(1<<SI_LOAD_SHIFT)));
@@ -7291,24 +7284,53 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			sprintf(result,"%.2f",(sys.loads[2] / (float)(1<<SI_LOAD_SHIFT)));
 		} else if(strcmp(type,"nvram.total") == 0) {
 			sprintf(result,"%d",NVRAM_SPACE);
+		} else if(strcmp(type,"nvram.used") == 0) {
+			char *buf;
+			int size = 0;
+
+			buf = malloc(NVRAM_SPACE);
+			if (buf) {
+				nvram_getall(buf, NVRAM_SPACE);
+				tmp = buf;
+				while (*tmp) tmp += strlen(tmp) +1;
+
+				size = sizeof(struct nvram_header) + (int) tmp - (int) buf;
+				free(buf);
+			}
+			sprintf(result,"%d",size);
+
+		} else if(strcmp(type,"jffs.usage") == 0) {
+			struct statvfs fiData;
+
+			char *mount_info = read_whole_file("/proc/mounts");
+
+			if ((mount_info) && (strstr(mount_info, "/jffs")) && (statvfs("/jffs",&fiData) == 0 )) {
+				sprintf(result,"%.2f / %.2f MB",((fiData.f_blocks-fiData.f_bfree) * fiData.f_frsize / (float)MBYTES) ,(fiData.f_blocks * fiData.f_frsize / (float)MBYTES));
+			} else {
+				strcpy(result,"<i>Unmounted</i>");
+			}
+
+			if (mount_info) free(mount_info);
+
 		} else if(strcmp(type,"conn.total") == 0) {
-			char tmp[8];
+			char buf[8];
 			FILE* fp;
+
 //			fp = fopen ("/proc/net/nf_conntrack", "r");
 			fp = fopen ("/proc/sys/net/ipv4/netfilter/ip_conntrack_count", "r");
 			if (fp) {
-				if (fgets(tmp, sizeof(tmp), fp) != NULL) {
-					sprintf(result,"%s", tmp);
+				if (fgets(buf, sizeof(buf), fp) != NULL) {
+					sprintf(result,"%s", buf);
 					fclose(fp);
 				}
 			}
 		} else if(strcmp(type,"conn.max") == 0) {
-			char tmp[8];
+			char buf[8];
 			FILE* fp;
 			fp = fopen ("/proc/sys/net/ipv4/netfilter/ip_conntrack_max", "r");
 			if (fp) {
-				if (fgets(tmp, sizeof(tmp), fp) != NULL) {
-					sprintf(result,"%s", tmp);
+				if (fgets(buf, sizeof(buf), fp) != NULL) {
+					sprintf(result,"%s", buf);
 					fclose(fp);
 				}
 			}
