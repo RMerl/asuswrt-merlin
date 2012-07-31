@@ -112,7 +112,7 @@ function showbootTime(){
 
 					<tr>
 						<th>Radios temperature</th>
-						<td><b>2.4 GHz:</b> <% sysinfo("temperature.2"); %>&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <% sysinfo("temperature.5"); %></td>
+						<td><b>2.4 GHz:</b><span> <% sysinfo("temperature.2"); %>&nbsp;&nbsp;-&nbsp;&nbsp;</span><b>5 GHz:</b> <span><% sysinfo("temperature.5"); %></span></td>
 					</tr>
 				</table>
 
