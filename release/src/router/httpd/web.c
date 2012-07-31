@@ -116,6 +116,7 @@ int ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv);
 
 extern int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t **argv);
+extern unsigned int get_phy_temperature(int radio);
 
 #define wan_prefix(unit, prefix)	snprintf(prefix, sizeof(prefix), "wan%d_", unit)
 /*
@@ -7312,6 +7313,22 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
 			if (mount_info) free(mount_info);
 
+#ifdef RTCONFIG_FANCTRL
+                } else if(strcmp(type,"temperature.2") == 0) {
+			unsigned int temperature;
+			temperature = get_phy_temperature(0);
+			if (temperature == 0)
+				strcpy(result,"<i>disabled</i>");
+			else
+				sprintf(result,"%u&deg;C", temperature);
+                } else if(strcmp(type,"temperature.5") == 0) {
+                        unsigned int temperature;
+                        temperature = get_phy_temperature(1);
+                        if (temperature == 0)
+                                strcpy(result,"<i>disabled</i>");
+                        else
+                                sprintf(result,"%u&deg;C", temperature);
+#endif
 		} else if(strcmp(type,"conn.total") == 0) {
 			char buf[8];
 			FILE* fp;
@@ -7345,4 +7362,31 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
         return retval;
 
 }
+
+#ifdef RTCONFIG_FANCTRL
+unsigned int get_phy_temperature(int radio)
+{
+        int ret = 0;
+        unsigned int *temp;
+        char buf[WLC_IOCTL_SMLEN];
+	char *interface;
+
+        strcpy(buf, "phy_tempsense");
+
+	if (radio == 0) {
+		interface = "eth1";
+	} else if (radio == 1) {
+		interface = "eth2";
+	} else {
+		return 0;
+	}
+
+	if ((ret = wl_ioctl(interface, WLC_GET_VAR, buf, sizeof(buf)))) {
+               	return 0;
+	} else {
+		temp = (unsigned int *)buf;
+		return *temp / 2 + 20;
+	}
+}
+#endif
 

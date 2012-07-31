@@ -93,6 +93,10 @@ function initial()
 					</tr>
 
 					<tr>
+						<th>Radios temperature</th>
+						<td>
+							<b>2.4 GHz:</b> <% sysinfo("temperature.2"); %>&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <% sysinfo("temperature.5"); %>
+					<tr>
 						<th>NVRAM usage</th>
 						<td>
 							<% sysinfo("nvram.used"); %>&nbsp;/ <% sysinfo("nvram.total"); %> bytes
@@ -201,7 +205,7 @@ bordercolor="#6b8fa3"  class="FormTable">
                                 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"bordercolor="#6b8fa3"  class="FormTable">
                                         <thead>
                                                 <tr>
-                                                        <td colspan="2">Network/td>
+                                                        <td colspan="2">Network</td>
                                                 </tr>
                                         </thead>
                                         <tr>
