@@ -90,6 +90,8 @@ typedef unsigned long long u64;
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
+#include "sysinfo.h"
+
 #ifdef RTCONFIG_HTTPS
 extern int do_ssl;
 extern int ssl_stream_fd;
@@ -114,10 +116,10 @@ int ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv);
 #endif
 
 extern int ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv);
-
+/*
 extern int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t **argv);
 extern unsigned int get_phy_temperature(int radio);
-
+*/
 #define wan_prefix(unit, prefix)	snprintf(prefix, sizeof(prefix), "wan%d_", unit)
 /*
 #define csprintf(fmt, args...) do{\
@@ -7222,171 +7224,3 @@ ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv)
 	retval += websWrite(wp, nvram_safe_get("reboot_time"));
 	return retval;
 }
-
-
-#include <sys/sysinfo.h>
-#include <sys/statvfs.h>
-#define MBYTES 1024 / 1024
-
-int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
-{
-        char *type;
-	char result[200];
-	int retval = 0;
-	struct sysinfo sys;
-	char *tmp;
-
-	strcpy(result,"None");
-
-        if (ejArgs(argc, argv, "%s", &type) < 1) {
-                websError(wp, 400, "Insufficient args\n");
-                return retval;
-        }
-
-        if (type) {
-		if (strcmp(type,"cpu.model") == 0) {
-			char *buffer = read_whole_file("/proc/cpuinfo");
-
-			if (buffer) {
-				tmp = strstr(buffer, "system type");
-				if (tmp)
-					sscanf(tmp, "system type  :  %[^\n]", result);
-				free(buffer);
-			}
-
-		} else if(strcmp(type,"cpu.freq") == 0) {
-			tmp = nvram_get("clkfreq");
-			if (tmp)
-				sscanf(tmp,"%[^,]s", result);
-
-		} else if(strcmp(type,"memory.total") == 0) {
-			sysinfo(&sys);
-			sprintf(result,"%.2f",(sys.totalram/(float)MBYTES));
-                } else if(strcmp(type,"memory.free") == 0) {
-                        sysinfo(&sys);
-                        sprintf(result,"%.2f",(sys.freeram/(float)MBYTES));
-                } else if(strcmp(type,"memory.buffer") == 0) {
-                        sysinfo(&sys);
-                        sprintf(result,"%.2f",(sys.bufferram/(float)MBYTES));
-                } else if(strcmp(type,"memory.swap.total") == 0) {
-                        sysinfo(&sys);
-                        sprintf(result,"%.2f",(sys.totalswap/(float)MBYTES));
-                } else if(strcmp(type,"memory.swap.used") == 0) {
-                        sysinfo(&sys);
-                        sprintf(result,"%.2f",((sys.totalswap - sys.freeswap) / (float)MBYTES));
-		} else if(strcmp(type,"cpu.load.1") == 0) {
-			sysinfo(&sys);
-			sprintf(result,"%.2f",(sys.loads[0] / (float)(1<<SI_LOAD_SHIFT)));
-		} else if(strcmp(type,"cpu.load.5") == 0) {
-			sysinfo(&sys);
-			sprintf(result,"%.2f",(sys.loads[1] / (float)(1<<SI_LOAD_SHIFT)));
-		} else if(strcmp(type,"cpu.load.15") == 0) {
-			sysinfo(&sys);
-			sprintf(result,"%.2f",(sys.loads[2] / (float)(1<<SI_LOAD_SHIFT)));
-		} else if(strcmp(type,"nvram.total") == 0) {
-			sprintf(result,"%d",NVRAM_SPACE);
-		} else if(strcmp(type,"nvram.used") == 0) {
-			char *buf;
-			int size = 0;
-
-			buf = malloc(NVRAM_SPACE);
-			if (buf) {
-				nvram_getall(buf, NVRAM_SPACE);
-				tmp = buf;
-				while (*tmp) tmp += strlen(tmp) +1;
-
-				size = sizeof(struct nvram_header) + (int) tmp - (int) buf;
-				free(buf);
-			}
-			sprintf(result,"%d",size);
-
-		} else if(strcmp(type,"jffs.usage") == 0) {
-			struct statvfs fiData;
-
-			char *mount_info = read_whole_file("/proc/mounts");
-
-			if ((mount_info) && (strstr(mount_info, "/jffs")) && (statvfs("/jffs",&fiData) == 0 )) {
-				sprintf(result,"%.2f / %.2f MB",((fiData.f_blocks-fiData.f_bfree) * fiData.f_frsize / (float)MBYTES) ,(fiData.f_blocks * fiData.f_frsize / (float)MBYTES));
-			} else {
-				strcpy(result,"<i>Unmounted</i>");
-			}
-
-			if (mount_info) free(mount_info);
-
-#ifdef RTCONFIG_FANCTRL
-                } else if(strcmp(type,"temperature.2") == 0) {
-			unsigned int temperature;
-			temperature = get_phy_temperature(0);
-			if (temperature == 0)
-				strcpy(result,"<i>disabled</i>");
-			else
-				sprintf(result,"%u&deg;C", temperature);
-                } else if(strcmp(type,"temperature.5") == 0) {
-                        unsigned int temperature;
-                        temperature = get_phy_temperature(1);
-                        if (temperature == 0)
-                                strcpy(result,"<i>disabled</i>");
-                        else
-                                sprintf(result,"%u&deg;C", temperature);
-#endif
-		} else if(strcmp(type,"conn.total") == 0) {
-			char buf[8];
-			FILE* fp;
-
-//			fp = fopen ("/proc/net/nf_conntrack", "r");
-			fp = fopen ("/proc/sys/net/ipv4/netfilter/ip_conntrack_count", "r");
-			if (fp) {
-				if (fgets(buf, sizeof(buf), fp) != NULL) {
-					sprintf(result,"%s", buf);
-					fclose(fp);
-				}
-			}
-		} else if(strcmp(type,"conn.max") == 0) {
-			char buf[8];
-			FILE* fp;
-			fp = fopen ("/proc/sys/net/ipv4/netfilter/ip_conntrack_max", "r");
-			if (fp) {
-				if (fgets(buf, sizeof(buf), fp) != NULL) {
-					sprintf(result,"%s", buf);
-					fclose(fp);
-				}
-			}
-
-                } else {
-			strcpy(result,"Not implemented");
-		}
-
-	}
-
-        retval += websWrite(wp, result);
-        return retval;
-
-}
-
-#ifdef RTCONFIG_FANCTRL
-unsigned int get_phy_temperature(int radio)
-{
-        int ret = 0;
-        unsigned int *temp;
-        char buf[WLC_IOCTL_SMLEN];
-	char *interface;
-
-        strcpy(buf, "phy_tempsense");
-
-	if (radio == 0) {
-		interface = "eth1";
-	} else if (radio == 1) {
-		interface = "eth2";
-	} else {
-		return 0;
-	}
-
-	if ((ret = wl_ioctl(interface, WLC_GET_VAR, buf, sizeof(buf)))) {
-               	return 0;
-	} else {
-		temp = (unsigned int *)buf;
-		return *temp / 2 + 20;
-	}
-}
-#endif
-

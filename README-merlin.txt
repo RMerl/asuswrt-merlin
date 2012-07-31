@@ -214,6 +214,7 @@ History
 3.0.0.3.162.14:
    - NEW: Spin down disks after (user-configurable) inactivity timeout
           (using Jeff Gibbons' sd-idle-2.6)
+   - NEW: System information page under the Tools menu.
    - CHANGED: Upgraded to MiniDLNA 1.0.25 (changelog:
               http://sourceforge.net/projects/minidlna/files/minidlna/1.0.25/)
    - CHANGED: Better integration of the Run Cmd page.
