@@ -193,7 +193,7 @@ function showbootTime(){
                                         </thead>
                                         <tr>
                                                 <th>Connections</th>
-                                                <td><% sysinfo("conn.total"); %>&nbsp;/ <% sysinfo("conn.max"); %></td>
+                                                <td><% sysinfo("conn.total"); %>&nbsp;/ <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;<% sysinfo("conn.active"); %> active</td>
 					</tr>
 				</table>
 			</td>
