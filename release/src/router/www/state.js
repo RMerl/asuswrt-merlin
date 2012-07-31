@@ -141,7 +141,7 @@ tabtitle[6] = new Array("", "<#menu5_1_1#>", "<#menu5_5_2#>", "<#menu5_5_5#>", "
 tabtitle[7] = new Array("", "<#menu5_6_1#>", "<#menu5_6_2#>", "<#menu5_6_3#>", "<#menu5_6_4#>", "Performance tuning", "<#menu_dsl_setting#>");
 tabtitle[8] = new Array("", "<#menu5_7_2#>", "<#menu5_7_3#>", "<#menu5_7_4#>", "<#menu5_7_5#>", "<#menu5_7_6#>", "<#menu_dsl_log#>","Connections");
 tabtitle[9] = new Array("", "QoS", "<#traffic_monitor#>");
-tabtitle[10] = new Array("", "WakeOnLAN", "Other Settings", "Sysinfo", "Run Cmd");
+tabtitle[10] = new Array("", "Sysinfo", "WakeOnLAN", "Other Settings", "Run Cmd");
 
 var tablink = new Array();
 tablink[0] = new Array("", "Advanced_Wireless_Content.asp", "Advanced_WWPS_Content.asp", "Advanced_WMode_Content.asp", "Advanced_ACL_Content.asp", "Advanced_WSecurity_Content.asp", "Advanced_WAdvanced_Content.asp");
