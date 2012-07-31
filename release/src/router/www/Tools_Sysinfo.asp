@@ -22,9 +22,24 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-function initial()
-{
+function initial(){
 	show_menu();
+	showbootTime();
+}
+
+
+function showbootTime(){
+        Days = Math.floor(boottime / (60*60*24));        
+        Hours = Math.floor((boottime / 3600) % 24);
+        Minutes = Math.floor(boottime % 3600 / 60);
+        Seconds = Math.floor(boottime % 60);
+        
+        $("boot_days").innerHTML = Days;
+        $("boot_hours").innerHTML = Hours;
+        $("boot_minutes").innerHTML = Minutes;
+        $("boot_seconds").innerHTML = Seconds;
+        boottime += 1;
+        setTimeout("showbootTime()", 1000);
 }
 
 </script>
@@ -88,6 +103,11 @@ function initial()
 					<tr>
 						<th>Features:</th>
 						<td><% nvram_get("rc_support"); %></td>
+					</tr>
+
+					<tr>
+						<th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(12, 1);"--><#General_x_SystemUpTime_itemname#></a></th>
+						<td><span id="boot_days"></span> <#Day#> <span id="boot_hours"></span> <#Hour#> <span id="boot_minutes"></span> <#Minute#> <span id="boot_seconds"></span> <#Second#></td>
 					</tr>
 
 					<tr>
