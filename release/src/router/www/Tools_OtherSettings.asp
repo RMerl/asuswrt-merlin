@@ -224,7 +224,7 @@ function done_validating(action){
 	                                </tr>
 
 					<tr>
-						<th>Disk spindown idle time (in seconds)</th>
+						<th>Disk spindown idle time (in seconds)<br><i>0 = disable feature</i></th>
 						<td>
 							<input type="text" maxlength="6" class="input_12_table"name="usb_idle_timeout" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 43200)"value="<% nvram_get("usb_idle_timeout"); %>">
 						</td>
