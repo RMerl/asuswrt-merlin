@@ -83,23 +83,17 @@ function initial()
 					</thead>
 					<tr>
 						<th>Model:</th>
-				        	<td><% nvram_get("productid"); %>
-			   			</td>
+				        	<td><% nvram_get("productid"); %></td>
 					</tr>
 					<tr>
 						<th>Features:</th>
-						<td><% nvram_get("rc_support"); %>
-						</td>
+						<td><% nvram_get("rc_support"); %></td>
 					</tr>
 
 					<tr>
 						<th>Radios temperature</th>
-						<td>
-							<b>2.4 GHz:</b> <% sysinfo("temperature.2"); %>&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <% sysinfo("temperature.5"); %>
-					<tr>
-						<th>NVRAM usage</th>
-						<td>
-							<% sysinfo("nvram.used"); %>&nbsp;/ <% sysinfo("nvram.total"); %> bytes
+						<td><b>2.4 GHz:</b> <% sysinfo("temperature.2"); %>&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <% sysinfo("temperature.5"); %></td>
+					</tr>
 				</table>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -111,16 +105,12 @@ function initial()
 
 					<tr>
 						<th>CPU Model</th>
-						<td>
-							<% sysinfo("cpu.model"); %>
-						</td>
+						<td><% sysinfo("cpu.model"); %>	</td>
 	                                </tr>
 
 					<tr>
 						<th>CPU Frequency</th>
-						<td>
-							<% sysinfo("cpu.freq"); %> MHz
-						</td>
+						<td><% sysinfo("cpu.freq"); %> MHz</td>
 					</tr>
 					<tr>
                                                 <th>CPU Load</th>
@@ -133,8 +123,7 @@ function initial()
 
 				</table>
 
-				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" 
-bordercolor="#6b8fa3"  class="FormTable">
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
 							<td colspan="2">Memory</td>
@@ -142,66 +131,40 @@ bordercolor="#6b8fa3"  class="FormTable">
 					</thead>
  					<tr>
 						<th>Total</th>
-						<td>
-							 <% sysinfo("memory.total"); %>&nbsp;MB
-						</td>
+						<td> <% sysinfo("memory.total"); %>&nbsp;MB</td>
 						</tr>
 
 						<tr>
 							<th>Free</th>
-							<td>
-								 <% sysinfo("memory.free"); %>&nbsp;MB
-							</td>
-                        
+							<td> <% sysinfo("memory.free"); %>&nbsp;MB</td>
 						</tr>
 
  						<tr>
 							<th>Buffers</th>
-							<td>
- 								 <% sysinfo("memory.buffer"); %>&nbsp;MB
-							</td>
+							<td> <% sysinfo("memory.buffer"); %>&nbsp;MB</td>
 						</tr>
 
-                                        <tr>
-                                                <th>Swap usage</th>
-                                                <td>
-                                                        <% sysinfo("memory.swap.used"); %> / <% sysinfo("memory.swap.total"); %>&nbsp;MB
-                                                </td>
-                                                </tr>
+                                        	<tr>
+                                                	<th>Swap usage</th>
+                                                	<td><% sysinfo("memory.swap.used"); %> / <% sysinfo("memory.swap.total"); %>&nbsp;MB</td>
+					</tr>
 				</table>
-                                <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"
-bordercolor="#6b8fa3"  class="FormTable">
+                                <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"bordercolor="#6b8fa3"  class="FormTable">
                                         <thead>
                                                 <tr>
-                                                        <td colspan="2">Storage</td>
+                                                        <td colspan="2">Internal Storage</td>
                                                 </tr>
                                         </thead>
+                                        
+					<tr>
+						<th>NVRAM usage</th>
+						<td><% sysinfo("nvram.used"); %>&nbsp;/ <% sysinfo("nvram.total"); %> bytes</td>
+					</tr>
                                         <tr>
                                                 <th>JFFS</th>
-                                                <td>
-                                                        <% sysinfo("jffs.usage"); %>
-                                                </td>
-                                                </tr>
-                                        <tr>
-                                                <th>USB1</th>
-                                                <td>
-                                                        <% sysinfo("usb1.usage"); %>
-                                                </td>
-                                                </tr>
-                                        <tr>
-                                                <th>USB2</th>
-                                                <td>
-                                                        <% sysinfo("usb2.usage"); %>
-                                                </td>
-                                                </tr>
-                                        <tr>
-                                                <th>SD Card</th>
-                                                <td>
-                                                        <% sysinfo("sd.usage"); %>
-                                                </td>
-                                                </tr>
-
-
+                                                <td><% sysinfo("jffs.usage"); %></td>
+                                        </tr>
+				</table>
                                 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"bordercolor="#6b8fa3"  class="FormTable">
                                         <thead>
                                                 <tr>
@@ -210,14 +173,17 @@ bordercolor="#6b8fa3"  class="FormTable">
                                         </thead>
                                         <tr>
                                                 <th>Connections</th>
-                                                <td>
-                                                        <% sysinfo("conn.total"); %>&nbsp;/ <% sysinfo("conn.max"); %>
-                                                </td>
-                                                </tr>
+                                                <td><% sysinfo("conn.total"); %>&nbsp;/ <% sysinfo("conn.max"); %></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
 
-
-					</table>
-				</td></tr>
+		<tr class="apply_gen" valign="top" height="95px">
+			<td>
+				<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
+			</td>
+		</tr>
 	        </tbody>
             </table>
             </form>
