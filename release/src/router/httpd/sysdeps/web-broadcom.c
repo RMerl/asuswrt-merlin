@@ -808,6 +808,9 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int max_sta_count, maclist_size;
 	int i, j, val, ret = 0;
 	int ii, jj;
+	char *arplist, *arpentry, *arplistptr;
+	char ip[40], ipentry[40], macentry[18];
+	int found = 0;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 #ifdef RTCONFIG_WIRELESSREPEATER
@@ -894,16 +897,38 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	if (wl_ioctl(name, WLC_GET_VAR, authorized, maclist_size))
 		goto exit;
 
+	/* Obtain mac + IP list */
+	arplist = read_whole_file("/proc/net/arp");
+
 	ret += websWrite(wp, "\n");
 	ret += websWrite(wp, "Stations List                           \n");
-	ret += websWrite(wp, "----------------------------------------\n");
-	//             00:00:00:00:00:00 associated authorized
+	ret += websWrite(wp, "--------------------------------------------------------\n");
+//             00:00:00:00:00:00 111.222.333.444 associated authorized
 
 	/* build authenticated/associated/authorized sta list */
 	for (i = 0; i < auth->count; i ++) {
 		char ea[ETHER_ADDR_STR_LEN];
 
 		ret += websWrite(wp, "%s ", ether_etoa((void *)&auth->ea[i], ea));
+
+		/* Retrieve IP from arp cache */
+		if (arplist) {
+			arplistptr = arplist;
+
+			while ((found == 0) && (sscanf(arplistptr,"%s %*s %*s %s",ipentry,macentry))) {
+				if (strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0)
+					found = 1;
+				else
+					arplistptr = strstr(arplistptr,"\n")+1;
+			}
+			if (found == 1) {
+				sprintf(ip,"%-15s",ipentry);
+				found = 0;
+			} else {
+				strcpy(ip,"               ");
+			}
+			ret += websWrite(wp, "%s ",ip);
+		}
 
 		for (j = 0; j < assoc->count; j ++) {
 			if (!bcmp((void *)&auth->ea[i], (void *)&assoc->ea[j], ETHER_ADDR_LEN)) {
@@ -953,6 +978,25 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 					ret += websWrite(wp, "%s ", ether_etoa((void *)&auth->ea[i], ea));
 
+					/* Retrieve IP from arp cache */
+					if (arplist) {
+						arplistptr = arplist;
+
+						while ((found == 0) && (sscanf(arplistptr,"%s %*s %*s %s",ipentry,macentry))) {
+							if (strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0)
+								found = 1;
+							else
+								arplistptr = strstr(arplistptr,"\n")+1;
+						}
+						if (found == 1) {
+							sprintf(ip,"%-15s",ipentry);
+							found = 0;
+						} else {
+							strcpy(ip,"               ");
+						}
+						ret += websWrite(wp, "%s ",ip);
+					}
+
 					for (j = 0; j < assoc->count; j ++) {
 						if (!bcmp((void *)&auth->ea[i], (void *)&assoc->ea[j], ETHER_ADDR_LEN)) {
 							ret += websWrite(wp, " associated");
@@ -977,6 +1021,7 @@ exit:
 	if (auth) free(auth);
 	if (assoc) free(assoc);
 	if (authorized) free(authorized);
+	if (arplist) free(arplist);
 
 	return ret;
 }
