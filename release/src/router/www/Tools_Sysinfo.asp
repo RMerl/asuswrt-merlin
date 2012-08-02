@@ -112,7 +112,7 @@ function showbootTime(){
 
 					<tr>
 						<th>Radios temperature</th>
-						<td><b>2.4 GHz:</b><span> <% sysinfo("temperature.2"); %>&nbsp;&nbsp;-&nbsp;&nbsp;</span><b>5 GHz:</b> <span><% sysinfo("temperature.5"); %></span></td>
+						<td><b>2.4 GHz:</b><span> <% sysinfo("temperature.2"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span><% sysinfo("temperature.5"); %></span></td>
 					</tr>
 				</table>
 
@@ -194,6 +194,22 @@ function showbootTime(){
                                         <tr>
                                                 <th>Connections</th>
                                                 <td><% sysinfo("conn.total"); %>&nbsp;/ <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;<% sysinfo("conn.active"); %> active</td>
+					</tr>
+					<tr>
+						<th>Wireless clients (2.4 GHz)</th>
+						<td>
+							Associated: <span><% sysinfo("conn.wifi.2.assoc"); %></span>&nbsp;&nbsp;-
+							Authorized: <span><% sysinfo("conn.wifi.2.autho"); %></span>&nbsp;&nbsp;-
+							Authenticated: <span><% sysinfo("conn.wifi.2.authe"); %></span>
+						</td>
+					</tr>
+					<tr>
+						<th>Wireless clients (5 GHz)</th>
+						<td>
+							Associated: <span><% sysinfo("conn.wifi.5.assoc"); %></span>&nbsp;&nbsp;-
+							Authorized: <span><% sysinfo("conn.wifi.5.autho"); %></span>&nbsp;&nbsp;-  
+							Authenticated: <span><% sysinfo("conn.wifi.5.authe"); %></span>   
+						</tr>
 					</tr>
 				</table>
 			</td>

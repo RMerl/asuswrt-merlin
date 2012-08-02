@@ -64,8 +64,13 @@ typedef unsigned long long u64;
 #include "sysinfo.h"
 
 unsigned int get_phy_temperature(int radio);
+unsigned int get_wifi_clients(int radio, int querytype);
 
 #define MBYTES 1024 / 1024
+
+#define SI_WL_QUERY_ASSOC 1
+#define SI_WL_QUERY_AUTHE 2
+#define SI_WL_QUERY_AUTHO 3
 
 
 int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
@@ -154,30 +159,23 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			if (mount_info) free(mount_info);
 
 #ifdef RTCONFIG_FANCTRL
-		} else if(strcmp(type,"temperature.2") == 0) {
+		} else if(strncmp(type,"temperature",11) == 0) {
 			unsigned int temperature;
-			temperature = get_phy_temperature(0);
-			if (temperature == 0)
-				strcpy(result,"<i>disabled</i>");
-			else
-				sprintf(result,"%u&deg;C", temperature);
-		} else if(strcmp(type,"temperature.5") == 0) {
-			unsigned int temperature;
-			temperature = get_phy_temperature(1);
+			int radio=0;
+
+                        sscanf(type,"temperature.%d", &radio);
+			temperature = get_phy_temperature(radio);
 			if (temperature == 0)
 				strcpy(result,"<i>disabled</i>");
 			else
 				sprintf(result,"%u&deg;C", temperature);
 #endif
 		} else if(strcmp(type,"conn.total") == 0) {
-			char buf[8];
 			FILE* fp;
 
-//			fp = fopen ("/proc/net/nf_conntrack", "r");
 			fp = fopen ("/proc/sys/net/ipv4/netfilter/ip_conntrack_count", "r");
 			if (fp) {
-				if (fgets(buf, sizeof(buf), fp) != NULL) {
-					sprintf(result,"%s", buf);
+				if (fgets(result, sizeof(result), fp) != NULL) {
 					fclose(fp);
 				}
 			}
@@ -189,7 +187,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			fp = fopen("/proc/net/nf_conntrack", "r");
 			if (fp) {
 				while (fgets(buf, sizeof(buf), fp) != NULL) {
-				if (strstr(buf,"ESTABLISHED") || ((strstr(buf,"ASSURED")) && (strstr(buf,"udp"))))
+				if (strstr(buf,"ESTABLISHED") || ((strstr(buf,"udp")) && (strstr(buf,"ASSURED"))))
 					established++;
 				}
 				fclose(fp);
@@ -197,15 +195,33 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			sprintf(result,"%u",established);
 
 		} else if(strcmp(type,"conn.max") == 0) {
-			char buf[8];
 			FILE* fp;
+
 			fp = fopen ("/proc/sys/net/ipv4/netfilter/ip_conntrack_max", "r");
 			if (fp) {
-				if (fgets(buf, sizeof(buf), fp) != NULL) {
-					sprintf(result,"%s", buf);
+				if (fgets(result, sizeof(result), fp) != NULL) {
 					fclose(fp);
 				}
 			}
+		} else if(strncmp(type,"conn.wifi",9) == 0) {
+			int count, radio;
+			char command[10];
+
+			sscanf(type,"conn.wifi.%d.%9s", &radio, command);
+
+			if (strcmp(command,"autho") == 0) {
+				count = get_wifi_clients(radio,SI_WL_QUERY_AUTHO);
+			} else if (strcmp(command,"authe") == 0) {
+				count = get_wifi_clients(radio,SI_WL_QUERY_AUTHE);
+			} else if (strcmp(command,"assoc") == 0) {
+				count = get_wifi_clients(radio,SI_WL_QUERY_ASSOC);
+			} else {
+				count = 0;
+			}
+			if (count == -1)
+				strcpy(result,"<i>off</i>");
+			else
+				sprintf(result,"%d",count);
 
                 } else {
 			strcpy(result,"Not implemented");
@@ -228,9 +244,9 @@ unsigned int get_phy_temperature(int radio)
 
 	strcpy(buf, "phy_tempsense");
 
-	if (radio == 0) {
+	if (radio == 2) {
 		interface = "eth1";
-	} else if (radio == 1) {
+	} else if (radio == 5) {
 		interface = "eth2";
 	} else {
 		return 0;
@@ -245,3 +261,56 @@ unsigned int get_phy_temperature(int radio)
 }
 #endif
 
+
+unsigned int get_wifi_clients(int radio, int querytype)
+{
+        char *name;
+        struct maclist *clientlist;
+        int max_sta_count, maclist_size;
+	int val, count = 0;
+
+        if (radio == 2) {
+                name = "eth1";
+        } else if (radio == 5) {
+                name = "eth2";
+        } else {
+                return 0;
+        }
+
+	wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
+	if (val == 1)
+		return -1;	// Radio is disabled
+
+
+       /* buffers and length */
+        max_sta_count = 128;
+        maclist_size = sizeof(clientlist->count) + max_sta_count * sizeof(struct ether_addr);
+        clientlist = malloc(maclist_size);
+
+        if (!clientlist)
+                return 0;
+
+	if (querytype == SI_WL_QUERY_AUTHE) {
+	        strcpy((char*)clientlist, "authe_sta_list");
+        	if (wl_ioctl(name, WLC_GET_VAR, clientlist, maclist_size))
+                	goto exit;
+
+	} else if (querytype == SI_WL_QUERY_AUTHO) {
+	        strcpy((char*)clientlist, "autho_sta_list");
+        	if (wl_ioctl(name, WLC_GET_VAR, clientlist, maclist_size))
+                	goto exit;
+
+	} else if (querytype == SI_WL_QUERY_ASSOC) {
+	        clientlist->count = max_sta_count;
+        	if (wl_ioctl(name, WLC_GET_ASSOCLIST, clientlist, maclist_size))
+                	goto exit;
+	} else {
+		goto exit;
+	}
+
+	count = clientlist->count;
+
+exit:
+        free(clientlist);
+	return count;
+}
