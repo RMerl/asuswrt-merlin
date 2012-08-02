@@ -37,6 +37,7 @@ The list of changes (so far):
 - Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
 - Dual WAN support (both failover and load balancing supported) (EXPERIMENTAL)
 - Disk spindown after user-configurable inactivity timeout
+- System info summary page
 
 
 Installation
@@ -408,7 +409,7 @@ Email: rmerl@lostrealm.ca
 
 Drop me a note if you are using this firmware and are enjoying it.  If you really like it and want 
 to give more than a simple "Thank you", there is also a Paypal donation button on my website.  I 
-wouldn't mind being able to afford a second RT-N66U, so I can work on this firmware without 
+wouldn't mind being able to afford a second router, so I can work on this firmware without 
 constantly cutting my Internet access :)
 
 
