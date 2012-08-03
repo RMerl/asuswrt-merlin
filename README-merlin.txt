@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.162.14 (XX-July-2012)
+Asuswrt-Merlin - build 3.0.0.3.162.14 (XX-Aug-2012)
 ====================================================
 
 About
@@ -38,6 +38,7 @@ The list of changes (so far):
 - Dual WAN support (both failover and load balancing supported) (EXPERIMENTAL)
 - Disk spindown after user-configurable inactivity timeout
 - System info summary page
+- Wireless client IP and hostname on the Wireless Log page
 
 
 Installation
@@ -216,6 +217,8 @@ History
    - NEW: Spin down disks after (user-configurable) inactivity timeout
           (using Jeff Gibbons' sd-idle-2.6)
    - NEW: System information page under the Tools menu.
+   - NEW: Station list on the Wireless Log page will now report associated
+          IP and hostnames (when possible).
    - CHANGED: Upgraded to MiniDLNA 1.0.25 (changelog:
               http://sourceforge.net/projects/minidlna/files/minidlna/1.0.25/)
    - CHANGED: Better integration of the Run Cmd page.

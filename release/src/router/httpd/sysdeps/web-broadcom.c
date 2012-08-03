@@ -809,6 +809,10 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int i, j, val, ret = 0;
 	int ii, jj;
 	char *arplist, *arpentry, *arplistptr;
+#ifdef RTCONFIG_DNSMASQ
+	char *leaselist, *leaselistptr;
+	char hostnameentry[16], hostname[16];
+#endif
 	char ip[40], ipentry[40], macentry[18];
 	int found = 0;
 
@@ -900,10 +904,20 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	/* Obtain mac + IP list */
 	arplist = read_whole_file("/proc/net/arp");
 
+	/* Obtain lease list - we still need the arp list for
+          cases where a device uses a static IP rather than DHCP */
+#ifdef RTCONFIG_DNSMASQ
+	leaselist = read_whole_file("/var/lib/misc/dnsmasq.leases");
+#endif
+
 	ret += websWrite(wp, "\n");
 	ret += websWrite(wp, "Stations List                           \n");
+#ifdef RTCONFIG_DNSMASQ
+	ret += websWrite(wp, "------------------------------------------------------------------------\n");
+#else
 	ret += websWrite(wp, "--------------------------------------------------------\n");
-//             00:00:00:00:00:00 111.222.333.444 associated authorized
+#endif
+//                            00:00:00:00:00:00 111.222.333.444 hostnamexxxxxxx associated authorized
 
 	/* build authenticated/associated/authorized sta list */
 	for (i = 0; i < auth->count; i ++) {
@@ -929,6 +943,18 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			}
 			ret += websWrite(wp, "%s ",ip);
 		}
+
+#ifdef RTCONFIG_DNSMASQ
+		// Retrieve hostname from dnsmasq leases
+		if (leaselist) {
+			leaselistptr = strstr(leaselist,ipentry); // ip entry more efficient than MAC
+			if (leaselistptr) {
+				sscanf(leaselistptr, "%*s %15s", hostnameentry);
+				sprintf(hostname,"%-15s ",hostnameentry);
+				ret += websWrite(wp, hostname);
+			}
+		}
+#endif
 
 		for (j = 0; j < assoc->count; j ++) {
 			if (!bcmp((void *)&auth->ea[i], (void *)&assoc->ea[j], ETHER_ADDR_LEN)) {
@@ -997,6 +1023,17 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 						ret += websWrite(wp, "%s ",ip);
 					}
 
+#ifdef RTCONFIG_DNSMASQ
+					// Retrieve hostname from dnsmasq leases
+					if (leaselist) {
+						leaselistptr = strstr(leaselist,ipentry); // ip entry more efficient than MAC
+						if (leaselistptr) {
+							sscanf(leaselistptr, "%*s %15s", hostnameentry);
+							sprintf(hostname,"%-15s ",hostnameentry);
+							ret += websWrite(wp, hostname);
+						}
+					}
+#endif
 					for (j = 0; j < assoc->count; j ++) {
 						if (!bcmp((void *)&auth->ea[i], (void *)&assoc->ea[j], ETHER_ADDR_LEN)) {
 							ret += websWrite(wp, " associated");
@@ -1022,6 +1059,7 @@ exit:
 	if (assoc) free(assoc);
 	if (authorized) free(authorized);
 	if (arplist) free(arplist);
+	if (leaselist) free(leaselist);
 
 	return ret;
 }
