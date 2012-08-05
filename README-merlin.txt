@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.162.14 (XX-Aug-2012)
+Asuswrt-Merlin - build 3.0.0.3.162.14 (05-Aug-2012)
 ====================================================
 
 About
@@ -6,8 +6,8 @@ About
 Asuswrt is the firmware developped by Asus for their newer routers.
 
 Asuswrt-merlin is my customized version, which I have modified and compiled.
-Originally developped for the RT-N66U, there is now also a version available 
-for the RT-N16.
+Originally developped for the RT-N66U, there is now also an experimental version 
+available for the RT-N16.
 
 The goal is to do some minor improvements to Asus's firmware, 
 without targeting at full-blown advanced featuresets such as provided by 
