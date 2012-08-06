@@ -903,7 +903,6 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 	/* Obtain mac + IP list */
 	arplist = read_whole_file("/proc/net/arp");
-
 	/* Obtain lease list - we still need the arp list for
           cases where a device uses a static IP rather than DHCP */
 #ifdef RTCONFIG_DNSMASQ
@@ -929,7 +928,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		if (arplist) {
 			arplistptr = arplist;
 
-			while ((found == 0) && (sscanf(arplistptr,"%s %*s %*s %s",ipentry,macentry))) {
+			while ((found == 0) && (arplistptr < arplist+strlen(arplist)-2) && (sscanf(arplistptr,"%s %*s %*s %s",ipentry,macentry))) {
 				if (strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0)
 					found = 1;
 				else
@@ -1008,7 +1007,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					if (arplist) {
 						arplistptr = arplist;
 
-						while ((found == 0) && (sscanf(arplistptr,"%s %*s %*s %s",ipentry,macentry))) {
+						while ((found == 0) && (arplistptr < arplist+strlen(arplist)-2) && (sscanf(arplistptr,"%s %*s %*s %s",ipentry,macentry))) {
 							if (strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0)
 								found = 1;
 							else

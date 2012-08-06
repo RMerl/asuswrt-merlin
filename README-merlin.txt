@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.162.14 (05-Aug-2012)
+Asuswrt-Merlin - build 3.0.0.3.162.14b (06-Aug-2012)
 ====================================================
 
 About
@@ -213,6 +213,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.3.162.14b:
+   - FIXED: Web server would crash for some people when accessing
+            the Wireless Log page.
+
+
 3.0.0.3.162.14:
    - NEW: Spin down disks after (user-configurable) inactivity timeout
           (using Jeff Gibbons' sd-idle-2.6)
