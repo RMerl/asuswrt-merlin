@@ -1,0 +1,39 @@
+# BCM94710R1 board
+# $Copyright (C) 2003 Broadcom Corporation$
+# $Id: bcm94710r1.txt,v 1.4 2004-12-15 21:09:38 rtrask Exp $
+boardtype=bcm94710r1
+boardnum=${serno}
+
+# 4710 SDRAM controller parameters
+sdram_init=0x0409
+sdram_config=0x0000
+sdram_refresh=0x8040
+sdram_ncdl=0
+
+# 4710 MAC and PHY parameters
+il0macaddr=00:90:4c:1a:${maclo}
+et0macaddr=00:90:4c:1b:${maclo}
+et0phyaddr=0
+et0mdcport=0
+et1macaddr=00:90:4c:1c:${maclo}
+et1phyaddr=1
+et1mdcport=0
+
+# vxWorks variables
+password=admin
+options=4096
+dhcps_startip=192.168.1.100
+dhcps_endip=192.168.1.119
+
+# PMON variables
+dl_ram_addr=a0001000
+os_ram_addr=80001000
+os_flash_addr=bfc40000
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+scratch=a0180000
+boot_wait=on
+
+# watchdog set to 3 sec
+watchdog=3000
+

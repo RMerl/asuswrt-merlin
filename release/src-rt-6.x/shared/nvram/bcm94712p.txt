@@ -1,0 +1,58 @@
+# bcm94712p board
+# Copyright 2003, Broadcom Corporation
+# All Rights Reserved.                
+#                                     
+# This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;   
+# the contents of this file may not be disclosed to third parties, copied
+# or duplicated in any form, in whole or in part, without the prior      
+# written permission of Broadcom Corporation.                            
+# $Id: bcm94712p.txt,v 1.13 2005-01-21 19:08:04 vpiskun Exp $
+boardtype=0x0446
+boardnum=${serno}
+# Board revision 6.0
+boardrev=0x60
+boardflags=0x48
+sromrev=2
+
+# MIPS clock frequency in MHz
+clkfreq=200
+
+# 8 MB SDR SDRAM (4 Meg x 16)
+sdram_init=0x0002
+sdram_config=0x0022
+sdram_refresh=0x0000
+sdram_ncdl=0
+
+# No ethernet at all
+et0phyaddr=0x1f
+et1phyaddr=0x1f
+
+# 4712 802.11g parameters
+il0macaddr=00:90:4c:77:${maclo}
+aa0=3
+ag0=2
+pa0maxpwr=76
+pa0itssit=62
+pa0b0=0x1599
+pa0b1=0xfad3
+pa0b2=0xfed4
+
+# Commons wireless parameters
+wl0gpio0=0xff
+wl0gpio1=0xff
+wl0gpio2=0xff
+wl0gpio3=0xff
+cctl=0
+ccode=0
+
+# Bootlaoder variables
+dl_ram_addr=a0001000
+os_ram_addr=80001000
+os_flash_addr=bfc40000
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+scratch=a0180000
+boot_wait=on
+
+# Watchdog timer in ms
+watchdog=3000

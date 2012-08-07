@@ -1,0 +1,17 @@
+brcm ref for brcm s/w (dhd full mac) (non-Nokia customers would use it)
+	bcm943362sdg.txt - has all the paparams
+
+brcm ref for brcm s/w or gekko (lmac or h2spi wha) (Colin would use it)
+	bcm943362sdg_lmac.txt - same as bcm943362sdg.txt without paparams
+	bcm943362sdg_lmac_nvmem_rev1.txt - nok variables and paparams
+	Note: when released, these are concatenated to bcm943362sdg_nok_rev1.txt
+		by the win_mfgtest_dongle_sdio.mk PLT release script
+
+nok board for nokia s/w (dhd)
+	nok43362.txt - has all the paparams (Suman would use it)
+
+nok board for nokia s/w (gekko with nok board) (Nokia product would use it)
+	nok43362_lmac.txt - like bcm943362sdg_lmac.txt but for nokia board
+	nok43362_lmac_nvmem_rev1.txt - like bcm943362sdg_lmac_nvmem_rev1.txt but for nokia board
+	Note: when released, these are concatenated to nok43362_nok_rev1.txt
+		by the win_mfgtest_dongle_sdio.mk PLT release script

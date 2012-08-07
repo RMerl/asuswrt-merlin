@@ -14,8 +14,6 @@
 include common.mak
 
 ifeq ($(RTCONFIG_BCMWL6),y)
-ooWLAN_ComponentsInUse := bcmwifi clm
-include ../../src-rt-6.x/makefiles/WLAN_Common.mk
 export CFLAGS += -DBCM_DCS
 export CFLAGS += -DEXT_ACS
 export CFLAGS += -DD11AC_IOTYPES

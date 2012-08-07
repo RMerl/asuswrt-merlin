@@ -2359,9 +2359,6 @@ void restart_wireless_acsd()
 #elif defined RTCONFIG_RALINK
 	stop_8021x();
 #endif
-#ifdef RTCONFIG_BCMWL6
-	stop_acsd();
-#endif
 	// inform watchdog to stop WPS LED
 	kill_pidfile_s("/var/run/watchdog.pid", SIGUSR2);
 
