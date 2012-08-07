@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.162.14b (06-Aug-2012)
+Asuswrt-Merlin - build 3.0.0.3.162.15 (xx-Aug-2012)
 ====================================================
 
 About
@@ -79,7 +79,8 @@ certain events occur.  Those scripts must be saved in /jffs/scripts/
 - services-start:  Services are started (boot)
 - services-stop:  Services are stopped (reboot)
 - wan-start:  WAN interface just come up (includes if it went down and back up)
-- firewall-start:  Firewall is started (rules have been applied)
+- firewall-start:  Firewall is started (filter rules have been applied)
+- nat-start: nat rules (i.e. port forwards and such) have been applied (nat table)
 - init-start:  Right after jffs is mounted, before any of the services get started
 - pre-mount:  Just before a partition is mounted.  Be careful with 
   this script.  This is run in a blocking call and will block the mounting of the 
@@ -213,6 +214,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.3.162.15:
+   - NEW: Added nat-start user script, as NAT rules get applied separately from
+          other firewall rules (firewall-start changes to the nat table are 
+          being overwritten when the router starts NAT)
+
+
 3.0.0.3.162.14b:
    - FIXED: Web server would crash for some people when accessing
             the Wireless Log page.

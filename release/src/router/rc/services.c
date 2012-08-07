@@ -3796,6 +3796,7 @@ void start_nat_rules() {
 
 	eval("iptables-restore", "/tmp/nat_rules");
 
+	run_custom_script("nat-start");
 	return;
 }
 
