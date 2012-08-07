@@ -41,6 +41,7 @@
 #include <common.h>
 #include <shared.h>
 #include <rtstate.h>
+#include <wlioctl.h>
 
 #ifdef RTCONFIG_FANCTRL
 #include <wlutils.h>
