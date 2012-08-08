@@ -162,6 +162,7 @@ static int x509_certify (X509_STORE *ctx,char *CAfile,const EVP_MD *digest,
 						ASN1_INTEGER *sno);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 static int reqfile=0;
+static time_t setstartsecs=0;
 
 int MAIN(int, char **);
 
@@ -367,6 +368,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			alias= *(++argv);
 			trustout = 1;
+			}
+		else if (strcmp(*argv,"-setstartsecs") == 0)
+			{
+			if (--argc < 1) goto bad;
+			setstartsecs = atol(*(++argv));
 			}
 		else if (strcmp(*argv,"-certopt") == 0)
 			{
@@ -1245,14 +1251,30 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *dig
 	EVP_PKEY_free(pktmp);
 
 	if (!X509_set_issuer_name(x,X509_get_subject_name(x))) goto err;
-	if (X509_gmtime_adj(X509_get_notBefore(x),0) == NULL) goto err;
 
-	/* Lets just make it 12:00am GMT, Jan 1 1970 */
-	/* memcpy(x->cert_info->validity->notBefore,"700101120000Z",13); */
-	/* 28 days to be certified */
+	if(setstartsecs) {
+		struct tm *tmnow;
+		char buf[100];
 
-	if (X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days) == NULL)
-		goto err;
+		tmnow = localtime(&setstartsecs);
+		snprintf(buf, sizeof(buf), "%02d%02d%02d%02d%02d%02dZ",
+			tmnow->tm_year%100, tmnow->tm_mon+1, tmnow->tm_mday,
+			tmnow->tm_hour, tmnow->tm_min, tmnow->tm_sec);
+		if (!ASN1_UTCTIME_set_string(X509_get_notBefore(x), buf)) goto err;
+
+		if (X509_time_adj(X509_get_notAfter(x), (long)60*60*24*days, &setstartsecs) == NULL)
+			goto err;
+	}
+	else {
+		if (X509_gmtime_adj(X509_get_notBefore(x),0) == NULL) goto err;
+
+		/* Lets just make it 12:00am GMT, Jan 1 1970 */
+		/* memcpy(x->cert_info->validity->notBefore,"700101120000Z",13); */
+		/* 28 days to be certified */
+
+		if (X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days) == NULL)
+			goto err;
+	}
 
 	if (!X509_set_pubkey(x,pkey)) goto err;
 	if (clrext)
