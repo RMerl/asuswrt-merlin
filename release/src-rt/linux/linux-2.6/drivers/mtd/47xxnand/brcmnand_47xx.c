@@ -1777,7 +1777,13 @@ static void brcmnand_resume(struct mtd_info *mtd)
 		       "in suspended state\n");
 }
 
-struct mtd_partition brcmnand_parts[4] = {{0}};
+struct mtd_partition brcmnand_parts[5] = {{0}};
+
+
+// Minimum number of blocks for jffs2 fs
+#define PART_JFFS2_MIN 5
+// Max size = 32 MB
+#define PART_JFFS2_MAXSIZE (32 * 0x100000UL)
 
 struct mtd_partition *init_brcmnand_mtd_partitions(struct mtd_info *mtd, size_t size)
 {
@@ -1785,6 +1791,7 @@ struct mtd_partition *init_brcmnand_mtd_partitions(struct mtd_info *mtd, size_t 
 	int j = 0;
 	int offset = 0;
 	unsigned int image_first_offset=0;
+	int jffssize;
 #ifdef CONFIG_FAILSAFE_UPGRADE
 	char *img_boot = nvram_get(BOOTPARTITION);
 	char *imag_1st_offset = nvram_get(IMAGE_FIRST_OFFSET);
@@ -1827,6 +1834,37 @@ struct mtd_partition *init_brcmnand_mtd_partitions(struct mtd_info *mtd, size_t 
 		j++;
 #endif
 	}
+/*
+	if (size > ((NFL_BBT_SIZE * 2) + (mtd->erasesize * PART_JFFS2_MIN)) ) {
+		brcmnand_parts[j].name = "jffs2";
+		brcmnand_parts[j].offset = offset;
+
+		if ( (size - (NFL_BBT_SIZE * 2)) > (32 * 0x100000UL) ) // Limit to 32 MB max
+			jffssize = (32 * 0x100000UL);
+		else
+			jffssize = size - (NFL_BBT_SIZE * 2);
+
+		brcmnand_parts[j].size = jffssize;
+		offset += brcmnand_parts[j].size;
+		size -= brcmnand_parts[j].size;
+		j++;
+	}
+*/
+
+	jffssize = size - (NFL_BBT_SIZE * 2);
+	if (jffssize > (mtd->erasesize * PART_JFFS2_MIN)) {
+
+		if (jffssize > PART_JFFS2_MAXSIZE)
+			jffssize = PART_JFFS2_MAXSIZE;
+
+                brcmnand_parts[j].name = "jffs2";
+                brcmnand_parts[j].offset = offset;
+		brcmnand_parts[j].size = jffssize;
+                offset += brcmnand_parts[j].size;
+                size -= brcmnand_parts[j].size;
+                j++;
+	}
+
 
 	size -= NFL_BBT_SIZE;
 	if (size <= 0) {
