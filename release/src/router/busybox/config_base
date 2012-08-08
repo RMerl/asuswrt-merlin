@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Busybox version: 1.17.4
-# Wed Aug  8 19:10:06 2012
+# Wed Aug  8 19:15:22 2012
 #
 CONFIG_HAVE_DOT_CONFIG=y
 
@@ -178,7 +178,7 @@ CONFIG_TR=y
 CONFIG_CHMOD=y
 CONFIG_CHOWN=y
 # CONFIG_FEATURE_CHOWN_LONG_OPTIONS is not set
-# CONFIG_CHROOT is not set
+CONFIG_CHROOT=y
 # CONFIG_CKSUM is not set
 # CONFIG_COMM is not set
 CONFIG_CP=y
