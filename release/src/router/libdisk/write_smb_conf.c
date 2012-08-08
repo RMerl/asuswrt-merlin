@@ -160,11 +160,11 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "max log size = 5\n");
 	
 	/* share mode */
-	if (!strcmp(nvram_safe_get("st_samba_mode"), "1") || !strcmp(nvram_safe_get("st_samba_mode"), "3")) {
+	if (!strcmp(nvram_safe_get("st_samba_mode"), "1") || !strcmp(nvram_safe_get("st_samba_mode"), "2")) {
 		fprintf(fp, "security = SHARE\n");
 		fprintf(fp, "guest only = yes\n");
 	}
-	else if (!strcmp(nvram_safe_get("st_samba_mode"), "2") || !strcmp(nvram_safe_get("st_samba_mode"), "4")) {
+	else if (!strcmp(nvram_safe_get("st_samba_mode"), "3") || !strcmp(nvram_safe_get("st_samba_mode"), "4")) {
 		fprintf(fp, "security = USER\n");
 		fprintf(fp, "guest ok = no\n");
 		fprintf(fp, "map to guest = Bad User\n");

@@ -239,7 +239,7 @@ getStorageStatus(STORAGE_INFO_T *st)
 	{
 		apps_status|=APPS_STATUS_BLOCKED;
 	}
-	if(!strcmp(nvram_safe_get("st_samba_mode"), "2") || !strcmp(nvram_safe_get("st_samba_mode"), "4"))
+	if(!strcmp(nvram_safe_get("st_samba_mode"), "3") || !strcmp(nvram_safe_get("st_samba_mode"), "4"))
 	{
 		apps_status|=APPS_STATUS_SMBUSER;
 	}
