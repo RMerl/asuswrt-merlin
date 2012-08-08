@@ -6,8 +6,8 @@
 
 my $openssl;
 
-my $dir = "/etc";
-my $prefix = "/etc";
+my $dir = "/usr/local/ssl";
+my $prefix = "/usr/local/ssl";
 
 if(defined $ENV{OPENSSL}) {
 	$openssl = $ENV{OPENSSL};
