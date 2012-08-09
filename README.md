@@ -8,4 +8,12 @@ original Asus firmware.  While some features do get added, this is not the main 
 It is not meant to replace existing projects such as Tomato or DD-WRT, but rather to offer an alternative 
 for people who prefer the original firmware featureset.
 
-At this time, the only device supported by this project is the RT-N66U.
+At this time, the supported devices are:
+
+- RT-N66U
+- RT-AC66U
+
+
+Also available in experimental (untested) state:
+- RT-N16
+
