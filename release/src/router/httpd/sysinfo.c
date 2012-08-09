@@ -159,7 +159,6 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
 			if (mount_info) free(mount_info);
 
-#ifdef RTCONFIG_FANCTRL
 		} else if(strncmp(type,"temperature",11) == 0) {
 			unsigned int temperature;
 			int radio=0;
@@ -170,7 +169,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				strcpy(result,"<i>disabled</i>");
 			else
 				sprintf(result,"%u&deg;C", temperature);
-#endif
+
 		} else if(strcmp(type,"conn.total") == 0) {
 			FILE* fp;
 
