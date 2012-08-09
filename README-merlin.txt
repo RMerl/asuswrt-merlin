@@ -1,22 +1,41 @@
-Asuswrt-Merlin - build 3.0.0.3.162.15 (xx-Aug-2012)
+Asuswrt-Merlin - build 3.0.0.3.164.15 (xx-Aug-2012)
 ====================================================
 
 About
 -----
-Asuswrt is the firmware developped by Asus for their newer routers.
+Asuswrt is the firmware developped by Asus for their newer routers.  They are 
+also porting it to some of their older models, like the RT-56U and RT-N16.  
+While originally based on Tomato-RT, Asus has disabled some of the 
+original Tomato features, and added others.
 
-Asuswrt-merlin is my customized version, which I have modified and compiled.
-Originally developped for the RT-N66U, there is now also an experimental version 
-available for the RT-N16.
-
-The goal is to do some minor improvements to Asus's firmware, 
+Asuswrt-merlin is a customized version, which I am developping.
+The goal is to do some bugfixes and minor enhancements to Asus's firmware, 
 without targeting at full-blown advanced featuresets such as provided by 
-excellent projects such as Tomato or DD-WRT.  This aims to be a more restrained 
-alternative for those who prefer to stay closer to the original firmware.
+excellent projects such as Tomato or DD-WRT.  Some of the features 
+that had been disabled by Asus have also been re-enabled.
+This aims to be a more restrained alternative for those who prefer to stay 
+closer to the original firmware, with limited risks of seeing new 
+features bring in new stability issues.  I value stability over 
+performance, and performance over features.
 
-The list of changes (so far):
 
-- Based on the source code of release 3.0.0.3.162
+
+Supported Devices
+-----------------
+Supported devices are:
+ * RT-N66U
+ * RT-AC66U
+
+These devices have experimental support (because I don't own one to test it):
+ * RT-N16
+
+
+
+Features
+--------
+Here is a list of features that Asuswrt-merlin brings over the original firmware:
+
+- Based on the source code of release 3.0.0.3.164
 - WakeOnLan web interface (with user-entered preset targets)
 - Persistent JFFS partition
 - User scripts that run on specific events
@@ -39,6 +58,7 @@ The list of changes (so far):
 - Disk spindown after user-configurable inactivity timeout
 - System info summary page
 - Wireless client IP and hostname on the Wireless Log page
+
 
 
 Installation
@@ -70,6 +90,14 @@ First time you enable JFFS, it must be formatted.  This can be done through
 the web page, same page where you enable it.  Enabling/Disabling/Formating 
 JFFS requires a reboot to take effect.
 
+I do not recommend doing frequent writes to this area, as it will 
+prematuraly wear out the flash storage.  This is a good place to 
+put files that are written once like scripts or kernel modules, or 
+that rarely get written to (like once a day).  Storing files that 
+constantly get written to (like logfiles) is NOT recommended - use
+a USB disk for that.
+
+
 
 * User scripts *
 These are shell scripts that you can create, and which will be run when 
@@ -99,12 +127,14 @@ And like any Linux script, they need to start with a shebang:
    #!/bin/sh
 
 
+
 * WakeOnLan *
 There's a WOL tab under the new Tools menu.  From there you can enter a
 target computer's MAC address to send it a WakeOnLan packet.  You can also
 create a list of MAC addresses that will be stored in nvram, and on
 which you can click afterward to wake up one of the listed computers, without 
 having to remember their MAC addresses.
+
 
 
 * SSHD *
@@ -121,11 +151,13 @@ or both.  You can also change the https port to a different one
 (default is 8443).
 
 
+
 * WPS button mode - toggle radio *
 You can configure the router so pressing the WPS button will 
 toggle the radio on/off instead of starting WPS mode.
 The option to enable this feature can be found on the 
 Administration page, on the System tab.
+
 
 
 * Crond *
@@ -136,6 +168,7 @@ Note that this location resides in RAM, so you would have to
 put your cron script somewhere such as in the jffs partition, 
 and at boot time copy it to /var/spool/cron/crontabs/ using 
 an init-start user script.
+
 
 
 * Traffic history saving *
@@ -157,6 +190,7 @@ Also, a new "Monthly" page has been added to the Traffic
 Monitor pages.
 
 
+
 * Display active connections *
 There is a new tab under System Log called "Connections".
 This page will list the currently tracked network connections.
@@ -176,6 +210,7 @@ values to make them more VoIP-friendly, by using smaller timeouts.
 Timeout values are in seconds.
 
 
+
 * Mounting remote CIFS shares on the router *
 You can mount remote SMB shares on your router.  The syntax will 
 be something like this:
@@ -183,6 +218,7 @@ be something like this:
 mount \\\\192.168.1.100\\ShareName /cifs1 -t cifs -o "username=User,password=Pass"
 
 (backslashes must be doubled.)
+
 
 
 * Dual WAN (EXPERIMENTAL) *
@@ -203,6 +239,16 @@ the time Asus finishes developping and testing it.
 
 
 
+* Disk Spindown when idle *
+Jeff Gibbons's sd-idle-2.6 has been added to the firmware, allowing you 
+to configure a timeout value (in seconds) on the Tools -> Other Settings 
+page.  Plugged hard drives will stop spinning after being inactive 
+for that specified period of time.  Note that services like Download Master 
+might be generating background disk activity, preventing it from idling.
+
+
+
+
 Source code
 -----------
 The source code with all my modifications can be found 
@@ -214,7 +260,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.3.162.15:
+3.0.0.3.164.15:
+   - NEW: RT-AC66U officialy supported, with all the same features as the RT-N66U.
+   - NEW: (RT-AC66U) Implemented JFFS support.  Limiting partition to 32 MB
+          max, as using the whole 90+ MB available makes little sense for 
+          JFFS, and is also displaying some issues.
    - NEW: Added nat-start user script, as NAT rules get applied separately from
           other firewall rules (firewall-start changes to the nat table are 
           being overwritten when the router starts NAT)
@@ -423,9 +473,7 @@ Website: http://www.lostrealm.ca/
 Email: rmerl@lostrealm.ca
 
 Drop me a note if you are using this firmware and are enjoying it.  If you really like it and want 
-to give more than a simple "Thank you", there is also a Paypal donation button on my website.  I 
-wouldn't mind being able to afford a second router, so I can work on this firmware without 
-constantly cutting my Internet access :)
+to give more than a simple "Thank you", there is also a Paypal donation button on my website.
 
 
 --- 
