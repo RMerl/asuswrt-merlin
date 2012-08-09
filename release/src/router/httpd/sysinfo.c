@@ -43,9 +43,7 @@
 #include <rtstate.h>
 #include <wlioctl.h>
 
-#ifdef RTCONFIG_FANCTRL
 #include <wlutils.h>
-#endif
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
 
@@ -234,7 +232,6 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 }
 
 
-#ifdef RTCONFIG_FANCTRL
 unsigned int get_phy_temperature(int radio)
 {
 	int ret = 0;
@@ -259,7 +256,6 @@ unsigned int get_phy_temperature(int radio)
 		return *temp / 2 + 20;
 	}
 }
-#endif
 
 
 unsigned int get_wifi_clients(int radio, int querytype)
