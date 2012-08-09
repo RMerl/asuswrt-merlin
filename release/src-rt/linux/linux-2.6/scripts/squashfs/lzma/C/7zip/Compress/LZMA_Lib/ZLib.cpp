@@ -31,6 +31,10 @@
 #define ZLIB_LP 0
 #define ZLIB_PB 2
 
+#ifndef OF
+#define OF(args) args
+#endif
+
 #ifdef WIN32
 #include <initguid.h>
 #else
