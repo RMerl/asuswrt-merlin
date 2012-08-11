@@ -1421,6 +1421,7 @@ int init_nvram(void)
 		add_rc_support("mssid 2.4G 5G update usbX2");
 		add_rc_support("switchctrl"); // broadcom: for jumbo frame only
 		add_rc_support("manual_stb");
+		add_rc_support("pwrctrl");
 		break;
 
 	case MODEL_RTN10U:
@@ -1519,7 +1520,6 @@ int init_nvram(void)
 #ifdef RTCONFIG_FANCTRL
 	if( button_pressed(BTN_HAVE_FAN) )
 		add_rc_support("fanctrl");
-	add_rc_support("pwrctrl");
 #endif
 
 #ifdef RTCONFIG_OLD_PARENTALCTRL
