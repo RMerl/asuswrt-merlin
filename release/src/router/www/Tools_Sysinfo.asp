@@ -101,6 +101,14 @@ function showbootTime(){
 				        	<td><% nvram_get("productid"); %></td>
 					</tr>
 					<tr>
+						<th>Firmware Build:</th>
+						<td><% nvram_get("buildinfo"); %></td>
+					</tr>
+					<tr>
+						<th>Bootloader:</th>
+						<td><% nvram_get("pmon_ver"); %></td>
+					</tr>
+					<tr>
 						<th>Features:</th>
 						<td><% nvram_get("rc_support"); %></td>
 					</tr>
