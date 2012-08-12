@@ -268,6 +268,10 @@ History
    - NEW: Added nat-start user script, as NAT rules get applied separately from
           other firewall rules (firewall-start changes to the nat table are 
           being overwritten when the router starts NAT)
+   - NEW: Added additional info to Sysinfo page
+   - FIXED: (RT-AC66U) Re-enabled power control
+   - FIXED: Performance page now uses then ew Sysinfo API, and is able now to
+            deal with cases where radios are disabled.
 
 
 3.0.0.3.162.14b:
