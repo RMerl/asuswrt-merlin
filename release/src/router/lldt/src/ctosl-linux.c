@@ -513,7 +513,10 @@ get_net_flags(void *data)
     /* If your device has a management page at the url
             http://<device-ip-address>/
        then use the fMW flag, otherwise, remove it */
+    if (nvram_match("wan_nat_x", "1"))
     *nf = htonl(fFD | fNX | fMW);
+    else
+        *nf = htonl(fFD | fMW);
 
     return TLV_GET_SUCCEEDED;
 }
