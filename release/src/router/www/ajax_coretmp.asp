@@ -1,5 +1,6 @@
-﻿fanctrl_info = <% get_fanctrl_info(); %>;
-curr_rxData = fanctrl_info[3];
-curr_coreTmp_2 = fanctrl_info[1];
-curr_coreTmp_5 = fanctrl_info[2];
-curr_coreTmp_2 = (parseInt(curr_coreTmp_2)+parseInt(curr_coreTmp_5))*0.5;
+﻿
+curr_coreTmp_2 = "<% sysinfo("temperature.2"); %>".replace("&deg;C", "");
+if (curr_coreTmp_2 == "diasbled") curr_coreTmp_2 = 0;
+curr_coreTmp_5 = "<% sysinfo("temperature.5"); %>".replace("&deg;C", "");
+if (curr_coreTmp_5 == "disabled") curr_coreTmp_5 = 0;
+

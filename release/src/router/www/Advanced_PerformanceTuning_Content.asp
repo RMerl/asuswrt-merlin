@@ -22,11 +22,10 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-var fanctrl_info = <% get_fanctrl_info(); %>;
-var curr_rxData = fanctrl_info[3];
-var curr_coreTmp_2 = convertTemp(fanctrl_info[1], fanctrl_info[2], 0);
-//var curr_coreTmp_2 = fanctrl_info[1];
-var curr_coreTmp_5 = fanctrl_info[2];
+curr_coreTmp_2 = "<% sysinfo("temperature.2"); %>".replace("&deg;C", "");
+if (curr_coreTmp_2 == "diasbled") curr_coreTmp_2 = 0;      
+curr_coreTmp_5 = "<% sysinfo("temperature.5"); %>".replace("&deg;C", ""); 
+if (curr_coreTmp_5 == "disabled") curr_coreTmp_5 = 0;
 var coreTmp_2 = new Array();
 var coreTmp_5 = new Array();
 coreTmp_2 = [curr_coreTmp_2];
@@ -35,18 +34,14 @@ var wl_control_channel = <% wl_control_channel(); %>;
 var $j = jQuery.noConflict();
 var MaxTxPower_2;
 var MaxTxPower_5;
-var flag = 0;;
 var HW_MAX_LIMITATION_2 = 501;
 var HW_MIN_LIMITATION_2 = 9;
 var HW_MAX_LIMITATION_5 = 251;
 var HW_MIN_LIMITATION_5 = 9;
-var fanctrl_fullspeed_temp_orig = convertTemp('<% nvram_get("fanctrl_fullspeed_temp"); %>', 0, 0);
-var fanctrl_period_temp_orig = convertTemp('<% nvram_get("fanctrl_period_temp"); %>', 0, 0);
-var fanctrl_fullspeed_temp_orig_F = Math.round(fanctrl_fullspeed_temp_orig*9/5+32);
-var fanctrl_period_temp_orig_F = Math.round(fanctrl_period_temp_orig*9/5+32);
 
 function initial(){
 	show_menu();
+	document.form.fanctrl_fullspeed_temp_unit.selectedIndex = getCookie("CoreTmpUnit");
 	update_coretmp();
 
 	if(getCookie("CoreTmpUnit") == 1){
@@ -61,7 +56,6 @@ function initial(){
 		document.form.fanctrl_fullspeed_temp.value = fanctrl_fullspeed_temp_orig;
 		document.form.fanctrl_period_temp.value = fanctrl_period_temp_orig;
 	}
-	document.form.fanctrl_fullspeed_temp_unit.selectedIndex = getCookie("CoreTmpUnit");
 
 	if(power_support < 0){
 		inputHideCtrl(document.form.wl0_TxPower, 0);
@@ -84,15 +78,8 @@ function update_coretmp(e){
   });
 }
 
-function convertTemp(__coreTmp_2, __coreTmp_5, _method){
-	if(_method == 0)
-		return parseInt(__coreTmp_2)*0.5+20;
-	else
-		return (parseInt(__coreTmp_2)-20)*2;
-}
 
 function updateNum(_coreTmp_2, _coreTmp_5){
-	curr_coreTmp_2 = convertTemp(_coreTmp_2, _coreTmp_5, 0);
 
 	if(document.form.fanctrl_fullspeed_temp_unit.value == 1){
 		$("coreTemp_2").innerHTML = Math.round(_coreTmp_2*9/5+32) + " °F";
@@ -122,26 +109,9 @@ function applyRule(){
 		document.form.wl1_TxPower.focus();
 		return false;
 	}
-/*
-	if(parseInt(document.form.wl0_TxPower.value) > 80 && flag < 2){
-		$("TxPowerHint_2").style.display = "";
-		document.form.wl0_TxPower.focus();
-		flag++;
-		return false;
-	}
-	else
-*/
-		$("TxPowerHint_2").style.display = "none";
-/*
-	if(parseInt(document.form.wl1_TxPower.value) > 80 && flag < 2){
-		$("TxPowerHint_5").style.display = "";
-		document.form.wl1_TxPower.focus();
-		flag++;
-		return false;
-	}
-	else
-*/
-		$("TxPowerHint_5").style.display = "none";
+
+	$("TxPowerHint_2").style.display = "none";
+	$("TxPowerHint_5").style.display = "none";
 
 	if(parseInt(document.form.wl0_TxPower.value) > parseInt(document.form.wl0_TxPower_orig.value) 
 		|| parseInt(document.form.wl1_TxPower.value) > parseInt(document.form.wl1_TxPower_orig.value))
@@ -167,11 +137,6 @@ function applyRule(){
 		return false;
 	}
 
-	if(document.form.fanctrl_fullspeed_temp_unit.value == "1"){
-		document.form.fanctrl_fullspeed_temp.value = Math.round((document.form.fanctrl_fullspeed_temp.value-32)*5/9);
-		document.form.fanctrl_period_temp.value = Math.round((document.form.fanctrl_period_temp.value-32)*5/9);
-	}
-	
 	/*if(validate_number_range(document.form.fanctrl_fullspeed_temp, 25, 70) 
 		&& validate_number_range(document.form.fanctrl_period_temp, 25, 55)){
 		document.form.fanctrl_fullspeed_temp.value = convertTemp(document.form.fanctrl_fullspeed_temp.value, 0, 1);
@@ -248,10 +213,6 @@ function getCookie(c_name)
 			<input type="hidden" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>">
 			<input type="hidden" name="wl0_TxPower_orig" value="<% nvram_get("wl0_TxPower"); %>" disabled>
 			<input type="hidden" name="wl1_TxPower_orig" value="<% nvram_get("wl1_TxPower"); %>" disabled>
-			<input type="hidden" name="fanctrl_mode_orig" value="<% nvram_get("fanctrl_mode"); %>" disabled>
-			<input type="hidden" name="fanctrl_fullspeed_temp_orig" value="<% nvram_get("fanctrl_fullspeed_temp"); %>" disabled>
-			<input type="hidden" name="fanctrl_period_temp_orig" value="<% nvram_get("fanctrl_period_temp"); %>" disabled>
-			<input type="hidden" name="fanctrl_dutycycle_orig" value="<% nvram_get("fanctrl_dutycycle"); %>" disabled>
 
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
@@ -295,32 +256,9 @@ function getCookie(c_name)
 												</td>
 											</tr>
 										</table>
+										<br>Legend: <span style="color: #FF9900;">2.4 GHz</span> - <span style="color: #33CCFF;">5 GHz</span>
 									</td>
-					  		</tr>
-
-								<tr style="display:none;">
-									<td bgcolor="#4D595D">
-						    	 	<table width="735px" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_NWM">
-								  		<tr>
-								  			<th style="text-align:center; width:35%;height:25px;">2.4GHz</th>
-								  			<th style="text-align:center; width:35%;">5GHz</th>
-								  			<th style="text-align:center; width:30%;">Unit</th>
-								  		</tr>
-		
-								  		<tr>
-								  			<td style="text-align:center; background-color:#111;"><span id="coreTemp_2" style="font-weight:bold;color:#FF9000"></span></td>
-								 				<td style="text-align:center; background-color:#111;"><span id="coreTemp_5" style="font-weight:bold;color:#33CCFF"></span></td>
-								  			<td style="text-align:center; background-color:#111;">
-													<!--select name="fanctrl_fullspeed_temp_unit" class="input_option" onchange="changeTempUnit(this.value)" style="background-color:#111;">
-														<option class="content_input_fd" value="0">°C</option>
-														<option class="content_input_fd" value="1">°F</option>
-													</select-->			
-												</td>
-								    	</tr>
-										</table>
-									</td>
-					  		</tr>
-
+								</tr>
 								<tr>
 									<td bgcolor="#4D595D">
 										<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
@@ -346,72 +284,16 @@ function getCookie(c_name)
 												</td> 
 											</tr>
 
-											<tr style="display:none">
-												<th>Cooler rotate mode</th>
-												<td>
-													<select name="fanctrl_mode" class="input_option">
-														<option class="content_input_fd" value="0" <% nvram_match("fanctrl_mode", "0", "selected"); %>><#Automatic_cooler#></option>
-														<option class="content_input_fd" value="1" <% nvram_match("fanctrl_mode", "1", "selected"); %>>Manually</option>
-													</select>			
-												</td>
-											</tr>
-
 											<tr>
 												<th>Temperature unit</th>
 												<td>
 													<select name="fanctrl_fullspeed_temp_unit" class="input_option" onchange="changeTempUnit(this.value)">
 														<option class="content_input_fd" value="0">°C</option>
 														<option class="content_input_fd" value="1">°F</option>
-													</select>			
+													</select>
 												</td>
 											</tr>
 											
-											<tr style="display:none">
-												<th>Cooler full speed spin</th>
-												<td>Temperature over
-													<input type="text" name="fanctrl_fullspeed_temp" maxlength="3" class="input_3_table" value="<% nvram_get("fanctrl_fullspeed_temp"); %>">
-													<span style="color:#FFF" id="unitDisplay1">°C</span>
-												</td>
-											</tr>
-
-											<tr style="display:none">
-												<th>Cooler periodically spin</th>
-												<td>Temperature over
-													<input type="text" name="fanctrl_period_temp" maxlength="3" class="input_3_table" value="<% nvram_get("fanctrl_period_temp"); %>">
-													<span style="color:#FFF" id="unitDisplay2">°C</span>
-												</td>
-											</tr>
-				            
-											<!--tr>
-												<th>Spin duty cycle</th>
-												<td> 
-													<select name="fanctrl_dutycycle" class="input_option">
-														<option class="content_input_fd" value="0" <% nvram_match("fanctrl_dutycycle", "1", "selected"); %>>Auto</option>
-														<option class="content_input_fd" value="1" <% nvram_match("fanctrl_dutycycle", "1", "selected"); %>>10%</option>
-														<option class="content_input_fd" value="2" <% nvram_match("fanctrl_dutycycle", "2", "selected"); %>>20%</option>
-														<option class="content_input_fd" value="3" <% nvram_match("fanctrl_dutycycle", "3", "selected"); %>>30%</option>
-														<option class="content_input_fd" value="4" <% nvram_match("fanctrl_dutycycle", "4", "selected"); %>>40%</option>
-														<option class="content_input_fd" value="5" <% nvram_match("fanctrl_dutycycle", "5", "selected"); %>>50%</option>
-														<option class="content_input_fd" value="6" <% nvram_match("fanctrl_dutycycle", "6", "selected"); %>>60%</option>
-														<option class="content_input_fd" value="7" <% nvram_match("fanctrl_dutycycle", "7", "selected"); %>>70%</option>
-														<option class="content_input_fd" value="8" <% nvram_match("fanctrl_dutycycle", "8", "selected"); %>>80%</option>
-														<option class="content_input_fd" value="9" <% nvram_match("fanctrl_dutycycle", "9", "selected"); %>>90%</option>
-														<option class="content_input_fd" value="10" <% nvram_match("fanctrl_dutycycle", "10", "selected"); %>>100%</option>
-													</select>										
-												</td> 
-											</tr-->
-											<!--tr>
-												<th>Spin duty cycle</th>
-												<td> 
-													<select name="fanctrl_dutycycle" class="input_option">
-														<option class="content_input_fd" value="0" <% nvram_match("fanctrl_dutycycle", "1", "selected"); %>><#Auto#></option>
-														<option class="content_input_fd" value="1" <% nvram_match("fanctrl_dutycycle", "1", "selected"); %>>50%</option>
-														<option class="content_input_fd" value="2" <% nvram_match("fanctrl_dutycycle", "2", "selected"); %>>67%</option>
-														<option class="content_input_fd" value="3" <% nvram_match("fanctrl_dutycycle", "3", "selected"); %>>75%</option>
-														<option class="content_input_fd" value="4" <% nvram_match("fanctrl_dutycycle", "4", "selected"); %>>80%</option>
-													</select>										
-												</td> 
-											</tr-->
 										</table>
 										<div class="apply_gen">
 											<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
