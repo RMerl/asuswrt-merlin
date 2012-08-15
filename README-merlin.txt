@@ -265,6 +265,7 @@ History
            * Radio turns back on based on schedule
            * (RT-AC66U) 5G LED turns off/on as appropriate
            * Reorganized QoS pages
+           * Turning WAN DHCP connection off will first release current DHCP lease
    - NEW: RT-AC66U officialy supported, with all the same features as the RT-N66U.
    - NEW: (RT-AC66U) Implemented JFFS support.  Limiting partition to 32 MB
           max, as using the whole 90+ MB available makes little sense for 
