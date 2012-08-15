@@ -62,37 +62,27 @@ extern bool acsd_swap;
 #define dtohenum(i) (acsd_swap?((sizeof(i) == 4) ? \
 			dtoh32(i) : ((sizeof(i) == 2) ? htod16(i) : i)):i)
 
-extern int acsd_debug_level;
-#define ACSD_ERROR(fmt, arg...) \
-		do { if (acsd_debug_level & ACSD_DEBUG_ERROR) \
-			printf("ACSD >>%s(%d): "fmt, __FUNCTION__, __LINE__, ##arg); } while (0)
-
-#define ACSD_WARNING(fmt, arg...) \
-		do { if (acsd_debug_level & ACSD_DEBUG_WARNING) \
-			printf("ACSD >>%s(%d): "fmt, __FUNCTION__, __LINE__, ##arg); } while (0)
-
-#define ACSD_INFO(fmt, arg...) \
-		do { if (acsd_debug_level & ACSD_DEBUG_INFO) \
-			printf("ACSD >>%s(%d): "fmt, __FUNCTION__, __LINE__, ##arg); } while (0)
-
-#define ACSD_DEBUG(fmt, arg...) \
-		do { if (acsd_debug_level & ACSD_DEBUG_DETAIL) \
-			printf("ACSD >>%s(%d): "fmt, __FUNCTION__, __LINE__, ##arg); } while (0)
-
-#define ACSD_CHANIM(fmt, arg...) \
-		do { if (acsd_debug_level & ACSD_DEBUG_CHANIM) \
-			printf(fmt, ##arg); } while (0)
-
 #define acsddbg(fmt, args...) do { FILE *fp = fopen("/dev/console", "w"); if (fp) { fprintf(fp, fmt, ## args); fclose(fp); } else fprintf(stderr, fmt, ## args); } while (0)
 #define acsddbG(fmt, args...) acsddbg(fmt, ##args)
 
-#if 0
-#define ACSD_PRINT(fmt, arg...) \
-		do { printf("acsd: "fmt, ##arg); } while (0)
-#else
+extern int acsd_debug_level;
+#define ACSD_ERROR(fmt, arg...) \
+		do { acsddbG("ACSD >>%s(%d): "fmt, __FUNCTION__, __LINE__, ##arg); } while (0)
+
+#define ACSD_WARNING(fmt, arg...) \
+		do { acsddbG("ACSD >>%s(%d): "fmt, __FUNCTION__, __LINE__, ##arg); } while (0)
+
+#define ACSD_INFO(fmt, arg...) \
+		do { acsddbG("ACSD >>%s(%d): "fmt, __FUNCTION__, __LINE__, ##arg); } while (0)
+
+#define ACSD_DEBUG(fmt, arg...) \
+		do { acsddbG("ACSD >>%s(%d): "fmt, __FUNCTION__, __LINE__, ##arg); } while (0)
+
+#define ACSD_CHANIM(fmt, arg...) \
+		do { acsddbG("ACSD >>%s(%d): "fmt, __FUNCTION__, __LINE__, ##arg); } while (0)
+
 #define ACSD_PRINT(fmt, arg...) \
                 do { acsddbG("acsd: "fmt, ##arg); logmessage("acsd", fmt, ##arg); } while (0)
-#endif
 
 #define HERE ACSD_ERROR("trace\n")
 

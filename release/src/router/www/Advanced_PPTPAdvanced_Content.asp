@@ -507,7 +507,7 @@ function check_dns_wins(){
 											<td>
 												<select name="pptpd_enable" class="input_option" disabled>
 													<option class="content_input_fd" value="0" <% nvram_match("pptpd_enable", "0","selected"); %>><#btn_disable#></option>
-													<option class="content_input_fd" value="1"<% nvram_match("pptpd_enable", "1","selected"); %>><#btn_Enable#></option>
+													<option class="content_input_fd" value="1"<% nvram_match("pptpd_enable", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 												</select>			
 											</td>
 									  </tr>

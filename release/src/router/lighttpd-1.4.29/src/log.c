@@ -144,6 +144,7 @@ int open_logfile_or_pipe(server *srv, const char* logfile) {
  */
 
 int log_error_open(server *srv) {
+	
 #ifdef HAVE_SYSLOG_H
 	/* perhaps someone wants to use syslog() */
 	openlog("lighttpd", LOG_CONS | LOG_PID, LOG_DAEMON);
@@ -155,8 +156,7 @@ int log_error_open(server *srv) {
 	if (srv->srvconf.errorlog_use_syslog) {
 		srv->errorlog_mode = ERRORLOG_SYSLOG;
 	} else if (!buffer_is_empty(srv->srvconf.errorlog_file)) {
-		const char *logfile = srv->srvconf.errorlog_file->ptr;
-
+		const char *logfile = srv->srvconf.errorlog_file->ptr;		
 		if (-1 == (srv->errorlog_fd = open_logfile_or_pipe(srv, logfile))) {
 			return -1;
 		}
@@ -175,7 +175,7 @@ int log_error_open(server *srv) {
 	if (!buffer_is_empty(srv->srvconf.breakagelog_file)) {
 		int breakage_fd;
 		const char *logfile = srv->srvconf.breakagelog_file->ptr;
-
+		
 		if (srv->errorlog_mode == ERRORLOG_FD) {
 			srv->errorlog_fd = dup(STDERR_FILENO);
 #ifdef FD_CLOEXEC
@@ -208,11 +208,11 @@ int log_error_open(server *srv) {
 
 int log_error_cycle(server *srv) {
 	/* only cycle if the error log is a file */
-
+	
 	if (srv->errorlog_mode == ERRORLOG_FILE) {
 		const char *logfile = srv->srvconf.errorlog_file->ptr;
 		/* already check of opening time */
-
+		
 		int new_fd;
 
 		if (-1 == (new_fd = open_logfile_or_pipe(srv, logfile))) {
@@ -373,6 +373,133 @@ int log_error_write(server *srv, const char *filename, unsigned int line, const 
 		break;
 	}
 
+	return 0;
+}
+
+//- Jerry add
+/**
+ * open the syslog
+ *
+ * if the open failed, report to the user and die
+ *
+ */
+int log_sys_open(server *srv) {
+	
+	srv->syslog_fd = -1;
+
+	if (!buffer_is_empty(srv->srvconf.syslog_file)) {
+		const char *logfile = srv->srvconf.syslog_file->ptr;		
+		if (-1 == (srv->syslog_fd = open_logfile_or_pipe(srv, logfile))) {
+			return -1;
+		}
+
+		log_sys_write(srv, "s", "Start syslog...");
+	}
+
+	return 0;
+}
+
+int log_sys_close(server *srv) {
+	if (-1 != srv->syslog_fd) {
+		if (STDERR_FILENO != srv->syslog_fd){
+			close(srv->syslog_fd);
+			srv->syslog_fd = -1;
+		}
+	}
+	return 0;
+}
+
+int log_sys_write(server *srv, const char *fmt, ...) {
+	va_list ap;
+	
+	if (-1 == srv->syslog_fd) return 0;
+	
+	buffer* sys_time_str = buffer_init();
+	buffer_prepare_copy(sys_time_str, 255);
+	strftime(sys_time_str->ptr, sys_time_str->size - 1, "%b  %d %H:%M:%S", localtime(&(srv->cur_ts)));
+	buffer_copy_string(srv->syslog_buf, sys_time_str->ptr);	
+	buffer_free(sys_time_str);
+
+	buffer_append_string_len(srv->syslog_buf, CONST_STR_LEN(" webdav: "));
+	
+	for(va_start(ap, fmt); *fmt; fmt++) {
+		int d;
+		char *s;
+		buffer *b;
+		off_t o;
+
+		switch(*fmt) {
+		case 's':           /* string */
+			s = va_arg(ap, char *);
+			buffer_append_string(srv->syslog_buf, s);
+			buffer_append_string_len(srv->syslog_buf, CONST_STR_LEN(" "));
+			break;
+		case 'b':           /* buffer */
+			b = va_arg(ap, buffer *);
+			buffer_append_string_buffer(srv->syslog_buf, b);
+			buffer_append_string_len(srv->syslog_buf, CONST_STR_LEN(" "));
+			break;
+		case 'd':           /* int */
+			d = va_arg(ap, int);
+			buffer_append_long(srv->syslog_buf, d);
+			buffer_append_string_len(srv->syslog_buf, CONST_STR_LEN(" "));
+			break;
+		case 'o':           /* off_t */
+			o = va_arg(ap, off_t);
+			buffer_append_off_t(srv->syslog_buf, o);
+			buffer_append_string_len(srv->syslog_buf, CONST_STR_LEN(" "));
+			break;
+		case 'x':           /* int (hex) */
+			d = va_arg(ap, int);
+			buffer_append_string_len(srv->syslog_buf, CONST_STR_LEN("0x"));
+			buffer_append_long_hex(srv->syslog_buf, d);
+			buffer_append_string_len(srv->syslog_buf, CONST_STR_LEN(" "));
+			break;
+		case 'S':           /* string */
+			s = va_arg(ap, char *);
+			buffer_append_string(srv->syslog_buf, s);
+			break;
+		case 'B':           /* buffer */
+			b = va_arg(ap, buffer *);
+			buffer_append_string_buffer(srv->syslog_buf, b);
+			break;
+		case 'D':           /* int */
+			d = va_arg(ap, int);
+			buffer_append_long(srv->syslog_buf, d);
+			break;
+		case 'O':           /* off_t */
+			o = va_arg(ap, off_t);
+			buffer_append_off_t(srv->syslog_buf, o);
+			break;
+		case 'X':           /* int (hex) */
+			d = va_arg(ap, int);
+			buffer_append_string_len(srv->syslog_buf, CONST_STR_LEN("0x"));
+			buffer_append_long_hex(srv->syslog_buf, d);
+			break;
+		case '(':
+		case ')':
+		case '<':
+		case '>':
+		case ',':
+		case ' ':
+			buffer_append_string_len(srv->syslog_buf, fmt, 1);
+			break;
+		}
+	}
+	va_end(ap);
+
+	struct stat st;
+	stat(srv->srvconf.syslog_file->ptr, &st);
+	int file_size = st.st_size;
+	if( file_size >= 1048576 ){//- 1M
+		unlink(srv->srvconf.syslog_file->ptr);
+		if (-1 == log_sys_open(srv)) 
+			return 0;
+	}
+	
+	buffer_append_string_len(srv->syslog_buf, CONST_STR_LEN("\n"));
+	write(srv->syslog_fd, srv->syslog_buf->ptr, srv->syslog_buf->used - 1);
+	
 	return 0;
 }
 

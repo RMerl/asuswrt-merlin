@@ -100,5 +100,5 @@ endif
 	cd $(INSTALLDIR)/sbin && ln -sf test_share how_many_layer
 
 clean:
-	rm -f *.o $(PROGS)
+	rm -f *.o $(PROGS) write_webdav_conf
 

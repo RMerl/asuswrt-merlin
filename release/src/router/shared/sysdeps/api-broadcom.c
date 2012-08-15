@@ -76,8 +76,14 @@ uint32_t get_phy_status(uint32_t portmask)
 		vecarg[1] = 0;
 		if ((portmask & (1U << i)) == 0)
 			continue;
+
 		if (ioctl(fd, SIOCGETCPHYRD2, (caddr_t)&ifr) < 0)
 			continue;
+		/* link is down, but negotiation has started
+		 * read register again, use previous value, if failed */
+		if ((vecarg[1] & 0x22) == 0x20)
+			ioctl(fd, SIOCGETCPHYRD2, (caddr_t)&ifr);
+
 		if (vecarg[1] & (1U << 2))
 			mask |= (1U << i);
 	}
@@ -263,9 +269,26 @@ void set_radio(int on, int unit, int subunit)
 	else
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
+	if (nvram_match(strcat_r(prefix, "radio", tmp), "0")) return;
+
+#if 0
 	sprintf(tmpstr, "%d", on);
 	nvram_set(strcat_r(prefix, "radio", tmp),  tmpstr);
 	nvram_commit();
+#endif
+#ifdef RTAC66U
+	snprintf(tmp, sizeof(tmp), "%sradio", prefix);
+	if(!strcmp(tmp, "wl1_radio")){
+		if(on){
+			nvram_set("led_5g", "1");
+			led_control(LED_5G, LED_ON);
+		}
+		else{
+			nvram_set("led_5g", "0");
+			led_control(LED_5G, LED_OFF);
+		}
+	}
+#endif
 
 	if(subunit>0) {
 		sprintf(tmpstr, "%d", subunit);

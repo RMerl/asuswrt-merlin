@@ -24,7 +24,7 @@ function initial(){
 	parent.$("dummyShareway").value = "<% nvram_get("dummyShareway"); %>";
 	if(parent.$("dummyShareway").value == "")
 		parent.$("dummyShareway").value = 0;
-	showTextinWizard(parent.$("dummyShareway").value);
+	showTextinWizard(parent.$("dummyShareway").value);		
 }
 
 function showTextinWizard(flag){
@@ -96,13 +96,14 @@ function passTheResult(){
 			return;
 		}//*/
 		
-		if(checkPasswdValid($("userpasswd2").value)){
+		if(checkPasswdValid(document.smartForm.userpasswd2)){
 			parent.$("account1").value = $("user2").firstChild.nodeValue;
 			parent.$("passwd1").value = $("userpasswd2").value;
 			parent.$("permission1").value = "1";
 		}
 		else{
-			$("userpasswd2").focus();
+			document.smartForm.action = "/aidisk/Aidisk-2.asp";
+			document.smartForm.submit();
 			return;
 		}
 	}
@@ -133,28 +134,19 @@ function go_pre_page(){
 	document.smartForm.submit();
 }
 
-function checkPasswdValid(passwd){
-	var tempPasswd = trim(passwd);
-	
-	// password
-	if(tempPasswd.length != passwd.length){
-		alert("<#File_Pop_content_alert_desc8#>");
-		
-		return false;
-	}
-	
-	if(trim(tempPasswd).length <= 0){
+function checkPasswdValid(obj){
+	if(obj.value.length <= 0){
 		alert("<#File_Pop_content_alert_desc6#>");
-		
+		obj.focus();
+		obj.select();
 		return false;
-	}
+	}	
 	
-	var re = new RegExp("[^a-zA-Z0-9]+","gi");
-	if(re.test(tempPasswd)){
-		alert("<#File_Pop_content_alert_desc9#>");
-		
-		return false;
-	}
+	if(!validate_string(obj)){
+			obj.focus();
+			obj.select();
+			return false;	
+	}	
 	
 	return true;
 }
@@ -220,7 +212,7 @@ function checkPasswdValid(passwd){
             	<table width="80%" border="1" align="center" cellpadding="2" cellspacing="0" bordercolor="#7ea7bd" class="FormTable_table">
                 	<tr>
                   	<th width="100"><#AiDisk_Account#></th>
-                  	<th><#AiDisk_Password#></th>
+                  	<th><#PPPConnection_Password_itemname#></th>
                   	<th width="50" ><#AiDisk_Read#></th>
                   	<th width="50" ><#AiDisk_Write#></th>
                 	</tr>
@@ -234,7 +226,7 @@ function checkPasswdValid(passwd){
                 
                 	<tr id="target2">
                   	<td height="35"><span id="user2" style="color:#FFFFFF;"></span></td>
-                  	<td><input type="text" name="userpasswd2" id="userpasswd2" value="" class="input_25_table"></td>
+                  	<td><input type="text" name="userpasswd2" id="userpasswd2" value="" class="input_25_table" onKeyPress="return is_string(this, event);" maxlength="16"></td>
                   	<td align="center"><img src="/images/New_ui/checkbox.png"></td>
                   	<td align="center">&nbsp;</td>
                 	</tr>

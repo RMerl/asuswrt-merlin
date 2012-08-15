@@ -1446,7 +1446,7 @@ void write_ftpd_conf()
 	else
 		fprintf(fp, "max_clients=%s\n", "10");
 	fprintf(fp, "ftp_username=anonymous\n");
-	fprintf(fp, "ftpd_banner=Welcome to ASUS %s FTP service.\n", nvram_safe_get("productid"));
+	fprintf(fp, "ftpd_banner=Welcome to ASUS %s FTP service.\n", get_productid());
 
 	// update codepage
 	modprobe_r("nls_cp936");
@@ -1578,13 +1578,39 @@ void enable_gro()
 }
 #endif
 
+int suit_double_quote(const char *output, const char *input, int outsize){
+	char *src = (char *)input;
+	char *dst = (char *)output;
+	char *end = (char *)output + outsize - 1;
+
+	if(src == NULL || dst == NULL || outsize <= 0)
+		return 0;
+
+	for(; *src && dst < end; ++src){
+		if(*src =='"'){
+			if(dst+2 > end)
+				break;
+
+			*dst++ = '\\';
+			*dst++ = *src;
+		}
+		else
+			*dst++ = *src;
+	}
+
+	if(dst <= end)
+		*dst = '\0';
+
+	return dst-output;
+}
+
 void
 start_samba(void)
 {
 	int acc_num, i;
 	char cmd[256];
 	char *nv, *nvp, *b;
-	char *tmp_account, *tmp_passwd;
+	char *tmp_ascii_user, *tmp_ascii_passwd;
 
 	if (getpid() != 1) {
 		notify_rc_after_wait("start_samba");
@@ -1617,10 +1643,21 @@ start_samba(void)
 	i = 0;
 	if(nv && strlen(nv) > 0){
 		while((b = strsep(&nvp, "<")) != NULL){
-			if(vstrsep(b, ">", &tmp_account, &tmp_passwd) != 2)
+			if(vstrsep(b, ">", &tmp_ascii_user, &tmp_ascii_passwd) != 2)
 				continue;
 
-			sprintf(cmd, "smbpasswd %s %s", tmp_account, tmp_passwd);
+			char char_user[64], char_passwd[64], suit_user[64], suit_passwd[64];
+
+			memset(char_user, 0, 64);
+			ascii_to_char_safe(char_user, tmp_ascii_user, 64);
+			memset(suit_user, 0, 64);
+			suit_double_quote(suit_user, char_user, 64);
+			memset(char_passwd, 0, 64);
+			ascii_to_char_safe(char_passwd, tmp_ascii_passwd, 64);
+			memset(suit_passwd, 0, 64);
+			suit_double_quote(suit_passwd, char_passwd, 64);
+
+			sprintf(cmd, "smbpasswd \"%s\" \"%s\"", suit_user, suit_passwd);
 _dprintf("%s: cmd=%s.\n", __FUNCTION__, cmd);
 			system(cmd);
 
@@ -1736,7 +1773,7 @@ void start_dms(void)
 				"\n",
 				nvram_safe_get("lan_ifname"),
 				(port < 0) || (port >= 0xffff) ? 0 : port,
-				nvram_get("computer_name") && is_valid_hostname(nvram_get("computer_name")) ? nvram_get("computer_name") : nvram_safe_get("productid"),
+				nvram_get("computer_name") && is_valid_hostname(nvram_get("computer_name")) ? nvram_get("computer_name") : get_productid(),
 				dbdir,
 				nvram_get_int("dms_tivo") ? "yes" : "no",
 				nvram_get_int("dms_stdlna") ? "yes" : "no",
@@ -1852,7 +1889,7 @@ start_mt_daapd()
 		strncpy(servername, nvram_safe_get("computer_name"), sizeof(servername));
 	else
 		servername[0] = '\0';
-	if(strlen(servername)==0) strncpy(servername, nvram_safe_get("productid"), sizeof(servername));
+	if(strlen(servername)==0) strncpy(servername, get_productid(), sizeof(servername));
 	write_mt_daapd_conf(servername);
 
 	if (is_routing_enabled())
@@ -1888,7 +1925,9 @@ stop_mt_daapd()
 		system("killall mDNSResponder");
 
 	if (pids("mt-daapd"))
-		system("killall mt-daapd");
+		system("killall -SIGKILL mt-daapd");
+
+	unlink("/etc/mt-daapd.conf");
 
 	logmessage("iTunes", "daemon is stoped");
 }
@@ -1905,7 +1944,7 @@ void write_webdav_permissions()
 	FILE *fp;
 	int acc_num = 0, i;
 	char *nv, *nvp, *b;
-	char *tmp_account, *tmp_passwd;
+	char *tmp_ascii_user, *tmp_ascii_passwd;
 
 	/* write /tmp/lighttpd/permissions */
 	fp = fopen("/tmp/lighttpd/permissions", "w");
@@ -1919,10 +1958,17 @@ void write_webdav_permissions()
 	i = 0;
 	if(nv && strlen(nv) > 0){
 		while((b = strsep(&nvp, "<")) != NULL){
-			if(vstrsep(b, ">", &tmp_account, &tmp_passwd) != 2)
+			if(vstrsep(b, ">", &tmp_ascii_user, &tmp_ascii_passwd) != 2)
 				continue;
 
-			fprintf(fp, "%s:%s\n", tmp_account, tmp_passwd);
+			char char_user[64], char_passwd[64];
+
+			memset(char_user, 0, 64);
+			ascii_to_char_safe(char_user, tmp_ascii_user, 64);
+			memset(char_passwd, 0, 64);
+			ascii_to_char_safe(char_passwd, tmp_ascii_passwd, 64);
+
+			fprintf(fp, "%s:%s\n", char_user, char_passwd);
 
 			if(++i >= acc_num)
 				break;

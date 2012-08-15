@@ -305,6 +305,7 @@ const char *ipv6_gateway_address()
 	struct sockaddr_in6 snaddr6;
 	int ret = 0;
 	static char buf[INET6_ADDRSTRLEN];
+	struct in6_addr addr;
 	int found = 0;
 
 	FILE *fp = fopen("/proc/net/ipv6_route", "r");
@@ -362,14 +363,16 @@ const char *ipv6_gateway_address()
 			naddr6 = INET6_rresolve((struct sockaddr_in6 *) &snaddr6,
 						   0x0fff /* Apparently, upstream never resolves. */
 						   );
+			inet_pton(AF_INET6, naddr6, &addr);
 
 			if (!r) {			/* 1st pass */
 				snprintf(addr6, sizeof(addr6), "%s/%d", naddr6, prefix_len);
 				r += 40;
 				free(naddr6);
 			} else {			/* 2nd pass */
-				if (!strcmp(addr6, "::/0") && !strcmp(flags, "UGDA")
-					&& !strcmp(get_wan6face(), iface))
+				if (!strcmp(addr6, "::/0") && !strcmp(flags, "UGDA") &&
+				    !strcmp(get_wan6face(), iface) &&
+				    IN6_IS_ADDR_LINKLOCAL(&addr))
 				{
 					found = 1;
 					snprintf(buf, sizeof(buf), "%s %s", naddr6, iface);
@@ -862,11 +865,21 @@ void bcmvlan_models(int model, char *vlan)
 {
 	if(model==MODEL_RTN16||model==MODEL_RTN15U||model==MODEL_RTN66U||model==MODEL_RTAC66U)
 		strcpy(vlan, "vlan1");
-	else if(model==MODEL_RTN12||model==MODEL_RTN12B1||model==MODEL_RTN12C1||model==MODEL_RTN10U||model==MODEL_RTN10D) 
+	else if(model==MODEL_RTN53||model==MODEL_RTN12||model==MODEL_RTN12B1||model==MODEL_RTN12C1||model==MODEL_RTN12D1||model==MODEL_RTN12HP||model==MODEL_RTN10U||model==MODEL_RTN10D) 
 		strcpy(vlan, "vlan0");
-	else if(model==MODEL_RTN53)
-		strcpy(vlan, "vlan2");
 	else strcpy(vlan, "");
+}
+
+char *get_productid()
+{
+	char *productid = nvram_safe_get("productid");
+#ifdef RTCONFIG_ODMPID
+	char *odmpid = nvram_safe_get("odmpid");
+	char* pidp = strlen(odmpid) ? odmpid : productid;
+#else
+	char* pidp = productid;
+#endif
+	return pidp;
 }
 
 int backup_rx;

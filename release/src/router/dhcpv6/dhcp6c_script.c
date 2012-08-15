@@ -71,6 +71,7 @@ static char nispserver_str[] = "new_nisp_servers";
 static char nispname_str[] = "new_nisp_name";
 static char bcmcsserver_str[] = "new_bcmcs_servers";
 static char bcmcsname_str[] = "new_bcmcs_name";
+extern char gw_linklocal[];
 
 int
 client6_script(scriptpath, state, optinfo)
@@ -400,11 +401,15 @@ client6_script(scriptpath, state, optinfo)
 			    "script \"%s\" terminated", scriptpath);
 		}
 	} else {
-		char *argv[2];
+		char *argv[3];
 		int fd;
 
 		argv[0] = scriptpath;
-		argv[1] = NULL;
+		if (strlen(gw_linklocal))
+			argv[1] = gw_linklocal;
+		else
+			argv[1] = NULL;
+		argv[2] = NULL;
 
 		if (safefile(scriptpath)) {
 			dprintf(LOG_ERR, FNAME,

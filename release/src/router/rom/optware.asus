@@ -41,28 +41,28 @@ URL: http://www.asusnetwork.net:8081/
 
 
 Package: mediaserver
-Version: 1.0.0.14
+Version: 1.0.0.15
 Depends: uclibc-opt, zlib, gdbm, libid3tag, sqlite, libjpeg, libexif, libogg, flac, libvorbis, ffmpeg, e2fsprogs
 OptionalUtility: 1.0.0.2
 Section: net
 Architecture: mipsel
 Maintainer: ASUS
-Size: 4600822
-Filename: mediaserver_1.0.0.14_mipsel.ipk
+Size: 4600903
+Filename: mediaserver_1.0.0.15_mipsel.ipk
 Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
 Description: 
 URL: http://www.asusnetwork.net:8081/mediaserverui/mediaserver.asp
 
 
 Package: mediaserver2
-Version: 1.0.0.17
+Version: 1.0.0.18
 Depends: uclibc-opt, zlib, gdbm, libid3tag, sqlite, libjpeg, libexif, libogg, flac, libvorbis, ffmpeg, e2fsprogs, pcre, zlib, libstdc++, openssl, spawn-fcgi
 OptionalUtility: 1.0.0.2
 Section: net
 Architecture: mipsel
 Maintainer: ASUS
-Size: 4732205
-Filename: mediaserver2_1.0.0.17_mipsel.ipk
+Size: 4732297
+Filename: mediaserver2_1.0.0.18_mipsel.ipk
 Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
 Description: 
 URL: http://www.asusnetwork.net:8081/mediaserverui/mediaserver.asp

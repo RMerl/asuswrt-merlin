@@ -471,6 +471,9 @@ typedef struct smb_info_s {
 	buffer *user_agent;
 	buffer *src_ip;
 	int auth_right;
+
+	int login_count;
+	time_t login_begin_time;
 	
 	//for Basic
 	buffer *username;
@@ -674,6 +677,7 @@ typedef struct {
 
 	//- Jerry add 20111018
 	buffer *arpping_interface;
+	buffer *syslog_file;
 } server_config;
 
 typedef struct {
@@ -814,6 +818,10 @@ typedef struct server {
 	//- Jerry add
 	smb_info_t *smb_srv_info_list;
 	smb_info_t *aidisk_info_list;
+	int syslog_fd;
+	buffer *syslog_buf;
+	buffer *cur_login_info;
+	buffer *last_login_info;
 } server;
 
 //- Jerry add
@@ -832,6 +840,7 @@ typedef struct share_link_info_s {
 	buffer *realpath;
 	buffer *filename;
 	buffer *auth;
+	unsigned long createtime;
 	unsigned long expiretime;
 	int toshare;
 	struct share_link_info_s *prev, *next;

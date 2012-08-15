@@ -26,7 +26,7 @@ $("document").ready(function() {
 	
 	$('label#username').text(m.getString('title_username'));
 	$('label#password').text(m.getString('title_password'));
-	$('button#ok').text(m.getString('btn_ok'));
+	$('button#ok').text(m.getString('btn_apply'));
 	$('button#cancel').text(m.getString('btn_cancel'));
 	$('span#desc').text(m.getString('msg_sharelink'));
 	
@@ -97,7 +97,7 @@ function select_all(){
   <tr>
   	<td>
   	<div class="table_block_footer" style="text-align:right">
-    	<button id="cancel" class="btnStyle" onClick="doCancel();">Close</button>
+    	<button id="ok" class="btnStyle" onClick="doCancel();">Close</button>
     </div>
     </td>
   </tr>

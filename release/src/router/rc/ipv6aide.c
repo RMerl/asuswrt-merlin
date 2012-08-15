@@ -49,12 +49,8 @@ static void ipv6aide_check(int sig)
 {
 	char tmp[64];
 	char *p = NULL;
-	char *q;	
-#if 0
-	time_t now = uptime();
-	if (((now - up) >= 600))
-		;
-#endif
+	char *q;
+
 	if (get_ipv6_service() != IPV6_NATIVE_DHCP)
 		goto END;
 

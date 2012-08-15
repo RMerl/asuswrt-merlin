@@ -231,7 +231,9 @@ int get_all_folders(const char *dirname,Folders *allfolderlist,int offset)
         {
             //printf("ent->d_name is %s\n",ent->d_name);
 
-            if(ent->d_name[0] == '.')
+            //if(ent->d_name[0] == '.')
+                //continue;
+            if(!strcmp(ent->d_name,".") || !strcmp(ent->d_name,".."))
                 continue;
 
             if( !strcmp(dirname,mount_path) && !strcmp(ent->d_name,"smartcloud") )

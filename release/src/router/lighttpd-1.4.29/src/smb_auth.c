@@ -401,11 +401,6 @@ int smbc_wrapper_parse_path2(connection* con, char *pWorkgroup, char *pServer, c
 		}while(strstr(pPath,"\\")!=NULL);
 		
 		free(buff);
-
-		Cdbg(DBE,"pServer=%s, len=%d", pServer, strlen(pServer));
-		Cdbg(DBE,"pShare=%s, len=%d", pShare, strlen(pShare));
-		Cdbg(DBE,"pPath=%s, len=%d", pPath, strlen(pPath));
-		
 	}
 
 	return 1;
@@ -1263,20 +1258,21 @@ void save_sharelink_list(){
 		char strTime[25] = {0};
 		sprintf(strTime, "%lu", c->expiretime);		
 		buffer_append_string(temp, strTime);
+
+		buffer_append_string(temp, "<");
+		
+		char strTime2[25] = {0};
+		sprintf(strTime2, "%lu", c->createtime);		
+		buffer_append_string(temp, strTime2);
 		
 		buffer_append_string(temp, ">");
 			
 		buffer_append_string_buffer(sharelink_list, temp);
-
-		Cdbg(DBE, "temp = %s", temp->ptr);
 		
 		buffer_free(temp);
 	}
 	
-	Cdbg(DBE, "nvram_set sharelink %s", sharelink_list->ptr);
-	nvram_set_sharelink_str(sharelink_list->ptr);
-	//nvram_do_commit();
-	
+	nvram_set_sharelink_str(sharelink_list->ptr);		
 	buffer_free(sharelink_list);
 #else
 	unlink(g_temp_sharelink_file);
@@ -1286,8 +1282,6 @@ void save_sharelink_list(){
 	char mybuffer[100];
 	FILE* fp = fopen(g_temp_sharelink_file, "w");
 
-	Cdbg(DBE, "save_share_link %s", g_temp_sharelink_file);
-	
 	if(fp!=NULL){
 		share_link_info_t* c;
 	
@@ -1295,7 +1289,7 @@ void save_sharelink_list(){
 			if(c->toshare == 0)
 				continue;
 			
-			fprintf(fp, "%s<%s<%s<%s<%lu\n", c->shortpath->ptr, c->realpath->ptr, c->filename->ptr, c->auth->ptr, c->expiretime);
+			fprintf(fp, "%s<%s<%s<%s<%lu<%lu\n", c->shortpath->ptr, c->realpath->ptr, c->filename->ptr, c->auth->ptr, c->expiretime, c->createtime);
 		}
 		
 		fclose(fp);
@@ -1308,7 +1302,6 @@ void free_share_link_info(share_link_info_t *smb_sharelink_info){
 	buffer_free(smb_sharelink_info->realpath);
 	buffer_free(smb_sharelink_info->filename);
 	buffer_free(smb_sharelink_info->auth);
-	//buffer_free(smb_sharelink_info->expiretime);
 }
 
 void read_sharelink_list(){
@@ -1321,8 +1314,7 @@ void read_sharelink_list(){
 	
 	char* str_sharelink_list = (char*)malloc(strlen(aa)+1);
 	strcpy(str_sharelink_list, aa);
-	Cdbg(DBE, "read_sharelink_list................str_sharelink_list=%s", str_sharelink_list);
-	
+		
 	if(str_sharelink_list!=NULL){
 		char * pch;
 		pch = strtok(str_sharelink_list, "<>");
@@ -1368,65 +1360,23 @@ void read_sharelink_list(){
 
 			//- Expire Time
 			pch = strtok(NULL,"<>");
-			if(pch){
-				#if 1
+			if(pch){				
 				smb_sharelink_info->expiretime = atoi(pch);	
-				time_t cur_time = time(NULL);
-				Cdbg(DBE, "expire_time=%lu, cur_time=%lu", smb_sharelink_info->expiretime, cur_time);
+				time_t cur_time = time(NULL);				
 				double offset = difftime(smb_sharelink_info->expiretime, cur_time);					
 				if( offset < 0.0 ){
 					free_share_link_info(smb_sharelink_info);
 					free(smb_sharelink_info);
 					b_addto_list = 0;
 				}
-				#else
-				smb_sharelink_info->expiretime = buffer_init();
-				buffer_copy_string_len(smb_sharelink_info->expiretime, pch, strlen(pch));
-
-				struct tm tm;
-				time_t expire_time;				
-				if (strptime(pch, "%Y-%m-%d-%H:%M:%S", &tm) ){					
-					expire_time = mktime(&tm);
-					time_t cur_time = time(NULL);
-
-					char strTime[25] = {0};
-					strftime(strTime, sizeof(strTime), "%Y-%m-%d-%H:%M:%S", localtime(&cur_time));	
-
-					double offset = difftime(expire_time, cur_time);					
-					if( offset < 0.0 ){
-						free_share_link_info(smb_sharelink_info);
-						free(smb_sharelink_info);
-						b_addto_list = 0;
-					}
-				}
-				#endif
 			}
-/*
-			//- Expire Time
+			
+			//- Create Time
 			pch = strtok(NULL,"<>");
-			if(pch){
-				Cdbg(DBE, "expire time=%s", pch);
-				smb_sharelink_info->expiretime = buffer_init();
-				buffer_copy_string_len(smb_sharelink_info->expiretime, pch, strlen(pch));
-
-				struct tm tm;
-				time_t expire_time;				
-				if (strptime(pch, "%Y-%m-%d-%H:%M:%S", &tm) ){					
-					expire_time = mktime(&tm);
-					time_t cur_time = time(NULL);
-
-					char strTime[25] = {0};
-					strftime(strTime, sizeof(strTime), "%Y-%m-%d-%H:%M:%S", localtime(&cur_time));	
-
-					double offset = difftime(expire_time, cur_time);					
-					if( offset < 0.0 ){
-						free_share_link_info(smb_sharelink_info);
-						free(smb_sharelink_info);
-						b_addto_list = 0;
-					}
-				}
+			if(pch){				
+				smb_sharelink_info->createtime = atoi(pch);
 			}
-*/
+			
 			if(b_addto_list==1)
 				DLIST_ADD(share_link_info_list, smb_sharelink_info);
 			
@@ -1488,40 +1438,23 @@ void read_sharelink_list(){
 			//- Expire Time
 			pch = strtok(NULL,"<");
 			if(pch){
-				#if 1
+				
 				smb_sharelink_info->expiretime = atoi(pch);	
-				time_t cur_time = time(NULL);
-				Cdbg(DBE, "expire_time=%lu, cur_time=%lu", smb_sharelink_info->expiretime, cur_time);
+				time_t cur_time = time(NULL);				
 				double offset = difftime(smb_sharelink_info->expiretime, cur_time);					
 				if( offset < 0.0 ){
 					free_share_link_info(smb_sharelink_info);
 					free(smb_sharelink_info);
 					b_addto_list = 0;
 				}
-					
-				#else
-				smb_sharelink_info->expiretime = buffer_init();			
-				buffer_copy_string_len(smb_sharelink_info->expiretime, pch, strlen(pch));
-
-				struct tm tm;
-				time_t expire_time;				
-				if (strptime(pch, "%Y-%m-%d-%H:%M:%S", &tm) ){					
-					expire_time = mktime(&tm);
-					time_t cur_time = time(NULL);
-
-					char strTime[25] = {0};
-					strftime(strTime, sizeof(strTime), "%Y-%m-%d-%H:%M:%S", localtime(&cur_time));	
-
-					double offset = difftime(expire_time, cur_time);					
-					if( offset < 0.0 ){
-						free_share_link_info(smb_sharelink_info);
-						free(smb_sharelink_info);
-						b_addto_list = 0;
-					}
-				}
-				#endif
 			}
 
+			//- Create Time
+			pch = strtok(NULL,"<");
+			if(pch){
+				smb_sharelink_info->createtime = atoi(pch);
+			}
+			
 			if(b_addto_list==1)
 				DLIST_ADD(share_link_info_list, smb_sharelink_info);
 		}

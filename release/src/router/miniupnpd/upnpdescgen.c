@@ -91,8 +91,12 @@ static const struct XMLElt rootDesc[] =
 	{"/minor", "0"},
 /* 5 */
 	{"/deviceType", "urn:schemas-upnp-org:device:InternetGatewayDevice:1"},
+#if 0
 	{"/friendlyName", ROOTDEV_FRIENDLYNAME},	/* required */
-	{"/manufacturer", ROOTDEV_MANUFACTURER},		/* required */
+#else
+	{"/friendlyName", friendly_name},		/* required */
+#endif
+	{"/manufacturer", ROOTDEV_MANUFACTURER},	/* required */
 /* 8 */
 	{"/manufacturerURL", ROOTDEV_MANUFACTURERURL},	/* optional */
 	{"/modelDescription", ROOTDEV_MODELDESCRIPTION}, /* recommended */

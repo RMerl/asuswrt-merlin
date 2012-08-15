@@ -439,8 +439,20 @@ int setSN(const char *SN)
 	getSN();
 	return 1;
 }
+#ifdef RTCONFIG_ODMPID
+int setMN(const char *MN)
+{	// TODO: Ralink sysdep
+	if(MN==NULL || !is_valid_hostname(MN))
+		return 0;
 
+	return 1;
+}
 
+int getMN(void)
+{	// TODO: Ralink sysdep
+	return 1;
+}
+#endif
 int
 setPIN(const char *pin)
 {
@@ -463,7 +475,7 @@ getBootVer()
 	memset(btv, 0, sizeof(btv));
 	memset(output_buf, 0, sizeof(output_buf));
 	FRead(btv, OFFSET_BOOT_VER, 4);
-	sprintf(output_buf, "%s-%c.%c.%c.%c", nvram_safe_get("productid"),btv[0], btv[1], btv[2], btv[3]);
+	sprintf(output_buf, "%s-%c.%c.%c.%c", get_productid(), btv[0], btv[1], btv[2], btv[3]);
 	puts(output_buf);
 
 	return 0;
@@ -2170,10 +2182,8 @@ int gen_ralink_config(int band, int is_iNIC)
 	{
 		if (Channel == 0)
 			EXTCHA_MAX = 1;
-#if 0
 		else if ((Channel >=1) && (Channel <= 4))
-			EXTCHA_MAX = 0;
-#endif
+			;
 		else if ((Channel >= 5) && (Channel <= 7))
 			EXTCHA_MAX = 1;
 		else if ((Channel >= 8) && (Channel <= 14))
@@ -2528,7 +2538,6 @@ int gen_ralink_config(int band, int is_iNIC)
 				fprintf(fp, "WdsEnable=%d\n", 2);
 			else if (atoi(str) == 2)
 			{
-//				if (nvram_match(strcat_r(prefix, "lazywds", tmp), "1"))
 				if (nvram_match(strcat_r(prefix, "wdsapply_x", tmp), "0"))
 					fprintf(fp, "WdsEnable=%d\n", 4);
 				else

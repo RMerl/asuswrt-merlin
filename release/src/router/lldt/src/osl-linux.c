@@ -71,6 +71,9 @@
 
 #include "packetio.h"
 
+#include <bcmnvram.h>
+#include <rtconfig.h>
+
 /* helper functions */
 
 /* Convert from name "interface" to its index, or die on error. */
@@ -411,19 +414,12 @@ foreach_interface(foreach_interface_fn fn, void *state)
     return TRUE;
 }
 
-void reapchild()	// 0527 add
-{
-	signal(SIGCHLD, reapchild);
-	wait(NULL);
-}
 
 /* Recipe from section 1.7 of the Unix Programming FAQ */
 /* http://www.erlenstar.demon.co.uk/unix/faq_toc.html */
 void
 osl_become_daemon(osl_t *osl)
 {
-    signal(SIGCHLD, reapchild); // 0527 add
-
     /* 1) fork */
     pid_t pid = fork();
     if (pid == -1)
@@ -800,10 +796,10 @@ get_ipv6addr(void *data)
     unsigned int fl = 0;
 
     printf("get_ipv6addr() is called...\n");
-//    if((fp = fopen("/proc/net/if_inet6", "r")) == (FILE*)0) {	/* ASUS EXT by Jiahao */
+    if((fp = fopen("/proc/net/if_inet6", "r")) == (FILE*)0) {
 	printf("get_ipv6addr() -- ipv6 not supported!");
         return TLV_GET_FAILED;
-//    }								/* ASUS EXT by Jiahao */
+    }
     while(fgets(buf, 256, fp) != NULL) {
         if(strstr(buf, dflt_if) == (char*) 0) {
 	  continue;
@@ -989,8 +985,13 @@ get_machine_name(void *data)
 
     int ret;
     struct utsname unamebuf;
-//    char* machine_name = "localhost";
-    char* machine_name = "RT-N56U";	/* ASUS EXT by Jiahao */
+    char *productid = nvram_safe_get("productid");
+#ifdef RTCONFIG_ODMPID
+    char *odmpid = nvram_safe_get("odmpid");
+    char* machine_name = strlen(odmpid) ? odmpid : strlen(productid) ? productid : "ASUS Router";
+#else
+    char* machine_name = strlen(productid) ? productid : "ASUS Router";
+#endif
 
     /* use uname() to get the system's hostname */
     ret = uname(&unamebuf);
@@ -1037,7 +1038,6 @@ get_support_info(void *data)
 /*    TLVDEF( ucs2char_t,       support_info,    [32], 0x10, Access_unset ) // RLS: was "contact_info" */
 
     ucs2char_t * support = (ucs2char_t*) data;
-//    char* support_info = "Ralinktech Inc.";
     char* support_info = "ASUSTeK Computer Inc.";
 
     util_copy_ascii_to_ucs2(support, (strlen(support_info)+1)*2, support_info);
@@ -1057,8 +1057,7 @@ get_friendly_name(void *data)
 /*    TLVDEF( ucs2char_t,       friendly_name,   [32], 0x11, Access_unset ) */
 
     ucs2char_t * fname = (ucs2char_t*) data;
-//    char* friendly_name = "RT2880_GW";
-    char* friendly_name = "ASUS_RT-N56U";
+    char* friendly_name = "ASUS Router";
 
     util_copy_ascii_to_ucs2(fname, (strlen(friendly_name)+1)*2, friendly_name);
     return TLV_GET_SUCCEEDED;
@@ -1087,8 +1086,7 @@ get_hw_id(void *data)
 /*    TLVDEF( ucs2char_t,       hw_id,          [200], 0x13, Access_unset ) // 400 bytes long, max */
 
     ucs2char_t * hwid = (ucs2char_t*) data;
-//    unsigned char id[200] = "rt2880";
-    unsigned char id[200] = "RT-N56U";
+    unsigned char id[200] = "ASUS Router";
     memcpy(data, id, 200);
 
     // return TLV_GET_FAILED;

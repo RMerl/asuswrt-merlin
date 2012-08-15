@@ -284,7 +284,7 @@ void start_dnsmasq()
 		}
 
 		n = nvram_get_int("dhcpd_lmax");
-		fprintf(f,"dhcp-lease-max=%d\n", (n > 0) ? n : 255);
+		fprintf(f,"dhcp-lease-max=%d\n", (n > 0) ? n : 253);
 
 		if (nvram_get_int("dhcpd_auth") >= 0) {
 			fprintf(f, "dhcp-authoritative\n");
@@ -341,7 +341,7 @@ void start_dnsmasq()
 	fprintf(fp, "127.0.0.1 localhost.localdomain localhost\n");
 	fprintf(fp, "%s www.asusnetwork.net\n", nvram_safe_get("lan_ipaddr"));
 
-	if (strcmp(nvram_safe_get("productid"), nvram_safe_get("computer_name")) && is_valid_hostname(nvram_safe_get("computer_name")))
+	if (strcmp(get_productid(), nvram_safe_get("computer_name")) && is_valid_hostname(nvram_safe_get("computer_name")))
 		fprintf(fp, "%s %s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("computer_name"));
 
 	if (nvram_invmatch("lan_hostname", ""))
@@ -673,11 +673,8 @@ void start_radvd(void)
 		mtu = NULL;
 
 		switch (service) {
-#if 0
 		case IPV6_NATIVE_DHCP:
 			prefix = "::";
-			break;
-#endif
 		case IPV6_6TO4:
 		case IPV6_6IN4:
 		case IPV6_6RD:
@@ -687,7 +684,7 @@ void start_radvd(void)
 			prefix = do_6to4 | do_6rd ? "0:0:0:1::" : nvram_safe_get("ipv6_prefix");
 			break;
 		}
-		if (!(*prefix)) prefix = "::";
+		if (!(*prefix) || (strlen(prefix) <= 0)) prefix = "::";
 
 		// Create radvd.conf
 		if ((f = fopen("/etc/radvd.conf", "w")) == NULL) return;
@@ -851,7 +848,7 @@ void stop_ipv6(void)
 {
 	stop_ipv6_tunnel();
 	stop_dhcp6c();
-	eval("ip", "-6", "addr", "flush", "scope", "global");
+	eval("ip", "-6", "addr", "flush", "scope", "all");
 	eval("ip", "-6", "route", "flush", "scope", "all");
 	eval("ip", "-6", "neigh", "flush", "dev", nvram_safe_get("lan_ifname"));
 }
@@ -1433,21 +1430,6 @@ stop_dhcpd(void)
 	}
 }
 
-
-// dns patch check 0524
-int
-restart_dhcpd()
-{
-	printf("restart udhcpd\n");	//tmp test
-
-	stop_dhcpd();
-	sleep(1);
-	start_dhcpd();
-
-	return 0;
-}
-// dns patch check 0524 end
-
 int
 start_dns(void)
 {
@@ -1542,10 +1524,10 @@ start_dns(void)
 
 	fprintf(fp, "127.0.0.1 localhost.localdomain localhost\n");
 	fprintf(fp, "%s	my.router\n", nvram_safe_get("lan_ipaddr"));
-	fprintf(fp, "%s	my.%s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("productid"));
-	fprintf(fp, "%s %s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("productid"));
+	fprintf(fp, "%s	my.%s\n", nvram_safe_get("lan_ipaddr"), get_productid());
+	fprintf(fp, "%s %s\n", nvram_safe_get("lan_ipaddr"), get_productid());
 
-	if (strcmp(nvram_safe_get("productid"), nvram_safe_get("computer_name")) && is_valid_hostname(nvram_safe_get("computer_name")))
+	if (strcmp(get_productid(), nvram_safe_get("computer_name")) && is_valid_hostname(nvram_safe_get("computer_name")))
 		fprintf(fp, "%s %s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("computer_name"));
 
 	if (nvram_invmatch("lan_hostname", ""))
@@ -2011,11 +1993,11 @@ start_telnetd()
 	if (pids("telnetd"))
 		killall_tk("telnetd");
 
-	if (nvram_get("productid"))
+	if (get_productid())
 	{
 		if ((fp=fopen("/proc/sys/kernel/hostname", "w+")))
 		{
-			fputs(nvram_get("productid"), fp);
+			fputs(get_productid(), fp);
 			fclose(fp);
 		}
 	}
@@ -2202,6 +2184,7 @@ void start_upnp(void)
 					"upnp_nat_chain=VUPNP\n"
 					"notify_interval=%d\n"
 					"system_uptime=yes\n"
+					"friendly_name=%s\n"
 					"\n"
 					,
 					get_wan_ifname(wan_primary_ifunit()),
@@ -2210,7 +2193,8 @@ void start_upnp(void)
 					upnp_enable ? "yes" : "no",	// upnp enable
 					upnp_mnp_enable ? "yes" : "no",	// natpmp enable
 					nvram_get_int("upnp_secure") ? "yes" : "no",			// secure_mode (only forward to self)
-					nvram_get_int("upnp_ssdp_interval")
+					nvram_get_int("upnp_ssdp_interval"),
+					get_productid()
 				);
 
 				if (nvram_get_int("upnp_clean")) {
@@ -2330,11 +2314,32 @@ void refresh_ntpc(void)
 	else killall("ntp", SIGTSTP);
 }
 
-#ifdef CONFIG_BCMWL5
 int start_lltd(void)
 {
 	chdir("/usr/sbin");
-	eval("lld2d", "br0");
+
+#ifdef CONFIG_BCMWL5
+	char *odmpid = nvram_safe_get("odmpid");
+	int model = get_model();
+
+	if (strlen(odmpid) && is_valid_hostname(odmpid))
+	{
+		switch (model) {
+		case MODEL_RTN66U:
+			eval("lld2d.rtn66r", "br0");
+			break;
+		case MODEL_RTAC66U:
+			eval("lld2d.rtac66r", "br0");
+			break;
+		default:
+			eval("lld2d", "br0");
+			break;
+		}
+	}
+	else
+#endif
+		eval("lld2d", "br0");
+
 	chdir("/");
 
 	return 0;
@@ -2344,25 +2349,29 @@ int stop_lltd(void)
 {
 	int ret;
 
+#ifdef CONFIG_BCMWL5
+        char *odmpid = nvram_safe_get("odmpid");
+        int model = get_model();
+	if (strlen(odmpid) && is_valid_hostname(odmpid))
+	{
+		switch (model) {
+		case MODEL_RTN66U:
+			ret = eval("killall", "lld2d.rtn66r");
+			break;
+		case MODEL_RTAC66U:
+			ret = eval("killall", "lld2d.rtac66r");
+			break;
+		default:
+			ret = eval("killall", "lld2d");
+			break;
+		}
+	}
+	else
+#endif
 	ret = eval("killall", "lld2d");
 
 	return ret;
 }
-#else
-int start_lltd(void)
-{
-	xstart("lld2d", "br0");
-	
-	return 0;
-}
-
-void stop_lltd(void)
-{
-	if (pids("lld2d"))
-		killall_tk("lld2d");
-}
-
-#endif
 
 int
 start_services(void)
@@ -2737,6 +2746,10 @@ again:
 			stop_usb();
 			stop_usbled();
 #endif
+			killall("udhcpc", SIGTERM);
+#ifdef RTCONFIG_IPV6
+			stop_dhcp6c();
+#endif
 			// TODO free necessary memory here
 		}
 		if(action&RC_SERVICE_START) {
@@ -3025,7 +3038,12 @@ again:
 	}
 #ifdef CONFIG_BCMWL5
 	else if (strcmp(script, "set_wltxpower") == 0) {
-		set_wltxpower();
+	if ((get_model() == MODEL_RTAC66U) ||
+		(get_model() == MODEL_RTN12HP) ||
+		(get_model() == MODEL_RTN66U))
+			set_wltxpower();
+		else
+			dbG("\n\tDon't do this!\n\n");
 	}
 #endif
 #ifdef RTCONFIG_FANCTRL
@@ -3862,11 +3880,20 @@ int
 start_acsd(void)
 {
 	int ret = 0;
-
+#ifdef RTCONFIG_PROXYSTA
+	if (is_psta(0) || is_psta(1))
+	{
+		nvram_set("acsd_restart_wl", "0");
+		return 0;
+	}
+#endif
 	if (!restore_defaults_g && strlen(nvram_safe_get("acs_ifnames")))
 	{
 		nvram_set("wlx0_chanspec", "0");
 		nvram_set("wlx1_chanspec", "0");
+		nvram_set("wly0_chanspec", "0");
+		nvram_set("wly1_chanspec", "0");
+		nvram_set("acsd_restart_wl", "0");
 
 		ret = eval("/usr/sbin/acsd");
 	}

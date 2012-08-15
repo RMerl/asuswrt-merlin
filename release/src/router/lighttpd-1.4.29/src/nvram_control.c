@@ -32,6 +32,12 @@
 #define WEBDAV_HTTPS_PORT "webdav_https_port"
 #define MISC_HTTP_X "misc_http_x"
 #define MISC_HTTP_PORT "misc_httpport_x"
+#define ENABLE_WEBDAV_CAPTCHA "enable_webdav_captcha"
+#define ENABLE_WEBDAV_LOCK "enable_webdav_lock"
+#define WEBDAV_ACC_LOCK "webdav_acc_lock"
+#define WEBDAV_LOCK_INTERVAL "webdav_lock_interval"
+#define WEBDAV_LOCK_TIMES "webdav_lock_times"
+#define WEBDAV_LAST_LOGININFO "webdav_last_login_info"
 
 #define DBE 0
 
@@ -117,7 +123,11 @@ nvram_get_ddns_host_name_EXIT:
 
 char* nvram_get_productid()
 {
+#if 0
 	return nvram_get(PRODUCT_ID);
+#else
+	return get_productid();
+#endif
 }
 
 char* nvram_get_acc_list()
@@ -200,6 +210,48 @@ char* nvram_get_misc_http_x()
 char* nvram_get_msie_http_port()
 {
 	return nvram_get(MISC_HTTP_PORT);
+}
+
+char* nvram_get_enable_webdav_captcha()
+{
+	return nvram_get(ENABLE_WEBDAV_CAPTCHA);
+}
+
+char* nvram_get_enable_webdav_lock()
+{
+	return nvram_get(ENABLE_WEBDAV_LOCK);
+}
+
+char* nvram_get_webdav_acc_lock()
+{
+	return nvram_get(WEBDAV_ACC_LOCK);
+}
+
+int nvram_set_webdav_acc_lock(const char* acc_lock)
+{
+	nvram_set(WEBDAV_ACC_LOCK, acc_lock);
+	return 1;
+}
+
+char* nvram_get_webdav_lock_interval()
+{
+	return nvram_get(WEBDAV_LOCK_INTERVAL);
+}
+
+char* nvram_get_webdav_lock_times()
+{
+	return nvram_get(WEBDAV_LOCK_TIMES);
+}
+
+char* nvram_get_webdav_last_login_info()
+{
+	return nvram_get(WEBDAV_LAST_LOGININFO);
+}
+
+int nvram_set_webdav_last_login_info(const char* last_login_info)
+{
+	char* set_str = nvram_set(WEBDAV_LAST_LOGININFO, last_login_info);
+	return set_str;
 }
 
 #endif

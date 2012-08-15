@@ -72,6 +72,10 @@ int ntp_main(int argc, char *argv[])
 	FILE *fp;
 	int ret;
 
+	// ntpclient will check non_restart_upnp; if 0, restart ntp
+	// initial nvram to zero.
+	nvram_set("non_restart_upnp", "0");
+
 //	strcpy(servers, nvram_safe_get("ntp_servers"));
 	strcpy(servers, nvram_safe_get("ntp_server0"));
 	nvram_set("ntp_server_tried", servers);
@@ -102,6 +106,9 @@ int ntp_main(int argc, char *argv[])
 			time_t now;
 			int diff_sec;
 
+			// ntpclient will check non_restart_upnp, if 1, not to restart ntp
+			nvram_set("non_restart_upnp", "1");
+
 			time(&now);
 			localtime_r(&now, &local);
 			//cprintf("%s: %d-%d-%d, %d:%d:%d dst:%d\n", __FUNCTION__, local.tm_year+1900, local.tm_mon+1, local.tm_mday, local.tm_hour, local.tm_min, local.tm_sec, local.tm_isdst); //tmp test
@@ -111,6 +118,7 @@ int ntp_main(int argc, char *argv[])
 			if((local.tm_min != 0) || (local.tm_sec != 0)){
 				diff_sec = (3600-3) - (local.tm_min*60 + local.tm_sec);
 				if(diff_sec == 0) diff_sec = 3597;
+				else if(diff_sec < 0) diff_sec = -diff_sec;
 				//fprintf(stderr, "diff_sec: %d \n", diff_sec);
 				alarm(diff_sec);
 			}

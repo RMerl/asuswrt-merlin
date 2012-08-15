@@ -393,7 +393,11 @@ int detect_internet(int wan_unit){
 }
 
 int trigger_ppp_connection(int wan_unit){
+#ifdef RTCONFIG_DSL
+	const char *test_url = "203.69.138.19";
+#else
 	const char *test_url = "www.asus.com";
+#endif
 	char cmd[256];
 	char prefix_wan[8], nvram_name[16];
 
@@ -406,6 +410,7 @@ int trigger_ppp_connection(int wan_unit){
 			){
 csprintf("# wanduck trigger the PPP connection!\n");
 		sprintf(cmd, "ping -c 1 -W %d %s", TCPCHECK_TIMEOUT, test_url);
+logmessage("wanduck", cmd);
 		system(cmd);
 	}
 
@@ -595,7 +600,9 @@ int chk_proto(int wan_unit, int wan_state){
 
 		if(wan_state != WAN_STATE_CONNECTED
 				&& ppp_fail_state == WAN_STOPPED_REASON_PPP_LACK_ACTIVITY){
-			; // PPP is into the idle mode.
+			// PPP is into the idle mode.
+			if(wan_state == WAN_STATE_STOPPED) // Sometimes ip_down() didn't set it.
+				record_wan_state_nvram(wan_unit, -1, -1, WAN_STOPPED_REASON_PPP_LACK_ACTIVITY);
 		}
 		else if(wan_state == WAN_STATE_INITIALIZING){
 			disconn_case[wan_unit] = CASE_PPPFAIL;

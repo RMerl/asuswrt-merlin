@@ -16,6 +16,12 @@ int log_error_open(server *srv);
 int log_error_close(server *srv);
 int log_error_write(server *srv, const char *filename, unsigned int line, const char *fmt, ...);
 int log_error_cycle(server *srv);
+
+//- Jerry add
+int log_sys_open(server *srv);
+int log_sys_close(server *srv);
+int log_sys_write(server *srv, const char *fmt, ...);
+
 //void dprintf_impl(const char* date,const char* time,const char* file,const char* func, size_t line, int enable, const char* fmt, ...);
 void dprintf_impl(const char* file,const char* func, size_t line, int enable, const char* fmt, ...);
 #define NDEBUG

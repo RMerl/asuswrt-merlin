@@ -178,7 +178,7 @@ function submitenter(myfield,e)
 <body onLoad="QKaccount_load_body();" onunLoad="" onKeyPress="submitenter(this,event)">
 <div id="navtxt" class="navtext" style="position:absolute; top:50px; left:-100px; visibility:hidden; font-family:Arial, Verdana"></div>
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
-<form method="post" name="form" action="/start_apply.htm" target="hidden_frame" onsubmit="return submitForm();">
+<form method="post" name="form" action="/start_apply.htm" target="hidden_frame" onsubmit="return submitForm();" autocomplete="off">
 <input type="hidden" name="prev_page" value="QIS_internet_type.htm">
 <input type="hidden" name="current_page" value="QIS_internet_account.htm">
 <input type="hidden" name="next_page" value="">

@@ -232,4 +232,7 @@ if [ "$link_internet" == "1" ]; then
 	app_update.sh&
 fi
 
+test_of_var_files "$APPS_MOUNTED_PATH"
+rc rc_service restart_nasapps
+
 nvram set apps_state_install=4 # FINISHED

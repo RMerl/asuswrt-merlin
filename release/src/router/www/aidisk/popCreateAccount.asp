@@ -14,12 +14,6 @@
 function clickevent(){
 	$("Submit").onclick = function(){
 			if(validForm()){
-				/*alert('action = '+document.createAccountForm.action+'\n'+
-					  'account = '+$("account").value+'\n'+
-					  'password = '+$("password").value
-					  );//*/
-				
-				
 				parent.showLoading();
 				document.createAccountForm.submit();
 				parent.hidePop("apply");
@@ -28,75 +22,85 @@ function clickevent(){
 }
 
 function validForm(){
-	$("account").value = trim($("account").value);
-	tempPasswd = trim($("password").value);
-	$("confirm_password").value = trim($("confirm_password").value);
-	
+	showtext($("alert_msg1"), "");
+	showtext($("alert_msg2"), "");
+
 	// account name
+	var alert_str = validate_account($("account"), "noalert");
+
+	if(alert_str != ""){
+		showtext($("alert_msg1"), alert_str);
+		$("account").focus();
+		return false;
+	}
+
+	$("account").value = trim($("account").value);
+	
 	if($("account").value.length == 0){
-		alert("<#File_Pop_content_alert_desc1#>");
+		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc1#>");
 		$("account").focus();
 		return false;
 	}
-	
-	if($("account").value == "root" || $("account").value == "guest"){
-		//alert("User's account can not be 'root' or 'guest'! Please enter a valid account.");
-		alert("<#USB_Application_account_alert#>");
+
+	if($("account").value == "root"
+			|| $("account").value == "guest"
+			|| $("account").value == "anonymous"
+			){
+		showtext($("alert_msg1"), "<#USB_Application_account_alert#>");
 		$("account").focus();
 		return false;
 	}
-	
-	if(trim($("account").value).length <= 1){
-		alert("<#File_Pop_content_alert_desc2#>");
+
+	if($("account").value.length <= 1){
+		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc2#>");
 		$("account").focus();
 		return false;
 	}
-	
-	if(trim($("account").value).length > 20){
-		alert("<#File_Pop_content_alert_desc3#>");
+
+	if($("account").value.length > 20){
+		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc3#>");
 		$("account").focus();
 		return false;
 	}
-	
-	var re = new RegExp("[^a-zA-Z0-9-]+","gi");
-	if(re.test($("account").value)){
-		alert("<#File_Pop_content_alert_desc4#>");
-		$("account").focus();
-		return false;
-	}
-	
+
 	if(checkDuplicateName($("account").value, parent.get_accounts())){
-		alert("<#File_Pop_content_alert_desc5#>");
+		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
 		$("account").focus();
 		return false;
 	}
-	
+
 	// password
-	if(trim(tempPasswd).length <= 0 || trim($("confirm_password").value).length == 0){
-		alert("<#File_Pop_content_alert_desc6#>");
-		$("password").focus();
+	if($("password").value.length <= 0 || $("confirm_password").value.length <= 0){
+		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
+		if($("password").value.length <= 0){
+				$("password").focus();
+				$("password").select();
+		}else{
+				$("confirm_password").focus();
+				$("confirm_password").select();
+		}
 		return false;
 	}
-	
-	if(tempPasswd != $("confirm_password").value){
-		alert("<#File_Pop_content_alert_desc7#>");
+
+	if($("password").value != $("confirm_password").value){
+		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
 		$("confirm_password").focus();
 		return false;
 	}
-	
-	if(tempPasswd.length != $("password").value.length){
-		alert("<#File_Pop_content_alert_desc8#>");
+
+	if(!validate_string(document.createAccountForm.password)){
 		$("password").focus();
+		$("password").select();
 		return false;
 	}
-	
-	var re = new RegExp("[^a-zA-Z0-9]+","gi");
-	if(re.test($("password").value)){
-		alert("<#File_Pop_content_alert_desc9#>");
+
+	if($("password").value.length > 16){
+		showtext($("alert_msg2"),"*<#LANHostConfig_x_Password_itemdesc#>");
 		$("password").focus();
+		$("password").select();
 		return false;
 	}
-	
+
 	return true;
 }
 </script>
@@ -116,15 +120,19 @@ function validForm(){
     </tr>
     <tr>
       <th><#AiDisk_Account#>: </th>
-      <td><input class="input_15_table" name="account" id="account" type="text" maxlength="20"></td>
+      <td><input class="input_15_table" name="account" id="account" type="text" maxlength="20">
+      		<br/><span id="alert_msg1"></span>	
+      </td>
     </tr>
     <tr>
-      <th><#AiDisk_Password#>: </th>
-      <td><input class="input_15_table" name="password" id="password" type="password" maxlength="20"></td>
+      <th><#PPPConnection_Password_itemname#>: </th>
+      <td><input type="password" class="input_15_table" autocapitalization="off" name="password" id="password" onKeyPress="return is_string(this, event);" maxlength="17"></td>
     </tr>
     <tr>
       <th><#Confirmpassword#>: </th>
-      <td><input class="input_15_table" name="confirm_password" id="confirm_password" type="password" maxlength="20"></td>
+      <td><input type="password" class="input_15_table" autocapitalization="off" name="confirm_password" id="confirm_password" onKeyPress="return is_string(this, event);" maxlength="17">
+      		<br/><span id="alert_msg2"></span>	
+      </td>
     </tr>
 	</tbody>	
     <tr bgcolor="#E6E6E6">

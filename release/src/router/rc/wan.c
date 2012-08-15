@@ -837,7 +837,7 @@ static int start_ipoa()
 #else
     strcpy(ip_gateway, nvram_safe_get("wan0_gateway"));
     strcpy(ip_addr, nvram_safe_get("wan0_ipaddr"));
-    strcpy(ip_mask, nvram_safe_get("wan0_netmask"));        
+    strcpy(ip_mask, nvram_safe_get("wan0_netmask"));
 #endif    
     
 
@@ -1521,7 +1521,7 @@ stop_wan_if(int unit)
 		killall_tk("ntpclient");
 
 #ifdef RTCONFIG_IPV6
-		if (!strncmp(nvram_safe_get("ipv6_ifdev"), "eth", 3) ||
+		if (nvram_match("ipv6_ifdev", "eth") ||
 			((get_ipv6_service() != IPV6_NATIVE) && (get_ipv6_service() != IPV6_NATIVE_DHCP)))
 		stop_wan6();
 #endif
@@ -1821,7 +1821,7 @@ cprintf("%s: Couldn't get %s's prefix.\n", __FUNCTION__, wan_ifname);
 			}
 		}
 
-	        foreach(word, ipv6_dns_str, next) {
+		foreach(word, ipv6_dns_str, next) {
 			fseek(fp, 0, SEEK_SET);
 			while (fgets(line, sizeof(line), fp)) {
 				char *token = strtok(line, " \t\n");
@@ -2104,7 +2104,7 @@ void wan6_up(const char *wan_ifname)
 		return;
 
 	switch (service) {
-        case IPV6_NATIVE:
+	case IPV6_NATIVE:
 	case IPV6_NATIVE_DHCP:
 	case IPV6_MANUAL:
 		if ((nvram_get_int("ipv6_accept_ra") & 1) != 0)
@@ -2170,28 +2170,8 @@ void wan6_up(const char *wan_ifname)
 		break;
 	}
 
-	if (!strncmp(nvram_safe_get("ipv6_ifdev"), "eth", 3) ||
-		(get_ipv6_service() != IPV6_NATIVE_DHCP))
-	{
-#if 0
-		// wait for RA
-		if ((get_ipv6_service() == IPV6_NATIVE) ||
-			(get_ipv6_service() == IPV6_NATIVE_DHCP))
-		{
-			if (!is_intf_up(get_wan6face())) return;
-
-			wait_count = 10;
-			while (!getifaddr(get_wan6face(), AF_INET6, 0) && (wait_count-- > 0))
-			{
-				if (is_intf_up(get_wan6face()))
-					sleep(1);
-				else
-					return;
-			}
-		}
-#endif
+	if (get_ipv6_service() != IPV6_NATIVE_DHCP)
 		start_radvd();
-	}
 }
 
 void wan6_down(const char *wan_ifname)
@@ -2211,8 +2191,18 @@ void start_wan6(void)
 {
 	// support wan_unit=0 first
 	// call wan6_up directly
-	if ((!strncmp(nvram_safe_get("ipv6_ifdev"), "eth", 3) ||
-		((get_ipv6_service() != IPV6_NATIVE) && (get_ipv6_service() != IPV6_NATIVE_DHCP))))
+	char tmp[100];
+	char prefix[] = "wanXXXXXXXXXX_";
+	snprintf(prefix, sizeof(prefix), "wan%d_", 0);
+
+	if ((nvram_match(strcat_r(prefix, "proto", tmp), "dhcp") ||
+		nvram_match(strcat_r(prefix, "proto", tmp), "static")) &&
+		nvram_match("ipv6_ifdev", "ppp"))
+		nvram_set("ipv6_ifdev", "eth");
+
+	if (nvram_match("ipv6_ifdev", "eth") ||
+		((get_ipv6_service() != IPV6_NATIVE) &&
+		(get_ipv6_service() != IPV6_NATIVE_DHCP)))
 	wan6_up(get_wan6face());
 }
 
@@ -2247,11 +2237,18 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		snprintf(prefix_x, sizeof(prefix_x), "wan%d_x", wan_unit);
 
 #ifdef RTCONFIG_IPV6
-		if ((wan_unit == wan_primary_ifunit()) &&
-//			!strncmp(nvram_safe_get("ipv6_ifdev"), wan_ifname, 3))
-			(!strncmp(nvram_safe_get("ipv6_ifdev"), "eth", 3) ||
-			((get_ipv6_service() != IPV6_NATIVE) && (get_ipv6_service() != IPV6_NATIVE_DHCP))))
-		wan6_up(get_wan6face());
+		if (wan_unit == wan_primary_ifunit())
+		{
+			if ((nvram_match(strcat_r(prefix, "proto", tmp), "dhcp") ||
+				nvram_match(strcat_r(prefix, "proto", tmp), "static")) &&
+				nvram_match("ipv6_ifdev", "ppp"))
+			nvram_set("ipv6_ifdev", "eth");
+
+			if (nvram_match("ipv6_ifdev", "eth") ||
+				((get_ipv6_service() != IPV6_NATIVE) &&
+				(get_ipv6_service() != IPV6_NATIVE_DHCP)))
+			wan6_up(get_wan6face());
+		}
 #endif
 
 		start_firewall(wan_unit, 0);
@@ -2331,10 +2328,15 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		add_dhcp_routes(prefix, wan_ifname, 0);
 
 #ifdef RTCONFIG_IPV6
+	if ((nvram_match(strcat_r(prefix, "proto", tmp), "dhcp") ||
+		nvram_match(strcat_r(prefix, "proto", tmp), "static")) &&
+		nvram_match("ipv6_ifdev", "ppp"))
+		nvram_set("ipv6_ifdev", "eth");
+
 	if ((wan_unit == wan_primary_ifunit()) &&
-//		!strncmp(nvram_safe_get("ipv6_ifdev"), wan_ifname, 3))
-		(!strncmp(nvram_safe_get("ipv6_ifdev"), "eth", 3) ||
-		((get_ipv6_service() != IPV6_NATIVE) && (get_ipv6_service() != IPV6_NATIVE_DHCP))))
+		(nvram_match("ipv6_ifdev", "eth") ||
+		((get_ipv6_service() != IPV6_NATIVE) &&
+		(get_ipv6_service() != IPV6_NATIVE_DHCP))))
 	wan6_up(get_wan6face());
 #endif
 
@@ -2518,7 +2520,7 @@ get_lan_ipaddr()
 		return strdup("0.0.0.0");
 #else
 	{
-		memset(&ip_addr, 0x0, sizeof(ip_addr));        
+		memset(&ip_addr, 0x0, sizeof(ip_addr));
 		return inet_ntoa(ip_addr);
 	}
 #endif
@@ -2588,7 +2590,7 @@ found_default_route(int wan_unit)
 	unsigned int dest, mask;
 	char buf[256], device[256];
 	char *wanif;
-        
+
 	n = 0;
 	found = 0;
 	mask = 0;

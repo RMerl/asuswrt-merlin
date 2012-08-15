@@ -60,9 +60,11 @@ function QKWireless_load_body(){
 				
 		inputCtrl(document.form.wl0_ssid,0);
 		inputCtrl(document.form.wl0_wpa_psk,0);
-		inputCtrl(document.form.sync_with_2ghz,0);
-		inputCtrl(document.form.wl1_ssid,0);
-		inputCtrl(document.form.wl1_wpa_psk,0);		
+		if(band5g_support != -1){
+				inputCtrl(document.form.sync_with_2ghz,0);
+				inputCtrl(document.form.wl1_ssid,0);
+				inputCtrl(document.form.wl1_wpa_psk,0);
+		}		
 		
 	}else{
 		$("Continued_PrevSetting").style.display = "none";
@@ -259,16 +261,19 @@ function PrevSetting(v){
 	if(v == 0){
 		inputCtrl(document.form.wl0_ssid,0);
 		inputCtrl(document.form.wl0_wpa_psk,0);
-		inputCtrl(document.form.sync_with_2ghz,0);
-		inputCtrl(document.form.wl1_ssid,0);
-		inputCtrl(document.form.wl1_wpa_psk,0);	
-		
+		if(band5g_support != -1){
+				inputCtrl(document.form.sync_with_2ghz,0);
+				inputCtrl(document.form.wl1_ssid,0);
+				inputCtrl(document.form.wl1_wpa_psk,0);	
+		}				
 	}else{
 		inputCtrl(document.form.wl0_ssid,1);
 		inputCtrl(document.form.wl0_wpa_psk,1);
-		inputCtrl(document.form.sync_with_2ghz,1);
-		inputCtrl(document.form.wl1_ssid,1);
-		inputCtrl(document.form.wl1_wpa_psk,1);	
+		if(band5g_support != -1){
+				inputCtrl(document.form.sync_with_2ghz,1);
+				inputCtrl(document.form.wl1_ssid,1);
+				inputCtrl(document.form.wl1_wpa_psk,1);	
+		}		
 	}
 }
 
@@ -285,6 +290,50 @@ function submitenter(myfield,e)
   }
 	else
    	return true;
+}
+
+var isNotIE = (navigator.userAgent.search("MSIE") == -1); 
+function switchType(obj, _method){
+	if(isNotIE){
+		if(obj.id.indexOf('wl0') >= 0){		// for wl0		
+				document.form.wl0_wpa_psk.type = _method ? "text" : "password";
+		}
+		if(obj.id.indexOf('wl1') >= 0){		// for wl0		
+				document.form.wl1_wpa_psk.type = _method ? "text" : "password";
+		}		
+	}	
+}
+
+function switchType_IE(obj){
+		if(isNotIE) return;		
+		
+		var tmp = "";
+		tmp = obj.value;
+		if(obj.id.indexOf('wl0') >= 0){		// for wl0
+				if(obj.id.indexOf('text') < 0){		//password
+							obj.style.display = "none";
+							document.getElementById('wl0_wpa_psk_text').style.display = "";
+							document.getElementById('wl0_wpa_psk_text').value = tmp;
+							document.getElementById('wl0_wpa_psk_text').focus();
+				}else{													//text					
+							obj.style.display = "none";
+							document.getElementById('wl0_wpa_psk').style.display = "";
+							document.getElementById('wl0_wpa_psk').value = tmp;
+							
+				}
+		}
+		if(obj.id.indexOf('wl1') >= 0){		// for wl1
+				if(obj.id.indexOf('text') < 0){		//password
+							obj.style.display = "none";
+							document.getElementById('wl1_wpa_psk_text').style.display = "";
+							document.getElementById('wl1_wpa_psk_text').value = tmp;
+							document.getElementById('wl1_wpa_psk_text').focus();
+				}else{														//text		
+							obj.style.display = "none";
+							document.getElementById('wl1_wpa_psk').style.display = "";
+							document.getElementById('wl1_wpa_psk').value = tmp;
+				}
+		}
 }
 </script>
 </head>
@@ -401,7 +450,8 @@ function submitenter(myfield,e)
 	<tr id="wl_unit_field_0">
 		<th width="180"><span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#Network_key#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
-			<input type="password" id="wl0_wpa_psk" name="wl0_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>" onkeyup="Sync_2ghz(2);" style="height:25px;" class="input_32_table" maxlength="65">
+			<input id="wl0_wpa_psk" name="wl0_wpa_psk" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);switchType_IE(this);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>" onkeyup="Sync_2ghz(2);" style="height:25px;" class="input_32_table" maxlength="65">
+			<input id="wl0_wpa_psk_text" name="wl0_wpa_psk_text" type="text" autocapitalization="off" onBlur="switchType_IE(this);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>" onkeyup="Sync_2ghz(2);" style="height:25px;display:none;" class="input_32_table" maxlength="65">
 		</td>
 	</tr>
 	<tr id="wl_unit_field_1">
@@ -419,7 +469,8 @@ function submitenter(myfield,e)
 	<tr id="wl_unit_field_3">
 		<th width="180"><span onmouseout="return nd();" onclick="openHint(0, 23);" style="cursor:help;"><#Network_key#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
-			<input type="password" id="wl1_wpa_psk" name="wl1_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>" onkeyup="Sync_2ghz(5);" style="height:25px;" class="input_32_table" maxlength="65">
+			<input id="wl1_wpa_psk" name="wl1_wpa_psk" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);switchType_IE(this);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>" onkeyup="Sync_2ghz(5);" style="height:25px;" class="input_32_table" maxlength="65">
+			<input id="wl1_wpa_psk_text" name="wl1_wpa_psk_text" type="text" autocapitalization="off" onBlur="switchType_IE(this);" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>" onkeyup="Sync_2ghz(5);" style="height:25px;display:none;" class="input_32_table" maxlength="65">
 		</td>
 	</tr>
 </table>

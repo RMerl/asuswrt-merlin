@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <sys/vfs.h>
 #include <limits.h>
+#include <dirent.h>
 
 #include "usb_info.h"
 #include "disk_initial.h"
@@ -35,44 +36,6 @@
 #include <shared.h>
 #include <stdarg.h>
 
-extern char *read_whole_file2(const char *target){
-	FILE *fp;
-	char *buffer, *new_str;
-	int i;
-	unsigned int read_bytes = 0;
-	unsigned int each_size = 1024;
-
-	if((fp = fopen(target, "r")) == NULL)
-		return NULL;
-
-	buffer = (char *)malloc(sizeof(char)*each_size);
-	if(buffer == NULL){
-		usb_dbg("No memory \"buffer\".\n");
-		fclose(fp);
-		return NULL;
-	}
-	memset(buffer, 0, each_size);
-
-	while ((i = fread(buffer+read_bytes, each_size*sizeof(char), 1, fp)) == 1){
-		read_bytes += each_size;
-		new_str = (char *)malloc(sizeof(char)*(each_size+read_bytes));
-		if(new_str == NULL){
-			usb_dbg("No memory \"new_str\".\n");
-			free(buffer);
-			fclose(fp);
-			return NULL;
-		}
-		memset(new_str, 0, sizeof(char)*(each_size+read_bytes));
-		memcpy(new_str, buffer, read_bytes);
-
-		free(buffer);
-		buffer = new_str;
-	}
-
-	fclose(fp);
-	return buffer;
-}
-
 int main(int argc, char *argv[]){
 	char *command;
 	int i, num;
@@ -86,7 +49,24 @@ int main(int argc, char *argv[]){
 	else
 		command = argv[0];
 
-	if(!strcmp(command, "get_account_list")){
+	if(!strcmp(command, "set_file_integrity")){
+		if(argc != 2)
+			usb_dbg("Usage: set_file_integrity filename\n");
+		else{
+			set_file_integrity(argv[1]);
+		}
+	}
+	else if(!strcmp(command, "check_file_integrity")){
+		if(argc != 2)
+			usb_dbg("Usage: check_file_integrity filename\n");
+		else if(check_file_integrity(argv[1])){
+			usb_dbg("Ok.\n");
+		}
+		else{
+			usb_dbg("Broken.\n");
+		}
+	}
+	else if(!strcmp(command, "get_account_list")){
 		if(get_account_list(&num, &list) <= 0)
 			usb_dbg("Can't get account list.\n");
 		else{

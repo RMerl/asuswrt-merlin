@@ -35,6 +35,7 @@
 
 #include <httpd.h>
 #include <bcmnvram.h>
+#include <rtconfig.h>
 
 static char * get_arg(char *args, char **next);
 static void call(char *func, FILE *stream);
@@ -132,12 +133,20 @@ process_asp (char *s, char *e, FILE *f)
 
 	return end;
 }
+
 // Call this function if and only if we can read whole <#....#> pattern.
 static char *
 translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 {
 	char *end = NULL, *name = NULL, *desc = NULL;
-
+#ifdef RTCONFIG_ODMPID
+	static char pattern1[1024];
+	static char pattern2[1024];
+	char *p_PID_STR = NULL;
+	char *PID_STR = nvram_safe_get("productid");
+	char *OEM_PID_STR = nvram_safe_get("odmpid");
+	int odm_product = strlen(OEM_PID_STR);
+#endif
 	if (s == NULL || e == NULL || f == NULL || pkw == NULL || s >= e)       {
 		return NULL;
 	}
@@ -147,11 +156,24 @@ translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 		for (; isspace((int)*name); name++);
 		if (!(end = strstr(name, kw_mark2)))
 			break;
-		*end++ = '=';	   // '#' --> '=', search_desc() need '='
-		*end++ = '\0';	  // '>' --> '\0'
+		*end++ = '=';	// '#' --> '=', search_desc() need '='
+		*end++ = '\0';	// '>' --> '\0'
 
 		desc = search_desc (pkw, name);
-		if (desc != NULL)       {
+		if (desc != NULL) {
+#ifdef RTCONFIG_ODMPID
+			if (odm_product)
+			while((p_PID_STR = strstr(desc, PID_STR)))
+			{
+				memset(pattern1, 0, sizeof(pattern1));
+				memcpy(pattern1, desc, p_PID_STR - desc);
+				memcpy(pattern1 + (p_PID_STR - desc), OEM_PID_STR, strlen(OEM_PID_STR));
+				strcpy(pattern1 + (p_PID_STR - desc) + strlen(OEM_PID_STR), p_PID_STR + strlen(PID_STR));
+				memset(pattern2, 0, sizeof(pattern2));
+				strcpy(pattern2, pattern1);
+				desc = pattern2;
+			}
+#endif
 			fprintf (f, "%s", desc);
 		}
 

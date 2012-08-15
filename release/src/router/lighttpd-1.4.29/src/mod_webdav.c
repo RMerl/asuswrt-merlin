@@ -52,7 +52,7 @@
 #define WEBDAV_FILE_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define WEBDAV_DIR_MODE  S_IRWXU | S_IRWXG | S_IRWXO
 
-#define DBG_ENABLE_MOD_SMBDAV 0
+#define DBG_ENABLE_MOD_SMBDAV 1
 #define DBE	DBG_ENABLE_MOD_SMBDAV
 
 /* plugin config for all request/connections */
@@ -883,8 +883,8 @@ static int webdav_get_live_property(server *srv, connection *con, plugin_data *p
 		} else if (0 == strcmp(prop_name, "getlastmodified")) {
 			//buffer_append_string_len(b,CONST_STR_LEN("<D:getlastmodified ns0:dt=\"dateTime.rfc1123\">"));
 			buffer_append_string_len(b,CONST_STR_LEN("<D:getlastmodified>"));
-			//strftime(mtime_buf, sizeof(mtime_buf), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&(sce->st.st_mtime)));
-			strftime(mtime_buf, sizeof(mtime_buf), "%Y/%m/%d %H:%M:%S", localtime(&(sce->st.st_mtime)));
+			strftime(mtime_buf, sizeof(mtime_buf), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&(sce->st.st_mtime)));
+			//strftime(mtime_buf, sizeof(mtime_buf), "%Y/%m/%d %H:%M:%S", localtime(&(sce->st.st_mtime)));
 			buffer_append_string(b, mtime_buf);
 			buffer_append_string_len(b, CONST_STR_LEN("</D:getlastmodified>"));
 			found = 1;
@@ -1790,6 +1790,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 				break;
 			}
 		} else {
+			log_sys_write(srv, "sbss", "Create folder", con->url.rel_path, "from ip", con->dst_addr_buf->ptr);
 			con->http_status = 201;
 			con->file_finished = 1;
 		}
@@ -1854,6 +1855,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 						break;
 					}
 				} else {
+					log_sys_write(srv, "sbss", "Delete folder", con->url.rel_path, "from ip", con->dst_addr_buf->ptr);
 					con->http_status = 204;
 				}
 			}
@@ -1872,6 +1874,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 				break;
 			}
 		} else {
+			log_sys_write(srv, "sbss", "Delete file", con->url.rel_path, "from ip", con->dst_addr_buf->ptr);
 			con->http_status = 204;
 		}
 		return HANDLER_FINISHED;
@@ -2215,6 +2218,8 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 				buffer_free(b);
 
 				rmdir(con->physical.path->ptr);
+
+				log_sys_write(srv, "sbsbss", "Move", con->url.rel_path, "to", p->physical.rel_path ,"from ip", con->dst_addr_buf->ptr);
 			}
 			con->http_status = 201;
 			con->file_finished = 1;
@@ -2301,7 +2306,9 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 							log_error_write(srv, __FILE__, __LINE__, "ss", "sql-move failed:", sqlite3_errmsg(p->conf.sql));
 						}
 					}
-#endif
+#endif				
+					log_sys_write(srv, "sbsbss", "Move", con->url.rel_path, "to", p->physical.rel_path ,"from ip", con->dst_addr_buf->ptr);
+
 					return HANDLER_FINISHED;
 				}
 
@@ -2318,6 +2325,8 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 				b = buffer_init();
 				webdav_delete_file(srv, con, p, &(con->physical), b);
 				buffer_free(b);
+
+				log_sys_write(srv, "sbsbss", "Move", con->url.rel_path, "to", p->physical.rel_path ,"from ip", con->dst_addr_buf->ptr);
 			}
 		}
 
@@ -2968,7 +2977,7 @@ propmatch_cleanup:
 		
 		while(pch!=NULL){
 			
-			share_link = (char*)malloc(1024);
+			char share_link[1024];
 			struct timeval tv;
 	  		unsigned long long now_utime;
 	 		gettimeofday(&tv,NULL);
@@ -2990,7 +2999,8 @@ propmatch_cleanup:
 			share_link_info->auth = buffer_init();
 			buffer_copy_string(share_link_info->auth, base64_auth);
 
-			share_link_info->expiretime = time(NULL) + expire;
+			share_link_info->createtime = time(NULL);
+			share_link_info->expiretime = share_link_info->createtime + expire;
 			share_link_info->toshare = toShare;
 			
 			DLIST_ADD(share_link_info_list, share_link_info);
@@ -3003,7 +3013,11 @@ propmatch_cleanup:
 			pch = strtok(NULL,";");
 
 			if(pch)
-				buffer_append_string_len(buffer_result_share_link,CONST_STR_LEN(";"));			
+				buffer_append_string_len(buffer_result_share_link,CONST_STR_LEN(";"));
+
+			if(toShare==1)
+				log_sys_write(srv, "sbsbss", "Create share link", share_link_info->realpath , "/", share_link_info->filename, "from ip", con->dst_addr_buf->ptr);
+
 		}
 #else
 		char mac[20]="\0";

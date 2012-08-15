@@ -33,6 +33,11 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
 var $j = jQuery.noConflict();
 
+var country = new Array("None", "China");
+var country_n_isp = new Array;
+country_n_isp[0] = new Array("");
+country_n_isp[1] = new Array("edu","telecom","mobile","unicom");
+
 function initial(){
 	show_menu();
 	wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
@@ -41,18 +46,13 @@ function initial(){
 	//wans_caps_secondary = wans_caps.replace("dsl", "").replace("  ", " ");
 
 	addWANOption(document.form.wans_primary, wans_caps_primary.split(" "));
-	document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];
-	if(wans_dualwan_orig.search(" ") < 0 || wans_dualwan_orig.split(" ")[1] == "none"){ // single wan
-		form_show(wans_flag);		
-	}
-	else{ // init dual WAN		
-		form_show(wans_flag);		
-	}
+	addWANOption(document.form.wans_second, wans_caps_secondary.split(" ").filter(function(x){return x!="dsl"}));
+	document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];	
+	form_show(wans_flag);		
 }
 
 function form_show(v){
 	if(v == 0){
-
 		inputCtrl(document.form.wans_second, 0);
 		inputCtrl(document.form.wans_mode, 0);
 		inputCtrl(document.form.wans_lb_ratio_0, 0);
@@ -66,78 +66,36 @@ function form_show(v){
 		inputCtrl(document.form.wan1_isp_list, 0);		
 		document.form.wans_routing_enable[1].checked = true;		
 		document.form.wans_routing_enable[0].disabled = true;
-		document.form.wans_routing_enable[1].disabled = true;		
-	}else if(v == 1){		
-		changeWANProto(document.form.wans_primary);
+		document.form.wans_routing_enable[1].disabled = true;
+		$('Routing_rules_table').style.display = "none";
+		$('wans_RoutingRules_Block').style.display = "none";	
+		document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];	
+		appendLANoption1(document.form.wans_primary);
+	}else if(v == 1){
+		document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];
 		document.form.wans_second.value = wans_dualwan_orig.split(" ")[1];
+		appendLANoption1(document.form.wans_primary);
 		appendLANoption2(document.form.wans_second);
-		appendModeOption('<% nvram_get("wans_mode"); %>');			
-	}
-	
-	show_wans_rules();	
+		appendModeOption(document.form.wans_mode.value);
+		show_wans_rules();		
+	}		
 }
 
 function applyRule(){
-	
 	if(wans_flag == 1){
 		document.form.wans_dualwan.value = document.form.wans_primary.value +" "+ document.form.wans_second.value;
-	}else{
-		document.form.wans_dualwan.value = document.form.wans_primary.value + " none";
-	}	
-		
-	if(document.form.wans_lanport1 && !document.form.wans_lanport2)
-			document.form.wans_lanport.value = document.form.wans_lanport1.value;
-	else if(!document.form.wans_lanport1 && document.form.wans_lanport2)
-			document.form.wans_lanport.value = document.form.wans_lanport2.value;
-			
-	var tmp_pri_if = wans_dualwan_orig.split(" ")[0].toUpperCase();
-	var tmp_sec_if = wans_dualwan_orig.split(" ")[1].toUpperCase();	
-	if (tmp_pri_if != 'LAN' || tmp_sec_if != 'LAN') {
-		var port_conflict = false;
-		var lan_port_num = document.form.wans_lanport.value;
-		if (switch_stb_x == '1') {
-			if (lan_port_num == '1') {
-				port_conflict = true;
-			}		
-		}
-		else if (switch_stb_x == '2') {
-			if (lan_port_num == '2') {
-				port_conflict = true;
+		if(document.form.wans_mode.value == "lb"){
+			if(document.form.wans_lb_ratio_0.value !=0 && document.form.wans_lb_ratio_1.value!=0)	// To check LoadBalance ratio value is zero or not, Jieming add 2012/08/01
+				document.form.wans_lb_ratio.value = document.form.wans_lb_ratio_0.value + ":" + document.form.wans_lb_ratio_1.value;
+				else{
+				if(document.form.wans_lb_ratio_0.value == 0)
+					document.form.wans_lb_ratio_0.focus();
+				else
+					document.form.wans_lb_ratio_1.focus();
+				
+				alert("LoadBalance ratio value cloundn't be 0");
+				return false;
 			}
-		}
-		else if (switch_stb_x == '3') {
-			if (lan_port_num == '3') {
-				port_conflict = true;
-			}
-		}
-		else if (switch_stb_x == '4') {
-			if (lan_port_num == '4') {
-				port_conflict = true;
-			}		
-		}
-		else if (switch_stb_x == '5') {
-			if (lan_port_num == '1' || lan_port_num == '2') {
-				port_conflict = true;
-			}		
-		}
-		else if (switch_stb_x == '6') {
-			if (lan_port_num == '3' || lan_port_num == '4') {
-				port_conflict = true;
-			}				
-		}
-		if (port_conflict) {
-			alert("IPTV port number is same as dual wan LAN port number");
-			return;
-		}
-	}
-		
-	document.form.wans_lb_ratio.value = document.form.wans_lb_ratio_0.value + ":" + document.form.wans_lb_ratio_1.value;
-	
-	if (document.form.wans_primary.value == "dsl") document.form.next_page = "Advanced_DSL_Content.asp";
-	if (document.form.wans_primary.value == "lan") document.form.next_page = "Advanced_WAN_Content.asp";
-	if (document.form.wans_primary.value == "usb") document.form.next_page = "Advanced_Modem_Content.asp";
-
-	if(document.form.wans_mode.value != "fo"){	//lb, rt					 
 			
 			if(document.form.wan0_isp_country.options[0].selected == true){
 					document.form.wan0_routing_isp.value = country[document.form.wan0_isp_country.value];
@@ -149,14 +107,59 @@ function applyRule(){
 					document.form.wan1_routing_isp.value = country[document.form.wan1_isp_country.value];
 			}else{
 					document.form.wan1_routing_isp.value = country[document.form.wan1_isp_country.value].toLowerCase()+"_"+country_n_isp[document.form.wan1_isp_country.value][document.form.wan1_isp_list.value];
-			}			
+			}
 			
-	}else if(document.form.wans_mode.value == "fo"){
-			/*document.form.wan0_routing_isp_enable.value = 0;	
-			document.form.wan1_routing_isp_enable.value = 0;*/
+			save_table();
+		}
+		else if(document.form.wans_mode.value == "fo"){
+			document.form.wans_lb_ratio.disabled = true;
+			document.form.wan0_routing_isp_enable.disabled = true;
+			document.form.wan0_routing_isp.disabled = true;	
+			document.form.wan1_routing_isp_enable.disabled = true;
+			document.form.wan1_routing_isp.disabled = true;
+			document.form.wans_routing_rulelist.disabled =true;	
+		}		
 	}
+	else{
+		document.form.wans_lb_ratio.disabled = true;
+		document.form.wan0_routing_isp_enable.disabled = true;
+		document.form.wan0_routing_isp.disabled = true;	
+		document.form.wan1_routing_isp_enable.disabled = true;
+		document.form.wan1_routing_isp.disabled = true;
+		document.form.wans_routing_rulelist.disabled =true;		
+		document.form.wans_dualwan.value = document.form.wans_primary.value + " none";
+	}	
+
+	if(document.form.wans_primary.value == "lan")
+		document.form.wans_lanport.value = document.form.wans_lanport1.value;
+	else if(document.form.wans_second.value =="lan")
+		document.form.wans_lanport.value = document.form.wans_lanport2.value;
+	else	
+		document.form.wans_lanport.disabled = true;
+
+	var tmp_pri_if = wans_dualwan_orig.split(" ")[0].toUpperCase();
+	var tmp_sec_if = wans_dualwan_orig.split(" ")[1].toUpperCase();	
+	if (tmp_pri_if == 'LAN' || tmp_sec_if == 'LAN') {
+		var port_conflict = false;
+		var lan_port_num = document.form.wans_lanport.value;
+		
+		if(switch_stb_x == lan_port_num)
+			port_conflict = true;
+		else if (switch_stb_x == '5' && (lan_port_num == '1' || lan_port_num == '2')) 
+			port_conflict = true;					
+		else if (switch_stb_x == '6' && (lan_port_num == '3' || lan_port_num == '4'))
+			port_conflict = true;	
+						
+		if (port_conflict) {
+			alert("IPTV port number is same as dual wan LAN port number");
+			return;
+		}
+	}	
 	
-	save_table();
+	if (document.form.wans_primary.value == "dsl") document.form.next_page = "Advanced_DSL_Content.asp";
+	if (document.form.wans_primary.value == "lan") document.form.next_page = "Advanced_WAN_Content.asp";
+	if (document.form.wans_primary.value == "usb") document.form.next_page = "Advanced_Modem_Content.asp";
+		
 	showLoading();
 	document.form.submit();
 }
@@ -169,18 +172,39 @@ function addWANOption(obj, wanscapItem){
 			obj.options[i] = new Option(wanscapItem[i].toUpperCase(), wanscapItem[i]);
 		}
 	}		
-	if(obj.name == 'wans_second')
-		appendLANoption2(obj);
 }
 
 function changeWANProto(obj){	
 	if(wans_flag == 1){
-		var dx = wans_caps_secondary.split(" ").getIndexByValue(obj.value);
-		var wans_caps_secondary_tmp_array = wans_caps_secondary.split(" ");
-		wans_caps_secondary_tmp_array.splice(dx, 1);
-	  addWANOption(document.form.wans_second, wans_caps_secondary.split(" "));
-	}		
-	appendLANoption1(obj);
+		if(document.form.wans_primary.value == document.form.wans_second.value){
+			if(obj.name == "wans_primary"){
+				if(obj.value == "wan"){			
+					document.form.wans_second.value = "usb";
+					document.form.wans_second.index = 1;
+				}else if (obj.value == "usb"){
+					document.form.wans_second.value = "lan";
+					document.form.wans_second.index = 2;					
+				}else if (obj.value == "lan"){
+					document.form.wans_second.value = "wan";
+					document.form.wans_second.index = 0;
+				}
+			}else if(obj.name == "wans_second"){
+				if(obj.value == "wan"){
+					document.form.wans_primary.value = "usb";
+					document.form.wans_primary.index = 1;
+				}else if (obj.value == "usb"){
+					document.form.wans_primary.value = "lan";
+					document.form.wans_primary.index = 2;
+				}else if (obj.value == "lan"){
+					document.form.wans_primary.value = "wan";
+					document.form.wans_primary.index = 0;
+				}	
+			}			
+		}
+		appendLANoption1(document.form.wans_primary);
+		appendLANoption2(document.form.wans_second);
+	}else
+		appendLANoption1(document.form.wans_primary);
 }
 
 function appendLANoption1(obj){
@@ -199,23 +223,12 @@ function appendLANoption1(obj){
 		}else{
 			document.form.wans_lanport1.style.display = "";	
 		}		
-		
-		if('<% nvram_get("wans_lanport"); %>' == 0)
-				document.form.wans_lanport1.selectedIndex = 0;
-		else
-				document.form.wans_lanport1.selectedIndex = '<% nvram_get("wans_lanport"); %>' - 1;		
+
+		document.form.wans_lanport1.selectedIndex = '<% nvram_get("wans_lanport"); %>' - 1;		
 		
 	}
 	else if(document.form.wans_lanport1){
 		document.form.wans_lanport1.style.display = "none";
-	}
-}
-
-function validSecond(){
-	if(document.form.wans_second.value == document.form.wans_primary.value){
-		alert("This value cannot be the same as the Primary.");
-		document.form.wans_second.focus();
-		return false;
 	}
 }
 
@@ -236,11 +249,7 @@ function appendLANoption2(obj){
 			document.form.wans_lanport2.style.display = "";
 		}	
 
-		if('<% nvram_get("wans_lanport"); %>' == 0)
-				document.form.wans_lanport2.selectedIndex = 0;
-		else
-				document.form.wans_lanport2.selectedIndex = '<% nvram_get("wans_lanport"); %>' - 1;		
-		
+		document.form.wans_lanport2.selectedIndex = '<% nvram_get("wans_lanport"); %>' - 1;			
 	}
 	else if(document.form.wans_lanport2){
 		document.form.wans_lanport2.style.display = "none";
@@ -249,50 +258,51 @@ function appendLANoption2(obj){
 
 function appendModeOption(v){
 		if(v == "fo"){
-				inputCtrl(document.form.wans_lb_ratio_0, 0);
-				inputCtrl(document.form.wans_lb_ratio_1, 0);
-				inputCtrl(document.form.wans_isp_unit[0], 0);
-				inputCtrl(document.form.wans_isp_unit[1], 0);
-				inputCtrl(document.form.wans_isp_unit[2], 0);
-				inputCtrl(document.form.wan0_isp_country, 0);
-				inputCtrl(document.form.wan0_isp_list, 0);				
-				inputCtrl(document.form.wan1_isp_country, 0);
-				inputCtrl(document.form.wan1_isp_list, 0);				
-				document.form.wans_routing_enable[1].checked = true;				
-				document.form.wans_routing_enable[0].disabled = true;
-				document.form.wans_routing_enable[1].disabled = true;
-
+			inputCtrl(document.form.wans_lb_ratio_0, 0);
+			inputCtrl(document.form.wans_lb_ratio_1, 0);
+			inputCtrl(document.form.wans_isp_unit[0], 0);
+			inputCtrl(document.form.wans_isp_unit[1], 0);
+			inputCtrl(document.form.wans_isp_unit[2], 0);
+			inputCtrl(document.form.wan0_isp_country, 0);
+			inputCtrl(document.form.wan0_isp_list, 0);				
+			inputCtrl(document.form.wan1_isp_country, 0);
+			inputCtrl(document.form.wan1_isp_list, 0);				
+			document.form.wans_routing_enable[1].checked = true;				
+			document.form.wans_routing_enable[0].disabled = true;
+			document.form.wans_routing_enable[1].disabled = true;
+			$('Routing_rules_table').style.display = "none";
+			$('wans_RoutingRules_Block').style.display = "none";
 		}else{	//lb, rt
-				inputCtrl(document.form.wans_lb_ratio_0, 1);
-				inputCtrl(document.form.wans_lb_ratio_1, 1);
-				document.form.wans_lb_ratio_0.value = '<% nvram_get("wans_lb_ratio"); %>'.split(':')[0];
-				document.form.wans_lb_ratio_1.value = '<% nvram_get("wans_lb_ratio"); %>'.split(':')[1];				
+			inputCtrl(document.form.wans_lb_ratio_0, 1);
+			inputCtrl(document.form.wans_lb_ratio_1, 1);
+			document.form.wans_lb_ratio_0.value = '<% nvram_get("wans_lb_ratio"); %>'.split(':')[0];
+			document.form.wans_lb_ratio_1.value = '<% nvram_get("wans_lb_ratio"); %>'.split(':')[1];								
+			inputCtrl(document.form.wans_isp_unit[0], 1);
+			inputCtrl(document.form.wans_isp_unit[1], 1);
+			inputCtrl(document.form.wans_isp_unit[2], 1);
+			if('<% nvram_get("wan0_routing_isp_enable"); %>' == 1 && '<% nvram_get("wan1_routing_isp_enable"); %>' == 0){
+				document.form.wans_isp_unit[1].checked =true;
+				change_isp_unit(1);
+			}else if('<% nvram_get("wan0_routing_isp_enable"); %>' == 0 && '<% nvram_get("wan1_routing_isp_enable"); %>' == 1){
+				document.form.wans_isp_unit[2].checked =true;
+				change_isp_unit(2);
+			}else{
+				document.form.wans_isp_unit[0].checked =true;
+				change_isp_unit(0);
+			}				
 				
-				inputCtrl(document.form.wans_isp_unit[0], 1);
-				inputCtrl(document.form.wans_isp_unit[1], 1);
-				inputCtrl(document.form.wans_isp_unit[2], 1);
-				if('<% nvram_get("wan0_routing_isp_enable"); %>' == 1 && '<% nvram_get("wan1_routing_isp_enable"); %>' == 0){
-						document.form.wans_isp_unit[1].checked =true;
-						change_isp_unit(1);
-				}else if('<% nvram_get("wan0_routing_isp_enable"); %>' == 0 && '<% nvram_get("wan1_routing_isp_enable"); %>' == 1){
-						document.form.wans_isp_unit[2].checked =true;
-						change_isp_unit(2);
-				}else{
-						document.form.wans_isp_unit[0].checked =true;
-						change_isp_unit(0);
-				}				
+			Load_ISP_country();
+			appendcountry(document.form.wan0_isp_country);
+			appendcountry(document.form.wan1_isp_country);				
+			inputCtrl(document.form.wans_routing_enable[0], 1);
+			inputCtrl(document.form.wans_routing_enable[1], 1);				
+			if('<% nvram_get("wans_routing_enable"); %>' == 1)
+				document.form.wans_routing_enable[0].checked = true;
+			else
+				document.form.wans_routing_enable[1].checked = true;	
 				
-				Load_ISP_country();
-				appendcoutry(document.form.wan0_isp_country);
-				appendcoutry(document.form.wan1_isp_country);
-				
-				inputCtrl(document.form.wans_routing_enable[0], 1);
-				inputCtrl(document.form.wans_routing_enable[1], 1);				
-				if('<% nvram_get("wans_routing_enable"); %>' == 1)
-					document.form.wans_routing_enable[0].checked = true;
-				else
-					document.form.wans_routing_enable[1].checked = true;	
-					
+			$('Routing_rules_table').style.display = "";
+			$('wans_RoutingRules_Block').style.display = "";				
 		}
 }
 
@@ -300,22 +310,24 @@ function addRow_Group(upper){
 			var rule_num = $('wans_RoutingRules_table').rows.length;
 			var item_num = $('wans_RoutingRules_table').rows[0].cells.length;	
 			if(rule_num >= upper){
-					alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
-					return false;	
+				alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
+				return false;	
 			}			
 
 			if(document.form.wans_FromIP_x_0.value==""){
-					document.form.wans_FromIP_x_0.value = "all";
-			}else if(valid_IP_form(document.form.wans_FromIP_x_0,2) != true){
-					return false;
+				document.form.wans_FromIP_x_0.value = "all";
+			}
+			else if(valid_IP_form(document.form.wans_FromIP_x_0,2) != true){
+				return false;
 			} 
 			
 			if(document.form.wans_ToIP_x_0.value==""){
 					document.form.wans_ToIP_x_0.value = "all";
-			}else if(valid_IP_form(document.form.wans_ToIP_x_0,2) != true){
-					document.form.wans_FromIP_x_0.value = "";
-					document.form.wans_ToIP_x_0.value = "";				
-					return false;
+			}
+			else if(valid_IP_form(document.form.wans_ToIP_x_0,2) != true){
+				document.form.wans_FromIP_x_0.value = "";
+				document.form.wans_ToIP_x_0.value = "";				
+				return false;
 			}				
 		
 			//Viz check same rule  //match(From IP, To IP) is not accepted
@@ -340,19 +352,17 @@ function addRow_Group(upper){
 			addRow(document.form.wans_ToIP_x_0, 0);
 			addRow(document.form.wans_unit_x_0, 0);
 			document.form.wans_unit_x_0.value = 0;
-			show_wans_rules();		
-					
+			show_wans_rules();							
 }
 
 function addRow(obj, head){
-			if(head == 1)
-				wans_routing_rulelist_array += "&#60"
-			else
-				wans_routing_rulelist_array += "&#62"
+	if(head == 1)
+		wans_routing_rulelist_array += "&#60"
+	else
+		wans_routing_rulelist_array += "&#62"
 			
-			wans_routing_rulelist_array += obj.value;
-
-			obj.value = "";		
+	wans_routing_rulelist_array += obj.value;
+	obj.value = "";		
 }
 
 function show_wans_rules(){
@@ -368,24 +378,24 @@ function show_wans_rules(){
 			var routing_rules_col = wans_rules_row[i].split('&#62');
 				for(var j = 0; j < routing_rules_col.length; j++){
 					if(j != 2){
-							code +='<td width="30%">'+ routing_rules_col[j] +'</td>';		//IP  width="98"
-					}else{
-							
-							code += '<td width="25%"><select class="input_option">';
-							if(routing_rules_col[2] =="0")
-									code += '<option value="0" selected>Primary WAN</option>';
-							else
-									code += '<option value="0">Primary WAN</option>';
+						code +='<td width="30%">'+ routing_rules_col[j] +'</td>';		//IP  width="98"
+					}
+					else{							
+						code += '<td width="25%"><select class="input_option">';
+						if(routing_rules_col[2] =="0")
+							code += '<option value="0" selected>Primary WAN</option>';
+						else
+							code += '<option value="0">Primary WAN</option>';
 
-							if(routing_rules_col[2] =="1")
-									code += '<option value="1" selected>Secondary WAN</option>';
-							else
-									code += '<option value="1">Secondary WAN</option>';								
+						if(routing_rules_col[2] =="1")
+							code += '<option value="1" selected>Secondary WAN</option>';
+						else
+							code += '<option value="1">Secondary WAN</option>';								
 
-							code += '</select></td>';								
+						code += '</select></td>';								
 					}		
 				}
-				code +='<td width="15%"><!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->';
+				code +='<td width="15%">'<!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->;
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 		}
 	}
@@ -393,12 +403,11 @@ function show_wans_rules(){
 	$("wans_RoutingRules_Block").innerHTML = code;
 }
 
-
 function save_table(){
 	var rule_num = $('wans_RoutingRules_table').rows.length;
 	var item_num = $('wans_RoutingRules_table').rows[0].cells.length;
 	var tmp_value = "";
-     var comp_tmp = "";
+    var comp_tmp = "";
 
 	for(i=0; i<rule_num; i++){
 		tmp_value += "<"		
@@ -406,7 +415,7 @@ function save_table(){
 			if(j==2){
 				tmp_value += $('wans_RoutingRules_table').rows[i].cells[2].firstChild.value;
 			}else{						
-					tmp_value += $('wans_RoutingRules_table').rows[i].cells[j].innerHTML;
+				tmp_value += $('wans_RoutingRules_table').rows[i].cells[j].innerHTML;
 			}
 			
 			if(j != item_num-2)	
@@ -415,11 +424,11 @@ function save_table(){
 	}
 	if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
 		tmp_value = "";	
+		
 	document.form.wans_routing_rulelist.value = tmp_value;
 }
 
 function change_isp_unit(v){
-	
 	inputCtrl(document.form.wan0_isp_country, 1);
 	inputCtrl(document.form.wan1_isp_country, 1);
 	
@@ -447,61 +456,52 @@ function change_isp_unit(v){
 	}	
 }
 
-var country = new Array("None", "China");
-var country_n_isp = new Array;
-country_n_isp[0] = new Array("");
-country_n_isp[1] = new Array("edu","telecom","mobile","unicom");
-
 function Load_ISP_country(){
-		var country_num = country.length;
-		for(c = 0; c < country_num; c++){
-				document.form.wan0_isp_country.options[c] = new Option(country[c], c);
-				if(document.form.wan0_isp_country.options[c].text.toLowerCase() == '<% nvram_get("wan0_routing_isp"); %>'.split("_")[0])
-						document.form.wan0_isp_country.options[c].selected =true;
+	var country_num = country.length;
+	for(c = 0; c < country_num; c++){
+		document.form.wan0_isp_country.options[c] = new Option(country[c], c);
+		if(document.form.wan0_isp_country.options[c].text.toLowerCase() == '<% nvram_get("wan0_routing_isp"); %>'.split("_")[0])
+			document.form.wan0_isp_country.options[c].selected =true;
 												
-				document.form.wan1_isp_country.options[c] = new Option(country[c], c);		
-				if(document.form.wan1_isp_country.options[c].text.toLowerCase() == '<% nvram_get("wan1_routing_isp"); %>'.split("_")[0])
-						document.form.wan1_isp_country.options[c].selected =true;
-						
-		}
-		if('<% nvram_get("wan0_routing_isp"); %>' == "")
-				document.form.wan0_isp_country.options[0].selected =true;
-		if('<% nvram_get("wan1_routing_isp"); %>' == "")
-				document.form.wan1_isp_country.options[0].selected =true;				
+		document.form.wan1_isp_country.options[c] = new Option(country[c], c);		
+		if(document.form.wan1_isp_country.options[c].text.toLowerCase() == '<% nvram_get("wan1_routing_isp"); %>'.split("_")[0])
+			document.form.wan1_isp_country.options[c].selected =true;						
+	}
+	if('<% nvram_get("wan0_routing_isp"); %>' == "")
+		document.form.wan0_isp_country.options[0].selected =true;
+	if('<% nvram_get("wan1_routing_isp"); %>' == "")
+		document.form.wan1_isp_country.options[0].selected =true;				
 }
 
-function appendcoutry(obj){
-		if(obj.name == "wan0_isp_country"){
-				if(obj.value == 0){	//none
-							document.form.wan0_isp_list.style.display = "none";
-				}else{	//other country
-							var wan0_country_isp_num = country_n_isp[obj.value].length;
-							document.form.wan0_isp_list.style.display = "";
-							for(j = 0; j < wan0_country_isp_num; j++){
-									document.form.wan0_isp_list.options[j] = new Option(country_n_isp[obj.value][j], j);
-									if(document.form.wan0_isp_list.options[j].text == '<% nvram_get("wan0_routing_isp"); %>'.split("_")[1])
-											document.form.wan0_isp_list.options[j].selected =true;
-							}
-							
-				}				
-		}else if(obj.name == "wan1_isp_country"){
-				if(obj.value == 0){	//none
-							document.form.wan1_isp_list.style.display = "none";					
-				}else{	//other country
-							var wan1_country_isp_num = country_n_isp[obj.value].length;
-							document.form.wan1_isp_list.style.display = "";
-							for(j = 0; j < wan1_country_isp_num; j++){
-									document.form.wan1_isp_list.options[j] = new Option(country_n_isp[obj.value][j], j);
-									if(document.form.wan1_isp_list.options[j].text == '<% nvram_get("wan1_routing_isp"); %>'.split("_")[1])
-											document.form.wan1_isp_list.options[j].selected =true;
-							}
+function appendcountry(obj){
+	if(obj.name == "wan0_isp_country"){
+		if(obj.value == 0){	//none
+			document.form.wan0_isp_list.style.display = "none";
+		}
+		else{	//other country
+			var wan0_country_isp_num = country_n_isp[obj.value].length;
+			document.form.wan0_isp_list.style.display = "";
+			for(j = 0; j < wan0_country_isp_num; j++){
+				document.form.wan0_isp_list.options[j] = new Option(country_n_isp[obj.value][j], j);
+				if(document.form.wan0_isp_list.options[j].text == '<% nvram_get("wan0_routing_isp"); %>'.split("_")[1])
+					document.form.wan0_isp_list.options[j].selected =true;
+			}							
+		}				
+	}else if(obj.name == "wan1_isp_country"){
+		if(obj.value == 0){	//none
+			document.form.wan1_isp_list.style.display = "none";					
+		}else{	//other country
+			var wan1_country_isp_num = country_n_isp[obj.value].length;
+			document.form.wan1_isp_list.style.display = "";
+			for(j = 0; j < wan1_country_isp_num; j++){
+				document.form.wan1_isp_list.options[j] = new Option(country_n_isp[obj.value][j], j);
+				if(document.form.wan1_isp_list.options[j].text == '<% nvram_get("wan1_routing_isp"); %>'.split("_")[1])
+					document.form.wan1_isp_list.options[j].selected =true;
+			}
 					
-				}		
-		}
-
+		}		
+	}
 }
-
-
 
 function is_ipaddr_plus_netmask(o,event){
 	keyPressed = event.keyCode ? event.keyCode : event.which;
@@ -541,8 +541,7 @@ function is_ipaddr_plus_netmask(o,event){
 		}
 		
 		return true;
-	}
-	
+	}	
 	return false;
 }
 
@@ -564,7 +563,7 @@ function del_Row(obj){
 	
 	wans_routing_rulelist_array = routing_rules_value;
 	if(wans_routing_rulelist_array == "")
-			show_wans_rules();
+		show_wans_rules();
 }
 
 </script>
@@ -667,13 +666,13 @@ function del_Row(obj){
 										<tr>
 											<th>Primary WAN</th>
 											<td>
-												<select name="wans_primary" class="input_option" onchange="changeWANProto(this);" onblur="validSecond();"></select>
+												<select name="wans_primary" class="input_option" onchange="changeWANProto(this);"></select>
 											</td>
 									  </tr>
 										<tr>
 											<th>Secondary WAN</th>
 											<td>
-												<select name="wans_second" class="input_option" onchange="appendLANoption2(this);" onblur="validSecond();"></select>
+												<select name="wans_second" class="input_option" onchange="changeWANProto(this);"></select>
 											</td>
 									  </tr>
 
@@ -709,7 +708,7 @@ function del_Row(obj){
 			          		<tr>
 			          			<th>Country / ISP profile rules for Primary WAN</th>
 			          			<td>
-			          					<select name="wan0_isp_country" class="input_option" onchange="appendcoutry(this);" value=""></select>
+			          					<select name="wan0_isp_country" class="input_option" onchange="appendcountry(this);" value=""></select>
 													<select name="wan0_isp_list" class="input_option" style="display:none;"value=""></select>
 			          			</td>	
 			          		</tr>
@@ -717,7 +716,7 @@ function del_Row(obj){
 			          		<tr>
 			          			<th>Country / ISP profile rules for Secondary WAN</th>
 			          			<td>
-			          					<select name="wan1_isp_country" class="input_option" onchange="appendcoutry(this);" value=""></select>
+			          					<select name="wan1_isp_country" class="input_option" onchange="appendcountry(this);" value=""></select>
 													<select name="wan1_isp_list" class="input_option" style="display:none;"value=""></select>
 			          			</td>	
 			          		</tr>			          		
@@ -742,20 +741,19 @@ function del_Row(obj){
           </table>									
 									
 				<!-- ----------Routing Rules Table  ---------------- -->
-				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;" >
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;" id="Routing_rules_table">
 			  	<thead>
 			  		<tr><td colspan="4" id="Routing_table">Routing rules</td></tr>
 			  	</thead>
 			  
 			  	<tr>
-		  			<th><!--a class="hintstyle" href="javascript:void(0);"-->Source IP<!--/a--></th>
-        		<th>Destination IP</th>
+		  			<th><!--a class="hintstyle" href="javascript:void(0);"--><#FirewallConfig_LanWanSrcIP_itemname#><!--/a--></th>
+        		<th><#FirewallConfig_LanWanDstIP_itemname#></th>
         		<th>WAN Unit</th>
         		<th>Add / Delete</th>
 			  	</tr>			  
 			  	<tr>
 			  			<!-- rules info -->
-							<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 			  		
             			<td width="30%">            			
                 		<input type="text" class="input_15_table" maxlength="18" name="wans_FromIP_x_0" style="" onKeyPress="return is_ipaddr_plus_netmask(this,event)">

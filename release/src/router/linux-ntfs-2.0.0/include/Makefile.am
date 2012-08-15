@@ -1,0 +1,3 @@
+SUBDIRS = ntfs
+
+MAINTAINERCLEANFILES = Makefile.in

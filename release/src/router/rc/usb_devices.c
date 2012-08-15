@@ -641,11 +641,21 @@ int write_3g_conf(FILE *fp, int dno, int aut, char *vid, char *pid){
 			fprintf(fp, "MessageContent=\"55534243123456780000000000000011062000000100000000000000000000\"\n");
 			break;
 		case SN_Huawei_K3770:
-			fprintf(fp, "TargetVendor=   0x12d1\n");
-			fprintf(fp, "TargetProduct=  0x14d1\n");
-			fprintf(fp, "DefaultVendor=  0x12d1\n");
-			fprintf(fp, "DefaultProduct= 0x14c9\n");
-			fprintf(fp, "MessageContent=\"55534243123456780000000000000011062000000100000000000000000000\"\n");
+			if(nvram_match("test_k3770", "1")){
+				fprintf(fp, "TargetVendor=   0x12d1\n");
+				fprintf(fp, "TargetProduct=  0x14d1\n");
+				fprintf(fp, "DefaultVendor=  0x12d1\n");
+				fprintf(fp, "DefaultProduct= 0x14c9\n");
+				fprintf(fp, "MessageContent=\"55534243123456780000000000000011062000000100000000000000000000\"\n");
+			}
+			else{
+				fprintf(fp, "TargetVendor=   0x12d1\n");
+				fprintf(fp, "TargetProduct=  0x14d1\n");
+				fprintf(fp, "DefaultVendor=  0x12d1\n");
+				fprintf(fp, "DefaultProduct= 0x1c05\n");
+				fprintf(fp, "CheckSuccess=   20\n");
+				fprintf(fp, "MessageContent=\"55534243123456780000000000000011060000000000000000000000000000\"\n");
+			}
 			break;
 		case SN_Mobile_Action:
 			fprintf(fp, "DefaultVendor=  0x0df7\n");
@@ -1607,9 +1617,9 @@ usb_dbg("3G: Auto setting.\n");
 			write_3g_conf(fp, SN_SU9800, 1, vid, pid);
 		else if((strcmp(vid, "0af0")==0) && (strcmp(pid, "7a05")==0))	
 			write_3g_conf(fp, SN_OPTION_ICON_461, 1, vid, pid);
-		else if((strcmp(vid, "12d1")==0) && (strcmp(pid, "14ca")==0))	
+		else if((strcmp(vid, "12d1")==0) && (strcmp(pid, "14c4")==0))	
 			write_3g_conf(fp, SN_Huawei_K3771, 1, vid, pid);
-		else if((strcmp(vid, "12d1")==0) && (strcmp(pid, "14c9")==0))	
+		else if((strcmp(vid, "12d1")==0) && (strcmp(pid, "14d1")==0))	
 			write_3g_conf(fp, SN_Huawei_K3770, 1, vid, pid);
 		else if((strcmp(vid, "0df7")==0) && (strcmp(pid, "0800")==0))	
 			write_3g_conf(fp, SN_Mobile_Action, 1, vid, pid);

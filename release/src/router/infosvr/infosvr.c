@@ -19,6 +19,8 @@
 #include "iboxcom.h"
 #include "lp.h"
 
+#include <rtconfig.h>
+
 #define SRV_PORT 9999
 #define PRINT(fmt, args...) fprintf(stderr, fmt, ## args)
 #define TRUE     1
@@ -67,7 +69,8 @@ void load_sysparam(void)
 
 	strncpy(ssid_g, nvram_safe_get("wl0_ssid"), sizeof(ssid_g));
 	strncpy(netmask_g, nvram_safe_get("lan_netmask"), sizeof(netmask_g));
-	strncpy(productid_g, nvram_safe_get("productid"), sizeof(productid_g));
+	strncpy(productid_g, get_productid(), sizeof(productid_g));
+
 	strncpy(firmver_g, nvram_safe_get("firmver"), sizeof(firmver_g));
 
 	strcpy(macstr, nvram_safe_get("et0macaddr"));

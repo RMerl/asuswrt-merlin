@@ -407,7 +407,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
             
 		  <tr>
 			<th width="30%">
-			  <a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,1);"><#LANHostConfig_IPRouters_itemname#></a>
+			  <a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,1);"><#IPConnection_ExternalIPAddress_itemname#></a>
 			</th>			
 			<td>
 			  <input type="text" maxlength="15" class="input_15_table" id="lan_ipaddr" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" onKeyPress="return is_ipaddr(this, event);">

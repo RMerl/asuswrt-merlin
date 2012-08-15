@@ -119,6 +119,7 @@ static int config_insert(server *srv) {
 
 		//- Jerry add 20111018
 		{ "server.arpping-interface",	 NULL, T_CONFIG_STRING, T_CONFIG_SCOPE_SERVER },	  /* 74 */
+		{ "server.syslog",               NULL, T_CONFIG_STRING, T_CONFIG_SCOPE_SERVER },      /* 75 */
 
 		{ NULL,                          NULL, T_CONFIG_UNSET, T_CONFIG_SCOPE_UNSET }
 	};
@@ -156,6 +157,7 @@ static int config_insert(server *srv) {
 
 	//- Jerry add 20111018
 	cv[74].destination = srv->srvconf.arpping_interface;
+	cv[75].destination = srv->srvconf.syslog_file;
 	
 	srv->config_storage = calloc(1, srv->config_context->used * sizeof(specific_config *));
 

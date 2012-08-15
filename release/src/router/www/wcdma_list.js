@@ -9,13 +9,13 @@ function gen_country_list(){
 	countrylist.push(["Czech", "CZ"]);
 	countrylist.push(["Denmark", "DK"]);
 	countrylist.push(["Dominican Republic", "DR"]);
-	countrylist.push(["Germany", "DE"]);
 	countrylist.push(["Egypt", "EG"]);
 	countrylist.push(["El Salvador", "SV"]);
 	countrylist.push(["Finland", "FI"]);
+	countrylist.push(["Germany", "DE"]);
 	countrylist.push(["Hong Kong", "HK"]);
-	countrylist.push(["Indonesia", "IN"]);
 	countrylist.push(["India", "INDI"]);
+	countrylist.push(["Indonesia", "IN"]);
 	countrylist.push(["Italy", "IT"]);
 	countrylist.push(["Japan", "JP"]);
 	countrylist.push(["Malaysia", "MA"]);
@@ -155,12 +155,12 @@ function gen_list(){
 		passlist = new Array("user123", "", "", "");
 	}
 	else if(country == "PH"){
-		protolist = new Array("1", "1", "1");
-		isplist = new Array("Globe", "Smart", "Sun Cellula");
-		apnlist = new Array("internet.globe.com.ph", "internet", "minternet");
-		daillist = new Array("*99***1#", "*99***1#", "*99***1#");
-		userlist = new Array("", "", "");
-		passlist = new Array("", "", "");
+		protolist = new Array("1", "1", "1", "1", "1", "1");
+		isplist = new Array("Globe Prepaid", "Globe Postpaid", "Smart Bro", "Smart Buddy", "Sun Prepaid", "Sun Postpaid");
+		apnlist = new Array("http.globe.com.ph", "internet.globe.com.ph", "smartbro", "internet", "minternet", "fbband");
+		daillist = new Array("*99***1#", "*99***1#", "*99#", "*99#", "*99#", "*99#");
+		userlist = new Array("", "", "", "", "", "");
+		passlist = new Array("", "", "", "", "", "");
 	}
 	else if(country == "SA"){
 		protolist = new Array("1", "1", "1");

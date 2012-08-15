@@ -1289,7 +1289,7 @@ function change_wireless_bridge(m, a, r, mflag)
 	if (m == "0"){
 		inputRCtrl2(document.form.wl_wdsapply_x, 1);
 		inputRCtrl1(document.form.wl_wdsapply_x, 0);
-	}/*else if (m == "1"){	 // N66U-spec
+	}else if (m == "1" && Rawifi_support != -1){	 // N66U-spec
 		inputRCtrl2(document.form.wl_wdsapply_x, 0);
 		inputRCtrl1(document.form.wl_wdsapply_x, 0);
 		if (document.form.wl_channel_orig.value == "0" && document.form.wl_channel.options[0].selected == 1){
@@ -1297,7 +1297,7 @@ function change_wireless_bridge(m, a, r, mflag)
 				document.form.wl_channel.options[0].selected = 0;
 				document.form.wl_channel.options[1].selected = 1;
 		}
-	}*/else{
+	}else{
 			inputRCtrl1(document.form.wl_wdsapply_x, 1);
 			if (m != 0) {
 				if (document.form.wl_channel_orig.value == "0" && document.form.wl_channel.options[0].selected == 1){

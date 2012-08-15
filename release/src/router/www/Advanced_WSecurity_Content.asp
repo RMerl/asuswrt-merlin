@@ -158,7 +158,6 @@ function done_validating(action){
 		</table>
 		
 			<div id="submitBtn" class="apply_gen">
-				<!--input type="button" class="button5" value="<#GO_5G#>" onclick="location.href='Advanced_WSecurity_Content.asp';"-->    
 				<input class="button_gen" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>
 			</div>		
 		

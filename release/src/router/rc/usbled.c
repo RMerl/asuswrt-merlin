@@ -94,7 +94,7 @@ static void usbled_exit(int sig)
 {
 	alarmtimer(0, 0);
 	status_usb = 0;
-        usb_busy = 1;
+        usb_busy = 0;
 	led_control(LED_USB, LED_OFF);
 
         remove("/var/run/usbled.pid");
@@ -108,7 +108,9 @@ static void usbled(int sig)
 	status_usb_old = status_usb;
 	status_usb = usb_status();
 
-	if (!usb_busy)
+	if(nvram_match("asus_mfg", "1"))
+		no_blink(sig);
+	else if (!usb_busy)
 	{
 		if (status_usb != status_usb_old)
 		{
@@ -160,6 +162,7 @@ usbled_main(int argc, char *argv[])
 	sigaddset(&sigs_to_catch, SIGTERM);
 	sigaddset(&sigs_to_catch, SIGUSR1);
 	sigaddset(&sigs_to_catch, SIGUSR2);
+	sigaddset(&sigs_to_catch, SIGTSTP);
 	sigprocmask(SIG_UNBLOCK, &sigs_to_catch, NULL);
 
 	signal(SIGALRM, usbled);

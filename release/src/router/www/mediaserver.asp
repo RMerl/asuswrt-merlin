@@ -532,7 +532,7 @@ function confirm_temp(){
 	<div id="tree"></div>
 </div>
 <div id="test_panel" class="panel_new" >
-		<div class="machineName" style="font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:25px;margin-left:30px;"><% nvram_get("productid"); %></div>
+		<div class="machineName" style="font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:25px;margin-left:30px;"><#Web_Title2#></div>
 		<div id="e0" class="FdTemp" style="font-size:10pt; margin-top:8px;margin-left:30px;margin-bottom:1px;height:345px;overflow:auto;width:455px;"></div>
 		<div style="background-image:url(images/Tree/bg_02.png);background-repeat:no-repeat;height:90px;">
 		<input class="button_gen" type="button" style="margin-left:27%;margin-top:18px;" onclick="cancel_temp();" value="<#CTL_Cancel#>">

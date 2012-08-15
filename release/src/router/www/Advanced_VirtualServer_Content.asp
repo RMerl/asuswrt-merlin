@@ -624,8 +624,8 @@ function changeBgColor(obj, num){
  		  	</thead>
  		  	
           		<tr>
-								<th><#IPConnection_VServerDescript_itemname#></th>
-            		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,24);"><#IPConnection_VServerPort_itemname#></a></th>
+								<th><#BM_UserList1#></th>
+            		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,24);"><#FirewallConfig_LanWanSrcPort_itemname#></a></th>
             		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,25);"><#IPConnection_VServerIP_itemname#></a></th>
             		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,26);"><#IPConnection_VServerLPort_itemname#></a></th>
             		<th><#IPConnection_VServerProto_itemname#></th>

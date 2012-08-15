@@ -57,6 +57,56 @@ void char_to_ascii(const char *output, const char *input)
 	char_to_ascii_safe(output, input, outlen);
 }
 
+/* Transfer ASCII to Char */
+int ascii_to_char_safe(const char *output, const char *input, int outsize){
+	char *src = (char *)input;
+	char *dst = (char *)output;
+	char *end = (char *)output+outsize-1;
+	char char_array[3];
+	unsigned int char_code;
+
+	if(src == NULL || dst == NULL || outsize <= 0)
+		return 0;
+
+	for(; *src && dst < end; ++src, ++dst){
+		if((*src >= '0' && *src <= '9')
+				|| (*src >= 'A' && *src <= 'Z')
+				|| (*src >= 'a' && *src <= 'z')
+				){
+			*dst = *src;
+		}
+		else if(*src == '\\'){
+			++src;
+			if(!(*src))
+				break;
+
+			*dst = *src;
+		}
+		else{
+			++src;
+			if(!(*src))
+				break;
+			memset(char_array, 0, 3);
+			strncpy(char_array, src, 2);
+			++src;
+
+			char_code = strtol(char_array, NULL, 16);
+
+			*dst = (char)char_code;
+		}
+	}
+
+	if(dst <= end)
+		*dst = '\0';
+
+	return (dst-output);
+}
+
+void ascii_to_char(const char *output, const char *input){
+	int outlen = strlen(input)+1;
+	ascii_to_char_safe(output, input, outlen);
+}
+
 const char *find_word(const char *buffer, const char *word)
 {
 	const char *p, *q;

@@ -187,7 +187,7 @@ void lease_update_file(time_t now)
       for (lease = leases; lease; lease = lease->next)
 	{
 #if 1	// zzz
-	  ourprintf(&err, "%lu ", (unsigned long)lease->expires - now);
+	  ourprintf(&err, "%-6lu ", (unsigned long)lease->expires - now);
 #else
 #ifdef HAVE_BROKEN_RTC
 	  ourprintf(&err, "%u ", lease->length);
@@ -204,7 +204,7 @@ void lease_update_file(time_t now)
 		ourprintf(&err, ":");
 	    }
 
-	  ourprintf(&err, " %s ", inet_ntoa(lease->addr));
+	  ourprintf(&err, " %-15s ", inet_ntoa(lease->addr));
 	  ourprintf(&err, "%s ", lease->hostname ? lease->hostname : "*");
 	  	  
 	  if (lease->clid && lease->clid_len != 0)

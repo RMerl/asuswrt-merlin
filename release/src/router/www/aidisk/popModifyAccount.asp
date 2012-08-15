@@ -34,52 +34,82 @@ function clickevent(){
 }
 
 function validForm(){
-	if($("new_account").value.length > 0)
-		$("new_account").value = trim($("new_account").value);
-	if($("new_password").value.length > 0)
-		$("new_password").value = trim($("new_password").value);
-	$("confirm_password").value = trim($("confirm_password").value);
-	
+	showtext($("alert_msg1"), "");
+	showtext($("alert_msg2"), "");
+
 	// new_account name
 	if($("new_account").value.length > 0){
-		if(trim($("new_account").value).length > 20){
-			alert("<#File_Pop_content_alert_desc3#>");
+		var alert_str = validate_account($("new_account"), "noalert");
+
+		if(alert_str != ""){
+			showtext($("alert_msg1"), alert_str);
 			$("new_account").focus();
 			return false;
 		}
-		
-		var re = new RegExp("[^a-zA-Z0-9-]+","gi");
-		if(re.test($("new_account").value)){
-			alert("<#File_Pop_content_alert_desc4#>");
+
+		$("new_account").value = trim($("new_account").value);
+
+		if($("new_account").value == "root"
+				|| $("new_account").value == "guest"
+				|| $("new_account").value == "anonymous"
+				){
+			showtext($("alert_msg1"), "<#USB_Application_account_alert#>");
 			$("new_account").focus();
 			return false;
 		}
-		
+
+		if($("new_account").value.length <= 1){
+			showtext($("alert_msg1"), "<#File_Pop_content_alert_desc2#>");
+			$("new_account").focus();
+			return false;
+		}
+
+		if($("new_account").value.length > 20){
+			showtext($("alert_msg1"), "<#File_Pop_content_alert_desc3#>");
+			$("new_account").focus();
+			return false;
+		}
+
 		if(checkDuplicateName($("new_account").value, parent.get_accounts()) &&
 				$("new_account").value != selectedAccount){
-			alert("<#File_Pop_content_alert_desc5#>");
+			showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
 			$("new_account").focus();
 			return false;
 		}
 	}
-	
+
 	// password
+	/*if($("new_password").value.length <= 0 || $("confirm_password").value.length <= 0){
+		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
+		if($("new_password").value.length <= 0){
+				$("new_password").focus();
+				$("new_password").select();
+		}else{
+				$("confirm_password").focus();
+				$("confirm_password").select();
+		}
+		return false;
+	}//*/
+
 	if($("new_password").value != $("confirm_password").value){
-		alert("<#File_Pop_content_alert_desc7#>");
-		
-		if($("new_password").value.length <= 0)
+		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
+		$("confirm_password").focus();
+		return false;
+	}
+
+	if(!validate_string(document.modifyAccountForm.new_password)){
 			$("new_password").focus();
-		else
-			$("confirm_password").focus();
-		return false;
+			$("new_password").select();
+			return false;
 	}
-	
-	if($("new_account").value.length <= 0 && $("new_password").value.length <= 0){
-		alert("並無輸入新的帳號或新的密碼!!"); /*2009 Need Translation Lock*/
-		
-		return false;
+
+	if($("new_password").value.length > 16){
+			showtext($("alert_msg2"),"*<#LANHostConfig_x_Password_itemdesc#>");
+			$("password").focus();
+			$("password").select();
+			return false;
 	}
-		
+
 	return true;
 }
 
@@ -113,15 +143,19 @@ function checkDuplicateName(newname, teststr){
     </tr>
     <tr>
       <th><#AiDisk_Account#>: </th>
-      <td ><input class="input_15_table" name="new_account" id="new_account" type="text" maxlength="20"></td>
+      <td><input class="input_15_table" name="new_account" id="new_account" type="text" maxlength="20">
+      		<br/><span id="alert_msg1"></span>	
+      </td>
     </tr>
     <tr>
       <th><#ModAccountPassword#>: </th>
-      <td><input class="input_15_table" name="new_password" id="new_password" type="password" maxlength="20"></td>
+      <td><input type="password" class="input_15_table" autocapitalization="off" name="new_password" id="new_password" onKeyPress="return is_string(this, event);" maxlength="17"></td>
     </tr>
     <tr>
       <th><#Confirmpassword#>: </th>
-      <td><input class="input_15_table" id="confirm_password" type="password" maxlength="20"></td>
+      <td><input type="password" class="input_15_table" autocapitalization="off" name="confirm_password" id="confirm_password" onKeyPress="return is_string(this, event);" maxlength="17">
+      		<br/><span id="alert_msg2"></span>	
+      </td>
     </tr>
 	</tbody>	
     <tr bgcolor="#E6E6E6">

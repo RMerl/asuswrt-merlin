@@ -220,14 +220,14 @@ struct nvram_tuple router_defaults[] = {
 	{ "wps_modelname", "Wi-Fi Protected Setup Router"},
 #endif
 	{ "wps_mfstring", "ASUSTeK Computer Inc."},
-	{ "wps_device_name", RT_BUILD_NAME},
+//	{ "wps_device_name", RT_BUILD_NAME},
 	{ "wl_wps_reg", "enabled"},
 	//{ "wps_device_pin", "12345670"}, it is mapped to secret_code
 	{ "wps_sta_pin", "00000000"},
 #if 0
 	{ "wps_modelnum", "123456"},
 #else
-	{ "wps_modelnum", RT_BUILD_NAME},
+//	{ "wps_modelnum", RT_BUILD_NAME},
 #endif
 	{ "wps_timeout_enable", "0"},
 	/* Allow or Deny Wireless External Registrar get or configure AP security settings */
@@ -537,6 +537,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dhcp_wins_x", "" },
 	{ "dhcp_static_x", "0"},
 	{ "dhcp_staticlist", ""},
+	{ "dhcpd_lmax", "253"},
 
 	// NVRAM for start_dhcpd
 	// Guest DHCP server parameters
@@ -701,13 +702,12 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl_encap", ""},
 	{ "dsl_proto", ""},
 	
-	/* Paul modify 2012/7/13, set default Service Category to UBR with PCR, with PCR set to maximum allowed value 1887. *
-	 * In order to fix DL/UL throughput issue with some QoS-enabled PVC, it should not affect QoS-disabled PVC. */
-	{ "dsl_svc_cat", "1"},
-	{ "dsl_pcr", "1887"},
-	
-	{ "dsl_scr", ""},
-	{ "dsl_mbs", ""},
+	/* Paul modify 2012/8/6, set default Service Category to UBR without PCR, with PCR, SCR and MBS set to 0. */
+	{ "dsl_svc_cat", "0"},
+	{ "dsl_pcr", "0"},
+	{ "dsl_scr", "0"},
+	{ "dsl_mbs", "0"},
+
 // those PVC need to init first so that QIS internet/IPTV PVC setting could write to NVRAM
 	{ "dsl0_enable", "0"},
 	{ "dsl0_vpi", ""},
@@ -1003,6 +1003,12 @@ struct nvram_tuple router_defaults[] = {
 	{ "webdav_http_port", "8082"},
 	{ "webdav_https_port", "443"},
 	{ "acc_webdavproxy", "admin>1"}, //0: Only show USBDisk, 1: show USBDisk and Smb pc
+	{ "enable_webdav_captcha", "0"}, // 0: disable, 1: enable
+	{ "enable_webdav_lock", "0"}, // 0: disable, 1: enable
+	{ "webdav_acc_lock", "0"}, // 0: unlock account, 1: lock account
+	{ "webdav_lock_interval", "2"},
+	{ "webdav_lock_times", "3"},
+	{ "webdav_last_login_info", ""},
 #endif
 
 #ifdef RTCONFIG_CLOUDSYNC
@@ -1149,8 +1155,10 @@ struct nvram_tuple router_defaults[] = {
 	{"debug_ovrc", "0"},
 	{"debug_abrst", "0"},
 	{"https_enable", "0"},
-	{"upnp_max_port_int", "0"},
-	{"upnp_min_port_ext", "0"},
+	{"upnp_min_port_int", "1024"},
+	{"upnp_max_port_int", "65535"},
+	{"upnp_min_port_ext", "1"},
+	{"upnp_max_port_ext", "65535"},
 	{"mfp_ip_monopoly", ""},
 	#if (!defined(W7_LOGO) && !defined(WIFI_LOGO))
 	{"telnetd", "0"},

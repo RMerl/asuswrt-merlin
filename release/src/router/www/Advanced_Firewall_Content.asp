@@ -397,7 +397,7 @@ function showfilter_lwlist(){
         					</tr>
 
           					<tr>
-          						<th><#FirewallConfig_LWFilterList_widzarddesc#></th>
+          						<th><#IPConnection_TriggerList_widzarddesc#></th>
             					<td>
             						<select name="LWKnownApps" class="input_option" onChange="change_wizard(this, 'LWKnownApps');">
               							<option value="User Defined">User Defined</option>
@@ -459,7 +459,7 @@ function showfilter_lwlist(){
           						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,3);"><#FirewallConfig_LanWanSrcIP_itemname#></a></th>
             					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,2);"><#FirewallConfig_LanWanSrcPort_itemname#></a></th>
             					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,3);"><#FirewallConfig_LanWanDstIP_itemname#></a></th>
-            					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,2);"><#FirewallConfig_LanWanDstPort_itemname#></a></th>
+            					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,2);"><#FirewallConfig_LanWanSrcPort_itemname#></a></th>
             					<th><#IPConnection_VServerProto_itemname#></th>
             					<th>Add / Delete</th>
           					</tr>

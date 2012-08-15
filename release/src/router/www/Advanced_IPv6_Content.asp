@@ -656,7 +656,7 @@ function applyRule(){
 								<option class="content_input_fd" value="6to4" <% nvram_match("ipv6_service", "6to4", "selected"); %>>Tunnel 6to4</option>
 								<option class="content_input_fd" value="6in4" <% nvram_match("ipv6_service", "6in4", "selected"); %>>Tunnel 6in4</option>
 								<option class="content_input_fd" value="6rd" <% nvram_match("ipv6_service", "6rd", "selected"); %>>Tunnel 6rd</option>
-								<option class="content_input_fd" value="other" <% nvram_match("ipv6_service", "other", "selected"); %>>Static IPv6</option>
+								<option class="content_input_fd" value="other" <% nvram_match("ipv6_service", "other", "selected"); %>><#IPv6_static_IP#></option>
 								<!--option class="content_input_fd" value="slaac" <% nvram_match("ipv6_service", "slaac", "selected"); %>>SLAAC</option-->
 								<!--option class="content_input_fd" value="icmp6" <% nvram_match("ipv6_service", "icmp6", "selected"); %>>ICMPv6</option-->
 							</select>
@@ -690,7 +690,7 @@ function applyRule(){
 					<tr style="display:none;">
 						<th><#ipv6_6rd_dhcp_option#></th>
 		     		<td>
-								<input type="radio" name="ipv6_6rd_dhcp" class="input" value="1" onclick="showInputfield2('ipv6_6rd_dhcp', this.value);" <% nvram_match("ipv6_6rd_dhcp", "1","checked"); %>><#btn_Enable#>
+								<input type="radio" name="ipv6_6rd_dhcp" class="input" value="1" onclick="showInputfield2('ipv6_6rd_dhcp', this.value);" <% nvram_match("ipv6_6rd_dhcp", "1","checked"); %>><#WLANConfig11b_WirelessCtrl_button1name#>
 								<input type="radio" name="ipv6_6rd_dhcp" class="input" value="0" onclick="showInputfield2('ipv6_6rd_dhcp', this.value);" <% nvram_match("ipv6_6rd_dhcp", "0","checked"); %>><#btn_disable#>
 		     		</td>
 		     	</tr>
@@ -818,9 +818,9 @@ function applyRule(){
 				  </tr>
 				  </thead>		
 					<tr style="display:none;">
-						<th>Get DNS Automatically</th>
+						<th><#IPConnection_x_DNSServerEnable_itemname#></th>
 		     		<td>
-								<input type="radio" name="ipv6_dnsenable" class="input" value="1" onclick="showInputfield2('ipv6_dnsenable', this.value);" <% nvram_match("ipv6_dnsenable", "1","checked"); %>><#btn_Enable#>
+								<input type="radio" name="ipv6_dnsenable" class="input" value="1" onclick="showInputfield2('ipv6_dnsenable', this.value);" <% nvram_match("ipv6_dnsenable", "1","checked"); %>><#WLANConfig11b_WirelessCtrl_button1name#>
 								<input type="radio" name="ipv6_dnsenable" class="input" value="0" onclick="showInputfield2('ipv6_dnsenable', this.value);" <% nvram_match("ipv6_dnsenable", "0","checked"); %>><#btn_disable#>
 		     		</td>
 		     	</tr>
@@ -856,7 +856,7 @@ function applyRule(){
 						<th><#Enable_Router_AD#></th>
 		     		<td>
 							<select name="ipv6_radvd" class="input_option">
-								<option class="content_input_fd" value="1" <% nvram_match("ipv6_radvd", "1","selected"); %>><#btn_Enable#></option>
+								<option class="content_input_fd" value="1" <% nvram_match("ipv6_radvd", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 								<option class="content_input_fd" value="0" <% nvram_match("ipv6_radvd", "0","selected"); %>><#btn_disable#></option>
 							</select>
 		     		</td>

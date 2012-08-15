@@ -80,6 +80,7 @@ function initial(){
 
 function applyRule(){
 	if(power_support != -1){
+		/*
 		var wlcountry = '<% nvram_get("wl0_country_code"); %>';
 		if(wlcountry == 'US' || wlcountry == 'CN' || wlcountry == 'TW'){
 			if(document.form.wl_unit.value == 0)
@@ -101,9 +102,23 @@ function applyRule(){
 			flag++;
 			return false;
 		}
-			
-		if(parseInt(document.form.wl_TxPower.value) > parseInt(document.form.wl_TxPower_orig.value))
-		  FormActions("start_apply.htm", "apply", "set_wltxpower;reboot", "<% get_default_reboot_time(); %>");
+		*/
+		var wlcountry = '<% nvram_get("wl0_country_code"); %>';
+		if(wlcountry == 'EU'){
+			var maxPower = 100;
+			if(parseInt(document.form.wl_TxPower.value) > maxPower && flag < 2){
+				$("TxPowerHint").style.display = "";
+				document.form.wl_TxPower.focus();
+				flag++;
+				return false;
+			}
+		}
+		
+		/* Model Dep */
+		if(productid == "RT-N66U" || productid == "RT-N66R"){
+			if(parseInt(document.form.wl_TxPower.value) > parseInt(document.form.wl_TxPower_orig.value))
+			  FormActions("start_apply.htm", "apply", "set_wltxpower;reboot", "<% get_default_reboot_time(); %>");
+		}
 	}
 
 	if(validForm()){
@@ -463,7 +478,7 @@ function loadDateTime(){
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 17);"><#WLANConfig11b_TxPower_itemname#></a></th>
 						<td>
 		  				<input type="text" maxlength="3" name="wl_TxPower" class="input_3_table" value="<% nvram_get("wl_TxPower"); %>"> mW
-							<br><span>FCC: max. 500mW for North America.<br>ETSI: max. 100mW for Europe, South America and APAC.</span>
+							<br><span id="TxPowerHint" style="display:none;">ETSI: max. 100mW for Europe, South America and APAC.</span>
 						</td>
 					</tr>
 

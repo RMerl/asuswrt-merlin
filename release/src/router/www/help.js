@@ -59,7 +59,7 @@ helptitle[3] = [["", ""],
 				];
 // LAN
 helptitle[4] = [["", ""],
-				["<#LANHostConfig_IPRouters_itemname#>", "lan_ipaddr"],
+				["<#IPConnection_ExternalIPAddress_itemname#>", "lan_ipaddr"],
 				["<#IPConnection_x_ExternalSubnetMask_itemname#>", "lan_netmask"],
 				["<#IPConnection_x_ExternalGateway_itemname#>", "lan_gateway"]];
 helptitle[5] = [["", ""],
@@ -102,7 +102,7 @@ helptitle[7] = [["", ""],
 				["<#PPPConnection_x_MacAddressForISP_itemname#>", "wan_hwaddr_x"],
 				["<#PPPConnection_x_PPTPOptions_itemname#>", "wan_pptp_options_x"],
 				["<#PPPConnection_x_AdditionalOptions_itemname#>", "wan_pppoe_options_x"],
-				["<#PPPConnection_x_HeartBeat_itemname#>", "wan_heartbeat_x"],
+				["<#BOP_isp_heart_item#>", "wan_heartbeat_x"],
 				["<#IPConnection_BattleNet_itemname#>", "sp_battle_ips"],
 				["<#Layer3Forwarding_x_STB_itemname#>", "wan_stb_x"],
 				["Hardware NAT", "hwnat"],
@@ -150,7 +150,7 @@ helptitle[14] = [["", ""],
 				["<#UPnPMediaServer#>", ""]];
 //AiDisk Wizard
 helptitle[15] = [["", ""],
-				["<a href='../Advanced_AiDisk_ftp.asp' target='_parent' hidefocus='true'><#t1USB#></a>", ""],
+				["<a href='../Advanced_AiDisk_ftp.asp' target='_parent' hidefocus='true'><#menu5_4#></a>", ""],
 				["<#AiDisk_Step1_helptitle#>", ""],
 				["<#AiDisk_Step2_helptitle#>", ""],
 				["<#AiDisk_Step3_helptitle#>", ""]];
@@ -191,7 +191,7 @@ helptitle[20] = [["", ""],
 // HSDPA
 helptitle[21] = [["", ""],
 				["<#HSDPAConfig_hsdpa_mode_itemname#>", "hsdpa_mode"],
-				["<#HSDPAConfig_pin_code_itemname#>", "pin_code"],
+				["<#PIN_code#>", "pin_code"],
 				["<#HSDPAConfig_private_apn_itemname#>", "private_apn"],
 				["HSDPA<#PPPConnection_x_PPPoEMTU_itemname#>", "wan_hsdpa_mtu"],
 				["HSDPA<#PPPConnection_x_PPPoEMRU_itemname#>", "wan_hsdpa_mru"],
@@ -381,7 +381,7 @@ helpcontent[15] = new Array("",
 							"<#AiDisk_Step3_help#>");
 //EzQoS
 helpcontent[16] = new Array("",
-							"<#EZQoSDesc1#><p><#EZQoSDesc2#> <a href='/Advanced_QOSUserSpec_Content.asp'><#BM_title_User#></a></p>");
+							"<#EZQoSDesc1#><p><#EZQoSDesc2#> <a href='/QoS_EZQoS.asp'><#BM_title_User#></a></p>");
 //Others in the USB application
 helpcontent[17] = new Array("",
 							"<#JS_storageMLU#>",
@@ -613,7 +613,6 @@ function overHint(itemNum){
 		var dmStatus = "Not installed";
 		var apps_dev = '<% nvram_get("apps_dev"); %>';
 
-//		if(usb_path1 == "usb=" && usb_path2 == "usb="){
 		if(foreign_disk_total_mounted_number()[0] == null){
 			statusmenu = "<div class='StatusHint'><#no_usb_found#></div>";
 		}

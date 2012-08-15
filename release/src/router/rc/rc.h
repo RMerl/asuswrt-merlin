@@ -38,7 +38,7 @@
 extern char wan6face[];
 #endif
 
-#define LOGNAME nvram_safe_get("productid")
+#define LOGNAME get_productid()
 #define is_ap_mode() (nvram_match("sw_mode", "3"))
 #ifdef RTCONFIG_USB_MODEM
 #define is_phyconnected() (nvram_match("link_wan", "1") || nvram_match("link_wan1", "1"))

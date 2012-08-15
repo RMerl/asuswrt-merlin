@@ -740,7 +740,7 @@ next_info:
 	if (ap_count == 0){
 		fprintf(stderr, "[wlc] No AP found!\n");
 	}else{
-        	fprintf(stderr, "%-4s%-3s%-33s%-18s%-9s%-16s%-9s%8s%3s%3s\n",
+		fprintf(stderr, "%-4s%-3s%-33s%-18s%-9s%-16s%-9s%8s%3s%3s\n",
 				"idx", "CH", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode", "CC", "EC");
 		for (k = 0; k < ap_count; k++)
 		{
@@ -1064,11 +1064,11 @@ int wlcconnect_core(void)
 	int ret;
 	unsigned int count;
 	char word[256], *next;
-	unsigned char SEND_NULLDATA[]={0x73, 0x65, 0x6e, 0x64,
-											0x5f, 0x6e, 0x75, 0x6c,
-											0x6c, 0x64, 0x61, 0x74,
-											0x61, 0x00, 0xff, 0xff,
-											0xff, 0xff, 0xff, 0xff};
+	unsigned char SEND_NULLDATA[]={ 0x73, 0x65, 0x6e, 0x64,
+					0x5f, 0x6e, 0x75, 0x6c,
+					0x6c, 0x64, 0x61, 0x74,
+					0x61, 0x00, 0xff, 0xff,
+					0xff, 0xff, 0xff, 0xff};
 	int unit;
 
 	count = 0;
@@ -1082,7 +1082,7 @@ int wlcconnect_core(void)
 				count++;
 				// wl send_nulldata xx:xx:xx:xx:xx:xx
 				wl_ioctl(word, WLC_SET_VAR, SEND_NULLDATA,
-													sizeof(SEND_NULLDATA));
+				sizeof(SEND_NULLDATA));
 				sleep(1);
 			}
 			ret = get_wlc_status(word);

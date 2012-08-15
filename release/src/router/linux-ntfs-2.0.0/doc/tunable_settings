@@ -1,0 +1,31 @@
+The following settings can be tuned in Windows NT in the registry under the key
+\Registry\Machine\System\CurrentControlSet\Control\FileSystem.
+
+NtfsDisable8dot3NameCreation		default is to enable 8.3 creation
+
+NtfsAllowExtendedCharacterIn8dot3Name	default is to disallow extended chars
+
+NtfsDisableLastAccessUpdate		default is enable the last acc. update
+
+__u32 NtfsMftZoneReservation:
+	If not present set the variable _NtfsMftZoneMultiplier to 1.
+	If = 0 or > 4, again set the variable _NtfsMftZoneMultiplier to 1.
+	Otherwise, set the variable _NtfsMftZoneMultiplier to the value of
+	NtfsMftZoneReservation.
+
+	    Value = Space % of volume reserved for MftZone
+		1 = 12.5%
+		2 = 25%
+		3 = 37.5%
+		4 = 50%
+
+The zone multiplier is ONLY read accessed when mount_volume is called and
+when deallocate_clusters is called.
+The zone multiplier is ONLY write accessed when the driver initializes.
+
+Win2k adds:
+
+NtfsQuotaNotifyRate	?
+
+NtfsEncryptionService	?
+

@@ -1,0 +1,129 @@
+/* All values are as in Windows NT4 SP6a. */
+
+__u16 name[64]		= "$STANDARD_INFORMATION"
+__u32 type		= 0x10
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0x40
+__u64 min_size		= 0x30
+__u64 max_size		= 0x30, in Win2k: 0x48
+
+__u16 name[64]		= "$ATTRIBUTE_LIST"
+__u32 type		= 0x20
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0x80
+__u64 min_size		= 0
+__u64 max_size		= -1
+
+__u16 name[64]		= "$FILE_NAME"
+__u32 type		= 0x30
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0x42
+__u64 min_size		= 0x44
+__u64 max_size		= 0x242
+
+/* The $volume_version attribute has never been observed in the field.  It
+ * probably never was used and was hence replaced by the $object_id in
+ * Windows 2000. */
+__u16 name[64]		= "$VOLUME_VERSION" in Win2k: "$OBJECT_ID"
+__u32 type		= 0x40
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0x40
+__u64 min_size		= 0x8 in Win2k: 0
+__u64 max_size		= 0x8 in Win2k: 0x100
+
+__u16 name[64]		= "$SECURITY_DESCRIPTOR"
+__u32 type		= 0x50
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0x80
+__u64 min_size		= 0
+__u64 max_size		= -1
+
+__u16 name[64]		= "$VOLUME_NAME"
+__u32 type		= 0x60
+__u32 unknown[2]	= 0,0
+__u32 flags		= 0x40
+__u64 min_size		= 0x2
+__u64 max_size		= 0x100
+
+__u16 name[64]		= "$VOLUME_INFORMATION"
+__u32 type		= 0x70
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0x40
+__u64 min_size		= 0xc
+__u64 max_size		= 0xc
+
+__u16 name[64]		= "$DATA"
+__u32 type		= 0x80
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0
+__u64 min_size		= 0
+__u64 max_size		= -1
+
+__u16 name[64]		= "$INDEX_ROOT"
+__u32 type		= 0x90
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0x40
+__u64 min_size		= 0
+__u64 max_size		= -1
+
+__u16 name[64]		= "$INDEX_ALLOCATION"
+__u32 type		= 0xa0
+__u32 unknown[2]	= 0,0
+__u32 flags		= 0x80
+__u64 min_size		= 0
+__u64 max_size		= -1
+
+__u16 name[64]		= "$BITMAP"
+__u32 type		= 0xb0
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0x80
+__u64 min_size		= 0
+__u64 max_size		= -1
+
+/* The $symbolic_link attribute has never been observed in the field.  It
+ * probably never was used and was hence replaced by the $reparse_point in
+ * Windows 2000. */
+__u16 name[64]		= "$SYMBOLIC_LINK" in Win2k: "$REPARSE_POINT"
+__u32 type		= 0xc0
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0x80
+__u64 min_size		= 0
+__u64 max_size		= -1 in Win2k: 0x4000
+
+__u16 name[64]		= "$EA_INFORMATION"
+__u32 type		= 0xd0
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0x40
+__u64 min_size		= 0x8
+__u64 max_size		= 0x8
+
+__u16 name[64]		= "$EA"
+__u32 type		= 0xe0
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0
+__u64 min_size		= 0
+__u64 max_size		= 0x10000
+
+/*
+ * Sequence terminates here with a record all of whose fields are zero, even
+ * though the size of the $AttrDef data attribute is much larger (36000 bytes,
+ * i.e. in theory 225 attribute definitions of 160 bytes each but in practice
+ * only until we reach an all zero record).
+ * 
+ * The following only applies to Windows 2000 and replaces the above comment.
+ */
+
+__u16 name[64]		= "$LOGGED_UTILITY_STREAM"
+__u32 type		= 0x100
+__u32 unknown[2]	= 0, 0
+__u32 flags		= 0x80
+__u64 min_size		= 0
+__u64 max_size		= 0x10000
+
+/*
+ * This is terminated by a single record all of whose fields are zero.  This
+ * also finishes the $AttrDef data attribute, i.e. the attribute size is the
+ * correct size of the sequence of attribute definitions (2560 bytes, i.e.
+ * 16 attribute definitions of 160 bytes each).
+ */
+

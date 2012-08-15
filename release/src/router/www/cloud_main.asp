@@ -18,8 +18,10 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
+/*
 if('<% nvram_get("start_aicloud"); %>' != '1')
 	location.href = "cloud__main.asp";
+*/
 
 var $j = jQuery.noConflict();
 
@@ -39,6 +41,7 @@ function initial(){
 	addOnlineHelp($("faq0"), ["samba"]);
 	addOnlineHelp($("faq1"), ["ASUSWRT", "port", "forwarding"]);
 	addOnlineHelp($("faq2"), ["ASUSWRT", "DMZ"]);
+	addOnlineHelp($("faq3"), ["WOL", "BIOS"]);
 
 	switch(valid_is_wan_ip(wanlink_ipaddr())){
 		/* private */
@@ -49,7 +52,7 @@ function initial(){
 		case 1:
 			$("privateIpOnly").style.display = "none";
 			if('<% nvram_get("ddns_enable_x"); %>' == '1' && '<% nvram_get("ddns_hostname_x"); %>' != ''){
-				$("accessMethod").innerHTML = '<#aicloud_disk_case11#> <a style="font-weight: bolder;text-decoration: underline;" href="http://<% nvram_get("ddns_hostname_x"); %>:8082" target="_blank">http://<% nvram_get("ddns_hostname_x"); %>:8082</a><br />';
+				$("accessMethod").innerHTML = '<#aicloud_disk_case11#> <a style="font-weight: bolder;text-decoration: underline;" href="https://<% nvram_get("ddns_hostname_x"); %>:443" target="_blank">https://<% nvram_get("ddns_hostname_x"); %>:443</a><br />';
 				$("accessMethod").innerHTML += '<#aicloud_disk_case12#>';
 			}
 			else{
@@ -135,6 +138,12 @@ function inet_network(ip_str){
 						</td>
 						<td>
 							<a href="cloud_sync.asp"><div class="tab"><span>Smart Sync</span></div></a>
+						</td>
+						<td>
+							<a href="cloud_settings.asp"><div class="tab"><span>Settings</span></div></a>
+						</td>
+						<td>
+							<a href="cloud_syslog.asp"><div class="tab"><span>Log</span></div></a>
 						</td>
 					</tr>
 					</tbody>

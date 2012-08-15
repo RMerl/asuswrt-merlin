@@ -1,5 +1,6 @@
 #!/bin/sh
-# $1: device name.
+# ASUS app switch script
+# $1: package name, $2: device name.
 
 
 # $1: installed path.
@@ -30,15 +31,21 @@ PATH=$APPS_PATH/usr/bin:$APPS_PATH/bin:$APPS_PATH/usr/sbin:$APPS_PATH/sbin:/usr/
 unset LD_LIBRARY_PATH
 unset LD_PRELOAD
 
-if [ -z "$1" ] || [ ! -b "/dev/$1" ];then
-	echo "Usage: app_switch.sh <device name>"
+if [ -z "$1" ]; then
+	echo "Usage: app_switch.sh <Package name> <device name>"
 	nvram set apps_state_error=1
 	exit 1
 fi
 
-APPS_MOUNTED_PATH=`mount |grep "/dev/$1 on " |awk '{print $3}'`
+if [ -z "$2" ] || [ ! -b "/dev/$2" ];then
+	echo "Usage: app_switch.sh <Package name> <device name>"
+	nvram set apps_state_error=1
+	exit 1
+fi
+
+APPS_MOUNTED_PATH=`mount |grep "/dev/$2 on " |awk '{print $3}'`
 if [ -z "$APPS_MOUNTED_PATH" ]; then
-	echo "$1 had not mounted yet!"
+	echo "$2 had not mounted yet!"
 	nvram set apps_state_error=2
 	exit 1
 fi
@@ -46,7 +53,7 @@ fi
 APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 _build_dir $APPS_INSTALL_PATH
 
-nvram set apps_dev=$1
+nvram set apps_dev=$2
 nvram set apps_mounted_path=$APPS_MOUNTED_PATH
 
 
@@ -75,7 +82,7 @@ fi
 
 
 nvram set apps_state_switch=3 # CHECKING the chosed pool
-mount_ready=`app_check_pool.sh $1`
+mount_ready=`app_check_pool.sh $2`
 if [ "$mount_ready" == "Non-mounted" ]; then
 	echo "Had not mounted yet!"
 	nvram set apps_state_error=2
@@ -97,7 +104,7 @@ fi
 
 
 nvram set apps_state_switch=4 # EXECUTING
-app_install.sh downloadmaster
+app_install.sh $1
 if [ "$?" != "0" ]; then
 	# apps_state_error was already set by app_install.sh.
 	exit 1

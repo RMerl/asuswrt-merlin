@@ -21,6 +21,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 if(parental2_support != -1){
 	addNewScript("/calendar/fullcalendar.js");
@@ -141,7 +142,7 @@ function gen_mainTable(){
 	code +='<th width="10%"><#ParentalCtrl_time#></th>';
 	code +='<th width="10%">Add / Delete</th></tr>';
 
-	code +='<tr><td style="border-bottom:2px solid #000;" title="<#btn_Enable#>/<#btn_disable#>"><input type=\"checkbox\" id="newrule_Enable" checked></td>';
+	code +='<tr><td style="border-bottom:2px solid #000;" title="<#WLANConfig11b_WirelessCtrl_button1name#>/<#btn_disable#>"><input type=\"checkbox\" id="newrule_Enable" checked></td>';
 	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">';
 	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;"></td>';
 	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" class="input_macaddr_table" name="PC_mac" onKeyPress="return is_hwaddr(this,event)"></td>';
@@ -163,16 +164,19 @@ function gen_mainTable(){
 	}
  	code +='</tr></table>';
 
-	$("mainTable").style.display = "none";
+	// Viz 2012.07.24$("mainTable").style.display = "none";
+	$("mainTable").style.display = "";
 	$("mainTable").innerHTML = code;
 	$j("#mainTable").fadeIn();
 
-	$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="applyRule(0);" value="<#btn_disable#>"><input class="button_gen" type="button" onClick="applyRule(1);" value="<#CTL_apply#>">';
+	// Viz 2012.07.24$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="applyRule(0);" value="<#btn_disable#>"><input class="button_gen" type="button" onClick="applyRule(1);" value="<#CTL_apply#>">';
+	$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="applyRule(1);" value="<#CTL_apply#>">';
 
+	/* Viz 2012.07.24
 	if(document.form.MULTIFILTER_ALL.value == 0){
 		$("mainTable").style.display = "none";
-		$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="applyRule(1);" value="<#btn_Enable#>">'
-	}
+		$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="applyRule(1);" value="<#WLANConfig11b_WirelessCtrl_button1name#>">'
+	}*/
 }
 
 function selectAll(obj, tab){
@@ -234,7 +238,7 @@ function genEnableArray_lantowan(j, client, obj){
 }
 
 function applyRule(_on){
-	document.form.MULTIFILTER_ALL.value = _on;
+	//Viz 2012.07.24document.form.MULTIFILTER_ALL.value = _on;
 	document.form.MULTIFILTER_ENABLE.value = MULTIFILTER_ENABLE;
 	document.form.MULTIFILTER_MAC.value = MULTIFILTER_MAC;
 	document.form.MULTIFILTER_DEVICENAME.value = MULTIFILTER_DEVICENAME;
@@ -374,7 +378,7 @@ function gen_lantowanTable(client){
 	code +='<thead><tr><td colspan="6" id="LWFilterList">LAN to WAN Filter Table</td></tr></thead>';
   code +='<tr><th width="5%" height="30px;"><input id="selAll" type=\"checkbox\" onclick=\"selectAll(this, 1);\"/></th>';
 	code +='<th width="35%"><#BM_UserList1#></th>';
-	code +='<th width="30%"><#IPConnection_VServerPort_itemname#></th>';
+	code +='<th width="30%"><#FirewallConfig_LanWanSrcPort_itemname#></th>';
 	code +='<th width="20%"><#IPConnection_VServerProto_itemname#></th>';
 	code +='<th width="10%">Add / Delete</th></tr>';
 	code +='<tr><td style="border-bottom:2px solid #666;"><input type=\"checkbox\" id="newrule_lantowan_Enable" checked></td>';
@@ -405,7 +409,8 @@ function gen_lantowanTable(client){
 	$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="cancel_lantowan('+client+');" value="<#CTL_Cancel#>">';
 	$("ctrlBtn").innerHTML += '<input class="button_gen" type="button" onClick="saveto_lantowan('+client+');" value="<#CTL_ok#>">';
 
-	$("mainTable").style.display = "none";
+	// Viz 2012.07.24$("mainTable").style.display = "none";
+	$("mainTable").style.display = "";
 	$j("#mainTable").fadeIn();
 
 	if(parental2_support != -1)
@@ -517,6 +522,9 @@ function cancel_lantowan(client){
 }
 
 function addRow_main(upper){
+	if(<% nvram_get("MULTIFILTER_ALL"); %> != "1")
+		document.form.MULTIFILTER_ALL.value = 1;
+	
 	var rule_num = $('mainTable_table').rows.length;
 	var item_num = $('mainTable_table').rows[0].cells.length;	
 	
@@ -760,6 +768,21 @@ function deleteRow_lantowan(r, client){
 				<tr>
 					<td>
 						<img id="guest_image" src="/images/New_ui/parental-control.png">
+						<div align="center" class="left" style="margin-top:25px;margin-left:43px;width:94px; float:left; cursor:pointer;" id="radio_ParentControl_enable"></div>
+						<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
+						<script type="text/javascript">
+								$j('#radio_ParentControl_enable').iphoneSwitch('<% nvram_get("MULTIFILTER_ALL"); %>',
+										function() {
+													document.form.MULTIFILTER_ALL.value = 1;
+										},
+										function() {
+													document.form.MULTIFILTER_ALL.value = 0;
+										},
+										{
+													switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
+										});
+						</script>			
+						</div>
 					</td>
 					<td>&nbsp;&nbsp;</td>
 					<td>

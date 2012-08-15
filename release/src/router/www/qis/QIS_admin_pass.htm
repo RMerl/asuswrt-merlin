@@ -20,6 +20,8 @@
 <script type="text/javascript" language="JavaScript" src="../help.js"></script>
 <script type="text/javascript">
 
+var accounts = [<% get_all_accounts(); %>];
+
 function QKinternettype_load_body(){
 	parent.document.title = "<#Web_Title#> - Welcome!";
 	parent.set_step("t0");
@@ -57,33 +59,92 @@ function QKinternettype_load_body(){
 }
 
 function submitForm(){
-	if(document.form.http_passwd.value == "" || document.form.v_password2.value == ""){
-		alert("<#File_Pop_content_alert_desc6#>");
-		document.form.http_passwd.focus();
-		document.form.http_passwd.select();		
+	showtext($("alert_msg1"), "");
+	showtext($("alert_msg2"), "");
+
+	var alert_str = validate_account(document.form.http_username, "noalert");
+
+	if(alert_str != ""){
+		showtext($("alert_msg1"), alert_str);
+		document.form.http_username.focus();
+		document.form.http_username.select();
 		return false;
 	}
-	
+
+	document.form.http_username.value = trim(document.form.http_username.value);
+
+	if(document.form.http_username.value.length == 0){
+		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc1#>");
+		document.form.http_username.focus();
+		document.form.http_username.select();
+		return false;
+	}
+
+	if(document.form.http_username.value == "root"
+			|| document.form.http_username.value == "guest"
+			|| document.form.http_username.value == "anonymous"
+			){
+		showtext($("alert_msg1"), "<#USB_Application_account_alert#>");
+		document.form.http_username.focus();
+		document.form.http_username.select();
+		return false;
+	}
+
+	if(document.form.http_username.value.length <= 1){
+		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc2#>");
+		document.form.http_username.focus();
+		document.form.http_username.select();
+		return false;
+	}
+
+	if(document.form.http_username.value.length > 20){
+		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc3#>");
+		document.form.http_username.focus();
+		document.form.http_username.select();
+		return false;
+	}
+
+	if(checkDuplicateName(document.form.http_username.value, accounts)
+			&& document.form.http_username.value != accounts[0]){
+		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
+		document.form.http_username.focus();
+		document.form.http_username.select();
+		return false;
+	}
+
+	if(document.form.http_passwd.value.length <= 0 || document.form.v_password2.value.length <= 0){
+		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
+		if(document.form.http_passwd.value.length <= 0){
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+		}else{
+			document.form.v_password2.focus();
+			document.form.v_password2.select();
+		}
+
+		return false;
+	}
+
 	if(document.form.http_passwd.value != document.form.v_password2.value){
-		alert("<#File_Pop_content_alert_desc7#>");
+		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
 		document.form.http_passwd.focus();
-		document.form.http_passwd.select();		
-		return false;	
-	}	
+		document.form.http_passwd.select();
+		return false;
+	}
 
 	if(!validate_string(document.form.http_passwd)){
 		document.form.http_passwd.focus();
-		document.form.http_passwd.select();		
+		document.form.http_passwd.select();
 		return false;
 	}
-	
+
 	if(document.form.http_passwd.value.length > 16){
-		alert("<#LANHostConfig_x_Password_itemdesc#>");		
+		showtext($("alert_msg2"),"*<#LANHostConfig_x_Password_itemdesc#>");
 		document.form.http_passwd.focus();
-		document.form.http_passwd.select();		
-		return false;		
-	}	
-	
+		document.form.http_passwd.select();
+		return false;
+	}
+
 	if(dsl_support != -1) {
 		// if it is dsl, just write to a temp variable
 		document.form.dsltmp_qis_admin_passwd.value = document.form.http_passwd.value;	
@@ -99,7 +160,7 @@ function submitForm(){
 	parent.document.QKform.http_username.value = document.form.http_username.value;
 	parent.document.QKform.http_passwd.value = document.form.http_passwd.value;
 	document.form.flag.value = "";
-	
+
 	if(parent.flag_manual == 1)
 		document.form.action = "/qis/QIS_manual.htm";
 	else if(parent.document.QKform.sw_mode.value == "1")
@@ -155,19 +216,21 @@ function gotoPrev(){
 		  <th width="200"><#Router_Login_Name#></th>
 		  <td class="QISformtd">
 				  	<div id="http_username_span" name="http_username_span" style="color:#FFFFFF;margin-left:8px;"><% nvram_get("http_username"); %></div>
-						<input type="text" id="http_username" name="http_username" style="height:25px;" class="input_15_table" maxlength="17" value='<% nvram_get("http_username"); %>'>
+						<input type="text" id="http_username" name="http_username" style="height:25px;" class="input_15_table" maxlength="20" value='<% nvram_get("http_username"); %>'>
+						<br/><span id="alert_msg1"></span>
 		  </td>
 		</tr>	
 		<tr>
 		  <th width="200"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
 		  <td class="QISformtd">
-				<input type="password" value="" name="http_passwd" style="height:25px;" class="input_15_table" maxlength="17" />
+				<input type="password" autocapitalization="off" value="" name="http_passwd" style="height:25px;" class="input_15_table" maxlength="17" />
 		  </td>
 		</tr>	
 		<tr>
 		  <th width="200"><span class="hintstyle"><#PASS_retype#></span></th>
 		  <td class="QISformtd">
-				<input type="password" value="" name="v_password2" style="height:25px;" class="input_15_table" maxlength="17" />
+				<input type="password" autocapitalization="off" value="" name="v_password2" style="height:25px;" class="input_15_table" maxlength="17" />
+				<br/><span id="alert_msg2"></span>
 		  </td>
 		</tr>	
 	</table>

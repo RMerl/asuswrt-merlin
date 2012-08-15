@@ -152,7 +152,7 @@ function show_modem_list(mode){
 
 function show_3G_modem_list(){
 	modemlist = new Array(
-			"AUTO"
+			"<#Auto#>"
 			, "ASUS-T500"
 			, "BandLuxe-C120"
 			, "BandLuxe-C170"
@@ -516,7 +516,7 @@ function done_validating(action){
 
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 
-<form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
+<form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame" autocomplete="off">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="Advanced_Modem_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_Modem_Content.asp">
@@ -642,7 +642,7 @@ function done_validating(action){
 					</tr>
 					
 					<tr style="display:none;">
-						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,2);"><#HSDPAConfig_PIN_itemname#></a></th>
+						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,2);"><#PIN_code#></a></th>
 						<td>
 							<input id="modem_pincode" name="modem_pincode" class="input_20_table" type="password" autocapitalization="off" maxLength="8" value="<% nvram_get("modem_pincode"); %>"/>
 						</td>
@@ -656,7 +656,7 @@ function done_validating(action){
 					</tr>
                                 
 					<tr>
-						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,12);"><#AiDisk_Password#></a></th>
+						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,12);"><#PPPConnection_Password_itemname#></a></th>
 						<td>
 							<input id="modem_pass" name="modem_pass" class="input_20_table" type="password" value="<% nvram_get("modem_pass"); %>"/>
 						</td>

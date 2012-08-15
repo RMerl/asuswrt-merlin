@@ -35,6 +35,7 @@ static const struct {
 	{ UPNPUUID, "uuid"},
 	{ UPNPSERIAL, "serial"},
 	{ UPNPMODEL_NUMBER, "model_number"},
+	{ UPNPFRIENDLYNAME, "friendly_name"},
 	{ UPNPCLEANTHRESHOLD, "clean_ruleset_threshold"},
 	{ UPNPCLEANINTERVAL, "clean_ruleset_interval"},
 #ifdef USE_NETFILTER

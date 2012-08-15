@@ -127,6 +127,8 @@ setMAC_2G(const char *mac)
 		case MODEL_RTN12:
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
+		case MODEL_RTN12D1:
+		case MODEL_RTN12HP:
 		case MODEL_RTN53:
 		case MODEL_RTN15U:
 		case MODEL_RTN10U:
@@ -239,6 +241,8 @@ setRegrev_2G(const char *regrev)
 		case MODEL_RTN12:
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
+		case MODEL_RTN12D1:
+		case MODEL_RTN12HP:
 		case MODEL_RTN53:
 		case MODEL_RTN15U:
 		case MODEL_RTN10U:
@@ -659,6 +663,8 @@ GetPhyStatus(void)
                 case MODEL_RTN12:
                 case MODEL_RTN12B1:
                 case MODEL_RTN12C1:
+                case MODEL_RTN12D1:
+                case MODEL_RTN12HP:
                 case MODEL_RTN15U:
                 case MODEL_RTN53:
                 {       /* WAN L1 L2 L3 L4 */
@@ -861,10 +867,14 @@ getBootVer(void) {
 	char buf[32];
 	memset(buf, 0, 32);
 
-	if(get_model()==MODEL_RTN53)
+	if(get_model()==MODEL_RTN53 ||
+		get_model()==MODEL_RTN10U ||
+		get_model()==MODEL_RTN12B1 || get_model()==MODEL_RTN12C1 ||
+		get_model()==MODEL_RTN12D1 || get_model()==MODEL_RTN12HP ||
+		get_model()==MODEL_RTN15U)
 		strcpy(buf, nvram_safe_get("hardware_version"));
 	else	
-		sprintf(buf,"%s-%s",nvram_safe_get("productid"),nvram_safe_get("bl_version"));
+		sprintf(buf,"%s-%s",get_productid(),nvram_safe_get("bl_version"));
 	puts(buf);
 	return 0;
 }
@@ -898,6 +908,8 @@ getRegrev_2G(void) {
 		case MODEL_RTN12:
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
+		case MODEL_RTN12D1:
+		case MODEL_RTN12HP:
 		case MODEL_RTN53:
 		case MODEL_RTN15U:
 		case MODEL_RTN10U:
@@ -961,7 +973,27 @@ int getSN(void)
 	puts(nvram_safe_get("serial_no"));
 	return 0;
 }
+#ifdef RTCONFIG_ODMPID
+int setMN(const char *MN)
+{
+	char cmd_l[64];
 
+	if(MN==NULL || !is_valid_hostname(MN))
+		return 0;
+
+	memset(cmd_l, 0, 64);
+	sprintf(cmd_l, "asuscfeodmpid=%s", MN);
+	eval("nvram", "set", cmd_l );
+	puts(nvram_safe_get("odmpid"));
+	return 1;
+}
+
+int getMN(void)
+{
+	puts(nvram_safe_get("odmpid"));
+	return 1;
+}
+#endif
 void
 Get_fail_ret(void)
 {

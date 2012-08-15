@@ -45,6 +45,7 @@ var pool_end_end = parseInt(pool_end.split(".")[3]);
 var static_enable = '<% nvram_get("dhcp_static_x"); %>';
 var dhcp_staticlists = '<% nvram_get("dhcp_staticlist"); %>';
 var staticclist_row = dhcp_staticlists.split('&#60');
+var dualwan_mode = '<% nvram_get("wans_mode"); %>';
 
 function initial(){
 	show_menu();	
@@ -69,6 +70,12 @@ function initial(){
 
 	addOnlineHelp($("faq"), ["ASUSWRT", "VPN"]);
 	check_pptpd_broadcast();
+	
+	if(dualwan_mode == "lb"){
+		$('wan_ctrl').style.display = "none";
+		$('dualwan_ctrl').style.display = "";	
+	}
+		
 }
 
 function changeMppe(){
@@ -430,10 +437,11 @@ function set_pptpd_broadcast(obj){
 								  <div class="formfonttitle"><#BOP_isp_heart_item#> - <#t2BC#></div>
 								  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 								  <div class="formfontdesc"><#PPTP_desc#></div>
-								  <div class="formfontdesc"><#PPTP_desc2#> <% nvram_get("wan0_ipaddr"); %></div>
+								  <div id="wan_ctrl" class="formfontdesc"><#PPTP_desc2#> <% nvram_get("wan0_ipaddr"); %></div>
+								  <div id="dualwan_ctrl" style="display:none;" class="formfontdesc"><#PPTP_desc2#> <span class="formfontdesc">Primary WAN IP : <% nvram_get("wan0_ipaddr"); %> </sapn><span class="formfontdesc">Secondary WAN IP : <% nvram_get("wan1_ipaddr"); %> </sapn></div>
 								  <div class="formfontdesc" style="margin-top:-10px;font-weight: bolder;"><#PPTP_desc3#></div>
 									<div class="formfontdesc" style="margin-top:-10px;">
-										(7) <a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">VPN server FAQ</a>
+										(7) <a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;"><#BOP_isp_heart_item#> FAQ</a>
 									</div>
 
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -451,7 +459,7 @@ function set_pptpd_broadcast(obj){
 												<!-- need to unify -->
 												<!--select name="pptpd_enable" class="input_option">
 													<option class="content_input_fd" value="0" <% nvram_match("pptpd_enable", "0","selected"); %>><#btn_disable#></option>
-													<option class="content_input_fd" value="1"<% nvram_match("pptpd_enable", "1","selected"); %>><#btn_Enable#></option>
+													<option class="content_input_fd" value="1"<% nvram_match("pptpd_enable", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 												</select-->			
 											</td>
 									  </tr>

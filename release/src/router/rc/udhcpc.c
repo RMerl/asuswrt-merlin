@@ -123,7 +123,7 @@ bound(void)
 	}
 	if ((value = getenv("subnet")))
 		nvram_set(strcat_r(prefix, "netmask", tmp), trim_r(value));
-        if ((value = getenv("router"))) {
+	if ((value = getenv("router"))) {
 		gateway = 1;
 		nvram_set(strcat_r(prefix, "gateway", tmp), trim_r(value));
 	}
@@ -444,7 +444,7 @@ bound_lan(void)
 		nvram_set("lan_ipaddr", trim_r(value));
 	if ((value = getenv("subnet")))
 		nvram_set("lan_netmask", trim_r(value));
-        if ((value = getenv("router")))
+	if ((value = getenv("router")))
 		nvram_set("lan_gateway", trim_r(value));
 	if ((value = getenv("lease"))) {
 		nvram_set("lan_lease", trim_r(value));
@@ -516,13 +516,14 @@ int dhcp6c_state_main(int argc, char **argv)
 	char prefix[INET6_ADDRSTRLEN];
 	struct in6_addr addr;
 	int i, r;
-	int wait_count;
 
 	TRACE_PT("begin\n");
 
 	if (!wait_action_idle(10)) return 1;
 
 	nvram_set("ipv6_rtr_addr", getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 0));
+
+	if (argv[1]) nvram_set("ipv6_gw_addr", argv[1]);
 
 	// extract prefix from configured IPv6 address
 	if (inet_pton(AF_INET6, nvram_safe_get("ipv6_rtr_addr"), &addr) > 0) {
@@ -546,18 +547,6 @@ int dhcp6c_state_main(int argc, char **argv)
 #endif
 	}
 
-#if 0
-	// wait for RA
-	if (!is_intf_up(get_wan6face())) return 0;
-	wait_count = 10;
-	while (!getifaddr(get_wan6face(), AF_INET6, 0) && (wait_count-- > 0))
-	{
-		if (is_intf_up(get_wan6face()))
-			sleep(1);
-		else
-			return 0;
-	}
-#endif
 	// (re)start radvd and httpd
 	start_radvd();
 	start_httpd();
@@ -587,7 +576,6 @@ void start_dhcp6c(void)
 	unsigned long iaid = 0;
 	char *mac;
 	char *lan_ifname = nvram_safe_get("lan_ifname");
-	char tmpstr[128];
 
 	TRACE_PT("begin\n");
 
@@ -623,12 +611,14 @@ void start_dhcp6c(void)
 	nvram_set("ipv6_get_dns", "");
 	nvram_set("ipv6_rtr_addr", "");
 	nvram_set("ipv6_prefix", "");
+	nvram_set("ipv6_gw_addr", "");
 
 	// Create dhcp6c.conf
 	if ((f = fopen("/etc/dhcp6c.conf", "w"))) {
 		fprintf(f,
 			"interface %s {\n"
 			" send ia-pd %d;\n"
+			" send ia-na %d;\n"
 			" send rapid-commit;\n"
 			" request domain-name-servers;\n"
 			" script \"/sbin/dhcp6c-state\";\n"
@@ -643,15 +633,12 @@ void start_dhcp6c(void)
 			wan6face,
 			iaid,
 			iaid,
+			iaid,
 			lan_ifname,
 			prefix_len,
 			iaid);
 		fclose(f);
 	}
-
-	sprintf(tmpstr, "ip -6 addr flush scope global dev %s; "
-		"ip -6 route flush root 2000::/3 dev %s", lan_ifname, lan_ifname);
-	system(tmpstr);
 
 	argc = 3;
 	if (nvram_get_int("ipv6_debug"))
@@ -667,8 +654,17 @@ void stop_dhcp6c(void)
 {
 	TRACE_PT("begin\n");
 
+	char *wan6face = get_wan6face();
+	char *lan_ifname = nvram_safe_get("lan_ifname");
+
+	if (!pids("dhcp6c")) return;
+
 	killall("dhcp6c-event", SIGTERM);
 	killall_tk("dhcp6c");
+
+	eval("ip", "-6", "addr", "flush", "scope", "global", "dev", lan_ifname);
+	eval("ip", "-6", "route", "flush", "root", "2000::/3", "dev", wan6face);
+	eval("ip", "-6", "neigh", "flush", "dev", lan_ifname);
 
 	TRACE_PT("end\n");
 }

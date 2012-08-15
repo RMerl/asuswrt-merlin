@@ -56,12 +56,13 @@ function chg_pvc(pvc_to_chg) {
 		}
 	}
 	reset_item_select();
-	if (pvc_to_chg != 0) {
+
+	if (pvc_to_chg != "0") {
 		remove_item_from_select_bridge();
 	}
 	else
 	{
-		if (document.form.dsl_unit.value == 0 && document.form.dsl_proto.value == "bridge")
+		if (DSLWANList[0][3] == "bridge")
 			remove_item_from_select_bridge();
 	}
 	disable_pvc_summary();
@@ -145,10 +146,10 @@ function add_pvc() {
 	document.form.dsl_vpi.value="0";
 	document.form.dsl_vci.value=avail_vci.toString();
 	document.form.dsl_encap.value="0";
-	document.form.dsl_svc_cat.value="1";
-	document.form.dsl_pcr.value="1887";
-	document.form.dsl_scr.value="299";
-	document.form.dsl_mbs.value="32";
+	document.form.dsl_svc_cat.value="0";
+	document.form.dsl_pcr.value="0";
+	document.form.dsl_scr.value="0";
+	document.form.dsl_mbs.value="0";
 
 	if (avail_pvc == 0) {
 		document.form.dsl_proto.value="pppoe";
@@ -178,8 +179,7 @@ function add_pvc() {
 		remove_item_from_select_bridge();
 	}
 
-	//
-	change_svc_cat(document.form.dsl_svc_cat.value);
+	change_svc_cat("0");
 	change_dsl_dhcp_enable();
 	change_dsl_dns_enable();
 	$("dslSettings").style.display = "";
@@ -198,14 +198,13 @@ function add_pvc() {
 		$("vpn_server").style.display = "none";
 	}
 
-	///////
 	change_dsl_type(document.form.dsl_proto.value);
 	fixed_change_dsl_type(document.form.dsl_proto.value);
 }
 
 function del_pvc(pvc_to_del) {
 	var msg = "";
-	if (pvc_to_del == 0) msg += "Internet PVC, "
+	if (pvc_to_del == "0") msg += "Internet PVC, "
 	else msg += "IPTV PVC, ";
 	msg += "VPI = "+DSLWANList[pvc_to_del][1].toString()+", VCI = "+DSLWANList[pvc_to_del][2].toString();
 	msg += "\n\n";
@@ -319,10 +318,10 @@ function initial(){
 			if (i==0) DSLWANList[i][3] = "pppoe";
 			else DSLWANList[i][3] = "bridge";
 			DSLWANList[i][4] = "0";
-			DSLWANList[i][5] = "<% nvram_get("dsl_svc_cat"); %>";
-			DSLWANList[i][6] = "<% nvram_get("dsl_pcr"); %>";
-			DSLWANList[i][7] = "<% nvram_get("dsl_scr"); %>";
-			DSLWANList[i][8] = "<% nvram_get("dsl_mbs"); %>";
+			DSLWANList[i][5] = "0";
+			DSLWANList[i][6] = "0";
+			DSLWANList[i][7] = "0";
+			DSLWANList[i][8] = "0";
 		}
 	}
 	disable_all_ctrl();
@@ -364,7 +363,7 @@ function genWANSoption(){
 
 function change_dsl_unit_idx(idx,iptv_row){
 	// reset to old values
-	if (idx == 0) $("pvc_sel").innerHTML = "Internet PVC";
+	if (idx == "0") $("pvc_sel").innerHTML = "Internet PVC";
 	else $("pvc_sel").innerHTML = "IPTV PVC #"+iptv_row.toString();
 	document.form.dsl_unit.value=idx.toString();
 	document.form.dsl_enable.value="1";
@@ -379,8 +378,7 @@ function change_dsl_unit_idx(idx,iptv_row){
 
 	if (document.form.dsl_encap.value == "0") document.form.dsl_encap.selectedIndex = 0;
 	else document.form.dsl_encap.selectedIndex = 1;
-	//document.form.dsl_svc_cat.value="0";
-	//change_svc_cat(document.form.dsl_svc_cat.value);
+	change_svc_cat_current(document.form.dsl_svc_cat.value);
 	change_dsl_dhcp_enable();
 	change_dsl_dns_enable();
 	$("dslSettings").style.display = "";
@@ -457,6 +455,10 @@ function applyRule(){
 
 		if (document.form.dsl_unit.value == 0 && document.form.dsl_proto.value == "bridge")
 			document.getElementById('bridgePPPoE_relay').innerHTML = '<input type="hidden" name="fw_pt_pppoerelay" value="1"> ';
+
+		inputCtrl(document.form.dsl_pcr, 1);
+		inputCtrl(document.form.dsl_scr, 1);
+		inputCtrl(document.form.dsl_mbs, 1);
 
 		document.form.submit();
 	}
@@ -874,17 +876,17 @@ function changeDSLunit(){
 
 function change_svc_cat(_value){
 	if(_value == 0){
-		document.form.dsl_pcr.value = "";
-		document.form.dsl_scr.value = "";
-		document.form.dsl_mbs.value = "";
+		document.form.dsl_pcr.value = "0";
+		document.form.dsl_scr.value = "0";
+		document.form.dsl_mbs.value = "0";
 		inputCtrl(document.form.dsl_pcr, 0);
 		inputCtrl(document.form.dsl_scr, 0);
 		inputCtrl(document.form.dsl_mbs, 0);
 	}
 	else if(_value < 3){
-		document.form.dsl_pcr.value = "1887";
-		document.form.dsl_scr.value = "";
-		document.form.dsl_mbs.value = "";
+		document.form.dsl_pcr.value = "300";
+		document.form.dsl_scr.value = "0";
+		document.form.dsl_mbs.value = "0";
 		inputCtrl(document.form.dsl_pcr, 1);
 		inputCtrl(document.form.dsl_scr, 0);
 		inputCtrl(document.form.dsl_mbs, 0);
@@ -897,7 +899,25 @@ function change_svc_cat(_value){
 		inputCtrl(document.form.dsl_scr, 1);
 		inputCtrl(document.form.dsl_mbs, 1);
 	}
-}
+} 
+
+function change_svc_cat_current(_value){
+	if(_value == 0){
+		inputCtrl(document.form.dsl_pcr, 0);
+		inputCtrl(document.form.dsl_scr, 0);
+		inputCtrl(document.form.dsl_mbs, 0);
+	}
+	else if(_value < 3){
+		inputCtrl(document.form.dsl_pcr, 1);
+		inputCtrl(document.form.dsl_scr, 0);
+		inputCtrl(document.form.dsl_mbs, 0);
+	}
+	else{
+		inputCtrl(document.form.dsl_pcr, 1);
+		inputCtrl(document.form.dsl_scr, 1);
+		inputCtrl(document.form.dsl_mbs, 1);
+	}
+} 
 
 function showMAC(){
 	var tempMAC = "";

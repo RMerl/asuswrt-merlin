@@ -2348,13 +2348,18 @@ vsf_sysutil_getpwnam(const char* p_user){
 				if(vstrsep(b, ">", &tmp_account, &tmp_passwd) != 2)
 					continue;
 
+				char char_passwd[64];
+
+				memset(char_passwd, 0, 64);
+				ascii_to_char_safe(char_passwd, tmp_passwd, 64);
+
 				if(!strcmp(p_user, tmp_account)){
 					result = (struct passwd *)(malloc(sizeof(struct passwd)));
 					if(result == NULL)
 						return NULL;
 
 					result->pw_name = (char *)p_user;
-					result->pw_passwd = tmp_passwd;
+					result->pw_passwd = char_passwd;
 					result->pw_uid = 1;
 					result->pw_gid = 1;
 					result->pw_gecos = tmp_account;

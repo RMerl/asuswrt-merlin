@@ -233,6 +233,10 @@ config RTCONFIG_LOCALE2012
 	depends on RTCONFIG_RALINK_RT3883
 	default n
 
+config RTCONFIG_ODMPID
+	bool "ODM Product ID"
+	default n
+
 config CONFIG_LIBBCM
 	bool "Broadcom shared library functions"
 	default n

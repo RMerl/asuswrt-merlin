@@ -41,6 +41,10 @@ var $j = jQuery.noConflict();
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
+var qos_rulelist_array = "<% nvram_char_to_ascii("","qos_rulelist"); %>";
+
+var overlib_str0 = new Array();	//Viz add 2011.06 for record longer qos rule desc
+var overlib_str = new Array();	//Viz add 2011.06 for record longer portrange value
 
 function initial(){
 	show_menu();
@@ -57,6 +61,7 @@ function initial(){
 	}
 	init_changeScale("qos_obw");
 	init_changeScale("qos_ibw");	
+	showqos_rulelist();
 	addOnlineHelp($("faq"), ["ASUSWRT", "QoS"]);
 }
 
@@ -75,10 +80,12 @@ function changeScale(_obj_String){
 }
 
 function switchPage(page){
-	if(page == "1")
-		return false;
+	if(page == "2")
+		location.href = "/Advanced_QOSUserPrio_Content.asp";
+	else if(page == "3")
+		location.href = "/Advanced_QOSUserRules_Content.asp";
 	else
-		location.href = "/Advanced_QOSUserSpec_Content.asp";
+		return false;
 }
 
 function submitQoS(){
@@ -111,6 +118,64 @@ function submitQoS(){
 	parent.showLoading();
 	document.form.submit();	
 	
+}
+
+function showqos_rulelist(){
+	var qos_rulelist_row = "";
+	qos_rulelist_row = decodeURIComponent(qos_rulelist_array).split('<');	
+
+	var code = "";
+	code +='<table style="margin-left:3px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="list_table" id="qos_rulelist_table">';
+	if(qos_rulelist_row.length == 1)	// no exist "<"
+		code +='<tr><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
+	else{
+		for(var i = 1; i < qos_rulelist_row.length; i++){
+			overlib_str0[i] ="";
+			overlib_str[i] ="";			
+			code +='<tr id="row'+i+'">';
+			var qos_rulelist_col = qos_rulelist_row[i].split('>');
+			var wid=[22, 21, 17, 14, 16, 12];						
+				for(var j = 0; j < qos_rulelist_col.length; j++){
+						if(j != 0 && j !=2 && j!=5){
+							code +='<td width="'+wid[j]+'%">'+ qos_rulelist_col[j] +'</td>';
+						}else if(j==0){
+							if(qos_rulelist_col[0].length >15){
+								overlib_str0[i] += qos_rulelist_col[0];
+								qos_rulelist_col[0]=qos_rulelist_col[0].substring(0, 13)+"...";
+								code +='<td width="'+wid[j]+'%"  title="'+overlib_str0[i]+'">'+ qos_rulelist_col[0] +'</td>';
+							}else
+								code +='<td width="'+wid[j]+'%">'+ qos_rulelist_col[j] +'</td>';
+						}else if(j==2){
+							if(qos_rulelist_col[2].length >13){
+								overlib_str[i] += qos_rulelist_col[2];
+								qos_rulelist_col[2]=qos_rulelist_col[2].substring(0, 11)+"...";
+								code +='<td width="'+wid[j]+'%"  title="'+overlib_str[i]+'">'+ qos_rulelist_col[2] +'</td>';
+							}else
+								code +='<td width="'+wid[j]+'%">'+ qos_rulelist_col[j] +'</td>';																						
+						}else if(j==5){
+								code += '<td width="'+wid[j]+'%">';
+
+								if(qos_rulelist_col[5] =="0")
+									code += '<#Highest#>';
+								if(qos_rulelist_col[5] =="1")
+									code += '<#High#>';
+								if(qos_rulelist_col[5] =="2")
+									code += '<#Medium#>';
+								if(qos_rulelist_col[5] =="3")
+									code += '<#Low#>';
+								if(qos_rulelist_col[5] =="4")
+									code += '<#Lowest#>';
+						}
+						code +='</td>';
+				}
+				code +='</tr>';
+		}
+	}
+	code +='</table>';
+	$("qos_rulelist_Block").innerHTML = code;
+	
+	
+	parse_port="";
 }
 </script>
 </head>
@@ -148,23 +213,33 @@ function submitQoS(){
 			<br>
 		<!--===================================Beginning of Main Content===========================================-->
 		<div class="qos_table" id="qos_table">
-		<table>
+		<table >
   		<tr>
     			<td bgcolor="#4D595D" valign="top">
     				<table>
         			<tr>
-          			<td>
-     							<div align="right">
-     		   					<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
-											<!--option><#switchpage#></option-->
-											<option value="1" selected><#qos_automatic_mode#></option>
-											<option value="2"><#user_def_qos#></option>
-										</select>	    
-									</div>
-								</td>
+						<td>
+							<table width="100%">
+								<tr>
+									<td  class="formfonttitle" align="left">								
+										<div ><#Menu_TrafficManager#> - QoS</div>
+									</td>
+									<td align="right" >
+										<div>
+											<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
+												<!--option><#switchpage#></option-->
+												<option value="1" selected><#qos_automatic_mode#></option>
+												<option value="2"><#qos_user_prio#></option>
+												<option value="3"><#qos_user_rules#></option>
+											</select>	    
+										</div>
+									</td>	
+								</tr>
+							</table>	
+						</td>
         			</tr>
         			<tr>
-          				<td height="20"><img src="images/New_ui/export/line_export.png" /></td>
+          				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
         			<tr>
           				<td height="30" align="left" valign="middle" >
@@ -211,7 +286,7 @@ function submitQoS(){
 														 }
 													);
 												</script>			
-								</div>	
+												</div>	
 											</td>
 										</tr>										
 										<tr>
@@ -245,6 +320,27 @@ function submitQoS(){
           					<div style=" *width:136px;margin-left:300px;" class="titlebtn" align="center" onClick="submitQoS();"><span><#CTL_onlysave#></span></div>
           				</td>
         			</tr>
+        			<tr>
+          				<td>
+											<table style="margin-left:3px; margin-top:15px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
+											<thead>
+											<tr>
+													<td colspan="6" id="TriggerList" style="border-right:none;"><#BM_UserList_title#></td>
+											</tr>
+											</thead>			
+											<tr>
+													<th width="22%"><#BM_UserList1#></th>
+													<th width="21%"><a href="javascript:void(0);" onClick="openHint(18,6);"><div class="table_text">Source IP or MAC</div></a></th>
+													<th width="17%"><a href="javascript:void(0);" onClick="openHint(18,4);"><div class="table_text"><#BM_UserList3#></div></a></th>
+													<th width="14%"><div class="table_text"><#IPConnection_VServerProto_itemname#></div></th>
+													<th width="16%"><a href="javascript:void(0);" onClick="openHint(18,5);"><div class="table_text"><div class="table_text">Transferred</div></a></th>
+													<th width="12%"><#BM_UserList4#></th>
+											</tr>											
+										</table>          					
+          					
+          					<div id="qos_rulelist_Block"></div>
+          				</td>
+        			</tr>        			
       			</table>
       		</td>  
       	</tr>

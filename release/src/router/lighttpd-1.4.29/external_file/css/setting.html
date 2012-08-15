@@ -12,8 +12,48 @@ body{
 	display: block;
 	overflow: hidden;
 }
+
+tr.odd {
+	/*cursor: pointer;*/
+	background-color: #E1FBF8;
+}
+tr.even {
+	/*cursor: pointer;*/
+	background-color: #DDD;
+}
+tr.synceven {
+	/*cursor: pointer;*/
+	background-color: #FFCF73;
+}
+tr.syncodd {
+	/*cursor: pointer;*/
+	background-color: #F9FF48;
+}
+table#ntb { 
+  border: 1px; 
+  font-family: arial;
+	font-size:100%;
+	border-collpase:collpase; 
+}
+
+table thead {
+	color:#F3F6FB;
+	background-color: #595959;
+}
+
+.tab_container{
+	overflow:auto;
+}
+
+.dellink{
+background:transparent url("style-metro.png") no-repeat top left;
+background-position: -479px -313px;
+width:40px;
+height:28px;
+}
 </style>
 <script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript" src="/smb/js/davclient_tools.js"></script>
 <link href="tabs.css" rel="stylesheet" type="text/css">
 <script type="text/javascript">
 var m = new lang();
@@ -53,12 +93,91 @@ $("document").ready(function() {
 	});
 	
 	$('li#rescan a').text(m.getString('title_rescan'));
-	$('li#filter a').text(m.getString('title_filter'));
+	$('li#sharelink a').text(m.getString('title_sharelink'));
 	$('button#ok').text(m.getString('btn_ok'));
 	$('button#cancel').text(m.getString('btn_cancel'));
 	$('#btn_rescan').text(m.getString('btn_rescan'));
 	$('span#desc_rescan').text(m.getString('title_desc_rescan'));
+	
+	refreshShareLinkList();
+	
 });
+
+function refreshShareLinkList(){
+	var client = new davlib.DavClient();
+	client.initialize();
+	client.GSLL("/", function(error, content, statusstring){	
+		if(error==200){
+			var data = parseXml(statusstring);
+			
+			$("#tab2").empty();
+			
+			var table_html = "<table id='sharelink' width='100%' border='0'>";
+			table_html += "<thead><tr>";
+      table_html += "<th scope='col' class='filename' style='width:20%'>" + m.getString('table_filename') + "</th>";
+      table_html += "<th scope='col' class='createtime' style='width:25%'>" + m.getString('table_createtime') + "</th>";
+      table_html += "<th scope='col' class='expiretime' style='width:25%'>" + m.getString('table_expiretime') + "</th>";
+      table_html += "<th scope='col' class='lefttime' style='width:20%'>" + m.getString('table_lefttime') + "</th>";
+      table_html += "<th scope='col' class='remove' style='width:10%'>" + m.getString('func_delete') + "</th>";
+    	table_html += "</tr></thead>";
+    	
+    	table_html += "<tbody id='ntb'>";
+    	
+    	var i = 0;
+			$(data).find('sharelink').each(function(){
+				
+				var filename = decodeURI($(this).attr("filename"));
+				var url = window.location.protocol + "//" + window.location.host + "/" + $(this).attr("url") + "/" + filename;
+				var createtime = $(this).attr("createtime");
+				var expiretime = $(this).attr("expiretime");
+				var lefttime = parseFloat($(this).attr("lefttime"));
+				var hour = parseInt(lefttime/3600);
+				var minute = parseInt(lefttime%3600/60);
+												
+				table_html += "<tr nid='" + i + "' class='even'>";
+    		table_html += "<td fid='filename' align='center'><a href='" + url + "'>" + filename + "</a></td>";
+       	table_html += "<td fid='createtime' align='center'>" + createtime + "</td>";
+       	table_html += "<td fid='expiretime' align='center'>" + expiretime + "</td>";
+       	table_html += "<td fid='lefttime' align='center'>" + hour + " hours " + minute + " mins" + "</td>";
+       	table_html += "<td fid='remove' align='center'><a>";
+        table_html += "<div class='dellink' title='remove' link='" + $(this).attr("url") + "'></div>";
+        table_html += "</a></td>";
+       	
+      	table_html += "</tr>";
+      
+      	i++;
+      	
+			});
+			
+			table_html += "</tbody>";      
+			table_html += "</table>";
+	
+			$(table_html).appendTo($("#tab2"));
+			
+			$(".dellink").click(function(){
+				
+				var r=confirm(m.getString('msg_confirm_delete_sharelink'));
+			
+				if (r==true){
+					client.REMOVESL("/", $(this).attr("link"), function(error, content, statusstring){	
+						if(error==200){
+							refreshShareLinkList();
+						}
+					});
+				}
+			});
+		}
+	});
+}
+
+function parseXml(xml) {
+  if (jQuery.browser.msie) {
+  	var xmlDoc = new ActiveXObject("Microsoft.XMLDOM"); 
+    xmlDoc.loadXML(xml);
+    xml = xmlDoc;
+  }   
+  return xml;
+}
 
 function doOK(e) {
 	parent.closeJqmWindow();
@@ -78,6 +197,8 @@ function getUrlVars(){
     }
     return vars;
 }
+
+
 </script>
 </head>
 <body>
@@ -88,17 +209,15 @@ function getUrlVars(){
 	    <div class="abgne_tab">
 				<ul class="tabs">
 					<li id='rescan'><a href="#tab1">重新搜尋</a></li>
-					<!--<li id='filter'><a href="#tab2">資料輸入</a></li>-->
+					<li id='sharelink'><a href="#tab2">分享清單</a></li>
 				</ul>
 				<div class="tab_container">
 					<div id="tab1" class="tab_content">
 						<span id="desc_rescan"></span>
 						<button id="btn_rescan">開始重新搜尋</button>
 				  </div>
-				  <!--
-					<div id="tab2" class="tab_content">			    	
+				  <div id="tab2" class="tab_content" style="padding:0">			    	
 					</div>
-					-->
 				</div>
 			</div>
     </td>    

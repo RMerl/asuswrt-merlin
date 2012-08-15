@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <bcmnvram.h>
 #include <shutils.h>
+#include <rtconfig.h>
 
 #include "usb_info.h"
 #include "disk_initial.h"
@@ -146,7 +147,7 @@ int main(int argc, char *argv[]) {
 		fprintf(fp, "server string = %s\n", nvram_safe_get("computer_name"));
 	}
 #else
-	p_computer_name = nvram_get("computer_name") && is_valid_hostname(nvram_get("computer_name")) ? nvram_get("computer_name") : nvram_safe_get("productid");
+	p_computer_name = nvram_get("computer_name") && is_valid_hostname(nvram_get("computer_name")) ? nvram_get("computer_name") : get_productid();
 	if (p_computer_name) {
 		fprintf(fp, "netbios name = %s\n", p_computer_name);
 		fprintf(fp, "server string = %s\n", p_computer_name);

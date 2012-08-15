@@ -134,9 +134,12 @@ var retHostName = function(_mac){
 	if(parent.sw_mode != 1) return false;
 
 	for(var idx=0; idx<leasemac.length; idx++){
-		if( _mac.toLowerCase() == leasemac[idx].childNodes[0].nodeValue.toLowerCase()){
-			if(leasehostname[idx].childNodes[0].nodeValue != "*")
-				return leasehostname[idx].childNodes[0].nodeValue;
+		if(!(leasehostname[idx].childNodes[0].nodeValue.split("value=")[1]) || !(leasemac[idx].childNodes[0].nodeValue.split("value=")[1]))
+			continue;
+
+		if( _mac.toLowerCase() == leasemac[idx].childNodes[0].nodeValue.split("value=")[1].toLowerCase()){
+			if(leasehostname[idx].childNodes[0].nodeValue.split("value=")[1] != "*")
+				return leasehostname[idx].childNodes[0].nodeValue.split("value=")[1];
 			else
 				return "";
 		}
@@ -265,7 +268,7 @@ function showclient_list(list){
 				client_list_col[1] += "...";
 			}
 
-			overlib_str += "<p><#FirewallConfig_MFhwaddr_itemname#></p>" + client_list_col[3];
+			overlib_str += "<p><#MAC_Address#></p>" + client_list_col[3];
 			if(login_ip_str() == client_list_col[2])
 				overlib_str += "<p><#CTL_localdevice#>:</p>YES";
 			if(client_list_col[5] == 1)

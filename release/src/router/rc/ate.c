@@ -376,6 +376,16 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
 		return 0;
  	}
+#ifdef RTCONFIG_ODMPID
+	else if (!strcmp(command, "Set_ModelName")) {
+		if(!setMN(value))
+		{
+			puts("ATE_ERROR_INCORRECT_PARAMETER");
+			return EINVAL;
+		}
+		return 0;
+	}
+#endif
 	else if (!strcmp(command, "Set_PINCode")) {
 		if (!setPIN(value))
 		{
@@ -497,6 +507,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		getSN();
 		return 0;
 	}
+#ifdef RTCONFIG_ODMPID
+	else if (!strcmp(command, "Get_ModelName")) {
+		getMN();
+		return 0;
+	}
+#endif
 	else if (!strcmp(command, "Get_PINCode")) {
 		getPIN();
 		return 0;

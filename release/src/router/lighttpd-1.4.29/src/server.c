@@ -210,6 +210,10 @@ static server *server_init(void) {
 
 	//- Jerry add 20111018
 	CLEAN(srvconf.arpping_interface);
+	CLEAN(srvconf.syslog_file);
+	CLEAN(syslog_buf);
+	CLEAN(cur_login_info);
+	CLEAN(last_login_info);
 	
 	CLEAN(tmp_chunk_len);
 #undef CLEAN
@@ -302,6 +306,10 @@ static void server_free(server *srv) {
 
 	//- Jerry add 20111018
 	CLEAN(srvconf.arpping_interface);
+	CLEAN(srvconf.syslog_file);
+	CLEAN(syslog_buf);
+	CLEAN(cur_login_info);
+	CLEAN(last_login_info);
 	
 	CLEAN(tmp_chunk_len);
 #undef CLEAN
@@ -961,6 +969,24 @@ int main (int argc, char **argv) {
 		return -1;
 	}
 
+	//- Jerry add
+	if (-1 == log_sys_open(srv)) {
+		log_error_write(srv, __FILE__, __LINE__, "s", "Opening syslog failed. Going down.");
+
+		plugins_free(srv);
+		network_close(srv);
+		server_free(srv);
+		return -1;
+	}
+
+	#if EMBEDDED_EANBLE
+	buffer_copy_string( srv->last_login_info, nvram_get_webdav_last_login_info() );
+	buffer_copy_string( srv->cur_login_info, nvram_get_webdav_last_login_info() );
+	#else
+	buffer_copy_string( srv->last_login_info, "admin>2012/08/08 18:28:28>100.100.100.100" );
+	buffer_copy_string( srv->cur_login_info, "admin>2012/08/08 18:28:28>100.100.100.100" );
+	#endif
+	
 	if (HANDLER_GO_ON != plugins_call_set_defaults(srv)) {
 		log_error_write(srv, __FILE__, __LINE__, "s", "Configuration of plugins failed. Going down.");
 
@@ -1134,6 +1160,7 @@ int main (int argc, char **argv) {
 			}
 
 			log_error_close(srv);
+			log_sys_close(srv);
 			network_close(srv);
 			connections_free(srv);
 			plugins_free(srv);
@@ -1557,6 +1584,7 @@ Cdbg(DBE, "GOT event, fd_ndx=[%d], fd=[%d], revents=[%04X]\n", fd_ndx, fd, reven
 
 	/* clean-up */
 	log_error_close(srv);
+	log_sys_close(srv);
 	network_close(srv);
 	connections_free(srv);
 	plugins_free(srv);

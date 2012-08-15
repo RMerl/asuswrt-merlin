@@ -311,9 +311,9 @@ void start_dsl()
 	
 	eval("mkdir", "/tmp/adsl");
 
-	// disable out-of-memory process killer
-	// this command could not use eval because redirection
-	system("echo 2 > /proc/sys/vm/overcommit_memory");
+	/* Paul comment 2012/7/25, the "never overcommit" policy would cause Ralink WiFi driver kernel panic when configure DUT through external registrar. *
+	 * So let this value be the default which is 0, the kernel will estimate the amount of free memory left when userspace requests more memory. */
+	//system("echo 2 > /proc/sys/vm/overcommit_memory");
 	
 
 #ifdef RTCONFIG_DUALWAN

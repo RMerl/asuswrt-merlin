@@ -291,6 +291,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_LOCALE2012/d" $(1); \
 		echo "RTCONFIG_LOCALE2012=y" >>$(1); \
 	fi; \
+	if [ "$(ODMPID)" = "y" ]; then \
+		sed -i "/RTCONFIG_ODMPID/d" $(1); \
+		echo "RTCONFIG_ODMPID=y" >>$(1); \
+	fi; \
 	if [ "$(N56U_SR2)" = "y" ]; then \
 		sed -i "/RTCONFIG_N56U_SR2/d" $(1); \
 		echo "RTCONFIG_N56U_SR2=y" >>$(1); \

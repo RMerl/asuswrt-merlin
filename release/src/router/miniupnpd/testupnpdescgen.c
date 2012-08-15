@@ -15,6 +15,7 @@
 char uuidvalue[] = "uuid:12345678-0000-0000-0000-00000000abcd";
 char serialnumber[] = "12345678";
 char modelnumber[] = "1";
+char friendly_name[] = "ASUS Router";
 char presentationurl[] = "http://192.168.0.1:8080/";
 
 char * use_ext_ip_addr = NULL;

@@ -42,7 +42,7 @@ function wl_chanspec_list_change(){
 				else // US
 					chanspecs = new Array(0, "36l", "40u", "44l", "48u", "149l", "153u", "157l", "161u");
 			} 
-			else if (bw_cap == "3") { // -- 80 MHz
+			else if (bw_cap == "3" || bw_cap == "0") { // -- 80 MHz
 				if (country == "Q2")
 					chanspecs = new Array(0, "36/80", "40/80", "44/80", "48/80", "149/80", "153/80", "157/80", "161/80");
 				else if (country == "EU")
@@ -71,7 +71,7 @@ function wl_chanspec_list_change(){
 				else // US
 					chanspecs = new Array(0, "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11");
 			} 
-			else if (bw_cap == "2") { // -- 40 MHz
+			else if (bw_cap == "2" || bw_cap == "0") { // -- 40 MHz
 				if (country == "Q2")
 					chanspecs = new Array(0, "1l", "2l", "3l", "4l", "5l", "5u", "6l", "6u", "7l", "7u", "8u", "9u", "10u", "11u");
 				else if (country == "EU")
@@ -92,10 +92,12 @@ function wl_chanspec_list_change(){
 		chanspecs = new Array(0);
 	}
 
+	/* displaying chanspec even if the BW is auto.
 	if(chanspecs[0] == 0 && chanspecs.length == 1)
 		document.form.wl_chanspec.parentNode.parentNode.style.display = "none";
 	else
 		document.form.wl_chanspec.parentNode.parentNode.style.display = "";
+	*/
 
 	/* Reconstruct channel array from new chanspecs */
 	document.form.wl_chanspec.length = chanspecs.length;

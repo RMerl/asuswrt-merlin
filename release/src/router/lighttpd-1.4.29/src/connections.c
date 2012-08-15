@@ -450,6 +450,8 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 		case HTTP_METHOD_GETROUTERMAC:
 		case HTTP_METHOD_GETFIRMVER:
 		case HTTP_METHOD_GETROUTERINFO:
+		case HTTP_METHOD_GSLL:
+		case HTTP_METHOD_REMOVESL:
 		   	//Cdbg(DBE,"http method= %s break;",connection_get_state(con->request.http_method));
 			break;
 		case HTTP_METHOD_OPTIONS:
@@ -904,8 +906,11 @@ static int parser_share_file(server *srv, connection *con){
 		
 		Cdbg(DBE, "end parser_share_file, con->request.uri=%s", con->request.uri->ptr);
 
+		log_sys_write(srv, "sbss", "Download file", c->filename, "from ip", con->dst_addr_buf->ptr);
+		
 		return 1;
 	}
+		
 	return result;
 }
 
@@ -1003,15 +1008,15 @@ static smb_info_t *smbdav_get_smb_info_from_pool(server *srv, connection *con, p
 		//if(con->mode==SMB_BASIC && !buffer_is_equal(c->share, buffer_share))
 		//	continue;
 
-		Cdbg(DBE, "%d, c->src_ip=[%s], dst_addr_buf=[%s]", count, c->src_ip->ptr, con->dst_addr_buf->ptr);
+		//Cdbg(DBE, "%d, c->src_ip=[%s], dst_addr_buf=[%s]", count, c->src_ip->ptr, con->dst_addr_buf->ptr);
 		if(!buffer_is_equal(c->src_ip, con->dst_addr_buf))
 			continue;
 		
-		Cdbg(DBE, "%d, c->user_agent=[%s], user_agent=[%s]", count, c->user_agent->ptr, ds->value->ptr);
+		//Cdbg(DBE, "%d, c->user_agent=[%s], user_agent=[%s]", count, c->user_agent->ptr, ds->value->ptr);
 		if(!buffer_is_equal(c->user_agent, ds->value))
 			continue;
 
-		Cdbg(DBE, "return %d, c->server=[%s]", count, c->server->ptr);
+		//Cdbg(DBE, "return %d, c->server=[%s]", count, c->server->ptr);
 
 		buffer_free(buffer_server);
 		buffer_free(buffer_share);
@@ -2414,26 +2419,31 @@ int connection_state_machine(server *srv, connection *con) {
 			
 			int res = http_request_parse(srv, con);
 						
+			//- JerryLin add
 			con->mode = SMB_BASIC;
+			
+			if(strncmp(con->request.uri->ptr, "/GetCaptchaImage", 16)==0){
+				connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
+				break;
+			}
 			
 			//- If url is encrypted share link, then use basic auth
 			int result = parser_share_file(srv, con);
-			
-			//- Jerry add 20111007
 			if(result==-1){
 				Cdbg(DBE, "fail to parser_share_file");
 				connection_set_state(srv, con, CON_STATE_ERROR);
 				break;
 			}
-
+			
 			get_connection_auth_type(srv, con);
-						
+			
 			if(do_connection_auth(srv, con) != HANDLER_UNSET) {
 				chunkqueue_reset(con->read_queue);
 				chunkqueue_reset(con->write_queue);
 				connection_set_state(srv, con, CON_STATE_RESPONSE_START);
 				break;
 			}
+			/////////////////////////////////////////////////////////////////////
 			
 			if (res) {
 				/* we have to read some data from the POST request */

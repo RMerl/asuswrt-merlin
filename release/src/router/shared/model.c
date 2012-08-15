@@ -17,6 +17,8 @@ int get_model(void)
 	else if(nvram_match("productid", "RT-N12")) return MODEL_RTN12;
 	else if(nvram_match("productid", "RT-N12B1")) return MODEL_RTN12B1;
 	else if(nvram_match("productid", "RT-N12C1")) return MODEL_RTN12C1;
+	else if(nvram_match("productid", "RT-N12D1")) return MODEL_RTN12D1;
+	else if(nvram_match("productid", "RT-N12HP")) return MODEL_RTN12HP;
 	else if(nvram_match("productid", "RT-N10U")) return MODEL_RTN10U;
 	else if(nvram_match("productid", "RT-N10D")) return MODEL_RTN10D;
 #ifdef RTCONFIG_RALINK

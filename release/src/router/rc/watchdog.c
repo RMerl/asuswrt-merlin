@@ -155,6 +155,9 @@ void btn_check(void)
 				}
 				if (btn_pressed == 2)
 				{
+#ifdef RTCONFIG_DSL
+					system("adslate sysdefault"); /* Paul add 2012/8/7 */
+#endif
 				/* 0123456789 */
 				/* 0011100111 */
 					if ((btn_count % 10) < 2 || ((btn_count % 10) > 4 && (btn_count % 10) < 7))
@@ -548,14 +551,14 @@ void timecheck(void)
 
 	// radio on/off
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
-		/* TODO: when wl_radio = 0, not to do timecheck_item */
-		if (!nvram_get_int(wl_nvname("radio", unit, 0))){
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+		if (nvram_match(strcat_r(prefix, "radio", tmp), "0")){
 			item++;
 			unit++;
 			continue;
 		}
 
-		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 		svcDate = nvram_safe_get(strcat_r(prefix, "radio_date_x", tmp));
 		svcTime = nvram_safe_get(strcat_r(prefix, "radio_time_x", tmp));
 		svcTime2 = nvram_safe_get(strcat_r(prefix, "radio_time2_x", tmp));
@@ -684,7 +687,7 @@ static void catch_sig(int sig)
 #endif
 }
 
-#ifdef RTCONFIG_BRCM_USBAP
+#if defined(RTCONFIG_BRCM_USBAP) || defined(RTAC66U)
 unsigned long get_5g_count()
 {
 	FILE *f;
@@ -722,6 +725,9 @@ void fake_wl_led_5g(void)
 	static unsigned int data_5g = 0;
 	unsigned long count_5g;	
 	int i;
+	static int j;
+	static int status = -1;
+	static int status_old;
 
 	// check data per 10 count
 	if((blink_5g_check%10)==0) {
@@ -735,7 +741,27 @@ void fake_wl_led_5g(void)
 	}
 
 	if(blink_5g) {
+#ifdef RTAC66U
+		j = rand_seed_by_time() % 3;
+#endif
 		for(i=0;i<10;i++) {
+#ifdef RTAC66U
+			usleep(33*1000);
+
+			status_old = status;
+			if (((i%2)==0) && (i > (3 + 2*j)))
+				status = 0;
+			else
+				status = 1;
+
+			if (status != status_old)
+			{
+				if (status)
+					led_control(LED_5G, LED_ON);
+				else
+					led_control(LED_5G, LED_OFF);
+			}
+#else
 			usleep(50*1000);
 			if(i%2==0) {
 				led_control(LED_5G, LED_OFF);
@@ -743,6 +769,7 @@ void fake_wl_led_5g(void)
 			else {
 				led_control(LED_5G, LED_ON);
 			}
+#endif
 		}
 		led_control(LED_5G, LED_ON);
 	}
@@ -753,7 +780,10 @@ void fake_wl_led_5g(void)
 
 void led_check(void)
 {
-#ifdef RTCONFIG_BRCM_USBAP
+#if defined(RTCONFIG_BRCM_USBAP) || defined(RTAC66U)
+#ifdef RTAC66U
+	if (nvram_match("led_5g", "1"))
+#endif
 	fake_wl_led_5g();
 #endif
 
@@ -926,7 +956,6 @@ watchdog_main(int argc, char *argv[])
 	_dprintf("TZ watchdog\n");
 	/* set timer */
 	alarmtimer(NORMAL_PERIOD, 0);
-
 
 	led_control_normal();
 

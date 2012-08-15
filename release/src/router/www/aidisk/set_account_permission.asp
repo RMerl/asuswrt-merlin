@@ -15,7 +15,8 @@ var flag = '<% get_parameter("flag"); %>';
 
 function set_account_permission_error(error_msg){
 	if(flag == "aidisk_wizard")
-		parent.alert_error_msg("<#AiDisk_Wizard_failedreson1#>");
+		//parent.alert_error_msg("<#AiDisk_Wizard_failedreson1#>");
+		parent.alert_error_msg(error_msg);
 	else
 		parent.alert_error_msg(error_msg);
 }

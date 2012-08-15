@@ -167,8 +167,11 @@ function switchPage(page){
 	      		<tr>
 	      			<td bgcolor="#4D595D" valign="top">
 	      				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
-
+						<tr><td><table width=100%" >
 	        				<tr>
+							<td  class="formfonttitle" align="left">
+								<div style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
+							</td>
 		          				<td>
      								<div align="right">
 			    						<select class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
@@ -195,10 +198,11 @@ function switchPage(page){
 			    						</select>
 										</div>
 									</td>
+							</table></td></tr>
 	        				</tr>
 
 	        				<tr>
-	          					<td height="20"><img src="images/New_ui/export/line_export.png" /></td>
+	          					<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
 	        				</tr>
 						<tr>
 							<td>

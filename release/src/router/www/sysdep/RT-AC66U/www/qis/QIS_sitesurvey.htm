@@ -156,6 +156,7 @@ function submitForm(_idx){
 
 	document.getElementById("loadingIcon").style.display = "";
 	parent.document.getElementById("stassid").innerHTML = document.form.wlc_ssid.value;
+	parent.document.getElementById("stassid").innerHTML += "<br/><span style='color:#FC0;font-weight:normal;'>Please unplug the network cable connected to WAN port in media bridge mode.</span>";
 	parent.w_Setting_tmp = document.form.w_Setting.value;
 	document.form.http_username.value = parent.document.QKform.http_username.value;
 	document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
@@ -256,7 +257,7 @@ function changeCrypto(_val){
 			<#APSurvey_action_search_again_hint2#>
 			<br/>
 			<span style="color:#FC0" id="deviceDiscorvy">
-				Install and use the <a href="http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip" style="font-family:Lucida Console;text-decoration:underline;color:#FC0;">Device Discovery Utility</a> in order to detect the <% nvram_get("productid"); %>'s IP address.
+				Install and use the <a href="http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip" style="font-family:Lucida Console;text-decoration:underline;color:#FC0;">Device Discovery Utility</a> in order to detect the <#Web_Title2#>'s IP address.
 			</span>
 		</div>
 
@@ -293,7 +294,7 @@ function changeCrypto(_val){
 					-->
 	  		</select>
 				<div id="wl_nmode_x_hint" style="margin-top:5px;color:#FC0;">
-					Under WEP or WPA-Personal encryption, the maximum transmission rate of RT-AC66U is 54Mbps. Please change to WPA2-Personal.
+					Under WEP or WPA-Personal encryption, the maximum transmission rate of <#Web_Title2#> is 54Mbps. Please change to WPA2-Personal.
 				</div>
 			</td>
 	  	</tr>

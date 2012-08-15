@@ -52,6 +52,7 @@ char uuidvalue[] = "uuid:00000000-0000-0000-0000-000000000000";
 char serialnumber[SERIALNUMBER_MAX_LEN] = "00000000";
 
 char modelnumber[MODELNUMBER_MAX_LEN] = "1";
+char friendly_name[FRIENDLYNAME_MAX_LEN] = "ASUS Router";
 
 /* presentation url :
  * http://nnn.nnn.nnn.nnn:ppppp/  => max 30 bytes including terminating 0 */

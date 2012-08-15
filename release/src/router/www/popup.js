@@ -77,9 +77,9 @@ function showLoading(seconds, flag){
 	var blockmarginTop;
 	var blockmarginLeft;
 	if (window.innerWidth)
-	winWidth = window.innerWidth;
+		winWidth = window.innerWidth;
 	else if ((document.body) && (document.body.clientWidth))
-	winWidth = document.body.clientWidth;
+		winWidth = document.body.clientWidth;
 	
 	if (window.innerHeight)
 		winHeight = window.innerHeight;
@@ -132,8 +132,44 @@ function showLoadingBar(seconds){
 	winW_H();
 
 	var blockmarginTop;
-	blockmarginTop = document.documentElement.scrollTop + 200;
+	var blockmarginLeft;
+	if (window.innerWidth)
+		winWidth = window.innerWidth;
+	else if ((document.body) && (document.body.clientWidth))
+		winWidth = document.body.clientWidth;
+	
+	if (window.innerHeight)
+		winHeight = window.innerHeight;
+	else if ((document.body) && (document.body.clientHeight))
+		winHeight = document.body.clientHeight;
+
+	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
+		winHeight = document.documentElement.clientHeight;
+		winWidth = document.documentElement.clientWidth;
+	}
+
+	if(winWidth >1050){
+	
+		winPadding = (winWidth-1050)/2;	
+		winWidth = 1105;
+		blockmarginLeft= (winWidth*0.35)+winPadding;
+	}
+	else if(winWidth <=1050){
+		blockmarginLeft= (winWidth)*0.35+document.body.scrollLeft;	
+
+	}
+	
+	if(winHeight >660)
+		winHeight = 660;
+	
+	blockmarginTop= winHeight*0.3			
+	
 	$("loadingBarBlock").style.marginTop = blockmarginTop+"px";
+	$("loadingBarBlock").style.marginLeft = blockmarginLeft+"px";
+
+	
+	/*blockmarginTop = document.documentElement.scrollTop + 200;
+	$("loadingBarBlock").style.marginTop = blockmarginTop+"px";*/
 
 	$("LoadingBar").style.width = winW+"px";
 	$("LoadingBar").style.height = winH+"px";

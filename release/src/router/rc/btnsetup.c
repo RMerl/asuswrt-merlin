@@ -161,7 +161,7 @@ int bs_encrypt;
 //#define OTS_LOG 1
 //#define OTS_SIMU 1
 
-static int rand_seed_by_time(void)
+int rand_seed_by_time(void)
 {
 	time_t atime;
 
@@ -934,8 +934,8 @@ int OTSStart(int flag)
 		/* Start button setup process */
 		/* SSID : [ProductID]_OTS[Default]_[Prime]*/
 		if (nvram_match("x_Setting", "1")) // not in default
-			sprintf(ssid, "%s_OTS1", nvram_safe_get("productid")); 
-		else sprintf(ssid, "%s_OTS0", nvram_safe_get("productid")); 
+			sprintf(ssid, "%s_OTS1", get_productid()); 
+		else sprintf(ssid, "%s_OTS0", get_productid()); 
 
 		doSystem("iwpriv %s set AuthMode=OPEN", WIF);
 		doSystem("iwpriv %s set EncrypType=NONE", WIF);
@@ -1287,7 +1287,7 @@ int OTSPacketHandler(int sockfd)
 				ezprobe_res->Wds = WDS_MODE_HYBRID;
 		     else ezprobe_res->Wds = WDS_MODE_AP_ONLY;
 
-		     strcpy(ezprobe_res->ProductID, nvram_safe_get("productid")); 
+		     strcpy(ezprobe_res->ProductID, get_productid()); 
 		     strcpy(ezprobe_res->FirmwareVersion, nvram_safe_get("firmver"));
 		     time(&bs_time); // reset timer only
 		     bs_auth=-1;

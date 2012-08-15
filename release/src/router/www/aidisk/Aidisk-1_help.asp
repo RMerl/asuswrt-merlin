@@ -16,7 +16,7 @@
 	<tbody>
 	<tr>
 	<td valign="top">
-		<a href="../Advanced_AiDisk_ftp.asp" target="_parent" hidefocus="true"><#t1USB#></a>: <#AiDisk_moreconfig#>
+		<a href="../Advanced_AiDisk_ftp.asp" target="_parent" hidefocus="true"><#menu5_4#></a>: <#AiDisk_moreconfig#>
 	</td>
 	</tr>
 	</tbody>

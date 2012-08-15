@@ -250,13 +250,18 @@ void rfc1305print(char *data, struct ntptime *arrival)
 			perror("settimeofday");
 			exit(1);
 		}
+
+		if (get_ipv6_service() != IPV6_DISABLED)
+			notify_rc("restart_radvd");
+
 #if 0
 		if (debug) {
 			fprintf(stderr,"set time to %lu.%.6lu\n", tv_set.tv_sec, tv_set.tv_usec);
 		}
 #else
 
-		if (is_routing_enabled())
+		// if non_restart_upnp = 1, not to restart_upnp
+		if (is_routing_enabled() && nvram_match("non_restart_upnp" , "0"))
 			notify_rc("restart_upnp");
 
 		fprintf(stderr, "[ntpclient] set time to %lu.%.6lu\n", tv_set.tv_sec, tv_set.tv_usec);

@@ -1,0 +1,41 @@
+System files mft record numbers.  All these files are always marked as used
+in the bitmap attribute of the mft; presumably in order to avoid accidental
+allocation for random other mft records.  Also, the sequence number for each
+of the system files is always equal to their mft record number and it is
+never modified. (Only $MFT has a sequence number of 1, rather than 0.)
+
+FILE_$MFT       = 0,	/* Master file table (mft).  Data attribute
+			   contains the entries and bitmap attribute
+			   records which ones are in use (bit==1). */
+FILE_$MFTMirr   = 1,	/* Mft mirror (copy of first four mft records)
+			   in data attribute. */
+FILE_$LogFile   = 2,	/* Journalling log in data attribute. */
+FILE_$Volume    = 3,	/* Volume name attribute and volume information
+			   attribute (flags and ntfs version).  Windows
+			   refers to this file as volume DASD (Direct
+			   Access Storage Device). */
+FILE_$AttrDef   = 4,	/* Array of attribute definitions in data
+			   attribute. */
+FILE_$root      = 5,	/* Root directory. */
+FILE_$Bitmap    = 6,	/* Allocation bitmap of all clusters (lcns) in
+			   data attribute. */
+FILE_$Boot      = 7,	/* Boot sector (always at cluster 0) in data
+			   attribute. */
+FILE_$BadClus   = 8,	/* Contains all bad clusters in the non-resident
+			   data attribute. */
+FILE_$Secure    = 9,	/* Shared security descriptors in data attribute
+			   and two indexes into the descriptors.
+			   Appeared in Windows 2000.  Before that, this
+			   file was named $Quota but was unused. */
+FILE_$UpCase    = 10,	/* Uppercase equivalents of all 65536 Unicode
+			   characters in data attribute. */
+FILE_$Extend    = 11,	/* Directory containing other system files (eg.
+			   $ObjId, $Quota, $Reparse and $UsnJrnl).  This
+			   is new to NTFS3.0. */
+FILE_reserved12 = 12,	/* Reserved for future use (records 12-15). */
+FILE_reserved13 = 13,
+FILE_reserved14 = 14,
+FILE_reserved15 = 15,
+FILE_first_user = 16,	/* First user file, used as test limit for
+			   whether to allow opening a file or not. */
+

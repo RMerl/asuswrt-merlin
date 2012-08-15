@@ -24,6 +24,10 @@ CFLAGS += -DU2EC
 LDFLAGS += -L$(TOP)/libdisk -ldisk
 endif
 
+ifeq ($(RTAC66U), y)
+CFLAGS += -DRTAC66U
+endif
+
 #CFLAGS += -DRC_BUILDTIME=$(shell date -d "now" +"%s")
 
 LDFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections

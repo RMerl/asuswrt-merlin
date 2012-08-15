@@ -42,8 +42,8 @@ function show_dummyshareway(){
 		case "2":
 			showtext($("dummyShareStr"), "\"<#Step2_method3#>\"");
 			break;
-		default:
-			alert("System error!");
+		//default:
+		//	alert("dummy: System error!");
 	}
 }
 
@@ -202,7 +202,7 @@ function clickevent(){
   		<td width="20%">
   			<div class="apply_gen" style="margin-top:30px">
   				<input type="button" id="prevButton" value="<#btn_pre#>" onclick="go_pre_page();" class="button_gen">
-  				<input type="submit" id="finish" value="<#CTL_finish#>" class="button_gen">
+  				<input type="button" id="finish" value="<#CTL_finish#>" class="button_gen">
 	    		<!--a href="Aidisk-3.asp"><div class="titlebtn" align="center" style="margin-left:275px;_margin-left:137px;width:80px;"><span><#btn_pre#></span></div></a>
 	    		<a href="javascript:;"><div id="finish" class="titlebtn" align="center" style="width:80px;"><span><#CTL_finish#></span></div></a-->
 	    	</div>	

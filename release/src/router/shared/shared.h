@@ -191,6 +191,8 @@ enum {
 	MODEL_RTN12,
 	MODEL_RTN12B1,
 	MODEL_RTN12C1,
+	MODEL_RTN12D1,
+	MODEL_RTN12HP,
 	MODEL_RTN16,
 	MODEL_RTN15U,
 	MODEL_RTN53,
@@ -309,6 +311,8 @@ extern int base64_decoded_len(int len);										// maximum possible, not actual
 // strings.c
 extern int char_to_ascii_safe(const char *output, const char *input, int outsize);
 extern void char_to_ascii(const char *output, const char *input);
+extern int ascii_to_char_safe(const char *output, const char *input, int outsize);
+extern void ascii_to_char(const char *output, const char *input);
 extern const char *find_word(const char *buffer, const char *word);
 extern int remove_word(char *buffer, const char *word);
 

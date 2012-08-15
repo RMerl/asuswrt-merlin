@@ -285,10 +285,11 @@ global.davlib = new function() {
         var request = this._getRequest('GET', path, handler, context);
         request.send('');
     };
-	//charles mark	
+    
+		//charles mark	
     this.DavClient.prototype.PUT = function(path, content, sliceAsBinary,
-											start, stop, filesize,
-											 handler, 
+											                      start, stop, filesize,
+											                      handler, 
                                             updateProgress, context, locktoken ) {
         /* perform a PUT request
             save the contents of a resource to the server
@@ -296,21 +297,24 @@ global.davlib = new function() {
         */
         var request = this._getRequest('PUT', path, handler, context);
         request.setRequestHeader("Content-type", "text/xml,charset=UTF-8");
-		/*
-		 for example  Content-Range: bytes 21010-47021/47022
-		 */
-	//alert("set request start ="+start+"stop="+stop+"filesize="+filesize);	
+				/*
+				 for example  Content-Range: bytes 21010-47021/47022
+				 */
+				//alert("set request start ="+start+"stop="+stop+"filesize="+filesize+", sliceAsBinary="+sliceAsBinary);	
         request.setRequestHeader("Content-Range", "bytes "+start+"-"+stop+"/"+filesize);
         
         if (locktoken) {
             request.setRequestHeader('If', '<' + locktoken + '>');
         };
         
-        request.upload.onprogress = updateProgress;
+        if(request.upload){
+        	request.upload.onprogress = updateProgress;
+        }
+        
         try{
         	if(sliceAsBinary == 0 && request.sendAsBinary != null)
 						request.sendAsBinary(content);
-			else if(sliceAsBinary == 1)
+					else if(sliceAsBinary == 1)
         		request.send(content);
         	else
         		throw '';
@@ -462,6 +466,23 @@ global.davlib = new function() {
 			request.send('');
 		};
 		
+		this.DavClient.prototype.GSLL = function(path,handler,context,locktoken){			
+			var request = this._getRequest('GSLL',path,handler,context);
+			if(locktoken){
+				request.setRequestHeader('If','<'+locktoken+'>');
+			};
+			request.send('');
+		};
+		
+		this.DavClient.prototype.REMOVESL = function(path,sharelink,handler,context,locktoken){			
+			var request = this._getRequest('REMOVESL',path,handler,context);
+			request.setRequestHeader("SHARELINK",sharelink);
+			if(locktoken){
+				request.setRequestHeader('If','<'+locktoken+'>');
+			};
+			request.send('');
+		};
+		
 		this.DavClient.prototype.LOGOUT = function(path,handler,context,locktoken){			
 			var request = this._getRequest('LOGOUT',path,handler,context);			
 			if(locktoken){
@@ -602,7 +623,7 @@ global.davlib = new function() {
         request.open(method, url, true);
         
         // refuse all encoding, since the browsers don't seem to support it...
-        request.setRequestHeader('Accept-Encoding', ' ');
+        //request.setRequestHeader('Accept-Encoding', ' ');
         
         return request
     };

@@ -63,3 +63,8 @@ ifeq ($(RTCONFIG_DUALWAN),y)
 	cp -rf rom/etc/static_routes $(INSTALLDIR)/rom/etc/
 endif
 
+ifeq ($(RTCONFIG_RALINK_RT3883),y)
+	mkdir -p $(INSTALLDIR)/rom/wlan
+	cp -rf wlan/RT3092_PCIe_LNA_2T2R_ALC_V1_2.bin $(INSTALLDIR)/rom/wlan/
+	cp -rf wlan/RT3662_AP_2T2R_V0_0.bin $(INSTALLDIR)/rom/wlan/
+endif

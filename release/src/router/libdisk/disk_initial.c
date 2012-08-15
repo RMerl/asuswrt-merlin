@@ -26,6 +26,7 @@
 // From BusyBox and get volume's label.
 #include <autoconf.h>
 #include <volume_id_internal.h>
+#include <shared.h>
 
 #include "usb_info.h"
 #include "disk_initial.h"

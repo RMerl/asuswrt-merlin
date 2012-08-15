@@ -343,7 +343,15 @@ void adsl_ate(int argc, char* argv[])
         send_buf.mtype=IPC_DEL_ALL_PVC;
         strcpy(send_buf.mtext,"delall");
         myprintf("msg :%s\n",send_buf.mtext);
-    }    
+    }
+    /* Paul add 2012/8/7 */
+    else if (strcmp(argv[1],"sysdefault") == 0)
+    {
+        myprintf("IPC_ATE_ADSL_RESTORE_DEFAULT\n");    
+        send_buf.mtype=IPC_ATE_ADSL_RESTORE_DEFAULT;
+        strcpy(send_buf.mtext,"sysdefault");
+        myprintf("msg :%s\n",send_buf.mtext);
+    }
     else if (strcmp(argv[1],"setadslmode") == 0)
     {
         int mode,type;    

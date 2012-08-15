@@ -210,10 +210,9 @@ function done_validating(action){
 
 /*------------ Site Survey Start -----------------*/
 function wds_scan(){
-	if('<% nvram_get("wl_unit"); %>' == '0')
-		var ajaxURL = '/wds_aplist_2g.asp';
-	else
-		return false;
+	var ajaxURL = '/wds_aplist_2g.asp';
+	if('<% nvram_get("wl_unit"); %>' == '1')
+		var ajaxURL = '/wds_aplist_5g.asp';
 
 	$j.ajax({
 		url: ajaxURL,

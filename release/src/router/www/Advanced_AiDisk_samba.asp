@@ -96,15 +96,6 @@ function chech_usb()
 	}
 }
 
-function show_footer(){
-	footer_code = '<div align="center" class="bottom-image"></div>';
-	footer_code +='<div align="center" class="copyright"><#footer_copyright_desc#></div>';
-	
-	$("footer").innerHTML = footer_code;
-
-	flash_button();
-}
-
 function get_disk_tree(){
 	if(this.isLoading == 0){
 		get_layer_items("0", "gettree");
@@ -273,8 +264,8 @@ function showAccountMenu(){
 		for(var i = 0; i < this.accounts.length; ++i){
 			account_menu_code += '<div class="accountName" id="';
 			account_menu_code += "account"+i;
-			account_menu_code += '" onClick="setSelectAccount(this);">'
-			account_menu_code += this.accounts[i];
+			account_menu_code += '" onClick="setSelectAccount('+i+');">'
+			account_menu_code += decodeURIComponent(this.accounts[i]);
 			account_menu_code += '</div>\n';
 		}
 	
@@ -282,7 +273,7 @@ function showAccountMenu(){
 	
 	if(this.accounts.length > 0){
 		if(get_manage_type(PROTOCOL) == 1)
-			setSelectAccount($("account0"));
+			setSelectAccount(0);
 	}
 }
 
@@ -344,21 +335,21 @@ function showApplyBtn(){
 	}
 }
 
-function setSelectAccount(selectedObj){
-	this.selectedAccount = selectedObj.firstChild.nodeValue;
+function setSelectAccount(account_order){
+	this.selectedAccount = accounts[account_order];
 	
 	onEvent();
 	
-	show_permissions_of_account(selectedObj, PROTOCOL);
-	contrastSelectAccount(selectedObj);
+	show_permissions_of_account(account_order, PROTOCOL);
+	contrastSelectAccount(account_order);
 }
 
 function getSelectedAccount(){
 	return this.selectedAccount;
 }
 
-function show_permissions_of_account(selectedObj, protocol){
-	var accountName = selectedObj.firstChild.nodeValue;
+function show_permissions_of_account(account_order, protocol){
+	var accountName = accounts[account_order];
 	var poolName;
 	var permissions;
 	
@@ -401,13 +392,15 @@ function get_permission_of_folder(accountName, poolName, folderName, protocol){
 	alert("Wrong folderName when get permission!");	// system error msg. must not be translate
 }
 
-function contrastSelectAccount(selectedObj){
+function contrastSelectAccount(account_order){
 	if(this.lastClickedAccount != 0){
 		this.lastClickedAccount.style.marginRight = "0px";
 		this.lastClickedAccount.style.background = "url(/images/New_ui/advancesetting/user_icon0.png)left no-repeat";
 		this.lastClickedAccount.style.cursor = "pointer";
 		this.lastClickedAccount.style.fontWeight ="normal";
 	}
+	
+	var selectedObj = $("account"+account_order);
 	
 	selectedObj.style.marginRight = "-1px";
 	selectedObj.style.background = "url(/images/New_ui/advancesetting/user_icon.png) left no-repeat";
@@ -808,7 +801,7 @@ function unload_body(){
 			    <table width="480"  border="0" cellspacing="0" cellpadding="0" class="FileStatusTitle">
 		  	    <tr>
 		    	  		<td width="290" height="20" align="left">
-				    		<div class="machineName"><% nvram_get("productid"); %></div>
+				    		<div class="machineName"><#Web_Title2#></div>
 				    	</td>
 				  <td>
 				    <div id="permissionTitle"></div>

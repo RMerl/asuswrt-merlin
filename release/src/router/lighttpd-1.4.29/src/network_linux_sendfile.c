@@ -29,7 +29,7 @@
 /* on linux 2.4.29 + debian/ubuntu we have crashes if this is enabled */
 #undef HAVE_POSIX_FADVISE
 
-#define DBE 1
+#define DBE 0
 
 int network_write_chunkqueue_linuxsendfile(server *srv, connection *con, int fd, chunkqueue *cq) {
 	chunk *c;

@@ -385,14 +385,15 @@ $("document").ready(function() {
 		var bSliceAsBinary = 0;
 		
 		// If we use onloadend, we need to check the readyState.
-		reader.onloadend = function(evt) {
+		reader.onloadend = function(evt) {			
 			if (evt.target.readyState == FileReader.DONE) { // DONE == 2      	
 			var tURL = this_url + pfile.name;
+			
 			webdav_client.PUT(tURL, evt.target.result, bSliceAsBinary, start, stop, filesize,
 				  webdav_put_callbackfunction, webdav_put_progress_callbackfunction  );
 			}
 		};
-
+		
 		if (pfile.webkitSlice) {
 			var blob = pfile.webkitSlice(start, stop + 1);
 			reader.readAsArrayBuffer(blob);
@@ -403,6 +404,11 @@ $("document").ready(function() {
 			reader.readAsBinaryString(blob);
 			bSliceAsBinary = 0;
 		}
+		else {
+			var blob = pfile.slice(start, stop + 1);
+			reader.readAsArrayBuffer(blob);
+			bSliceAsBinary = 1;
+    }
 	}
 	
  	var f_offset  =0;
@@ -428,7 +434,7 @@ $("document").ready(function() {
 			current_file_size = f.thefile.size;		
 			if(f.status=="Init" || f.status=="Upload"){
 				this_upload_index = i;
-				f.status = "Upload";	  		
+				f.status = "Upload";				
 				send_segment_data(f, f.thefile.size);
 				return 1;
 			}
@@ -437,8 +443,9 @@ $("document").ready(function() {
 	}
 	
 	document.querySelector('.readBytesButtons').addEventListener('click', function(evt) {  
+		
   	if (evt.target.tagName.toLowerCase() == 'button') {
-    	      
+    	 
       if (!this_upload_files.length) {
 	      alert(m.getString('warn_selfile'));
 	      return;

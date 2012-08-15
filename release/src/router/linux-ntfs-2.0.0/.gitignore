@@ -1,0 +1,13 @@
+*.o
+ntfsprogs/*
+*.lo
+*.la
+libntfs/.deps/*
+libntfs/.libs/*
+Makefile
+config.h
+*.8
+libntfs/libntfs.conf
+libtool
+test/.deps/
+

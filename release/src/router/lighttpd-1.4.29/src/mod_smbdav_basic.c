@@ -35,27 +35,27 @@
 handler_t basic_authentication_handler(server *srv, connection *con, plugin_data *p)
 {
 	data_string *ds_auth = (data_string *)array_get_element(con->request.headers, "Authorization");
+	data_string *ds_useragent = (data_string *)array_get_element(con->request.headers, "user-Agent");
 	
 	buffer *user = buffer_init();
 	buffer *pass = buffer_init();
 	buffer_copy_string(user, " ");
 	buffer_copy_string(pass, " ");
 	
-	//Cdbg(DBE, "*********** con->request.uri..%s", con->request.uri->ptr);
-	
+	int get_account_from_smb_info = 0;
 	char *auth_username = NULL;
 	char *auth_password = NULL;
 	if( smbc_parser_basic_authentication(srv, con, &auth_username, &auth_password) != 1 ){
 			
 		if(con->smb_info==NULL)
 			goto error_401;
-
-		//Cdbg(DBE, "1111111, %s, %s", con->smb_info->username->ptr, con->smb_info->password->ptr);
-
+		
 		if( con->smb_info->username->used && con->smb_info->password->used ){
 			buffer_copy_string_buffer(user, con->smb_info->username);			
 			buffer_copy_string_buffer(pass, con->smb_info->password);
 		}
+
+		get_account_from_smb_info = 1;
 		
 		Cdbg(DBE, "fail smbc_parser_basic_authentication-> %s, %s", user->ptr, pass->ptr);
 	}
@@ -64,6 +64,7 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 		buffer_copy_string(pass, auth_password);
 		free(auth_username);
 		free(auth_password);
+		get_account_from_smb_info = 0;
 	}
 
 	time_t cur_time = time(NULL);
@@ -84,26 +85,90 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 			buffer_reset(con->smb_info->password);
 			goto error_401;
 		}
-		
+		/*
 		if(con->smb_info->username->used && con->smb_info->password->used){
 			buffer_copy_string_buffer(user, con->smb_info->username);			
 			buffer_copy_string_buffer(pass, con->smb_info->password);
 			Cdbg(DBE, "SMB_HOST_QUERY-->copy from smb_info user=[%s], pass=[%s]", user->ptr, pass->ptr);
 		}
-
+		*/
 		#if EMBEDDED_EANBLE
-		if( strcmp(user->ptr, nvram_get_http_username())!=0 || 
-		     strcmp(pass->ptr, nvram_get_http_passwd())!=0 ){
-			Cdbg(DBE, "smbc_host_account_authentication fail user=[%s], pass=[%s]", user->ptr, pass->ptr);
-			goto error_401;
-		}
+		char* webav_user = nvram_get_http_username();
+		char* webav_pass = nvram_get_http_passwd();
+		char* enable_webdav_block = nvram_get_enable_webdav_lock();
+		char* is_webdav_block = nvram_get_webdav_acc_lock();
+		int try_times = atoi(nvram_get_webdav_lock_times());
+		int try_interval = atoi(nvram_get_webdav_lock_interval())*60;
+		int isBrowser = ( ds_useragent && strstr( ds_useragent->value->ptr, "Mozilla" ) ) ? 1 : 0;
 		#else
-		if(  strcmp(user->ptr, "admin")!=0 || 
-		     strcmp(pass->ptr, "admin")!=0 ){
-			Cdbg(DBE, "smbc_host_account_authentication fail user=[%s], pass=[%s]", user->ptr, pass->ptr);
+		char* webav_user = "admin";
+		char* webav_pass = "admin";
+		char* enable_webdav_block = "1";
+		char* is_webdav_block = "0";
+		int try_times = 3;
+		int try_interval = 1*60; //- 1 minutes
+		int isBrowser = ( ds_useragent && strstr( ds_useragent->value->ptr, "Mozilla" ) ) ? 1 : 0;
+		#endif
+
+		if( isBrowser==1 && strcmp(enable_webdav_block, "1") == 0 && strcmp(is_webdav_block, "1") == 0 )
+			goto error_455;
+			
+		if( strcmp(user->ptr, webav_user)!=0 || 
+		    strcmp(pass->ptr, webav_pass)!=0 ){
+			
+			if( isBrowser==1 && strcmp(enable_webdav_block, "1") == 0 && con->smb_info ){
+				con->smb_info->login_count++;
+				
+				time_t current_time = time(NULL);
+				
+				double result2 = difftime(cur_time, con->smb_info->login_begin_time);
+				if( result2 > try_interval ){
+					con->smb_info->login_count = 1;
+				}
+
+				if(con->smb_info->login_count==1)
+					con->smb_info->login_begin_time = time(NULL);
+				
+				Cdbg(DBE, "con->smb_info->login_count=[%d]", con->smb_info->login_count);
+				if(con->smb_info->login_count>=try_times){
+
+					con->smb_info->login_count = 0;
+					
+					#if EMBEDDED_EANBLE
+					nvram_set_webdav_acc_lock("1");
+					#endif
+					
+					goto error_455;
+				}
+			}
+			
+			//Cdbg(DBE, "smbc_host_account_authentication fail user=[%s], pass=[%s]", user->ptr, pass->ptr);			
 			goto error_401;
 		}
-		#endif
+		
+		if(con->smb_info){
+			con->smb_info->login_count = 0;
+		}
+
+		if(!get_account_from_smb_info){
+			log_sys_write(srv, "ssss", "User", user->ptr, "login from ip", con->dst_addr_buf->ptr);
+
+			buffer_copy_string_buffer(srv->last_login_info, srv->cur_login_info);
+			
+			buffer_copy_string(srv->cur_login_info, user->ptr);
+			buffer_append_string(srv->cur_login_info, ">");
+
+			char srv_time[255];
+			strftime(srv_time, 254, "%Y/%m/%d %H:%M:%S", localtime(&(srv->cur_ts)));
+			buffer_append_string(srv->cur_login_info, srv_time);
+			buffer_append_string(srv->cur_login_info, ">");
+			
+			buffer_append_string(srv->cur_login_info, con->dst_addr_buf->ptr);
+
+			#if EMBEDDED_EANBLE
+			nvram_set_webdav_last_login_info(srv->last_login_info->ptr);
+			#endif
+		}
 	}
 	else {
 		//- check user / password
@@ -144,7 +209,6 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 					buffer_copy_string(pass, "");
 				}
 				
-				//sprintf(strr, "smb://%s:%s@%s", user->ptr, pass->ptr, con->request.uri->ptr+1);
 				int res = smbc_server_check_creds(con->smb_info->server->ptr, 
 											    con->smb_info->share->ptr, 
 											    con->smb_info->workgroup->ptr, 
@@ -155,11 +219,14 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 			}
 			else		
 				goto error_401;
-		}			
+		}
+
+		if(!get_account_from_smb_info)
+			log_sys_write(srv, "sssbss", "User", user->ptr, "login", con->smb_info->server, "from ip", con->dst_addr_buf->ptr);
 	}
 	
 	con->smb_info->auth_time = time(NULL);
-
+	
 	if( !buffer_is_equal_string(user, "no", 2) && !buffer_is_equal_string(pass, "no", 2)){
 		buffer_copy_string_buffer(con->smb_info->username, user);
 		buffer_copy_string_buffer(con->smb_info->password, pass);
@@ -172,6 +239,7 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 	return HANDLER_UNSET;
 
 error_401:
+	
 	buffer_free(user);
 	buffer_free(pass);
 	
@@ -181,4 +249,12 @@ error_401:
 	smbc_wrapper_response_401(srv, con);
 	
 	return HANDLER_FINISHED;
+	
+error_455:
+	//- Block webdav
+	buffer_free(user);
+	buffer_free(pass);
+	con->http_status = 455;
+	return HANDLER_FINISHED;
+	
 }

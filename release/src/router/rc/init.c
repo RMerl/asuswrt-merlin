@@ -103,6 +103,9 @@ wps_restore_defaults(void)
 	nvram_unset("wps_enr_wsec");
 
 	nvram_unset("wps_unit");
+
+	nvram_set("wps_device_name", get_productid());
+	nvram_set("wps_modelnum", get_productid());
 }
 #endif /* RTCONFIG_WPS */
 
@@ -542,7 +545,11 @@ void usbctrl_default()
 		acc_num = nvram_get_int("acc_num");
 		acc_num_ret = 0;
 
-		buf_len = snprintf(tmp, sizeof(tmp), "%s>%s", nvram_safe_get("http_username"), nvram_safe_get("http_passwd")); // default account.
+		char ascii_passwd[64];
+
+		memset(ascii_passwd, 0, 64);
+		char_to_ascii_safe(ascii_passwd, nvram_safe_get("http_passwd"), 64);
+		buf_len = snprintf(tmp, sizeof(tmp), "%s>%s", nvram_safe_get("http_username"), ascii_passwd); // default account.
 		ptr = tmp+buf_len;
 		acc_num_ret = 1;
 
@@ -552,9 +559,11 @@ void usbctrl_default()
 
 			sprintf(acc_nvram_password, "acc_password%d", i);
 			if((acc_password = nvram_get(acc_nvram_password)) == NULL) continue;
+			memset(ascii_passwd, 0, 64);
+			char_to_ascii_safe(ascii_passwd, acc_password, 64);
 
 			if(strcmp(acc_user, "admin")){
-				buf_len += snprintf(ptr, 256-buf_len, "<%s>%s", acc_user, acc_password);
+				buf_len += snprintf(ptr, 256-buf_len, "<%s>%s", acc_user, ascii_passwd);
 				ptr = tmp+buf_len;
 				acc_num_ret++;
 			}
@@ -631,7 +640,7 @@ restore_defaults(void)
 		if (restore_defaults || !nvram_get(t->name)) {	
 			// add special default value handle here		
 			if(strcmp(t->name, "computer_name")==0) 
-				nvram_set(t->name, nvram_safe_get("productid"));
+				nvram_set(t->name, get_productid());
 			else nvram_set(t->name, t->value);			
 		}
 	}
@@ -724,6 +733,11 @@ restore_defaults(void)
 
 #ifdef RTCONFIG_WEBDAV
 	webdav_account_default();
+#endif
+
+	nvram_set("success_start_service", "0");
+#ifdef RTAC66U
+	nvram_set("led_5g", "0");
 #endif
 
 }
@@ -1145,6 +1159,37 @@ int init_nvram(void)
 #endif // RTCONFIG_RALINK
 
 #ifdef CONFIG_BCMWL5
+	case MODEL_RTN12HP:
+		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
+		add_rc_support("mssid");
+		nvram_set_int("btn_rst_gpio", 22|GPIO_ACTIVE_LOW);
+		nvram_set_int("btn_wps_gpio", 23|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_pwr_gpio", 18|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_wps_gpio", 18|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_wan_gpio", 5|GPIO_ACTIVE_LOW);
+		nvram_set_int("et_swleds", 0x0f);
+		nvram_set_int("sb/1/ledbh4", 2);
+		nvram_set_int("sb/1/ledbh5", 11);
+		nvram_set_int("sb/1/ledbh6", 11);
+		add_rc_support("pwrctrl"); // only for N12HP
+		/* go to common N12* init */
+		goto case_MODEL_RTN12X;
+
+	case MODEL_RTN12D1:
+		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
+		add_rc_support("mssid");
+		nvram_set_int("btn_rst_gpio", 22|GPIO_ACTIVE_LOW);
+		nvram_set_int("btn_wps_gpio", 23|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_pwr_gpio", 18|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_wps_gpio", 18|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_wan_gpio", 5|GPIO_ACTIVE_LOW);
+		nvram_set_int("et_swleds", 0x0f);
+		nvram_set_int("sb/1/ledbh4", 2);
+		nvram_set_int("sb/1/ledbh5", 11);
+		nvram_set_int("sb/1/ledbh6", 11);
+		/* go to common N12* init */
+		goto case_MODEL_RTN12X;
+
 	case MODEL_RTN12C1:
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
 		add_rc_support("mssid");
@@ -1305,14 +1350,13 @@ int init_nvram(void)
 		nvram_set_int("led_usb_gpio", 0xff);
 		nvram_set("ehci_ports", "1-2 1-1");
 		nvram_set("ohci_ports", "2-2 2-1");
-                nvram_set("boardflags", "0x310");
-                nvram_set("sb/1/boardflags", "0x310");
+		nvram_set("boardflags", "0x310");
+		nvram_set("sb/1/boardflags", "0x310");
 		if(!nvram_get("ct_max")) 
 			nvram_set("ct_max", "300000");
 		add_rc_support("2.4G update usbX2 mssid");
 		add_rc_support("switchctrl"); // broadcom: for jumbo frame only
 		add_rc_support("manual_stb");
-		add_rc_support("pwrctrl");
 		break;
 
 	case MODEL_RTN53:
@@ -1589,20 +1633,23 @@ int init_nvram(void)
 		add_rc_support("appnone");
 	else add_rc_support("appnet");
 
-#ifdef RTCONFIG_RALINK
-#ifdef RTCONFIG_DSL
-	if(model==MODEL_DSLN55U) 
-		add_rc_support("nodm");
-#endif
-#endif
+// DSL-N55U will follow N56U to have DM
+//#ifdef RTCONFIG_RALINK
+//#ifdef RTCONFIG_DSL
+//	if(model==MODEL_DSLN55U) 
+//		add_rc_support("nodm");
+//#endif
+//#endif
 #endif // RTCONFIG_APP_NETINSTALLED
 #endif // RTCONFIG_USB
 
 #ifdef RTCONFIG_WIRELESSREPEATER
 	add_rc_support("repeater");
 #endif
+#ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
 	add_rc_support("psta");
+#endif
 #endif
 #ifdef RTCONFIG_BCMWL6
 	add_rc_support("wl6");
@@ -1806,6 +1853,8 @@ int init_main(int argc, char *argv[])
 	int rc_check, dev_check, boot_check; //Power on/off test
 	int boot_fail, dev_fail, dev_fail_count, total_fail_check;
 	char dev_status[20], reboot_log[128], dev_log[128];
+	int ret;
+
 	sysinit();
 
 	sigemptyset(&sigset);
@@ -2052,8 +2101,22 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 					dbG("System boot up success %d times\n", boot_check);
 					setAllLedOn();
 					ate_commit_bootlog("2");
-                                }
-                        }
+				}
+			}
+
+#ifdef RTCONFIG_BCMWL6
+			if (nvram_match("acsd_restart_wl", "1"))
+			{
+				nvram_set("acsd_restart_wl", "0");
+
+				restart_wireless_acsd();
+				nvram_set("wl0_chanspec", nvram_safe_get("wly0_chanspec"));
+				nvram_set("wl1_chanspec", nvram_safe_get("wly1_chanspec"));
+				nvram_set("wly0_chanspec", "0");
+				nvram_set("wly1_chanspec", "0");
+			}
+#endif
+
 			nvram_set("success_start_service", "1");
 
 			force_free_caches();		
@@ -2062,7 +2125,9 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 
 		chld_reap(0);		/* Periodically reap zombies. */
 		check_services();
-		sigwait(&sigset, &state);
+		do {
+		ret = sigwait(&sigset, &state);
+		} while (ret);
 	}
 
 	return 0;

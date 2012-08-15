@@ -372,7 +372,7 @@ function add_options_value(o, str, arr, orig){
 	    	<th width="30%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,28);"><#Select_ISPfile#></a></th>
   		<td>
 		    <select name="switch_wantag" class="input_option" onChange="ISP_Profile_Selection(this.value)">
-						<option value="none" <% nvram_match( "switch_wantag", "none", "selected"); %>>None</option>
+						<option value="none" <% nvram_match( "switch_wantag", "none", "selected"); %>><#wl_securitylevel_0#></option>
 						<option value="unifi_home" <% nvram_match( "switch_wantag", "unifi_home", "selected"); %>>Unifi-Home</option>
 						<option value="unifi_biz" <% nvram_match( "switch_wantag", "unifi_biz", "selected"); %>>Unifi-Business</option>
 						<option value="singtel_mio" <% nvram_match( "switch_wantag", "singtel_mio", "selected"); %>>Singtel-MIO</option>
@@ -386,7 +386,7 @@ function add_options_value(o, str, arr, orig){
 		<th width="30%"><#Layer3Forwarding_x_STB_itemname#></th>
 		<td align="left">
 		    <select name="switch_stb_x" class="input_option">
-			<option value="0" <% nvram_match( "switch_stb_x", "0", "selected"); %>>None</option>
+			<option value="0" <% nvram_match( "switch_stb_x", "0", "selected"); %>><#wl_securitylevel_0#></option>
 			<option value="1" <% nvram_match( "switch_stb_x", "1", "selected"); %>>LAN1</option>
 			<option value="2" <% nvram_match( "switch_stb_x", "2", "selected"); %>>LAN2</option>
 			<option value="3" <% nvram_match( "switch_stb_x", "3", "selected"); %>>LAN3</option>
@@ -460,7 +460,7 @@ function add_options_value(o, str, arr, orig){
 		  <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:10px;">
 	  	<thead>
 		<tr>
-            	<td colspan="2">Special Application</td>
+            	<td colspan="2"><#IPConnection_BattleNet_sectionname#></td>
             	</tr>
 		</thead>
 		  

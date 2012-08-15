@@ -823,6 +823,7 @@ textarea{
 	border: 1px solid #000000;
 	border-collapse: collapse;
 	font-family: Lucida Console;
+	height:25px;
 }
 
 .list_table td.list_32_table{

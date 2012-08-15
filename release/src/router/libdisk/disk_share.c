@@ -22,7 +22,7 @@
 #include <ctype.h>
 #include <sys/stat.h>	// for mkdir()
 #include <sys/types.h>	// for mkdir()
-#include <unistd.h>	// for rmdir()
+#include <unistd.h>	// for sleep()
 #include <bcmnvram.h>
 #include <shutils.h>
 #include <shared.h>
@@ -35,13 +35,20 @@
 
 extern void set_file_integrity(const char *const file_name){
 	unsigned long file_size;
-	char test_file[PATH_MAX];
-	char cmd[PATH_MAX];
+	char test_file[PATH_MAX], test_file_name[PATH_MAX];
 	FILE *fp;
+	char target_dir[PATH_MAX], *ptr;
+	int len;
+	DIR *opened_dir;
+	struct dirent *dp;
 
-	memset(cmd, 0, PATH_MAX);
-	sprintf(cmd, "rm -rf %s.*", file_name);
-	system(cmd);
+	if((ptr = strrchr(file_name, '/')) == NULL){
+		usb_dbg("Fail to get the target_dir of the file.\n");
+		return;
+	}
+	len = strlen(file_name)-strlen(ptr);
+	memset(target_dir, 0, PATH_MAX);
+	strncpy(target_dir, file_name, len);
 
 	if((file_size = f_size(file_name)) == -1){
 		usb_dbg("Fail to get the size of the file.\n");
@@ -52,6 +59,32 @@ extern void set_file_integrity(const char *const file_name){
 	sprintf(test_file, "%s.%lu", file_name, file_size);
 	if((fp = fopen(test_file, "w")) != NULL)
 		fclose(fp);
+
+	memset(test_file_name, 0, PATH_MAX);
+	++ptr;
+	sprintf(test_file_name, "%s.%lu", ptr, file_size);
+
+	if((opened_dir = opendir(target_dir)) == NULL){
+		usb_dbg("Can't opendir \"%s\".\n", target_dir);
+		return;
+	}
+
+	len = strlen(ptr);
+	while((dp = readdir(opened_dir)) != NULL){
+		char test_path[PATH_MAX];
+
+		if(!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+			continue;
+
+		if(strncmp(dp->d_name, ptr, len) || !strcmp(dp->d_name, ptr) || !strcmp(dp->d_name, test_file_name))
+			continue;
+
+		memset(test_path, 0, PATH_MAX);
+		sprintf(test_path, "%s/%s", target_dir, dp->d_name);
+		usb_dbg("delete %s.\n", test_path);
+		delete_file_or_dir(test_path);
+	}
+	closedir(opened_dir);
 }
 
 extern int check_file_integrity(const char *const file_name){
@@ -78,7 +111,8 @@ extern int get_account_list(int *acc_num, char ***account_list) {
 	char **tmp_account_list, **tmp_account;
 	int len, i, j;
 	char *nv, *nvp, *b;
-	char *account, *passwd;
+	char *tmp_ascii_user, *tmp_ascii_passwd;
+	char char_user[64];
 
 	*acc_num = atoi(nvram_safe_get("acc_num"));
 	if(*acc_num <= 0)
@@ -88,7 +122,7 @@ extern int get_account_list(int *acc_num, char ***account_list) {
 	i = 0;
 	if(nv && strlen(nv) > 0){
 		while((b = strsep(&nvp, "<")) != NULL){
-			if(vstrsep(b, ">", &account, &passwd) != 2)
+			if(vstrsep(b, ">", &tmp_ascii_user, &tmp_ascii_passwd) != 2)
 				continue;
 
 			tmp_account = (char **)malloc(sizeof(char *)*(i+1));
@@ -98,7 +132,10 @@ extern int get_account_list(int *acc_num, char ***account_list) {
 				return -1;
 			}
 
-			len = strlen(account);
+			memset(char_user, 0, 64);
+			ascii_to_char_safe(char_user, tmp_ascii_user, 64);
+
+			len = strlen(char_user);
 			tmp_account[i] = (char *)malloc(sizeof(char)*(len+1));
 			if(tmp_account[i] == NULL){
 				usb_dbg("Can't malloc \"tmp_account[%d]\".\n", i);
@@ -106,7 +143,7 @@ extern int get_account_list(int *acc_num, char ***account_list) {
 				free(nv);
 				return -1;
 			}
-			strcpy(tmp_account[i], account);
+			strcpy(tmp_account[i], char_user);
 			tmp_account[i][len] = 0;
 
 			if(i != 0){
@@ -155,7 +192,11 @@ extern int get_folder_list(const char *const mount_path, int *sh_num, char ***fo
 	// 2. check the file integrity.
 	if(!check_file_integrity(list_file)){
 		usb_dbg("Fail to check the folder list.\n");
-		initial_folder_list(mount_path);
+		if(initial_folder_list(mount_path) != 0){
+			usb_dbg("Can't initial the folder list.\n");
+			free(list_file);
+			return -1;
+		}
 	}
 	
 	// 3. read if the list file is existed
@@ -274,7 +315,6 @@ extern int get_all_folder(const char *const mount_path, int *sh_num, char ***fol
 	
 	*sh_num = 0;
 	while ((dp = readdir(pool_to_open)) != NULL) {
-		//if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 		if (dp->d_name[0] == '.')
 			continue;
 		
@@ -331,31 +371,25 @@ extern int get_all_folder(const char *const mount_path, int *sh_num, char ***fol
 extern int get_var_file_name(const char *const account, const char *const path, char **file_name){
 	int len;
 	char *var_file;
-	int result, acc_num;
-	char **account_list, *target_acc = NULL;
+	char ascii_user[64];
 
 	if(path == NULL)
 		return -1;
 
-	if(account != NULL){
-		result = get_account_list(&acc_num, &account_list);
-		if(acc_num > 0  && !strcmp(account_list[ADMIN_ORDER], account))
-			target_acc = nvram_default_get("http_username");
-		else
-			target_acc = (char *)account;
-		free_2_dimension_list(&acc_num, &account_list);
-	}
-
 	len = strlen(path)+strlen("/.___var.txt");
-	if(target_acc != NULL)
-		len += strlen(target_acc);
+	if(account != NULL){
+		memset(ascii_user, 0, 64);
+		char_to_ascii_safe(ascii_user, account, 64);
+
+		len += strlen(ascii_user);
+	}
 	*file_name = (char *)malloc(sizeof(char)*(len+1));
 	if(*file_name == NULL)
 		return -1;
 
 	var_file = *file_name;
-	if(target_acc != NULL)
-		sprintf(var_file, "%s/.__%s_var.txt", path, target_acc);
+	if(account != NULL)
+		sprintf(var_file, "%s/.__%s_var.txt", path, ascii_user);
 	else
 		sprintf(var_file, "%s/.___var.txt", path);
 	var_file[len] = 0;
@@ -445,23 +479,23 @@ extern int initial_var_file(const char *const account, const char *const mount_p
 #ifdef RTCONFIG_WEBDAV_OLD
 	int webdav_right;
 #endif
-	
+
 	if (mount_path == NULL || strlen(mount_path) <= 0) {
 		usb_dbg("No input, mount_path\n");
 		return -1;
 	}
-	
+
 	// 1. get the folder number and folder_list
 	//result = get_folder_list(mount_path, &sh_num, &folder_list);
 	result = get_all_folder(mount_path, &sh_num, &folder_list);
-	
+
 	// 2. get the var file
 	if(get_var_file_name(account, mount_path, &var_file)){
 		usb_dbg("Can't malloc \"var_file\".\n");
 		free_2_dimension_list(&sh_num, &folder_list);
 		return -1;
 	}
-	
+
 	// 3. get the default permission of all protocol.
 	if(account == NULL // share mode.
 			|| !strcmp(account, nvram_safe_get("http_username"))){
@@ -480,7 +514,7 @@ extern int initial_var_file(const char *const account, const char *const mount_p
 		webdav_right = 0;
 #endif
 	}
-	
+
 	// 4. write the default content in the var file
 	if ((fp = fopen(var_file, "w")) == NULL) {
 		usb_dbg("Can't create the var file, \"%s\".\n", var_file);
@@ -488,7 +522,7 @@ extern int initial_var_file(const char *const account, const char *const mount_p
 		free(var_file);
 		return -1;
 	}
-	
+
 	for (i = -1; i < sh_num; ++i) {
 		fprintf(fp, "*");
 		
@@ -500,61 +534,69 @@ extern int initial_var_file(const char *const account, const char *const mount_p
 		fprintf(fp, "=%d%d%d\n", samba_right, ftp_right, dms_right);
 #endif
 	}
-	
+
 	fclose(fp);
 	free_2_dimension_list(&sh_num, &folder_list);
-	
+
 	// 5. set the check target of file.
 	set_file_integrity(var_file);
 	free(var_file);
-	
+
 	return 0;
 }
 
 extern int initial_all_var_file(const char *const mount_path) {
-	char *cmd;
-	int len, i, result;
+	int i, result;
 	int acc_num;
 	char **account_list;
-	
+	DIR *opened_dir;
+	struct dirent *dp;
+
 	if (mount_path == NULL || strlen(mount_path) <= 0) {
 		usb_dbg("No input, mount_path\n");
 		return -1;
 	}
-	
+
 	// 1. get the account number and account_list
 	result = get_account_list(&acc_num, &account_list);
-	
+
 	// 2. delete all var files
-	len = strlen("cd ")+strlen(mount_path)+strlen(" && rm -rf .__* && cd");
-	cmd = (char *)malloc(sizeof(char)*(len+1));
-	if (cmd == NULL) {
-		usb_dbg("Can't malloc \"cmd\".\n");
-		free_2_dimension_list(&acc_num, &account_list);
+	if((opened_dir = opendir(mount_path)) == NULL){
+		usb_dbg("Can't opendir \"%s\".\n", mount_path);
 		return -1;
 	}
-	sprintf(cmd, "cd %s && rm -rf .__* && cd", mount_path);
-	cmd[len] = 0;
-	result = system(cmd);
-	free(cmd);
-	if (result != 0)
-		usb_dbg("Fail to delete all var files!\n");
-	
+
+	while((dp = readdir(opened_dir)) != NULL){
+		char test_path[PATH_MAX];
+
+		if(!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+			continue;
+
+		if(strncmp(dp->d_name, ".__", 3))
+			continue;
+
+		memset(test_path, 0, PATH_MAX);
+		sprintf(test_path, "%s/%s", mount_path, dp->d_name);
+		usb_dbg("delete %s.\n", test_path);
+		delete_file_or_dir(test_path);
+	}
+	closedir(opened_dir);
+
 	// 3. initial the var file
-	if (initial_var_file(NULL, mount_path) != 0) // share mode.
+	if(initial_var_file(NULL, mount_path) != 0) // share mode.
 		usb_dbg("Can't initial the var file for the share mode.\n");
-	
-	for (i = 0; i < acc_num; ++i) {
-		if (initial_var_file(account_list[i], mount_path) != 0)
+
+	for(i = 0; i < acc_num; ++i){
+		if(initial_var_file(account_list[i], mount_path) != 0)
 			usb_dbg("Can't initial \"%s\"'s file in %s.\n", account_list[i], mount_path);
 	}
 	free_2_dimension_list(&acc_num, &account_list);
-	
+
 	// 4. initial the folder list
 	result = initial_folder_list(mount_path);
-	if (result != 0)
+	if(result != 0)
 		usb_dbg("Can't initial the folder list.\n");
-	
+
 	return 0;
 }
 
@@ -579,7 +621,7 @@ extern int create_if_no_var_files(const char *const mount_path) {
 	}
 	
 	// 2. test if the var_file is existed and check the file integrity.
-	if (!check_if_file_exist(var_file)) {
+	if(!check_if_file_exist(var_file)){
 		// 3.1. create the var_file when it's not existed
 		if (initial_var_file(NULL, mount_path) != 0)
 			usb_dbg("Can't initial the var file for the share mode.\n");
@@ -587,8 +629,11 @@ extern int create_if_no_var_files(const char *const mount_path) {
 	else if(!check_file_integrity(var_file)){
 		// 3.2. check the file integrity.
 		usb_dbg("Fail to check the file: %s.\n", var_file);
-		if (initial_var_file(NULL, mount_path) != 0)
+		if(initial_var_file(NULL, mount_path) != 0){
 			usb_dbg("Can't initial the var file for the share mode.\n");
+			free(var_file);
+			return -1;
+		}
 	}
 	else{
 		// 3.3. add the new folder into the var file
@@ -602,22 +647,26 @@ extern int create_if_no_var_files(const char *const mount_path) {
 	result = get_account_list(&acc_num, &account_list);
 	
 	// 5. get the var_file of all accounts.
-	for (i = 0; i < acc_num; ++i) {
+	for(i = 0; i < acc_num; ++i){
 		if(get_var_file_name(account_list[i], mount_path, &var_file)){
 			usb_dbg("Can't malloc \"var_file\".\n");
 			free_2_dimension_list(&acc_num, &account_list);
 			return -1;
 		}
 		
-		if (!check_if_file_exist(var_file)) {
+		if(!check_if_file_exist(var_file)){
 			if (initial_var_file(account_list[i], mount_path) != 0)
 				usb_dbg("Can't initial \"%s\"'s file in %s.\n", account_list[i], mount_path);
 		}
 		else if(!check_file_integrity(var_file)){
 			// 3.2. check the file integrity.
 			usb_dbg("Fail to check the file: %s.\n", var_file);
-			if (initial_var_file(account_list[i], mount_path) != 0)
+			if (initial_var_file(account_list[i], mount_path) != 0){
 				usb_dbg("Can't initial \"%s\"'s file in %s.\n", account_list[i], mount_path);
+				free_2_dimension_list(&acc_num, &account_list);
+				free(var_file);
+				return -1;
+			}
 		}
 		else{
 			result = modify_if_exist_new_folder(account_list[i], mount_path);
@@ -995,13 +1044,6 @@ extern int set_permission(const char *const account,
 	fclose(fp);
 	free(var_info);
 	
-	// 8. re-run ftp and samba
-	/*result = system("/sbin/run_ftpsamba");
-	if (result != 0) {
-		usb_dbg("Fail to \"run_ftpsamba\"!\n");
-		return -1;
-	}//*/
-	
 	return 0;
 }
 
@@ -1011,6 +1053,7 @@ extern int add_account(const char *const account, const char *const password){
 	int acc_num;
 	int len;
 	char nvram_value[PATH_MAX], *ptr;
+	char ascii_user[64], ascii_passwd[64];
 
 	if(account == NULL || strlen(account) <= 0){
 		usb_dbg("No input, \"account\".\n");
@@ -1025,6 +1068,12 @@ extern int add_account(const char *const account, const char *const password){
 		return -1;
 	}
 
+	memset(ascii_user, 0, 64);
+	char_to_ascii_safe(ascii_user, account, 64);
+
+	memset(ascii_passwd, 0, 64);
+	char_to_ascii_safe(ascii_passwd, password, 64);
+
 	acc_num = atoi(nvram_safe_get("acc_num"));
 	if(acc_num < 0)
 		acc_num = 0;
@@ -1038,14 +1087,14 @@ extern int add_account(const char *const account, const char *const password){
 	len = strlen(nvram_value);
 	if(len > 0){
 		ptr = nvram_value+len;
-		sprintf(ptr, "<%s>%s", account, password);
+		sprintf(ptr, "<%s>%s", ascii_user, ascii_passwd);
 		nvram_set("acc_list", nvram_value);
 
 		sprintf(nvram_value, "%d", acc_num+1);
 		nvram_set("acc_num", nvram_value);
 	}
 	else{
-		sprintf(nvram_value, "%s>%s", account, password);
+		sprintf(nvram_value, "%s>%s", ascii_user, ascii_passwd);
 		nvram_set("acc_list", nvram_value);
 
 		nvram_set("acc_num", "1");
@@ -1072,12 +1121,6 @@ extern int add_account(const char *const account, const char *const password){
 	}
 	free_disk_data(&disk_list);
 
-	/*result = system("/sbin/run_samba");
-	if(result != 0){
-		usb_dbg("Fail to \"run_samba\"!\n");
-		return -1;
-	}//*/
-
 	return 0;
 }
 
@@ -1088,8 +1131,9 @@ extern int del_account(const char *const account){
 	char nvram_value[PATH_MAX], *ptr;
 	char *var_file;
 	char *nv, *nvp, *b;
-	char *tmp_account, *tmp_passwd;
-	char cmd[PATH_MAX];
+	char *tmp_ascii_user, *tmp_ascii_passwd, char_user[64];
+	DIR *opened_dir;
+	struct dirent *dp;
 
 	if(account == NULL || strlen(account) <= 0){
 		usb_dbg("No input, \"account\".\n");
@@ -1105,10 +1149,13 @@ extern int del_account(const char *const account){
 	i = 0;
 	if(nv && strlen(nv) > 0){
 		while((b = strsep(&nvp, "<")) != NULL){
-			if(vstrsep(b, ">", &tmp_account, &tmp_passwd) != 2)
+			if(vstrsep(b, ">", &tmp_ascii_user, &tmp_ascii_passwd) != 2)
 				continue;
 
-			if(!strcmp(account, tmp_account)){
+			memset(char_user, 0, 64);
+			ascii_to_char_safe(char_user, tmp_ascii_user, 64);
+
+			if(!strcmp(account, char_user)){
 				if(--acc_num == 0){
 					nvram_set("acc_num", "0");
 					nvram_set("acc_list", "");
@@ -1123,10 +1170,10 @@ extern int del_account(const char *const account){
 			len = strlen(nvram_value);
 			if(len > 0){
 				ptr = nvram_value+len;
-				sprintf(ptr, "<%s>%s", tmp_account, tmp_passwd);
+				sprintf(ptr, "<%s>%s", tmp_ascii_user, tmp_ascii_passwd);
 			}
 			else
-				sprintf(nvram_value, "%s>%s", tmp_account, tmp_passwd);
+				sprintf(nvram_value, "%s>%s", tmp_ascii_user, tmp_ascii_passwd);
 
 			if(++i >= acc_num)
 				break;
@@ -1155,7 +1202,7 @@ extern int del_account(const char *const account){
 	disk_list = read_disk_data();
 	if(disk_list == NULL){
 		usb_dbg("Couldn't read the disk list out.\n");
-		return -1;
+		return 0;
 	}
 
 	for(follow_disk = disk_list; follow_disk != NULL; follow_disk = follow_disk->next){			
@@ -1169,20 +1216,42 @@ extern int del_account(const char *const account){
 				return -1;
 			}
 
-			memset(cmd, 0, PATH_MAX);
-			sprintf(cmd, "rm -rf %s*", var_file);
-			system(cmd);
+			if((ptr = strrchr(var_file, '/')) == NULL){
+				usb_dbg("Fail to get the %s of the file.\n", follow_partition->mount_point);
+				free_disk_data(&disk_list);
+				free(var_file);
+				return -1;
+			}
+
+			if((opened_dir = opendir(follow_partition->mount_point)) == NULL){
+				usb_dbg("Can't opendir \"%s\".\n", follow_partition->mount_point);
+				free_disk_data(&disk_list);
+				free(var_file);
+				return -1;
+			}
+
+			++ptr;
+			len = strlen(ptr);
+			while((dp = readdir(opened_dir)) != NULL){
+				char test_path[PATH_MAX];
+
+				if(!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+					continue;
+
+				if(strncmp(dp->d_name, ptr, len))
+					continue;
+
+				memset(test_path, 0, PATH_MAX);
+				sprintf(test_path, "%s/%s", follow_partition->mount_point, dp->d_name);
+				usb_dbg("delete %s.\n", test_path);
+				delete_file_or_dir(test_path);
+			}
+			closedir(opened_dir);
 
 			free(var_file);
 		}
 	}
 	free_disk_data(&disk_list);
-
-	/*result = system("/sbin/run_ftpsamba");
-	if(result != 0){
-		usb_dbg("Fail to \"run_ftpsamba\"!\n");
-		return -1;
-	}//*/
 
 	return 0;
 }
@@ -1196,7 +1265,7 @@ extern int mod_account(const char *const account, const char *const new_account,
 	char nvram_value[PATH_MAX], *ptr;
 	char *var_file, *new_var_file;
 	char *nv, *nvp, *b;
-	char *tmp_account, *tmp_passwd;
+	char *tmp_ascii_user, *tmp_ascii_passwd, char_user[64];
 	unsigned long file_size;
 	char file1[PATH_MAX], file2[PATH_MAX];
 
@@ -1226,37 +1295,43 @@ extern int mod_account(const char *const account, const char *const new_account,
 	i = 0;
 	if(nv && strlen(nv) > 0){
 		while((b = strsep(&nvp, "<")) != NULL){
-			if(vstrsep(b, ">", &tmp_account, &tmp_passwd) != 2)
+			if(vstrsep(b, ">", &tmp_ascii_user, &tmp_ascii_passwd) != 2)
 				continue;
 
 			char *set_passwd;
-			if(new_password != NULL && strlen(new_password) > 0)
-				set_passwd = (char *)new_password;
+			char ascii_user[64], ascii_passwd[64];
+
+			memset(ascii_user, 0, 64);
+			if(new_account != NULL && strlen(new_account) > 0)
+				char_to_ascii_safe(ascii_user, new_account, 64);
 			else
-				set_passwd = tmp_passwd;
+				char_to_ascii_safe(ascii_user, account, 64);
+
+			if(new_password != NULL && strlen(new_password) > 0){
+				memset(ascii_passwd, 0, 64);
+				char_to_ascii_safe(ascii_passwd, new_password, 64);
+				set_passwd = ascii_passwd;
+			}
+			else
+				set_passwd = tmp_ascii_passwd;
 
 			len = strlen(nvram_value);
-			if(!strcmp(account, tmp_account)){
-				if(len == 0){
-					if(new_account == NULL || strlen(new_account) <= 0)
-						sprintf(nvram_value, "%s>%s", account, set_passwd);
-					else
-						sprintf(nvram_value, "%s>%s", new_account, set_passwd);
-				}
+			memset(char_user, 0, 64);
+			ascii_to_char_safe(char_user, tmp_ascii_user, 64);
+			if(!strcmp(account, char_user)){
+				if(len == 0)
+					sprintf(nvram_value, "%s>%s", ascii_user, set_passwd);
 				else{
 					ptr = nvram_value+len;
-					if(new_account == NULL || strlen(new_account) <= 0)
-						sprintf(ptr, "<%s>%s", account, set_passwd);
-					else
-						sprintf(ptr, "<%s>%s", new_account, set_passwd);
+					sprintf(ptr, "<%s>%s", ascii_user, set_passwd);
 				}
 			}
 			else{
 				if(len == 0)
-					sprintf(nvram_value, "%s>%s", tmp_account, tmp_passwd);
+					sprintf(nvram_value, "%s>%s", tmp_ascii_user, tmp_ascii_passwd);
 				else{
 					ptr = nvram_value+len;
-					sprintf(ptr, "<%s>%s", tmp_account, tmp_passwd);
+					sprintf(ptr, "<%s>%s", tmp_ascii_user, tmp_ascii_passwd);
 				}
 			}
 
@@ -1273,12 +1348,12 @@ extern int mod_account(const char *const account, const char *const new_account,
 	spinlock_unlock(SPINLOCK_NVRAMCommit);
 
 	if(new_account == NULL || strlen(new_account) <= 0 || !strcmp(new_account, account))
-		goto rerun;
+		return 0;
 
 	disk_list = read_disk_data();
 	if(disk_list == NULL){
 		usb_dbg("Couldn't read the disk list out.\n");
-		return -1;
+		return 0;
 	}
 
 	for(follow_disk = disk_list; follow_disk != NULL; follow_disk = follow_disk->next){			
@@ -1310,8 +1385,7 @@ extern int mod_account(const char *const account, const char *const new_account,
 				}
 			}
 			else{
-				rmdir(new_var_file);
-				unlink(new_var_file);
+				delete_file_or_dir(new_var_file);
 				rename(var_file, new_var_file);
 
 				if((file_size = f_size(new_var_file)) == -1){
@@ -1324,8 +1398,7 @@ extern int mod_account(const char *const account, const char *const new_account,
 				memset(file2, 0, PATH_MAX);
 				sprintf(file2, "%s.%lu", new_var_file, file_size);
 
-				rmdir(file2);
-				unlink(file2);
+				delete_file_or_dir(file2);
 				rename(file1, file2);
 			}
 
@@ -1335,13 +1408,6 @@ extern int mod_account(const char *const account, const char *const new_account,
 	}
 
 	free_disk_data(&disk_list);
-
-rerun:
-	/*result = system("/sbin/run_ftpsamba");
-	if(result != 0){
-		usb_dbg("Fail to \"run_ftpsamba\"!\n");
-		return -1;
-	}//*/
 
 	return 0;
 }
@@ -1590,7 +1656,7 @@ extern int del_folder(const char *const mount_path, const char *const folder) {
 	}
 	
 	// 2. delete the folder
-	result = rmdir(full_path);
+	result = delete_file_or_dir(full_path);
 	free(full_path);
 	if (result != 0) {
 		usb_dbg("To delete \"%s\" is failed!\n", folder);

@@ -879,9 +879,9 @@ ure_any_enabled(void)
 #define WDS_DEV_NAME	"wds"
 
 /**
- *	 nvifname_to_osifname()
- *  The intent here is to provide a conversion between the OS interface name
- *  and the device name that we keep in NVRAM.
+ * nvifname_to_osifname()
+ * The intent here is to provide a conversion between the OS interface name
+ * and the device name that we keep in NVRAM.
  * This should eventually be placed in a Linux specific file with other
  * OS abstraction functions.
 

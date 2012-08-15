@@ -37,7 +37,19 @@ char* nvram_get_webdav_https_port();
 char* nvram_get_misc_http_x();
 char* nvram_get_msie_http_port();
 
+char* nvram_get_enable_webdav_captcha();
 
+char* nvram_get_enable_webdav_lock();
+
+char* nvram_get_webdav_acc_lock();
+int nvram_set_webdav_acc_lock(const char* acc_block);
+
+char* nvram_get_webdav_lock_interval();
+
+char* nvram_get_webdav_lock_times();
+
+char* nvram_get_webdav_last_login_info();
+int nvram_set_webdav_last_login_info(const char* last_login_info);
 
 
 

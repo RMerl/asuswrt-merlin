@@ -22,21 +22,24 @@
 #include <unistd.h>
 #include <bcmnvram.h>
 #include <shutils.h>
+#include <rtconfig.h>
 
 #include "usb_info.h"
 #include "disk_initial.h"
 #include "disk_share.h"
 
 #define WEBDAV_CONF "/tmp/lighttpd.conf"
-
+#if 0
 #define PRODUCTID "productid"
+#endif
 #define WEBDAV_HTTP_PORT "webdav_http_port"
 #define WEBDAV_HTTPS_PORT "webdav_https_port"
+#if 0
 char* get_productid()
 {
    nvram_get(PRODUCTID);
 }
-
+#endif
 char* get_webdav_http_port()
 {
    nvram_get(WEBDAV_HTTP_PORT);
@@ -71,6 +74,7 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "server.modules+=(\"mod_alias\")\n");
 	fprintf(fp, "server.modules+=(\"mod_userdir\")\n");
 	fprintf(fp, "server.modules+=(\"mod_aidisk_access\")\n");
+	fprintf(fp, "server.modules+=(\"mod_create_captcha_image\")\n");
 	fprintf(fp, "server.modules+=(\"mod_webdav\")\n");
 	fprintf(fp, "server.modules+=(\"mod_smbdav\")\n");
 	fprintf(fp, "server.modules+=(\"mod_redirect\")\n");
@@ -94,6 +98,7 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "server.arpping-interface=\"br0\"\n");
 	fprintf(fp, "server.errorfile-prefix=\"/usr/css/status-\"\n");
 	fprintf(fp, "dir-listing.activate=\"enable\"\n");
+    fprintf(fp, "server.syslog=\"/tmp/lighttpd/syslog.log\"\n");
 
 	//	**** Minetype setting **** //	
 	fprintf(fp, "mimetype.assign = (\n");
@@ -101,6 +106,8 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "\".htm\" => \"text/html\",\n");
 	fprintf(fp, "\".css\" => \"text/css\",\n");
 	fprintf(fp, "\".js\" => \"text/javascript\",\n");
+	
+	fprintf(fp, "\".swf\" => \"application/x-shockwave-flash\",\n");
 	//fprintf(fp, "\".txt\" => \"text/plain\",\n");
 	//fprintf(fp, "\".jpg\" => \"image/jpeg\",\n");
 	//fprintf(fp, "\".gif\" => \"image/gif\",\n");

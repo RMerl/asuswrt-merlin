@@ -35,17 +35,14 @@ width:40px;
 height:40px;
 float:right;
 }
-
 #title1{
 color:#fff;
 font-size:30px
 }
-
 #title2{
 color:#fff;
 font-size:20px
 }
- 
 input {
 font-size: 15px;
 text-shadow: 0px 1px 0px white;
@@ -59,6 +56,18 @@ border: 0;
 -moz-box-shadow: 0 0 0;
 box-shadow: 0 0 0;
 }
+div.cap_num{
+width:40px;
+height:40px;
+float:right;
+}
+.unselectable {
+-moz-user-select: -moz-none;
+-khtml-user-select: none;
+-webkit-user-select: none;
+-o-user-select: none;
+user-select: none;
+}
 </style>
 <script type="text/javascript" src="/smb/js/tools.js"></script>
 <script type='text/javascript' src='/smb/js/davclient_tools.js'></script>
@@ -66,6 +75,7 @@ box-shadow: 0 0 0;
 var this_url;
 var m = new lang();
 var g_storage = new myStorage();
+var g_captcha = -1;
 
 $("document").ready(function() {
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
@@ -74,6 +84,7 @@ $("document").ready(function() {
 	
 	$('label#username').text(m.getString('title_username2'));
 	$('label#password').text(m.getString('title_password2'));
+	$('label#captcha').text(m.getString('title_captcha'));
 	
 	this_url = getUrlVars()["v"];
 	
@@ -82,7 +93,60 @@ $("document").ready(function() {
 			getInternetExplorerVersion() <= 7 ){
 		alert(m.getString('msg_browsersupport'));
 	}
+	
+	$(".captcha").css("display","none");	
+			
+	generateCaptcha();
+	
 });
+
+function parseXml(xml) {
+  if (jQuery.browser.msie) {
+  	var xmlDoc = new ActiveXObject("Microsoft.XMLDOM"); 
+    xmlDoc.loadXML(xml);
+    xml = xmlDoc;
+  }   
+  return xml;
+}
+
+function generateCaptcha(){
+	
+	$.ajax({
+		url: 'GetCaptchaImage',
+		data: '',
+		type: 'GET',
+		dataType: 'xml',
+		timeout: 20000,
+		error: function(){
+			//alert('Error loading XML document');
+		},
+		success: function(xml){			
+			var data = parseXml(xml);
+			var captcha_enable = $(data).find('enable').text();
+			if(captcha_enable==1){
+				var image_data1 = $(data).find('img1').text();
+				var image_data1 = $(data).find('img1').text();
+				var image_data2 = $(data).find('img2').text();
+				var image_data3 = $(data).find('img3').text();
+				var image_data4 = $(data).find('img4').text();
+				g_captcha = $(data).find('code').text();
+				
+				var captcha_pattern = "";
+				$("#captcha_pattern").empty();
+				
+				captcha_pattern += "<div class='cap_num' style='background-image: url(" + image_data4 + ")'></div>";
+				captcha_pattern += "<div class='cap_num' style='background-image: url(" + image_data3 + ")'></div>";
+				captcha_pattern += "<div class='cap_num' style='background-image: url(" + image_data2 + ")'></div>";
+				captcha_pattern += "<div class='cap_num' style='background-image: url(" + image_data1 + ")'></div>";
+				
+				$(captcha_pattern).appendTo("#captcha_pattern");
+				
+				$(".captcha").css("display","block");
+				$("#main").css("height",420);
+			}
+		}
+	});
+}
 
 function getInternetExplorerVersion(){
    var rv = -1; // Return value assumes failure.
@@ -97,15 +161,19 @@ function getInternetExplorerVersion(){
 }
 
 function doOK(e) {
+	var captcha = $('input#captcha').val();
+	var user = "";
+	var pass = "";
+	var auth = "";
 	
-	var user = $('input#username').val();
-	var pass = $('input#password').val();
-	var auth = "Basic " + Base64.encode(user + ":" + pass);
-	
-	//$('input#username').attr("disabled", "disabled");
-	//$('input#password').attr("disabled", "disabled");
-	//alert(auth);
-	//parent.doLOGIN(this_url, auth);
+	if(g_captcha!=-1&&captcha!=g_captcha){
+		alert(m.getString('msg_error_captcha'));
+	}
+	else{
+		user = $('input#username').val();
+		pass = $('input#password').val();
+		auth = "Basic " + Base64.encode(user + ":" + pass);
+	}
 	
 	var client = new davlib.DavClient();
 	client.initialize();
@@ -164,7 +232,7 @@ function onKeyHandler(e){
 			<table valign="middle" align="center" border="0" cellpadding="0" cellspacing="0">
 				<tbody><tr>
 					<td align="left" background="" height="106" alt="">		
-						<div style="width:300px;height:385px;background-color:#008F6D">
+						<div id="main" style="width:300px;height:385px;background-color:#008F6D">
 							<table border="0" cellpadding="0" cellspacing="3" style="position: relative;left:40px;padding-top:20px">
 									<tbody>
 										<tr>
@@ -174,7 +242,7 @@ function onKeyHandler(e){
 										<tr>
 					          	<td><input id="username" name="username" type="text" size="20" autocapitalize="off" style="font-size:20px;width:220px;height:36px"></td>
 					          </tr>
-					          <tr style="height:26px"></tr>
+					          <tr style="height:10px"></tr>
 					          <tr> 
 					            <td><font color="white" size="4"><label id="password">Password :</label></font></td>
 					          </tr>
@@ -182,7 +250,21 @@ function onKeyHandler(e){
 					          <tr> 
 					            <td><input id="password" name="password" type="password" size="20" style="font-size:20px;width:220px;height:36px" onkeydown="return onKeyHandler(event)"></td>
 					          </tr>
-					          <tr style="height:20px"></tr>
+					           <tr style="height:10px"></tr>
+					          <tr class="captcha">
+											<td><font color="white" size="4"><label id="captcha">Random no. :</label></font></td>
+										</tr>
+										<tr class="captcha" height="5px"></tr>
+										<tr class="captcha">
+					          	<td>
+					          		<input id="captcha" name="captcha" type="text" size="20" autocapitalize="off" maxlength="4" style="font-size:20px;width:220px;height:36px" onkeydown="return onKeyHandler(event)">
+					          	</td>
+					          </tr>
+					          <tr class="captcha" height="5px"></tr>
+					          <tr class="captcha">
+					          	<td><div id="captcha_pattern" class="unselectable" name="captcha_pattern" style="width:220px;height:40px;float:left" onclick="generateCaptcha()"></div></td>
+					          </tr>
+					          <tr style="height:10px"></tr>
 					          <tr> 
 					          	<td colspan="2" align="center"><div id="ok" onClick="doOK();"></div></td>
 					        	</tr>

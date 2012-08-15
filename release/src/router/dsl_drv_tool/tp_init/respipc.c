@@ -35,6 +35,7 @@ extern void UpdateAllAdslSts(int cnt, int from_ate);
 extern void DispAllPvc();
 extern int AddPvc(int idx, int vlan_id, int vpi, int vci, int encap, int mode);
 extern int DelAllPvc();
+extern int RestoreDefault(); /* Paul add 2012/8/7 */
 extern void GetLinkSts(char* buf, int max_len);
 extern void myprintf(const char *fmt, ...);
 extern void SleepMs(int ms);
@@ -221,6 +222,16 @@ int RcvMsgQ()
             del_ret = DelAllPvc();
             send_buf.mtype=IPC_DEL_ALL_PVC;
             if (del_ret == 0) strcpy(send_buf.mtext,"OK");
+            else strcpy(send_buf.mtext,"FAIL");
+        }
+				/* Paul add 2012/8/7 */
+        else if (IPC_ATE_ADSL_RESTORE_DEFAULT == receive_buf.mtype)
+        {
+            int rst_ret;
+            myprintf("TP_INIT:IPC_ATE_ADSL_RESTORE_DEFAULT\n");                        
+            rst_ret = RestoreDefault();
+            send_buf.mtype=IPC_ATE_ADSL_RESTORE_DEFAULT;
+            if (rst_ret == 0) strcpy(send_buf.mtext,"OK");
             else strcpy(send_buf.mtext,"FAIL");
         }
         else if (IPC_LINK_STATE == receive_buf.mtype)

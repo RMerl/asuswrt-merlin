@@ -122,7 +122,7 @@ function init()
 	if (typeof(speed_history) == 'undefined') {
 		speed_history = {};
 		rstats_busy = 1;
-//		E('rbusy').style.display = '';
+//		E('rbusy').style.display = '';	
 	}
 
 	hours = fixInt(cookie.get(cprefix + 'hrs'), 1, 24, 24);
@@ -130,17 +130,18 @@ function init()
 	showHours();
 	initCommon(1, 0, 0, 1);	   //Viz 2010.09
 	ref.initX();
+	addOnlineHelp($("faq0"), ["ASUSWRT", "Traffic", "Monitor"]);
 }
 
 function switchPage(page){
 	if(page == "1")
 		location.href = "/Main_TrafficMonitor_realtime.asp";
-	else if(page == "3")
-		location.href = "/Main_TrafficMonitor_daily.asp";
+	else if(page == "2")
+		return false;
 	else if(page == "4")
 		location.href = "/Main_TrafficMonitor_monthly.asp";
 	else
-		return false;
+		location.href = "/Main_TrafficMonitor_daily.asp";
 }
 
 function Zoom(func){
@@ -211,67 +212,72 @@ function Zoom(func){
 		  				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="TMTable">
 
         			<tr>
-          			<td>
-     							<div align="right">
-			    					<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option" style="margin-top:8px;">
-											<!--option><#switchpage#></option-->
-											<option value="1"><#menu4_2_1#></option>
-											<option value="2" selected><#menu4_2_2#></option>
-											<option value="3"><#menu4_2_3#></option>
-											<option value="4">Monthly</option>
-										</select>	
-									</div>
-								</td>
+						<td>
+						<table width="100%" ><tr>
+							<td  class="formfonttitle" align="left">								
+										<div style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
+									</td>
+							<td>
+     						<div align="right">
+			    				<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option" style="margin-top:8px;">
+									<!--option><#switchpage#></option-->
+									<option value="1"><#menu4_2_1#></option>
+									<option value="2" selected><#menu4_2_2#></option>
+									<option value="3"><#menu4_2_3#></option>
+									<option value="4">Monthly</option>
+								</select>	
+							</div>
+							</td></tr></table>
+						</td>
         			</tr>
-
         			<tr>
-          				<td height="20"><img src="images/New_ui/export/line_export.png" /></td>
+          				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
         			<tr>
           				<td height="30" align="left" valign="middle" >
-										<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc1#></p></div>										
+							<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc1#></p></div>										
           				</td>
         			</tr>
         			<tr>
           				<td align="left" valign="middle">
-										<table width="95%" border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="DescTable">
-											<tr><th width="16%"></th><th width="26%"><#tm_internet#></th><th width="29%"><#tm_wired#></th><th width="29%"><#tm_wireless#></th></tr>
-											<tr><th><#tm_reception#></th><td><#tm_recp_int#></td><td><#tm_recp_wired#></td><td><#tm_recp_wireless#></td></tr>
-											<tr><th><#tm_transmission#></th><td><#tm_trans_int#></td><td><#tm_trans_wired#></td><td><#tm_trans_wireless#></td></tr>
-										</table>	
+							<table width="95%" border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="DescTable">
+								<tr><th width="16%"></th><th width="26%"><#tm_internet#></th><th width="29%"><#tm_wired#></th><th width="29%"><#tm_wireless#></th></tr>
+								<tr><th><#tm_reception#></th><td style="color:#FF9000;"><#tm_recp_int#></td><td style="color:#3CF;"><#tm_recp_wired#></td><td style="color:#3CF;"><#tm_recp_wireless#></td></tr>
+								<tr><th><#tm_transmission#></th><td style="color:#3CF;"><#tm_trans_int#></td><td style="color:#FF9000;"><#tm_trans_wired#></td><td style="color:#FF9000;"><#tm_trans_wireless#></td></tr>
+							</table>	
           				</td>
         			</tr>
         			<tr>
           				<td height="30" align="left" valign="middle" >
-										<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc2#></p></div>										
+							<div class="formfontcontent"><p><#traffic_monitor_desc2#></p></div>		
+							<div class="formfontcontent"><p><a id="faq0" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;"><#traffic_monitor#> FAQ</a></p></div>	
           				</td>
-        			</tr>
-
-        					<tr>
-        						<td>
-								<span id="tab-area"></span>										
-										<span style="display:none;">	
-											<input title="Zoom in" type="button" onclick="Zoom('in');" class="zoomin_btn" name="button">
-         							<input title="Zoom out" type="button" onclick="Zoom('out');" class="zoomout_btn" name="button">
-										</span>
-					<!--========= svg =========-->
-					<!--[if IE]>
-								<div id="svg-table" align="left">
-								<object id="graph" src="tm.svg" classid="image/svg+xml" width="730" height="350">
-								</div>
-					<![endif]-->
-					<!--[if !IE]>-->
-									<object id="graph" data="tm.svg" type="image/svg+xml" width="730" height="350">
-					<!--<![endif]-->
-									</object>
-      				<!--========= svg =========-->
+        			</tr>    			
+        			<tr>
+						<td>
+							<span id="tab-area"></span>										
+							<span style="display:none;">	
+								<input title="Zoom in" type="button" onclick="Zoom('in');" class="zoomin_btn" name="button">
+         						<input title="Zoom out" type="button" onclick="Zoom('out');" class="zoomout_btn" name="button">
+							</span>
+							<!--========= svg =========-->
+							<!--[if IE]>
+										<div id="svg-table" align="left">
+										<object id="graph" src="tm.svg" classid="image/svg+xml" width="730" height="350">
+										</div>
+							<![endif]-->
+							<!--[if !IE]>-->
+								<object id="graph" data="tm.svg" type="image/svg+xml" width="730" height="350">
+							<!--<![endif]-->
+								</object>
+							<!--========= svg =========-->
       			
-                    				</td>
-        	    				</tr>
+                    	</td>
+        	    	</tr>
         	    
-  		     				<tr>
-							<td>
-				    	 			<table width="735px"   border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_NWM" style="margin-top:10px">
+  		     		<tr>
+						<td>
+				    	 	<table width="735px"   border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_NWM" style="margin-top:10px">
 						  		<tr>
 						  			<th style="text-align:center;width:160px;height:25px;"><#Network#></th>
 						  			<th style="text-align:center;width:160px;height:25px;"><#Current#></th>
@@ -281,90 +287,78 @@ function Zoom(func){
 						  		</tr>
 						  		<tr>
 						  			<td style="text-align:center; background-color:#111;">
-										<div id='rx-sel'><#tm_reception#>										
-											</ul>
-										</div>
-						  			</td>
-						  			
+										<div id='rx-sel'><#tm_reception#></div>
+						  			</td>						  			
 						  			<td style="text-align:center;font-weight: bold; background-color:#111;"><span id='rx-current' style="color:#FF9000;"></span></td>
 						  			<td style="text-align:center; background-color:#111;" id='rx-avg'></td>
 						  			<td style="text-align:center; background-color:#111;" id='rx-max'></td>
 						  			<td style="text-align:center; background-color:#111;" id='rx-total'></td>
-						    		</tr>
-						    		
-						    		<tr>
-						    			<td style="text-align:center; background-color:#111;">
-											<div id='tx-sel'><#tm_transmission#></div> 																			             			                            
-						    			</td>						    			
-										<td style="text-align:center;font-weight: bold; background-color:#111;"><span id='tx-current' style="color:#3CF;"></span></td>
-										<td style="text-align:center; background-color:#111;" id='tx-avg'></td>
-										<td style="text-align:center; background-color:#111;" id='tx-max'></td>
-										<td style="text-align:center; background-color:#111;" id='tx-total'></td>
-									</tr>
-								</table>
-							</td>
-						</tr>
+						    	</tr>						    		
+						    	<tr>
+						    		<td style="text-align:center; background-color:#111;">
+										<div id='tx-sel'><#tm_transmission#></div> 																			             			                            
+						    		</td>						    			
+									<td style="text-align:center;font-weight: bold; background-color:#111;"><span id='tx-current' style="color:#3CF;"></span></td>
+									<td style="text-align:center; background-color:#111;" id='tx-avg'></td>
+									<td style="text-align:center; background-color:#111;" id='tx-max'></td>
+									<td style="text-align:center; background-color:#111;" id='tx-total'></td>
+								</tr>
+							</table>
+						</td>
+					</tr>
 						</table>
 					</td>
-				</tr>
-	
+				</tr>	
 				<tr style="display:none">
 					<td bgcolor="#FFFFFF">
 		  				<table width="100%"  border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 		    				<thead>
-						<tr>
-			  				<td colspan="5" id="TriggerList">Display Options</td>
-						</tr>
+								<tr>
+									<td colspan="5" id="TriggerList">Display Options</td>
+								</tr>
 		    				</thead>
-
-						<div id='bwm-controls'>
-						
-						<tr>
-							<th width='50%'><#Traffic_Hours#>:&nbsp;</th>
-							<td>
-								<a href='javascript:switchHours(4);' id='hr4'>4</a>,
-								<a href='javascript:switchHours(6);' id='hr6'>6</a>,
-								<a href='javascript:switchHours(12);' id='hr12'>12</a>,
-								<a href='javascript:switchHours(18);' id='hr18'>18</a>,
-								<a href='javascript:switchHours(24);' id='hr24'>24</a>
-							</td>
-						</tr>
-						
-						<tr>
-							<th><#Traffic_Avg#>:&nbsp;</th>
-							<td>
-								<a href='javascript:switchAvg(1)' id='avg1'>Off</a>,
-								<a href='javascript:switchAvg(2)' id='avg2'>2x</a>,
-								<a href='javascript:switchAvg(4)' id='avg4'>4x</a>,
-								<a href='javascript:switchAvg(6)' id='avg6'>6x</a>,
-								<a href='javascript:switchAvg(8)' id='avg8'>8x</a>
-							</td>
-						</tr>
-			
-						<tr>
-							<th><#Traffic_Max#>:&nbsp;</th>
-							<td>
-								<a href='javascript:switchScale(0)' id='scale0'>Uniform</a>,
-								<a href='javascript:switchScale(1)' id='scale1'>Per IF</a>
-							</td>
-						</tr>
-			
-						<tr>
-							<th><#Traffic_SvgDisp#>:&nbsp;</th>
-							<td>
-								<a href='javascript:switchDraw(0)' id='draw0'>Solid</a>,
-								<a href='javascript:switchDraw(1)' id='draw1'>Line</a>
-							</td>
-						</tr>
-			
-						<tr>
-							<th><#Traffic_Color#>:&nbsp; </th>
-							<td>
-								<a href='javascript:switchColor()' id='drawcolor'> </a><small><a href='javascript:switchColor(1)' id='drawrev'><#Traffic_Reverse#></a></small>
-							</td>
-						</tr>	
-						</div>	
-						
+							<div id='bwm-controls'>						
+								<tr>
+									<th width='50%'><#Traffic_Hours#>:&nbsp;</th>
+									<td>
+										<a href='javascript:switchHours(4);' id='hr4'>4</a>,
+										<a href='javascript:switchHours(6);' id='hr6'>6</a>,
+										<a href='javascript:switchHours(12);' id='hr12'>12</a>,
+										<a href='javascript:switchHours(18);' id='hr18'>18</a>,
+										<a href='javascript:switchHours(24);' id='hr24'>24</a>
+									</td>
+								</tr>						
+								<tr>
+									<th><#Traffic_Avg#>:&nbsp;</th>
+									<td>
+										<a href='javascript:switchAvg(1)' id='avg1'>Off</a>,
+										<a href='javascript:switchAvg(2)' id='avg2'>2x</a>,
+										<a href='javascript:switchAvg(4)' id='avg4'>4x</a>,
+										<a href='javascript:switchAvg(6)' id='avg6'>6x</a>,
+										<a href='javascript:switchAvg(8)' id='avg8'>8x</a>
+									</td>
+								</tr>			
+								<tr>
+									<th><#Traffic_Max#>:&nbsp;</th>
+									<td>
+										<a href='javascript:switchScale(0)' id='scale0'>Uniform</a>,
+										<a href='javascript:switchScale(1)' id='scale1'>Per IF</a>
+									</td>
+								</tr>			
+								<tr>
+									<th><#Traffic_SvgDisp#>:&nbsp;</th>
+									<td>
+										<a href='javascript:switchDraw(0)' id='draw0'>Solid</a>,
+										<a href='javascript:switchDraw(1)' id='draw1'>Line</a>
+									</td>
+								</tr>		
+								<tr>
+									<th><#Traffic_Color#>:&nbsp; </th>
+									<td>
+										<a href='javascript:switchColor()' id='drawcolor'> </a><small><a href='javascript:switchColor(1)' id='drawrev'><#Traffic_Reverse#></a></small>
+									</td>
+								</tr>	
+							</div>							
 						</table>
 					</td>
 				</tr>
@@ -388,9 +382,7 @@ function Zoom(func){
 		</td>
 	</tr>
 	</table>				
-	</td>
-   	 <td>&nbsp</td>
-   	 
+	</td>   	 
 	</tr>
 </table>
 

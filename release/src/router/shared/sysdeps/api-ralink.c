@@ -209,19 +209,23 @@ void set_radio(int on, int unit, int subunit)
 	char tmpstr[32];
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 
+	if (subunit > 0)
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
+	else
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+	if (nvram_match(strcat_r(prefix, "radio", tmp), "0")) return;
+
 	// TODO: replace hardcoded 
 	// TODO: handle subunit
 	if(unit==0)
 		doSystem("iwpriv %s set RadioOn=%d", WIF_2G, on);
 	else doSystem("iwpriv %s set RadioOn=%d", WIF, on);
 
-	if (subunit > 0)
-		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
-	else
-		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-
+#if 0
 	sprintf(tmpstr, "%d", on);
         nvram_set(strcat_r(prefix, "radio", tmp),  tmpstr);
 	nvram_commit();
+#endif
 }
 

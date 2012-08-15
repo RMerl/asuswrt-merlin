@@ -802,6 +802,10 @@ init(int argc, char * * argv, struct runtime_vars * v)
 				strncpy(modelnumber, ary_options[i].value, MODELNUMBER_MAX_LEN);
 				modelnumber[MODELNUMBER_MAX_LEN-1] = '\0';
 				break;
+			case UPNPFRIENDLYNAME:
+				strncpy(friendly_name, ary_options[i].value, FRIENDLYNAME_MAX_LEN);
+				friendly_name[FRIENDLYNAME_MAX_LEN-1] = '\0';
+				break;
 			case UPNPCLEANTHRESHOLD:
 				v->clean_ruleset_threshold = atoi(ary_options[i].value);
 				break;

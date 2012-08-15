@@ -590,81 +590,70 @@ function showstausframe(page){
 		<!--=====Beginning of Network Map=====-->
 		<div id="tabMenu"></div><br>
 		<div id="NM_shift" style="margin-top:-160px;"></div>
-		<div id="NM_table" class="NM_table">
-		
-		<table id="_NM_table" border="0" cellpadding="0" cellspacing="0" height="720" style="opacity:.95;">
-  		<tr>
-    			<td width="40" rowspan="11" valign="center">
+		<div id="NM_table" class="NM_table" >
+		<div id="NM_table_div">
+			<table id="_NM_table" border="0" cellpadding="0" cellspacing="0" height="720" style="opacity:.95;" >
+				<tr>
+					<td width="40" rowspan="11" valign="center"></td>
+					<td height="115" align="right" class="NM_radius_left" valign="middle" bgcolor="#444f53" onclick="showstausframe('Internet');">
+						<a href="/device-map/internet.asp" target="statusframe"><div id="iconInternet" onclick="clickEvent(this);"></div></a>
 					</td>
-
-    			<td height="115" align="right" class="NM_radius_left" valign="middle" bgcolor="#444f53" onclick="showstausframe('Internet');">
-    				<a href="/device-map/internet.asp" target="statusframe"><div id="iconInternet" onclick="clickEvent(this);"></div></a>
-    			</td>
-
-    			<td colspan="2" valign="middle" bgcolor="#444f53" class="NM_radius_right" onclick="showstausframe('Internet');">
+					<td colspan="2" valign="middle" bgcolor="#444f53" class="NM_radius_right" onclick="showstausframe('Internet');">
 						<span style="font-size:14px;font-family: Verdana, Arial, Helvetica, sans-serif;" id="internetDesc"><#statusTitle_Internet#>:</span><br/><br/>
-    				<strong id="NM_connect_status" class="index_status"><#QKSet_Internet_Setup_fail_method1#>...</strong>
-    			</td>
-
-    			<td width="40" rowspan="11" valign="top">
-    				<div class="statusTitle">
-    					<div id="helpname" style="padding-top:10px;font-size:16px;"></div>
-    				</div>
-    				
-    				<div>
-    					<iframe id="statusframe" class="NM_radius_bottom" style="margin-left:45px;margin-top:-2px;" name="statusframe" width="320" height="680" frameborder="0" allowtransparency="true" style="background-color:transparent; margin-left:10px;" src="device-map/router.asp"></iframe>
-    				</div>
-  	 			</td>	
-  		</tr>
-  		
-  		<tr>
-    		<td colspan="5" align="center" height="19px">
-					<img style="margin-left:-365px;*margin-left:-185px;" src="/images/New_ui/networkmap/line_one.png">
-				</td>
-  		</tr>
-  		
-  		<tr>
-    			<td height="115" align="right" bgcolor="#444f53" class="NM_radius_left" onclick="showstausframe('Router');">
-    				<a href="device-map/router.asp" target="statusframe"><div id="iconRouter" onclick="clickEvent(this);"></div></a>
+						<strong id="NM_connect_status" class="index_status"><#QKSet_Internet_Setup_fail_method1#>...</strong>
 					</td>
-    			<td colspan="2" valign="middle" bgcolor="#444f53" class="NM_radius_right" onclick="showstausframe('Router');">
-    				<span style="font-size:14px;font-family: Verdana, Arial, Helvetica, sans-serif;"><#Security_Level#>: </span><br/><br/><strong id="wl_securitylevel_span" class="index_status"></strong>
+					<td width="40" rowspan="11" valign="top">
+						<div class="statusTitle">
+							<div id="helpname" style="padding-top:10px;font-size:16px;"></div>
+						</div>							
+						<div>
+							<iframe id="statusframe" class="NM_radius_bottom" style="margin-left:45px;margin-top:-2px;" name="statusframe" width="320" height="680" frameborder="0" allowtransparency="true" style="background-color:transparent; margin-left:10px;" src="device-map/router.asp"></iframe>
+						</div>
+					</td>	
+				</tr>			
+				<tr>
+					<td colspan="5" align="center" height="19px">
+						<img style="margin-left:-365px;*margin-left:-185px;" src="/images/New_ui/networkmap/line_one.png">
+					</td>
+				</tr>			
+				<tr>
+					<td height="115" align="right" bgcolor="#444f53" class="NM_radius_left" onclick="showstausframe('Router');">
+						<a href="device-map/router.asp" target="statusframe"><div id="iconRouter" onclick="clickEvent(this);"></div></a>
+					</td>
+					<td colspan="2" valign="middle" bgcolor="#444f53" class="NM_radius_right" onclick="showstausframe('Router');">
+						<span style="font-size:14px;font-family: Verdana, Arial, Helvetica, sans-serif;"><#Security_Level#>: </span><br/><br/><strong id="wl_securitylevel_span" class="index_status"></strong>
 						<img id="iflock">
-    			</td>
-  		</tr>
-  		
-  		<tr>
-    			<td id="line3_td" colspan="3" align="center" height="52px">
-						<img id="line3_img" src="/images/New_ui/networkmap/line_two.png">
 					</td>
-  		</tr>
-
-  		<tr>
-    			<td id="clients_tr" width="150" height="170" bgcolor="#444f53" align="center" valign="top" class="NM_radius_top" onclick="showstausframe('Client');">
-    				<a id="clientStatusLink" href="device-map/clients.asp" target="statusframe"><!--lock 1226-->
-    					<div id="iconClient" style="margin-top:20px;" onclick="clickEvent(this);"></div>
-    				</a>
-    				<div class="clients" id="clientNumber" style="cursor:pointer;"></div>
-    			</td>
+				</tr>			
+				<tr>
+					<td id="line3_td" colspan="3" align="center" height="52px">
+					<img id="line3_img" src="/images/New_ui/networkmap/line_two.png">
+					</td>
+				</tr>
+				<tr>
+					<td id="clients_tr" width="150" height="170" bgcolor="#444f53" align="center" valign="top" class="NM_radius_top" onclick="showstausframe('Client');">
+						<a id="clientStatusLink" href="device-map/clients.asp" target="statusframe"><!--lock 1226-->
+							<div id="iconClient" style="margin-top:20px;" onclick="clickEvent(this);"></div>
+						</a>
+						<div class="clients" id="clientNumber" style="cursor:pointer;"></div>
+					</td>
 					<td width="36" rowspan="6" id="clientspace_td"></td>
 					<td id="usb1_tr" width="160" bgcolor="#444f53" align="center" valign="top" class="NM_radius_top">
 						<div style="margin-top:20px;" id="deviceIcon_0"></div><div id="deviceDec_0"></div>
 					</td>
-			</tr>
-	  		
-			<tr id="usb2_tr">
-    			<td bgcolor="#444f53" align="center" valign="top" class="NM_radius_bottom">
-					</td>
-  				<td height="150" bgcolor="#444f53" align="center" valign="top" class="NM_radius_bottom">
+				</tr>				
+				<tr id="usb2_tr">
+					<td bgcolor="#444f53" align="center" valign="top" class="NM_radius_bottom"></td>
+					<td height="150" bgcolor="#444f53" align="center" valign="top" class="NM_radius_bottom">
 						<div style="margin-top:10px;" id="deviceIcon_1"></div>
 						<div id="deviceDec_1"></div>
 					</td>
-			</tr>
-
-			<tr id="bottomspace_tr" style="display:none">
-				<td colspan="3" height="200px"></td>
-			</tr>
-		</table>
+				</tr>
+				<tr id="bottomspace_tr" style="display:none">
+					<td colspan="3" height="200px"></td>
+				</tr>
+			</table>
+		</div>
 	</div>
 <!--==============Ending of hint content=============-->
   </tr>

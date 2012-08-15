@@ -9,6 +9,7 @@ body {
 	width: 998px;
 	border:0px;
 	background:url(images/New_ui/middown_bg.png);
+	/*padding-bottom:24px;*/
 	
 	margin-top:-5px \0;	/* \0 for IE8-9 to move upper for covering the hidden form By Viz*/
 	padding-top:15px \0;	/* \0 for IE8-9 to move upper for covering the hidden form By Viz*/
@@ -721,4 +722,38 @@ width:122px;
 #menu_img9{
   background: url(images/New_ui/icon_menues.png);
   background-position: -0px -257px; width: 43px; height: 40px;
+}
+#bottom_help_icon{
+  background: url(images/New_ui/bottom_help.png);
+  background-position: -0px -0px; width: 19px; height: 19px;
+}
+#bottom_help_title{
+	font-family:Arial, Helvetica, sans-serif;
+	font-weight:bolder;
+	color: #569AC7;
+}
+
+.input_FAQ_table{
+	margin-left:2px;
+	padding-left:0.4em;
+	height:23px;
+	width:213px;
+	line-height:23px \9;	/*IE*/
+	font-size:12px;
+	font-family: Lucida Console;
+	background-image:url(/images/New_ui/bottom_text.png);
+	border-width:0;
+	color:#FFFFFF;
+}
+.bottom_help_FAQ_icon{
+  background: url(images/New_ui/bottom_search.png);
+  background-position: -0px -0px; width: 32px; height: 32px;
+}
+.bottom_help_FAQ_icon:hover{
+  background: url(images/New_ui/bottom_search.png);
+	background-position: -0px -32px; width: 32px; height: 32px;
+}
+.bottom_help_FAQ_icon:active{
+  background: url(images/New_ui/bottom_search.png);
+  background-position: -0px -64px; width: 32px; height: 32px;
 }

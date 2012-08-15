@@ -55,12 +55,14 @@ extern int mkdir_if_none(const char *path){
 }
 
 extern int delete_file_or_dir(char *target){
-	if(check_if_dir_exist(target))
-		rmdir(target);
-	else
-		unlink(target);
+	int ret;
 
-	return 0;
+	if(check_if_dir_exist(target))
+		ret = rmdir(target);
+	else
+		ret = unlink(target);
+
+	return ret;
 }
 
 extern int test_if_mount_point_of_pool(const char *dirname){

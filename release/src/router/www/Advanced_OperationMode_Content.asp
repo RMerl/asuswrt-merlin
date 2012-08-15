@@ -201,7 +201,7 @@ $j("#Senario").css("background", "url(/images/New_ui/ap.jpg) center");
 	<tr bgcolor="#4D595D" valign="top" height="100px">
 	  	<td>
 	  		<div>&nbsp;</div>
-	  		<div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_1#></div>
+	  		<div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_1_title#></div>
 	  		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		  	<div class="formfontdesc"><#OP_desc1#></div>
 

@@ -42,10 +42,10 @@ function detectVLCInstalled(){
 	if(isIE){
 		var vlcObj = null;
 		try {
-			vlcObj = new ActiveXObject("VideoLAN.Vlcplugin.1");
+			vlcObj = new ActiveXObject("VideoLAN.Vlcplugin");
 		} 
 		catch (e) {
-			var msg= "Se produjo una excepción al tratar de crear el objeto VideoLAN.VLCPlugin.1:\n";
+			var msg= "An exception occurred while trying to create the object VideoLAN.VLCPlugin.1:\n";
 		  for (p in e)
 		  	msg+= "e."+p+"= " + e[p] + "\n";
 		  window.alert (msg);
@@ -126,7 +126,7 @@ function createVLC() {
 		document.write("</video>");
 		return;
 	}
-	 	
+	
 	if(!detectVLCInstalled()){
 		
 		document.write("<body width='100%' height='100%' style='margin:0px;padding:0px'>");		
@@ -172,7 +172,7 @@ function createVLC() {
 	document.write("<embed type='application/x-vlc-plugin'");
 	document.write(" pluginspage='http://www.videolan.org'");
 	document.write(" width='" + vlc_width + "' height='" + vlc_height + "' id='vlcPlayer2' name='vlcPlayer2'/>");
-		
+	
 	document.write("</OBJECT>");
 	
 	if(this_showbutton==1){
@@ -191,8 +191,16 @@ function createVLC() {
 		var id = vlc.playlist.add(this_video);
 		vlc.playlist.playItem(id);
 		
+		if(isIE){
+			vlc.style.width = vlc_width;
+			vlc.style.height = vlc_height;
+		}
+	
 		//- Full Screen
 		//vlc.video.toggleFullscreen();
+		
+		//vlc.playlist.options.set("sub-file", "xxxEng.srt");
+		//alert("complete");
 	}
 	
 	$('button#btnClose').text(m.getString("btn_close"));

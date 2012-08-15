@@ -109,7 +109,7 @@ function initial(){
 	 		$("VPN_conflict_span").innerHTML = "<#vpn_conflict_dhcp#>"+pptpd_clients;
 	}	
 
-	addOnlineHelp($("faq"), ["set", "up", "specific", "IP", "addresses"]);
+	addOnlineHelp($("faq"), ["set", "up", "specific", "IP", "address"]);
 }
 
 function addRow(obj, head){
@@ -542,7 +542,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
       <div id="router_in_pool" class="formfontdesc" style="color:#FFCC00;display:none;"><#LANHostConfig_DHCPServerConfigurable_sectiondesc2#><span id="LANIP"></span></div>	
       <div id="VPN_conflict" class="formfontdesc" style="color:#FFCC00;display:none;"><span id="VPN_conflict_span"></span></div>
 			<div class="formfontdesc" style="margin-top:-10px;">
-				<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;"><#LANHostConfig_ManualDHCPList_groupitemdesc#> FAQ</a>
+				<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;"><#LANHostConfig_ManualDHCPList_groupitemdesc#>&nbsp;FAQ</a>
 			</div>
   
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
@@ -636,13 +636,13 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 			  	<thead>
 			  		<tr>
-						<td colspan="3" id="GWStatic"><#LANHostConfig_ManualDHCPList_groupitemdesc#></td>
+						<td colspan="3" id="GWStatic"><#LANHostConfig_ManualDHCPList_groupitemdesc#></td><!--Viz hold on this : &nbsp;&nbsp;(<#List_limit#> 32)-->
 			  		</tr>
 			  	</thead>
 
 			  	<tr>
-		  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#LANHostConfig_ManualMac_itemname#></a></th>
-        		<th><#LANHostConfig_ManualIP_itemname#></th>
+		  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#MAC_Address#></a></th>
+        		<th><#IPConnection_ExternalIPAddress_itemname#></th>
 			<th>Name</th>
         		<th>Add / Delete</th>
 			  	</tr>			  
@@ -657,10 +657,10 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
             			<td width="27%">
             				<input type="text" class="input_15_table" maxlength="15" name="dhcp_staticip_x_0" onkeypress="return is_ipaddr(this,event)">
             			</td>
-				<td width="27%">
+            			<td width="27%">
 					<input type="text" class="input_15_table" maxlenght="15" name="dhcp_staticname_x_0">
 				</td>
-            			<td width="19%">
+				<td width="19%">
 										<div> 
 											<input type="button" class="add_btn" onClick="addRow_Group(32);" value="">
 										</div>

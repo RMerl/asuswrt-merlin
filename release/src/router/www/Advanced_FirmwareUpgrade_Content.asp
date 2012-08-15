@@ -279,7 +279,7 @@ function detect_httpd(){
 		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 			<tr>
 				<th><#FW_item1#></th>
-				<td><input type="text" class="input_15_table" value="<% nvram_get("productid"); %>" readonly="1"></td>
+				<td><#Web_Title2#></td>
 			</tr>
 <!--###HTML_PREP_START###-->
 <!--###HTML_PREP_ELSE###-->

@@ -13,7 +13,7 @@
 
 	wificonf, OpenWRT
 	Copyright (C) 2005 Felix Fietkau <nbd@vd-s.ath.cx>
-	
+
 */
 /*
 
@@ -76,10 +76,9 @@ void update_lan_state(int state, int reason)
 	nvram_set_int(strcat_r(prefix, "sbstate_t", tmp), 0);
 
 	if(state==LAN_STATE_INITIALIZING)
-	{	
-		
+	{
 		if(nvram_match(strcat_r(prefix, "proto", tmp), "dhcp")) {
-			// always keep in default ip before getting ip	
+			// always keep in default ip before getting ip
 			nvram_set(strcat_r(prefix, "dns", tmp), nvram_default_get("lan_ipaddr"));
 		}
 
@@ -88,7 +87,7 @@ void update_lan_state(int state, int reason)
 
 			ptr = nvram_get(strcat_r(prefix, "dns1_x", tmp));
 			if(ptr && strlen(ptr))
-				sprintf(tmp1, "%s", ptr);	
+				sprintf(tmp1, "%s", ptr);
 			ptr = nvram_get(strcat_r(prefix, "dns2_x", tmp));
 
 			if(ptr && strlen(ptr)) {
@@ -96,11 +95,11 @@ void update_lan_state(int state, int reason)
 					sprintf(tmp1, "%s %s", tmp1, ptr);
 				else sprintf(tmp1, "%s", ptr);
 			}
-				
+
 			nvram_set(strcat_r(prefix, "dns", tmp), tmp1);
 		}
 		else nvram_set(strcat_r(prefix, "dns", tmp), "");
-	}	
+	}
 	else if(state==LAN_STATE_STOPPED) {
 		// Save Stopped Reason
 		// keep ip info if it is stopped from connected
@@ -118,6 +117,7 @@ static int wlconf(char *ifname, int unit, int subunit)
 	char str_txpowerq[8];
 	char blver1, blver2, blver3, blver4;
 	int model;
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 
 	sscanf(nvram_safe_get("bl_version"), "%c.%c.%c.%c", &blver1, &blver2, &blver3, &blver4);
 
@@ -125,19 +125,27 @@ static int wlconf(char *ifname, int unit, int subunit)
 
 	if (subunit < 0)
 	{
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+		if (nvram_match(strcat_r(prefix, "radio", tmp), "0"))
+		{
+			eval("wlconf", ifname, "down");
+			return -1;
+		}
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+		if (is_psta(1 - unit))
+		{
+			eval("wlconf", ifname, "down");
+			return -1;
+		}
+#endif
+#endif
 		generate_wl_para(unit, subunit);
 
 		for (r = 1; r < MAX_NO_MSSID; r++)	// early convert for wlx.y
 			generate_wl_para(unit, r);
 	}
-/*
-#ifdef RTCONFIG_BCMWL6
-	if (nvram_match("wl1_radio", "1"))	// tmp usage
-		led_control(LED_5G, LED_ON);
-	else
-		led_control(LED_5G, LED_OFF);
-#endif
-*/
+
 #if 0
 	if (/* !wl_probe(ifname) && */ unit >= 0) {
 		// validate nvram settings foa wireless i/f
@@ -158,21 +166,77 @@ static int wlconf(char *ifname, int unit, int subunit)
 			eval("wl", "-i", ifname, "interference", nvram_safe_get(wl_nvname("interfmode", unit, 0)));
 #endif
 			txpower = nvram_get_int(wl_nvname("TxPower", unit, 0));
-#if 0
-			if ((txpower > 0) && (txpower <= 48))
-			{
-				char str_txpower[8];
-				txpower += 40;
-				sprintf(str_txpower, "%d", txpower);
-				eval("wl", "-i", ifname, "txpwr1", "-o", "-q", str_txpower);
-			}
-			else
-				eval("wl", "-i", ifname, "txpwr1", "-o", "-q", "-1");
-#else
+
 			dbG("unit: %d, txpower: %d\n", unit, txpower);
 
 			model = get_model();
 			switch (model) {
+				case MODEL_RTAC66U:
+
+					if (unit == 0)
+					{
+						if (txpower == 80)
+							eval("wl", "-i", ifname, "txpwr1", "-o", "-q", "-1");
+						else
+						{
+							if (txpower < 30)
+								txpowerq = 56;
+							else if (txpower < 50)
+								txpowerq = 64;
+							else if (txpower < 81)
+								txpowerq = 72;
+							else if (txpower < 151)
+								txpowerq = 84;
+							else if (txpower < 221)
+								txpowerq = 88;
+							else if (txpower < 291)
+								txpowerq = 90;
+							else if (txpower < 361)
+								txpowerq = 92;
+							else if (txpower < 431)
+								txpowerq = 94;
+							else
+								txpowerq = 96;
+
+							sprintf(str_txpowerq, "%d", txpowerq);
+							eval("wl", "-i", ifname, "txpwr1", "-o", "-q", str_txpowerq);
+						}
+					}
+					else if (unit == 1)
+					{
+						if (txpower == 80)
+							eval("wl", "-i", ifname, "txpwr1", "-o", "-q", "-1");
+						else
+						{
+							if (txpower < 30)
+								txpowerq = 48;
+							else if (txpower < 50)
+								txpowerq = 60;
+							else if (txpower < 81)
+								txpowerq = 72;
+							else if (txpower < 111)
+								txpowerq = 80;
+							else if (txpower < 141)
+								txpowerq = 84;
+							else if (txpower < 171)
+								txpowerq = 86;
+							else if (txpower < 201)
+								txpowerq = 88;
+							else if (txpower < 231)
+								txpowerq = 90;
+							else
+								txpowerq = 92;
+
+							sprintf(str_txpowerq, "%d", txpowerq);
+							eval("wl", "-i", ifname, "txpwr1", "-o", "-q", str_txpowerq);
+						}
+					}
+
+					if (txpower != 80)
+						dbG("txpowerq: %d\n", txpowerq);
+
+					break;
+
 				case MODEL_RTN66U:
 				case MODEL_RTN16:
 
@@ -238,7 +302,44 @@ static int wlconf(char *ifname, int unit, int subunit)
 						}
 					}
 
-					if (txpower != 40)
+					if (txpower != 80)
+						dbG("txpowerq: %d\n", txpowerq);
+
+					break;
+
+				case MODEL_RTN12HP:
+
+					if (unit == 0)
+					{
+						if (txpower == 80)
+							eval("wl", "-i", ifname, "txpwr1", "-o", "-q", "-1");
+						else
+						{
+							if (txpower < 30)
+								txpowerq = 56;
+							else if (txpower < 50)
+								txpowerq = 64;
+							else if (txpower < 81)
+								txpowerq = 72;
+							else if (txpower < 151)
+								txpowerq = 84;
+							else if (txpower < 221)
+								txpowerq = 88;
+							else if (txpower < 291)
+								txpowerq = 90;
+							else if (txpower < 361)
+								txpowerq = 92;
+							else if (txpower < 431)
+								txpowerq = 94;
+							else
+								txpowerq = 96;
+
+							sprintf(str_txpowerq, "%d", txpowerq);
+							eval("wl", "-i", ifname, "txpwr1", "-o", "-q", str_txpowerq);
+						}
+					}
+
+					if (txpower != 80)
 						dbG("txpowerq: %d\n", txpowerq);
 
 					break;
@@ -249,7 +350,6 @@ static int wlconf(char *ifname, int unit, int subunit)
 
 					break;
 			}
-#endif
 		}
 
 		if (wl_client(unit, subunit)) {
@@ -457,14 +557,14 @@ static void check_afterburner(void)
 	else {
 		return;
 	}
-	
+
 	nvram_set("boardflags", p);
-	
+
 	if (!nvram_match("debug_abrst", "0")) {
 		modprobe_r("wl");
 		modprobe("wl");
 	}
-	
+
 
 /*	safe?
 
@@ -493,7 +593,7 @@ char *wif_to_vif(char *wif)
 		for (subunit = 1; subunit < 4; subunit++)
 		{
 			snprintf(prefix, sizeof(prefix), "wl%d.%d", unit, subunit);
-			
+
 			if (nvram_match(strcat_r(prefix, "_ifname", tmp), wif))
 			{
 				sprintf(vif, "%s", prefix);
@@ -502,7 +602,7 @@ char *wif_to_vif(char *wif)
 		}
 
 RETURN_VIF:
-	return vif;       
+	return vif;
 }
 #endif
 
@@ -511,6 +611,7 @@ void start_wl(void)
 	char *lan_ifname, *lan_ifnames, *ifname, *p;
 	int unit, subunit;
 	int is_client = 0;
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 
 	lan_ifname = nvram_safe_get("lan_ifname");
 	if (strncmp(lan_ifname, "br", 2) == 0) {
@@ -542,6 +643,15 @@ void start_wl(void)
 				is_client |= wl_client(unit, subunit) && nvram_get_int(wl_nvname("radio", unit, 0));
 
 #ifdef CONFIG_BCMWL5
+				snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+				if (nvram_match(strcat_r(prefix, "radio", tmp), "0"))
+					eval("wlconf", ifname, "down");
+				else
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+				if (!is_psta(1 - unit)) 
+#endif
+#endif				
 				eval("wlconf", ifname, "start"); /* start wl iface */
 #endif	// CONFIG_BCMWL5
 			}
@@ -562,10 +672,18 @@ void start_wl(void)
 		xstart("radio", "join");
 
 #ifdef RTCONFIG_BCMWL6
+#ifdef RTAC66U
 	if (nvram_match("wl1_radio", "1"))
+	{
+		nvram_set("led_5g", "1");
 		led_control(LED_5G, LED_ON);
+	}
 	else
+	{
+		nvram_set("led_5g", "0");
 		led_control(LED_5G, LED_OFF);
+	}
+#endif
 #endif
 }
 
@@ -613,14 +731,14 @@ gen_ra_config(const char* wif)
 		{
 			if (!strcmp(word, WIF_2G))
 			{
-				if (!strncmp(word, "rai", 3))   // iNIC
+				if (!strncmp(word, "rai", 3))	// iNIC
 					gen_ralink_config(0, 1);
 				else
 					gen_ralink_config(0, 0);
 			}
 			else if (!strcmp(word, WIF_5G))
 			{
-				if (!strncmp(word, "rai", 3))   // iNIC
+				if (!strncmp(word, "rai", 3))	// iNIC
 					gen_ralink_config(1, 1);
 				else
 					gen_ralink_config(1, 0);
@@ -860,14 +978,17 @@ void start_lan(void)
 	char eabuf[32];
 	char word[256], *next;
 	int match;
-	char tmp[100];
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
+	int i;
 
 	update_lan_state(LAN_STATE_INITIALIZING, 0);
 
 	convert_routes();
 
 #ifdef CONFIG_BCMWL5
-	if (get_model() == MODEL_RTN66U)
+	if ((get_model() == MODEL_RTAC66U) ||
+		(get_model() == MODEL_RTN12HP) ||
+		(get_model() == MODEL_RTN66U))
 	set_wltxpower();
 #endif
 
@@ -1048,13 +1169,28 @@ void start_lan(void)
 						continue;
 				}
 #endif
+				/* Don't attach the main wl i/f in wds mode */
+				match = 0, i = 0;
+				foreach (word, nvram_safe_get("wl_ifnames"), next) {
+					if (!strcmp(ifname, word))
+					{
+						snprintf(prefix, sizeof(prefix), "wl%d_", i);
+						if (nvram_match(strcat_r(prefix, "mode_x", tmp), "1"))
+							match = 1;
+
+						break;
+					}
+
+					i++;
+				}
+				if (!match)
 				eval("brctl", "addif", lan_ifname, ifname);
 #ifdef RTCONFIG_EMF
 				if (nvram_get_int("emf_enable"))
 					eval("emf", "add", "iface", lan_ifname, ifname);
 #endif
 			}
-				
+
 			free(lan_ifnames);
 		}
 	}
@@ -1096,16 +1232,23 @@ void start_lan(void)
 	if(nvram_match("lan_proto", "dhcp"))
 	{
 		// only none routing mode need lan_proto=dhcp
+		if (pids("udhcpc"))
+		{
+			killall("udhcpc", SIGUSR2);
+			killall("udhcpc", SIGTERM);
+			unlink("/tmp/udhcpc_lan");
+		}
+
 		char *dhcp_argv[] = { "udhcpc",
 					"-i", "br0",
 					"-p", "/var/run/udhcpc_lan.pid",
 					"-s", "/tmp/udhcpc_lan",
 					NULL };
 		pid_t pid;
-		
+
 		symlink("/sbin/rc", "/tmp/udhcpc_lan");
 		_eval(dhcp_argv, NULL, 0, &pid);
-		
+
 		update_lan_state(LAN_STATE_CONNECTING, 0);
 	}
 	else {
@@ -1123,12 +1266,12 @@ void start_lan(void)
 	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER){
 		// Drop the DHCP server from PAP.
 		repeater_pap_disable();
-		
+
 		// When CONNECTED, need to redirect 10.0.0.1(from the browser's cache) to DUT's home page.
 		repeater_nat_setting();
 	}
 #endif
-	
+
 	if(nvram_get_int("sw_mode") != SW_MODE_AP) {
 		redirect_setting();
 		stop_nat_rules();
@@ -1189,7 +1332,7 @@ void stop_lan(void)
 	lan_ifname = nvram_safe_get("lan_ifname");
 
 	if(is_routing_enabled())
-	{		
+	{
 		stop_wanduck();
 		del_lan_routes(lan_ifname);
 	}
@@ -1231,7 +1374,10 @@ void stop_lan(void)
 	}
 
 #ifdef RTCONFIG_BCMWL6
+#ifdef RTAC66U
+	nvram_set("led_5g", "0");
 	led_control(LED_5G, LED_OFF);
+#endif
 #endif
 
 	// inform watchdog to stop WPS LED
@@ -1244,8 +1390,9 @@ void stop_lan(void)
 
 	update_lan_state(LAN_STATE_STOPPED, 0);
 
-	unlink("/tmp/udhcpc_lan");
+	killall("udhcpc", SIGUSR2);
 	killall("udhcpc", SIGTERM);
+	unlink("/tmp/udhcpc_lan");
 
 	_dprintf("%s %d\n", __FUNCTION__, __LINE__);
 }
@@ -1395,9 +1542,10 @@ void hotplug_net(void)
 			wl_send_dif_event(interface, 0);
 			return;
 		}
-
+#endif
 		if (!strncmp(lan_ifname, "br", 2)) {
 			eval("brctl", "addif", lan_ifname, interface);
+#ifdef CONFIG_BCMWL5
 #ifdef RTCONFIG_BCMWL6
 			/* Inform driver to send up new WDS link event */
 			if (wl_iovar_setint(interface, "wds_enable", 1)) {
@@ -1407,8 +1555,9 @@ void hotplug_net(void)
 #else
 			notify_nas(interface);
 #endif
-		}
 #endif
+		}
+
 		return;
 	}
 
@@ -1778,10 +1927,7 @@ enum {
 static int radio_toggle(int idx, int unit, int subunit, void *param)
 {
 
-	/* TODO: Now, radio on/off according to nvram wl0_radio and wl1_radio */
-	/* TODO: watchdog do timecheck_item to make radio ON/OFF */
-
-	//if (!nvram_get_int(wl_nvname("radio", unit, 0))) return 0;
+	if (!nvram_get_int(wl_nvname("radio", unit, 0))) return 0;
 
 	int *op = param;
 
@@ -1821,7 +1967,7 @@ HELP:
 		op = radio_toggle(0, unit, subunit, &op);
 	else
 		op = foreach_wif(0, &op, radio_toggle);
-		
+
 	if (!op) {
 		//led(LED_DIAG, 0);
 		return 0;
@@ -1920,12 +2066,12 @@ update_lan_resolvconf(void)
 
 	if (!nvram_match("lan_gateway", ""))
 		fprintf(fp, "nameserver %s\n", nvram_safe_get("lan_gateway"));
-	
+
 	foreach(word, nvram_safe_get("lan_dns"), next)
 	{
 		fprintf(fp, "nameserver %s\n", word);
 	}
-	
+
 	fclose(fp);
 
 	unlink("/etc/resolv.conf");
@@ -1954,7 +2100,7 @@ lan_up(char *lan_ifname)
 	/* Sync time */
 	stop_ntpc();
 	start_ntpc();
-	
+
 	update_lan_state(LAN_STATE_CONNECTED, 0);
 
 #ifdef RTCONFIG_USB
@@ -1978,7 +2124,7 @@ lan_down(char *lan_ifname)
 	/* remove resolv.conf */
 	unlink("/tmp/resolv.conf");
 	unlink("/etc/resolv.conf");
-	
+
 	update_lan_state(LAN_STATE_STOPPED, 0);
 }
 
@@ -2018,7 +2164,10 @@ void stop_lan_wl(void)
 	}
 
 #ifdef RTCONFIG_BCMWL6
+#ifdef RTAC66U
+	nvram_set("led_5g", "0");
 	led_control(LED_5G, LED_OFF);
+#endif
 #endif
 
 #ifdef RTCONFIG_RALINK
@@ -2051,10 +2200,15 @@ void start_lan_wl(void)
 	char *wl_ifnames, *ifname, *p;
 	uint32 ip;
 	int unit, subunit, sta;
-	char tmp[100];
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
+	char word[256], *next;
+	int match;
+	int i;
 
 #ifdef CONFIG_BCMWL5
-	if (get_model() == MODEL_RTN66U)
+	if ((get_model() == MODEL_RTAC66U) ||
+		(get_model() == MODEL_RTN12HP) ||
+		(get_model() == MODEL_RTN66U))
 	set_wltxpower();
 #endif
 
@@ -2068,7 +2222,7 @@ void start_lan_wl(void)
 		foreach_wif(1, NULL, set_wlmac);
 		check_afterburner();
 	}
-#endif	
+#endif
 
 	lan_ifname = strdup(nvram_safe_get("lan_ifname"));
 	if (strncmp(lan_ifname, "br", 2) == 0) {
@@ -2167,7 +2321,21 @@ void start_lan_wl(void)
 						continue;
 				}
 #endif
+				/* Don't attach the main wl i/f in wds mode */
+				match = 0, i = 0;
+				foreach (word, nvram_safe_get("wl_ifnames"), next) {
+					if (!strcmp(ifname, word))
+					{
+						snprintf(prefix, sizeof(prefix), "wl%d_", i);
+						if (nvram_match(strcat_r(prefix, "mode_x", tmp), "1"))
+							match = 1;
+	
+						break;
+					}
 
+					i++;
+				}
+				if (!match)
 				eval("brctl", "addif", lan_ifname, ifname);
 
 			}
@@ -2189,6 +2357,7 @@ void restart_wl(void)
 	char *lan_ifname, *wl_ifnames, *ifname, *p;
 	int unit, subunit;
 	int is_client = 0;
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 
 	if ((wl_ifnames = strdup(nvram_safe_get("lan_ifnames"))) != NULL) {
 		p = wl_ifnames;
@@ -2218,6 +2387,15 @@ void restart_wl(void)
 			is_client |= wl_client(unit, subunit) && nvram_get_int(wl_nvname("radio", unit, 0));
 
 #ifdef CONFIG_BCMWL5
+			snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+			if (nvram_match(strcat_r(prefix, "radio", tmp), "0"))
+				eval("wlconf", ifname, "down");
+			else
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+			if (!is_psta(1 - unit))
+#endif
+#endif
 			eval("wlconf", ifname, "start"); /* start wl iface */
 #endif	// CONFIG_BCMWL5
 		}
@@ -2231,10 +2409,18 @@ void restart_wl(void)
 		xstart("radio", "join");
 
 #ifdef RTCONFIG_BCMWL6
+#ifdef RTAC66U
 	if (nvram_match("wl1_radio", "1"))
+	{
+		nvram_set("led_5g", "1");
 		led_control(LED_5G, LED_ON);
+	}
 	else
+	{
+		nvram_set("led_5g", "0");
 		led_control(LED_5G, LED_OFF);
+	}
+#endif
 #endif
 }
 
@@ -2449,7 +2635,7 @@ void start_lan_wlport()
 }
 
 void stop_lan_wlport()
-{	
+{
 	char word[256], *next;
 	int unit, subunit;
 
@@ -2503,7 +2689,7 @@ void start_lan_wlc(void)
 	_dprintf("%s %d\n", __FUNCTION__, __LINE__);
 
 	char *lan_ifname;
-	
+
 	lan_ifname = nvram_safe_get("lan_ifname");
 	update_lan_state(LAN_STATE_INITIALIZING, 0);
 
@@ -2513,22 +2699,29 @@ void start_lan_wlc(void)
 	if(nvram_match("lan_proto", "dhcp"))
 	{
 		// only none routing mode need lan_proto=dhcp
+		if (pids("udhcpc"))
+		{
+			killall("udhcpc", SIGUSR2);
+			killall("udhcpc", SIGTERM);
+			unlink("/tmp/udhcpc_lan");
+		}
+
 		char *dhcp_argv[] = { "udhcpc",
 					"-i", "br0",
 					"-p", "/var/run/udhcpc_lan.pid",
 					"-s", "/tmp/udhcpc_lan",
 					NULL };
 		pid_t pid;
-		
+
 		symlink("/sbin/rc", "/tmp/udhcpc_lan");
 		_eval(dhcp_argv, NULL, 0, &pid);
-		
+
 		update_lan_state(LAN_STATE_CONNECTING, 0);
 	}
 	else {
 		lan_up(lan_ifname);
 	}
-	
+
 	_dprintf("%s %d\n", __FUNCTION__, __LINE__);
 }
 
@@ -2545,6 +2738,7 @@ void stop_lan_wlc(void)
 
 	update_lan_state(LAN_STATE_STOPPED, 0);
 
+	killall("udhcpc", SIGUSR2);
 	killall("udhcpc", SIGTERM);
 	unlink("/tmp/udhcpc_lan");
 

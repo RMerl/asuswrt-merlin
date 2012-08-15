@@ -56,6 +56,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/vfs.h>	/* get disk type */
+#include <sys/ioctl.h>
+#include <netinet/in.h>
 #include <net/if.h>
 #include <bcmnvram.h>
 #include <shutils.h>
@@ -705,6 +707,23 @@ get_ftype(char *type)	/* get disk type */
 	return free_size;
 }
 
+char *get_lan_netmask()
+{
+	int fd;
+	struct ifreq ifr;
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	char *lan_ifname = nvram_safe_get("lan_ifname");
+
+	/* IPv4 netmask */
+	ifr.ifr_addr.sa_family = AF_INET;
+
+	strncpy(ifr.ifr_name, strlen(lan_ifname) ? lan_ifname : "br0", IFNAMSIZ-1);
+	ioctl(fd, SIOCGIFNETMASK, &ifr);
+	close(fd);
+
+	return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
+}
+
 char *processPacket(int sockfd, char *pdubuf)
 {
     IBOX_COMM_PKT_HDR	*phdr;
@@ -735,9 +754,7 @@ char *processPacket(int sockfd, char *pdubuf)
     phdr = (IBOX_COMM_PKT_HDR *)pdubuf;  
     phdr_res = (IBOX_COMM_PKT_RES_EX *)pdubuf_res;
     
-    printf("1.Get: %x %x %x\n", phdr->ServiceID, phdr->PacketType, phdr->OpCode);
-    _dprintf("2.Get: %x %x %x\n", phdr->ServiceID, phdr->PacketType, phdr->OpCode);
-    fprintf(stderr,"3.Get: %x %x %x\n", phdr->ServiceID, phdr->PacketType, phdr->OpCode);
+//    fprintf(stderr,"Get: %x %x %x\n", phdr->ServiceID, phdr->PacketType, phdr->OpCode);
 
     if (phdr->ServiceID==NET_SERVICE_ID_IBOX_INFO &&
 	phdr->PacketType==NET_PACKET_TYPE_CMD)
@@ -798,9 +815,9 @@ char *processPacket(int sockfd, char *pdubuf)
 		     /* get disk type */
 		     strcpy(ssid_g, nvram_safe_get("wl0_ssid"));
 //		   strcpy(productid_g, nvram_safe_get("machine_name"));
-		     strcpy(productid_g, nvram_safe_get("productid"));
+		     strcpy(productid_g, get_productid());
 		     strcpy(ginfo->SSID, ssid_g);
-		     strcpy(ginfo->NetMask, netmask_g);
+		     strcpy(ginfo->NetMask, get_lan_netmask());
 		     strcpy(ginfo->ProductID, productid_g);	// disable for tmp
 		     //strcpy(ginfo->ProductID, "WL-500gp V2");	// tmp test
 		     strcpy(ginfo->FirmwareVersion, firmver_g);	// disable for tmp
@@ -842,9 +859,9 @@ char *processPacket(int sockfd, char *pdubuf)
 		     memset(ginfo->PrinterInfo, 0, sizeof(ginfo->PrinterInfo));
 #endif
 		     strcpy(ssid_g, nvram_safe_get("wl0_ssid"));	
-		     strcpy(productid_g, nvram_safe_get("productid"));
+		     strcpy(productid_g, get_productid());
    		     strcpy(ginfo->SSID, ssid_g);
-		     strcpy(ginfo->NetMask, netmask_g);
+		     strcpy(ginfo->NetMask, get_lan_netmask());
 		     strcpy(ginfo->ProductID, productid_g);	// disable for tmp
 		     strcpy(ginfo->FirmwareVersion, firmver_g); // disable for tmp
 

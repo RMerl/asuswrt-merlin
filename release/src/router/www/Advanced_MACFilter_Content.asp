@@ -252,7 +252,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 
         	<tr>
           		<th width="80%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);">
-          			<#FirewallConfig_MFhwaddr_itemname#></a>
+          			<#MAC_Address#></a>
               		<input type="hidden" name="macfilter_num_x_0" value="<% nvram_get("macfilter_num_x"); %>" readonly="1"/>
 		  	</th>
 			<th width="20%">Add / Delete</th>

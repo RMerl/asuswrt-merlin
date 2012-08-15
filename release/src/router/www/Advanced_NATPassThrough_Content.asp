@@ -79,7 +79,7 @@ function applyRule(){
 											<td>
 												<select name="fw_pt_pptp" class="input_option">
 													<option class="content_input_fd" value="0" <% nvram_match("fw_pt_pptp", "0","selected"); %>><#btn_disable#></option>
-													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_pptp", "1","selected"); %>><#btn_Enable#></option>
+													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_pptp", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 												</select>			
 											</td>
 									  </tr>
@@ -89,7 +89,7 @@ function applyRule(){
 											<td>
 												<select name="fw_pt_l2tp" class="input_option">
 													<option class="content_input_fd" value="0" <% nvram_match("fw_pt_l2tp", "0","selected"); %>><#btn_disable#></option>
-													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_l2tp", "1","selected"); %>><#btn_Enable#></option>
+													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_l2tp", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 												</select>			
 											</td>
 									  </tr>
@@ -99,7 +99,7 @@ function applyRule(){
 											<td>
 												<select name="fw_pt_ipsec" class="input_option">
 													<option class="content_input_fd" value="0" <% nvram_match("fw_pt_ipsec", "0","selected"); %>><#btn_disable#></option>
-													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_ipsec", "1","selected"); %>><#btn_Enable#></option>
+													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_ipsec", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 												</select>			
 											</td>
 									  </tr>
@@ -109,7 +109,7 @@ function applyRule(){
     	       					<td>
 												<select name="fw_pt_rtsp" class="input_option">
 													<option class="content_input_fd" value="0" <% nvram_match("fw_pt_rtsp", "0","selected"); %>><#btn_disable#></option>
-													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_rtsp", "1","selected"); %>><#btn_Enable#></option>
+													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_rtsp", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 												</select>			
         	    				</td>
            					</tr>
@@ -119,7 +119,7 @@ function applyRule(){
     	       					<td>
 												<select name="fw_pt_pppoerelay" class="input_option">
 													<option class="content_input_fd" value="0" <% nvram_match("fw_pt_pppoerelay", "0","selected"); %>><#btn_disable#></option>
-													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_pppoerelay", "1","selected"); %>><#btn_Enable#></option>
+													<option class="content_input_fd" value="1"<% nvram_match("fw_pt_pppoerelay", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 												</select>			
         	    				</td>
            					</tr>

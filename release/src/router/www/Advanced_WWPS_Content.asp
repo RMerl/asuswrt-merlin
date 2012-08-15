@@ -255,7 +255,7 @@ function show_wsc_status(wps_infos){
 	}
 	else{
 		$("wps_enable_word").innerHTML = "<#btn_Disabled#>"
-		$("enableWPSbtn").value = "<#btn_Enable#>";
+		$("enableWPSbtn").value = "<#WLANConfig11b_WirelessCtrl_button1name#>";
 
 		if(wps_infos[12].firstChild.nodeValue == 0){
 			$("wps_band_word").innerHTML = "2.4GHz";
@@ -464,7 +464,7 @@ function changemethod(wpsmethod){
 			  </th>
 			  <td>
 					<input type="radio" name="wps_method" onclick="changemethod(0);" value="0">Push Button
-					<input type="radio" name="wps_method" onclick="changemethod(1);" value="1">Client PIN Code
+					<input type="radio" name="wps_method" onclick="changemethod(1);" value="1"><#WLANConfig11b_x_WPSPIN_itemname#>
 			  	<input type="text" name="wps_sta_pin" id="wps_sta_pin" value="" size="8" maxlength="8" class="input_15_table">
 				  <div id="starBtn" style="margin-top:10px;"><input class="button_gen" type="button" style="margin-left:5px;" onClick="configCommand();" id="addEnrolleebtn_client" name="addEnrolleebtn"  value="<#wps_start_btn#>"></div>
 				</td>

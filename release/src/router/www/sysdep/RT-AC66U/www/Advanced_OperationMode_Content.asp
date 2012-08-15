@@ -108,12 +108,12 @@ function setScenerion(mode){
 		document.form.sw_mode_radio[0].checked = true;
 	}	
 	else if(mode == '2'){
-		var pstaDesc =  "The RT-AC66U can be configured in Media bridge mode.";
+		var pstaDesc =  "The <#Web_Title2#> can be configured in Media bridge mode.";
 				pstaDesc += "This mode provide multiple entertainment devices fastest 802.11ac wifi connection simultaneously.";
-				pstaDesc += "To setup the Media bridge mode, you need two RT-AC66U routers, one configured as the Media station and the other as a router.";
-				pstaDesc += "Setup the first RT-AC66U as router then configure the second RT-AC66U as 802.11ac Media bridge  and you can simply connect  PCs, Smart TV, game console, DVR, media player to Media bridge via Ethernet cable.";
+				pstaDesc += "To setup the Media bridge mode, you need two <#Web_Title2#> routers, one configured as the Media station and the other as a router.";
+				pstaDesc += "Setup the first <#Web_Title2#> as router then configure the second <#Web_Title2#> as 802.11ac Media bridge  and you can simply connect  PCs, Smart TV, game console, DVR, media player to Media bridge via Ethernet cable.";
 				pstaDesc += "Upgrade your home entertainment device with low interference Gigabit Wi-Fi and avoid the separate Wi-Fi adapters for multiple devices at the same time.";
-				pstaDesc += "<br/><span style=\"color:#FC0\">Install and use the <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery Utility</a> in order to detect the <% nvram_get("productid"); %>'s IP address.</span>";
+				pstaDesc += "<br/><span style=\"color:#FC0\">Install and use the <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery Utility</a> in order to detect the <#Web_Title2#>'s IP address.</span>";
 
 		document.form.sw_mode.value = 2;
 		$j("#Senario").css("height", "300px");

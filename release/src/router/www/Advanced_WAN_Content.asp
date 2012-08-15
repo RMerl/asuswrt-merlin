@@ -66,7 +66,7 @@ function initial(){
 	change_wan_type(document.form.wan_proto.value, 0);	
 	fixed_change_wan_type(document.form.wan_proto.value);
 	genWANSoption();
-	addOnlineHelp($("faq"), ["UPNP"]);
+	addOnlineHelp($("faq"), ["UPnP"]);
 	change_wan_type(document.form.wan_proto.value, 0);	
 	
 	if(document.form.wan_proto.value == "pppoe"
@@ -691,7 +691,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 							</tr>				
 
 							<tr>
-								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);"><#BasicConfig_EnableMediaServer_itemname#></a>&nbsp&nbsp<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">UPnP&nbspFAQ</a></th>                 
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);"><#BasicConfig_EnableMediaServer_itemname#></a>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">UPnP&nbspFAQ</a></th>
 								<td>
 									<input type="radio" name="wan_upnp_enable" class="input" value="1" onclick="return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '1')" <% nvram_match("wan_upnp_enable", "1", "checked"); %>><#checkbox_Yes#>
 									<input type="radio" name="wan_upnp_enable" class="input" value="0" onclick="return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '0')" <% nvram_match("wan_upnp_enable", "0", "checked"); %>><#checkbox_No#>
@@ -764,7 +764,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 							<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,29);"><#PPPConnection_Authentication_itemname#></a></th>
 							<td align="left">
 							    <select class="input_option" name="wan_auth_x" onChange="change_wan_type(document.form.wan_proto.value);">
-							    <option value="" <% nvram_match("wan_auth_x", "", "selected"); %>>None</option>
+							    <option value="" <% nvram_match("wan_auth_x", "", "selected"); %>><#wl_securitylevel_0#></option>
 							    <option value="8021x-md5" <% nvram_match("wan_auth_x", "8021x-md5", "selected"); %>>802.1x MD5</option>
 							    </select></td>
 							</tr>
@@ -826,7 +826,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
             	</tr>
 		</thead>
 		<tr id="vpn_server">    
-          	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,19);"><#PPPConnection_x_HeartBeat_itemname#></a></th>
+          	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,19);"><#BOP_isp_heart_item#></a></th>
           	<td>
           	<!-- 2008.03 James. patch for Oleg's patch. { -->
           	<input type="text" name="wan_heartbeat_x" class="input_32_table" maxlength="256" value="<% nvram_get("wan_heartbeat_x"); %>" onKeyPress="return is_string(this, event)"></td>

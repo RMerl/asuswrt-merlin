@@ -62,6 +62,9 @@ extern char serialnumber[];
 #define MODELNUMBER_MAX_LEN (48)
 extern char modelnumber[];
 
+#define FRIENDLYNAME_MAX_LEN (64)
+extern char friendly_name[];
+
 #define PRESENTATIONURL_MAX_LEN (64)
 extern char presentationurl[];
 

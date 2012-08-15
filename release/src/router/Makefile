@@ -121,6 +121,7 @@ obj-$(RTCONFIG_USB_BECEEM) += Beceem_BCMS250 # for Beceem WiMAX
 obj-y += libdisk
 
 obj-y += dosfstools
+obj-$(RTCONFIG_NTFS) += linux-ntfs-2.0.0
 obj-$(RTCONFIG_FTP) += vsftpd
 
 ifeq ($(CONFIG_LINUX26),y)
@@ -224,7 +225,7 @@ ifeq ($(RTCONFIG_BCMWL6),y)
 obj-y += acsd
 endif
 else
-#obj-y += lldt
+obj-y += lldt
 endif
 obj-y += networkmap
 obj-y += infosvr
@@ -851,6 +852,23 @@ ntfs-3g-install: ntfs-3g
 	install -d $(INSTALLDIR)/ntfs-3g/sbin && cd $(INSTALLDIR)/ntfs-3g/sbin && \
 		ln -sf ../bin/ntfs-3g mount.ntfs-3g && \
 		ln -sf ../bin/ntfs-3g mount.ntfs
+
+linux-ntfs-2.0.0/stamp-h1:
+	cd linux-ntfs-2.0.0 && \
+	$(CONFIGURE) --host=mips-linux
+	touch linux-ntfs-2.0.0/stamp-h1
+
+linux-ntfs-2.0.0: linux-ntfs-2.0.0/stamp-h1
+	@$(MAKE) -C linux-ntfs-2.0.0 all
+
+linux-ntfs-2.0.0-install:
+	install -D linux-ntfs-2.0.0/libntfs/.libs/libntfs.so.10.0.0 $(INSTALLDIR)/linux-ntfs-2.0.0/usr/lib/libntfs.so.10.0.0
+	$(STRIP) $(INSTALLDIR)/linux-ntfs-2.0.0/usr/lib/libntfs.so.10.0.0
+	cd $(INSTALLDIR)/linux-ntfs-2.0.0/usr/lib && \
+		ln -sf libntfs.so.10.0.0 libntfs.so.10 && \
+		ln -sf libntfs.so.10.0.0 libntfs.so
+	install -D linux-ntfs-2.0.0/ntfsprogs/.libs/ntfsfix $(INSTALLDIR)/linux-ntfs-2.0.0/usr/sbin/ntfsfix
+	$(STRIP) $(INSTALLDIR)/linux-ntfs-2.0.0/usr/sbin/*
 
 libupnp-1.3.1: libupnp-1.3.1/Makefile
 	$(MAKE) -C $@
@@ -1834,9 +1852,9 @@ madwimax-0.1.1: libusb10 madwimax-0.1.1/stamp-h1
 	@$(MAKE) -C madwimax-0.1.1 all
 
 madwimax-0.1.1-install: madwimax-0.1.1
-	@install -D madwimax-0.1.1/scripts/events/event.sh $(INSTALLDIR)/madwimax-0.1.1/usr/sbin/event.sh
-	@install -D madwimax-0.1.1/src/madwimax $(INSTALLDIR)/madwimax-0.1.1/usr/sbin/madwimax
-	@$(STRIP) $(INSTALLDIR)/madwimax-0.1.1/usr/sbin/madwimax
+	install -D madwimax-0.1.1/scripts/events/event.sh $(INSTALLDIR)/madwimax-0.1.1/usr/sbin/event.sh
+	install -D madwimax-0.1.1/src/madwimax $(INSTALLDIR)/madwimax-0.1.1/usr/sbin/madwimax
+	$(STRIP) $(INSTALLDIR)/madwimax-0.1.1/usr/sbin/madwimax
 
 madwimax-0.1.1-clean:
 	-@$(MAKE) -C madwimax-0.1.1 clean

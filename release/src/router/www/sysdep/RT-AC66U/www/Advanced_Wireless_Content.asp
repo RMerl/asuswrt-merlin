@@ -59,9 +59,6 @@ function initial(){
 	if(document.form.wl_unit[0].selected == true){
 		$("wl_gmode_checkbox").style.display = "";
 	}
-	else{
-		
-	}
 
 	if(document.form.wl_nmode_x.value=='1'){
 		document.form.wl_gmode_check.checked = false;
@@ -123,11 +120,11 @@ function genBWTable(_unit){
 	}
 	else if(_unit == 0){
 		var bws = new Array(0, 1, 2);
-		var bwsDesc = new Array("Auto", "20 MHz", "40 MHz");
+		var bwsDesc = new Array("20/40 MHz", "20 MHz", "40 MHz");
 	}
 	else{
 		var bws = new Array(0, 1, 2, 3);
-		var bwsDesc = new Array("Auto", "20 MHz", "40 MHz", "80 MHz");
+		var bwsDesc = new Array("20/40/80 MHz", "20 MHz", "40 MHz", "80 MHz");
 	}
 
 	document.form.wl_bw.length = bws.length;
@@ -198,6 +195,14 @@ function applyRule(){
 
 		if(sw_mode == 2)
 			document.form.action_wait.value = "5";
+
+		if(document.form.wl_chanspec.value != 0 && document.form.wl_bw.value == 0){
+			if('<% nvram_get("wl_unit"); %>' == 0)
+				document.form.wl_bw.value = 2;
+			else
+				document.form.wl_bw.value = 3;
+		}
+
 		document.form.submit();
 	}
 }
@@ -264,6 +269,15 @@ function disableAdvFn(){
 function _change_wl_unit(val){
 	document.form.wl_subunit.value = (val == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
 	change_wl_unit();
+}
+
+function checkBW(){
+	if(document.form.wl_chanspec.value != 0 && document.form.wl_bw.value == 0){
+		if('<% nvram_get("wl_unit"); %>' == 0)
+			document.form.wl_bw.selectedIndex = 2;
+		else
+			document.form.wl_bw.selectedIndex = 3;
+	}
 }
 </script>
 </head>
@@ -429,7 +443,7 @@ function _change_wl_unit(val){
 				<tr>
 					<th><a id="wl_channel_select" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 3);"><#WLANConfig11b_Channel_itemname#></a></th>
 					<td>
-				 		<select name="wl_chanspec" class="input_option" onChange=""></select>
+				 		<select name="wl_chanspec" class="input_option" onChange="checkBW();"></select>
 					</td>
 			  </tr>
 		  	<!-- end -->

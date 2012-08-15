@@ -142,7 +142,7 @@ function gen_gntable_tr(unit, gn_array){
 		}
 		else{
 			var subunit = i+1;
-			htmlcode += '<td align="center"><input type="button" class="button_gen" value="<#btn_Enable#>" onclick="create_guest_unit('+ unit +','+ subunit +');"></td>';
+			htmlcode += '<td align="center"><input type="button" class="button_gen" value="<#WLANConfig11b_WirelessCtrl_button1name#>" onclick="create_guest_unit('+ unit +','+ subunit +');"></td>';
 		}
 	}
 
@@ -637,7 +637,7 @@ function create_guest_unit(_unit, _subunit){
 					<th><#Access_Intranet#></th>
 					<td>
 				 		<select name="wl_lanaccess" class="input_option">
-							<option value="on" <% nvram_match("wl_lanaccess", "on","selected"); %>><#btn_Enable#></option>
+							<option value="on" <% nvram_match("wl_lanaccess", "on","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 							<option value="off" <% nvram_match("wl_lanaccess", "off","selected"); %>><#btn_disable#></option>
 			  		</select>
 					</td>

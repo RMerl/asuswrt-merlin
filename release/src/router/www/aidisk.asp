@@ -107,7 +107,7 @@ function resultOfInitialAccount(){
 		if(pools && pools.length > 0)
 			folderlist = get_sharedfolder_in_pool(pools[0]);
 		
-		submitChangePermission('<% nvram_get("http_username"); %>', "3", "ftp");
+		submitChangePermission('<% nvram_char_to_ascii("", "http_username"); %>', "3", "ftp");
 	}
 }
 
@@ -181,7 +181,7 @@ function submitChangePermission(account, permission, protocol){
 		if(pools && pools.length > 0)
 			folderlist = get_sharedfolder_in_pool(pools[0]);
 		
-		submitChangePermission('<% nvram_get("http_username"); %>', "3", "ftp");
+		submitChangePermission('<% nvram_char_to_ascii("", "http_username"); %>', "3", "ftp");
 	}
 	else
 		switchShareMode("ftp", "account");

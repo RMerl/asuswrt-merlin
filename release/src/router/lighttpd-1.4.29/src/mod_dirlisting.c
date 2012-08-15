@@ -79,7 +79,7 @@ typedef struct {
 	plugin_config conf;
 } plugin_data;
 
-#define DBE 0
+#define DBE 1
 
 static excludes_buffer *excludes_buffer_init(void) {
 	excludes_buffer *exb;
@@ -926,7 +926,7 @@ static int http_list_directory(server *srv, connection *con, plugin_data *p, buf
 	} else {
 		buffer_append_string_buffer(out, p->conf.encoding);
 	}
-	
+	Cdbg(DBE, "http_list_directory....");
 	buffer_append_string_len(out, CONST_STR_LEN("\"?>\n"));
 	http_list_directory_header(srv, con, p, out);
 	

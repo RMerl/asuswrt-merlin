@@ -1,0 +1,2 @@
+/usr/sbin/mkntfs /sbin/mkfs.ntfs
+/usr/bin/ntfsmount /sbin/mount.ntfs-fuse

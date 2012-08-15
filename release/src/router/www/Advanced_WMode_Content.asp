@@ -194,7 +194,7 @@ function applyRule(){
 	}
 	
 	if(document.form.wl_mode_x.value == "1")
-		document.form.wl_wdsapply_x.value = "1";
+		inputRCtrl1(document.form.wl_wdsapply_x, 1);
 
 	showLoading();	
 	document.form.submit();

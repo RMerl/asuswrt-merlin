@@ -34,8 +34,10 @@ function initial(){
 		hideAll(1);
 	}
 
-	if(HTTPS_support == -1)
+	if(HTTPS_support == -1 || '<% nvram_get("http_enable"); %>' == 0)
 		$("https_port").style.display = "none";
+	else if('<% nvram_get("http_enable"); %>' == 1)
+		$("http_port").style.display = "none";
 
 	hideport(document.form.misc_http_x[0].checked);
 }
@@ -181,7 +183,7 @@ function done_validating(action){
           		<th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,1);"><#FirewallConfig_WanLanLog_itemname#></a></th>
             	<td>
               		<select name="fw_log_x" class="input_option" onchange="return change_common(this, 'FirewallConfig', 'fw_log_x')">
-                			<option value="none" <% nvram_match("fw_log_x", "none","selected"); %>>None</option>
+                			<option value="none" <% nvram_match("fw_log_x", "none","selected"); %>><#wl_securitylevel_0#></option>
                 			<option value="drop" <% nvram_match("fw_log_x", "drop","selected"); %>>Dropped</option>
                 			<option value="accept" <% nvram_match("fw_log_x", "accept","selected"); %>>Accepted</option>
                 			<option value="both" <% nvram_match("fw_log_x", "both","selected"); %>>Both</option>

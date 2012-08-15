@@ -70,7 +70,7 @@ function initial(){
 	default_apps_array = [["AiDisk", "aidisk.asp", "<#AiDiskWelcome_desp1#>", "Aidisk.png"],
 												["Servers Center", tablink[3][1], "<#UPnPMediaServer_Help#>", "server.png"],
 												["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer.png"],
-												["3G/WiMax", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png"]];
+												["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png"]];
   if(no_wimax_support >= 0){
   	default_apps_array.splice(3, 1, ["3G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png"]);  	
   	//alert(default_apps_array);
@@ -547,7 +547,7 @@ function show_partition(){
 		}
 		else{
 			if(all_accessable_size > 1)
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="apps_form(\'switch\',\'\',\''+ partitions_array[i] +'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="apps_form(\'switch\',\''+_appname+'\',\''+partitions_array[i]+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
 			else
 				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
 			htmlcode += '<div class="app_desc"><b>'+ pool_names()[i] + '</b></div>'; 
