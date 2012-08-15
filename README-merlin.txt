@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.164.15 (xx-Aug-2012)
+Asuswrt-Merlin - build 3.0.0.3.178.15 (xx-Aug-2012)
 ====================================================
 
 About
@@ -260,7 +260,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.3.164.15:
+3.0.0.3.178.15:
+   - NEW: Rebased on 3.0.0.3.178.  Notable fixes by Asus:
+           * Radio turns back on based on schedule
+           * (RT-AC66U) 5G LED turns off/on as appropriate
+           * Reorganized QoS pages
    - NEW: RT-AC66U officialy supported, with all the same features as the RT-N66U.
    - NEW: (RT-AC66U) Implemented JFFS support.  Limiting partition to 32 MB
           max, as using the whole 90+ MB available makes little sense for 
