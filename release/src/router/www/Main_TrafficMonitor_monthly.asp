@@ -196,10 +196,10 @@ function switchPage(page){
 			    							<option value=1>MB</option>
 			    							<option value=2 selected>GB</option>
 			    						</select>
-										</div>
-									</td>
-							</table></td></tr>
+								</div>
+							</td>
 	        				</tr>
+						</table></td></tr>
 
 	        				<tr>
 	          					<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
