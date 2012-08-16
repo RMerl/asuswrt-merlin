@@ -105,6 +105,10 @@ function showbootTime(){
 						<td><% nvram_get("buildinfo"); %></td>
 					</tr>
 					<tr>
+						<th>Driver version:</th>
+						<td><% nvram_get("wl_version"); %></td>
+					</tr>
+					<tr>
 						<th>Bootloader:</th>
 						<td><% nvram_get("pmon_ver"); %></td>
 					</tr>
@@ -112,9 +116,8 @@ function showbootTime(){
 						<th>Features:</th>
 						<td><% nvram_get("rc_support"); %></td>
 					</tr>
-
 					<tr>
-						<th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(12, 1);"--><#General_x_SystemUpTime_itemname#></a></th>
+						<th><#General_x_SystemUpTime_itemname#></a></th>
 						<td><span id="boot_days"></span> <#Day#> <span id="boot_hours"></span> <#Hour#> <span id="boot_minutes"></span> <#Minute#> <span id="boot_seconds"></span> <#Second#></td>
 					</tr>
 
