@@ -49,3 +49,4 @@ cscope.*
 # asuswrt
 config_
 config_current
+save-config
