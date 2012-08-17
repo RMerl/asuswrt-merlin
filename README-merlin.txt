@@ -263,7 +263,6 @@ History
 3.0.0.3.178.15:
    - NEW: Rebased on 3.0.0.3.178.  Notable fixes by Asus:
            * Radio turns back on based on schedule
-           * (RT-AC66U) 5G LED turns off/on as appropriate
            * Reorganized QoS pages
            * Turning WAN DHCP connection off will first release current DHCP lease
    - NEW: RT-AC66U officialy supported, with all the same features as the RT-N66U.
@@ -274,7 +273,9 @@ History
           other firewall rules (firewall-start changes to the nat table are 
           being overwritten when the router starts NAT)
    - NEW: Added additional info to Sysinfo page
-   - FIXED: (RT-AC66U) Re-enabled power control
+   - NEW: Added chroot applet
+   - NEW: Option to allow SSH access from WAN
+   - NEW: Option to exclude specific devices from idle spindown
    - FIXED: Performance page now uses the new Sysinfo API, and is now able
             to deal with cases where radios are disabled.
 
