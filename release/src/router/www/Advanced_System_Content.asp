@@ -896,6 +896,13 @@ function pullLANIPList(obj){
 					</tr>
 
 					<tr>
+						<th>Allow SSH access from WAN</th>
+						<td>
+							<input type="radio" name="sshd_wan" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_wan", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="sshd_wan" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_wan", "0", "checked"); %>><#checkbox_No#>
+						</td>
+					</tr>
+					<tr>
 						<th>Allow SSH password login</th>
 						<td>
 							<input type="radio" name="sshd_pass" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_pass", "1", "checked"); %>><#checkbox_Yes#>

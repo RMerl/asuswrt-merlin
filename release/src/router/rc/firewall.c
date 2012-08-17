@@ -2043,6 +2043,10 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -p 47 -j %s\n",logaccept);
 		}
 
+		// Open ssh to WAN
+		if ((nvram_match("sshd_wan", "1")) && (nvram_get_int("sshd_port")))
+			fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, nvram_get_int("sshd_port"), logaccept);
+
 		fprintf(fp, "-A INPUT -j %s\n", logdrop);
 	}
 
