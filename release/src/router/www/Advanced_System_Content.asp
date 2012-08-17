@@ -891,7 +891,7 @@ function pullLANIPList(obj){
 					<tr id="ssh_lanport">
 						<th>SSH service port</th>
 						<td>
-							<input type="text" maxlength="5" class="input_6_table" name="sshd_port" value="<% nvram_get("sshd_port"); %>">
+							<input type="text" maxlength="5" class="input_6_table" name="sshd_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("sshd_port"); %>">
 						</td>        
 					</tr>
 
