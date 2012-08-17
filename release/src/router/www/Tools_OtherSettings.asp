@@ -28,6 +28,14 @@ function initial()
 	initConntrackValues()
 	set_rstats_location();
 	hide_rstats_storage(document.form.rstats_location.value);
+
+	if (document.form.usb_idle_exclude.value.indexOf("a") != -1)
+		document.form.usb_idle_exclude_a.checked = true;
+	if (document.form.usb_idle_exclude.value.indexOf("b") != -1)
+		document.form.usb_idle_exclude_b.checked = true;
+	if (document.form.usb_idle_exclude.value.indexOf("c") != -1)
+		document.form.usb_idle_exclude_c.checked = true;
+
 }
 
 function set_rstats_location()
@@ -88,8 +96,7 @@ function applyRule(){
 	{
 		document.form.rstats_path.value = "";
 	}
-
-
+	
 	document.form.ct_tcp_timeout.value = "0 "+
 		document.form.tcp_established.value +" " +
 		document.form.tcp_syn_sent.value +" " +
@@ -102,8 +109,18 @@ function applyRule(){
 
 	document.form.ct_udp_timeout.value = document.form.udp_unreplied.value + " "+document.form.udp_assured.value;
 
-	if (document.form.usb_idle_timeout.value != <% nvram_get("usb_idle_timeout"); %>)
-		document.form.action_script.value += ";restart_sdidle";
+	excluded = "";
+	if (document.form.usb_idle_exclude_a.checked)
+		excluded += "a";
+        if (document.form.usb_idle_exclude_b.checked)   
+                excluded += "b";
+        if (document.form.usb_idle_exclude_c.checked)   
+                excluded += "c";
+
+	document.form.usb_idle_exclude.value = excluded;
+
+	if ( (excluded != "<% nvram_get("usb_idle_exclude"); %>") ||  (document.form.usb_idle_timeout.value != <% nvram_get("usb_idle_timeout"); %>) )
+                document.form.action_script.value += ";restart_sdidle";
 
 	document.form.submit();
 }
@@ -137,7 +154,7 @@ function done_validating(action){
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="ct_tcp_timeout" value="<% nvram_get("ct_tcp_timeout"); %>">
 <input type="hidden" name="ct_udp_timeout" value="<% nvram_get("ct_udp_timeout"); %>">
-
+<input type="hidden" name="usb_idle_exclude" value="<% nvram_get("usb_idle_exclude"); %>">
 
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -229,6 +246,14 @@ function done_validating(action){
 							<input type="text" maxlength="6" class="input_12_table"name="usb_idle_timeout" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 43200)"value="<% nvram_get("usb_idle_timeout"); %>">
 						</td>
 					</tr>
+					<tr>
+						<th>Exclude the following drives from spinning down</th>
+						<td>
+							<input type="checkbox" name="usb_idle_exclude_a">sda</input>
+							<input type="checkbox" name="usb_idle_exclude_b">sdb</input>
+							<input type="checkbox" name="usb_idle_exclude_c">sdc</input> 
+						</td>
+					</td>
 				</table>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">

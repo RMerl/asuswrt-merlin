@@ -2456,11 +2456,20 @@ void webdav_account_default(void)
 int start_sd_idle(void) {
 	int ret = 0;
 	int idle_timeout = nvram_get_int("usb_idle_timeout");
-	char tmp[12];
+	char tmp[12], exclude2[6];
+	char *exclude = nvram_get("usb_idle_exclude");
 
 	if (idle_timeout != 0) {
 		sprintf(tmp,"%d",idle_timeout);
-		ret = eval("/usr/sbin/sd-idle-2.6" , "-i" , tmp);
+
+		if (*exclude) {
+			strcpy(exclude2,"!");
+			strncat(exclude2, nvram_safe_get("usb_idle_exclude"), sizeof (exclude2) );
+		} else {
+			strcpy(exclude2,"");
+		}
+
+		ret = eval("/usr/sbin/sd-idle-2.6" , "-i" , tmp, *exclude ? "-d" : NULL,  exclude2, NULL);
 	}
 	return ret;
 }
