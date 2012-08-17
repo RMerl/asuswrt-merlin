@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.178.15 (xx-Aug-2012)
+Asuswrt-Merlin - build 3.0.0.3.178.15 (17-Aug-2012)
 ====================================================
 
 About
@@ -35,7 +35,7 @@ Features
 --------
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
-- Based on the source code of release 3.0.0.3.164
+- Based on the source code of release 3.0.0.3.178
 - WakeOnLan web interface (with user-entered preset targets)
 - Persistent JFFS partition
 - User scripts that run on specific events
@@ -141,7 +141,8 @@ having to remember their MAC addresses.
 SSH support (through Dropbear) was re-enabled.  Password-based login will use 
 the "admin" username (like telnet), and the same password as used to log on  
 the web interface.  You can also optionally insert a RSA public key there 
-for keypair-based authentication.
+for keypair-based authentication.  There is also an option to make 
+ssh access available over WAN.
 
 
 * HTTPS management *
@@ -268,7 +269,7 @@ History
    - NEW: RT-AC66U officialy supported, with all the same features as the RT-N66U.
    - NEW: (RT-AC66U) Implemented JFFS support.  Limiting partition to 32 MB
           max, as using the whole 90+ MB available makes little sense for 
-          JFFS, and is also displaying some issues.
+          JFFS, and was also displaying some issues.
    - NEW: Added nat-start user script, as NAT rules get applied separately from
           other firewall rules (firewall-start changes to the nat table are 
           being overwritten when the router starts NAT)
@@ -480,10 +481,24 @@ Contact information
 SmallNetBuilder forums (preferred method: http://forums.smallnetbuilder.com/showthread.php?t=7047 as RMerlin)
 Asus Forums (http://vip.asus.com/forum/topic.aspx?board_id=11&model=RT-N66U%20(VER.B1)&SLanguage=en-us) as RMerlin.
 Website: http://www.lostrealm.ca/
+Github: https://github.com/RMerl/asuswrt-merlin
 Email: rmerl@lostrealm.ca
+Twitter: https://twitter.com/RMerlinDev
+
+Development news will be posted on Twitter.  You can also keep a closer eye 
+on development as it happens through the Github site.
+
+For support question, plese use the SmallNetBuilder forums whenever possible, I regularily 
+post there (in the Asus Wireless section).
+
 
 Drop me a note if you are using this firmware and are enjoying it.  If you really like it and want 
 to give more than a simple "Thank you", there is also a Paypal donation button on my website.
+
+I want to give my special thanks to Asus for showing an interest in this project, 
+and also providing me with support when needed.  Also, thank you everyone who has 
+donated through Paypal.  Much appreciated!
+
 
 
 --- 
