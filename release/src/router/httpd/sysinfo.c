@@ -221,6 +221,20 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			else
 				sprintf(result,"%d",count);
 
+		} else if(strcmp(type,"driver_version") == 0 ) {
+			system("/usr/sbin/wl ver >/tmp/output.txt");
+
+			char *buffer = read_whole_file("/tmp/output.txt");
+
+			if (buffer) {
+				if (tmp = strstr(buffer, "\n"))
+					strncpy(result, tmp+1, sizeof result);
+				else
+					strncpy(result, buffer, sizeof result);
+				free(buffer);
+				unlink("/tmp/output.txt");
+			}
+
                 } else {
 			strcpy(result,"Not implemented");
 		}

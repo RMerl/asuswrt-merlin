@@ -106,7 +106,8 @@ function showbootTime(){
 					</tr>
 					<tr>
 						<th>Driver version:</th>
-						<td><% nvram_get("wl_version"); %></td>
+<!--						<td><% nvram_get("wl_version"); %></td> -->
+						<td><% sysinfo("driver_version"); %></td>
 					</tr>
 					<tr>
 						<th>Features:</th>
