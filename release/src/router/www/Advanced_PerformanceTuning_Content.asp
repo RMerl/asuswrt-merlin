@@ -267,6 +267,7 @@ function getCookie(c_name)
 												<td colspan="2">System adjustment</td>
 											</tr>
 											</thead>
+<!--
 											
 											<tr>
 												<th>2.4GHz Transmit radio power</th>
@@ -283,7 +284,7 @@ function getCookie(c_name)
 													<span id="TxPowerHint_5" style="margin-left:10px;display:none;">This value could not exceed 80</span>
 												</td> 
 											</tr>
-
+-->
 											<tr>
 												<th>Temperature unit</th>
 												<td>
