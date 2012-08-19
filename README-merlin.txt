@@ -263,8 +263,10 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.3.178.16:
-   - FIXED: (RT-AC66U) Crashes when accessing a LAN device through either 
-            VPN or the NAT Loopback (disabled GRO)
+   - FIXED: (RT-AC66U) Would crashe when accessing a LAN device through either 
+            VPN or the NAT Loopback (GRO is now disabled for that device)
+   - CHANGED: Removed power adjustments from the Performance page, as they
+              are redundant, and not as reliable.
 
 
 3.0.0.3.178.15:
