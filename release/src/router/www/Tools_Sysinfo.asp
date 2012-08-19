@@ -106,7 +106,6 @@ function showbootTime(){
 					</tr>
 					<tr>
 						<th>Driver version:</th>
-<!--						<td><% nvram_get("wl_version"); %></td> -->
 						<td><% sysinfo("driver_version"); %></td>
 					</tr>
 					<tr>
@@ -206,8 +205,8 @@ function showbootTime(){
 					<tr>
 						<th>Wireless clients (2.4 GHz)</th>
 						<td>
-							Associated: <span><% sysinfo("conn.wifi.2.assoc"); %></span>&nbsp;&nbsp;-
-							Authorized: <span><% sysinfo("conn.wifi.2.autho"); %></span>&nbsp;&nbsp;-
+							Associated: <span><% sysinfo("conn.wifi.2.assoc"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
+							Authorized: <span><% sysinfo("conn.wifi.2.autho"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
 							Authenticated: <span><% sysinfo("conn.wifi.2.authe"); %></span>
 						</td>
 					</tr>
