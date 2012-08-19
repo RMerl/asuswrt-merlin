@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.178.15 (17-Aug-2012)
+Asuswrt-Merlin - build 3.0.0.3.178.16 (17-Aug-2012)
 ====================================================
 
 About
@@ -36,6 +36,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 - Based on the source code of release 3.0.0.3.178
+- Various bugfixes (like the crash on VPN/NAT Loopback access of LAN devices)
 - WakeOnLan web interface (with user-entered preset targets)
 - Persistent JFFS partition
 - User scripts that run on specific events
@@ -261,6 +262,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.3.178.16:
+   - FIXED: (RT-AC66U) Crashes when accessing a LAN device through either 
+            VPN or the NAT Loopback (disabled GRO)
+
+
 3.0.0.3.178.15:
    - NEW: Rebased on 3.0.0.3.178.  Notable fixes by Asus:
            * Radio turns back on based on schedule
