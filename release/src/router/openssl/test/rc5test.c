@@ -1,1 +1,1 @@
-../crypto/rc5/rc5test.c
+dummytest.c

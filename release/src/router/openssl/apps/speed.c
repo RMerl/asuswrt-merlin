@@ -1230,7 +1230,8 @@ int MAIN(int argc, char **argv)
 		count*=2;
 		Time_F(START);
 		for (it=count; it; it--)
-			DES_ecb_encrypt(buf_as_des_cblock,buf_as_des_cblock,
+			DES_ecb_encrypt((DES_cblock *)buf,
+				(DES_cblock *)buf,
 				&sch,DES_ENCRYPT);
 		d=Time_F(STOP);
 		} while (d <3);
@@ -2702,6 +2703,7 @@ static int do_multi(int multi)
 				else
 					rsa_results[k][1]=d;
 				}
+#ifndef OPENSSL_NO_DSA
 			else if(!strncmp(buf,"+F3:",4))
 				{
 				int k;
@@ -2723,6 +2725,7 @@ static int do_multi(int multi)
 				else
 					dsa_results[k][1]=d;
 				}
+#endif
 #ifndef OPENSSL_NO_ECDSA
 			else if(!strncmp(buf,"+F4:",4))
 				{

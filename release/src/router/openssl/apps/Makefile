@@ -50,26 +50,21 @@ S_SRC=	s_cb.c s_socket.c
 RAND_OBJ=app_rand.o
 RAND_SRC=app_rand.c
 
-#zzz
+E_OBJ=	verify.o asn1pars.o req.o dgst.o dh.o dhparam.o enc.o passwd.o gendh.o errstr.o \
+	ca.o pkcs7.o crl2p7.o crl.o \
+	rsa.o rsautl.o dsa.o dsaparam.o ec.o ecparam.o \
+	x509.o genrsa.o gendsa.o genpkey.o s_server.o s_client.o speed.o \
+	s_time.o $(A_OBJ) $(S_OBJ) $(RAND_OBJ) version.o sess_id.o \
+	ciphers.o nseq.o pkcs12.o pkcs8.o pkey.o pkeyparam.o pkeyutl.o \
+	spkac.o smime.o cms.o rand.o engine.o ocsp.o prime.o ts.o
 
-E_OBJ= req.o rsa.o x509.o $(A_OBJ) $(RAND_OBJ) enc.o
-E_SRC= req.c rsa.c x509.c $(A_SRC) $(RAND_SRC) enc.c
-
-#E_OBJ=	verify.o asn1pars.o req.o dgst.o dh.o dhparam.o enc.o passwd.o gendh.o errstr.o \
-#	ca.o pkcs7.o crl2p7.o crl.o \
-#	rsa.o rsautl.o dsa.o dsaparam.o ec.o ecparam.o \
-#	x509.o genrsa.o gendsa.o genpkey.o s_server.o s_client.o speed.o \
-#	s_time.o $(A_OBJ) $(S_OBJ) $(RAND_OBJ) version.o sess_id.o \
-#	ciphers.o nseq.o pkcs12.o pkcs8.o pkey.o pkeyparam.o pkeyutl.o \
-#	spkac.o smime.o cms.o rand.o engine.o ocsp.o prime.o ts.o
-
-#E_SRC=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c ca.c \
-#	pkcs7.c crl2p7.c crl.c \
-#	rsa.c rsautl.c dsa.c dsaparam.c ec.c ecparam.c \
-#	x509.c genrsa.c gendsa.c genpkey.c s_server.c s_client.c speed.c \
-#	s_time.c $(A_SRC) $(S_SRC) $(RAND_SRC) version.c sess_id.c \
-#	ciphers.c nseq.c pkcs12.c pkcs8.c pkey.c pkeyparam.c pkeyutl.c \
-#	spkac.c smime.c cms.c rand.c engine.c ocsp.c prime.c ts.c
+E_SRC=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c ca.c \
+	pkcs7.c crl2p7.c crl.c \
+	rsa.c rsautl.c dsa.c dsaparam.c ec.c ecparam.c \
+	x509.c genrsa.c gendsa.c genpkey.c s_server.c s_client.c speed.c \
+	s_time.c $(A_SRC) $(S_SRC) $(RAND_SRC) version.c sess_id.c \
+	ciphers.c nseq.c pkcs12.c pkcs8.c pkey.c pkeyparam.c pkeyutl.c \
+	spkac.c smime.c cms.c rand.c engine.c ocsp.c prime.c ts.c
 
 SRC=$(E_SRC)
 
@@ -159,13 +154,12 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-#	LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
-	LIBRARIES="$(LIBCRYPTO)" ; \
+	LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$(EXE) OBJECTS="$(PROGRAM).o $(E_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
-#	@(cd ..; $(MAKE) rehash)
+	@(cd ..; $(MAKE) rehash)
 
 progs.h: progs.pl
 	$(PERL) progs.pl $(E_EXE) >progs.h
