@@ -79,8 +79,6 @@ function redraw()
 	grid += "<th><#tm_reception#></th>";
 	grid += "<th><#tm_transmission#></th>";
 	grid += "<th><#Total#></th></tr>";
-        grid = '<table width="730px" class="FormTable_NWM">';
-        grid += "<tr><th style=\"height:30px;\"><#Date#></th>";
 
 	for (i = 0; i < monthly_history.length-1; ++i) {
 		h = monthly_history[i];
