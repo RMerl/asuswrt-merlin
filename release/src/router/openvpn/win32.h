@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -33,6 +33,8 @@
 #define DEFAULT_WIN_SYS_PATH  "C:\\WINDOWS" /* --win-sys default value */
 #define NETSH_PATH_SUFFIX     "\\system32\\netsh.exe"
 #define WIN_ROUTE_PATH_SUFFIX "\\system32\\route.exe"
+#define WIN_IPCONFIG_PATH_SUFFIX "\\system32\\ipconfig.exe"
+#define WIN_NET_PATH_SUFFIX "\\system32\\net.exe"
 
 /*
  * Win32-specific OpenVPN code, targetted at the mingw
@@ -267,6 +269,9 @@ char *get_win_sys_path (void);
 
 /* call self in a subprocess */
 void fork_to_self (const char *cmdline);
+
+/* Find temporary directory */
+const char *win_get_tempdir();
 
 #endif
 #endif

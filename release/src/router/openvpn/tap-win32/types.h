@@ -4,7 +4,7 @@
  *
  *  This code was inspired by the CIPE-Win32 driver by Damion K. Wilson.
  *
- *  This source code is Copyright (C) 2002-2009 OpenVPN Technologies, Inc.,
+ *  This source code is Copyright (C) 2002-2010 OpenVPN Technologies, Inc.,
  *  and is released under the GPL version 2 (see below).
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -143,6 +143,7 @@ typedef struct _TapAdapter
   IPADDR m_remoteNetmask;
   ETH_HEADER m_TapToUser;
   ETH_HEADER m_UserToTap;
+  ETH_HEADER m_UserToTap_IPv6;		// same as UserToTap but proto=ipv6
   MACADDR m_MAC_Broadcast;
 
   // Used for DHCP server masquerade

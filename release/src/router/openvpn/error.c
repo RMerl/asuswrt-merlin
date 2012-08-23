@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -26,7 +26,6 @@
 
 #include "error.h"
 #include "buffer.h"
-#include "thread.h"
 #include "misc.h"
 #include "win32.h"
 #include "socket.h"
@@ -229,8 +228,6 @@ void x_msg (const unsigned int flags, const char *format, ...)
 
   gc_init (&gc);
 
-  mutex_lock_static (L_MSG);
-
   m1 = (char *) gc_malloc (ERR_BUF_SIZE, false, &gc);
   m2 = (char *) gc_malloc (ERR_BUF_SIZE, false, &gc);
 
@@ -330,22 +327,12 @@ void x_msg (const unsigned int flags, const char *format, ...)
 	    }
 	  else
 	    {
-#ifdef USE_PTHREAD
-	      fprintf (fp, "%s [%d] %s%s%s%s",
-		       time_string (0, 0, show_usec, &gc),
-		       (int) openvpn_thread_self (),
-		       prefix,
-		       prefix_sep,
-		       m1,
-		       (flags&M_NOLF) ? "" : "\n");
-#else
 	      fprintf (fp, "%s %s%s%s%s",
 		       time_string (0, 0, show_usec, &gc),
 		       prefix,
 		       prefix_sep,
 		       m1,
 		       (flags&M_NOLF) ? "" : "\n");
-#endif
 	    }
 	  fflush(fp);
 	  ++x_msg_line_num;
@@ -355,8 +342,6 @@ void x_msg (const unsigned int flags, const char *format, ...)
   if (flags & M_FATAL)
     msg (M_INFO, "Exiting");
 
-  mutex_unlock_static (L_MSG);
-  
   if (flags & M_FATAL)
     openvpn_exit (OPENVPN_EXIT_STATUS_ERROR); /* exit point */
 
@@ -477,14 +462,16 @@ redirect_stdout_stderr (const char *file, bool append)
     {
       HANDLE log_handle;
       int log_fd;
-      struct security_attributes sa;
 
-      init_security_attributes_allow_all (&sa);
+      SECURITY_ATTRIBUTES saAttr; 
+      saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); 
+      saAttr.bInheritHandle = TRUE; 
+      saAttr.lpSecurityDescriptor = NULL; 
 
       log_handle = CreateFile (file,
 			       GENERIC_WRITE,
 			       FILE_SHARE_READ,
-			       &sa.sa,
+			       &saAttr,
 			       append ? OPEN_ALWAYS : CREATE_ALWAYS,
 			       FILE_ATTRIBUTE_NORMAL,
 			       NULL);
@@ -505,10 +492,12 @@ redirect_stdout_stderr (const char *file, bool append)
       /* save original stderr for password prompts */
       orig_stderr = GetStdHandle (STD_ERROR_HANDLE);
 
+#if 0 /* seems not be necessary with stdout/stderr redirection below*/
       /* set up for redirection */
       if (!SetStdHandle (STD_OUTPUT_HANDLE, log_handle)
 	  || !SetStdHandle (STD_ERROR_HANDLE, log_handle))
 	msg (M_ERR, "Error: cannot redirect stdout/stderr to --log file: %s", file);
+#endif
 
       /* direct stdout/stderr to point to log_handle */
       log_fd = _open_osfhandle ((intptr_t)log_handle, _O_TEXT);
@@ -517,9 +506,13 @@ redirect_stdout_stderr (const char *file, bool append)
       
       /* open log_handle as FILE stream */
       ASSERT (msgfp == NULL);
-      msgfp = _fdopen (log_fd, "w");
+      msgfp = _fdopen (log_fd, "wt");
       if (msgfp == NULL)
 	msg (M_ERR, "Error: --log redirect failed due to _fdopen");
+
+      /* redirect C-library stdout/stderr to log file */
+      if (_dup2 (log_fd, 1) == -1 || _dup2 (log_fd, 2) == -1)
+	msg (M_WARN, "Error: --log redirect of stdout/stderr failed");
 
       std_redir = true;
     }
@@ -645,35 +638,11 @@ x_check_status (int status,
  */
 const char *x_msg_prefix; /* GLOBAL */
 
-#ifdef USE_PTHREAD
-pthread_key_t x_msg_prefix_key; /* GLOBAL */
-#endif
-
 /*
  * Allow MSG to be redirected through a virtual_output object
  */
 
 const struct virtual_output *x_msg_virtual_output; /* GLOBAL */
-
-/*
- * Init thread-local variables
- */
-
-void
-msg_thread_init (void)
-{
-#ifdef USE_PTHREAD
-  ASSERT (!pthread_key_create (&x_msg_prefix_key, NULL));
-#endif
-}
-
-void
-msg_thread_uninit (void)
-{
-#ifdef USE_PTHREAD
-  pthread_key_delete (x_msg_prefix_key);
-#endif
-}
 
 /*
  * Exiting.
@@ -682,9 +651,12 @@ msg_thread_uninit (void)
 void
 openvpn_exit (const int status)
 {
+  void tun_abort();
 #ifdef ENABLE_PLUGIN
   void plugin_abort (void);
 #endif
+
+  tun_abort();
 
 #ifdef WIN32
   uninit_win32 ();

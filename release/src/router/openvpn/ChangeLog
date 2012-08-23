@@ -1,5 +1,307 @@
 OpenVPN Change Log
-Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+Copyright (C) 2002-2011 OpenVPN Technologies, Inc. <sales@openvpn.net>
+
+2011.12.14 -- Version 2.2.2
+David Sommerseth (1):
+      Only warn about non-tackled IPv6 packets once
+
+Gert Doering (3):
+      add missing break between "case IPv4" and "case IPv6"
+      bump tap driver version from 9.8 to 9.9
+      log error message and exit for "win32, tun mode, tap driver version 9.8"
+
+Samuli Seppänen (1):
+      Backported pkcs11-related parts of 7a8d707237bb18 to 2.2 branch
+
+2011.07.01 -- Version 2.2.1
+David Sommerseth (4):
+	      Don't define ENABLE_PUSH_PEER_INFO if SSL is not available
+	      Fix compiling issues with pkcs11 when --disable-management is configured
+	      Remove support for Linux 2.2 configuration fallback
+	      Revert "Add new openssl.cnf to easy-rsa/Windows"
+	      Prepared for releasing OpenVPN 2.2.1
+
+Gustavo Zacarias (1):
+	      Fix compile issues when using --enable-small and --disable-ssl/--disable-crypto
+
+Matthew L. Creech (1):
+	      Fix 2.2.0 build failure when management interface disabled
+
+Robert Fischer (2):
+	      Added info about --show-proxy-settings
+	      Documented --x509-username-field option
+
+Samuli Seppänen (5):
+	      Fix a build-ca issue on Windows
+	      Add new openssl.cnf to easy-rsa/Windows
+	      Updated "easy-rsa" for OpenSSL 1.0.0
+	      Made domake-win builds to use easy-rsa/2.0/openssl-1.0.0.cnf
+	      Fixes to easy-rsa/2.0
+
+Simon Matter (1):
+	      Fix issues with some older GCC compilers
+
+2011.04.21 -- Version 2.2.0
+David Sommerseth (4):
+      Fix the --client-cert-not-required feature
+      Change the default --tmp-dir path to a more suitable path
+      Improve the mysprintf() issue in openvpnserv.c
+      Add a simple comment regarding openvpn_snprintf() is duplicated
+
+Gert Doering (1):
+      Add more detailed explanation regarding the function of "--rdns-internal"
+
+Gisle Vanem (1):
+      Avoid re-defining uint32_t when using mingw compiler
+
+James Yonan (1):
+      Fixed bug in port-share that could cause port share process to crash with output like this:
+
+Robert Fischer / rf (4):
+      Update man page with info about --capath
+      Update man page with info about --connect-timeout
+      Update man page with info about --remote-random-hostname
+      Added man page entry for --management-client
+
+Samuli Seppänen (6):
+      Add man page entry for --redirect-private
+      Change all CRLF linefeeds to LF linefeeds
+      Fix a bug in devcon source code handling
+      Removed Win2k from supported platforms list in INSTALL and win/openvpn.nsi
+      Fixed copying of tapinstall.exe to dist/bin when using prebuilt TAP-drivers
+      Fixed a bug with GUI icon deletion on upgrade from 2.2-RC or earlier
+
+chantra (1):
+      Clarify --tmp-dir option
+
+2011.03.24 -- Version 2.2-RC2
+Alon Bar-Lev (1):
+      Windows cross-compile cleanup
+
+David Sommerseth (2):
+      Open log files as text files on Windows
+      Clarify default value for the --inactive option.
+
+Gert Doering (1):
+      Implement IPv6 in TUN mode for Windows TAP driver.
+
+Samuli Seppänen (6):
+      Added support for prebuilt TAP-drivers. Automated embedding manifests.
+      Fixes to win/openvpn.nsi
+      Replaced config-win32.h with win/config.h.in
+      Updated INSTALL-win32.txt
+      Fixes to Makefile.am
+      Clarified --client-config-dir section on the man-page.
+
+Ville Skyttä (1):
+      Fix line continuation in chkconfig init script description.
+
+2011.02.28 -- Version 2.2-RC
+David Sommerseth (3):
+      Make the --x509-username-field feature an opt-in feature
+      Fix compiler warning when compiling against OpenSSL 1.0.0
+      Fix packaging of config-win32.h and service-win32/msvc.mak
+
+James Yonan (1):
+      Minor addition of logging info before and after execution of Windows net commands.
+
+Matthias Andree (1):
+      Change variadic macros to C99 style.
+
+Samuli Seppänen (15):
+      Added ENABLE_PASSWORD_SAVE to config-win32.h
+      Added a nmake makefile for openvpnserv.exe building
+      Moved TAP-driver version info to version.m4. Cleaned up win/settings.in.
+      Added helper functionality to win/wb.py
+      Added support for viewing config-win32.h paramters to win/show.py
+      Added comments and made small modifications to win/msvc.mak.in
+      Added command-line switch to win/build_all.py to skip TAP driver building
+      Added configure.h and version.m4 variable parsing to win/config.py
+      Added openvpnserv.exe building to win/build.py
+      Added comments to win/build_ddk.py
+      Several modifications to win/make_dist.py to allow building the NSI installer
+      Copied install-win32/setpath.nsi to win/setpath.nsi
+      Added first version of NSI installer script to win/openvpn.nsi
+      Changes to buildsystem patchset
+      Temporary snprintf-related fix to service-win32/openvpnserv.c
+
+2010.11.25 -- Version 2.2-beta5
+
+Samuli Seppänen (1):
+      Fixed an issue causing a build failure with MS Visual Studio 2008.
+
+2010.11.18 -- Version 2.2-beta4
+
+David Sommerseth (10):
+      Clarified --explicit-exit-notify man page entry
+      Clean-up: Remove pthread and mutex locking code
+      Clean-up: Remove more dead and inactive code paths
+      Clean-up: Removing useless code - hash related functions
+      Use stricter snprintf() formatting in socks_username_password_auth() (v3)
+      Fix compiler warnings about not used dummy() functions
+      Fixed potential misinterpretation of boolean logic
+      Only add some functions when really needed
+      Removed functions not being used anywhere
+      Merged add_bypass_address() and add_host_route_if_nonlocal()
+
+Gert Doering (3):
+      Integrate support for TAP mode on Solaris, written by Kazuyoshi Aizawa <admin2@whiteboard.ne.jp>.
+      Make "topology subnet" work on Solaris
+      Improved man page entry for script_type
+
+James Yonan (5):
+      Fixed initialization bug in route_list_add_default_gateway (Gert Doering).
+      Implement challenge/response authentication support in client mode
+      Make base64.h have the same conditional compilation expression as base64.c.
+      Fixed compiling issues when using --disable-crypto
+      In verify_callback, the subject var should be freed by OPENSSL_free, not free
+
+Jesse Young (1):
+      Remove hardcoded path to resolvconf
+
+Lars Hupel (1):
+      Add HTTP/1.1 Host header
+
+Pierre Bourdon (1):
+      Adding support for SOCKS plain text authentication
+
+Samuli Seppänen (2):
+      Added check for variable CONFIGURE_DEFINES into options.c
+      Added command-line option parser and an unsigned build option to build_all.py
+
+2010.08.21 -- Version 2.2-beta3
+
+* Attempt to fix issue where domake-win build system was not properly
+  signing drivers and .exe files.
+
+  Added win/tap_span.py for building multiple versions of the TAP driver
+  and tapinstall binaries using different DDK versions to span from Win2K
+  to Win7 and beyond.
+
+* Community patches
+  David Sommerseth (2):
+      Test framework improvment - Do not FAIL if t_client.rc is missing
+      More t_client.sh updates - exit with SKIP when we want to skip
+
+  Gert Doering (4):
+      Fix compile problems on NetBSD and OpenBSD
+      Fix <net/if.h> compile time problems on OpenBSD for good
+      full "VPN client connect" test framework for OpenVPN
+      Build t_client.sh by configure at run-time.
+
+  chantra (1):
+      Fixes openssl-1.0.0 compilation warning
+
+2010.08.16 -- Version 2.2-beta2
+
+* Windows security issue:
+  Fixed potential local privilege escalation vulnerability in
+  Windows service. The Windows service did not properly quote the
+  executable filename passed to CreateService.  A local attacker
+  with write access to the root directory C:\ could create an
+  executable that would be run with the same privilege level as
+  the OpenVPN Windows service.  However, since non-Administrative
+  users normally lack write permission on C:\, this vulnerability
+  is generally not exploitable except on older versions of Windows
+  (such as Win2K) where the default permissions on C:\ would allow
+  any user to create files there.
+  Credit:  Scott Laurie, MWR InfoSecurity
+
+* Added Python-based based alternative build system for Windows using
+  Visual Studio 2008 (in win directory).
+
+* When aborting in a non-graceful way, try to execute do_close_tun in
+  init.c prior to daemon exit to ensure that the tun/tap interface is
+  closed and any added routes are deleted.
+
+* Fixed an issue where AUTH_FAILED was not being properly delivered
+  to the client when a bad password is given for mid-session reauth,
+  causing the connection to fail without an error indication.
+
+* Don't advance to the next connection profile on AUTH_FAILED errors.
+
+* Fixed an issue in the Management Interface that could cause
+  a process hang with 100% CPU utilization in --management-client
+  mode if the management interface client disconnected at the
+  point where credentials are queried.
+
+* Fixed an issue where if reneg-sec was set to 0 on the client,
+  so that the server-side value would take precedence,
+  the auth_deferred_expire_window function would incorrectly
+  return a window period of 0 seconds.  In this case, the
+  correct window period should be the handshake window
+  period.
+
+* Modified ">PASSWORD:Verification Failed" management interface
+  notification to include a client reason string:
+
+    >PASSWORD:Verification Failed: 'AUTH_TYPE' ['REASON_STRING']
+
+* Enable exponential backoff in reliability layer
+  retransmits.
+
+* Set socket buffers (SO_SNDBUF and SO_RCVBUF) immediately after
+  socket is created rather than waiting until after connect/listen.
+
+* Management interface performance optimizations:
+
+  1. Added env-filter MI command to perform filtering on env vars
+     passed through as a part of --management-client-auth
+
+  2. man_write will now try to aggregate output into larger blocks
+     (up to 1024 bytes) for more efficient i/o
+
+* Fixed minor issue in Windows TAP driver DEBUG builds
+  where non-null-terminated unicode strings were being
+  printed incorrectly.
+
+* Fixed issue on Windows with MSVC compiler, where TCP_NODELAY support
+  was not being compiled in.
+
+* Proxy improvements:
+
+  Improved the ability of http-auth "auto" flag to dynamically detect
+  the auth method required by the proxy.
+
+  Added http-auth "auto-nct" flag to reject weak proxy auth methods.
+
+  Added HTTP proxy digest authentication method.
+
+  Removed extraneous openvpn_sleep calls from proxy.c.
+
+* Implemented http-proxy-override and http-proxy-fallback directives to make it
+  easier for OpenVPN client UIs to start a pre-existing client config file with
+  proxy options, or to adaptively fall back to a proxy connection if a direct
+  connection fails.
+
+* Implemented a key/value auth channel from client to server.
+
+* Fixed issue where bad creds provided by the management interface
+  for HTTP Proxy Basic Authentication would go into an infinite
+  retry-fail loop instead of requerying the management interface for
+  new creds.
+
+* Added support for MSVC debugging of openvpn.exe in settings.in:
+
+  # Build debugging version of openvpn.exe
+  !define PRODUCT_OPENVPN_DEBUG
+
+* Implemented multi-address DNS expansion on the network field of route
+  commands.
+
+  When only a single IP address is desired from a multi-address DNS
+  expansion, use the first address rather than a random selection.
+
+* Added --register-dns option for Windows.
+
+  Fixed some issues on Windows with --log, subprocess creation
+  for command execution, and stdout/stderr redirection.
+
+* Fixed an issue where application payload transmissions on the
+  TLS control channel (such as AUTH_FAILED) that occur during
+  or immediately after a TLS renegotiation might be dropped. 
+
+* Added warning about tls-remote option in man page.
 
 2009.12.11 -- Version 2.1.1
 

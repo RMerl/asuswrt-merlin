@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -51,7 +51,6 @@ multi_get_create_instance_udp (struct multi_context *m)
       const uint32_t hv = hash_value (hash, &real);
       struct hash_bucket *bucket = hash_bucket (hash, hv);
   
-      hash_bucket_lock (bucket);
       he = hash_lookup_fast (hash, bucket, &real, hv);
 
       if (he)
@@ -80,8 +79,6 @@ multi_get_create_instance_udp (struct multi_context *m)
 		}
 	    }
 	}
-
-      hash_bucket_unlock (bucket);
 
 #ifdef ENABLE_DEBUG
       if (check_debug_level (D_MULTI_DEBUG))

@@ -4,7 +4,7 @@ dnl             session authentication and key exchange,
 dnl             packet encryption, packet authentication, and
 dnl             packet compression.
 dnl
-dnl  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+dnl  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
 dnl
 dnl  This program is free software; you can redistribute it and/or modify
 dnl  it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@ AC_CONFIG_SRCDIR(syshead.h)
 
 dnl Guess host type.
 AC_CANONICAL_HOST
-AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE(openvpn, [$PACKAGE_VERSION])
 
 AC_ARG_WITH(cygwin-native,
@@ -48,7 +47,7 @@ case "${host}" in
 		WIN32="yes"
 		cross_compiling="yes"
 	;;
-	*-cygwin*)
+	*-*-cygwin*)
 		AC_MSG_CHECKING([cygwin mode to use])
 		if test "${CYGWIN_NATIVE}" = "yes"; then
 			AC_MSG_RESULT([Using native win32])
@@ -81,6 +80,12 @@ AC_ARG_ENABLE(ssl,
    [SSL="yes"]
 )
 
+AC_ARG_ENABLE(x509-alt-username,
+   [  --enable-x509-alt-username    Enable the --x509-username-field feature],
+   [X509ALTUSERNAME="$enableval"],
+   [X509ALTUSERNAME="no"]
+)
+
 AC_ARG_ENABLE(multi,
    [  --disable-multi         Disable client/server support (--mode server + client mode)],
    [MULTI="$enableval"],
@@ -97,6 +102,12 @@ AC_ARG_ENABLE(plugins,
    [  --disable-plugins       Disable plug-in support],
    [PLUGINS="$enableval"],
    [PLUGINS="yes"]
+)
+
+AC_ARG_ENABLE(eurephia,
+   [  --disable-eurephia      Disable support for the eurephia plug-in],
+   [EUREPHIA="$enableval"],
+   [EUREPHIA="yes"]
 )
 
 AC_ARG_ENABLE(management,
@@ -151,12 +162,6 @@ AC_ARG_ENABLE(small,
    [  --enable-small          Enable smaller executable size (disable OCC, usage message, and verb 4 parm list)],
    [SMALL="$enableval"],
    [SMALL="no"]
-)
-
-AC_ARG_ENABLE(pthread,
-   [  --enable-pthread        Enable pthread support (Experimental for OpenVPN 2.0)],
-   [PTHREAD="$enableval"],
-   [PTHREAD="no"]
 )
 
 AC_ARG_ENABLE(password-save,
@@ -267,6 +272,13 @@ AC_ARG_WITH(route-path,
 )
 AC_DEFINE_UNQUOTED(ROUTE_PATH, "$ROUTE", [Path to route tool])
 
+AC_ARG_WITH(netstat-path,
+   [  --with-netstat-path=PATH  Path to netstat tool],
+   [NETSTAT="$withval"],
+   [AC_PATH_PROG([NETSTAT], [netstat], [netstat], [$PATH:/usr/local/sbin:/usr/sbin:/sbin:/etc])]
+)
+AC_DEFINE_UNQUOTED(NETSTAT_PATH, "$NETSTAT", [Path to netstat tool])
+
 AC_ARG_WITH(mem-check,
    [  --with-mem-check=TYPE  Build with debug memory checking, TYPE = dmalloc or valgrind],
    [MEMCHECK="$withval"]
@@ -275,39 +287,40 @@ AC_ARG_WITH(mem-check,
 dnl fix search path, to allow compilers to find syshead.h
 CPPFLAGS="$CPPFLAGS -I${srcdir}"
 
-dnl check target OS
-openvpn_target=$target
-if test $target_alias; then
-  openvpn_target=$target_alias
+dnl check host OS
+openvpn_host=$host
+if test $host_alias; then
+  openvpn_host=$host_alias
 fi
-AC_DEFINE_UNQUOTED(TARGET_ALIAS, "$openvpn_target", [A string representing our target])
-case "$target" in
-*linux*)
+AC_DEFINE_UNQUOTED(TARGET_ALIAS, "$openvpn_host", [A string representing our host])
+case "$host" in
+*-*-linux*)
 	AC_DEFINE(TARGET_LINUX, 1, [Are we running on Linux?])
 	dnl RH9 SSL headers workaround
         if test -z $CS_HDR_DIR && test "$CRYPTO" = "yes"; then
            CPPFLAGS="$CPPFLAGS $(pkg-config --cflags openssl 2>/dev/null)"
         fi
 	;;
-*solaris*)
+*-*-solaris*)
 	AC_DEFINE(TARGET_SOLARIS, 1, [Are we running on Solaris?])
 	;;
-*openbsd*)
+*-*-openbsd*)
 	AC_DEFINE(TARGET_OPENBSD, 1, [Are we running on OpenBSD?])
 	;;
-*freebsd*)
+*-*-freebsd*)
 	AC_DEFINE(TARGET_FREEBSD, 1, [Are we running on FreeBSD?])
 	;;
-*netbsd*)
+*-*-netbsd*)
 	AC_DEFINE(TARGET_NETBSD, 1, [Are we running NetBSD?])
 	;;
-*darwin*)
+*-*-darwin*)
 	dnl some Mac OS X tendering (we use vararg macros...)
 	AC_DEFINE(TARGET_DARWIN, 1, [Are we running on Mac OS X?])
 	CPPFLAGS="$CPPFLAGS -no-cpp-precomp"
 	;;
-*mingw*)
+*-mingw*)
 	AC_DEFINE(TARGET_WIN32, 1, [Are we running WIN32?])
+	CPPFLAGS="${CPPFLAGS} -DWIN32_LEAN_AND_MEAN"
 	OPENVPN_ADD_LIBS(-lgdi32)
 	OPENVPN_ADD_LIBS(-lws2_32)
 	OPENVPN_ADD_LIBS(-lwininet)
@@ -315,7 +328,7 @@ case "$target" in
 	OPENVPN_ADD_LIBS(-liphlpapi)
 	OPENVPN_ADD_LIBS(-lwinmm)
 	;;
-*dragonfly*)
+*-*-dragonfly*)
 	AC_DEFINE(TARGET_DRAGONFLY, 1, [Are we running on DragonFlyBSD?])
 	;;
 	
@@ -369,7 +382,10 @@ if test "${WIN32}" != "yes"; then
 		 linux/types.h sys/poll.h sys/epoll.h err.h dnl
    )
    AC_CHECK_HEADERS(net/if.h,,,
-		 [#ifdef HAVE_SYS_SOCKET_H 
+		 [#ifdef HAVE_SYS_TYPES_H
+		  # include <sys/types.h>
+		  #endif
+		  #ifdef HAVE_SYS_SOCKET_H
 		  # include <sys/socket.h>
 		  #endif
 		 ])
@@ -566,32 +582,6 @@ if test "$MEMCHECK" = "valgrind"; then
 fi
 
 dnl
-dnl check for pthread library
-dnl
-
-if test "$PTHREAD" = "yes"; then
-  AC_CHECKING([for pthread support])
-  AC_MSG_RESULT([********* WARNING: pthread support is experimental for OpenVPN 2.0])
-  ACX_PTHREAD(
-        [
-	    case "$target" in
-	    *openbsd*)
-		AC_MSG_RESULT([WARNING: pthread support on OpenBSD is unstable!])
-		CFLAGS="$CFLAGS -pthread"
-		;;
-	    esac
-	    LIBS="$PTHREAD_LIBS $LIBS"
-	    CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-	    CC="$PTHREAD_CC"
-	    AC_DEFINE(USE_PTHREAD, 1, [Use pthread-based multithreading])
-	],
-	[
-	    AC_MSG_RESULT([I don't know how to build with pthread support on this platform.])
-	    AC_MSG_ERROR([try ./configure --disable-pthread])
-	])
-fi
-
-dnl
 dnl check for dmalloc library
 dnl
 
@@ -600,11 +590,7 @@ if test "$MEMCHECK" = "dmalloc"; then
    AC_CHECK_HEADER(dmalloc.h, 
         [AC_CHECK_LIB(dmalloc, malloc,
 	    [
-               if test "$PTHREAD" = "yes"; then
-                   OPENVPN_ADD_LIBS(-ldmallocth)
-               else
-                   OPENVPN_ADD_LIBS(-ldmalloc)
-               fi
+               OPENVPN_ADD_LIBS(-ldmalloc)
 	       AC_DEFINE(DMALLOC, 1, [Use dmalloc memory debugging library])
 	    ],
 	    [AC_MSG_ERROR([dmalloc library not found.])]
@@ -632,6 +618,9 @@ if test "${WIN32}" != "yes"; then
            )],
            [AC_MSG_RESULT([libdl headers not found.])]
       )
+      if test "$EUREPHIA" = "yes"; then
+         AC_DEFINE(ENABLE_EUREPHIA, 1, [Enable support for the eurephia plug-in])
+      fi
    fi
 fi
 
@@ -767,6 +756,11 @@ dnl
 
       AC_DEFINE(USE_SSL, 1, [Use OpenSSL SSL library])
    fi
+fi
+
+dnl enable --x509-username-field feature if requested
+if test "$X509ALTUSERNAME" = "yes"; then
+   AC_DEFINE(ENABLE_X509ALTUSERNAME, 1, [Enable --x509-username-field feature])
 fi
 
 dnl enable pkcs11 capability
@@ -911,10 +905,10 @@ if test -z "${htmldir}"; then
 fi
 # end workaround
 
+AC_CONFIG_FILES([t_client.sh], [chmod +x t_client.sh])
 AC_OUTPUT([
 	Makefile
 	openvpn.spec
-	config-win32.h
 	images/Makefile
 	service-win32/Makefile
 	install-win32/Makefile

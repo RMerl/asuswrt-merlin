@@ -1,6 +1,6 @@
 Installation instructions for OpenVPN, a Secure Tunneling Daemon
 
-Copyright (C) 2002-2009 OpenVPN Technologies, Inc. This program is free software;
+Copyright (C) 2002-2010 OpenVPN Technologies, Inc. This program is free software;
 you can redistribute it and/or modify
 it under the terms of the GNU General Public License version 2
 as published by the Free Software Foundation.
@@ -12,8 +12,11 @@ QUICK START:
   Unix:
     ./configure && make && make-install
 
-  Windows:
+  Windows MinGW, using MSYS bash shell:
     ./domake-win (see comments in the script for more info)
+
+  Windows Visual Studio:
+    python win\build_all.py
 
 *************************************************************************
 
@@ -39,7 +42,7 @@ SUPPORTED PLATFORMS:
   (4) Mac OS X Darwin
   (5) FreeBSD
   (6) NetBSD
-  (7) Windows (Win 2K and higher)
+  (7) Windows (WinXP and higher)
 
 SUPPORTED PROCESSOR ARCHITECTURES:
    In general, OpenVPN is word size and endian independent, so
@@ -277,7 +280,7 @@ TUN/TAP Driver Configuration:
   needs to be manually copied to /kernel/drv/sparcv9/ and then a 
   reconfiguration reboot. (boot -r).
 
-* Windows 2000/XP/2003/Vista
+* Windows XP/2003/Vista
 
   See domake-win for building instructions.
   See INSTALL-win32.txt for usage info.

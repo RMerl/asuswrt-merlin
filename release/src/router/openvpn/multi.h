@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -56,7 +56,6 @@ struct multi_reap
 struct multi_instance {
   struct schedule_entry se;    /* this must be the first element of the structure */
   struct gc_arena gc;
-  MUTEX_DEFINE (mutex);
   bool defined;
   bool halt;
   int refcount;
@@ -274,7 +273,6 @@ multi_instance_dec_refcount (struct multi_instance *mi)
   if (--mi->refcount <= 0)
     {
       gc_free (&mi->gc);
-      mutex_destroy (&mi->mutex);
       free (mi);
     }
 }

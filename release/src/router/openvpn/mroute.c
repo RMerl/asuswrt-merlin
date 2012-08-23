@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -131,6 +131,8 @@ mroute_extract_addr_ipv4 (struct mroute_addr *src,
 			  const struct buffer *buf)
 {
   unsigned int ret = 0;
+  static bool ipv6warned = false;
+
   if (BLEN (buf) >= 1)
     {
       switch (OPENVPN_IPH_GET_VER (*BPTR(buf)))
@@ -156,7 +158,10 @@ mroute_extract_addr_ipv4 (struct mroute_addr *src,
 	  break;
 	case 6:
 	  {
-	    msg (M_WARN, "Need IPv6 code in mroute_extract_addr_from_packet"); 
+            if( !ipv6warned ) {
+              msg (M_WARN, "IPv6 in tun mode is not supported in OpenVPN 2.2");
+              ipv6warned = true;
+            }
 	    break;
 	  }
 	}
@@ -360,7 +365,6 @@ mroute_helper_init (int ageable_ttl_secs)
 {
   struct mroute_helper *mh;
   ALLOC_OBJ_CLEAR (mh, struct mroute_helper);
-  /*mutex_init (&mh->mutex);*/
   mh->ageable_ttl_secs = ageable_ttl_secs;
   return mh;
 }
@@ -398,12 +402,10 @@ mroute_helper_add_iroute (struct mroute_helper *mh, const struct iroute *ir)
   if (ir->netbits >= 0)
     {
       ASSERT (ir->netbits < MR_HELPER_NET_LEN);
-      mroute_helper_lock (mh);
       ++mh->cache_generation;
       ++mh->net_len_refcount[ir->netbits];
       if (mh->net_len_refcount[ir->netbits] == 1)
 	mroute_helper_regenerate (mh);
-      mroute_helper_unlock (mh);
     }
 }
 
@@ -413,20 +415,17 @@ mroute_helper_del_iroute (struct mroute_helper *mh, const struct iroute *ir)
   if (ir->netbits >= 0)
     {
       ASSERT (ir->netbits < MR_HELPER_NET_LEN);
-      mroute_helper_lock (mh);
       ++mh->cache_generation;
       --mh->net_len_refcount[ir->netbits];
       ASSERT (mh->net_len_refcount[ir->netbits] >= 0);
       if (!mh->net_len_refcount[ir->netbits])
 	mroute_helper_regenerate (mh);
-      mroute_helper_unlock (mh);
     }
 }
 
 void
 mroute_helper_free (struct mroute_helper *mh)
 {
-  /*mutex_destroy (&mh->mutex);*/
   free (mh);
 }
 

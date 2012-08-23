@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -459,9 +459,6 @@ struct context
 
   /* true on initial VPN iteration */
   bool first_time;
-
-  /* used by multi-client code to lock the context */
-  /*MUTEX_DEFINE (mutex);*/
 
   /* context modes */
 # define CM_P2P            0 /* standalone point-to-point session or client */

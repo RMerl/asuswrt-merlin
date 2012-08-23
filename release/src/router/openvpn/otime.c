@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -123,10 +123,8 @@ time_string (time_t t, int usec, bool show_usec, struct gc_arena *gc)
 	}
     }
 
-  mutex_lock_static (L_CTIME);
   t = tv.tv_sec;
   buf_printf (&out, "%s", ctime(&t));
-  mutex_unlock_static (L_CTIME);
   buf_rmtail (&out, '\n');
 
   if (show_usec && tv.tv_usec)

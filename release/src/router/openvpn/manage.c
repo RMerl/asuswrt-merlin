@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -97,6 +97,7 @@ man_help ()
   msg (M_CLIENT, "client-deny CID KID R [CR] : Deny auth client-id/key-id CID/KID with log reason");
   msg (M_CLIENT, "                             text R and optional client reason text CR");
   msg (M_CLIENT, "client-kill CID        : Kill client instance CID");
+  msg (M_CLIENT, "env-filter [level]     : Set env-var filter level");
 #ifdef MANAGEMENT_PF
   msg (M_CLIENT, "client-pf CID          : Define packet filter for client CID (MULTILINE)");
 #endif
@@ -109,6 +110,10 @@ man_help ()
   msg (M_CLIENT, "username type u        : Enter username u for a queried OpenVPN username.");
   msg (M_CLIENT, "verb [n]               : Set log verbosity level to n, or show if n is absent.");
   msg (M_CLIENT, "version                : Show current version number.");
+#if HTTP_PROXY_FALLBACK
+  msg (M_CLIENT, "http-proxy-fallback <server> <port> [flags] : Enter dynamic HTTP proxy fallback info.");
+  msg (M_CLIENT, "http-proxy-fallback-disable : Disable HTTP proxy fallback.");
+#endif
   msg (M_CLIENT, "END");
 }
 
@@ -203,12 +208,10 @@ man_update_io_state (struct management *man)
 }
 
 static void
-man_output_list_push (struct management *man, const char *str)
+man_output_list_push_finalize (struct management *man)
 {
   if (management_connected (man))
     {
-      if (str)
-	buffer_list_push (man->connection.out, (const unsigned char *) str);
       man_update_io_state (man);
       if (!man->persist.standalone_disabled)
 	{
@@ -219,13 +222,29 @@ man_output_list_push (struct management *man, const char *str)
 }
 
 static void
+man_output_list_push_str (struct management *man, const char *str)
+{
+  if (management_connected (man) && str)
+    {
+      buffer_list_push (man->connection.out, (const unsigned char *) str);
+    }
+}
+
+static void
+man_output_list_push (struct management *man, const char *str)
+{
+  man_output_list_push_str (man, str);
+  man_output_list_push_finalize (man);
+}
+
+static void
 man_prompt (struct management *man)
 {
   if (man_password_needed (man))
     man_output_list_push (man, "ENTER PASSWORD:");
 #if 0 /* should we use prompt? */
   else
-    man_output_list_push (man, PACKAGE_NAME ">");
+    man_output_list_push (man, ">");
 #endif
 }
 
@@ -255,12 +274,13 @@ man_close_socket (struct management *man, const socket_descriptor_t sd)
 static void
 virtual_output_callback_func (void *arg, const unsigned int flags, const char *str)
 {
+  struct management *man = (struct management *) arg;
   static int recursive_level = 0; /* GLOBAL */
+  bool did_push = false;
 
   if (!recursive_level) /* don't allow recursion */
     {
       struct gc_arena gc = gc_new ();
-      struct management *man = (struct management *) arg;
       struct log_entry e;
       const char *out = NULL;
 
@@ -288,13 +308,17 @@ virtual_output_callback_func (void *arg, const unsigned int flags, const char *s
 				   |   LOG_PRINT_LOG_PREFIX
 				   |   LOG_PRINT_CRLF, &gc);
 	  if (out)
-	    man_output_list_push (man, out);
+	    {
+	      man_output_list_push_str (man, out);
+	      did_push = true;
+	    }
 	  if (flags & M_FATAL)
 	    {
 	      out = log_entry_print (&e, LOG_FATAL_NOTIFY|LOG_PRINT_CRLF, &gc);
 	      if (out)
 		{
-		  man_output_list_push (man, out);
+		  man_output_list_push_str (man, out);
+		  did_push = true;
 		  man_reset_client_socket (man, true);
 		}
 	    }
@@ -303,6 +327,9 @@ virtual_output_callback_func (void *arg, const unsigned int flags, const char *s
       --recursive_level;
       gc_free (&gc);
     }
+
+  if (did_push)
+    man_output_list_push_finalize (man);
 }
 
 /*
@@ -935,6 +962,13 @@ man_client_n_clients (struct management *man)
     }
 }
 
+static void
+man_env_filter (struct management *man, const int level)
+{
+  man->connection.env_filter_level = level;
+  msg (M_CLIENT, "SUCCESS: env_filter_level=%d", level);
+}
+
 #ifdef MANAGEMENT_PF
 
 static void
@@ -990,6 +1024,31 @@ man_need (struct management *man, const char **p, const int n, unsigned int flag
   return true;
 }
 
+#if HTTP_PROXY_FALLBACK
+
+static void
+man_http_proxy_fallback (struct management *man, const char *server, const char *port, const char *flags)
+{
+  if (man->persist.callback.http_proxy_fallback_cmd)
+    {
+      const bool status = (*man->persist.callback.http_proxy_fallback_cmd)(man->persist.callback.arg, server, port, flags);
+      if (status)
+	{
+	  msg (M_CLIENT, "SUCCESS: proxy-fallback command succeeded");
+	}
+      else
+	{
+	  msg (M_CLIENT, "ERROR: proxy-fallback command failed");
+	}
+    }
+  else
+    {
+      msg (M_CLIENT, "ERROR: The proxy-fallback command is not supported by the current daemon mode");
+    }
+}
+
+#endif
+
 static void
 man_dispatch_command (struct management *man, struct status_output *so, const char **p, const int nparms)
 {
@@ -1019,6 +1078,13 @@ man_dispatch_command (struct management *man, struct status_output *so, const ch
   else if (streq (p[0], "nclients"))
     {
       man_client_n_clients (man);
+    }
+  else if (streq (p[0], "env-filter"))
+    {
+      int level = 0;
+      if (p[1])
+	level = atoi (p[1]);
+      man_env_filter (man, level);
     }
 #endif
   else if (streq (p[0], "signal"))
@@ -1193,6 +1259,17 @@ man_dispatch_command (struct management *man, struct status_output *so, const ch
     {
       if (man_need (man, p, 1, 0))
 	man_pkcs11_id_get (man, atoi(p[1]));
+    }
+#endif
+#if HTTP_PROXY_FALLBACK
+  else if (streq (p[0], "http-proxy-fallback"))
+    {
+      if (man_need (man, p, 2, MN_AT_LEAST))
+	man_http_proxy_fallback (man, p[1], p[2], p[3]);
+    }
+  else if (streq (p[0], "http-proxy-fallback-disable"))
+    {
+      man_http_proxy_fallback (man, NULL, NULL, NULL);
     }
 #endif
 #if 1
@@ -1541,17 +1618,18 @@ man_reset_client_socket (struct management *man, const bool exiting)
 {
   if (socket_defined (man->connection.sd_cli))
     {
-      msg (D_MANAGEMENT, "MANAGEMENT: Client disconnected");
 #ifdef WIN32
       man_stop_ne32 (man);
 #endif
       man_close_socket (man, man->connection.sd_cli);
       man->connection.sd_cli = SOCKET_UNDEFINED;
+      man->connection.state = MS_INITIAL;
       command_line_reset (man->connection.in);
       buffer_list_reset (man->connection.out);
 #ifdef MANAGEMENT_DEF_AUTH
       in_extra_reset (&man->connection, false);
 #endif
+      msg (D_MANAGEMENT, "MANAGEMENT: Client disconnected");
     }
   if (!exiting)
     {
@@ -1722,13 +1800,15 @@ man_read (struct management *man)
 static int
 man_write (struct management *man)
 {
-  const int max_send = 256;
+  const int size_hint = 1024;
   int sent = 0;
+  const struct buffer *buf;
 
-  const struct buffer *buf = buffer_list_peek (man->connection.out);
+  buffer_list_aggregate(man->connection.out, size_hint);
+  buf = buffer_list_peek (man->connection.out);
   if (buf && BLEN (buf))
     {
-      const int len = min_int (max_send, BLEN (buf));
+      const int len = min_int (size_hint, BLEN (buf));
       sent = send (man->connection.sd_cli, BPTR (buf), len, MSG_NOSIGNAL);
       if (sent >= 0)
 	{
@@ -2085,7 +2165,7 @@ management_clear_callback (struct management *man)
   man->persist.standalone_disabled = false;
   man->persist.hold_release = false;
   CLEAR (man->persist.callback);
-  man_output_list_push (man, NULL); /* flush output queue */
+  man_output_list_push_finalize (man); /* flush output queue */
 }
 
 void
@@ -2129,15 +2209,51 @@ management_set_state (struct management *man,
 
 #ifdef MANAGEMENT_DEF_AUTH
 
+static bool
+env_filter_match (const char *env_str, const int env_filter_level)
+{
+  static const char *env_names[] = {
+    "username=",
+    "password=",
+    "X509_0_CN=",
+    "tls_serial_0=",
+    "untrusted_ip=",
+    "ifconfig_local=",
+    "ifconfig_netmask=",
+    "daemon_start_time=",
+    "daemon_pid=",
+    "dev=",
+    "ifconfig_pool_remote_ip=",
+    "ifconfig_pool_netmask=",
+    "time_duration=",
+    "bytes_sent=",
+    "bytes_received="
+  };
+  if (env_filter_level >= 1)
+    {
+      size_t i;
+      for (i = 0; i < SIZE(env_names); ++i)
+	{
+	  const char *en = env_names[i];
+	  const size_t len = strlen(en);
+	  if (strncmp(env_str, en, len) == 0)
+	    return true;
+	}
+      return false;
+    }
+  else
+    return true;
+}
+
 static void
-man_output_env (const struct env_set *es, const bool tail)
+man_output_env (const struct env_set *es, const bool tail, const int env_filter_level)
 {
   if (es)
     {
       struct env_item *e;
       for (e = es->list; e != NULL; e = e->next)
 	{
-	  if (e->string)
+	  if (e->string && (!env_filter_level || env_filter_match(e->string, env_filter_level)))
 	    msg (M_CLIENT, ">CLIENT:ENV,%s", e->string);
 	}
     }
@@ -2155,8 +2271,60 @@ man_output_extra_env (struct management *man)
       const int nclients = (*man->persist.callback.n_clients) (man->persist.callback.arg);
       setenv_int (es, "n_clients", nclients);
     }
-  man_output_env (es, false);
+  man_output_env (es, false, man->connection.env_filter_level);
   gc_free (&gc);
+}
+
+static bool
+validate_peer_info_line(const char *line)
+{
+  uint8_t c;
+  int state = 0;
+  while ((c=*line++))
+    {
+      switch (state)
+	{
+	case 0:
+	case 1:
+	  if (c == '=' && state == 1)
+	    state = 2;
+	  else if (isalnum(c) || c == '_')
+	    state = 1;
+	  else
+	    return false;
+	case 2:
+	  if (isprint(c))
+	    ;
+	  else
+	    return false;
+	}
+    }
+  return (state == 2);
+}
+
+static void
+man_output_peer_info_env (struct management *man, struct man_def_auth_context *mdac)
+{
+  char line[256];
+  if (man->persist.callback.get_peer_info)
+    {
+      const char *peer_info = (*man->persist.callback.get_peer_info) (man->persist.callback.arg, mdac->cid);
+      if (peer_info)
+	{
+	  struct buffer buf;
+	  buf_set_read (&buf, (const uint8_t *) peer_info, strlen(peer_info));
+	  while (buf_parse (&buf, '\n', line, sizeof (line)))
+	    {
+	      chomp (line);
+	      if (validate_peer_info_line(line))
+		{
+		  msg (M_CLIENT, ">CLIENT:ENV,%s", line);
+		}
+	      else
+		msg (D_MANAGEMENT, "validation failed on peer_info line received from client");
+	    }
+	}
+    }
 }
 
 void
@@ -2172,7 +2340,8 @@ management_notify_client_needing_auth (struct management *management,
 	mode = "REAUTH";
       msg (M_CLIENT, ">CLIENT:%s,%lu,%u", mode, mdac->cid, mda_key_id);
       man_output_extra_env (management);
-      man_output_env (es, true);
+      man_output_peer_info_env(management, mdac);
+      man_output_env (es, true, management->connection.env_filter_level);
       mdac->flags |= DAF_INITIAL_AUTH;
     }
 }
@@ -2185,7 +2354,7 @@ management_connection_established (struct management *management,
   mdac->flags |= DAF_CONNECTION_ESTABLISHED;
   msg (M_CLIENT, ">CLIENT:ESTABLISHED,%lu", mdac->cid);
   man_output_extra_env (management);
-  man_output_env (es, true);
+  man_output_env (es, true, management->connection.env_filter_level);
 }
 
 void
@@ -2196,7 +2365,7 @@ management_notify_client_close (struct management *management,
   if ((mdac->flags & DAF_INITIAL_AUTH) && !(mdac->flags & DAF_CONNECTION_CLOSED))
     {
       msg (M_CLIENT, ">CLIENT:DISCONNECT,%lu", mdac->cid);
-      man_output_env (es, true);
+      man_output_env (es, true, management->connection.env_filter_level);
       mdac->flags |= DAF_CONNECTION_CLOSED;
     }
 }
@@ -2272,9 +2441,12 @@ management_pre_tunnel_close (struct management *man)
 }
 
 void
-management_auth_failure (struct management *man, const char *type)
+management_auth_failure (struct management *man, const char *type, const char *reason)
 {
-  msg (M_CLIENT, ">PASSWORD:Verification Failed: '%s'", type);
+  if (reason)
+    msg (M_CLIENT, ">PASSWORD:Verification Failed: '%s' ['%s']", type, reason);
+  else
+    msg (M_CLIENT, ">PASSWORD:Verification Failed: '%s'", type);
 }
 
 static inline bool
@@ -2345,7 +2517,7 @@ management_io (struct management *man)
 		  net_event_win32_clear_selected_events (&man->connection.ne32, FD_ACCEPT);
 		}
 	    }
-	  else if (man->connection.state == MS_CC_WAIT_READ)
+	  else if (man->connection.state == MS_CC_WAIT_READ || man->connection.state == MS_CC_WAIT_WRITE)
 	    {
 	      if (net_events & FD_READ)
 		{
@@ -2353,18 +2525,13 @@ management_io (struct management *man)
 		    ;
 		  net_event_win32_clear_selected_events (&man->connection.ne32, FD_READ);
 		}
-	    }
 
-	  if (man->connection.state == MS_CC_WAIT_WRITE)
-	    {
 	      if (net_events & FD_WRITE)
 		{
 		  int status;
-		  /* dmsg (M_INFO, "FD_WRITE set"); */
 		  status = man_write (man);
 		  if (status < 0 && WSAGetLastError() == WSAEWOULDBLOCK)
 		    {
-		      /* dmsg (M_INFO, "FD_WRITE cleared"); */
 		      net_event_win32_clear_selected_events (&man->connection.ne32, FD_WRITE);
 		    }
 		}
@@ -2455,7 +2622,7 @@ man_block (struct management *man, volatile int *signal_received, const time_t e
   
   if (man_standalone_ok (man))
     {
-      do
+      while (true)
 	{
 	  event_reset (man->connection.es);
 	  management_socket_set (man, man->connection.es, NULL, NULL);
@@ -2473,15 +2640,18 @@ man_block (struct management *man, volatile int *signal_received, const time_t e
 	      status = -1;
 	      break;
 	    }
-	  /* set SIGINT signal if expiration time exceeded */
-	  if (expire && now >= expire)
+
+	  if (status > 0)
+	    break;
+	  else if (expire && now >= expire)
 	    {
+	      /* set SIGINT signal if expiration time exceeded */
 	      status = 0;
 	      if (signal_received)
 		*signal_received = SIGINT;
 	      break;
 	    }
-	} while (status != 1);
+	}
     }
   return status;
 }
@@ -2511,11 +2681,13 @@ man_output_standalone (struct management *man, volatile int *signal_received)
 static int
 man_standalone_event_loop (struct management *man, volatile int *signal_received, const time_t expire)
 {
-  int status;
-  ASSERT (man_standalone_ok (man));
-  status = man_block (man, signal_received, expire);
-  if (status > 0)
-    management_io (man);
+  int status = -1;
+  if (man_standalone_ok (man))
+    {
+      status = man_block (man, signal_received, expire);
+      if (status > 0)
+	management_io (man);
+    }
   return status;
 }
 
@@ -2556,26 +2728,29 @@ management_event_loop_n_seconds (struct management *man, int sec)
     {
       volatile int signal_received = 0;
       const bool standalone_disabled_save = man->persist.standalone_disabled;
-      time_t expire;
+      time_t expire = 0;
 
       man->persist.standalone_disabled = false; /* This is so M_CLIENT messages will be correctly passed through msg() */
 
       /* set expire time */
       update_time ();
-      expire = now + sec;
+      if (sec)
+	expire = now + sec;
 
       /* if no client connection, wait for one */
       man_wait_for_client_connection (man, &signal_received, expire, 0);
       if (signal_received)
 	return;
 
-      /* run command processing event loop until we get our username/password */
-      while (true)
+      /* run command processing event loop */
+      do
 	{
 	  man_standalone_event_loop (man, &signal_received, expire);
+	  if (!signal_received)
+	    man_check_for_signals (&signal_received);
 	  if (signal_received)
 	    return;
-	}
+	} while (expire);
 
       /* revert state */
       man->persist.standalone_disabled = standalone_disabled_save;
@@ -2662,6 +2837,8 @@ management_query_user_pass (struct management *man,
 	  do
 	    {
 	      man_standalone_event_loop (man, &signal_received, 0);
+	      if (!signal_received)
+		man_check_for_signals (&signal_received);
 	      if (signal_received)
 		{
 		  ret = false;
@@ -2742,6 +2919,8 @@ management_hold (struct management *man)
 	  do
 	    {
 	      man_standalone_event_loop (man, &signal_received, 0);
+	      if (!signal_received)
+		man_check_for_signals (&signal_received);
 	      if (signal_received)
 		break;
 	    } while (!man->persist.hold_release);
@@ -2962,6 +3141,19 @@ log_history_ref (const struct log_history *h, const int index)
   else
     return NULL;
 }
+
+#if HTTP_PROXY_FALLBACK
+
+void
+management_http_proxy_fallback_notify (struct management *man, const char *type, const char *remote_ip_hint)
+{
+  if (remote_ip_hint)
+    msg (M_CLIENT, ">PROXY:%s,%s", type, remote_ip_hint);
+  else
+    msg (M_CLIENT, ">PROXY:%s", type);
+}
+
+#endif /* HTTP_PROXY_FALLBACK */
 
 #else
 static void dummy(void) {}

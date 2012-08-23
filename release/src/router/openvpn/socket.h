@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -439,6 +439,11 @@ bool unix_socket_get_peer_uid_gid (const socket_descriptor_t sd, int *uid, int *
  * DNS resolution
  */
 
+struct resolve_list {
+  int len;
+  in_addr_t data[16];
+};
+
 #define GETADDR_RESOLVE               (1<<0)
 #define GETADDR_FATAL                 (1<<1)
 #define GETADDR_HOST_ORDER            (1<<2)
@@ -455,6 +460,13 @@ in_addr_t getaddr (unsigned int flags,
 		   int resolve_retry_seconds,
 		   bool *succeeded,
 		   volatile int *signal_received);
+
+in_addr_t getaddr_multi (unsigned int flags,
+			 const char *hostname,
+			 int resolve_retry_seconds,
+			 bool *succeeded,
+			 volatile int *signal_received,
+			 struct resolve_list *reslist);
 
 /*
  * Transport protocol naming and other details.
@@ -495,6 +507,12 @@ static inline bool
 legal_ipv4_port (int port)
 {
   return port > 0 && port < 65536;
+}
+
+static inline int
+is_proto_tcp(const int p)
+{
+  return p > 0; /* depends on the definition of PROTO_x */
 }
 
 static inline bool

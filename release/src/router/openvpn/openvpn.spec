@@ -16,7 +16,7 @@
 
 Summary:	OpenVPN is a robust and highly flexible VPN daemon by James Yonan.
 Name:           openvpn
-Version:        2.1.1
+Version:        2.2.2
 Release:	1
 URL:		http://openvpn.net/
 Source0:	http://prdownloads.sourceforge.net/openvpn/%{name}-%{version}.tar.gz

@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -40,6 +40,8 @@
 #include "memdbg.h"
 
 #include "occ-inline.h"
+
+static struct context *static_context; /* GLOBAL */
 
 /*
  * Crypto initialization flags
@@ -109,6 +111,101 @@ update_options_ce_post (struct options *options)
 #endif
 }
 
+#if HTTP_PROXY_FALLBACK
+
+static bool
+ce_http_proxy_fallback_defined(const struct context *c)
+{
+  const struct connection_list *l = c->options.connection_list;
+  if (l && l->current == 0)
+    {
+      int i;
+      for (i = 0; i < l->len; ++i)
+	{
+	  const struct connection_entry *ce = l->array[i];
+	  if (ce->flags & CE_HTTP_PROXY_FALLBACK)
+	    return true;
+	}
+    }
+  return false;
+}
+
+static void
+ce_http_proxy_fallback_start(struct context *c, const char *remote_ip_hint)
+{
+  const struct connection_list *l = c->options.connection_list;
+  if (l)
+    {
+      int i;
+      for (i = 0; i < l->len; ++i)
+	{
+	  struct connection_entry *ce = l->array[i];
+	  if (ce->flags & CE_HTTP_PROXY_FALLBACK)
+	    {
+	      ce->http_proxy_options = NULL;
+	      ce->ce_http_proxy_fallback_timestamp = 0;
+	      if (!remote_ip_hint)
+		remote_ip_hint = ce->remote;
+	    }
+	}
+    }
+
+  if (management)
+    management_http_proxy_fallback_notify(management, "NEED_LATER", remote_ip_hint);
+}
+
+static bool
+ce_http_proxy_fallback (struct context *c, volatile const struct connection_entry *ce)
+{
+  const int proxy_info_expire = 120; /* seconds before proxy info expires */
+
+  update_time();
+  if (management)
+    {
+      if (!ce->ce_http_proxy_fallback_timestamp)
+	{
+	  management_http_proxy_fallback_notify(management, "NEED_NOW", NULL);
+	  while (!ce->ce_http_proxy_fallback_timestamp)
+	    {
+	      management_event_loop_n_seconds (management, 1);
+	      if (IS_SIG (c))
+		return false;
+	    }
+	}
+      return (now < ce->ce_http_proxy_fallback_timestamp + proxy_info_expire && ce->http_proxy_options);
+    }
+  return false;
+}
+
+static bool
+management_callback_http_proxy_fallback_cmd (void *arg, const char *server, const char *port, const char *flags)
+{
+  struct context *c = (struct context *) arg;
+  const struct connection_list *l = c->options.connection_list;
+  int ret = false;
+  struct http_proxy_options *ho = parse_http_proxy_fallback (c, server, port, flags, M_WARN);
+
+  update_time();
+  if (l)
+    {
+      int i;
+      for (i = 0; i < l->len; ++i)
+	{
+	  struct connection_entry *ce = l->array[i];
+	  if (ce->flags & CE_HTTP_PROXY_FALLBACK)
+	    {
+	      ce->http_proxy_options = ho;
+	      ce->ce_http_proxy_fallback_timestamp = now;
+	      ret = true;
+	    }
+	}
+    }
+  
+  return ret;
+}
+
+#endif
+
 /*
  * Initialize and possibly randomize connection list.
  */
@@ -139,6 +236,30 @@ init_connection_list (struct context *c)
 #endif
 }
 
+#if 0 /* fixme -- disable for production */
+static void
+show_connection_list (const struct connection_list *l)
+{
+  int i;
+  dmsg (M_INFO, "CONNECTION_LIST len=%d current=%d",
+	l->len, l->current);
+  for (i = 0; i < l->len; ++i)
+    {
+      dmsg (M_INFO, "[%d] %s:%d proto=%s http_proxy=%d",
+	    i,
+	    l->array[i]->remote,
+	    l->array[i]->remote_port,
+	    proto2ascii(l->array[i]->proto, true),
+	    BOOL_CAST(l->array[i]->http_proxy_options));
+    }
+}
+#else
+static inline void
+show_connection_list (const struct connection_list *l)
+{
+}
+#endif
+
 /*
  * Increment to next connection entry
  */
@@ -149,27 +270,66 @@ next_connection_entry (struct context *c)
   struct connection_list *l = c->options.connection_list;
   if (l)
     {
-      if (l->no_advance && l->current >= 0)
-	{
-	  l->no_advance = false;
-	}
-      else
-	{
-	  int i;
-	  if (++l->current >= l->len)
-	    l->current = 0;
+      bool ce_defined;
+      struct connection_entry *ce;
+      int n_cycles = 0;
 
-	  dmsg (D_CONNECTION_LIST, "CONNECTION_LIST len=%d current=%d",
-		l->len, l->current);
-	  for (i = 0; i < l->len; ++i)
-	    {
-	      dmsg (D_CONNECTION_LIST, "[%d] %s:%d",
-		    i,
-		    l->array[i]->remote,
-		    l->array[i]->remote_port);
-	    }
-	}
-      c->options.ce = *l->array[l->current];
+      do {
+	const char *remote_ip_hint = NULL;
+	bool newcycle = false;
+
+	ce_defined = true;
+	if (l->no_advance && l->current >= 0)
+	  {
+	    l->no_advance = false;
+	  }
+	else
+	  {
+	    if (++l->current >= l->len)
+	      {
+		l->current = 0;
+		++l->n_cycles;
+		if (++n_cycles >= 2)
+		  msg (M_FATAL, "No usable connection profiles are present");
+	      }
+
+	    if (l->current == 0)
+	      newcycle = true;
+	    show_connection_list(l);
+	  }
+
+	ce = l->array[l->current];
+
+	if (c->options.remote_ip_hint && !l->n_cycles)
+	  remote_ip_hint = c->options.remote_ip_hint;
+
+#if HTTP_PROXY_FALLBACK
+	if (newcycle && ce_http_proxy_fallback_defined(c))
+	  ce_http_proxy_fallback_start(c, remote_ip_hint);
+
+	if (ce->flags & CE_HTTP_PROXY_FALLBACK)
+	  {
+	    ce_defined = ce_http_proxy_fallback(c, ce);
+	    if (IS_SIG (c))
+	      break;
+	  }
+#endif
+
+	if (ce->flags & CE_DISABLED)
+	  ce_defined = false;
+
+	c->options.ce = *ce;
+
+	if (remote_ip_hint)
+	  c->options.ce.remote = remote_ip_hint;
+
+#if 0 /* fixme -- disable for production, this code simulates a network where proxy fallback is the only method to reach the OpenVPN server */
+	if (!(c->options.ce.flags & CE_HTTP_PROXY_FALLBACK))
+	  {
+	    c->options.ce.remote = "10.10.0.1"; /* use an unreachable address here */
+	  }
+#endif
+      } while (!ce_defined);
     }
 #endif
   update_options_ce_post (&c->options);
@@ -257,6 +417,7 @@ init_proxy_dowork (struct context *c)
     {
       c->c1.socks_proxy = socks_proxy_new (c->options.ce.socks_proxy_server,
 					   c->options.ce.socks_proxy_port,
+					   c->options.ce.socks_proxy_authfile,
 					   c->options.ce.socks_proxy_retry,
 					   c->options.auto_proxy_info);
       if (c->c1.socks_proxy)
@@ -455,7 +616,7 @@ init_static (void)
 #ifdef STATUS_PRINTF_TEST
   {
     struct gc_arena gc = gc_new ();
-    const char *tmp_file = create_temp_filename ("/tmp", "foo", &gc);
+    const char *tmp_file = create_temp_file ("/tmp", "foo", &gc);
     struct status_output *so = status_open (tmp_file, 0, -1, NULL, STATUS_OUTPUT_WRITE);
     status_printf (so, "%s", "foo");
     status_printf (so, "%s", "bar");
@@ -497,14 +658,66 @@ init_static (void)
   }
 #endif
 
+#ifdef BUFFER_LIST_AGGREGATE_TEST
+  /* test buffer_list_aggregate function */
+  {
+    static const char *text[] = {
+      "It was a bright cold day in April, ",
+      "and the clocks were striking ",
+      "thirteen. ",
+      "Winston Smith, ",
+      "his chin nuzzled into his breast in an ",
+      "effort to escape the vile wind, ",
+      "slipped quickly through the glass doors ",
+      "of Victory Mansions, though not quickly ",
+      "enough to prevent a swirl of gritty dust from ",
+      "entering along with him."
+    };
+
+    int iter, listcap;
+    for (listcap = 0; listcap < 12; ++listcap)
+      {
+	for (iter = 0; iter < 512; ++iter)
+	  {
+	    struct buffer_list *bl = buffer_list_new(listcap);
+	    {
+	      int i;
+	      for (i = 0; i < SIZE(text); ++i)
+		buffer_list_push(bl, (unsigned char *)text[i]);
+	    }
+	    printf("[cap=%d i=%d] *************************\n", listcap, iter);
+	    if (!(iter & 8))
+	      buffer_list_aggregate(bl, iter/2);
+	    if (!(iter & 16))
+	      buffer_list_push(bl, (unsigned char *)"Even more text...");
+	    buffer_list_aggregate(bl, iter);
+	    if (!(iter & 1))
+	      buffer_list_push(bl, (unsigned char *)"More text...");
+	    {
+	      struct buffer *buf;
+	      while ((buf = buffer_list_peek(bl)))
+		{
+		  int c;
+		  printf ("'");
+		  while ((c = buf_read_u8(buf)) >= 0)
+		    putchar(c);
+		  printf ("'\n");
+		  buffer_list_advance(bl, 0);
+		}
+	    }
+	    buffer_list_free(bl);
+	  }
+      }
+    return false;
+  }
+#endif
+
   return true;
 }
 
 void
 uninit_static (void)
 {
-  openvpn_thread_cleanup ();
-
 #ifdef USE_CRYPTO
   free_ssl_lib ();
 #endif
@@ -924,6 +1137,10 @@ initialization_sequence_completed (struct context *c, const unsigned int flags)
   if ((flags & (ISC_ERRORS|ISC_SERVER)) == 0 && connection_list_defined (&c->options))
     connection_list_set_no_advance (&c->options);
 
+#ifdef WIN32
+  fork_register_dns_action (c->c1.tuntap);
+#endif
+
 #ifdef ENABLE_MANAGEMENT
   /* Tell management interface that we initialized */
   if (management)
@@ -973,7 +1190,7 @@ do_route (const struct options *options,
       struct argv argv = argv_new ();
       setenv_str (es, "script_type", "route-up");
       argv_printf (&argv, "%sc", options->route_script);
-      openvpn_execve_check (&argv, es, S_SCRIPT, "Route script failed");
+      openvpn_run_script (&argv, es, 0, "--route-up");
       argv_reset (&argv);
     }
 
@@ -1109,6 +1326,7 @@ do_open_tun (struct context *c)
 			       SET_MTU_TUN | SET_MTU_UPPER_BOUND);
 
       ret = true;
+      static_context = c;
     }
   else
     {
@@ -1162,6 +1380,8 @@ do_close_tun (struct context *c, bool force)
 
       if (force || !(c->sig->signal_received == SIGUSR1 && c->options.persist_tun))
 	{
+	  static_context = NULL;
+
 #ifdef ENABLE_MANAGEMENT
 	  /* tell management layer we are about to close the TUN/TAP device */
 	  if (management)
@@ -1216,6 +1436,17 @@ do_close_tun (struct context *c, bool force)
 	}
     }
   gc_free (&gc);
+}
+
+void
+tun_abort()
+{
+  struct context *c = static_context;
+  if (c)
+    {
+      static_context = NULL;
+      do_close_tun (c, true);
+    }
 }
 
 /*
@@ -1778,6 +2009,9 @@ do_init_crypto_tls (struct context *c, const unsigned int flags)
   to.renegotiate_packets = options->renegotiate_packets;
   to.renegotiate_seconds = options->renegotiate_seconds;
   to.single_session = options->single_session;
+#ifdef ENABLE_PUSH_PEER_INFO
+  to.push_peer_info = options->push_peer_info;
+#endif
 
   /* should we not xmit any packets until we get an initial
      response from client? */
@@ -1789,6 +2023,7 @@ do_init_crypto_tls (struct context *c, const unsigned int flags)
 #endif
 
   to.verify_command = options->tls_verify;
+  to.verify_export_cert = options->tls_export_cert;
   to.verify_x509name = options->tls_remote;
   to.crl_file = options->crl_file;
   to.ns_cert_type = options->ns_cert_type;
@@ -2704,6 +2939,9 @@ init_management_callback_p2p (struct context *c)
       cb.arg = c;
       cb.status = management_callback_status_p2p;
       cb.show_net = management_show_net_callback;
+#if HTTP_PROXY_FALLBACK
+      cb.http_proxy_fallback_cmd = management_callback_http_proxy_fallback_cmd;
+#endif
       management_set_callback (management, &cb);
     }
 #endif
@@ -2828,6 +3066,17 @@ init_instance (struct context *c, const struct env_set *env, const unsigned int 
   c->sig->signal_text = NULL;
   c->sig->hard = false;
 
+  if (c->mode == CM_P2P)
+    init_management_callback_p2p (c);
+
+  /* possible sleep or management hold if restart */
+  if (c->mode == CM_P2P || c->mode == CM_TOP)
+    {
+      do_startup_pause (c);
+      if (IS_SIG (c))
+	goto sig;
+    }
+
   /* map in current connection entry */
   next_connection_entry (c);
 
@@ -2845,14 +3094,6 @@ init_instance (struct context *c, const struct env_set *env, const unsigned int 
   /* should we disable paging? */
   if (c->first_time && options->mlock)
     do_mlockall (true);
-
-  /* possible sleep or management hold if restart */
-  if (c->mode == CM_P2P || c->mode == CM_TOP)
-    {
-      do_startup_pause (c);
-      if (IS_SIG (c))
-	goto sig;
-    }
 
 #if P2MP
   /* get passwords if undefined */
@@ -3262,23 +3503,6 @@ close_context (struct context *c, int sig, unsigned int flags)
 
 #ifdef USE_CRYPTO
 
-static void
-test_malloc (void)
-{
-  int i, j;
-  msg (M_INFO, "Multithreaded malloc test...");
-  for (i = 0; i < 25; ++i)
-    {
-      struct gc_arena gc = gc_new ();
-      const int limit = get_random () & 0x03FF;
-      for (j = 0; j < limit; ++j)
-	{
-	  gc_malloc (get_random () & 0x03FF, false, &gc);
-	}
-      gc_free (&gc);
-    }
-}
-
 /*
  * Do a loopback test
  * on the crypto subsystem.
@@ -3288,50 +3512,19 @@ test_crypto_thread (void *arg)
 {
   struct context *c = (struct context *) arg;
   const struct options *options = &c->options;
-#if defined(USE_PTHREAD)
-  struct context *child = NULL;
-  openvpn_thread_t child_id = 0;
-#endif
 
   ASSERT (options->test_crypto);
   init_verb_mute (c, IVM_LEVEL_1);
   context_init_1 (c);
   do_init_crypto_static (c, 0);
 
-#if defined(USE_PTHREAD)
-  {
-    if (c->first_time && options->n_threads > 1)
-      {
-	if (options->n_threads > 2)
-	  msg (M_FATAL, "ERROR: --test-crypto option only works with --threads set to 1 or 2");
-	openvpn_thread_init ();
-	ALLOC_OBJ (child, struct context);
-	context_clear (child);
-	child->options = *options;
-	options_detach (&child->options);
-	child->first_time = false;
-	child_id = openvpn_thread_create (test_crypto_thread, (void *) child);
-      }
-  }
-#endif
   frame_finalize_options (c, options);
-
-#if defined(USE_PTHREAD)
-  if (options->n_threads == 2)
-    test_malloc ();
-#endif
 
   test_crypto (&c->c2.crypto_options, &c->c2.frame);
 
   key_schedule_free (&c->c1.ks, true);
   packet_id_free (&c->c2.packet_id);
 
-#if defined(USE_PTHREAD)
-  if (c->first_time && options->n_threads > 1)
-    openvpn_thread_join (child_id);
-  if (child)
-    free (child);
-#endif
   context_gc_free (c);
   return NULL;
 }

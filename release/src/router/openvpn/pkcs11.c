@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -33,6 +33,8 @@
 #include "manage.h"
 #include "base64.h"
 #include "pkcs11.h"
+#include "misc.h"
+#include "otime.h"
 
 static
 time_t
@@ -982,5 +984,7 @@ cleanup:
 }
 
 #else
+#ifdef _MSC_VER  /* Dummy function needed to avoid empty file compiler warning in Microsoft VC */
 static void dummy (void) {}
+#endif
 #endif /* ENABLE_PKCS11 */

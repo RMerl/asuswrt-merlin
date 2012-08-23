@@ -5,7 +5,7 @@
 #             packet encryption, packet authentication, and
 #             packet compression.
 #
-#  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+#  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License version 2
@@ -57,7 +57,7 @@ nodist_doc_DATA = tmp/license.txt
 
 confdir = $(win32datadir)/config
 nodist_conf_DATA = \
-	tmp/openssl.cnf.sample \
+	tmp/openssl-1.0.0.cnf \
 	tmp/client.ovpn \
 	tmp/server.ovpn
 dist_conf_DATA = \
@@ -83,8 +83,8 @@ tmp/server.ovpn:	tmp $(top_srcdir)/sample-config-files/server.conf
 tmp/license.txt:	tmp $(top_srcdir)/COPYING $(top_srcdir)/COPYRIGHT.GPL
 	cat $(top_srcdir)/COPYING $(top_srcdir)/COPYRIGHT.GPL > tmp/license.txt
 
-tmp/openssl.cnf.sample:	tmp $(top_srcdir)/easy-rsa/2.0/openssl.cnf
-	cp $(top_srcdir)/easy-rsa/2.0/openssl.cnf tmp/openssl.cnf.sample
+tmp/openssl-1.0.0.cnf:	tmp $(top_srcdir)/easy-rsa/2.0/openssl-1.0.0.cnf
+	cp $(top_srcdir)/easy-rsa/2.0/openssl-1.0.0.cnf tmp/openssl-1.0.0.cnf
 
 clean-local:
 	-rm -fr tmp
