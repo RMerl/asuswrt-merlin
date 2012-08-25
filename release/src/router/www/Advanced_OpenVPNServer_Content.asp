@@ -346,20 +346,20 @@ function done_validating(action){
 
 					<tr>
 						<th>Interface Type</th>
-			        	<td>
-			       			<select name="vpn_server1_if" class="input_option">
-								<option value="tap">TAP</option>
-								<option value="tun">TUN</option>
+			        		<td>
+			       				<select name="vpn_server1_if" class="input_option">
+								<option value="tap" <% nvram_match("vpn_server1_if","tap","selected"); %> >TAP</option>
+								<option value="tun" <% nvram_match("vpn_server1_if","tun","selected"); %> >TUN</option>
 							</select>
 			   			</td>
 					</tr>
 
 					<tr>
 						<th>Protocol</th>
-			        	<td>
-			       			<select name="vpn_server1_proto" class="input_option">
-								<option value="tcp-server">TCP</option>
-								<option value="udp">UDP</option>
+			        		<td>
+			       				<select name="vpn_server1_proto" class="input_option">
+								<option value="tcp-server" <% nvram_match("vpn_server1_proto","tcp-server","selected"); %> >TCP</option>
+								<option value="udp" <% nvram_match("vpn_server1_proto","udp","selected"); %> >UDP</option>
 							</select>
 			   			</td>
 					</tr>
@@ -376,9 +376,9 @@ function done_validating(action){
 
 			        	<td>
 			        		<select name="vpn_server1_firewall" class="input_option">
-								<option value="auto">Automatic</option>
-								<option value="external">External only</option>
-								<option value="custom">Custom</option>
+								<option value="auto" <% nvram_match("vpn_server1_firewall","auto","selected"); %> >Automatic</option>
+								<option value="external" <% nvram_match("vpn_server1_firewall","external","selected"); %> >External only</option>
+								<option value="custom" <% nvram_match("vpn_server1_firewall","custom","selected"); %> >Custom</option>
 							</select>
 			   			</td>
 					</tr>
@@ -387,9 +387,9 @@ function done_validating(action){
 						<th>Authorization Mode</th>
 			        	<td>
 			        		<select name="vpn_server1_crypt" class="input_option">
-								<option value="tls">TLS</option>
-								<option value="secret">Static Key</option>
-								<option value="custom">Custom</option>
+								<option value="tls" <% nvram_match("vpn_server1_crypt","tls","selected"); %> >TLS</option>
+								<option value="secret" <% nvram_match("vpn_server1_crypt","secret","selected"); %> >Static Key</option>
+								<option value="custom" <% nvram_match("vpn_server1_crypt","custom","selected"); %> >Custom</option>
 							</select>
 			   			</td>
 					</tr>
@@ -398,10 +398,10 @@ function done_validating(action){
 						<th>Extra HMAC authorization<br><i>(tls-auth)</i></th>
 			        	<td>
 			        		<select name="vpn_server1_hmac" class="input_option">
-								<option value="-1">Disabled</option>
-								<option value="2">Bi-directional</option>
-								<option value="0">Incoming (0)</option>
-								<option value="1">Incoming (1)</option>
+								<option value="-1" <% nvram_match("vpn_server1_hmac","-1","selected"); %> >Disabled</option>
+								<option value="2" <% nvram_match("vpn_server1_hmac","2","selected"); %> >Bi-directional</option>
+								<option value="0" <% nvram_match("vpn_server1_hmac","0","selected"); %> >Incoming (0)</option>
+								<option value="1" <% nvram_match("vpn_server1_hmac","1","selected"); %> >Incoming (1)</option>
 							</select>
 			   			</td>
 					</tr>
@@ -482,10 +482,10 @@ function done_validating(action){
 						<th>Compression<br></th>
 			        	<td>
 			        		<select name="vpn_server1_comp" class="input_option">
-								<option value="-1">Disabled</option>
-								<option value="no">None</option>
-								<option value="yes">Enabled</option>
-								<option value="adaptive">Adaptive</option>
+								<option value="-1" <% nvram_match("vpn_server1_comp","-1","selected"); %> >Disabled</option>
+								<option value="no" <% nvram_match("vpn_server1_comp","no","selected"); %> >None</option>
+								<option value="yes" <% nvram_match("vpn_server1_comp","yes","selected"); %> >Enabled</option>
+								<option value="adaptive" <% nvram_match("vpn_server1_comp","adaptive","selected"); %> >Adaptive</option>
 							</select>
 			   			</td>
 					</tr>
