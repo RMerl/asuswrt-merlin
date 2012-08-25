@@ -418,7 +418,7 @@ void start_vpnclient(int clientNum)
 	}
 
 #ifdef LINUX26
-	sprintf(&buffer[0], "vpn_client%d", clientNum);
+//	sprintf(&buffer[0], "vpn_client%d", clientNum);
 //	allow_fastnat(buffer, 0);
 //	try_enabling_fastnat();
 #endif
@@ -499,7 +499,7 @@ void stop_vpnclient(int clientNum)
 	}
 
 #ifdef LINUX26
-	sprintf(&buffer[0], "vpn_client%d", clientNum);
+//	sprintf(&buffer[0], "vpn_client%d", clientNum);
 //	allow_fastnat(buffer, 1);
 //	try_enabling_fastnat();
 #endif
@@ -951,7 +951,7 @@ void start_vpnserver(int serverNum)
 	}
 
 #ifdef LINUX26
-	sprintf(&buffer[0], "vpn_server%d", serverNum);
+//	sprintf(&buffer[0], "vpn_server%d", serverNum);
 //	allow_fastnat(buffer, 0);
 //	try_enabling_fastnat();
 #endif
@@ -1032,7 +1032,7 @@ void stop_vpnserver(int serverNum)
 	}
 
 #ifdef LINUX26
-	sprintf(&buffer[0], "vpn_server%d", serverNum);
+//	sprintf(&buffer[0], "vpn_server%d", serverNum);
 //	allow_fastnat(buffer, 1);
 //	try_enabling_fastnat();
 #endif
