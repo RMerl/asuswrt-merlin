@@ -27,7 +27,7 @@ var vpn_clientlist_array ='<% nvram_get("vpn_server1_ccd_val"); %>';
 /*** TODO
 
 - Replace "Push" dropdown with checkbox if possible
-- Handle server stop/restart
+- Handle server stop/start
 - Client status
 - Dropdown to select server1 or 2
 
@@ -98,6 +98,8 @@ function initial()
 	// Set these based on a compound field
 	setRadioValue(document.form.vpn_server_eas1, ((document.form.vpn_server_eas.value.indexOf(''+(i+1)) >= 0) ? "1" : "0"));
 	setRadioValue(document.form.vpn_server1_dns, ((document.form.vpn_server_dns.value.indexOf(''+(i+1)) >= 0) ? "1" : "0"));
+
+	update_visibility();
 }
 
 
@@ -128,15 +130,42 @@ function vpn_clientlist(){
 	$("vpn_clientlist_Block").innerHTML = code;
 }
 
+
+function update_visibility(){
+	auth = document.form.vpn_server1_crypt.value;
+	iface = document.form.vpn_server1_if.value;
+	hmac = document.form.vpn_server1_hmac.value;
+	dhcp = document.form.vpn_server1_dhcp;
+	ccd = document.form.vpn_server1_ccd;
+	dns = document.form.vpn_server1_dns;
+
+	showhide("vpn_server1_snnm", ((auth == "tls") && (iface == "tun")) ? 1 : 0);
+	showhide("vpn_server1_plan", ((auth == "tls") && (iface == "tun")) ? 1 : 0);
+	showhide("vpn_server1_local", ((auth == "secret") && (iface == "tun")) ? 1 : 0);
+	showhide("vpn_server1_ccd", ((auth == "tls") ? 1 : 0));
+
+	showhide("vpn_server1_c2c",getRadioValue(ccd));
+	showhide("vpn_server1_ccd_excl",getRadioValue(ccd));
+	showhide("vpn_client_table",getRadioValue(ccd));
+	showhide("vpn_clientlist_Block",getRadioValue(ccd));
+
+	showhide("vpn_server1_pdns", ((auth == "tls") && (getRadioValue(dns)));
+	showhide("vpn_server1_dhcp",((auth == "tls") && (iface.value == "tap")) ? 1 : 0);
+	showhide("vpn_server1_range",getRadioValue(dhcp));
+	showhide("server1_custom_crypto_text",((auth == "custom") ? 1 : 0));
+}
+
+
 function addRow(obj, head){
 	if(head == 1)
-		vpn_clientlist_array += "&#60"
+		vpn_clientlist_array += "&#60";
 	else
-		vpn_clientlist_array += "&#62"
+		vpn_clientlist_array += "&#62";
 
 	vpn_clientlist_array += obj.value;
 	obj.value = "";
 }
+
 
 function addRow_Group(upper){
 	var client_num = $('vpn_clientlist_table').rows.length;
@@ -171,14 +200,14 @@ function addRow_Group(upper){
 
 
 function Do_addRow_Group(){
-		addRow(document.form.vpn_clientlist_commonname_0 ,1);
-		addRow(document.form.vpn_clientlist_subnet_0, 0);
-		addRow(document.form.vpn_clientlist_netmask_0, 0);
-		addRow(document.form.vpn_clientlist_push_0, 0);
+	addRow(document.form.vpn_clientlist_commonname_0 ,1);
+	addRow(document.form.vpn_clientlist_subnet_0, 0);
+	addRow(document.form.vpn_clientlist_netmask_0, 0);
+	addRow(document.form.vpn_clientlist_push_0, 0);
 
-		document.form.vpn_clientlist_push_0.value="0";
+	document.form.vpn_clientlist_push_0.value="0";
 
-		vpn_clientlist();
+	vpn_clientlist();
 }
 
 function edit_Row(r){
@@ -189,15 +218,15 @@ function edit_Row(r){
 	document.form.vpn_clientlist_netmask_0.value = $('vpn_clientlist_table').rows[i].cells[2].innerHTML;
 	document.form.vpn_clientlist_push_0.value = $('vpn_clientlist_table').rows[i].cells[3].innerHTML;
 
-  del_Row(r);
+	del_Row(r);
 }
 
 
 function del_Row(r){
-  var i=r.parentNode.parentNode.rowIndex;
-  $('vpn_clientlist_table').deleteRow(i);
+	var i=r.parentNode.parentNode.rowIndex;
+	$('vpn_clientlist_table').deleteRow(i);
 
-  var vpn_clientlist_value = "";
+	var vpn_clientlist_value = "";
 	for(k=0; k<$('vpn_clientlist_table').rows.length; k++){
 		for(j=0; j<$('vpn_clientlist_table').rows[k].cells.length-1; j++){
 			if(j == 0)
@@ -214,22 +243,19 @@ function del_Row(r){
 }
 
 
-function setRadioValue(theObj,theObjValue) {
-
-	for (var i=0; i<theObj.length; i++) {
-		if (theObj[i].value==theObjValue) { 
-			theObj[i].checked = true;
-		}
+function setRadioValue(obj,val) {
+	for (var i=0; i<obj.length; i++) {
+		if (obj[i].value==val)
+			obj[i].checked = true;
 	}
 }
 
 
-function getRadioValue(theObj) {
-
-        for (var i=0; i<theObj.length; i++) {
-                if (theObj[i].checked)
-			return theObj[i].value;
-        }
+function getRadioValue(obj) {
+	for (var i=0; i<obj.length; i++) {
+		if (obj[i].checked)
+			return obj[i].value;
+	}
 	return 0;
 }
 
@@ -266,17 +292,16 @@ function applyRule(){
 	if (getRadioValue(document.form.vpn_server_eas1) == 1)
 		document.form.vpn_server_eas.value += "1";
 
-	document.form.vpn_server_dns.value = "";
+	document.form.vpn_server_dns.value
+	tmp_value = "";
 	if (getRadioValue(document.form.vpn_server1_dns) == 1)
-		document.form.vpn_server_dns.value += "1";
+		tmp_value += "1";
+
+	if (tmp_value != document.form.vpn_server_dns.value)
+		document.form.action_script += ";restart_dnsmasq";
 
 	document.form.submit();
 
-}
-
-
-function done_validating(action){
-        refreshpage();
 }
 
 
@@ -347,7 +372,7 @@ function done_validating(action){
 					<tr>
 						<th>Interface Type</th>
 			        		<td>
-			       				<select name="vpn_server1_if" class="input_option">
+			       				<select name="vpn_server1_if" class="input_option" onclick="update_visibility();">
 								<option value="tap" <% nvram_match("vpn_server1_if","tap","selected"); %> >TAP</option>
 								<option value="tun" <% nvram_match("vpn_server1_if","tun","selected"); %> >TUN</option>
 							</select>
@@ -386,18 +411,19 @@ function done_validating(action){
 					<tr>
 						<th>Authorization Mode</th>
 			        	<td>
-			        		<select name="vpn_server1_crypt" class="input_option">
+			        		<select id="vpn_server1_crypt1" name="vpn_server1_crypt" class="input_option" onclick="update_visibility();">
 								<option value="tls" <% nvram_match("vpn_server1_crypt","tls","selected"); %> >TLS</option>
 								<option value="secret" <% nvram_match("vpn_server1_crypt","secret","selected"); %> >Static Key</option>
 								<option value="custom" <% nvram_match("vpn_server1_crypt","custom","selected"); %> >Custom</option>
 							</select>
+							<span id="server1_custom_crypto_text">(Must be manually configured!)</span>
 			   			</td>
 					</tr>
 
 					<tr>
 						<th>Extra HMAC authorization<br><i>(tls-auth)</i></th>
-			        	<td>
-			        		<select name="vpn_server1_hmac" class="input_option">
+			        		<td>
+			        			<select name="vpn_server1_hmac" class="input_option">
 								<option value="-1" <% nvram_match("vpn_server1_hmac","-1","selected"); %> >Disabled</option>
 								<option value="2" <% nvram_match("vpn_server1_hmac","2","selected"); %> >Bi-directional</option>
 								<option value="0" <% nvram_match("vpn_server1_hmac","0","selected"); %> >Incoming (0)</option>
@@ -405,22 +431,38 @@ function done_validating(action){
 							</select>
 			   			</td>
 					</tr>
-
-					<tr>
-						<th>VPN Subnet</th>
+					<tr id="vpn_server1_snnm">
+						<th>VPN Subnet / Netmask</th>
 						<td>
 							<input type="text" maxlength="15" class="input_15_table" name="vpn_server1_sn" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server1_sn"); %>">
-					</td>
-					</tr>
-
-					<tr>
-						<th>VPN Netmask</th>
-						<td>
 							<input type="text" maxlength="15" class="input_15_table" name="vpn_server1_nm" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server1_nm"); %>">
 						</td>
 					</tr>
-				</table>
 
+					<tr id="vpn_server1_dhcp">
+						<th>Allocate from DHCP</th>
+						<td>
+							<input type="radio" name="vpn_server1_dhcp" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server1_dhcp", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="vpn_server1_dhcp" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server11_dhcp", "0", "checked"); %>><#checkbox_No#>
+						</td>
+ 					</tr>
+
+					<tr id="vpn_server1_range">
+						<th>DHCP Address Pool</th>
+						<td>
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_server1_r1" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server1_r1"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_server1_r2" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server1_r2"); %>">
+						</td>
+					</tr>
+
+					<tr id="vpn_server1_local">
+						<th>Local/remote endpoint addresses</th>
+						<td>
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_server1_local" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server1_local"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_server1_remote" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server1_remote"); %>">
+						</td>
+					</tr>
+				</table>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
@@ -436,7 +478,7 @@ function done_validating(action){
 						</td>
 					</tr>
 
-					<tr>
+					<tr id="vpn_server1_plan">
 						<th>Push LAN to clients</th>
 						<td>
 							<input type="radio" name="vpn_server1_plan" class="input" value="1" <% nvram_match_x("", "vpn_server1_plan", "1", "checked"); %>><#checkbox_Yes#>
@@ -455,13 +497,13 @@ function done_validating(action){
 					<tr>
 						<th>Respond to DNS</th>
 						<td>
-							<input type="radio" name="vpn_server1_dns" class="input" value="1"><#checkbox_Yes#>
-							<input type="radio" name="vpn_server1_dns" class="input" value="0"><#checkbox_No#>
+							<input type="radio" name="vpn_server1_dns" class="input" value="1" onclick="update_visibility();"><#checkbox_Yes#>
+							<input type="radio" name="vpn_server1_dns" class="input" value="0" onclick="update_visibility();"><#checkbox_No#>
 						</td>
  					</tr>
 
 
-					<tr>
+					<tr id="vpn_server1_pdns">
 						<th>Advertise DNS to clients</th>
 						<td>
 							<input type="radio" name="vpn_server1_pdns" class="input" value="1" <% nvram_match_x("", "vpn_server1_pdns", "1", "checked"); %>><#checkbox_Yes#>
@@ -470,7 +512,7 @@ function done_validating(action){
  					</tr>
 
 					<tr>
-						<th>Encryption cipher<br></th>
+						<th>Encryption cipher</th>
 			        	<td>
 			        		<select name="cipher_select" class="input_option">
 								<option value="<% nvram_get("vpn_server1_cipher"); %>" selected><% nvram_get("vpn_server1_cipher"); %></option>
@@ -479,7 +521,7 @@ function done_validating(action){
 					</tr>
 
 					<tr>
-						<th>Compression<br></th>
+						<th>Compression</th>
 			        	<td>
 			        		<select name="vpn_server1_comp" class="input_option">
 								<option value="-1" <% nvram_match("vpn_server1_comp","-1","selected"); %> >Disabled</option>
@@ -497,37 +539,29 @@ function done_validating(action){
 						</td>
 					</tr>
 
-					<tr>
+					<tr id="vpn_server1_ccd">
 						<th>Manage Client-Specific Options</th>
 						<td>
-							<input type="radio" name="vpn_server1_ccd" class="input" value="1" <% nvram_match_x("", "vpn_server1_ccd", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="vpn_server1_ccd" class="input" value="0" <% nvram_match_x("", "vpn_server1_ccd", "0", "checked"); %>><#checkbox_No#>
+							<input type="radio" name="vpn_server1_ccd" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server1_ccd", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="vpn_server1_ccd" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server1_ccd", "0", "checked"); %>><#checkbox_No#>
 						</td>
  					</tr>
 
-					<tr>
-                                                <th>Allow Client &lt;-&gt; Client</th>
-                                                <td>
-                                                        <input type="radio" name="vpn_server1_c2c" class="input" value="1" <% nvram_match_x("", "vpn_server1_c2c", "1", "checked"); %>><#checkbox_Yes#>
-                                                        <input type="radio" name="vpn_server1_c2c" class="input" value="0" <% nvram_match_x("", "vpn_server1_c2c", "0", "checked"); %>><#checkbox_No#>
-                                                </td>
-                                         </tr>
+					<tr id="vpn_server1_c2c">
+						<th>Allow Client &lt;-&gt; Client</th>
+						<td>
+							<input type="radio" name="vpn_server1_c2c" class="input" value="1" <% nvram_match_x("", "vpn_server1_c2c", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="vpn_server1_c2c" class="input" value="0" <% nvram_match_x("", "vpn_server1_c2c", "0", "checked"); %>><#checkbox_No#>
+						</td>
+					</tr>
 
-					<tr>
+					<tr id="vpn_server1_ccd_excl">
 						<th>Allow only specified clients</th>
 						<td>
-							<input type="radio" name="vpn_server1_ccd_excl" class="input" value="1" <% nvram_match_x("", "vpn_server1_ccd_excl", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="vpn_server1_ccd_excl" class="input" value="0" <% nvram_match_x("", "vpn_server1_ccd_excl", "0", "checked"); %>><#checkbox_No#>
+							<input type="radio" name="vpn_server1_ccd_excl" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server1_ccd_excl", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="vpn_server1_ccd_excl" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server1_ccd_excl", "0", "checked"); %>><#checkbox_No#>
 						</td>
  					</tr>
-
-					<tr>
-						<th>Custom Configuration</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_server1_custom" cols="55" maxlength="1024"><% nvram_get("vpn_server1_custom"); %></textarea>
-						</td>
-
-
 
 					</table>
 
@@ -572,6 +606,19 @@ function done_validating(action){
 					</table>
 			     	<div id="vpn_clientlist_Block"></div>
 
+					<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" id="vpn_client_table">
+						<thead>
+						<tr>
+							<td colspan="2">Custom configuration</td>
+						</tr>
+						</thead>
+						<tr>
+						<td colspan="2">
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_server1_custom" cols="55" maxlength="1024"><% nvram_get("vpn_server1_custom"); %></textarea>
+						</td>
+					</tr>
+
+					</table>
 
 					<div class="apply_gen">
 						<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_apply#>"/>

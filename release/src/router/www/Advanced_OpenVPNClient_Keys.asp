@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title>ASUS Wireless Router <#Web_Title#> - OpenVPN Server Keys</title>
+<title>ASUS Wireless Router <#Web_Title#> - OpenVPN Client Keys</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 
@@ -45,12 +45,12 @@ function applyRule(){
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
-<input type="hidden" name="current_page" value="Advanced_OpenVPNServer_Keys.asp">
-<input type="hidden" name="next_page" value="Advanced_OpenVPNServer_Keys.asp">
+<input type="hidden" name="current_page" value="Advanced_OpenVPNClient_Keys.asp">
+<input type="hidden" name="next_page" value="Advanced_OpenVPNClient_Keys.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="restart_vpnserver1">
+<input type="hidden" name="action_script" value="restart_vpnclient1">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="SystemCmd" value="">
@@ -76,7 +76,7 @@ function applyRule(){
                 <tr bgcolor="#4D595D">
                 <td valign="top">
                 <div>&nbsp;</div>
-                <div class="formfonttitle">OpenVPN Server - Keys</div>
+                <div class="formfonttitle">OpenVPN Client - Keys</div>
                 <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -88,38 +88,32 @@ function applyRule(){
 					<tr>
 						<th>Static Key</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_server1_static" cols="65" maxlength="4096"><% nvram_get("vpn_server1_static"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_client1_static" cols="65" maxlength="4096"><% nvram_get("vpn_client1_static"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Certificate Authority</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_server1_ca" cols="65" maxlength="4096"><% nvram_get("vpn_server1_ca"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_client1_ca" cols="65" maxlength="4096"><% nvram_get("vpn_client1_ca"); %></textarea>
 						</td>
 					</tr>
 					<tr>
-						<th>Server Certificate</th>
+						<th>Client Certificate</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_server1_crt" cols="65" maxlength="4096"><% nvram_get("vpn_server1_crt"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_client1_crt" cols="65" maxlength="4096"><% nvram_get("vpn_client1_crt"); %></textarea>
 						</td>
 					</tr>
 					<tr>
-						<th>Server Key</th>
+						<th>Client Key</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_server1_key" cols="65" maxlength="4096"><% nvram_get("vpn_server1_key"); %></textarea>
-						</td>
-					</tr>
-					<tr>
-						<th>Diffie Hellman parameters</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_server1_dh" cols="65" maxlength="4096"><% nvram_get("vpn_server1_dh"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_client1_key" cols="65" maxlength="4096"><% nvram_get("vpn_client1_key"); %></textarea>
 						</td>
 					</tr>
 				</table>
 				<div class="apply_gen">
 					<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_apply#>"/>
-			    </div>
-			  </td></tr>
+				</div>
+              </td></tr>
 	        </tbody>
             </table>
             </form>
