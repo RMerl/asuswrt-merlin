@@ -26,11 +26,12 @@ var vpn_clientlist_array ='<% nvram_get("vpn_client1_ccd_val"); %>';
 
 /*** TODO
 
+- Logging verbosity
+- Server Address and Port - label the fields
+- Create NAT on tunnel - should the notice be displayed?
 - Handle server stop/restart
 - Client status
 - Dropdown to select client1 or 2
-- Redirect Internet trafic settings
-- See if client1_bridge_warn_text involves additional code
 - vpn_client1_local: double-check what must be hidden by update_visibility - we have two local
 - Use unique IDs for <tr>
 - vpn_client1_tlsremote/cn not hiding/showing appropriately
@@ -83,13 +84,13 @@ function initial()
 	show_menu();
 
 	// Cipher list
-	free_options(document.form.cipher_select);
+	free_options(document.form.vpn_client1_cipher);
 	currentcipher = "<% nvram_get("vpn_client1_cipher"); %>";
-	add_option(document.form.cipher_select,	"default","Default",(currentcipher == "Default"));
-	add_option(document.form.cipher_select,	"none","None",(currentcipher == "none"));
+	add_option(document.form.vpn_client1_cipher, "default","Default",(currentcipher == "Default"));
+	add_option(document.form.vpn_client1_cipher, "none","None",(currentcipher == "none"));
 
 	for(var i = 0; i < ciphersarray.length; i++){
-		add_option(document.form.cipher_select,
+		add_option(document.form.vpn_client1_cipher,
 			ciphersarray[i][0], ciphersarray[i][0],
 			(currentcipher == ciphersarray[i][0]));
 	}
@@ -115,34 +116,35 @@ function update_visibility(){
 	nat = getRadioValue(document.form.vpn_client1_nat);
 	hmac = document.form.vpn_client1_hmac.value;
 	rgw = getRadioValue(document.form.vpn_client1_rgw);
+	tlsremote = getRadioValue(document.form.vpn_client1_tlsremote);
 	userauth = (getRadioValue(document.form.vpn_client1_userauth) == 1) && (auth == 'tls') ? 1 : 0;
 	useronly = userauth && getRadioValue(document.form.vpn_client1_useronly);
 
-	showhide("vpn_client1_userauth", ((auth == "tls") ? 1 : 0));
-	showhide("vpn_client1_hmac", ((auth == "tls") ? 1 : 0));
+	showhide("client1_userauth", ((auth == "tls") ? 1 : 0));
+	showhide("client1_hmac", ((auth == "tls") ? 1 : 0));
 	showhide("client1_custom_crypto_text",((auth == "custom") ? 1 : 0));
-	showhide("vpn_client1_username", userauth);
-	showhide("vpn_client1_password", userauth);
-	showhide("vpn_client1_useronly", userauth);
+	showhide("client1_username", userauth);
+	showhide("client1_password", userauth);
+	showhide("client1_useronly", userauth);
 
 	showhide("client1_ca_warn_text", useronly);
-	showhide("vpn_client1_bridge", (iface == "tap") ? 1 : 0);
+	showhide("client1_bridge", (iface == "tap") ? 1 : 0);
 
 	showhide("client1_bridge_warn_text", (bridge == 0) ? 1 : 0);
-	showhide("vpn_client1_nat", ((fw != "custom") && (iface == "tun" || bridge == 0)) ? 1 : 0);
-	showhide("client1_nat_warn_text", (fw != "custom" && ((nat == 0) || (auth == "secret" && iface == "tun")))  ? 1 : 0);
+	showhide("client1_nat", ((fw != "custom") && (iface == "tun" || bridge == 0)) ? 1 : 0);
+	showhide("client1_nat_warn_text", ((fw != "custom") && ((nat == 0) || (auth == "secret" && iface == "tun")))  ? 1 : 0);
 
-	showhide("vpn_client1_local", (iface == "tun" && auth == "secret") ? 1 : 0);
-	showhide("vpn_client1_local", (iface == "tap" && (bridge == 0 && auth == "secret")) ? 1 : 0);
+	showhide("client1_local_1", (iface == "tun" && auth == "secret") ? 1 : 0);
+	showhide("client1_local_2", (iface == "tap" && (bridge == 0 && auth == "secret")) ? 1 : 0);
 
-	showhide("vpn_client1_adns", (auth == "tls")? 1 : 0);
-	showhide("vpn_client1_reneg", (auth == "tls")? 1 : 0);
-	showhide("client1_gateway_label", (iface == "tap" && rgw > 0) ? 1 : 0);
-	showhide("vpn_client1_gw", (iface == "tap" && rgw > 0) ? 1 : 0);
-	showhide("vpn_client1_tlsremote", (auth == "tls") ? 1 : 0);
+	showhide("client1_adns", (auth == "tls")? 1 : 0);
+	showhide("client1_reneg", (auth == "tls")? 1 : 0);
+	showhide("client1_gateway_label", (iface == "tap" && rgw == 1) ? 1 : 0);
+	showhide("vpn_client1_gw", (iface == "tap" && rgw == 1) ? 1 : 0);
+	showhide("client1_tlsremote", (auth == "tls") ? 1 : 0);
 
-	showhide("vpn_client1_cn", ((auth == "tls") && (getRadioValue(document.form.vpn_client1_tlsremote) == 1)) ? 1 : 0);
-	showhide("client1_cn_label", ((auth == "tls") && (getRadioValue(document.form.vpn_client1_tlsremote) == 1)) ? 1 : 0);
+	showhide("vpn_client1_cn", ((auth == "tls") && (tlsremote == 1)) ? 1 : 0);
+	showhide("client1_cn_label", ((auth == "tls") && (tlsremote == 1)) ? 1 : 0);
 
 }
 
@@ -204,9 +206,6 @@ function applyRule(){
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="vpn_client_eas" value="<% nvram_get("vpn_client_eas"); %>">
-<input type="hidden" name="vpn_client_dns" value="<% nvram_get("vpn_client_dns"); %>">
-<input type="hidden" name="vpn_client1_cipher" value="<% nvram_get("vpn_client1_cipher"); %>">
-<input type="hidden" name="vpn_client1_ccd_val" value="<% nvram_get("vpn_client1_ccd_val"); %>">
 
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -259,7 +258,7 @@ function applyRule(){
 						<th>Protocol</th>
 			        		<td>
 			       				<select name="vpn_client1_proto" class="input_option">
-								<option value="tcp-server" <% nvram_match("vpn_client1_proto","tcp-server","selected"); %> >TCP</option>
+								<option value="tcp-client" <% nvram_match("vpn_client1_proto","tcp-client","selected"); %> >TCP</option>
 								<option value="udp" <% nvram_match("vpn_client1_proto","udp","selected"); %> >UDP</option>
 							</select>
 			   			</td>
@@ -297,7 +296,7 @@ function applyRule(){
 			   			</td>
 					</tr>
 
-					<tr id="vpn_client1_userauth">
+					<tr id="client1_userauth">
 						<th>Username/Password Authentication</th>
 						<td>
 							<input type="radio" name="vpn_client1_userauth" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_client1_userauth", "1", "checked"); %>><#checkbox_Yes#>
@@ -305,19 +304,19 @@ function applyRule(){
 						</td>
  					</tr>
 
-					<tr id="vpn_client1_username">
+					<tr id="client1_username">
 						<th>Username</th>
 						<td>
-							<input type="text" maxlength="50" class="input_32_table" name="vpn_client1_username" value="<% nvram_get("vpn_client1_username"); %>" >
+							<input type="text" maxlength="50" class="input_25_table" name="vpn_client1_username" value="<% nvram_get("vpn_client1_username"); %>" >
 						</td>
 					</tr>
-					<tr id="vpn_client1_password">
+					<tr id="client1_password">
 						<th>Password</th>
 						<td>
-							<input type="text" maxlength="50" class="input_32_table" name="vpn_client1_password" value="<% nvram_get("vpn_client1_password"); %>">
+							<input type="text" maxlength="50" class="input_25_table" name="vpn_client1_password" value="<% nvram_get("vpn_client1_password"); %>">
 						</td>
 					</tr>
-					<tr id="vpn_client1_useronly">
+					<tr id="client1_useronly">
 						<th>Username Auth. Only<br><i>(Must define certificate authority)</i></th>
 						<td>
 							<input type="radio" name="vpn_client1_useronly" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_client1_useronly", "1", "checked"); %>><#checkbox_Yes#>
@@ -326,7 +325,7 @@ function applyRule(){
 						</td>
  					</tr>
 
-					<tr id="vpn_client1_hmac">
+					<tr id="client1_hmac">
 						<th>Extra HMAC authorization<br><i>(tls-auth)</i></th>
 			        	<td>
 			        		<select name="vpn_client1_hmac" class="input_option">
@@ -338,16 +337,16 @@ function applyRule(){
 			   			</td>
 					</tr>
 
-					<tr id="vpn_client1_bridge">
+					<tr id="client1_bridge">
 						<th>Server is on the same subnet</th>
 						<td>
 							<input type="radio" name="vpn_client1_bridge" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_client1_bridge", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="vpn_client1_bridge" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_client1_bridge", "0", "checked"); %>><#checkbox_No#>
-							<span id="client1_bridge_warn_text">Warning: Cannot bridge distinct subnets. Defaulting to routed mode.</span>
+							<span id="client1_bridge_warn_text">Warning: Cannot bridge distinct subnets. Will default to routed mode.</span>
 						</td>
  					</tr>
 
-					<tr id="vpn_client1_nat">
+					<tr id="client1_nat">
 						<th>Create NAT on tunnel<br><i>(Router must be configured manually)</i></th>
 						<td>
 							<input type="radio" name="vpn_client1_nat" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_client1_nat", "1", "checked"); %>><#checkbox_Yes#>
@@ -357,7 +356,7 @@ function applyRule(){
 						</td>
  					</tr>
 
-					<tr id="vpn_client1_local">
+					<tr id="client1_local_1">
 						<th>Local/remote endpoint addresses</th>
 						<td>
 							<input type="text" maxlength="15" class="input_15_table" name="vpn_client1_local" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_client1_local"); %>">
@@ -365,7 +364,7 @@ function applyRule(){
 						</td>
 					</tr>
 
-					<tr>
+					<tr id="client1_local_2">
 						<th>Tunnel address/netmask</th>
 						<td>
 							<input type="text" maxlength="15" class="input_15_table" name="vpn_client1_local" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_client1_local"); %>">
@@ -400,7 +399,7 @@ function applyRule(){
 						</td>
  					</tr>
 
-					<tr id="vpn_client1_adns">
+					<tr id="client1_adns">
 						<th>Accept DNS Configuration</th>
 						<td>
 			        		<select name="vpn_client1_comp" class="input_option">
@@ -415,7 +414,7 @@ function applyRule(){
 					<tr>
 						<th>Encryption cipher</th>
 			        	<td>
-			        		<select name="cipher_select" class="input_option">
+			        		<select name="vpn_client1_cipher" class="input_option">
 								<option value="<% nvram_get("vpn_client1_cipher"); %>" selected><% nvram_get("vpn_client1_cipher"); %></option>
 							</select>
 			   			</td>
@@ -433,7 +432,7 @@ function applyRule(){
 			   			</td>
 					</tr>
 
-					<tr id="vpn_client1_reneg">
+					<tr id="client1_reneg">
 						<th>TLS Renegotiation Time<br><i>(in seconds, -1 for default)</th>
 						<td>
 							<input type="text" maxlength="5" class="input_6_table" name="vpn_client1_reneg" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, -1, 2147483647)" value="<% nvram_get("vpn_client1_reneg"); %>">
@@ -447,12 +446,12 @@ function applyRule(){
 						</td>
 					</tr>
 
-					<tr id="vpn_client1_tlsremote1">
+					<tr id="client1_tlsremote">
 						<th>Verify Server Certificate</th>
 						<td>
-							<input type="radio" name="vpn_client1_tlsremote" class="input" value="1" <% nvram_match_x("", "vpn_client1_tlsremote", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="vpn_client1_tlsremote" class="input" value="0" <% nvram_match_x("", "vpn_client1_tlsremote", "0", "checked"); %>><#checkbox_No#>
-							<label style="padding-left:3em;" id="client1_cn_label">Common name:</label><input type="text" maxlength="64" class="input_15_table" id="vpn_client1_cn" name="vpn_client1_cn" value="<% nvram_get("vpn_client1_cn"); %>">
+							<input type="radio" name="vpn_client1_tlsremote" class="input" onclick="update_visibility();" value="1" <% nvram_match_x("", "vpn_client1_tlsremote", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="vpn_client1_tlsremote" class="input" onclick="update_visibility();" value="0" <% nvram_match_x("", "vpn_client1_tlsremote", "0", "checked"); %>><#checkbox_No#>
+							<label style="padding-left:3em;" id="client1_cn_label">Common name:</label><input type="text" maxlength="64" class="input_25_table" id="vpn_client1_cn" name="vpn_client1_cn" value="<% nvram_get("vpn_client1_cn"); %>">
 						</td>
  					</tr>
 
