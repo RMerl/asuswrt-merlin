@@ -866,8 +866,11 @@ int ssl3_get_server_hello(SSL *s)
 		s->session->cipher_id = s->session->cipher->id;
 	if (s->hit && (s->session->cipher_id != c->id))
 		{
+/* Workaround is now obsolete */
+#if 0
 		if (!(s->options &
 			SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG))
+#endif
 			{
 			al=SSL_AD_ILLEGAL_PARAMETER;
 			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
@@ -950,7 +953,7 @@ int ssl3_get_server_hello(SSL *s)
 		/* wrong packet length */
 		al=SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_BAD_PACKET_LENGTH);
-		goto err;
+		goto f_err;
 		}
 
 	return(1);
@@ -1834,7 +1837,7 @@ int ssl3_get_new_session_ticket(SSL *s)
 	if (n < 6)
 		{
 		/* need at least ticket_lifetime_hint + ticket length */
-		al = SSL3_AL_FATAL,SSL_AD_DECODE_ERROR;
+		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 		}
@@ -1845,7 +1848,7 @@ int ssl3_get_new_session_ticket(SSL *s)
 	/* ticket_lifetime_hint + ticket_length + ticket */
 	if (ticklen + 6 != n)
 		{
-		al = SSL3_AL_FATAL,SSL_AD_DECODE_ERROR;
+		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 		}
@@ -2240,6 +2243,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			if (!DH_generate_key(dh_clnt))
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
+				DH_free(dh_clnt);
 				goto err;
 				}
 
@@ -2251,6 +2255,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			if (n <= 0)
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
+				DH_free(dh_clnt);
 				goto err;
 				}
 

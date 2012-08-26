@@ -62,12 +62,8 @@ my $flavour = shift;
 my $output  = shift;
 if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
 
-{ my ($stddev,$stdino,@junk)=stat(STDOUT);
-  my ($outdev,$outino,@junk)=stat($output);
-
-    open STDOUT,">$output" || die "can't open $output: $!"
-	if ($stddev!=$outdev || $stdino!=$outino);
-}
+open STDOUT,">$output" || die "can't open $output: $!"
+	if (defined($output));
 
 my $gas=1;	$gas=0 if ($output =~ /\.asm$/);
 my $elf=1;	$elf=0 if (!$gas);
@@ -555,7 +551,8 @@ my %globals;
 					    $v.=" READONLY";
 					    $v.=" ALIGN(".($1 eq "p" ? 4 : 8).")" if ($masm>=$masmref);
 					} elsif ($line=~/\.CRT\$/i) {
-					    $v.=" READONLY DWORD";
+					    $v.=" READONLY ";
+					    $v.=$masm>=$masmref ? "ALIGN(8)" : "DWORD";
 					}
 				    }
 				    $current_segment = $line;

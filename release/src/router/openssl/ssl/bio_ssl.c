@@ -348,7 +348,11 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 		break;
 	case BIO_C_SET_SSL:
 		if (ssl != NULL)
+			{
 			ssl_free(b);
+			if (!ssl_new(b))
+				return 0;
+			}
 		b->shutdown=(int)num;
 		ssl=(SSL *)ptr;
 		((BIO_SSL *)b->ptr)->ssl=ssl;
@@ -534,6 +538,7 @@ err:
 
 BIO *BIO_new_ssl_connect(SSL_CTX *ctx)
 	{
+#ifndef OPENSSL_NO_SOCK
 	BIO *ret=NULL,*con=NULL,*ssl=NULL;
 
 	if ((con=BIO_new(BIO_s_connect())) == NULL)
@@ -545,6 +550,7 @@ BIO *BIO_new_ssl_connect(SSL_CTX *ctx)
 	return(ret);
 err:
 	if (con != NULL) BIO_free(con);
+#endif
 	return(NULL);
 	}
 
