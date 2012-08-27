@@ -75,7 +75,7 @@ unsigned int get_wifi_clients(int radio, int querytype);
 int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 {
 	char *type;
-	char result[512];
+	char result[2048];
 	int retval = 0;
 	struct sysinfo sys;
 	char *tmp;
