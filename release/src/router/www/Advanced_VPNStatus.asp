@@ -22,15 +22,197 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-function initial()
-{
+
+function initial(){
 	show_menu();
+	parseStatus(document.form.status_server1.value, "vpn_server1_Block");
+	parseStatus(document.form.status_client1.value, "vpn_client1_Block");
 }
 
-function applyRule(){
 
+function applyRule(){
 	showLoading();
 	document.form.submit();
+}
+
+
+function parseStatus(text, block){
+
+	// Clear it
+	$(block).innerHTML = "";
+	var code = "";
+
+	var lines = text.split('\n');
+	var staticStats = false;
+
+	var routeTableEntries = new Array();
+	var clientTableEntries = new Array();
+	var statsTableEntries = new Array();
+	var staticstatsTableEntries = new Array();
+
+	var clientPtr = 0;
+	var routePtr = 0;
+	var statsPtr = 0;
+	var staticstatsPtr = 0;
+
+// Parse data
+	for (i = 0; text != '' && i < lines.length; ++i)
+	{
+		var done = false;
+
+		var fields = lines[i].split(',');
+		if ( fields.length == 0 ) continue;
+
+		switch ( fields[0] )
+		{
+		case "TITLE":
+			break;
+		case "TIME":
+		case "Updated":
+			$(block + "_UpdateTime").innerHTML = 'Last updated: ' + fields[1];
+			break;
+		case "HEADER":
+			switch ( fields[1] )
+			{
+			case "CLIENT_LIST":
+				clientTableHeaders = fields.slice(2,fields.length-1);
+				break;
+			case "ROUTING_TABLE":
+				routeTableHeaders = fields.slice(2,fields.length-1);
+				break;
+			default:
+				break;
+			}
+			break;
+		case "CLIENT_LIST":
+			clientTableEntries[clientPtr++] = fields.slice(1,fields.length-1);
+			break;
+		case "ROUTING_TABLE":
+			routeTableEntries[routePtr++] = fields.slice(1,fields.length-1);
+			break;
+		case "GLOBAL_STATS":
+			statsTableEntries[statsPtr++] = fields.slice(1);
+			break;
+		case "OpenVPN STATISTICS":
+			staticStats = true;
+			break;
+		case "END":
+			done = true;
+			break;
+		default:
+			if(staticStats)
+			{
+				staticstatsTableEntries[staticstatsPtr++] = fields;
+			}
+			break;
+		}
+		if ( done ) break;
+	}
+
+
+/* Spit it out */
+
+/*** Clients ***/
+
+	if (clientPtr > 0) {
+		code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="' + (clientTableHeaders.length-1) + '">Clients</td></tr></thead><tr>';
+
+// Headers
+		for (i = 0; i < (clientTableHeaders.length - 1); ++i)
+		{
+			if (i == 0) {
+				code +='<th>' + clientTableHeaders[i] + '<br><span style="color: cyan; background: transparent;">' + clientTableHeaders[clientTableHeaders.length-1] + '</span></th>';
+			} else {
+				code +='<th>' + clientTableHeaders[i] + '</th>';
+			}
+		}
+
+		code += '</tr>';
+
+// Clients
+		for (i = 0; i < clientTableEntries.length; ++i)
+		{
+			code += '<tr>';
+			for (j = 0; j < (clientTableEntries[i].length-1); ++j)
+			{
+				if (j == 0) {
+					code += '<td style="white-space:nowrap;" align="left">' + clientTableEntries[i][j] + '<br><span style="color: cyan; background: transparent;">' + clientTableEntries[i][clientTableEntries[i].length-1] +'</span></td>';
+				} else {
+					code += '<td align="left">' + clientTableEntries[i][j] + '</td>';
+				}
+			}
+			code += '</tr>';
+		}
+		code += '</table><br>';
+	}
+
+	$(block).innerHTML += code;
+
+
+/*** Routes ***/
+
+	if (routePtr > 0) {
+		code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="' + routeTableHeaders.length + '">Routes</td></tr></thead><tr>';
+
+		// Headers
+		for (i = 0; i < routeTableHeaders.length; ++i)
+		{
+			code +='<th>' + routeTableHeaders[i] + '</th>';
+		}
+		code += '</tr>';
+
+		// Routes
+		for (i = 0; i < routeTableEntries.length; ++i)
+		{
+			code += '<tr>';
+			for (j = 0; j < routeTableEntries[i].length; ++j)
+			{
+				code += '<td style="white-space:nowrap;" align="left">' + routeTableEntries[i][j] + '</td>';
+			}
+			code += '</tr>';
+		}
+	}
+	code += '</table><br>';
+
+	$(block).innerHTML += code;
+
+
+	// Reset it, since we don't know which block we'll show next
+	code = "";
+
+
+/*** Stats ***/
+
+	if (statsPtr > 0) {
+		code += '<table width="50%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="2">Statistics</td></tr></thead>';
+
+		for (i = 0; i < statsTableEntries.length; ++i)
+		{
+			code += '<tr>';
+			code += '<th width="80%">' + statsTableEntries[i][0] +'</th>';
+			code += '<td width="20%" align="left">' + statsTableEntries[i][1] +'</td>';
+			code += '</tr>';
+		}
+		code += '</table>';
+	}
+
+
+/*** Static Stats ***/
+
+	if (staticstatsPtr > 0) {
+
+		code += '<table width="50%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="2">Statistics</td></tr></thead>';
+
+		for (i = 0; i < staticstatsTableEntries.length; ++i)
+		{
+			code += '<tr>';
+			code += '<th width="80%">' + staticstatsTableEntries[i][0] +'</th>';
+			code += '<td width="20%" align="left">' + staticstatsTableEntries[i][1] +'</td>';
+			code += '</tr>';
+		}
+		code += '</table>';
+	}
+	$(block).innerHTML += code;
 }
 
 
@@ -49,13 +231,15 @@ function applyRule(){
 <input type="hidden" name="next_page" value="Advanced_VPNStatus.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
-<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_mode" value="">
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="0">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="SystemCmd" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
+<input type="hidden" name="status_server1" value="<% sysinfo("vpnstatus.server.1"); %>">
+<input type="hidden" name="status_client1" value="<% sysinfo("vpnstatus.client.1"); %>">
 
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -82,26 +266,35 @@ function applyRule(){
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td colspan="2">OpenVPN status</td>
+							<td>OpenVPN Server 1<span id="vpn_server1_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
 						</tr>
 					</thead>
 					<tr>
-						<th>Server 1</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" style="width: 30em;" cols="30"><% sysinfo("vpnstatus.server.1"); %></textarea>
-<!--							<textarea rows="8" class="textarea_ssh_table" style="width: 30em;" cols="30"><% sysinfo("vpnstatus.server.2"); %></textarea> -->
-							</td>
-					</tr>
-					<tr>
-						<th>Client 1</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" style="width: 30em;" cols="30"><% sysinfo("vpnstatus.client.1"); %></textarea>
-<!--							<textarea rows="8" class="textarea_ssh_table" style="width: 30em;" cols="30"><% sysinfo("vpnstatus.client.2"); %></textarea> -->
+						<td style="border: none;">
+							<div id="vpn_server1_Block"></div>
 						</td>
 					</tr>
+
 				</table>
+
+				<br>
+
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+					<thead>
+						<tr>
+							<td>OpenVPN Client 1<span id="vpn_client1_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
+						</tr>
+					</thead>
+					<tr>
+						<td style="border: none;">
+							<div id="vpn_client1_Block"></div>
+						</td>
+					</tr>
+
+				</table>
+
 				<div class="apply_gen">
-					<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_apply#>"/>
+					<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_refresh#>"/>
 			    </div>
 			  </td></tr>
 	        </tbody>
