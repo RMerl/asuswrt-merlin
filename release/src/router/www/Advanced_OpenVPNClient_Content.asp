@@ -17,26 +17,17 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/detect.js"></script>
+<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
+var $j = jQuery.noConflict();
+
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
 var vpn_clientlist_array ='<% nvram_get("vpn_client1_ccd_val"); %>';
 
-/*** TODO
-
-- Logging verbosity
-- Server Address and Port - label the fields
-- Create NAT on tunnel - should the notice be displayed?
-- Handle server stop/restart
-- Client status
-- Dropdown to select client1 or 2
-- vpn_client1_local: double-check what must be hidden by update_visibility - we have two local
-- Use unique IDs for <tr>
-- vpn_client1_tlsremote/cn not hiding/showing appropriately
-- Test all hide/show rules
-***/
 
 ciphersarray = [
 		["AES-128-CBC"],
@@ -199,7 +190,7 @@ function applyRule(){
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="restart_vpnclient1">
+<input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="SystemCmd" value="">
@@ -236,6 +227,34 @@ function applyRule(){
 							<td colspan="2">Basic Settings</td>
 						</tr>
 					</thead>
+					<tr id="service_enable_button">
+						<th>Service state</th>
+						<td>
+							<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_service_enable"></div>
+							<script type="text/javascript">
+								service_state = (<% sysinfo("pid.vpnclient1"); %> > 0);
+								$j('#radio_service_enable').iphoneSwitch(service_state,
+									 function() {
+										document.form.action_script.value = "start_vpnclient1";
+										parent.showLoading();
+										document.form.submit();
+										return true;
+									 },
+									 function() {
+										document.form.action_script.value = "stop_vpnclient1";
+										parent.showLoading();
+										document.form.submit();
+										return true;
+									 },
+									 {
+										switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
+									 }
+								);
+							</script>
+							<span>Warning: any unsaved change will be lost.</span>
+					    </td>
+					</tr>
+
 					<tr>
 						<th>Start with WAN</th>
 						<td>
@@ -267,8 +286,8 @@ function applyRule(){
 					<tr>
 						<th>Server Address and Port</th>
 						<td>
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_client1_addr" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_client1_addr"); %>">
-							<input type="text" maxlength="5" class="input_6_table" name="vpn_client1_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("vpn_client1_port"); %>" >
+							<label>Address:</label><input type="text" maxlength="15" class="input_15_table" name="vpn_client1_addr" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_client1_addr"); %>">
+							<label style="margin-left: 4em;">Port:</label><input type="text" maxlength="5" class="input_6_table" name="vpn_client1_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("vpn_client1_port"); %>" >
 						</td>
 					</tr>
 

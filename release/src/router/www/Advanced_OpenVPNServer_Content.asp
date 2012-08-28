@@ -17,22 +17,16 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/detect.js"></script>
+<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
+var $j = jQuery.noConflict();
+
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
 var vpn_clientlist_array ='<% nvram_get("vpn_server1_ccd_val"); %>';
-
-/*** TODO
-
-- Logging verbosity
-- Replace "Push" dropdown with checkbox if possible
-- Handle server stop/start
-- Client status
-- Dropdown to select server1 or 2
-
-***/
 
 ciphersarray = [
 		["AES-128-CBC"],
@@ -322,7 +316,7 @@ function applyRule(){
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="restart_vpnserver1">
+<input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="SystemCmd" value="">
@@ -361,6 +355,35 @@ function applyRule(){
 							<td colspan="2">Basic Settings</td>
 						</tr>
 					</thead>
+
+					<tr id="service_enable_button">
+						<th>Service state</th>
+						<td>
+							<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_service_enable"></div>
+							<script type="text/javascript">
+								service_state = (<% sysinfo("pid.vpnserver1"); %> > 0);
+								$j('#radio_service_enable').iphoneSwitch(service_state,
+									function() {
+										document.form.action_script.value = "start_vpnclient1";
+										parent.showLoading();
+										document.form.submit();
+										return true;
+									},
+									function() {
+										document.form.action_script.value = "stop_vpnclient1";
+										parent.showLoading();
+										document.form.submit();
+										return true;
+									},
+									{
+										switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
+									}
+								);
+							</script>
+							<span>Warning: any unsaved change will be lost.</span>
+					    </td>
+					</tr>
+
 					<tr>
 						<th>Start with WAN</th>
 						<td>
