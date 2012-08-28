@@ -235,6 +235,13 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				unlink("/tmp/output.txt");
 			}
 
+		} else if(strncmp(type,"pid",3) ==0 ) {
+			char service[32];
+			sscanf(type, "pid.%31s", service);
+
+			if (strlen(service))
+				sprintf(result, "%d", pidof(service));
+
 		} else if(strncmp(type,"vpnstatus",9) == 0 ) {
 			int num = 0;
 			char service[10], buf[256];
@@ -349,5 +356,4 @@ exit:
         free(clientlist);
 	return count;
 }
-
 
