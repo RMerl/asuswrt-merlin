@@ -21,12 +21,25 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
+server1pid = '<% sysinfo("pid.vpnserver1"); %>';
+client1pid = '<% sysinfo("pid.vpnclient1"); %>';
 
 
 function initial(){
 	show_menu();
-	parseStatus(document.form.status_server1.value, "vpn_server1_Block");
-	parseStatus(document.form.status_client1.value, "vpn_client1_Block");
+
+	if (server1pid > 0)
+		$("server1_Block_Running").innerHTML = " - Running";
+	else
+		$("server1_Block_Running").innerHTML = " - Stopped";
+
+	if (client1pid > 0)
+		$("client1_Block_Running").innerHTML = " - Running";
+	else
+		$("client1_Block_Running").innerHTML = " - Stopped";
+
+	parseStatus(document.form.status_server1.value, "server1_Block");
+	parseStatus(document.form.status_client1.value, "client1_Block");
 }
 
 
@@ -266,12 +279,12 @@ function parseStatus(text, block){
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td>OpenVPN Server 1<span id="vpn_server1_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
+							<td>OpenVPN Server 1<span id="server1_Block_Running" style="background: transparent; color: inherit;"></span><span id="server1_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
 						</tr>
 					</thead>
 					<tr>
 						<td style="border: none;">
-							<div id="vpn_server1_Block"></div>
+							<div id="server1_Block"></div>
 						</td>
 					</tr>
 
@@ -282,12 +295,12 @@ function parseStatus(text, block){
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td>OpenVPN Client 1<span id="vpn_client1_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
+							<td>OpenVPN Client 1<span id="client1_Block_Running" style="background: transparent; color: inherit;"></span><span id="client1_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
 						</tr>
 					</thead>
 					<tr>
 						<td style="border: none;">
-							<div id="vpn_client1_Block"></div>
+							<div id="client1_Block"></div>
 						</td>
 					</tr>
 
