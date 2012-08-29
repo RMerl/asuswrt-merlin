@@ -25,8 +25,10 @@ var $j = jQuery.noConflict();
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
+<% vpn_server_get_parameter(); %>;
 
-var vpn_clientlist_array ='<% nvram_get("vpn_server1_ccd_val"); %>';
+var vpn_clientlist_array ='<% nvram_get("vpn_server_ccd_val"); %>';
+vpn_unit = '<% nvram_get("vpn_server_unit"); %>';
 
 ciphersarray = [
 		["AES-128-CBC"],
@@ -76,23 +78,20 @@ function initial()
 	vpn_clientlist();
 
 	// Cipher list
-	free_options(document.form.vpn_server1_cipher);
-	currentcipher = "<% nvram_get("vpn_server1_cipher"); %>";
-	add_option(document.form.vpn_server1_cipher, "default","Default",(currentcipher == "Default"));
-	add_option(document.form.vpn_server1_cipher, "none","None",(currentcipher == "none"));
+	free_options(document.form.vpn_server_cipher);
+	currentcipher = "<% nvram_get("vpn_server_cipher"); %>";
+	add_option(document.form.vpn_server_cipher, "default","Default",(currentcipher == "Default"));
+	add_option(document.form.vpn_server_cipher, "none","None",(currentcipher == "none"));
 
 	for(var i = 0; i < ciphersarray.length; i++){
-		add_option(document.form.vpn_server1_cipher,
+		add_option(document.form.vpn_server_cipher,
 			ciphersarray[i][0], ciphersarray[i][0],
 			(currentcipher == ciphersarray[i][0]));
 	}
 
-	// TODO: Handle a second server instance (for now set to first one)
-	i = 0;
-
 	// Set these based on a compound field
-	setRadioValue(document.form.vpn_server_eas1, ((document.form.vpn_server_eas.value.indexOf(''+(i+1)) >= 0) ? "1" : "0"));
-	setRadioValue(document.form.vpn_server1_dns, ((document.form.vpn_server_dns.value.indexOf(''+(i+1)) >= 0) ? "1" : "0"));
+	setRadioValue(document.form.vpn_server_x_eas, ((document.form.vpn_server_eas.value.indexOf(''+(vpn_unit)) >= 0) ? "1" : "0"));
+	setRadioValue(document.form.vpn_server_x_dns, ((document.form.vpn_server_dns.value.indexOf(''+(vpn_unit)) >= 0) ? "1" : "0"));
 
 	update_visibility();
 }
@@ -127,12 +126,12 @@ function vpn_clientlist(){
 
 
 function update_visibility(){
-	auth = document.form.vpn_server1_crypt.value;
-	iface = document.form.vpn_server1_if.value;
-	hmac = document.form.vpn_server1_hmac.value;
-	dhcp = getRadioValue(document.form.vpn_server1_dhcp);
-	ccd = getRadioValue(document.form.vpn_server1_ccd);
-	dns = getRadioValue(document.form.vpn_server1_dns);
+	auth = document.form.vpn_server_crypt.value;
+	iface = document.form.vpn_server_if.value;
+	hmac = document.form.vpn_server_hmac.value;
+	dhcp = getRadioValue(document.form.vpn_server_dhcp);
+	ccd = getRadioValue(document.form.vpn_server_ccd);
+	dns = getRadioValue(document.form.vpn_server_x_dns);
 
 	showhide("server1_snnm", ((auth == "tls") && (iface == "tun")) ? 1 : 0);
 	showhide("server1_plan", ((auth == "tls") && (iface == "tun")) ? 1 : 0);
@@ -259,6 +258,8 @@ function applyRule(){
 
 	showLoading();
 
+// TODO: Restart running client matching vpn_unit
+
 	var client_num = $('vpn_clientlist_table').rows.length;
 	var item_num = $('vpn_clientlist_table').rows[0].cells.length;
 	var tmp_value = "";
@@ -276,29 +277,51 @@ function applyRule(){
 				tmp_value += ">";
 		}
 	}
-
 	if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
 		tmp_value = "";
 
-	document.form.vpn_server1_ccd_val.value = tmp_value;
+	document.form.vpn_server_ccd_val.value = tmp_value;
 
-// Set enabled server(s) (currently only 1 supported)
-	document.form.vpn_server_eas.value = "";
-	if (getRadioValue(document.form.vpn_server_eas1) == 1)
-		document.form.vpn_server_eas.value += "1";
 
-	document.form.vpn_server_dns.value
 	tmp_value = "";
-	if (getRadioValue(document.form.vpn_server1_dns) == 1)
-		tmp_value += "1";
 
-	if (tmp_value != document.form.vpn_server_dns.value)
+	for (var i=1; i < 3; i++) {
+		if (i == vpn_unit) {
+			if (getRadioValue(document.form.vpn_server_x_eas) == 1)
+				tmp_value += ""+i+",";
+		} else {
+			if (document.form.vpn_server_eas.value.indexOf(''+(i)) >= 0)
+				tmp_value += ""+i+","
+		}
+	}
+	document.form.vpn_server_eas.value = tmp_value;
+
+	tmp_value = "";
+
+	for (var i=1; i < 3; i++) {
+		if (i == vpn_unit) {
+			if (getRadioValue(document.form.vpn_server_x_dns) == 1)
+				tmp_value += ""+i+",";
+		} else {
+			if (document.form.vpn_server_dns.value.indexOf(''+(i)) >= 0)
+				tmp_value += ""+i+","
+		}
+	}
+
+	if (tmp_value != document.form.vpn_server_x_dns.value) {
 		document.form.action_script += ";restart_dnsmasq";
-
+		document.form.vpn_server_dns.value = tmp_value;
+	}
 	document.form.submit();
 
 }
 
+
+function change_vpn_unit(val){
+        FormActions("apply.cgi", "change_vpn_server_unit", "", "");
+        document.form.target = "";
+        document.form.submit();
+}
 
 </script>
 </head>
@@ -324,7 +347,7 @@ function applyRule(){
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="vpn_server_eas" value="<% nvram_get("vpn_server_eas"); %>">
 <input type="hidden" name="vpn_server_dns" value="<% nvram_get("vpn_server_dns"); %>">
-<input type="hidden" name="vpn_server1_ccd_val" value="<% nvram_get("vpn_server1_ccd_val"); %>">
+<input type="hidden" name="vpn_server_ccd_val" value="<% nvram_get("vpn_server_ccd_val"); %>">
 
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -356,21 +379,36 @@ function applyRule(){
 						</tr>
 					</thead>
 
+					<tr id="client_unit">
+						<th>Select server instance</th>
+						<td>
+			        		<select name="vpn_server_unit" class="input_option" onChange="change_vpn_unit(this.value);">
+								<option value="1" <% nvram_match("vpn_server_unit","1","selected"); %> >Server 1</option>
+								<option value="2" <% nvram_match("vpn_server_unit","2","selected"); %> >Server 2</option>
+							</select>
+			   			</td>
+					</tr>
 					<tr id="service_enable_button">
 						<th>Service state</th>
 						<td>
 							<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_service_enable"></div>
 							<script type="text/javascript">
-								service_state = (<% sysinfo("pid.vpnserver1"); %> > 0);
+								if (vpn_unit == 1)
+									service_state = (<% sysinfo("pid.vpnserver1"); %> > 0);
+								else if (vpn_unit == 2)
+									service_state = (<% sysinfo("pid.vpnserver2"); %> > 0);
+								else
+									service_state = false;
+
 								$j('#radio_service_enable').iphoneSwitch(service_state,
 									function() {
-										document.form.action_script.value = "start_vpnclient1";
+										document.form.action_script.value = "start_vpnserver"+vpn_unit;
 										parent.showLoading();
 										document.form.submit();
 										return true;
 									},
 									function() {
-										document.form.action_script.value = "stop_vpnclient1";
+										document.form.action_script.value = "stop_vpnserver"+vpn_unit;
 										parent.showLoading();
 										document.form.submit();
 										return true;
@@ -387,17 +425,17 @@ function applyRule(){
 					<tr>
 						<th>Start with WAN</th>
 						<td>
-							<input type="radio" name="vpn_server_eas1" class="input" value="1"><#checkbox_Yes#>
-							<input type="radio" name="vpn_server_eas1" class="input" value="0"><#checkbox_No#>
+							<input type="radio" name="vpn_server_x_eas" class="input" value="1"><#checkbox_Yes#>
+							<input type="radio" name="vpn_server_x_eas" class="input" value="0"><#checkbox_No#>
 						</td>
  					</tr>
 
 					<tr>
 						<th>Interface Type</th>
 			        		<td>
-			       				<select name="vpn_server1_if" class="input_option" onclick="update_visibility();">
-								<option value="tap" <% nvram_match("vpn_server1_if","tap","selected"); %> >TAP</option>
-								<option value="tun" <% nvram_match("vpn_server1_if","tun","selected"); %> >TUN</option>
+			       				<select name="vpn_server_if" class="input_option" onclick="update_visibility();">
+								<option value="tap" <% nvram_match("vpn_server_if","tap","selected"); %> >TAP</option>
+								<option value="tun" <% nvram_match("vpn_server_if","tun","selected"); %> >TUN</option>
 							</select>
 			   			</td>
 					</tr>
@@ -405,9 +443,9 @@ function applyRule(){
 					<tr>
 						<th>Protocol</th>
 			        		<td>
-			       				<select name="vpn_server1_proto" class="input_option">
-								<option value="tcp-server" <% nvram_match("vpn_server1_proto","tcp-server","selected"); %> >TCP</option>
-								<option value="udp" <% nvram_match("vpn_server1_proto","udp","selected"); %> >UDP</option>
+			       				<select name="vpn_server_proto" class="input_option">
+								<option value="tcp-server" <% nvram_match("vpn_server_proto","tcp-server","selected"); %> >TCP</option>
+								<option value="udp" <% nvram_match("vpn_server_proto","udp","selected"); %> >UDP</option>
 							</select>
 			   			</td>
 					</tr>
@@ -415,7 +453,7 @@ function applyRule(){
 					<tr>
 						<th>Port<br><i>Default: 1194</i></th>
 						<td>
-							<input type="text" maxlength="5" class="input_6_table" name="vpn_server1_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("vpn_server1_port"); %>" >
+							<input type="text" maxlength="5" class="input_6_table" name="vpn_server_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("vpn_server_port"); %>" >
 						</td>
 					</tr>
 
@@ -423,10 +461,10 @@ function applyRule(){
 						<th>Firewall</th>
 
 			        	<td>
-			        		<select name="vpn_server1_firewall" class="input_option">
-								<option value="auto" <% nvram_match("vpn_server1_firewall","auto","selected"); %> >Automatic</option>
-								<option value="external" <% nvram_match("vpn_server1_firewall","external","selected"); %> >External only</option>
-								<option value="custom" <% nvram_match("vpn_server1_firewall","custom","selected"); %> >Custom</option>
+			        		<select name="vpn_server_firewall" class="input_option">
+								<option value="auto" <% nvram_match("vpn_server_firewall","auto","selected"); %> >Automatic</option>
+								<option value="external" <% nvram_match("vpn_server_firewall","external","selected"); %> >External only</option>
+								<option value="custom" <% nvram_match("vpn_server_firewall","custom","selected"); %> >Custom</option>
 							</select>
 			   			</td>
 					</tr>
@@ -434,10 +472,10 @@ function applyRule(){
 					<tr>
 						<th>Authorization Mode</th>
 			        	<td>
-			        		<select name="vpn_server1_crypt" class="input_option" onclick="update_visibility();">
-								<option value="tls" <% nvram_match("vpn_server1_crypt","tls","selected"); %> >TLS</option>
-								<option value="secret" <% nvram_match("vpn_server1_crypt","secret","selected"); %> >Static Key</option>
-								<option value="custom" <% nvram_match("vpn_server1_crypt","custom","selected"); %> >Custom</option>
+			        		<select name="vpn_server_crypt" class="input_option" onclick="update_visibility();">
+								<option value="tls" <% nvram_match("vpn_server_crypt","tls","selected"); %> >TLS</option>
+								<option value="secret" <% nvram_match("vpn_server_crypt","secret","selected"); %> >Static Key</option>
+								<option value="custom" <% nvram_match("vpn_server_crypt","custom","selected"); %> >Custom</option>
 							</select>
 							<span id="server1_custom_crypto_text">Must be manually configured.</span>
 			   			</td>
@@ -446,43 +484,43 @@ function applyRule(){
 					<tr>
 						<th>Extra HMAC authorization<br><i>(tls-auth)</i></th>
 			        		<td>
-			        			<select name="vpn_server1_hmac" class="input_option">
-								<option value="-1" <% nvram_match("vpn_server1_hmac","-1","selected"); %> >Disabled</option>
-								<option value="2" <% nvram_match("vpn_server1_hmac","2","selected"); %> >Bi-directional</option>
-								<option value="0" <% nvram_match("vpn_server1_hmac","0","selected"); %> >Incoming (0)</option>
-								<option value="1" <% nvram_match("vpn_server1_hmac","1","selected"); %> >Incoming (1)</option>
+			        			<select name="vpn_server_hmac" class="input_option">
+								<option value="-1" <% nvram_match("vpn_server_hmac","-1","selected"); %> >Disabled</option>
+								<option value="2" <% nvram_match("vpn_server_hmac","2","selected"); %> >Bi-directional</option>
+								<option value="0" <% nvram_match("vpn_server_hmac","0","selected"); %> >Incoming (0)</option>
+								<option value="1" <% nvram_match("vpn_server_hmac","1","selected"); %> >Incoming (1)</option>
 							</select>
 			   			</td>
 					</tr>
 					<tr id="server1_snnm">
 						<th>VPN Subnet / Netmask</th>
 						<td>
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_server1_sn" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server1_sn"); %>">
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_server1_nm" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server1_nm"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_server_sn" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server_sn"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_server_nm" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server_nm"); %>">
 						</td>
 					</tr>
 
 					<tr id="server1_dhcp">
 						<th>Allocate from DHCP</th>
 						<td>
-							<input type="radio" name="vpn_server1_dhcp" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server1_dhcp", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="vpn_server1_dhcp" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server11_dhcp", "0", "checked"); %>><#checkbox_No#>
+							<input type="radio" name="vpn_server_dhcp" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_dhcp", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="vpn_server_dhcp" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server1_dhcp", "0", "checked"); %>><#checkbox_No#>
 						</td>
  					</tr>
 
 					<tr id="server1_range">
 						<th>Client Address Pool</th>
 						<td>
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_server1_r1" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server1_r1"); %>">
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_server1_r2" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server1_r2"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_server_r1" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server_r1"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_server_r2" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server_r2"); %>">
 						</td>
 					</tr>
 
 					<tr id="server1_local">
 						<th>Local/remote endpoint addresses</th>
 						<td>
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_server1_local" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server1_local"); %>">
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_server1_remote" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server1_remote"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_server_local" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server_local"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_server_remote" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server_remote"); %>">
 						</td>
 					</tr>
 				</table>
@@ -497,31 +535,31 @@ function applyRule(){
 					<tr>
 						<th>Poll Interval<br><i>(in minutes, 0 to disable)</th>
 						<td>
-							<input type="text" maxlength="4" class="input_6_table" name="vpn_server1_poll" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 1440)" value="<% nvram_get("vpn_server1_poll"); %>">
+							<input type="text" maxlength="4" class="input_6_table" name="vpn_server_poll" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 1440)" value="<% nvram_get("vpn_server_poll"); %>">
 						</td>
 					</tr>
 
 					<tr id="server1_plan">
 						<th>Push LAN to clients</th>
 						<td>
-							<input type="radio" name="vpn_server1_plan" class="input" value="1" <% nvram_match_x("", "vpn_server1_plan", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="vpn_server1_plan" class="input" value="0" <% nvram_match_x("", "vpn_server1_plan", "0", "checked"); %>><#checkbox_No#>
+							<input type="radio" name="vpn_server_plan" class="input" value="1" <% nvram_match_x("", "vpn_server_plan", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="vpn_server_plan" class="input" value="0" <% nvram_match_x("", "vpn_server_plan", "0", "checked"); %>><#checkbox_No#>
 						</td>
  					</tr>
 
 					<tr>
 						<th>Direct clients to redirect Internet traffic</th>
 						<td>
-							<input type="radio" name="vpn_server1_rgw" class="input" value="1" <% nvram_match_x("", "vpn_server1_rgw", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="vpn_server1_rgw" class="input" value="0" <% nvram_match_x("", "vpn_server1_rgw", "0", "checked"); %>><#checkbox_No#>
+							<input type="radio" name="vpn_server_rgw" class="input" value="1" <% nvram_match_x("", "vpn_server_rgw", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="vpn_server_rgw" class="input" value="0" <% nvram_match_x("", "vpn_server_rgw", "0", "checked"); %>><#checkbox_No#>
 						</td>
  					</tr>
 
 					<tr>
 						<th>Respond to DNS</th>
 						<td>
-							<input type="radio" name="vpn_server1_dns" class="input" value="1" onclick="update_visibility();"><#checkbox_Yes#>
-							<input type="radio" name="vpn_server1_dns" class="input" value="0" onclick="update_visibility();"><#checkbox_No#>
+							<input type="radio" name="vpn_server_x_dns" class="input" value="1" onclick="update_visibility();"><#checkbox_Yes#>
+							<input type="radio" name="vpn_server_x_dns" class="input" value="0" onclick="update_visibility();"><#checkbox_No#>
 						</td>
  					</tr>
 
@@ -529,16 +567,16 @@ function applyRule(){
 					<tr id="server1_pdns">
 						<th>Advertise DNS to clients</th>
 						<td>
-							<input type="radio" name="vpn_server1_pdns" class="input" value="1" <% nvram_match_x("", "vpn_server1_pdns", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="vpn_server1_pdns" class="input" value="0" <% nvram_match_x("", "vpn_server1_pdns", "0", "checked"); %>><#checkbox_No#>
+							<input type="radio" name="vpn_server_pdns" class="input" value="1" <% nvram_match_x("", "vpn_server_pdns", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="vpn_server_pdns" class="input" value="0" <% nvram_match_x("", "vpn_server_pdns", "0", "checked"); %>><#checkbox_No#>
 						</td>
  					</tr>
 
 					<tr>
 						<th>Encryption cipher</th>
 			        	<td>
-			        		<select name="vpn_server1_cipher" class="input_option">
-								<option value="<% nvram_get("vpn_server1_cipher"); %>" selected><% nvram_get("vpn_server1_cipher"); %></option>
+			        		<select name="vpn_server_cipher" class="input_option">
+								<option value="<% nvram_get("vpn_server_cipher"); %>" selected><% nvram_get("vpn_server_cipher"); %></option>
 							</select>
 			   			</td>
 					</tr>
@@ -546,11 +584,11 @@ function applyRule(){
 					<tr>
 						<th>Compression</th>
 			        	<td>
-			        		<select name="vpn_server1_comp" class="input_option">
-								<option value="-1" <% nvram_match("vpn_server1_comp","-1","selected"); %> >Disabled</option>
-								<option value="no" <% nvram_match("vpn_server1_comp","no","selected"); %> >None</option>
-								<option value="yes" <% nvram_match("vpn_server1_comp","yes","selected"); %> >Enabled</option>
-								<option value="adaptive" <% nvram_match("vpn_server1_comp","adaptive","selected"); %> >Adaptive</option>
+			        		<select name="vpn_server_comp" class="input_option">
+								<option value="-1" <% nvram_match("vpn_server_comp","-1","selected"); %> >Disabled</option>
+								<option value="no" <% nvram_match("vpn_server_comp","no","selected"); %> >None</option>
+								<option value="yes" <% nvram_match("vpn_server_comp","yes","selected"); %> >Enabled</option>
+								<option value="adaptive" <% nvram_match("vpn_server_comp","adaptive","selected"); %> >Adaptive</option>
 							</select>
 			   			</td>
 					</tr>
@@ -558,31 +596,31 @@ function applyRule(){
 					<tr>
 						<th>TLS Renegotiation Time<br><i>(in seconds, -1 for default)</th>
 						<td>
-							<input type="text" maxlength="5" class="input_6_table" name="vpn_server1_reneg" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, -1, 2147483647)" value="<% nvram_get("vpn_server1_reneg"); %>">
+							<input type="text" maxlength="5" class="input_6_table" name="vpn_server_reneg" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, -1, 2147483647)" value="<% nvram_get("vpn_server_reneg"); %>">
 						</td>
 					</tr>
 
 					<tr id="server1_ccd">
 						<th>Manage Client-Specific Options</th>
 						<td>
-							<input type="radio" name="vpn_server1_ccd" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server1_ccd", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="vpn_server1_ccd" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server1_ccd", "0", "checked"); %>><#checkbox_No#>
+							<input type="radio" name="vpn_server_ccd" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_ccd", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="vpn_server_ccd" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_ccd", "0", "checked"); %>><#checkbox_No#>
 						</td>
  					</tr>
 
 					<tr id="server1_c2c">
 						<th>Allow Client &lt;-&gt; Client</th>
 						<td>
-							<input type="radio" name="vpn_server1_c2c" class="input" value="1" <% nvram_match_x("", "vpn_server1_c2c", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="vpn_server1_c2c" class="input" value="0" <% nvram_match_x("", "vpn_server1_c2c", "0", "checked"); %>><#checkbox_No#>
+							<input type="radio" name="vpn_server_c2c" class="input" value="1" <% nvram_match_x("", "vpn_server_c2c", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="vpn_server_c2c" class="input" value="0" <% nvram_match_x("", "vpn_server_c2c", "0", "checked"); %>><#checkbox_No#>
 						</td>
 					</tr>
 
 					<tr id="server1_ccd_excl">
 						<th>Allow only specified clients</th>
 						<td>
-							<input type="radio" name="vpn_server1_ccd_excl" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server1_ccd_excl", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="vpn_server1_ccd_excl" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server1_ccd_excl", "0", "checked"); %>><#checkbox_No#>
+							<input type="radio" name="vpn_server_ccd_excl" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_ccd_excl", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="vpn_server_ccd_excl" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_ccd_excl", "0", "checked"); %>><#checkbox_No#>
 						</td>
  					</tr>
 
@@ -637,7 +675,7 @@ function applyRule(){
 						</thead>
 						<tr>
 						<td colspan="2">
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_server1_custom" cols="55" maxlength="1024"><% nvram_get("vpn_server1_custom"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_server_custom" cols="55" maxlength="1024"><% nvram_get("vpn_server_custom"); %></textarea>
 						</td>
 					</tr>
 

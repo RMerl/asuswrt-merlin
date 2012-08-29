@@ -22,7 +22,9 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 server1pid = '<% sysinfo("pid.vpnserver1"); %>';
+server2pid = '<% sysinfo("pid.vpnserver2"); %>';
 client1pid = '<% sysinfo("pid.vpnclient1"); %>';
+client2pid = '<% sysinfo("pid.vpnclient2"); %>';
 
 
 function initial(){
@@ -38,8 +40,21 @@ function initial(){
 	else
 		$("client1_Block_Running").innerHTML = " - Stopped";
 
+	if (server2pid > 0)
+		$("server2_Block_Running").innerHTML = " - Running";
+	else
+		$("server2_Block_Running").innerHTML = " - Stopped";
+
+	if (client2pid > 0)
+		$("client2_Block_Running").innerHTML = " - Running";
+	else
+		$("client2_Block_Running").innerHTML = " - Stopped";
+
 	parseStatus(document.form.status_server1.value, "server1_Block");
 	parseStatus(document.form.status_client1.value, "client1_Block");
+	parseStatus(document.form.status_server2.value, "server2_Block");
+	parseStatus(document.form.status_client2.value, "client2_Block");
+
 }
 
 
@@ -184,8 +199,8 @@ function parseStatus(text, block){
 			}
 			code += '</tr>';
 		}
+		code += '</table><br>';
 	}
-	code += '</table><br>';
 
 	$(block).innerHTML += code;
 
@@ -252,7 +267,9 @@ function parseStatus(text, block){
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="status_server1" value="<% sysinfo("vpnstatus.server.1"); %>">
+<input type="hidden" name="status_server2" value="<% sysinfo("vpnstatus.server.2"); %>">
 <input type="hidden" name="status_client1" value="<% sysinfo("vpnstatus.client.1"); %>">
+<input type="hidden" name="status_client2" value="<% sysinfo("vpnstatus.client.2"); %>">
 
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -295,12 +312,44 @@ function parseStatus(text, block){
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
+							<td>OpenVPN Server 2<span id="server2_Block_Running" style="background: transparent; color: inherit;"></span><span id="server2_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
+						</tr>
+					</thead>
+					<tr>
+						<td style="border: none;">
+							<div id="server2_Block"></div>
+						</td>
+					</tr>
+
+				</table>
+
+				<br>
+
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+					<thead>
+						<tr>
 							<td>OpenVPN Client 1<span id="client1_Block_Running" style="background: transparent; color: inherit;"></span><span id="client1_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
 						</tr>
 					</thead>
 					<tr>
 						<td style="border: none;">
 							<div id="client1_Block"></div>
+						</td>
+					</tr>
+
+				</table>
+
+				<br>
+
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+					<thead>
+						<tr>
+							<td>OpenVPN Client 2<span id="client2_Block_Running" style="background: transparent; color: inherit;"></span><span id="client2_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
+						</tr>
+					</thead>
+					<tr>
+						<td style="border: none;">
+							<div id="client2_Block"></div>
 						</td>
 					</tr>
 
