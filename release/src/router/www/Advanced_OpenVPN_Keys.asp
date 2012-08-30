@@ -21,23 +21,35 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
+server1pid = '<% sysinfo("pid.vpnserver1"); %>';
+server2pid = '<% sysinfo("pid.vpnserver2"); %>';
+client1pid = '<% sysinfo("pid.vpnclient1"); %>';
+client2pid = '<% sysinfo("pid.vpnclient2"); %>';
 
 function initial()
 {
 	show_menu();
-	change_page(document.form.current_page.value);
+	change_page(1);
 }
 
 function applyRule(){
 
 	showLoading();
+
+	if (client1pid > 0) document.form.action_script.value += "restart_vpnclient1;";
+	if (client2pid > 0) document.form.action_script.value += "restart_vpnclient2;";
+	if (server1pid > 0) document.form.action_script.value += "restart_vpnserver1;";
+	if (server2pid > 0) document.form.action_script.value += "restart_vpnserver2;";
+
+	if (document.form.action_script.value != "") document.form.action_wait.value = "10";
+
 	document.form.submit();
 }
 
 function change_page(page){
 
 	for (i=1; i<5; i++) {
-		showhide("page"+i, (page == i ? 1 : 0)
+		showhide("page"+i, (page == i ? 1 : 0));
 	}
 }
 
@@ -52,8 +64,8 @@ function change_page(page){
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
-<input type="hidden" name="current_page" value="Advanced_OpenVPNServer_Keys.asp">
-<input type="hidden" name="next_page" value="Advanced_OpenVPNServer_Keys.asp">
+<input type="hidden" name="current_page" value="Advanced_OpenVPN_Keys.asp">
+<input type="hidden" name="next_page" value="Advanced_OpenVPN_Keys.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
@@ -89,13 +101,13 @@ function change_page(page){
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 
 					<tr id="server_unit">
-						<th>Select client instance to edit</th>
+						<th>Select OpenVPN instance to edit:</th>
 						<td>
-			        		<select name="current_page" class="input_option" onChange="change_page(this.value);">
-								<option value="1">Client 1</option>
-								<option value="2">Client 2</option>
-								<option value="3">Server 1</option>
-								<option value="4">Server 2</option>
+			        		<select name="displayed_page" class="input_option" onChange="change_page(this.value);">
+								<option value="1">Server 1</option>
+								<option value="2">Server 2</option>
+								<option value="3">Client 1</option>
+								<option value="4">Client 2</option>
 							</select>
 			   			</td>
 					</tr>
@@ -104,74 +116,6 @@ function change_page(page){
 				<br>
 
 				<table width="100%" id="page1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-					<thead>
-						<tr>
-							<td colspan="2">Keys and certificates</td>
-						</tr>
-					</thead>
-
-					<tr>
-						<th>Static Key</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_static" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client1_static"); %></textarea>
-						</td>
-					</tr>
-					<tr>
-						<th>Certificate Authority</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_ca" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client1_ca"); %></textarea>
-						</td>
-					</tr>
-					<tr>
-						<th>Client Certificate</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_crt" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client1_crt"); %></textarea>
-						</td>
-					</tr>
-					<tr>
-						<th>Client Key</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_key" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client1_key"); %></textarea>
-						</td>
-					</tr>
-				</table>
-
-
-				<table width="100%" id="page2" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-					<thead>
-						<tr>
-							<td colspan="2">Keys and certificates</td>
-						</tr>
-					</thead>
-
-					<tr>
-						<th>Static Key</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_static" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client2_static"); %></textarea>
-						</td>
-					</tr>
-					<tr>
-						<th>Certificate Authority</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_ca" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client2_ca"); %></textarea>
-						</td>
-					</tr>
-					<tr>
-						<th>Client Certificate</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_crt" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client2_crt"); %></textarea>
-						</td>
-					</tr>
-					<tr>
-						<th>Client Key</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_key" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client2_key"); %></textarea>
-						</td>
-					</tr>
-
-				</table>
-
-				<table width="100%" id="page3" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
 							<td colspan="2">Keys and certificates</td>
@@ -209,7 +153,7 @@ function change_page(page){
 					</tr>
 				</table>
 
-				<table width="100%" id="page4" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+				<table width="100%" id="page2" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
 							<td colspan="2">Keys and certificates</td>
@@ -245,6 +189,74 @@ function change_page(page){
 							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server2_dh" cols="65" maxlength="4096"><% nvram_get("vpn_crt_server2_dh"); %></textarea>
 						</td>
 					</tr>
+				</table>
+
+				<table width="100%" id="page3" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+					<thead>
+						<tr>
+							<td colspan="2">Keys and certificates</td>
+						</tr>
+					</thead>
+
+					<tr>
+						<th>Static Key</th>
+						<td>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_static" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client1_static"); %></textarea>
+						</td>
+					</tr>
+					<tr>
+						<th>Certificate Authority</th>
+						<td>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_ca" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client1_ca"); %></textarea>
+						</td>
+					</tr>
+					<tr>
+						<th>Client Certificate</th>
+						<td>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_crt" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client1_crt"); %></textarea>
+						</td>
+					</tr>
+					<tr>
+						<th>Client Key</th>
+						<td>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_key" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client1_key"); %></textarea>
+						</td>
+					</tr>
+				</table>
+
+
+				<table width="100%" id="page4" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+					<thead>
+						<tr>
+							<td colspan="2">Keys and certificates</td>
+						</tr>
+					</thead>
+
+					<tr>
+						<th>Static Key</th>
+						<td>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_static" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client2_static"); %></textarea>
+						</td>
+					</tr>
+					<tr>
+						<th>Certificate Authority</th>
+						<td>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_ca" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client2_ca"); %></textarea>
+						</td>
+					</tr>
+					<tr>
+						<th>Client Certificate</th>
+						<td>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_crt" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client2_crt"); %></textarea>
+						</td>
+					</tr>
+					<tr>
+						<th>Client Key</th>
+						<td>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_key" cols="65" maxlength="4096"><% nvram_get("vpn_crt_client2_key"); %></textarea>
+						</td>
+					</tr>
+
 				</table>
 
 				<div class="apply_gen">
