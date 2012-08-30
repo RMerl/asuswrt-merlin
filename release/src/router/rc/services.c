@@ -226,7 +226,10 @@ void start_dnsmasq()
 	if ((p = strrchr(lan, '.')) != NULL) *(p + 1) = 0;
 
 	fprintf(f, "pid-file=/var/run/dnsmasq.pid\n"
-		"interface=%s\n",lan_ifname);
+	"interface=%s\n",lan_ifname);
+
+	if (nvram_match("pptpd_enable","1"))
+		fprintf(f,"listen-address=%s,127.0.0.1\n",router_ip);
 
 	if (((nv = nvram_get("wan_domain")) != NULL) || ((nv = nvram_get("wan_get_domain")) != NULL)) {
 		if (*nv) fprintf(f, "domain=%s\n", nv);
