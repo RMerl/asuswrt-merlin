@@ -18,6 +18,7 @@ tests/sizes
 lzotest/lzotest
 minilzo/testmini
 .deps/
+examples/.deps/
 src/Makefile
 config.h
 libtool
