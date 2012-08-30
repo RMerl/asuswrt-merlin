@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -164,11 +164,15 @@ struct management_callback
 		       const char *reason,
 		       const char *client_reason,
 		       struct buffer_list *cc_config); /* ownership transferred */
+  char *(*get_peer_info) (void *arg, const unsigned long cid);
 #endif
 #ifdef MANAGEMENT_PF
   bool (*client_pf) (void *arg,
 		     const unsigned long cid,
 		     struct buffer_list *pf_config);   /* ownership transferred */
+#endif
+#if HTTP_PROXY_FALLBACK
+  bool (*http_proxy_fallback_cmd) (void *arg, const char *server, const char *port, const char *flags);
 #endif
 };
 
@@ -268,6 +272,7 @@ struct man_connection {
   unsigned long in_extra_cid;
   unsigned int in_extra_kid;
   struct buffer_list *in_extra;
+  int env_filter_level;
 #endif
   struct event_set *es;
 
@@ -435,7 +440,7 @@ void management_echo (struct management *man, const char *string, const bool pul
  * OpenVPN calls here to indicate a password failure
  */
 
-void management_auth_failure (struct management *man, const char *type);
+void management_auth_failure (struct management *man, const char *type, const char *reason);
 
 /*
  * These functions drive the bytecount in/out counters.
@@ -500,6 +505,12 @@ management_bytes_server (struct management *man,
 }
 
 #endif /* MANAGEMENT_DEF_AUTH */
+
+#if HTTP_PROXY_FALLBACK
+
+void management_http_proxy_fallback_notify (struct management *man, const char *type, const char *remote_ip_hint);
+
+#endif /* HTTP_PROXY_FALLBACK */
 
 #endif
 #endif

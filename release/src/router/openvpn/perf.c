@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -32,10 +32,6 @@
 #include "otime.h"
 
 #include "memdbg.h"
-
-#ifdef USE_PTHREAD
-#error ENABLE_PERFORMANCE_METRICS is incompatible with USE_PTHREAD
-#endif
 
 static const char *metric_names[] = {
   "PERF_BIO_READ_PLAINTEXT",
@@ -291,5 +287,7 @@ perf_print_state (int lev)
 }
 
 #else
+#ifdef _MSC_VER  /* Dummy function needed to avoid empty file compiler warning in Microsoft VC */
 static void dummy(void) {}
+#endif
 #endif

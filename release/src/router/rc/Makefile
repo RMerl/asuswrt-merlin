@@ -84,6 +84,10 @@ ifeq ($(RTCONFIG_ACCEL_PPTPD),y)
 OBJS += vpn.o
 endif
 
+ifeq ($(RTCONFIG_OPENVPN),y)
+OBJS += openvpn.o
+endif
+
 ifeq ($(RTCONFIG_OLD_PARENTALCTRL),y)
 OBJS += parental_ctrl.o
 endif
@@ -191,6 +195,13 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ATE
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_telnetd 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_pptpd
+
+ifeq ($(RTCONFIG_OPENVPN),y)
+	@mkdir -p $(INSTALLDIR)/rom/openvpn
+	@cp openvpn-updown.sh $(INSTALLDIR)/rom/openvpn/updown.sh
+	@chmod 0755 $(INSTALLDIR)/rom/openvpn/updown.sh
+endif
+
 ifeq ($(RTCONFIG_PARENTALCTRL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc pc
 endif

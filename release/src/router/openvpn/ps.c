@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -232,18 +232,6 @@ port_share_sendmsg (const socket_descriptor_t sd,
       close_socket_if_defined (sd_null[1]);
       free (mesg.msg_control);
     }
-}
-
-static int
-pc_list_len (struct proxy_connection *pc)
-{
-  int count = 0;
-  while (pc)
-    {
-      ++count;
-      pc = pc->next;
-    }
-  return count;
 }
 
 static void
@@ -785,6 +773,11 @@ port_share_open (const char *host, const int port)
 
       /* Let msg know that we forked */
       msg_forked ();
+
+#ifdef ENABLE_MANAGEMENT
+      /* Don't interact with management interface */
+      management = NULL;
+#endif
 
       /* close all parent fds except our socket back to parent */
       close_fds_except (fd[1]);

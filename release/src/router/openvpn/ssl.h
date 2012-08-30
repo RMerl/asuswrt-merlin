@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -42,7 +42,6 @@
 #include "reliable.h"
 #include "socket.h"
 #include "mtu.h"
-#include "thread.h"
 #include "options.h"
 #include "plugin.h"
 
@@ -278,8 +277,8 @@
  * Buffer sizes (also see mtu.h).
  */
 
-/* Maximum length of common name */
-#define TLS_CN_LEN 64
+/* Maximum length of the username in cert */
+#define TLS_USERNAME_LEN 64
 
 /* Legal characters in an X509 or common name */
 #define X509_NAME_CHAR_CLASS   (CC_ALNUM|CC_UNDERBAR|CC_DASH|CC_DOT|CC_AT|CC_COLON|CC_SLASH|CC_EQUAL)
@@ -287,6 +286,9 @@
 
 /* Maximum length of OCC options string passed as part of auth handshake */
 #define TLS_OPTIONS_LEN 512
+
+/* Default field in X509 to be username */
+#define X509_USERNAME_FIELD_DEFAULT "CN"
 
 /*
  * Range of key exchange methods
@@ -376,8 +378,10 @@ struct key_state
   struct reliable *rec_reliable;  /* order incoming ciphertext packets before we pass to TLS */
   struct reliable_ack *rec_ack;	  /* buffers all packet IDs we want to ACK back to sender */
 
-  int n_bytes;			 /* how many bytes sent/recvd since last key exchange */
-  int n_packets;		 /* how many packets sent/recvd since last key exchange */
+  struct buffer_list *paybuf;
+
+  counter_type n_bytes;		 /* how many bytes sent/recvd since last key exchange */
+  counter_type n_packets;	 /* how many packets sent/recvd since last key exchange */
 
   /*
    * If bad username/password, TLS connection will come up but 'authenticated' will be false.
@@ -432,6 +436,9 @@ struct tls_options
 #ifdef ENABLE_OCC
   bool disable_occ;
 #endif
+#ifdef ENABLE_PUSH_PEER_INFO
+  bool push_peer_info;
+#endif
   int transition_window;
   int handshake_window;
   interval_t packet_timeout;
@@ -441,6 +448,7 @@ struct tls_options
 
   /* cert verification parms */
   const char *verify_command;
+  const char *verify_export_cert;
   const char *verify_x509name;
   const char *crl_file;
   int ns_cert_type;
@@ -570,9 +578,6 @@ struct tls_session
  */
 struct tls_multi
 {
-  /* used to coordinate access between main thread and TLS thread */
-  /*MUTEX_PTR_DEFINE (mutex);*/
-
   /* const options and config info */
   struct tls_options opt;
 
@@ -617,6 +622,12 @@ struct tls_multi
    * An error message to send to client on AUTH_FAILED
    */
   char *client_reason;
+
+  /*
+   * A multi-line string of general-purpose info received from peer
+   * over control channel.
+   */
+  char *peer_info;
 
   /* Time of last call to tls_authentication_status */
   time_t tas_last;
@@ -694,6 +705,17 @@ void auth_user_pass_setup (const char *auth_file);
 void ssl_set_auth_nocache (void);
 void ssl_purge_auth (void);
 
+
+#ifdef ENABLE_CLIENT_CR
+/*
+ * ssl_get_auth_challenge will parse the server-pushed auth-failed
+ * reason string and return a dynamically allocated
+ * auth_challenge_info struct.
+ */
+void ssl_purge_auth_challenge (void);
+void ssl_put_auth_challenge (const char *cr_str);
+#endif
+
 void tls_set_verify_command (const char *cmd);
 void tls_set_crl_verify (const char *crl);
 void tls_set_verify_x509name (const char *x509name);
@@ -721,6 +743,12 @@ void tls_deauthenticate (struct tls_multi *multi);
 
 #ifdef MANAGEMENT_DEF_AUTH
 bool tls_authenticate_key (struct tls_multi *multi, const unsigned int mda_key_id, const bool auth, const char *client_reason);
+
+static inline char *
+tls_get_peer_info(const struct tls_multi *multi)
+{
+  return multi->peer_info;
+}
 #endif
 
 /*

@@ -4104,6 +4104,10 @@ int start_firewall(int wanunit, int lanunit)
 	}
 #endif
 
+#ifdef RTCONFIG_OPENVPN
+	run_vpn_firewall_scripts();
+#endif
+
 	run_custom_script("firewall-start");
 
 	return 0;

@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -28,7 +28,6 @@
 #include "buffer.h"
 #include "error.h"
 #include "mtu.h"
-#include "thread.h"
 
 #include "memdbg.h"
 
@@ -43,7 +42,7 @@ array_mult_safe (const size_t m1, const size_t m2, const size_t extra)
 }
 
 void
-buf_size_error (size_t size)
+buf_size_error (const size_t size)
 {
   msg (M_FATAL, "fatal buffer size error, size=%lu", (unsigned long)size);
 }
@@ -218,6 +217,9 @@ buf_printf (struct buffer *buf, const char *format, ...)
 /*
  * This is necessary due to certain buggy implementations of snprintf,
  * that don't guarantee null termination for size > 0.
+ *
+ * This function is duplicated into service-win32/openvpnserv.c
+ * Any modifications here should be done to the other place as well.
  */
 
 int openvpn_snprintf(char *str, size_t size, const char *format, ...)
@@ -299,10 +301,8 @@ gc_malloc (size_t size, bool clear, struct gc_arena *a)
 #endif
       check_malloc_return (e);
       ret = (char *) e + sizeof (struct gc_entry);
-      /*mutex_lock_static (L_GC_MALLOC);*/
       e->next = a->list;
       a->list = e;
-      /*mutex_unlock_static (L_GC_MALLOC);*/
     }
   else
     {
@@ -324,10 +324,8 @@ void
 x_gc_free (struct gc_arena *a)
 {
   struct gc_entry *e;
-  /*mutex_lock_static (L_GC_MALLOC);*/
   e = a->list;
   a->list = NULL;
-  /*mutex_unlock_static (L_GC_MALLOC);*/
   
   while (e != NULL)
     {
@@ -896,8 +894,11 @@ buffer_list_new (const int max_size)
 void
 buffer_list_free (struct buffer_list *ol)
 {
-  buffer_list_reset (ol);
-  free (ol);
+  if (ol)
+    {
+      buffer_list_reset (ol);
+      free (ol);
+    }
 }
 
 bool
@@ -924,9 +925,21 @@ buffer_list_reset (struct buffer_list *ol)
 void
 buffer_list_push (struct buffer_list *ol, const unsigned char *str)
 {
-  if (!ol->max_size || ol->size < ol->max_size)
+  if (str)
     {
-      struct buffer_entry *e;
+      const size_t len = strlen ((const char *)str);
+      struct buffer_entry *e = buffer_list_push_data (ol, str, len+1);
+      if (e)
+	e->buf.len = len; /* Don't count trailing '\0' as part of length */
+    }
+}
+
+struct buffer_entry *
+buffer_list_push_data (struct buffer_list *ol, const uint8_t *data, size_t size)
+{
+  struct buffer_entry *e = NULL;
+  if (data && (!ol->max_size || ol->size < ol->max_size))
+    {
       ALLOC_OBJ_CLEAR (e, struct buffer_entry);
 
       ++ol->size;
@@ -940,24 +953,66 @@ buffer_list_push (struct buffer_list *ol, const unsigned char *str)
 	  ASSERT (!ol->head);
 	  ol->head = e;
 	}
-      e->buf = string_alloc_buf ((const char *) str, NULL);
+      e->buf = alloc_buf (size);
+      memcpy (e->buf.data, data, size);
+      e->buf.len = (int)size;
       ol->tail = e;
     }
+  return e;
 }
 
-const struct buffer *
+struct buffer *
 buffer_list_peek (struct buffer_list *ol)
 {
-  if (ol->head)
+  if (ol && ol->head)
     return &ol->head->buf;
   else
     return NULL;
 }
 
-static void
+void
+buffer_list_aggregate (struct buffer_list *bl, const size_t max)
+{
+  if (bl->head)
+    {
+      struct buffer_entry *more = bl->head;
+      size_t size = 0;
+      int count = 0;
+      for (count = 0; more && size <= max; ++count)
+	{
+	  size += BLEN(&more->buf);
+	  more = more->next;
+	}
+
+      if (count >= 2)
+	{
+	  int i;
+	  struct buffer_entry *e = bl->head, *f;
+
+	  ALLOC_OBJ_CLEAR (f, struct buffer_entry);
+	  f->buf.data = malloc (size);
+	  check_malloc_return (f->buf.data);
+	  f->buf.capacity = size;
+	  for (i = 0; e && i < count; ++i)
+	    {
+	      struct buffer_entry *next = e->next;
+	      buf_copy (&f->buf, &e->buf);
+	      free_buf (&e->buf);
+	      free (e);
+	      e = next;
+	    }
+	  bl->head = f;
+	  f->next = more;
+	  if (!more)
+	    bl->tail = f;
+	}
+    }
+}
+
+void
 buffer_list_pop (struct buffer_list *ol)
 {
-  if (ol->head)
+  if (ol && ol->head)
     {
       struct buffer_entry *e = ol->head->next;
       free_buf (&ol->head->buf);

@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -109,7 +109,7 @@ learn_address_script (const struct multi_context *m,
 		   mroute_addr_print (addr, &gc));
       if (mi)
 	argv_printf_cat (&argv, "%s", tls_common_name (mi->context.c2.tls_multi, false));
-      if (!openvpn_execve_check (&argv, es, S_SCRIPT, "WARNING: learn-address command failed"))
+      if (!openvpn_run_script (&argv, es, 0, "--learn-address"))
 	ret = false;
       argv_reset (&argv);
     }
@@ -146,7 +146,7 @@ multi_reap_range (const struct multi_context *m,
     }
 
   dmsg (D_MULTI_DEBUG, "MULTI: REAP range %d -> %d", start_bucket, end_bucket);
-  hash_iterator_init_range (m->vhash, &hi, true, start_bucket, end_bucket);
+  hash_iterator_init_range (m->vhash, &hi, start_bucket, end_bucket);
   while ((he = hash_iterator_next (&hi)) != NULL)
     {
       struct multi_route *r = (struct multi_route *) he->value;
@@ -480,7 +480,7 @@ multi_client_disconnect_script (struct multi_context *m,
 	  struct argv argv = argv_new ();
 	  setenv_str (mi->context.c2.es, "script_type", "client-disconnect");
 	  argv_printf (&argv, "%sc", mi->context.options.client_disconnect_script);
-	  openvpn_execve_check (&argv, mi->context.c2.es, S_SCRIPT, "client-disconnect command failed");
+	  openvpn_run_script (&argv, mi->context.c2.es, 0, "--client-disconnect");
 	  argv_reset (&argv);
 	}
 #ifdef MANAGEMENT_DEF_AUTH
@@ -587,7 +587,7 @@ multi_uninit (struct multi_context *m)
 	  struct hash_iterator hi;
 	  struct hash_element *he;
 
-	  hash_iterator_init (m->iter, &hi, true);
+	  hash_iterator_init (m->iter, &hi);
 	  while ((he = hash_iterator_next (&hi)))
 	    {
 	      struct multi_instance *mi = (struct multi_instance *) he->value;
@@ -633,7 +633,6 @@ multi_create_instance (struct multi_context *m, const struct mroute_addr *real)
 
   ALLOC_OBJ_CLEAR (mi, struct multi_instance);
 
-  mutex_init (&mi->mutex);
   mi->gc = gc_new ();
   multi_instance_inc_refcount (mi);
   mi->vaddr_handle = -1;
@@ -721,10 +720,10 @@ multi_print_status (struct multi_context *m, struct status_output *so, const int
 	  /*
 	   * Status file version 1
 	   */
-	  status_printf (so, PACKAGE_NAME " CLIENT LIST");
+	  status_printf (so, "OpenVPN CLIENT LIST");
 	  status_printf (so, "Updated,%s", time_string (0, 0, false, &gc_top));
 	  status_printf (so, "Common Name,Real Address,Bytes Received,Bytes Sent,Connected Since");
-	  hash_iterator_init (m->hash, &hi, true);
+	  hash_iterator_init (m->hash, &hi);
 	  while ((he = hash_iterator_next (&hi)))
 	    {
 	      struct gc_arena gc = gc_new ();
@@ -745,7 +744,7 @@ multi_print_status (struct multi_context *m, struct status_output *so, const int
 
 	  status_printf (so, "ROUTING TABLE");
 	  status_printf (so, "Virtual Address,Common Name,Real Address,Last Ref");
-	  hash_iterator_init (m->vhash, &hi, true);
+	  hash_iterator_init (m->vhash, &hi);
 	  while ((he = hash_iterator_next (&hi)))
 	    {
 	      struct gc_arena gc = gc_new ();
@@ -788,7 +787,7 @@ multi_print_status (struct multi_context *m, struct status_output *so, const int
 	  status_printf (so, "TIME%c%s%c%u", sep, time_string (now, 0, false, &gc_top), sep, (unsigned int)now);
 	  status_printf (so, "HEADER%cCLIENT_LIST%cCommon Name%cReal Address%cVirtual Address%cBytes Received%cBytes Sent%cConnected Since%cConnected Since (time_t)",
 			 sep, sep, sep, sep, sep, sep, sep, sep);
-	  hash_iterator_init (m->hash, &hi, true);
+	  hash_iterator_init (m->hash, &hi);
 	  while ((he = hash_iterator_next (&hi)))
 	    {
 	      struct gc_arena gc = gc_new ();
@@ -811,7 +810,7 @@ multi_print_status (struct multi_context *m, struct status_output *so, const int
 
 	  status_printf (so, "HEADER%cROUTING_TABLE%cVirtual Address%cCommon Name%cReal Address%cLast Ref%cLast Ref (time_t)",
 			 sep, sep, sep, sep, sep, sep);
-	  hash_iterator_init (m->vhash, &hi, true);
+	  hash_iterator_init (m->vhash, &hi);
 	  while ((he = hash_iterator_next (&hi)))
 	    {
 	      struct gc_arena gc = gc_new ();
@@ -850,7 +849,7 @@ multi_print_status (struct multi_context *m, struct status_output *so, const int
 #ifdef PACKET_TRUNCATION_CHECK
       {
 	status_printf (so, "HEADER,ERRORS,Common Name,TUN Read Trunc,TUN Write Trunc,Pre-encrypt Trunc,Post-decrypt Trunc");
-	hash_iterator_init (m->hash, &hi, true);
+	hash_iterator_init (m->hash, &hi);
 	while ((he = hash_iterator_next (&hi)))
 	    {
 	      struct gc_arena gc = gc_new ();
@@ -895,8 +894,6 @@ multi_learn_addr (struct multi_context *m,
   struct hash_bucket *bucket = hash_bucket (m->vhash, hv);
   struct multi_route *oldroute = NULL;
   struct multi_instance *owner = NULL;
-
-  hash_bucket_lock (bucket);
 
   /* if route currently exists, get the instance which owns it */
   he = hash_lookup_fast (m->vhash, bucket, addr, hv);
@@ -967,7 +964,6 @@ multi_learn_addr (struct multi_context *m,
       gc_free (&gc);
     }
 
-  hash_bucket_unlock (bucket);
   return owner;
 }
 
@@ -1001,8 +997,6 @@ multi_get_instance_by_virtual_addr (struct multi_context *m,
       struct mroute_addr tryaddr;
       int i;
 
-      mroute_helper_lock (rh);
-
       /* cycle through each CIDR length */
       for (i = 0; i < rh->n_net_len; ++i)
 	{
@@ -1023,8 +1017,6 @@ multi_get_instance_by_virtual_addr (struct multi_context *m,
 	      break;
 	    }
 	}
-      
-      mroute_helper_unlock (rh);
     }
   
 #ifdef ENABLE_DEBUG
@@ -1135,7 +1127,7 @@ multi_delete_dup (struct multi_context *m, struct multi_instance *new_mi)
 	  struct hash_element *he;
 	  int count = 0;
 
-	  hash_iterator_init (m->iter, &hi, true);
+	  hash_iterator_init (m->iter, &hi);
 	  while ((he = hash_iterator_next (&hi)))
 	    {
 	      struct multi_instance *mi = (struct multi_instance *) he->value;
@@ -1530,9 +1522,14 @@ multi_connection_established (struct multi_context *m, struct multi_instance *mi
       if (plugin_defined (mi->context.plugins, OPENVPN_PLUGIN_CLIENT_CONNECT))
 	{
 	  struct argv argv = argv_new ();
-	  const char *dc_file = create_temp_filename (mi->context.options.tmp_dir, "cc", &gc);
+	  const char *dc_file = create_temp_file (mi->context.options.tmp_dir, "cc", &gc);
+
+          if( !dc_file ) {
+            cc_succeeded = false;
+            goto script_depr_failed;
+          }
+
 	  argv_printf (&argv, "%s", dc_file);
-	  delete_file (dc_file);
 	  if (plugin_call (mi->context.plugins, OPENVPN_PLUGIN_CLIENT_CONNECT, &argv, NULL, mi->context.c2.es) != OPENVPN_PLUGIN_FUNC_SUCCESS)
 	    {
 	      msg (M_WARN, "WARNING: client-connect plugin call failed");
@@ -1543,6 +1540,7 @@ multi_connection_established (struct multi_context *m, struct multi_instance *mi
 	      multi_client_connect_post (m, mi, dc_file, option_permissions_mask, &option_types_found);
 	      ++cc_succeeded_count;
 	    }
+        script_depr_failed:
 	  argv_reset (&argv);
 	}
 
@@ -1578,22 +1576,24 @@ multi_connection_established (struct multi_context *m, struct multi_instance *mi
 
 	  setenv_str (mi->context.c2.es, "script_type", "client-connect");
 
-	  dc_file = create_temp_filename (mi->context.options.tmp_dir, "cc", &gc);
-
-	  delete_file (dc_file);
+	  dc_file = create_temp_file (mi->context.options.tmp_dir, "cc", &gc);
+          if( !dc_file ) {
+            cc_succeeded = false;
+            goto script_failed;
+          }
 
 	  argv_printf (&argv, "%sc %s",
 		       mi->context.options.client_connect_script,
 		       dc_file);
 
-	  if (openvpn_execve_check (&argv, mi->context.c2.es, S_SCRIPT, "client-connect command failed"))
+	  if (openvpn_run_script (&argv, mi->context.c2.es, 0, "--client-connect"))
 	    {
 	      multi_client_connect_post (m, mi, dc_file, option_permissions_mask, &option_types_found);
 	      ++cc_succeeded_count;
 	    }
 	  else
 	    cc_succeeded = false;
-
+        script_failed:
 	  argv_reset (&argv);
 	}
 
@@ -1773,7 +1773,7 @@ multi_bcast (struct multi_context *m,
       printf ("BCAST len=%d\n", BLEN (buf));
 #endif
       mb = mbuf_alloc_buf (buf);
-      hash_iterator_init (m->iter, &hi, true);
+      hash_iterator_init (m->iter, &hi);
 
       while ((he = hash_iterator_next (&hi)))
 	{
@@ -1843,6 +1843,20 @@ compute_wakeup_sigma (const struct timeval *delta)
     }
 }
 
+static void
+multi_schedule_context_wakeup (struct multi_context *m, struct multi_instance *mi)
+{
+  /* calculate an absolute wakeup time */
+  ASSERT (!openvpn_gettimeofday (&mi->wakeup, NULL));
+  tv_add (&mi->wakeup, &mi->context.c2.timeval);
+
+  /* tell scheduler to wake us up at some point in the future */
+  schedule_add_entry (m->schedule,
+		      (struct schedule_entry *) mi,
+		      &mi->wakeup,
+		      compute_wakeup_sigma (&mi->context.c2.timeval));
+}
+
 /*
  * Figure instance-specific timers, convert
  * earliest to absolute time in mi->wakeup,
@@ -1863,15 +1877,8 @@ multi_process_post (struct multi_context *m, struct multi_instance *mi, const un
 
       if (!IS_SIG (&mi->context))
 	{
-	  /* calculate an absolute wakeup time */
-	  ASSERT (!openvpn_gettimeofday (&mi->wakeup, NULL));
-	  tv_add (&mi->wakeup, &mi->context.c2.timeval);
-
 	  /* tell scheduler to wake us up at some point in the future */
-	  schedule_add_entry (m->schedule,
-			      (struct schedule_entry *) mi,
-			      &mi->wakeup,
-			      compute_wakeup_sigma (&mi->context.c2.timeval));
+	  multi_schedule_context_wakeup(m, mi);
 
 	  /* connection is "established" when SSL/TLS key negotiation succeeds
 	     and (if specified) auth user/pass succeeds */
@@ -2234,7 +2241,7 @@ multi_get_queue (struct mbuf_set *ms)
 {
   struct mbuf_item item;
 
-  if (mbuf_extract_item (ms, &item, true)) /* cleartext IP packet */
+  if (mbuf_extract_item (ms, &item)) /* cleartext IP packet */
     {
       unsigned int pipv4_flags = PIPV4_PASSTOS;
 
@@ -2398,9 +2405,9 @@ multi_process_signal (struct multi_context *m)
 {
   if (m->top.sig->signal_received == SIGUSR2)
     {
-      struct status_output *so = m->top.c1.status_output? m->top.c1.status_output: status_open (NULL, 0, M_INFO, NULL, 0);
+      struct status_output *so = status_open (NULL, 0, M_INFO, NULL, 0);
       multi_print_status (m, so, m->status_file_version);
-      if ( so != m->top.c1.status_output ) status_close (so);
+      status_close (so);
       m->top.sig->signal_received = 0;
       return false;
     }
@@ -2460,7 +2467,7 @@ management_callback_kill_by_cn (void *arg, const char *del_cn)
   struct hash_element *he;
   int count = 0;
 
-  hash_iterator_init (m->iter, &hi, true);
+  hash_iterator_init (m->iter, &hi);
   while ((he = hash_iterator_next (&hi)))
     {
       struct multi_instance *mi = (struct multi_instance *) he->value;
@@ -2494,7 +2501,7 @@ management_callback_kill_by_addr (void *arg, const in_addr_t addr, const int por
   saddr.sa.sin_port = htons (port);
   if (mroute_extract_openvpn_sockaddr (&maddr, &saddr, true))
     {
-      hash_iterator_init (m->iter, &hi, true);
+      hash_iterator_init (m->iter, &hi);
       while ((he = hash_iterator_next (&hi)))
 	{
 	  struct multi_instance *mi = (struct multi_instance *) he->value;
@@ -2566,19 +2573,44 @@ management_client_auth (void *arg,
       ret = tls_authenticate_key (mi->context.c2.tls_multi, mda_key_id, auth, client_reason);
       if (ret)
 	{
-	  if (auth && !mi->connection_established_flag)
+	  if (auth)
 	    {
-	      set_cc_config (mi, cc_config);
-	      cc_config_owned = false;
+	      if (!mi->connection_established_flag)
+		{
+		  set_cc_config (mi, cc_config);
+		  cc_config_owned = false;
+		}
 	    }
-	  if (!auth && reason)
-	    msg (D_MULTI_LOW, "MULTI: connection rejected: %s, CLI:%s", reason, np(client_reason));
+	  else
+	    {
+	      if (reason)
+		msg (D_MULTI_LOW, "MULTI: connection rejected: %s, CLI:%s", reason, np(client_reason));
+	      if (mi->connection_established_flag)
+		{
+		  send_auth_failed (&mi->context, client_reason); /* mid-session reauth failed */
+		  multi_schedule_context_wakeup(m, mi);
+		}
+	    }
 	}
     }
   if (cc_config_owned && cc_config)
     buffer_list_free (cc_config);
   return ret;
 }
+
+static char *
+management_get_peer_info (void *arg, const unsigned long cid)
+{
+  struct multi_context *m = (struct multi_context *) arg;
+  struct multi_instance *mi = lookup_by_cid (m, cid);
+  char *ret = NULL;
+
+  if (mi)
+      ret = tls_get_peer_info (mi->context.c2.tls_multi);
+
+  return ret;
+}
+
 #endif
 
 #ifdef MANAGEMENT_PF
@@ -2619,6 +2651,7 @@ init_management_callback_multi (struct multi_context *m)
 #ifdef MANAGEMENT_DEF_AUTH
       cb.kill_by_cid = management_kill_by_cid;
       cb.client_auth = management_client_auth;
+      cb.get_peer_info = management_get_peer_info;
 #endif
 #ifdef MANAGEMENT_PF
       cb.client_pf = management_client_pf;

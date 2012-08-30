@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -58,26 +58,6 @@ print_bypass_addresses (const struct route_bypass *rb)
 }
 
 #endif
-
-static bool
-add_bypass_address (struct route_bypass *rb, const in_addr_t a)
-{
-  int i;
-  for (i = 0; i < rb->n_bypass; ++i)
-    {
-      if (a == rb->bypass[i]) /* avoid duplicates */
-	return true;
-    }
-  if (rb->n_bypass < N_ROUTE_BYPASS)
-    {
-      rb->bypass[rb->n_bypass++] = a;
-      return true;
-    }
-  else
-    {
-      return false;
-    }
-}
 
 struct route_option_list *
 new_route_option_list (const int max_routes, struct gc_arena *a)
@@ -219,6 +199,7 @@ is_special_addr (const char *addr_str)
 
 static bool
 init_route (struct route *r,
+	    struct resolve_list *network_list,
 	    const struct route_option *ro,
 	    const struct route_special_addr *spec)
 {
@@ -237,14 +218,15 @@ init_route (struct route *r,
   
   if (!get_special_addr (spec, ro->network, &r->network, &status))
     {
-      r->network = getaddr (
-			    GETADDR_RESOLVE
-			    | GETADDR_HOST_ORDER
-			    | GETADDR_WARN_ON_SIGNAL,
-			    ro->network,
-			    0,
-			    &status,
-			    NULL);
+      r->network = getaddr_multi (
+				  GETADDR_RESOLVE
+				  | GETADDR_HOST_ORDER
+				  | GETADDR_WARN_ON_SIGNAL,
+				  ro->network,
+				  0,
+				  &status,
+				  NULL,
+				  network_list);
     }
 
   if (!status)
@@ -438,20 +420,47 @@ init_route_list (struct route_list *rl,
   else
     rl->spec.remote_endpoint_defined = false;
 
-  if (!(opt->n >= 0 && opt->n <= rl->capacity))
-    msg (M_FATAL, PACKAGE_NAME " ROUTE: (init) number of route options (%d) is greater than route list capacity (%d)", opt->n, rl->capacity);
-
   /* parse the routes from opt to rl */
   {
     int i, j = 0;
+    bool warned = false;
     for (i = 0; i < opt->n; ++i)
       {
-	if (!init_route (&rl->routes[j],
+	struct resolve_list netlist;
+	struct route r;
+	int k;
+
+        CLEAR(netlist);		/* init_route() will not always init this */
+
+	if (!init_route (&r,
+			 &netlist,
 			 &opt->routes[i],
 			 &rl->spec))
 	  ret = false;
 	else
-	  ++j;
+	  {
+	    if (!netlist.len)
+	      {
+		netlist.data[0] = r.network;
+		netlist.len = 1;
+	      }
+	    for (k = 0; k < netlist.len; ++k)
+	      {
+		if (j < rl->capacity)
+		  {
+		    r.network = netlist.data[k];
+		    rl->routes[j++] = r;
+		  }
+		else
+		  {
+		    if (!warned)
+		      {
+			msg (M_WARN, PACKAGE_NAME " ROUTE: routes dropped because number of expanded routes is greater than route list capacity (%d)", rl->capacity);
+			warned = true;
+		      }
+		  }
+	      }
+	  }
       }
     rl->n = j;
   }
@@ -923,15 +932,13 @@ add_route (struct route *r, const struct tuntap *tt, unsigned int flags, const s
   argv_printf (&argv, "%s add",
 		ROUTE_PATH);
 
-#if 0
-  if (r->metric_defined)
-    argv_printf_cat (&argv, "-rtt %d", r->metric);
-#endif
-
   argv_printf_cat (&argv, "%s -netmask %s %s",
 	      network,
 	      netmask,
 	      gateway);
+
+  if (r->metric_defined)
+    argv_printf_cat (&argv, "%d", r->metric);
 
   argv_msg (D_ROUTE, &argv);
   status = openvpn_execve_check (&argv, es, 0, "ERROR: Solaris route add command failed");
@@ -2126,8 +2133,18 @@ netmask_to_netbits (const in_addr_t network, const in_addr_t netmask, int *netbi
 static void
 add_host_route_if_nonlocal (struct route_bypass *rb, const in_addr_t addr)
 {
-  if (test_local_addr(addr) == TLA_NONLOCAL && addr != 0 && addr != ~0)
-    add_bypass_address (rb, addr);
+  if (test_local_addr(addr) == TLA_NONLOCAL && addr != 0 && addr != ~0) {
+    int i;
+    for (i = 0; i < rb->n_bypass; ++i)
+      {
+        if (addr == rb->bypass[i]) /* avoid duplicates */
+          return;
+      }
+    if (rb->n_bypass < N_ROUTE_BYPASS)
+      {
+        rb->bypass[rb->n_bypass++] = addr;
+      }
+  }
 }
 
 static void
@@ -2186,7 +2203,7 @@ get_bypass_addresses (struct route_bypass *rb, const unsigned int flags)  /* PLA
 
 #endif
 
-#if AUTO_USERID
+#if AUTO_USERID || defined(ENABLE_PUSH_PEER_INFO)
 
 #if defined(TARGET_LINUX)
 

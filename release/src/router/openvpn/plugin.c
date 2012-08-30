@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -558,8 +558,6 @@ plugin_call (const struct plugin_list *pl,
       bool error = false;
       bool deferred = false;
       
-      mutex_lock_static (L_PLUGIN);
-
       setenv_del (es, "script_type");
       envp = make_env_array (es, false, &gc);
 
@@ -587,8 +585,6 @@ plugin_call (const struct plugin_list *pl,
 
       if (pr)
 	pr->n = i;
-
-      mutex_unlock_static (L_PLUGIN);
 
       gc_free (&gc);
 

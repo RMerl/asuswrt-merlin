@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -99,6 +99,8 @@ struct tuntap_options {
   bool dhcp_renew;
   bool dhcp_pre_release;
   bool dhcp_release;
+
+  bool register_dns;
 };
 
 #elif TARGET_LINUX
@@ -334,6 +336,9 @@ void tun_show_debug (struct tuntap *tt);
 
 bool dhcp_release_by_adapter_index(const DWORD adapter_index);
 bool dhcp_renew_by_adapter_index (const DWORD adapter_index);
+
+void fork_register_dns_action (struct tuntap *tt);
+void ipconfig_register_dns (const struct env_set *es);
 
 void tun_standby_init (struct tuntap *tt);
 bool tun_standby (struct tuntap *tt);

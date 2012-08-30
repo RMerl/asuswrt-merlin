@@ -13,8 +13,8 @@ SHLIB_MAJOR=1
 SHLIB_MINOR=0.0
 SHLIB_EXT=.so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 PLATFORM=linux-mipsel
-OPTIONS=--openssldir=/etc --cross-compile-prefix=  -ffunction-sections -fdata-sections -Wl,--gc-sections enable-shared no-gmp no-jpake no-krb5 no-md2 no-rc5 no-rfc3779 no-store no-zlib no-zlib-dynamic no-static-engine
-CONFIGURE_ARGS=linux-mipsel --openssldir=/etc --cross-compile-prefix=  -ffunction-sections -fdata-sections -Wl,--gc-sections shared
+OPTIONS=--openssldir=/etc --cross-compile-prefix=  -ffunction-sections -fdata-sections -Wl,--gc-sections enable-shared enable-rc5 no-gmp no-jpake no-krb5 no-md2 no-rfc3779 no-store no-zlib no-zlib-dynamic no-static-engine
+CONFIGURE_ARGS=linux-mipsel --openssldir=/etc --cross-compile-prefix=  -ffunction-sections -fdata-sections -Wl,--gc-sections shared enable-rc5
 SHLIB_TARGET=linux-shared
 
 # HERE indicates where this Makefile lives.  This can be used to indicate
@@ -62,7 +62,7 @@ OPENSSLDIR=/etc
 CROSS_COMPILE=  
 CC= $(CROSS_COMPILE)mipsel-uclibc-gcc
 CFLAG= -fPIC -DOPENSSL_PIC -DOPENSSL_THREADS -D_REENTRANT -DDSO_DLFCN -DHAVE_DLFCN_H -ffunction-sections -fdata-sections -DL_ENDIAN -DTERMIO -Os $(EXTRACFLAGS) -DOPENSSL_SMALL_FOOTPRINT -fomit-frame-pointer -Wall
-DEPFLAG= -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_STORE
+DEPFLAG= -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_STORE
 PEX_LIBS= 
 EX_LIBS= -Wl,--gc-sections -ldl
 EXE_EXT= 
@@ -120,7 +120,7 @@ SHLIBDIRS= crypto ssl
 SDIRS=  \
 	objects \
 	md4 md5 sha mdc2 hmac ripemd whrlpool \
-	des aes rc2 rc4 idea bf cast camellia seed modes \
+	des aes rc2 rc4 rc5 idea bf cast camellia seed modes \
 	bn ec rsa dsa ecdsa dh ecdh dso engine \
 	buffer bio stack lhash rand err \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui \

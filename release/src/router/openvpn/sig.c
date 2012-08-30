@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -185,15 +185,6 @@ signal_handler (const int signum)
   signal (signum, signal_handler);
 }
 
-/* temporary signal handler, before we are fully initialized */
-static void
-signal_handler_exit (const int signum)
-{
-  msg (M_FATAL,
-       "Signal %d (%s) received during initialization, exiting",
-       signum, signal_description (signum, NULL));
-}
-
 #endif
 
 /* set handlers for unix signals */
@@ -257,7 +248,7 @@ print_status (const struct context *c, struct status_output *so)
 
   status_reset (so);
 
-  status_printf (so, PACKAGE_NAME " STATISTICS");
+  status_printf (so, "OpenVPN STATISTICS");
   status_printf (so, "Updated,%s", time_string (0, 0, false, &gc));
   status_printf (so, "TUN/TAP read bytes," counter_format, c->c2.tun_read_bytes);
   status_printf (so, "TUN/TAP write bytes," counter_format, c->c2.tun_write_bytes);
@@ -338,9 +329,9 @@ remap_signal (struct context *c)
 static void
 process_sigusr2 (const struct context *c)
 {
-  struct status_output *so = c->c1.status_output? c->c1.status_output: status_open (NULL, 0, M_INFO, NULL, 0);
+  struct status_output *so = status_open (NULL, 0, M_INFO, NULL, 0);
   print_status (c, so);
-  if (so != c->c1.status_output) status_close (so);
+  status_close (so);
   signal_reset (c->sig);
 }
 

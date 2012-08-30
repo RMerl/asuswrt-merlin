@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -41,6 +41,7 @@
  * New Client Connection:
  *
  * FUNC: openvpn_plugin_client_constructor_v1
+ * FUNC: openvpn_plugin_func_v1 OPENVPN_PLUGIN_ENABLE_PF
  * FUNC: openvpn_plugin_func_v1 OPENVPN_PLUGIN_TLS_VERIFY (called once for every cert
  *                                                     in the server chain)
  * FUNC: openvpn_plugin_func_v1 OPENVPN_PLUGIN_AUTH_USER_PASS_VERIFY
@@ -72,7 +73,7 @@
  * [Client session continues]
  *
  * FUNC: openvpn_plugin_func_v1 OPENVPN_PLUGIN_CLIENT_DISCONNECT
- * FUNC: openvpn_plugin_client_constructor_v1
+ * FUNC: openvpn_plugin_client_destructor_v1
  *
  * [ some time may pass ]
  *

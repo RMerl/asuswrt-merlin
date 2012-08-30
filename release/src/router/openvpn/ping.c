@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -86,5 +86,7 @@ check_ping_send_dowork (struct context *c)
    * encrypt, sign, etc.
    */
   encrypt_sign (c, true);
+  /* Set length to 0, so it won't be counted as activity */
+  c->c2.buf.len = 0;
   dmsg (D_PING, "SENT PING");
 } 

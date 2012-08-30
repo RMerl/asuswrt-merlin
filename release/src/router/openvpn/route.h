@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -174,7 +174,7 @@ bool get_default_gateway (in_addr_t *ip, in_addr_t *netmask);
 #define TLA_LOCAL           2
 int test_local_addr (const in_addr_t addr);
 
-#if AUTO_USERID
+#if AUTO_USERID || defined(ENABLE_PUSH_PEER_INFO)
 bool get_default_gateway_mac_addr (unsigned char *macaddr);
 #endif
 

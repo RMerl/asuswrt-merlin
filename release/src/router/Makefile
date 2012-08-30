@@ -1682,7 +1682,7 @@ lzo-install: lzo
 	cd $(INSTALLDIR)/lzo/usr/lib && ln -sf liblzo2.so.2 liblzo2.so
 
 
-openvpn: openvpn/.conf
+openvpn: openvpn/.conf openssl lzo
 
 openvpn/.conf:
 	cd openvpn && CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \

@@ -3136,6 +3136,18 @@ _dprintf("restart_nas_services(%d): test 11.\n", getpid());
 			restart_nas_services(0, 1);
 		}
 	}
+#ifdef RTCONFIG_OPENVPN
+        else if (strncmp(script, "vpnclient", 9) == 0) {
+                if (action & RC_SERVICE_STOP) stop_vpnclient(atoi(&script[9]));
+                if (action & RC_SERVICE_START) start_vpnclient(atoi(&script[9]));
+        }
+
+        else if (strncmp(script, "vpnserver" ,9) == 0) {
+                if (action & RC_SERVICE_STOP) stop_vpnserver(atoi(&script[9]));
+                if (action & RC_SERVICE_START) start_vpnserver(atoi(&script[9]));
+        }
+#endif
+
 #if defined(RTCONFIG_SAMBASRV) && defined(RTCONFIG_FTP)
 	else if (strcmp(script, "ftpsamba") == 0)
 	{

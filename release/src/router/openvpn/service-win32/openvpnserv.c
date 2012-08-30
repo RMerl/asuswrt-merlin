@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -33,14 +33,11 @@
  * This code is designed to be built with the mingw compiler.
  */
 
-#ifdef _MSC_VER
-#include "config-win32.h"
-#else
 #include "config.h"
-#endif
 #include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <process.h>
 #include "service.h"
 
@@ -83,13 +80,6 @@ static HANDLE exit_event = NULL;
 /* clear an object */
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
-/* snprintf with guaranteed null termination */
-#define mysnprintf(out, args...) \
-        { \
-           snprintf (out, sizeof(out), args); \
-           out [sizeof (out) - 1] = '\0'; \
-        }
-
 /*
  * Message handling
  */
@@ -98,10 +88,10 @@ static HANDLE exit_event = NULL;
 #define M_ERR     (MSG_FLAGS_ERROR)                    // error
 
 /* write error to event log */
-#define MSG(flags, args...) \
+#define MSG(flags, ...) \
         { \
            char x_msg[256]; \
-           mysnprintf (x_msg, args); \
+           openvpn_snprintf (x_msg, sizeof(x_msg), __VA_ARGS__);      \
            AddToMessageLog ((flags), x_msg); \
         }
 
@@ -132,6 +122,28 @@ static HANDLE exit_event = NULL;
 	goto finish; \
       } \
   }
+
+/*
+ * This is necessary due to certain buggy implementations of snprintf,
+ * that don't guarantee null termination for size > 0.
+ * (copied from ../buffer.c, line 217)
+ * (git: 100644 blob e2f8caab0a5b2a870092c6cd508a1a50c21c3ba3	buffer.c)
+ */
+
+int openvpn_snprintf(char *str, size_t size, const char *format, ...)
+{
+  va_list arglist;
+  int ret = 0;
+  if (size > 0)
+    {
+      va_start (arglist, format);
+      ret = vsnprintf (str, size, format, arglist);
+      va_end (arglist);
+      str[size - 1] = 0;
+    }
+  return ret;
+}
+
 
 bool
 init_security_attributes_allow_all (struct security_attributes *obj)
@@ -275,7 +287,6 @@ VOID ServiceStart (DWORD dwArgc, LPTSTR *lpszArgv)
     LONG status;
     DWORD len;
     DWORD type;
-    char error_string[256];
 
     static const char error_format_str[] =
       "Error querying registry key of type REG_SZ: HKLM\\" REG_KEY "\\%s";
@@ -358,7 +369,7 @@ VOID ServiceStart (DWORD dwArgc, LPTSTR *lpszArgv)
     BOOL more_files;
     char find_string[MAX_PATH];
 
-    mysnprintf (find_string, "%s\\*", config_dir);
+    openvpn_snprintf (find_string, MAX_PATH, "%s\\*", config_dir);
 
     find_handle = FindFirstFile (find_string, &find_obj);
     if (find_handle == INVALID_HANDLE_VALUE)
@@ -400,10 +411,11 @@ VOID ServiceStart (DWORD dwArgc, LPTSTR *lpszArgv)
 	      FindClose (find_handle);
 	      goto finish;
 	    }
-	  mysnprintf (log_path, "%s\\%s", log_dir, log_file);
+	  openvpn_snprintf (log_path, sizeof(log_path),
+                            "%s\\%s", log_dir, log_file);
 
 	  /* construct command line */
-	  mysnprintf (command_line, PACKAGE " --service %s 1 --config \"%s\"",
+	  openvpn_snprintf (command_line, sizeof(command_line), PACKAGE " --service %s 1 --config \"%s\"",
 		      EXIT_EVENT_NAME,
 		      find_obj.cFileName);
 

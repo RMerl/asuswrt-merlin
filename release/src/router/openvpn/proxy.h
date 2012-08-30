@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -55,22 +55,34 @@ void show_win_proxy_settings (const int msglevel);
 #ifdef ENABLE_HTTP_PROXY
 
 /* HTTP CONNECT authentication methods */
-#define HTTP_AUTH_NONE  0
-#define HTTP_AUTH_BASIC 1
-#define HTTP_AUTH_NTLM  2
-#define HTTP_AUTH_N     3
-#define HTTP_AUTH_NTLM2 4
+#define HTTP_AUTH_NONE   0
+#define HTTP_AUTH_BASIC  1
+#define HTTP_AUTH_DIGEST 2
+#define HTTP_AUTH_NTLM   3
+#define HTTP_AUTH_NTLM2  4
+#define HTTP_AUTH_N      5 /* number of HTTP_AUTH methods */
 
 struct http_proxy_options {
   const char *server;
   int port;
   bool retry;
   int timeout;
-  bool auth_retry;
+
+# define PAR_NO  0  /* don't support any auth retries */
+# define PAR_ALL 1  /* allow all proxy auth protocols */
+# define PAR_NCT 2  /* disable cleartext proxy auth protocols */
+  int auth_retry;
+
   const char *auth_method_string;
   const char *auth_file;
   const char *http_version;
   const char *user_agent;
+};
+
+struct http_proxy_options_simple {
+  const char *server;
+  int port;
+  int auth_retry;
 };
 
 struct http_proxy_info {
@@ -78,6 +90,8 @@ struct http_proxy_info {
   int auth_method;
   struct http_proxy_options options;
   struct user_pass up;
+  char *proxy_authenticate;
+  bool queried_creds;
 };
 
 struct http_proxy_info *http_proxy_new (const struct http_proxy_options *o,

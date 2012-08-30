@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -168,7 +168,9 @@ status_flush (struct status_output *so)
 #if defined(HAVE_FTRUNCATE)
       {
 	const off_t off = lseek (so->fd, (off_t)0, SEEK_CUR);
-	ftruncate (so->fd, off);
+	if (ftruncate (so->fd, off) != 0) {
+	  msg (M_WARN, "Failed to truncate status file: %s", strerror(errno));
+	}
       }
 #elif defined(HAVE_CHSIZE)
       {

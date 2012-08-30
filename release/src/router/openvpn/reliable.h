@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -38,7 +38,7 @@
 #include "session_id.h"
 #include "mtu.h"
 
-/* #define EXPONENTIAL_BACKOFF */
+#define EXPONENTIAL_BACKOFF
 
 #define RELIABLE_ACK_SIZE 8
 

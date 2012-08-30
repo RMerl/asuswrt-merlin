@@ -28,6 +28,9 @@
 /* Enable debugging support */
 /* #undef ENABLE_DEBUG */
 
+/* Enable support for the eurephia plug-in */
+/* #undef ENABLE_EUREPHIA */
+
 /* Enable internal fragmentation support */
 #define ENABLE_FRAGMENT 1
 
@@ -51,6 +54,9 @@
 
 /* Enable Socks proxy support */
 /* #undef ENABLE_SOCKS */
+
+/* Enable --x509-username-field feature */
+/* #undef ENABLE_X509ALTUSERNAME */
 
 /* Define to 1 if you have the `accept' function. */
 #define HAVE_ACCEPT 1
@@ -98,16 +104,16 @@
 #define HAVE_DUP2 1
 
 /* Define to 1 if you have the `ENGINE_cleanup' function. */
-/* #undef HAVE_ENGINE_CLEANUP */
+#define HAVE_ENGINE_CLEANUP 1
 
 /* Define to 1 if you have the `ENGINE_load_builtin_engines' function. */
-/* #undef HAVE_ENGINE_LOAD_BUILTIN_ENGINES */
+#define HAVE_ENGINE_LOAD_BUILTIN_ENGINES 1
 
 /* Define to 1 if you have the `ENGINE_register_all_complete' function. */
-/* #undef HAVE_ENGINE_REGISTER_ALL_COMPLETE */
+#define HAVE_ENGINE_REGISTER_ALL_COMPLETE 1
 
 /* epoll_create function is defined */
-/* #undef HAVE_EPOLL_CREATE */
+#define HAVE_EPOLL_CREATE 1
 
 /* Define to 1 if you have the <errno.h> header file. */
 #define HAVE_ERRNO_H 1
@@ -242,13 +248,10 @@
 #define HAVE_OPENLOG 1
 
 /* Define to 1 if you have the <openssl/engine.h> header file. */
-/* #undef HAVE_OPENSSL_ENGINE_H */
+#define HAVE_OPENSSL_ENGINE_H 1
 
 /* Define to 1 if you have the `poll' function. */
 #define HAVE_POLL 1
-
-/* Define if you have POSIX threads libraries and header files. */
-/* #undef HAVE_PTHREAD */
 
 /* Define to 1 if you have the `putenv' function. */
 #define HAVE_PUTENV 1
@@ -353,7 +356,7 @@
 #define HAVE_SYSTEM 1
 
 /* Define to 1 if you have the <sys/epoll.h> header file. */
-/* #undef HAVE_SYS_EPOLL_H */
+#define HAVE_SYS_EPOLL_H 1
 
 /* Define to 1 if you have the <sys/file.h> header file. */
 #define HAVE_SYS_FILE_H 1
@@ -428,13 +431,16 @@
 #define IFCONFIG_PATH "/sbin/ifconfig"
 
 /* Path to iproute tool */
-#define IPROUTE_PATH "/sbin/ip"
+#define IPROUTE_PATH "/usr/sbin/ip"
 
 /* Use lzo/ directory prefix for LZO header files (for LZO 2.0) */
 #define LZO_HEADER_DIR 1
 
 /* LZO version number */
 #define LZO_VERSION_NUM "2"
+
+/* Path to netstat tool */
+#define NETSTAT_PATH "/bin/netstat"
 
 /* Name of package */
 #define PACKAGE "openvpn"
@@ -446,17 +452,16 @@
 #define PACKAGE_NAME "OpenVPN"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "OpenVPN 2.1.1"
+#define PACKAGE_STRING "OpenVPN 2.2.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "openvpn"
 
-/* Define to the version of this package. */
-#define PACKAGE_VERSION "2.1.1"
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
 
-/* Define to the necessary symbol if this constant uses a non-standard name on
-   your system. */
-/* #undef PTHREAD_CREATE_JOINABLE */
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "2.2.2"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -483,10 +488,10 @@
 #define TAP_WIN32_MIN_MAJOR 9
 
 /* The TAP-Win32 version number is defined in tap-win32/SOURCES */
-#define TAP_WIN32_MIN_MINOR 1
+#define TAP_WIN32_MIN_MINOR 9
 
-/* A string representing our target */
-#define TARGET_ALIAS "mipsel-unknown-linux-gnu"
+/* A string representing our host */
+#define TARGET_ALIAS "mipsel-linux"
 
 /* Are we running on Mac OS X? */
 /* #undef TARGET_DARWIN */
@@ -515,9 +520,6 @@
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #define TIME_WITH_SYS_TIME 1
 
-/* Win32 builtin */
-/* #undef UF */
-
 /* Use OpenSSL crypto library */
 #define USE_CRYPTO 1
 
@@ -533,22 +535,46 @@
 /* Enable PKCS11 capability */
 /* #undef USE_PKCS11 */
 
-/* Use pthread-based multithreading */
-/* #undef USE_PTHREAD */
-
 /* Use OpenSSL SSL library */
 #define USE_SSL 1
+
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# define _ALL_SOURCE 1
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE 1
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# define _POSIX_PTHREAD_SEMANTICS 1
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# define _TANDEM_SOURCE 1
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# define __EXTENSIONS__ 1
+#endif
+
 
 /* Use valgrind memory debugging library */
 /* #undef USE_VALGRIND */
 
 /* Version number of package */
-#define VERSION "2.1.1"
+#define VERSION "2.2.2"
 
-/* Enable GNU extensions on systems that have them.  */
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE 1
-#endif
+/* Define to 1 if on MINIX. */
+/* #undef _MINIX */
+
+/* Define to 2 if the system does not provide POSIX.1 features except with
+   this defined. */
+/* #undef _POSIX_1_SOURCE */
+
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+/* #undef _POSIX_SOURCE */
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

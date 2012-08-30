@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -363,24 +363,20 @@ schedule_init (void)
   struct schedule *s;
 
   ALLOC_OBJ_CLEAR (s, struct schedule);
-  mutex_init (&s->mutex);
   return s;
 }
 
 void
 schedule_free (struct schedule *s)
 {
-  mutex_destroy (&s->mutex);
   free (s);
 }
 
 void
 schedule_remove_entry (struct schedule *s, struct schedule_entry *e)
 {
-  mutex_lock (&s->mutex);
   s->earliest_wakeup = NULL; /* invalidate cache */
   schedule_remove_node (s, e);
-  mutex_unlock (&s->mutex);
 }
 
 /*

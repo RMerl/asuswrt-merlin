@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -952,6 +952,8 @@ int
 openvpn_execve (const struct argv *a, const struct env_set *es, const unsigned int flags)
 {
   int ret = -1;
+  static bool exec_warn = false;
+
   if (a && a->argv[0])
     {
       if (openvpn_execve_allowed (flags))
@@ -971,10 +973,8 @@ openvpn_execve (const struct argv *a, const struct env_set *es, const unsigned i
 	      /* fill in STARTUPINFO struct */
 	      GetStartupInfo(&start_info);
 	      start_info.cb = sizeof(start_info);
-	      start_info.dwFlags = STARTF_USESTDHANDLES|STARTF_USESHOWWINDOW;
+	      start_info.dwFlags = STARTF_USESHOWWINDOW;
 	      start_info.wShowWindow = SW_HIDE;
-	      start_info.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-	      start_info.hStdOutput = start_info.hStdError = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	      if (CreateProcess (cmd, cl, NULL, NULL, FALSE, 0, env, NULL, &start_info, &proc_info))
 		{
@@ -1004,9 +1004,10 @@ openvpn_execve (const struct argv *a, const struct env_set *es, const unsigned i
 	      ASSERT (0);
 	    }
 	}
-      else
+      else if (!exec_warn && (script_security < SSEC_SCRIPTS))
 	{
 	  msg (M_WARN, SCRIPT_SECURITY_WARNING);
+          exec_warn = true;
 	}
     }
   else
@@ -1042,10 +1043,8 @@ fork_to_self (const char *cmdline)
   /* fill in STARTUPINFO struct */
   GetStartupInfo(&start_info);
   start_info.cb = sizeof(start_info);
-  start_info.dwFlags = STARTF_USESTDHANDLES|STARTF_USESHOWWINDOW;
+  start_info.dwFlags = STARTF_USESHOWWINDOW;
   start_info.wShowWindow = SW_HIDE;
-  start_info.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-  start_info.hStdOutput = start_info.hStdError = GetStdHandle(STD_OUTPUT_HANDLE);
 
   if (CreateProcess (self_exe, cl, NULL, NULL, FALSE, 0, NULL, NULL, &start_info, &proc_info))
     {
@@ -1094,4 +1093,23 @@ env_set_add_win32 (struct env_set *es)
   set_win_sys_path (DEFAULT_WIN_SYS_PATH, es);
 }
 
+
+const char *
+win_get_tempdir()
+{
+  static char buf[MAX_PATH];
+  char *tmpdir = buf;
+
+  CLEAR(buf);
+
+  if (!GetTempPath(sizeof(buf),buf)) {
+    /* Warn if we can't find a valid temporary directory, which should
+     * be unlikely.
+     */
+    msg (M_WARN, "Could not find a suitable temporary directory."
+         " (GetTempPath() failed).  Consider to use --tmp-dir");
+    tmpdir = NULL;
+  }
+  return tmpdir;
+}
 #endif

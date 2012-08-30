@@ -75,7 +75,7 @@ unsigned int get_wifi_clients(int radio, int querytype);
 int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 {
 	char *type;
-	char result[200];
+	char result[2048];
 	int retval = 0;
 	struct sysinfo sys;
 	char *tmp;
@@ -235,6 +235,38 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				unlink("/tmp/output.txt");
 			}
 
+		} else if(strncmp(type,"pid",3) ==0 ) {
+			char service[32];
+			sscanf(type, "pid.%31s", service);
+
+			if (strlen(service))
+				sprintf(result, "%d", pidof(service));
+
+		} else if(strncmp(type,"vpnstatus",9) == 0 ) {
+			int num = 0;
+			char service[10], buf[256];
+
+                        sscanf(type,"vpnstatus.%9[^.].%d", service, &num);
+
+			if ( strlen(service) && (num > 0) )
+			{
+				// Trigger OpenVPN to update the status file
+				snprintf(buf, sizeof(buf), "vpn%s%d", service, num);
+				killall(buf, SIGUSR2);
+
+				// Give it a chance to update the file
+				sleep(1);
+
+				// Read the status file and repeat it verbatim to the caller
+				sprintf(buf,"/etc/openvpn/%s%d/status", service, num);
+				char *buffer = read_whole_file(buf);
+				if (buffer)
+				{
+					strncpy(result, buffer, sizeof(result));
+					free(buffer);
+				}
+			}
+
                 } else {
 			strcpy(result,"Not implemented");
 		}
@@ -324,3 +356,4 @@ exit:
         free(clientlist);
 	return count;
 }
+

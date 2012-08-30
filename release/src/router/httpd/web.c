@@ -1185,6 +1185,29 @@ ej_lan_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
 	return (websWrite(wp,""));	
 }
 
+static int
+ej_vpn_server_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
+{
+	int unit;
+
+	unit = nvram_get_int("vpn_server_unit");
+	// handle generate cases first
+	(void)copy_index_to_unindex("vpn_server_", unit, -1);
+
+	return (websWrite(wp,""));
+}
+
+static int
+ej_vpn_client_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
+{
+        int unit;
+
+        unit = nvram_get_int("vpn_client_unit");
+        // handle generate cases first
+        (void)copy_index_to_unindex("vpn_client_", unit, -1);
+
+        return (websWrite(wp,""));
+}
 
 
 
@@ -1400,6 +1423,31 @@ int validate_instance(webs_t wp, char *name)
 #endif
 	else if(strncmp(name, "lan", 3)==0) {
 	}
+// This seems to create default values for each unit.
+// Is it really necessary?  lan_ does not seem to use it.
+#ifdef RTCONFIG_OPENVPN
+       else if(strncmp(name, "vpn_server", 10)==0) {
+                for(i=1;i<3;i++) {
+                        sprintf(prefix, "vpn_server%d_", i);
+                        value = websGetVar(wp, strcat_r(prefix, name+11, tmp), NULL);
+                        if(value && strcmp(nvram_safe_get(tmp), value)) {
+                                nvram_set(tmp, value);
+                                found = NVRAM_MODIFIED_BIT;
+                        }
+                }
+        }
+       else if(strncmp(name, "vpn_client", 10)==0) {
+                for(i=1;i<3;i++) {
+                        sprintf(prefix, "vpn_client%d_", i);
+                        value = websGetVar(wp, strcat_r(prefix, name+11, tmp), NULL);
+                        if(value && strcmp(nvram_safe_get(tmp), value)) {
+                                nvram_set(tmp, value);
+                                found = NVRAM_MODIFIED_BIT;
+                        }
+                }
+        }
+#endif
+
 	return found;
 }
 
@@ -1452,6 +1500,11 @@ static int validate_apply(webs_t wp) {
 #ifdef RTCONFIG_DSL
 			|| !strcmp(name, "dsl_unit")
 #endif
+#ifdef RTCONFIG_OPENVPN
+                        || !strcmp(name, "vpn_server_unit")
+			|| !strcmp(name, "vpn_client_unit")
+#endif
+
 ) {
 				unit=atoi(value);
 				if(unit!=nvram_get_int(name)) {
@@ -1511,6 +1564,28 @@ static int validate_apply(webs_t wp) {
 					_dprintf("set %s=%s\n", tmp, value);
 				}
 			}
+#endif
+#ifdef RTCONFIG_OPENVPN
+                        else if(!strncmp(name, "vpn_server", 10) && unit!=-1) {
+                                snprintf(prefix, sizeof(prefix), "vpn_server%d_", unit);
+                                (void)strcat_r(prefix, name+11, tmp);
+
+                                if(strcmp(nvram_safe_get(tmp), value)) {
+                                        nvram_set(tmp, value);
+                                        nvram_modified = 1;
+                                        _dprintf("set %s=%s\n", tmp, value);
+                                }
+                        }
+                        else if(!strncmp(name, "vpn_client", 10) && unit!=-1) {
+                                snprintf(prefix, sizeof(prefix), "vpn_client%d_", unit);
+                                (void)strcat_r(prefix, name+11, tmp);
+
+                                if(strcmp(nvram_safe_get(tmp), value)) {
+                                        nvram_set(tmp, value);
+                                        nvram_modified = 1;
+                                        _dprintf("set %s=%s\n", tmp, value);
+                                }
+                        }
 #endif
 			// TODO: add other multiple instance handle here
 			else if(strcmp(buff, value)) {
@@ -3878,6 +3953,24 @@ wps_finish:
 		websRedirect(wp, current_url);
 	}
 #endif
+        else if (!strcmp(action_mode, "change_vpn_server_unit"))
+        {
+                action_para = websGetVar(wp, "vpn_server_unit", "");
+
+                if(action_para) 
+                        nvram_set("vpn_server_unit", action_para);
+
+                websRedirect(wp, current_url);
+        }
+        else if (!strcmp(action_mode, "change_vpn_client_unit"))
+        {
+                action_para = websGetVar(wp, "vpn_client_unit", "");
+
+                if(action_para) 
+                        nvram_set("vpn_client_unit", action_para);
+
+                websRedirect(wp, current_url);
+        }
 	return 1;
 }
 
@@ -7228,6 +7321,10 @@ struct ej_handler ej_handlers[] = {
 #endif	
 	{ "get_default_reboot_time", ej_get_default_reboot_time},	
 	{ "sysinfo",  ej_show_sysinfo},
+#ifdef RTCONFIG_OPENVPN
+        { "vpn_server_get_parameter", ej_vpn_server_get_parameter},
+	{ "vpn_client_get_parameter", ej_vpn_client_get_parameter},
+#endif
 	{ NULL, NULL }
 };
 

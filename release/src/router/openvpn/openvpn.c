@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2009 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -54,8 +54,6 @@ tunnel_point_to_point (struct context *c)
   init_instance_handle_signals (c, c->es, CC_HARD_USR1_TO_HUP);
   if (IS_SIG (c))
     return;
-
-  init_management_callback_p2p (c);
 
   /* main event loop */
   while (true)

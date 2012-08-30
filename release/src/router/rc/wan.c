@@ -2379,6 +2379,10 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	stop_ddns();
 	start_ddns();
 
+#ifdef RTCONFIG_OPENVPN
+	start_vpn_eas();
+#endif
+
 	/* Sync time */
 	refresh_ntpc();
 
@@ -2751,6 +2755,10 @@ stop_wan(void)
 	/* Start each configured and enabled wan connection and its undelying i/f */
 	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
 		stop_wan_if(unit);
+
+#ifdef RTCONFIG_OPENVPN
+	stop_vpn_eas();
+#endif
 
 	/* Remove dynamically created links */
 #ifdef RTCONFIG_EAPOL
