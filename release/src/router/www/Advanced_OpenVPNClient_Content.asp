@@ -27,7 +27,14 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 <% vpn_client_get_parameter(); %>;
 
-vpn_unit = '<% nvram_get("vpn_server_unit"); %>';
+vpn_unit = '<% nvram_get("vpn_client_unit"); %>';
+
+if (vpn_unit == 1)
+	service_state = (<% sysinfo("pid.vpnclient1"); %> > 0);
+else if (vpn_unit == 2)
+	service_state = (<% sysinfo("pid.vpnclient2"); %> > 0);
+else
+	service_state = false;
 
 ciphersarray = [
 		["AES-128-CBC"],
@@ -77,8 +84,8 @@ function initial()
 	// Cipher list
 	free_options(document.form.vpn_client_cipher);
 	currentcipher = "<% nvram_get("vpn_client_cipher"); %>";
-	add_option(document.form.vpn_client_cipher, "default","Default",(currentcipher == "Default"));
-	add_option(document.form.vpn_client_cipher, "none","None",(currentcipher == "none"));
+	add_option(document.form.vpn_client_cipher, "Default","default",(currentcipher == "Default"));
+	add_option(document.form.vpn_client_cipher, "None","none",(currentcipher == "none"));
 
 	for(var i = 0; i < ciphersarray.length; i++){
 		add_option(document.form.vpn_client_cipher,
@@ -158,21 +165,24 @@ function getRadioValue(theObj) {
 
 function applyRule(){
 
-// TODO: Restart running client matching vpn_unit
 	showLoading();
+
+	if (service_state) {
+		document.form.action_script.value = "restart_vpnclient"+vpn_unit;
+	}
 
 	tmp_value = "";
 
 	for (var i=1; i < 3; i++) {
 		if (i == vpn_unit) {
-			if (getRadioValue(document.form.vpn_server_x_eas) == 1)
+			if (getRadioValue(document.form.vpn_client_x_eas) == 1)
 				tmp_value += ""+i+",";
 		} else {
-			if (document.form.vpn_server_eas.value.indexOf(''+(i)) >= 0)
+			if (document.form.vpn_client_eas.value.indexOf(''+(i)) >= 0)
 				tmp_value += ""+i+","
 		}
 	}
-	document.form.vpn_server_eas.value = tmp_value;
+	document.form.vpn_client_eas.value = tmp_value;
 
 	document.form.submit();
 
@@ -251,12 +261,6 @@ function change_vpn_unit(val){
 						<td>
 							<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_service_enable"></div>
 							<script type="text/javascript">
-								if (vpn_unit == 1)
-									service_state = (<% sysinfo("pid.vpnclient1"); %> > 0);
-								else if (vpn_unit == 2)
-									service_state = (<% sysinfo("pid.vpnclient2"); %> > 0);
-								else
-									service_state = false;
 
 								$j('#radio_service_enable').iphoneSwitch(service_state,
 									 function() {

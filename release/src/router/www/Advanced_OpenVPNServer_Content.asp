@@ -30,6 +30,13 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 var vpn_clientlist_array ='<% nvram_get("vpn_server_ccd_val"); %>';
 vpn_unit = '<% nvram_get("vpn_server_unit"); %>';
 
+if (vpn_unit == 1)
+	var service_state = (<% sysinfo("pid.vpnserver1"); %> > 0);
+else if (vpn_unit == 2)
+	var service_state = (<% sysinfo("pid.vpnserver2"); %> > 0);
+else
+	var service_state = false;
+
 ciphersarray = [
 		["AES-128-CBC"],
 		["AES-128-CFB"],
@@ -80,8 +87,8 @@ function initial()
 	// Cipher list
 	free_options(document.form.vpn_server_cipher);
 	currentcipher = "<% nvram_get("vpn_server_cipher"); %>";
-	add_option(document.form.vpn_server_cipher, "default","Default",(currentcipher == "Default"));
-	add_option(document.form.vpn_server_cipher, "none","None",(currentcipher == "none"));
+	add_option(document.form.vpn_server_cipher, "Default","default",(currentcipher == "Default"));
+	add_option(document.form.vpn_server_cipher, "None","none",(currentcipher == "none"));
 
 	for(var i = 0; i < ciphersarray.length; i++){
 		add_option(document.form.vpn_server_cipher,
@@ -258,7 +265,9 @@ function applyRule(){
 
 	showLoading();
 
-// TODO: Restart running client matching vpn_unit
+	if (service_state) {
+		document.form.action_script.value = "restart_vpnserver"+vpn_unit;
+	}
 
 	var client_num = $('vpn_clientlist_table').rows.length;
 	var item_num = $('vpn_clientlist_table').rows[0].cells.length;
@@ -393,12 +402,6 @@ function change_vpn_unit(val){
 						<td>
 							<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_service_enable"></div>
 							<script type="text/javascript">
-								if (vpn_unit == 1)
-									service_state = (<% sysinfo("pid.vpnserver1"); %> > 0);
-								else if (vpn_unit == 2)
-									service_state = (<% sysinfo("pid.vpnserver2"); %> > 0);
-								else
-									service_state = false;
 
 								$j('#radio_service_enable').iphoneSwitch(service_state,
 									function() {
