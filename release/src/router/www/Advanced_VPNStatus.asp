@@ -25,6 +25,7 @@ server1pid = '<% sysinfo("pid.vpnserver1"); %>';
 server2pid = '<% sysinfo("pid.vpnserver2"); %>';
 client1pid = '<% sysinfo("pid.vpnclient1"); %>';
 client2pid = '<% sysinfo("pid.vpnclient2"); %>';
+pptpdpid = '<% sysinfo("pid.pptpd"); %>';
 
 
 function initial(){
@@ -50,17 +51,50 @@ function initial(){
 	else
 		$("client2_Block_Running").innerHTML = " - Stopped";
 
+	if (pptpdpid > 0)
+		$("pptp_Block_Running").innerHTML = " - Running";
+	else
+		$("pptp_Block_Running").innerHTML = " - Stopped";
+
 	parseStatus(document.form.status_server1.value, "server1_Block");
 	parseStatus(document.form.status_client1.value, "client1_Block");
 	parseStatus(document.form.status_server2.value, "server2_Block");
 	parseStatus(document.form.status_client2.value, "client2_Block");
-
+	parsePPTPClients();
 }
 
 
 function applyRule(){
 	showLoading();
 	document.form.submit();
+}
+
+
+function parsePPTPClients() {
+
+	text = document.form.status_pptp.value;
+
+	if ((text == "")) {
+		return;
+	}
+
+	var lines = text.split('\n');
+
+	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="' + routeTableHeaders.length + '">Connected Clients</td></tr></thead><tr>';
+	code += '<th>Username</th><th>Interface</th><th>Remote IP</th><th>Client IP</th>';
+
+	for (i = 0; text != '' && i < lines.length; ++i)
+	{
+		var done = false;
+
+		var fields = lines[i].split(' ');
+		if ( fields.length != 5 ) continue;
+
+		code +='<tr><td align="left">' + fields[4] + '</td><td align="left">' + fields[1] + '</td><td align="left">' + fields[2] + '</td><td align="left">' + fields[3] +'</td></tr>';
+	}
+	code +='</table>';
+
+	$('pptp_Block').innerHTML += code;
 }
 
 
@@ -164,9 +198,9 @@ function parseStatus(text, block){
 			for (j = 0; j < (clientTableEntries[i].length-1); ++j)
 			{
 				if (j == 0) {
-					code += '<td style="white-space:nowrap;" align="left">' + clientTableEntries[i][j] + '<br><span style="color: cyan; background: transparent;">' + clientTableEntries[i][clientTableEntries[i].length-1] +'</span></td>';
+					code += '<td style="white-space:nowrap; text-align:left;">' + clientTableEntries[i][j] + '<br><span style="color: cyan; background: transparent;">' + clientTableEntries[i][clientTableEntries[i].length-1] +'</span></td>';
 				} else {
-					code += '<td align="left">' + clientTableEntries[i][j] + '</td>';
+					code += '<td style="vertical-align:top; text-align:left;">' + clientTableEntries[i][j] + '</td>';
 				}
 			}
 			code += '</tr>';
@@ -195,7 +229,7 @@ function parseStatus(text, block){
 			code += '<tr>';
 			for (j = 0; j < routeTableEntries[i].length; ++j)
 			{
-				code += '<td style="white-space:nowrap;" align="left">' + routeTableEntries[i][j] + '</td>';
+				code += '<td style="white-space:nowrap; text-align:left;">' + routeTableEntries[i][j] + '</td>';
 			}
 			code += '</tr>';
 		}
@@ -270,6 +304,7 @@ function parseStatus(text, block){
 <input type="hidden" name="status_server2" value="<% sysinfo("vpnstatus.server.2"); %>">
 <input type="hidden" name="status_client1" value="<% sysinfo("vpnstatus.client.1"); %>">
 <input type="hidden" name="status_client2" value="<% sysinfo("vpnstatus.client.2"); %>">
+<input type="hidden" name="status_pptp" value="<% nvram_dump("pptp_connected",""); %>">
 
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -350,6 +385,22 @@ function parseStatus(text, block){
 					<tr>
 						<td style="border: none;">
 							<div id="client2_Block"></div>
+						</td>
+					</tr>
+
+				</table>
+
+				<br>
+
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+					<thead>
+						<tr>
+							<td>PPTP VPN Server<span id="pptp_Block_Running" style="background: transparent; color: inherit;"></span><span id="pptp_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
+						</tr>
+					</thead>
+					<tr>
+						<td style="border: none;">
+							<div id="pptp_Block"></div>
 						</td>
 					</tr>
 
