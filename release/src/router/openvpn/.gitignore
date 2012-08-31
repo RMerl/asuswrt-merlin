@@ -7,8 +7,9 @@ linux-ntfs-2.0.0
 openvpn
 autom4te.cache
 service-win32/Makefile
-service-win32/Makefile.in
-install-win32/Makefile.in
 install-win32/Makefile
 images/Makefile
-images/Makefile.in
+.conf
+aclocal.m4
+Makefile
+configure.h
