@@ -4,3 +4,11 @@ linux-ntfs-2.0.0
 *.o
 *.lo
 .deps
+openvpn
+autom4te.cache
+service-win32/Makefile
+service-win32/Makefile.in
+install-win32/Makefile.in
+install-win32/Makefile
+images/Makefile
+images/Makefile.in
