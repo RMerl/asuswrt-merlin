@@ -206,7 +206,8 @@ radius		1812/udp			# Radius
 radacct		1813/tcp			# Radius Accounting
 radacct		1813/udp			# Radius Accounting
 upnp		1900/udp
-nfsd		2049/udp
+nfs		2049/tcp
+nfs		2049/udp
 zephyr-srv	2102/tcp			# Zephyr server
 zephyr-srv	2102/udp			# Zephyr server
 zephyr-clt	2103/tcp			# Zephyr serv-hm connection
