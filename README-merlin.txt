@@ -59,6 +59,8 @@ Here is a list of features that Asuswrt-merlin brings over the original firmware
 - Disk spindown after user-configurable inactivity timeout
 - System info summary page
 - Wireless client IP and hostname on the Wireless Log page
+- OpenVPN client and server, based on code originally written by
+  Keith Moyer for Tomato (RT-N66U, RT-AC66U)
 
 
 
@@ -263,8 +265,16 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.3.178.16:
-   - FIXED: (RT-AC66U) Would crashe when accessing a LAN device through either 
+   - NEW: (RT-N66U, RT-AC66U) Implemented OpenVPN, based on code written by
+          Keith Moyer (from the Tomato project), and reused with
+          his permission.
+   - FIXED: (RT-AC66U) Would crash when accessing a LAN device through either 
             VPN or the NAT Loopback (GRO is now disabled for that device)
+   - FIXED: httpd would send malformed HTML entities when parsing nvram output.
+            (Asus bug).
+   - FIXED: dnsmasq was listening to all interfaces by default, allowing 
+            even dhcp requests to be serviced from the wan side if you
+            had the firewall disabled (Asus bug) (fixed by dev0id)
    - CHANGED: Removed power adjustments from the Performance page, as they
               are redundant, and not as reliable.
 
