@@ -2265,7 +2265,7 @@ static int ej_get_parameter(int eid, webs_t wp, int argc, char_t **argv){
 		}
 		else
 		{
-			ret += websWrite(wp, "&#%d", *c);
+			ret += websWrite(wp, "&#%d;", *c);
 			last_was_escaped = TRUE;
 		}
 	}//*/
