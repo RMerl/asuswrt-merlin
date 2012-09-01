@@ -406,7 +406,7 @@ ej_nvram_get(int eid, webs_t wp, int argc, char_t **argv)
 		    *c != '"' && *c != '&' && *c != '<' && *c != '>')
 			ret += websWrite(wp, "%c", *c);
 		else
-			ret += websWrite(wp, "&#%d;", *c);
+			ret += websWrite(wp, "&#%d", *c);
 	}
 
 	return ret;
@@ -430,7 +430,7 @@ ej_nvram_default_get(int eid, webs_t wp, int argc, char_t **argv)
 		    *c != '"' && *c != '&' && *c != '<' && *c != '>')
 			ret += websWrite(wp, "%c", *c);
 		else
-			ret += websWrite(wp, "&#%d;", *c);
+			ret += websWrite(wp, "&#%d", *c);
 	}
 
 	return ret;
@@ -458,7 +458,7 @@ ej_nvram_get_x(int eid, webs_t wp, int argc, char_t **argv)
 		    *c != '"' && *c != '&' && *c != '<' && *c != '>')
 			ret += websWrite(wp, "%c", *c);
 		else
-			ret += websWrite(wp, "&#%d;", *c);
+			ret += websWrite(wp, "&#%d", *c);
 	}
 
 	return ret;
@@ -482,7 +482,7 @@ ej_nvram_get_ddns(int eid, webs_t wp, int argc, char_t **argv)
 		    *c != '"' && *c != '&' && *c != '<' && *c != '>')
 			ret += websWrite(wp, "%c", *c);
 		else
-			ret += websWrite(wp, "&#%d;", *c);
+			ret += websWrite(wp, "&#%d", *c);
 	}
 	if (strcmp(name,"ddns_return_code")==0) {
 		if(!nvram_match("ddns_return_code", "ddns_query")) {
@@ -516,7 +516,7 @@ ej_nvram_get_f(int eid, webs_t wp, int argc, char_t **argv)
 		    *c != '"' && *c != '&' && *c != '<' && *c != '>')
 			ret += websWrite(wp, "%c", *c);
 		else
-			ret += websWrite(wp, "&#%d;", *c);
+			ret += websWrite(wp, "&#%d", *c);
 	}
 
 	return ret;
@@ -1075,7 +1075,7 @@ int webWriteNvram(webs_t wp, char *name)
 		    *c != '"' && *c != '&' && *c != '<' && *c != '>' && *c != '\\')
 			ret += websWrite(wp, "%c", *c);
 		else
-			ret += websWrite(wp, "&#%d;", *c);
+			ret += websWrite(wp, "&#%d", *c);
 	}
 
 	return ret;
@@ -2265,7 +2265,7 @@ static int ej_get_parameter(int eid, webs_t wp, int argc, char_t **argv){
 		}
 		else
 		{
-			ret += websWrite(wp, "&#%d;", *c);
+			ret += websWrite(wp, "&#%d", *c);
 			last_was_escaped = TRUE;
 		}
 	}//*/
