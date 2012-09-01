@@ -140,20 +140,20 @@ function update_visibility(){
 	ccd = getRadioValue(document.form.vpn_server_ccd);
 	dns = getRadioValue(document.form.vpn_server_x_dns);
 
-	showhide("server1_snnm", ((auth == "tls") && (iface == "tun")) ? 1 : 0);
-	showhide("server1_plan", ((auth == "tls") && (iface == "tun")) ? 1 : 0);
-	showhide("server1_local", ((auth == "secret") && (iface == "tun")) ? 1 : 0);
-	showhide("server1_ccd", (auth == "tls") ? 1 : 0);
+	showhide("server_snnm", ((auth == "tls") && (iface == "tun")) ? 1 : 0);
+	showhide("server_plan", ((auth == "tls") && (iface == "tun")) ? 1 : 0);
+	showhide("server_local", ((auth == "secret") && (iface == "tun")) ? 1 : 0);
+	showhide("server_ccd", (auth == "tls") ? 1 : 0);
 
-	showhide("server1_c2c", ccd);
-	showhide("server1_ccd_excl", ccd);
+	showhide("server_c2c", ccd);
+	showhide("server_ccd_excl", ccd);
 	showhide("vpn_client_table", ccd);
 	showhide("vpn_clientlist_Block", ccd);
 
-	showhide("server1_pdns", ((auth == "tls") && (dns == 1)) ? 1 : 0);
-	showhide("server1_dhcp",((auth == "tls") && (iface == "tap")) ? 1 : 0);
-	showhide("server1_range", (dhcp == 0) ? 1 : 0);
-	showhide("server1_custom_crypto_text", (auth == "custom") ? 1 : 0);
+	showhide("server_pdns", ((auth == "tls") && (dns == 1)) ? 1 : 0);
+	showhide("server_dhcp",((auth == "tls") && (iface == "tap")) ? 1 : 0);
+	showhide("server_range", (dhcp == 0) ? 1 : 0);
+	showhide("server_custom_crypto_text", (auth == "custom") ? 1 : 0);
 }
 
 
@@ -480,7 +480,7 @@ function change_vpn_unit(val){
 								<option value="secret" <% nvram_match("vpn_server_crypt","secret","selected"); %> >Static Key</option>
 								<option value="custom" <% nvram_match("vpn_server_crypt","custom","selected"); %> >Custom</option>
 							</select>
-							<span id="server1_custom_crypto_text">Must be manually configured.</span>
+							<span id="server_custom_crypto_text">Must be manually configured.</span>
 			   			</td>
 					</tr>
 
@@ -495,7 +495,7 @@ function change_vpn_unit(val){
 							</select>
 			   			</td>
 					</tr>
-					<tr id="server1_snnm">
+					<tr id="server_snnm">
 						<th>VPN Subnet / Netmask</th>
 						<td>
 							<input type="text" maxlength="15" class="input_15_table" name="vpn_server_sn" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server_sn"); %>">
@@ -503,15 +503,15 @@ function change_vpn_unit(val){
 						</td>
 					</tr>
 
-					<tr id="server1_dhcp">
+					<tr id="server_dhcp">
 						<th>Allocate from DHCP</th>
 						<td>
 							<input type="radio" name="vpn_server_dhcp" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_dhcp", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="vpn_server_dhcp" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server1_dhcp", "0", "checked"); %>><#checkbox_No#>
+							<input type="radio" name="vpn_server_dhcp" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_dhcp", "0", "checked"); %>><#checkbox_No#>
 						</td>
  					</tr>
 
-					<tr id="server1_range">
+					<tr id="server_range">
 						<th>Client Address Pool</th>
 						<td>
 							<input type="text" maxlength="15" class="input_15_table" name="vpn_server_r1" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server_r1"); %>">
@@ -519,7 +519,7 @@ function change_vpn_unit(val){
 						</td>
 					</tr>
 
-					<tr id="server1_local">
+					<tr id="server_local">
 						<th>Local/remote endpoint addresses</th>
 						<td>
 							<input type="text" maxlength="15" class="input_15_table" name="vpn_server_local" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_server_local"); %>">
@@ -542,7 +542,7 @@ function change_vpn_unit(val){
 						</td>
 					</tr>
 
-					<tr id="server1_plan">
+					<tr id="server_plan">
 						<th>Push LAN to clients</th>
 						<td>
 							<input type="radio" name="vpn_server_plan" class="input" value="1" <% nvram_match_x("", "vpn_server_plan", "1", "checked"); %>><#checkbox_Yes#>
@@ -567,7 +567,7 @@ function change_vpn_unit(val){
  					</tr>
 
 
-					<tr id="server1_pdns">
+					<tr id="server_pdns">
 						<th>Advertise DNS to clients</th>
 						<td>
 							<input type="radio" name="vpn_server_pdns" class="input" value="1" <% nvram_match_x("", "vpn_server_pdns", "1", "checked"); %>><#checkbox_Yes#>
@@ -603,7 +603,7 @@ function change_vpn_unit(val){
 						</td>
 					</tr>
 
-					<tr id="server1_ccd">
+					<tr id="server_ccd">
 						<th>Manage Client-Specific Options</th>
 						<td>
 							<input type="radio" name="vpn_server_ccd" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_ccd", "1", "checked"); %>><#checkbox_Yes#>
@@ -611,7 +611,7 @@ function change_vpn_unit(val){
 						</td>
  					</tr>
 
-					<tr id="server1_c2c">
+					<tr id="server_c2c">
 						<th>Allow Client &lt;-&gt; Client</th>
 						<td>
 							<input type="radio" name="vpn_server_c2c" class="input" value="1" <% nvram_match_x("", "vpn_server_c2c", "1", "checked"); %>><#checkbox_Yes#>
@@ -619,7 +619,7 @@ function change_vpn_unit(val){
 						</td>
 					</tr>
 
-					<tr id="server1_ccd_excl">
+					<tr id="server_ccd_excl">
 						<th>Allow only specified clients</th>
 						<td>
 							<input type="radio" name="vpn_server_ccd_excl" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_ccd_excl", "1", "checked"); %>><#checkbox_Yes#>
