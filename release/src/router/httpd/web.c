@@ -418,7 +418,7 @@ ej_nvram_get(int eid, webs_t wp, int argc, char_t **argv)
 */
 
 static int
-ej_getcert(int eid, webs_t wp, int argc, char_t **argv)
+ej_nvram_clean_get(int eid, webs_t wp, int argc, char_t **argv)
 {
         char *sid, *name, *c;
         int ret = 0;
@@ -7353,7 +7353,7 @@ struct ej_handler ej_handlers[] = {
         { "vpn_server_get_parameter", ej_vpn_server_get_parameter},
 	{ "vpn_client_get_parameter", ej_vpn_client_get_parameter},
 #endif
-	{ "getcert", ej_getcert},
+	{ "nvram_clean_get", ej_nvram_clean_get},
 	{ NULL, NULL }
 };
 

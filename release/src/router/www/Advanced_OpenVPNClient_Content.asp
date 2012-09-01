@@ -506,7 +506,7 @@ function change_vpn_unit(val){
 					<tr>
 						<th>Custom Configuration</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_client_custom" cols="55" maxlength="1024"><% nvram_get("vpn_client_custom"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_client_custom" cols="55" maxlength="1024"><% nvram_clean_get("vpn_client_custom"); %></textarea>
 						</td>
 					</tr>
 					</table>
