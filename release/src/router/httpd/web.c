@@ -413,6 +413,34 @@ ej_nvram_get(int eid, webs_t wp, int argc, char_t **argv)
 }
 
 
+/* This will return properly encoded HTML entities - required 
+   for retrieving stored certs/keys.
+*/
+
+static int
+ej_getcert(int eid, webs_t wp, int argc, char_t **argv)
+{
+        char *sid, *name, *c;
+        int ret = 0;
+//      char sid_dummy = "",
+
+        if (ejArgs(argc, argv, "%s", &name) < 1) {
+                websError(wp, 400, "Insufficient args\n");
+                return -1;
+        }
+
+        for (c = nvram_safe_get(name); *c; c++) {
+                if (isprint(*c) &&
+                    *c != '"' && *c != '&' && *c != '<' && *c != '>')
+                        ret += websWrite(wp, "%c", *c);
+                else
+                        ret += websWrite(wp, "&#%d;", *c);
+        }
+
+        return ret;
+}
+
+
 static int
 ej_nvram_default_get(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -7325,6 +7353,7 @@ struct ej_handler ej_handlers[] = {
         { "vpn_server_get_parameter", ej_vpn_server_get_parameter},
 	{ "vpn_client_get_parameter", ej_vpn_client_get_parameter},
 #endif
+	{ "getcert", ej_getcert},
 	{ NULL, NULL }
 };
 

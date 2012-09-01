@@ -913,7 +913,7 @@ function pullLANIPList(obj){
 					<tr>
 						<th>SSH Authentication key</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="sshd_authkeys" cols="55" maxlength="1024" onchange="this.value = this.value.replace(/[\r\n]+/g, '')"><% nvram_get("sshd_authkeys"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="sshd_authkeys" cols="55" maxlength="1024"><% getcert("sshd_authkeys"); %></textarea>
 							<span id="ssh_alert_msg"></span>
 						</td>
 				</tr>
