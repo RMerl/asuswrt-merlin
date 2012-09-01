@@ -112,12 +112,14 @@ function vpn_clientlist(){
 	if(vpn_clientlist_row.length == 1)
 		code +='<tr><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td>';
 	else{
-		for(var i = 1; i < vpn_clientlist_row.length; i++){
+		for (var i = 1; i < vpn_clientlist_row.length; i++){
 			code +='<tr id="row'+i+'">';
 			var vpn_clientlist_col = vpn_clientlist_row[i].split('&#62');
-			var wid=[36, 20, 20, 12];
-				for(var j = 0; j < vpn_clientlist_col.length; j++){
-					if (j == 3)
+			var wid=[0, 36, 20, 20, 12];
+
+				//skip field[0] as it contains "1" for "Enabled".
+				for (var j = 1; j < vpn_clientlist_col.length; j++){
+					if (j == 4)
 						code +='<td width="'+wid[j]+'%">'+ (vpn_clientlist_col[j] == 1 ? 'Yes' : 'No') +'</td>';
 					else
 						code +='<td width="'+wid[j]+'%">'+ vpn_clientlist_col[j] +'</td>';
@@ -127,7 +129,7 @@ function vpn_clientlist(){
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td>';
 		}
 	}
-  code +='</table>';
+	code +='</table>';
 	$("vpn_clientlist_Block").innerHTML = code;
 }
 
@@ -159,7 +161,7 @@ function update_visibility(){
 
 function addRow(obj, head){
 	if(head == 1)
-		vpn_clientlist_array += "&#60";
+		vpn_clientlist_array += "&#601&#62";
 	else
 		vpn_clientlist_array += "&#62";
 
@@ -231,7 +233,7 @@ function del_Row(r){
 	for(k=0; k<$('vpn_clientlist_table').rows.length; k++){
 		for(j=0; j<$('vpn_clientlist_table').rows[k].cells.length-1; j++){
 			if(j == 0)
-				vpn_clientlist_value += "&#60";
+				vpn_clientlist_value += "&#601&#62";
 			else
 				vpn_clientlist_value += "&#62";
 			vpn_clientlist_value += $('vpn_clientlist_table').rows[k].cells[j].innerHTML;
@@ -274,7 +276,9 @@ function applyRule(){
 	var tmp_value = "";
 
 	for(i=0; i<client_num; i++){
-		tmp_value += "<"
+
+		// Insert first field (1), which enables the client.
+		tmp_value += "<1>"
 		for(j=0; j<item_num-1; j++){
 
 			if (j == 3)
@@ -286,7 +290,7 @@ function applyRule(){
 				tmp_value += ">";
 		}
 	}
-	if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
+	if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<1>")
 		tmp_value = "";
 
 	document.form.vpn_server_ccd_val.value = tmp_value;
