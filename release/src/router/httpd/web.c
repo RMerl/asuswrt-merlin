@@ -1240,16 +1240,16 @@ ej_vpn_client_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
 
 
 //2008.08 magic {
-static char post_buf[10000] = { 0 };
-static char post_buf_backup[10000] = { 0 };
+static char post_buf[30000] = { 0 };
+static char post_buf_backup[30000] = { 0 };
 
 static void do_html_post_and_get(char *url, FILE *stream, int len, char *boundary){
 	char *query = NULL;
 	
 	init_cgi(NULL);
 	
-	memset(post_buf, 0, 10000);
-	memset(post_buf_backup, 0, 10000);
+	memset(post_buf, 0, 30000);
+	memset(post_buf_backup, 0, 30000);
 	
 	if (fgets(post_buf, MIN(len+1, sizeof(post_buf)), stream)){
 		len -= strlen(post_buf);
