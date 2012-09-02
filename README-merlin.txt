@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.178.16 (17-Aug-2012)
+Asuswrt-Merlin - build 3.0.0.3.178.16 (xx-Sept-2012)
 ====================================================
 
 About
@@ -60,7 +60,8 @@ Here is a list of features that Asuswrt-merlin brings over the original firmware
 - System info summary page
 - Wireless client IP and hostname on the Wireless Log page
 - OpenVPN client and server, based on code originally written by
-  Keith Moyer for Tomato (RT-N66U, RT-AC66U)
+  Keith Moyer for Tomato and reused with his 
+  permission. (RT-N66U, RT-AC66U)
 
 
 
@@ -252,6 +253,28 @@ might be generating background disk activity, preventing it from idling.
 
 
 
+* OpenVPN (client and swerver) *
+OpenVPN is an SSL-based VPN technology that is provided as a 
+secure alternative to the PPTP VPN already included by Asus.
+OpenVPN is far more secure and more flexible, however it is 
+not as easy to configure, and requires the installation of 
+a client software on your computer client.  The client 
+can be obtained through this download page:
+
+http://openvpn.net/index.php/open-source/downloads.html
+
+Explaining the details of OpenVPN are beyond the scope of this 
+documentation, and I am in no way an expert on OpenVPN.
+Fortunately, there is a lot of available documentation and 
+Howto guides out there.  I tried to stick to the same option 
+descriptions as used by Tomato, so about any guide written 
+for Tomato can easily be used to guide you on 
+Asuswrt-Merlin.  One such guide I recommend is this one:
+
+http://www.howtogeek.com/60774/connect-to-your-home-network-from-anywhere-with-openvpn-and-tomato/
+
+
+
 
 Source code
 -----------
@@ -266,17 +289,16 @@ History
 -------
 3.0.0.3.178.16:
    - NEW: (RT-N66U, RT-AC66U) Implemented OpenVPN, based on code written by
-          Keith Moyer (from the Tomato project), and reused with
-          his permission.
+          Keith Moyer (from the Tomato project).
    - FIXED: (RT-AC66U) Would crash when accessing a LAN device through either 
             VPN or the NAT Loopback (GRO is now disabled for that device)
-   - FIXED: httpd would send malformed HTML entities when parsing nvram output.
-            (Asus bug).
    - FIXED: dnsmasq was listening to all interfaces by default, allowing 
             even dhcp requests to be serviced from the wan side if you
             had the firewall disabled (Asus bug) (fixed by dev0id)
    - CHANGED: Removed power adjustments from the Performance page, as they
               are redundant, and not as reliable.
+   - CHANGED: (RT-N16) Disabled Dual WAN, as it exhibited many issues, and I 
+              am unable to work on them without an actual router.
 
 
 3.0.0.3.178.15:
