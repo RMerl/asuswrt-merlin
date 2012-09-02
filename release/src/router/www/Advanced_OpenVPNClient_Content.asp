@@ -315,7 +315,7 @@ function change_vpn_unit(val){
 					<tr>
 						<th>Server Address and Port</th>
 						<td>
-							<label>Address:</label><input type="text" maxlength="15" class="input_15_table" name="vpn_client_addr" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_client_addr"); %>">
+							<label>Address:</label><input type="text" maxlength="128" class="input_25_table" name="vpn_client_addr" value="<% nvram_get("vpn_client_addr"); %>">
 							<label style="margin-left: 4em;">Port:</label><input type="text" maxlength="5" class="input_6_table" name="vpn_client_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("vpn_client_port"); %>" >
 						</td>
 					</tr>
