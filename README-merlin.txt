@@ -253,7 +253,7 @@ might be generating background disk activity, preventing it from idling.
 
 
 
-* OpenVPN (client and swerver) *
+* OpenVPN (client and server) *
 OpenVPN is an SSL-based VPN technology that is provided as a 
 secure alternative to the PPTP VPN already included by Asus.
 OpenVPN is far more secure and more flexible, however it is 
