@@ -290,6 +290,7 @@ History
 3.0.0.3.178.16:
    - NEW: (RT-N66U, RT-AC66U) Implemented OpenVPN, based on code written by
           Keith Moyer (from the Tomato project).
+   - NEW: Added crontab command
    - FIXED: (RT-AC66U) Would crash when accessing a LAN device through either 
             VPN or the NAT Loopback (GRO is now disabled for that device)
    - FIXED: dnsmasq was listening to all interfaces by default, allowing 
