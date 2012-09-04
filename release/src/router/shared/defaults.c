@@ -953,7 +953,7 @@ struct nvram_tuple router_defaults[] = {
 #endif
 	{ "usb_automount", "1"},
 #ifdef LINUX26
-	{ "usb_idle_timeout", "900"},
+	{ "usb_idle_timeout", "0"},
 	{ "usb_idle_exclude", ""},
 #endif
 	{ "script_usbhotplug", ""},
