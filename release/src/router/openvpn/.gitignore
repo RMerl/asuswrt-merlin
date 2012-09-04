@@ -13,3 +13,4 @@ images/Makefile
 aclocal.m4
 Makefile
 configure.h
+autom4te.cache

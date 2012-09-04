@@ -1054,6 +1054,11 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 		s->max_cert_list=larg;
 		return(l);
 	case SSL_CTRL_SET_MTU:
+#ifndef OPENSSL_NO_DTLS1
+		if (larg < (long)dtls1_min_mtu())
+			return 0;
+#endif
+
 		if (SSL_version(s) == DTLS1_VERSION ||
 		    SSL_version(s) == DTLS1_BAD_VER)
 			{
@@ -1833,7 +1838,7 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 #endif
 	X509 *x = NULL;
 	EVP_PKEY *ecc_pkey = NULL;
-	int signature_nid = 0;
+	int signature_nid = 0, pk_nid = 0, md_nid = 0;
 
 	if (c == NULL) return;
 
@@ -1963,18 +1968,15 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 		    EVP_PKEY_bits(ecc_pkey) : 0;
 		EVP_PKEY_free(ecc_pkey);
 		if ((x->sig_alg) && (x->sig_alg->algorithm))
+			{
 			signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
+			OBJ_find_sigid_algs(signature_nid, &md_nid, &pk_nid);
+			}
 #ifndef OPENSSL_NO_ECDH
 		if (ecdh_ok)
 			{
-			const char *sig = OBJ_nid2ln(signature_nid);
-			if (sig == NULL)
-				{
-				ERR_clear_error();
-				sig = "unknown";
-				}
-				
-			if (strstr(sig, "WithRSA"))
+
+			if (pk_nid == NID_rsaEncryption || pk_nid == NID_rsa)
 				{
 				mask_k|=SSL_kECDHr;
 				mask_a|=SSL_aECDH;
@@ -1985,7 +1987,7 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 					}
 				}
 
-			if (signature_nid == NID_ecdsa_with_SHA1)
+			if (pk_nid == NID_X9_62_id_ecPublicKey)
 				{
 				mask_k|=SSL_kECDHe;
 				mask_a|=SSL_aECDH;
@@ -2039,7 +2041,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 	unsigned long alg_k, alg_a;
 	EVP_PKEY *pkey = NULL;
 	int keysize = 0;
-	int signature_nid = 0;
+	int signature_nid = 0, md_nid = 0, pk_nid = 0;
 
 	alg_k = cs->algorithm_mkey;
 	alg_a = cs->algorithm_auth;
@@ -2057,7 +2059,10 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 	/* This call populates the ex_flags field correctly */
 	X509_check_purpose(x, -1, 0);
 	if ((x->sig_alg) && (x->sig_alg->algorithm))
+		{
 		signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
+		OBJ_find_sigid_algs(signature_nid, &md_nid, &pk_nid);
+		}
 	if (alg_k & SSL_kECDHe || alg_k & SSL_kECDHr)
 		{
 		/* key usage, if present, must allow key agreement */
@@ -2069,7 +2074,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 		if (alg_k & SSL_kECDHe)
 			{
 			/* signature alg must be ECDSA */
-			if (signature_nid != NID_ecdsa_with_SHA1)
+			if (pk_nid != NID_X9_62_id_ecPublicKey)
 				{
 				SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG, SSL_R_ECC_CERT_SHOULD_HAVE_SHA1_SIGNATURE);
 				return 0;
@@ -2079,13 +2084,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 			{
 			/* signature alg must be RSA */
 
-			const char *sig = OBJ_nid2ln(signature_nid);
-			if (sig == NULL)
-				{
-				ERR_clear_error();
-				sig = "unknown";
-				}
-			if (strstr(sig, "WithRSA") == NULL)
+			if (pk_nid != NID_rsaEncryption && pk_nid != NID_rsa)
 				{
 				SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG, SSL_R_ECC_CERT_SHOULD_HAVE_RSA_SIGNATURE);
 				return 0;
@@ -3048,4 +3047,3 @@ IMPLEMENT_STACK_OF(SSL_CIPHER)
 IMPLEMENT_STACK_OF(SSL_COMP)
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER,
 				    ssl_cipher_id);
-

@@ -76,10 +76,16 @@
  * CertGetCertificateContextProperty. CERT_KEY_PROV_INFO_PROP_ID is
  * one of possible values you can pass to function in question. By
  * checking if it's defined we can see if wincrypt.h and accompanying
- * crypt32.lib are in shape. Yes, it's rather "weak" test and if
- * compilation fails, then re-configure with -DOPENSSL_NO_CAPIENG.
+ * crypt32.lib are in shape. The native MingW32 headers up to and
+ * including __W32API_VERSION 3.14 lack of struct DSSPUBKEY and the
+ * defines CERT_STORE_PROV_SYSTEM_A and CERT_STORE_READONLY_FLAG,
+ * so we check for these too and avoid compiling.
+ * Yes, it's rather "weak" test and if compilation fails,
+ * then re-configure with -DOPENSSL_NO_CAPIENG.
  */
-#ifdef CERT_KEY_PROV_INFO_PROP_ID
+#if defined(CERT_KEY_PROV_INFO_PROP_ID) && \
+    defined(CERT_STORE_PROV_SYSTEM_A) && \
+    defined(CERT_STORE_READONLY_FLAG)
 # define __COMPILE_CAPIENG
 #endif /* CERT_KEY_PROV_INFO_PROP_ID */
 #endif /* OPENSSL_NO_CAPIENG */
@@ -436,28 +442,36 @@ static int capi_init(ENGINE *e)
 	CAPI_CTX *ctx;
 	const RSA_METHOD *ossl_rsa_meth;
 	const DSA_METHOD *ossl_dsa_meth;
-	capi_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
-	cert_capi_idx = X509_get_ex_new_index(0, NULL, NULL, NULL, 0);
+
+	if (capi_idx < 0)
+		{
+		capi_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
+		if (capi_idx < 0)
+			goto memerr;
+
+		cert_capi_idx = X509_get_ex_new_index(0, NULL, NULL, NULL, 0);
+
+		/* Setup RSA_METHOD */
+		rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
+		ossl_rsa_meth = RSA_PKCS1_SSLeay();
+		capi_rsa_method.rsa_pub_enc = ossl_rsa_meth->rsa_pub_enc;
+		capi_rsa_method.rsa_pub_dec = ossl_rsa_meth->rsa_pub_dec;
+		capi_rsa_method.rsa_mod_exp = ossl_rsa_meth->rsa_mod_exp;
+		capi_rsa_method.bn_mod_exp = ossl_rsa_meth->bn_mod_exp;
+
+		/* Setup DSA Method */
+		dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
+		ossl_dsa_meth = DSA_OpenSSL();
+		capi_dsa_method.dsa_do_verify = ossl_dsa_meth->dsa_do_verify;
+		capi_dsa_method.dsa_mod_exp = ossl_dsa_meth->dsa_mod_exp;
+		capi_dsa_method.bn_mod_exp = ossl_dsa_meth->bn_mod_exp;
+		}
 
 	ctx = capi_ctx_new();
-	if (!ctx || (capi_idx < 0))
+	if (!ctx)
 		goto memerr;
 
 	ENGINE_set_ex_data(e, capi_idx, ctx);
-	/* Setup RSA_METHOD */
-	rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
-	ossl_rsa_meth = RSA_PKCS1_SSLeay();
-	capi_rsa_method.rsa_pub_enc = ossl_rsa_meth->rsa_pub_enc;
-	capi_rsa_method.rsa_pub_dec = ossl_rsa_meth->rsa_pub_dec;
-	capi_rsa_method.rsa_mod_exp = ossl_rsa_meth->rsa_mod_exp;
-	capi_rsa_method.bn_mod_exp = ossl_rsa_meth->bn_mod_exp;
-
-	/* Setup DSA Method */
-	dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
-	ossl_dsa_meth = DSA_OpenSSL();
-	capi_dsa_method.dsa_do_verify = ossl_dsa_meth->dsa_do_verify;
-	capi_dsa_method.dsa_mod_exp = ossl_dsa_meth->dsa_mod_exp;
-	capi_dsa_method.bn_mod_exp = ossl_dsa_meth->bn_mod_exp;
 
 #ifdef OPENSSL_CAPIENG_DIALOG
 	{
@@ -1149,6 +1163,7 @@ static int capi_list_containers(CAPI_CTX *ctx, BIO *out)
 		{
 		CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, CAPI_R_ENUMCONTAINERS_ERROR);
 		capi_addlasterror();
+		CryptReleaseContext(hprov, 0);
 		return 0;
 		}
 	CAPI_trace(ctx, "Got max container len %d\n", buflen);
@@ -1566,6 +1581,8 @@ static int capi_ctx_set_provname(CAPI_CTX *ctx, LPSTR pname, DWORD type, int che
 			}
 		CryptReleaseContext(hprov, 0);
 		}
+	if (ctx->cspname)
+		OPENSSL_free(ctx->cspname);
 	ctx->cspname = BUF_strdup(pname);
 	ctx->csptype = type;
 	return 1;
@@ -1575,9 +1592,12 @@ static int capi_ctx_set_provname_idx(CAPI_CTX *ctx, int idx)
 	{
 	LPSTR pname;
 	DWORD type;
+	int res;
 	if (capi_get_provname(ctx, &pname, &type, idx) != 1)
 		return 0;
-	return capi_ctx_set_provname(ctx, pname, type, 0);
+	res = capi_ctx_set_provname(ctx, pname, type, 0);
+	OPENSSL_free(pname);
+	return res;
 	}
 
 static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x)
@@ -1807,6 +1827,8 @@ static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 #else /* !__COMPILE_CAPIENG */
 #include <openssl/engine.h>
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE
+OPENSSL_EXPORT
+int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
 OPENSSL_EXPORT
 int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { return 0; }
 IMPLEMENT_DYNAMIC_CHECK_FN()

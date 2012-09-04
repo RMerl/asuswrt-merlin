@@ -62,3 +62,4 @@ libssl.so.1.0.0
 openssl.pc
 ssl/lib
 stamp-h1
+apps/progs.h
