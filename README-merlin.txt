@@ -296,6 +296,7 @@ History
    - FIXED: dnsmasq was listening to all interfaces by default, allowing 
             even dhcp requests to be serviced from the wan side if you
             had the firewall disabled (Asus bug) (fixed by dev0id)
+   - FIXED: Default disk idle spindown now set to 0 (disabled).
    - CHANGED: Upgraded openssl to 1.0.0j.
    - CHANGED: Included fully working openssl command (show allow to
               create keypairs and certs now).
