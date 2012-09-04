@@ -296,6 +296,9 @@ History
    - FIXED: dnsmasq was listening to all interfaces by default, allowing 
             even dhcp requests to be serviced from the wan side if you
             had the firewall disabled (Asus bug) (fixed by dev0id)
+   - CHANGED: Upgraded openssl to 1.0.0j.
+   - CHANGED: Included fully working openssl command (show allow to
+              create keypairs and certs now).
    - CHANGED: Removed power adjustments from the Performance page, as they
               are redundant, and not as reliable.
    - CHANGED: (RT-N16) Disabled Dual WAN, as it exhibited many issues, and I 
