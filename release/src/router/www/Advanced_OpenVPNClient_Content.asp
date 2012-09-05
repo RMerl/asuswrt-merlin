@@ -450,7 +450,7 @@ function change_vpn_unit(val){
 					<tr id="client_adns">
 						<th>Accept DNS Configuration</th>
 						<td>
-			        		<select name="vpn_client_comp" class="input_option">
+			        		<select name="vpn_client_adns" class="input_option">
 								<option value="0" <% nvram_match("vpn_client_adns","0","selected"); %> >Disabled</option>
 								<option value="1" <% nvram_match("vpn_client_adns","1","selected"); %> >Relaxed</option>
 								<option value="2" <% nvram_match("vpn_client_adns","2","selected"); %> >Strict</option>
