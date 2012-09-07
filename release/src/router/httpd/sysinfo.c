@@ -82,12 +82,12 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
 	strcpy(result,"None");
 
-        if (ejArgs(argc, argv, "%s", &type) < 1) {
-                websError(wp, 400, "Insufficient args\n");
-                return retval;
-        }
+	if (ejArgs(argc, argv, "%s", &type) < 1) {
+		websError(wp, 400, "Insufficient args\n");
+		return retval;
+	}
 
-        if (type) {
+	if (type) {
 		if (strcmp(type,"cpu.model") == 0) {
 			char *buffer = read_whole_file("/proc/cpuinfo");
 
@@ -180,7 +180,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 		} else if(strcmp(type,"conn.active") == 0) {
 			char buf[256];
 			FILE* fp;
-			unsigned int established = 0; 
+			unsigned int established = 0;
 
 			fp = fopen("/proc/net/nf_conntrack", "r");
 			if (fp) {
@@ -231,6 +231,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					strncpy(result, tmp+1, sizeof result);
 				else
 					strncpy(result, buffer, sizeof result);
+
 				free(buffer);
 				unlink("/tmp/output.txt");
 			}
@@ -246,7 +247,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			int num = 0;
 			char service[10], buf[256];
 
-                        sscanf(type,"vpnstatus.%9[^.].%d", service, &num);
+			sscanf(type,"vpnstatus.%9[^.].%d", service, &num);
 
 			if ( strlen(service) && (num > 0) )
 			{
@@ -267,7 +268,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				}
 			}
 
-                } else {
+		} else {
 			strcpy(result,"Not implemented");
 		}
 
@@ -306,46 +307,45 @@ unsigned int get_phy_temperature(int radio)
 
 unsigned int get_wifi_clients(int radio, int querytype)
 {
-        char *name;
-        struct maclist *clientlist;
-        int max_sta_count, maclist_size;
+	char *name;
+	struct maclist *clientlist;
+	int max_sta_count, maclist_size;
 	int val, count = 0;
 
-        if (radio == 2) {
-                name = "eth1";
-        } else if (radio == 5) {
-                name = "eth2";
-        } else {
-                return 0;
-        }
+	if (radio == 2) {
+		name = "eth1";
+	} else if (radio == 5) {
+		name = "eth2";
+	} else {
+		return 0;
+	}
 
 	wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
 	if (val == 1)
 		return -1;	// Radio is disabled
 
+	/* buffers and length */
+	max_sta_count = 128;
+	maclist_size = sizeof(clientlist->count) + max_sta_count * sizeof(struct ether_addr);
+	clientlist = malloc(maclist_size);
 
-       /* buffers and length */
-        max_sta_count = 128;
-        maclist_size = sizeof(clientlist->count) + max_sta_count * sizeof(struct ether_addr);
-        clientlist = malloc(maclist_size);
-
-        if (!clientlist)
-                return 0;
+	if (!clientlist)
+		return 0;
 
 	if (querytype == SI_WL_QUERY_AUTHE) {
-	        strcpy((char*)clientlist, "authe_sta_list");
-        	if (wl_ioctl(name, WLC_GET_VAR, clientlist, maclist_size))
-                	goto exit;
+		strcpy((char*)clientlist, "authe_sta_list");
+		if (wl_ioctl(name, WLC_GET_VAR, clientlist, maclist_size))
+			goto exit;
 
 	} else if (querytype == SI_WL_QUERY_AUTHO) {
-	        strcpy((char*)clientlist, "autho_sta_list");
-        	if (wl_ioctl(name, WLC_GET_VAR, clientlist, maclist_size))
-                	goto exit;
+		strcpy((char*)clientlist, "autho_sta_list");
+		if (wl_ioctl(name, WLC_GET_VAR, clientlist, maclist_size))
+			goto exit;
 
 	} else if (querytype == SI_WL_QUERY_ASSOC) {
-	        clientlist->count = max_sta_count;
-        	if (wl_ioctl(name, WLC_GET_ASSOCLIST, clientlist, maclist_size))
-                	goto exit;
+		clientlist->count = max_sta_count;
+		if (wl_ioctl(name, WLC_GET_ASSOCLIST, clientlist, maclist_size))
+			goto exit;
 	} else {
 		goto exit;
 	}
@@ -353,7 +353,7 @@ unsigned int get_wifi_clients(int radio, int querytype)
 	count = clientlist->count;
 
 exit:
-        free(clientlist);
+	free(clientlist);
 	return count;
 }
 
