@@ -1703,6 +1703,8 @@ openvpn-install: openvpn
 	install -D openvpn/openvpn $(INSTALLDIR)/openvpn/usr/sbin/openvpn
 	$(STRIP) -s $(INSTALLDIR)/openvpn/usr/sbin/openvpn
 	chmod 0500 $(INSTALLDIR)/openvpn/usr/sbin/openvpn
+	@mkdir -p $(TARGETDIR)/rom/easy-rsa
+	install -m 0644 openvpn/easy-rsa/2.0/* $(TARGETDIR)/rom/easy-rsa
 
 sdparm-1.02/stamp-h1:
 	cd $(TOP)/sdparm-1.02 && $(CONFIGURE) --host=mips --prefix=$(INSTALLDIR)/sdparm-1.02 CC=mipsel-uclibc-gcc STRIP=mipsel-uclibc-strip AR=mipsel-uclibc-ar LD=mipsel-uclibc-ld NM=mipsel-uclibc-nm RANLIB=mipsel-uclibc-ranlib

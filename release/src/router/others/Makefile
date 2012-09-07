@@ -31,4 +31,10 @@ endif
 # Display active connections
 	install -m 0700 netstat-nat.sh $(INSTALLDIR)/usr/sbin/
 
+# Easy-rsa scripts (for OpenVPN)
+
+ifeq ($(RTCONFIG_OPENVPN),y)
+	install -m 0700 setuprsa.sh $(INSTALLDIR)/usr/sbin
+endif
+
 clean:
