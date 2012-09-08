@@ -183,7 +183,7 @@ function showwol_list(){
 			code +='<tr id="row'+i+'">';
 			var wol_list_col = wol_list_row[i].split('&#62');
 				for(var j = 0; j < wol_list_col.length; j++){
-					code +='<td width="35%">'+ wol_list_col[j] +'</a></td>';
+					code +='<td width="35%">'+ wol_list_col[j] +'</td>';
 				}
 				code +='<td width="10%"><a class="wol_entry" href="#" onclick="setTargetMAC(\''+wol_list_col[0]+'\');">Wake</a></td>';
 				code +='<td width="20%"><!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->';
