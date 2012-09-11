@@ -1,0 +1,50 @@
+===
+CGI
+===
+
+---------------
+Module: mod_cgi
+---------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  The cgi module provides a CGI-conforming interface.
+
+.. meta::
+  :keywords: lighttpd, cgi
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+CGI programs allow you to enhance the functionality of the server in a very
+straight and simple way..
+
+Options
+=======
+
+cgi.assign
+
+  file-extensions that are handled by a CGI program
+
+  e.g.: ::
+
+    cgi.assign = ( ".pl"  => "/usr/bin/perl",
+                   ".cgi" => "/usr/bin/perl" )
+
+Examples
+========
+
+To setup a executable which doesn't need the help of a external program you
+just don't specify a handler for the extension. ::
+
+  cgi.assign = ( ".sh" => "" )
+
+If the file has no extension keep in mind that lighttpd matches not the
+extension itself but the right part of the URL: ::
+
+  cgi.assign = ( "/testfile" => "" )

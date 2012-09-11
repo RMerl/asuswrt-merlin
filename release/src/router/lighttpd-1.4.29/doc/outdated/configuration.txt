@@ -1,0 +1,532 @@
+==================
+Configuration File
+==================
+
+------------
+Module: core
+------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  the layout of the configuration file
+
+.. meta::
+  :keywords: lighttpd, configuration
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+Basic Syntax
+------------
+
+A BNF like notation: ::
+
+  option   : NAME = VALUE
+  merge    : NAME += VALUE
+  NAME     : modulename.key
+  VALUE    : ( <string> | <integer> | <boolean> | <array> | VALUE [ + VALUE ]*)
+  <string> : "text"
+  <integer>: digit*
+  <boolean>: ( "enable" | "disable" )
+  <array>  : "(" [ <string> "=>" ] <value> [, [ <string> "=>" ] <value> ]* ")"
+  INCLUDE  : "include" VALUE
+  INCLUDE_SHELL : "include_shell" STRING_VALUE
+
+Example
+-------
+
+::
+
+  # default document-root
+  server.document-root = "/var/www/example.org/pages/"
+
+  # TCP port
+  server.port = 80
+
+  # selecting modules
+  server.modules = ( "mod_access", "mod_rewrite" )
+
+  # variables, computed when config is read.
+  var.mymodule = "foo"
+  server.modules += ( "mod_" + var.mymodule )
+  # var.PID is initialised to the pid of lighttpd before config is parsed
+
+  # include, relative to dirname of main config file
+  include "mime.types.conf"
+
+  # read configuration from output of a command
+  include_shell "/usr/local/bin/confmimetype /etc/mime.types"
+
+
+Conditional Configuration
+=========================
+
+Most options can be configured conditionally by using the following syntax
+(including nesting).
+
+::
+
+  <field> <operator> <value> {
+    ...
+    <field> <operator> <value> {
+      ... nesting: match only when parent match
+    }
+  }
+  else <field> <operator> <value> {
+    ... the "else if" block
+  }
+
+where <field> is one of one of the following:
+
+$HTTP["cookie"]
+  match on cookie
+$HTTP["scheme"]
+  match on scheme
+$HTTP["host"]
+  match on host
+$HTTP["useragent"]
+$HTTP["user-agent"]
+  match on useragent
+$HTTP["referer"]
+  match on referer
+$HTTP["method"]
+  math on the http method
+$HTTP["url"]
+  match on url
+$HTTP["query-string"]
+  match on the (not decoded) query-string
+$HTTP["remoteip"]
+$HTTP["remote-ip"]
+  match on the remote IP or a remote Network
+$HTTP["language"]
+  match on the Accept-Language header
+$SERVER["socket"]
+  match on socket. Value must be on the format "ip:port" where ip is an IP
+  address and port a port number. Only equal match (==) is supported.
+  It also binds the daemon to this socket. Use this if you want to do IP/port-
+  based virtual hosts.
+
+<operator> is one of:
+
+==
+  string equal match
+!=
+  string not equal match
+=~
+  perl style regular expression match
+!~
+  perl style regular expression not match
+
+and <value> is either a quoted ("") literal string or regular expression.
+
+
+Example
+-------
+
+::
+
+  # disable directory-listings for /download/*
+  dir-listing.activate = "enable"
+  $HTTP["url"] =~ "^/download/" {
+    dir-listing.activate = "disable"
+  }
+
+  # handish virtual hosting
+  # map all domains of a top-level-domain to a single document-root
+  $HTTP["host"] =~ "(^|\.)example\.org$" {
+    server.document-root = "/var/www/htdocs/example.org/pages/"
+  }
+
+  # multiple sockets
+  $SERVER["socket"] == "127.0.0.1:81" {
+    server.document-root = "..."
+  }
+
+  $SERVER["socket"] == "127.0.0.1:443" {
+    ssl.pemfile = "/var/www/certs/localhost.pem"
+    ssl.engine = "enable"
+
+    server.document-root = "/var/www/htdocs/secure.example.org/pages/"
+  }
+
+  # deny access for all googlebot
+  $HTTP["useragent"] =~ "Google" {
+    url.access-deny = ( "" )
+  }
+
+  # deny access for all image stealers
+  $HTTP["referer"] !~ "^($|http://www\.example\.org)" {
+    url.access-deny = ( ".jpg", ".jpeg", ".png" )
+  }
+
+  # deny the access to www.example.org to all user which
+  # are not in the 10.0.0.0/8 network
+  $HTTP["host"] == "www.example.org" {
+    $HTTP["remoteip"] != "10.0.0.0/8" {
+     url.access-deny = ( "" )
+    }
+  }
+
+Using variables
+===============
+
+You can set your own variables in the configuration to simplify your config.
+::
+
+  var.basedir = "/home/www/servers/"
+  $HTTP["host"] == "www.example.org" {
+     server.name = "www.example.org"
+     include "incl-base.conf"
+  }
+
+  in incl-base.conf:
+  server.document-root = basedir + server.name + "/pages/"
+  accesslog.filename   = basedir + server.name + "/logs/access.log"
+
+You can also use environement variables or the default variables var.PID and
+var.CWD: ::
+
+  var.basedir = env.LIGHTTPDBASE
+
+  $HTTP["host"] == "www.example.org" {
+     server.name = "www.example.org"
+     include "incl-base.conf"
+     include "incl-fastcgi.conf"
+  }
+
+  in incl-fastcgi.conf:
+  fastcgi.server = ( ... => ((
+     "socket" => basedir + server.name + "/tmp/fastcgi-" + PID + ".sock"
+  )) )
+
+Or like the lighttpd script for rails does:
+
+  var.basedir = var.CWD
+
+  server.document-root = basedir + "/public/"
+
+Global context
+==============
+
+::
+
+  global {
+    ...
+  }
+
+You don't need it in the main configuration file. But you might have
+difficulty setting server wide configuration inside a included-file from
+conditionals.
+
+Example
+-------
+
+::
+
+  in lighttpd.conf:
+  server.modules = ()
+  $HTTP["host"] == "www.example.org" {
+    include "incl-php.conf"
+  }
+
+  in incl-php.conf:
+  global {
+    server.modules += ("mod_fastcgi")
+    static-file.exclude-extensions += (".php")
+  }
+  fastcgi.server = "..."
+
+Options
+=======
+
+server module
+-------------
+
+main sections
+`````````````
+
+server.document-root
+  document-root of the webserver
+
+  This variable has the specified as it will be used for all requests
+  without a Host: header and for all with a know hostname which you
+  might have specified with one of the above conditionals.
+
+  Default: no default, required
+
+server.bind
+  IP address, hostname or absolute path to the unix-domain socket the server
+  listen on.
+
+  Default: bind to all interfaces
+
+  Example: ::
+
+    server.bind = "127.0.0.1"
+    server.bind = "www.example.org"
+    server.bind = "/tmp/lighttpd.socket"
+
+server.port
+  tcp-port to bind the server to
+
+.. note:: port belows 1024 require root-permissions
+
+  Default: 80 (443 if ssl is enabled)
+
+server.use-ipv6
+  bind to the IPv6 socket
+
+server.defer-accept
+  set TCP_DEFER_ACCEPT to the specified value on the socket if the value is > 0
+  and TCP_DEFER_ACCEPT is available on the platform (linux2.4+)
+
+  default: 0
+
+server.tag
+  set the string returned by the Server: response header
+
+  Default: lighttpd <current-version>
+
+server.errorlog
+  pathname of the error-log
+
+  Default: either STDERR or ``server.errorlog-use-syslog``
+
+server.errorlog-use-syslog
+  send errorlog to syslog
+
+  Default: disabled
+
+server.chroot
+  root-directory of the server
+
+  NOTE: requires root-permissions
+
+server.username
+  username used to run the server
+
+  NOTE: requires root-permissions
+
+server.groupname
+  groupname used to run the server
+
+  NOTE: requires root-permissions
+
+server.follow-symlink
+  allow to follow-symlinks
+
+  Default: enabled
+
+index-file.names
+  list of files to search for if a directory is requested
+  e.g.: ::
+
+    index-file.names          = ( "index.php", "index.html",
+                                  "index.htm", "default.htm" )
+
+  if a name starts with slash this file will be used a index generator
+  for all directories.
+
+server.modules
+  modules to load
+
+.. note:: the order of the modules is important.
+
+  The modules are executed in the order as they are specified. Loading
+  mod_auth AFTER mod_fastcgi might disable authentication for fastcgi
+  backends (if check-local is disabled).
+
+  As auth should be done first, move it before all executing modules (like
+  proxy, fastcgi, scgi and cgi).
+
+  rewrites, redirects and access should be first, followed by auth and
+  the docroot plugins.
+
+  Afterwards the external handlers like fastcgi, cgi, scgi and proxy and
+  at the bottom the post-processing plugins like mod_accesslog.
+
+  e.g.: ::
+
+    server.modules          = ( "mod_rewrite",
+                                "mod_redirect",
+				"mod_alias",
+			        "mod_access",
+				"mod_auth",
+                                "mod_status",
+				"mod_simple_vhost",
+				"mod_evhost",
+				"mod_userdir",
+				"mod_secdownload",
+				"mod_fastcgi",
+				"mod_proxy",
+				"mod_cgi",
+                                "mod_ssi",
+				"mod_compress",
+                                "mod_usertrack",
+				"mod_expire",
+ 				"mod_rrdtool",
+				"mod_accesslog" )
+
+  Starting with lighttpd 1.4.0 three default modules are loaded automaticly:
+
+  - mod_indexfile
+  - mod_dirlisting
+  - mod_staticfile
+
+server.event-handler
+  set the event handler
+
+  Default: "poll"
+
+server.pid-file
+  set the name of the .pid-file where the PID of the server should be placed.
+  This option is used in combination with a start-script and the daemon mode
+
+  Default: not set
+
+server.max-request-size
+  maximum size in kbytes of the request (header + body). Only applies to POST
+  requests.
+
+  Default: 2097152 (2GB)
+
+server.max-worker
+  number of worker processes to spawn. This is usually only needed on servers
+  which are fairly loaded and the network handler calls delay often (e.g. new
+  requests are not handled instantaneously).
+
+  Default: 0
+
+server.name
+  name of the server/virtual server
+
+  Default: hostname
+
+server.max-keep-alive-requests
+  maximum number of request within a keep-alive session before the server
+  terminates the connection
+
+  Default: 128
+
+server.max-keep-alive-idle
+  maximum number of seconds until a idling keep-alive connection is droped
+
+  Default: 30
+
+server.max-read-idle
+  maximum number of seconds until a waiting, non keep-alive read times out
+  and closes the connection
+
+  Default: 60
+
+server.max-write-idle
+  maximum number of seconds until a waiting write call times out and closes
+  the connection
+
+  Default: 360
+
+server.error-handler-404
+  uri to call if the requested file results in a 404
+
+  Default: not set
+
+  Example: ::
+
+    server.error-handler-404 = "/error-404.php"
+
+server.protocol-http11
+  defines if HTTP/1.1 is allowed or not.
+
+  Default: enabled
+
+server.range-requests
+  defines if range requests are allowed or not.
+
+  Default: enabled
+
+
+SSL engine
+``````````
+
+ssl.pemfile
+  path to the PEM file for SSL support
+
+debugging
+`````````
+
+debug.dump-unknown-headers
+  enables listing of internally unhandled HTTP-headers
+
+  e.g. ::
+
+    debug.dump-unknown-headers = "enable"
+
+mimetypes
+`````````
+
+mimetype.assign
+  list of known mimetype mappings
+  NOTE: if no mapping is given "application/octet-stream" is used
+
+  e.g.: ::
+
+    mimetype.assign   = ( ".png"  => "image/png",
+                          ".jpg"  => "image/jpeg",
+                          ".jpeg" => "image/jpeg",
+			  ".html" => "text/html",
+  			  ".txt"  => "text/plain" )
+
+  The list is compared top down and the first match is taken. This is
+  important if you have matches like: ::
+
+                          ".tar.gz" => "application/x-tgz",
+			  ".gz" => "application/x-gzip",
+
+  If you want to set another default mimetype use: ::
+
+                          ...,
+                          "" => "text/plain" )
+
+  as the last entry in the list.
+
+mimetype.use-xattr
+  If available, use the XFS-style extended attribute interface to
+  retrieve the "Content-Type" attribute on each file, and use that as the
+  mime type. If it's not defined or not available, fall back to the
+  mimetype.assign assignment.
+
+  e.g.: ::
+
+    mimetype.use-xattr = "enable"
+
+    on shell use:
+
+    $ attr -s Content-Type -V image/svg svgfile.svg
+
+    or
+
+    $ attr -s Content-Type -V text/html indexfile
+
+
+debugging
+`````````
+
+debug.log-request-header
+  default: disabled
+
+debug.log-response-header
+  default: disabled
+
+debug.log-file-not-found
+  default: disabled
+
+debug.log-request-handling
+  default: disabled
+
+debug.log-ssl-noise
+  default: disabled

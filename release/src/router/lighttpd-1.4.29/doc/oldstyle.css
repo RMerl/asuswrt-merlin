@@ -1,0 +1,25 @@
+table {
+	border: 1px solid black;
+	padding: 1px;
+}
+th {
+	background-color: black;
+	border: 1px solid white;
+	color: white;
+	padding-right: 2px;
+	padding-left: 2px;
+}
+td {
+	background-color: #f0f0f0;
+	border: 1px solid white;
+	padding-right: 2px;
+	padding-left: 2px;
+}
+td.s {
+	background-color: #f0f0f0;
+	text-align: right;
+	padding-left: 14px;
+}
+div.foot {
+	margin-top: 4px;
+}

@@ -1,0 +1,46 @@
+========================
+Enhanced Virtual-Hosting
+========================
+
+------------------
+Module: mod_evhost
+------------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  virtual hosting
+
+.. meta::
+  :keywords: lighttpd, virtual hosting
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+mod_evhost builds the document-root based on a pattern which contains
+wildcards. Those wildcards can represent parts if the submitted hostname
+
+
+::
+
+  %% => % sign
+  %0 => domain name + tld
+  %1 => tld
+  %2 => domain name without tld
+  %3 => subdomain 1 name
+  %4 => subdomain 2 name
+  %_ => the complete hostname (without port info)
+
+  evhost.path-pattern = "/home/www/servers/%3/pages/"
+
+Options
+=======
+
+evhost.path-pattern
+  pattern with wildcards to be replace to build a documentroot
+
+

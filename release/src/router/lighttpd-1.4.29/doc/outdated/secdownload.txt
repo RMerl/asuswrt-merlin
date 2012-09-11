@@ -1,0 +1,147 @@
+===========================
+Secure and Fast Downloading
+===========================
+
+-----------------------
+Module: mod_secdownload
+-----------------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  authenticated file requests and a countermeasure against
+  deep-linking can be achieved easily by using mod_secdownload
+
+.. meta::
+  :keywords: lighttpd, secure, fast, downloads
+
+.. contents:: Table of Contents
+
+Options
+=======
+
+::
+
+  secdownload.secret        = <string>
+  secdownload.document-root = <string>
+  secdownload.uri-prefix    = <string>  (default: /)
+  secdownload.timeout       = <short>   (default: 60 seconds)
+
+Description
+===========
+
+there are multiple ways to handle secured download mechanisms:
+
+1. use the webserver and the internal HTTP authentication
+2. use the application to authenticate and send the file
+   through the application
+
+Both ways have limitations:
+
+webserver:
+
+- ``+`` fast download
+- ``+`` no additional system load
+- ``-`` inflexible authentication handling
+
+application:
+
+- ``+`` integrated into the overall layout
+- ``+`` very flexible permission management
+- ``-`` the download occupies an application thread/process
+
+A simple way to combine the two ways could be:
+
+1. app authenticates user and checks permissions to
+   download the file.
+2. app redirects user to the file accessable by the webserver
+   for further downloading.
+3. the webserver transfers the file to the user.
+
+As the webserver doesn't know anything about the permissions
+used in the app, the resulting URL would be available to every
+user who knows the URL.
+
+mod_secdownload removes this problem by introducing a way to
+authenticate a URL for a specified time. The application has
+to generate a token and a timestamp which are checked by the
+webserver before it allows the file to be downloaded by the
+webserver.
+
+The generated URL has to have the format:
+
+<uri-prefix><token>/<timestamp-in-hex><rel-path>
+
+<token> is an MD5 of
+
+1. a secret string (user supplied)
+2. <rel-path> (starts with /)
+3. <timestamp-in-hex>
+
+
+As you can see, the token is not bound to the user at all. The
+only limiting factor is the timestamp which is used to
+invalidate the URL after a given timeout (secdownload.timeout).
+
+.. Note::
+  Be sure to choose a another secret than the one used in the
+  examples, as this is the only part of the token that is not
+  known to the user.
+
+
+
+If the user tries to fake the URL by choosing a random token,
+status 403 'Forbidden' will be sent out.
+
+If the timeout is reached, status 408 'Request Timeout' will be
+sent. (This does not really conform to the standard, but should
+do the trick).
+
+If token and timeout are valid, the <rel-path> is appended to
+the configured (secdownload.document-root) and passed to the
+normal internal file transfer functionality. This might lead to
+status 200 or 404.
+
+Example
+=======
+
+Application
+-----------
+
+Your application has to generate the correct URLs. The following sample
+code for PHP should be easily adaptable to any other language: ::
+
+  <?php
+
+  $secret = "verysecret";
+  $uri_prefix = "/dl/";
+
+  # filename
+  $f = "/secret-file.txt";
+
+  # current timestamp
+  $t = time();
+
+  $t_hex = sprintf("%08x", $t);
+  $m = md5($secret.$f.$t_hex);
+
+  # generate link
+  printf('<a href="%s%s/%s%s">%s</a>',
+         $uri_prefix, $m, $t_hex, $f, $f);
+  ?>
+
+Webserver
+---------
+
+The server has to be configured in the same way. The URI prefix and
+secret have to match: ::
+
+  server.modules = ( ..., "mod_secdownload", ... )
+
+  secdownload.secret          = "verysecret"
+  secdownload.document-root   = "/home/www/servers/download-area/"
+  secdownload.uri-prefix      = "/dl/"
+  secdownload.timeout         = 120
+

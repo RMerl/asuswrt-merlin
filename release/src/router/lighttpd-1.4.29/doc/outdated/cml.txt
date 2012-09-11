@@ -1,0 +1,261 @@
+=========================
+CML (Cache Meta Language)
+=========================
+
+---------------
+Module: mod_cml
+---------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  CML is a Meta language to describe the dependencies of a page at one side and building a page from its fragments on the other side using LUA.
+
+.. meta::
+  :keywords: lighttpd, cml, lua
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+CML (Cache Meta Language) wants to solves several problems:
+
+ * dynamic content needs caching to perform
+ * checking if the content is dirty inside of the application is usually more expensive than sending out the cached data
+ * a dynamic page is usually fragmented and the fragments have different livetimes
+ * the different fragements can be cached independently
+
+Cache Decision
+--------------
+
+A simple example should show how to a content caching the very simple way in PHP.
+
+jan.kneschke.de has a very simple design:
+
+ * the layout is taken from a template in templates/jk.tmpl
+ * the menu is generated from a menu.csv file
+ * the content is coming from files on the local directory named content-1, content-2 and so on
+
+The page content is static as long non of the those tree items changes. A change in the layout
+is affecting all pages, a change of menu.csv too, a change of content-x file only affects the
+cached page itself.
+
+If we model this in PHP we get: ::
+
+  <?php
+
+  ## ... fetch all content-* files into $content
+  $cachefile = "/cache/dir/to/cached-content";
+
+  function is_cachable($content, $cachefile) {
+    if (!file_exists($cachefile)) {
+      return 0;
+    } else {
+      $cachemtime = filemtime($cachefile);
+    }
+
+    foreach($content as $k => $v) {
+      if (isset($v["file"]) &&
+          filemtime($v["file"]) > $cachemtime) {
+        return 0;
+      }
+    }
+
+    if (filemtime("/menu/menu.csv") > $cachemtime) {
+      return 0;
+    }
+    if (filemtime("/templates/jk.tmpl") > $cachemtime) {
+      return 0;
+    }
+  }
+
+  if (is_cachable(...), $cachefile) {
+    readfile($cachefile);
+    exit();
+  } else {
+    # generate content and write it to $cachefile
+  }
+  ?>
+
+Quite simple. No magic involved. If the one of the files is new than the cached
+content, the content is dirty and has to be regenerated.
+
+Now let take a look at the numbers:
+
+ * 150 req/s for a Cache-Hit
+ * 100 req/s for a Cache-Miss
+
+As you can see the increase is not as good as it could be. The main reason as the overhead
+of the PHP interpreter to start up (a byte-code cache has been used here).
+
+Moving these decisions out of the PHP script into a server module will remove the need
+to start PHP for a cache-hit.
+
+To transform this example into a CML you need 'index.cml' in the list of indexfiles
+and the following index.cml file: ::
+
+  output_contenttype = "text/html"
+
+  b = request["DOCUMENT_ROOT"]
+  cwd = request["CWD"]
+
+  output_include = { b .. "_cache.html" }
+
+  trigger_handler = "index.php"
+
+  if file_mtime(b .. "../lib/php/menu.csv") > file_mtime(cwd .. "_cache.html") or
+     file_mtime(b .. "templates/jk.tmpl")   > file_mtime(cwd .. "_cache.html") or
+     file_mtime(b .. "content.html")        > file_mtime(cwd .. "_cache.html") then
+     return CACHE_MISS
+  else
+     return CACHE_HIT
+  end
+
+Numbers again:
+
+ * 4900 req/s for Cache-Hit
+ *  100 req/s for Cache-Miss
+
+Content Assembling
+------------------
+
+Sometimes the different fragment are already generated externally. You have to cat them together: ::
+
+  <?php
+  readfile("head.html");
+  readfile("menu.html");
+  readfile("spacer.html");
+  readfile("db-content.html");
+  readfile("spacer2.html");
+  readfile("news.html");
+  readfile("footer.html");
+  ?>
+
+We we can do the same several times faster directly in the webserver.
+
+Don't forget: Webserver are built to send out static content, that is what they can do best.
+
+The index.cml for this looks like: ::
+
+  output_contenttype = "text/html"
+
+  cwd = request["CWD"]
+
+  output_include = { cwd .. "head.html",
+                     cwd .. "menu.html",
+                     cwd .. "spacer.html",
+                     cwd .. "db-content.html",
+                     cwd .. "spacer2.html",
+                     cwd .. "news.html",
+                     cwd .. "footer.html" }
+
+  return CACHE_HIT
+
+Now we get about 10000 req/s instead of 600 req/s.
+
+Power Magnet
+------------
+
+Next to all the features about Cache Decisions CML can do more. Starting
+with lighttpd 1.4.9 a power-magnet was added which attracts each request
+and allows you to manipulate the request for your needs.
+
+We want to display a maintainance page by putting a file in a specified
+place:
+
+We enable the power magnet: ::
+
+  cml.power-magnet  = "/home/www/power-magnet.cml"
+
+and create /home/www/power-magnet.cml with: ::
+
+  dr = request["DOCUMENT_ROOT"]
+
+  if file_isreg(dr .. 'maintainance.html') then
+    output_include = { 'maintainance.html' }
+    return CACHE_HIT
+  end
+
+  return CACHE_MISS
+
+For each requested file the /home/www/power-magnet.cml is executed which
+checks if maintainance.html exists in the docroot and displays it
+instead of handling the usual request.
+
+Another example, create thumbnail for requested image and serve it instead
+of sending the big image: ::
+
+  ## image-url is /album/baltic_winter_2005.jpg
+  ## no params -> 640x480 is served
+  ## /album/baltic_winter_2005.jpg/orig for full size
+  ## /album/baltic_winter_2005.jpg/thumb for thumbnail
+
+  dr = request["DOCUMENT_ROOT"]
+  sn = request["SCRIPT_NAME"]
+
+  ## to be continued :) ...
+
+  trigger_handler = '/gen_image.php'
+
+  return CACHE_MISS
+
+
+Installation
+============
+
+You need `lua <http://www.lua.org/>`_ and should install `libmemcache-1.3.x <http://people.freebsd.org/~seanc/libmemcache/>`_ and have to configure lighttpd with: ::
+
+  ./configure ... --with-lua --with-memcache
+
+To use the plugin you have to load it: ::
+
+   server.modules = ( ..., "mod_cml", ... )
+
+Options
+=======
+
+:cml.extension:
+  the file extension that is bound to the cml-module
+:cml.memcache-hosts:
+  hosts for the memcache.* functions
+:cml.memcache-namespace:
+  (not used yet)
+:cml.power-magnet:
+  a cml file that is executed for each request
+
+Language
+========
+
+The language used for CML is provided by `LUA <http://www.lua.org/>`_.
+
+Additionally to the functions provided by lua mod_cml provides: ::
+
+  tables:
+
+  request
+    - REQUEST_URI
+    - SCRIPT_NAME
+    - SCRIPT_FILENAME
+    - DOCUMENT_ROOT
+    - PATH_INFO
+    - CWD
+    - BASEURI
+
+  get
+    - parameters from the query-string
+
+  functions:
+  string md5(string)
+  number file_mtime(string)
+  string memcache_get_string(string)
+  number memcache_get_long(string)
+  boolean memcache_exists(string)
+
+
+What ever your script does, it has to return either CACHE_HIT or CACHE_MISS.
+It case a error occures check the error-log, the user will get a error 500. If you don't like
+the standard error-page use ``server.errorfile-prefix``.
+

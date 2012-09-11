@@ -1,0 +1,33 @@
+#######################################################################
+##
+## For more examples check:
+##
+## http://www.lighttpd.net/documentation/configuration.html#conditional-configuration
+##
+$HTTP["host"] == "download.example.com" {
+  var.server_name = "download.example.com"
+
+  server.name = server_name
+  ##
+  ## use trigger before download
+  ## 
+  include "conf.d/trigger_b4_dl.conf"
+
+  server.document-root = vhosts_dir + "/example.com/download/htdocs"
+  ##
+  ## use a seperate access log file
+  ## At the moment you cant have different error log files.
+  ##
+  accesslog.filename          = log_root + "/" + server_name "/access.log"
+}
+
+$SERVER["socket"] == "127.0.0.1:443" {
+  server.name = "localhost"
+  ssl.pemfile = "/etc/ssl/private/lighttpd-localhost.pem"
+  ssl.engine  = "enable"
+
+  server.document-root = vhosts_dir + "/ssl-localhost/pages/"
+}
+
+##
+#######################################################################

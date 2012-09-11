@@ -1,0 +1,70 @@
+.TH LIGHTTPD "8" "2009-03-07" "" ""
+.
+.SH NAME
+lighttpd \- a fast, secure and flexible web server
+.
+.SH SYNOPSIS
+\fBlighttpd\fP [\fB\-ptDvVh\fP] \fB\-f\fP \fIconfigfile\fP [\fB\-m\fP \fImoduledir\fP]
+.
+.SH DESCRIPTION
+\fBlighttpd\fP (pronounced 'lighty') is an advanced HTTP daemon that aims
+to be secure, fast, compliant and very flexible.  It has been optimized for
+high performance.  Its feature set includes, but is not limited to, FastCGI,
+CGI, basic and digest HTTP authentication, output compression, URL rewriting.
+.PP
+This manual page only lists the command line arguments.  For details
+on how to configure \fBlighttpd\fP and its modules see the files in the
+doc-directory.
+.
+.SH OPTIONS
+The following options are supported:
+.TP 8
+\fB\-f\ \fP \fIconfigfile\fP
+Load configuration file \fIconfigfile\fP.
+.TP 8
+\fB\-m\ \fP \fImoduledir\fP
+Use
+\fImoduledir\fP
+as the directory that contains modules, instead of the default.
+.TP 8
+\fB\-p\fP
+Print the parsed configuration file in its internal form and exit.
+.TP 8
+\fB\-t\fP
+Test the configuration file for syntax errors and exit.
+.TP 8
+\fB\-D\fP
+Do not daemonize (go into background). The default is to daemonize.
+.TP 8
+\fB\-v\fP
+Show version and exit.
+.TP 8
+\fB\-V\fP
+Show compile-time features and exit.
+.TP 8
+\fB\-h\fP
+Show a brief help message and exit.
+.
+.SH FILES
+.TP 8
+/etc/lighttpd/lighttpd.conf
+The standard location for the configuration file.
+.TP 8
+/var/run/lighttpd.pid
+The standard location for the PID of the running \fBlighttpd\fP process.
+.
+.SH SEE ALSO
+Online Documentation: http://wiki.lighttpd.net/
+.PP
+spawn-fcgi(1)
+.PP
+\fIHypertext Transfer Protocol -- HTTP/1.1\fP, RFC 2616.
+.PP
+\fIHTTP Authentication: Basic and Digest Access Authentication\fP, RFC 2617.
+.PP
+\fIThe Common Gateway Interface Version 1.1\fP, RFC 3875.
+.PP
+\fIThe FastCGI specification\fP.
+.
+.SH AUTHOR
+Jan Kneschke <jan@kneschke.de>

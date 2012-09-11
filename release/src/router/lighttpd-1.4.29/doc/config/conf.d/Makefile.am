@@ -1,0 +1,25 @@
+EXTRA_DIST=access_log.conf \
+	auth.conf \
+	cgi.conf \
+	cml.conf \
+	compress.conf \
+	debug.conf \
+	dirlisting.conf \
+	evhost.conf \
+	expire.conf \
+	fastcgi.conf \
+	geoip.conf \
+	magnet.conf \
+	mime.conf \
+	mod.template \
+	mysql_vhost.conf \
+	proxy.conf \
+	rrdtool.conf \
+	scgi.conf \
+	secdownload.conf \
+	simple_vhost.conf \
+	ssi.conf \
+	status.conf \
+	trigger_b4_dl.conf \
+	userdir.conf \
+	webdav.conf

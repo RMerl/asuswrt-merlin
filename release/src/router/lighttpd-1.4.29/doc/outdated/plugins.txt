@@ -1,0 +1,260 @@
+================
+Plugin Interface
+================
+
+------------
+Module: core
+------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  The plugin interface is an integral part of lighttpd which
+  provides a flexible way to add specific functionality to lighttpd.
+
+.. meta::
+  :keywords: lighttpd, plugins
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+Plugins allow you to enhance the functionality of lighttpd without
+changing the core of the webserver. They can be loaded at startup time
+and can change virtually any aspect of the behaviour of the webserver.
+
+Plugin Entry Points
+-------------------
+
+lighttpd has 16 hooks which are used in different states of the
+execution of the request:
+
+Serverwide hooks
+````````````````
+
+:init_:
+  called when the plugin is loaded
+:cleanup_:
+  called when the plugin is unloaded
+:set_defaults_:
+  called when the configuration has to be processed
+:handle_trigger_:
+  called once a second
+:handle_sighup_:
+  called when the server received a SIGHUP
+
+Connectionwide hooks
+````````````````````
+
+Most of these hooks are called in ``http_response_prepare()`` after some
+fields in the connection structure are set.
+
+:handle_uri_raw_:
+  called after uri.path_raw, uri.authority and uri.scheme are set
+:handle_uri_clean_:
+  called after uri.path (a clean URI without .. and %20) is set
+:handle_docroot_:
+  called at the end of the logical path handle to get a docroot
+:handle_subrequest_start_:
+  called if the physical path is set up and checked
+:handle_subrequest_:
+  called at the end of ``http_response_prepare()``
+:handle_physical_path_:
+  called after the physical path is created and no other handler is
+  found for this request
+:handle_request_done_:
+  called when the request is done
+:handle_connection_close_:
+  called if the connection has to be closed
+:handle_joblist_:
+  called after the connection_state_engine is left again and plugin
+  internal handles have to be called
+:connection_reset_:
+  called if the connection structure has to be cleaned up
+
+
+Plugin Interface
+----------------
+
+\*_plugin_init
+``````````````
+
+Every plugin has a uniquely-named function which is called after the
+plugin is loaded. It is used to set up the ``plugin`` structure with
+some useful data:
+
+- name of the plugin ``name``
+- all hooks
+
+The field ``data`` and ``lib`` should not be touched in the init function.
+``lib`` is the library handler from dlopen and ``data`` will be the storage
+of the internal plugin data.
+
+:returns:
+  0 (not handled)
+
+init
+````
+
+The first real call of a plugin function is the init hook which is used
+to set up the internal plugin data. The internal plugin is assigned the
+``data`` field mentioned in the \*_plugin_init description.
+
+:returns:
+  a pointer to the internal plugin data.
+
+cleanup
+```````
+
+The cleanup hook is called just before the plugin is unloaded. It is meant
+to free all buffers allocated in ``init`` or somewhere else in the plugin
+which are still not freed and to close all handles which were opened and
+are not closed yet.
+
+:returns:
+  HANDLER_GO_ON if ok (not handled)
+
+set_defaults
+````````````
+
+set_defaults is your entry point into the configfile parsing. It should
+pass a list of options to ``config_insert_values`` and check if
+the plugin configuration is valid. If it is not valid yet, it should
+set useful defaults or return with HANDLER_ERROR and an error message.
+
+:returns:
+  HANDLER_GO_ON if ok
+
+  HANDLER_ERROR will terminate lighttpd
+
+connection_reset
+````````````````
+
+called at the end of each request
+
+:returns:
+  HANDLER_GO_ON if ok
+
+  HANDLER_ERROR on error
+
+handle_trigger
+``````````````
+
+called once a second
+
+:returns:
+  HANDLER_GO_ON if ok
+
+  HANDLER_ERROR on error
+
+handle_sighup
+`````````````
+
+called if a SIGHUP is received (cycling logfiles, ...)
+
+:returns:
+  HANDLER_GO_ON if ok
+
+  HANDLER_ERROR on error
+
+handle_uri_raw
+``````````````
+
+called after uri_raw is set
+
+:returns:
+  HANDLER_GO_ON if ok
+  HANDLER_FINISHED if the final output is prepared
+
+  HANDLER_ERROR on error
+
+handle_uri_clean
+````````````````
+
+called after uri.path is set
+
+:returns:
+  HANDLER_GO_ON if ok
+  HANDLER_FINISHED if the final output is prepared
+
+  HANDLER_ERROR on error
+
+handle_docroot
+``````````````
+
+called when a docroot is needed
+
+:returns:
+  HANDLER_GO_ON if ok
+  HANDLER_FINISHED if the final output is prepared
+
+  HANDLER_ERROR on error
+
+handle_subrequest_start
+```````````````````````
+
+called after physical.path is set
+
+:returns:
+  HANDLER_GO_ON if ok
+  HANDLER_FINISHED if the final output is prepared
+
+  HANDLER_ERROR on error
+
+handle_subrequest
+`````````````````
+
+called if subrequest_start requested a COMEBACK or a WAIT_FOR_EVENT
+
+:returns:
+  HANDLER_GO_ON if ok
+  HANDLER_FINISHED if the final output is prepared
+
+  HANDLER_ERROR on error
+
+handle_physical_path
+````````````````````
+
+called after physical.path is set
+
+:returns:
+  HANDLER_GO_ON if ok
+  HANDLER_FINISHED if the final output is prepared
+
+  HANDLER_ERROR on error
+
+
+handle_request_done
+```````````````````
+
+called at the end of the request (logging, statistics, ...)
+
+:returns:
+  HANDLER_GO_ON if ok
+
+  HANDLER_ERROR on error
+
+handle_connection_close
+```````````````````````
+
+called if the connection is terminated
+
+:returns:
+  HANDLER_GO_ON if ok
+
+  HANDLER_ERROR on error
+
+handle_joblist
+``````````````
+
+called if the state of the connection has changed
+
+:returns:
+  HANDLER_GO_ON if ok
+
+  HANDLER_ERROR on error
+
+

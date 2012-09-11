@@ -1,0 +1,55 @@
+===============
+Traffic Shaping
+===============
+
+------------
+Module: core
+------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  limiting bandwidth usage
+
+.. meta::
+  :keywords: lighttpd, bandwidth limit, traffic shaping
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+Starting with 1.3.8, lighttpd supports limiting the bandwidth for
+a single connection or config context like a virtual host or a URL.
+
+Options
+=======
+
+:connection.kbytes-per-second:
+  limit the throughput for each single connection to the given
+  limit in kbyte/s
+
+  default: 0 (no limit)
+
+:server.kbytes-per-second:
+  limit the throughput for all connections to the given limit
+  in kbyte/s
+
+  if you want to specify a limit for a special virtual server
+  use: ::
+
+    $HTTP["host"] == "www.example.org" {
+      server.kbytes-per-second = 128
+    }
+
+  which will override the default for this host.
+
+  default: 0 (no limit)
+
+Additional Notes
+================
+
+Keep in mind that a limit below 32kb/s might actually limit the traffic to 32kb/s. This
+is caused by the size of the TCP send buffer.

@@ -1,0 +1,111 @@
+=============
+Server Status
+=============
+
+------------------
+Module: mod_status
+------------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  mod_status displays the server's status and configuration
+
+.. meta::
+  :keywords: lighttpd, server status
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+The server status module generates the status overview of the webserver. The
+information covers:
+
+- uptime
+- average throughput
+- current throughput
+- active connections and their state
+
+
+We need to load the module first. ::
+
+  server.modules = ( ..., "mod_ssi", ... )
+
+By default the status page is disabled to hide internal information from
+unauthorized users. ::
+
+  status.status-url = "/server-status"
+
+If you want to open the status page just for users from the local network
+cover it in a conditional. ::
+
+  $HTTP["remoteip"] == "10.0.0.0/8" {
+    status.status-url = "/server-status"
+  }
+
+Or require authorization: ::
+
+  auth.require = ( "/server-status" =>
+    ( "realm" ... ) )
+
+
+Please note that when using the server.max-worker directive, the stati of the
+childs are not combined yet, so you're going to see different stats with each
+request.
+
+
+Output Format
+-------------
+
+By default a nice looking HTML page is generated. If you append ?auto to the
+status-url you can get a text version which is simpler to parse. ::
+
+  Total Accesses: 1234
+  Total kBytes: 1043
+  Uptime: 1234
+  BusyServers: 123
+
+Total Accesses is the number of handled requests, kBytes the overall outgoing
+traffic, Uptime the uptime in seconds and BusyServers the number of currently
+active connections.
+
+The naming is kept compatible to Apache even if we have another concept and
+don't start new servers for each connection.
+
+
+Options
+=======
+
+status.status-url
+
+  relative URL which is used to retrieve the status-page
+
+  Default: unset
+
+  Example: status.status-url = "/server-status"
+
+status.enable-sort
+
+  add JavaScript which allows client-side sorting for the connection overview
+
+  Default: enable
+
+status.config-url
+
+  relative URL for the config page which displays the loaded modules
+
+  Default: unset
+
+  Example: status.config-url = "/server-config"
+
+status.statistics-url
+
+  relative URL for a plain-text page containing the internal statistics
+
+  Default: unset
+
+  Example: status.statistics-url = "/server-statistics"
+

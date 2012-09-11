@@ -1,0 +1,76 @@
+====================
+Server-Side Includes
+====================
+
+---------------
+Module: mod_ssi
+---------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  The module for server-side includes provides a compatability
+  layer for NSCA/Apache SSI.
+
+.. meta::
+  :keywords: lighttpd, ssi, Server-Side Includes
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+Configuration
+-------------
+
+::
+
+  server.modules = ( ..., "mod_ssi", ... )
+  ssi.extension = ( ".shtml" )
+
+Supported Options
+-----------------
+
+- ``<!--#echo var="..." -->``
+- ``<!--#include (file="..."\|virtual="...") -->``
+- ``<!--#flastmod (file="..."\|virtual="...") -->``
+- ``<!--#fsize (file="..."\|virtual="...") -->``
+- ``<!--#config timefmt="..." sizefmt="(bytes|abbrev)" -->``
+- ``<!--#printenv -->``
+- ``<!--#set var="..." value="..." -->``
+- ``<!--#if expr="..." -->``
+- ``<!--#elif expr="..." -->``
+- ``<!--#else -->``
+- ``<!--#endif -->``
+
+Expression Handling
+-------------------
+
+Every ''expr'' is interpreted:
+
+- logical: AND, OR, !
+- compare: =, <, <=, >, =>, !=
+- precedence: (, )
+- quoted strings: 'string with a dollar: $FOO'
+- variable substitution: $REMOTE_ADDR
+- unquoted strings: string
+
+Flow Control
+------------
+
+if, elif, else and endif can only be used to insert content under special
+conditions.
+
+Unsupported Features
+--------------------
+
+The original SSI module from NCSA and Apache provided some more options
+which are not supported by this module for various reasons:
+
+- exec
+- nested virtual
+- config.errmsg
+- echo.encoding
+

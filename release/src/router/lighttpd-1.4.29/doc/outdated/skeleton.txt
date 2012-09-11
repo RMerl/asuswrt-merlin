@@ -1,0 +1,29 @@
+===================
+headline
+===================
+
+--------------------
+Module: mod_skeleton
+--------------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  a nice, short abstrace about the module
+
+.. meta::
+  :keywords: lighttpd, skeleton
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+...
+
+Options
+=======
+
+...

@@ -1,0 +1,239 @@
+========================
+Performance Improvements
+========================
+
+------------
+Module: core
+------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  handling performance issues in lighttpd
+
+.. meta::
+  :keywords: lighttpd, performance
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+Performance Issues
+------------------
+
+lighttpd is optimized into varying directions. The most important direction is
+performance. The operation system has two major facilities to help lighttpd
+a deliver its best performance.
+
+HTTP Keep-Alive
+---------------
+
+Disabling keep-alive might help your server if you suffer from a large
+number of open file descriptors.
+
+The defaults for the server are: ::
+
+  server.max-keep-alive-requests = 128
+  server.max-keep-alive-idle = 30
+  server.max-read-idle = 60
+  server.max-write-idle = 360
+
+handling 128 keep-alive requests in a row on a single connection, waiting 30 seconds
+before an unused keep-alive connection gets dropped by lighttpd.
+
+If you handle several connections at once under a high load (let's assume 500 connections
+in parallel for 24h) you might run into the out-of-fd problem described below. ::
+
+  server.max-keep-alive-requests = 4
+  server.max-keep-alive-idle = 4
+
+would release the connections earlier and would free file descriptors without a
+detrimental performance loss.
+
+Disabling keep-alive completely is the last resort if you are still short on file descriptors: ::
+
+  server.max-keep-alive-requests = 0
+
+Event Handlers
+--------------
+
+The first one is the Event Handler which takes care of notifying the server
+that one of the connections is ready to send or receive. As you can see,
+every OS has at least the select() call which has some limitations.
+
+============ ========== ===============
+OS           Method     Config Value
+============ ========== ===============
+all          select     select
+Unix         poll       poll
+Linux 2.4+   rt-signals linux-rtsig
+Linux 2.6+   epoll      linux-sysepoll
+Solaris      /dev/poll  solaris-devpoll
+FreeBSD, ... kqueue     freebsd-kqueue
+============ ========== ===============
+
+
+For more information on this topic take a look at http://www.kegel.com/c10k.html
+
+Configuration
+`````````````
+
+The event handler can be set by specifying the 'Config Value' from above
+in the ``server.event-handler`` variable
+
+e.g.: ::
+
+  server.event-handler = "linux-sysepoll"
+
+Network Handlers
+----------------
+
+The basic network interface for all platforms at the syscalls read() and
+write(). Every modern OS provides its own syscall to help network servers
+transfer files as fast as possible.
+
+If you want to send out a file from the webserver, it doesn't make any sense
+to copy the file into the webserver just to write() it back into a socket
+in the next step.
+
+sendfile() minimizes the work in the application and pushes a file directly
+into the network card (ideally).
+
+lighttpd supports all major platform-specific calls:
+
+========== ==========
+OS         Method
+========== ==========
+all        write
+Unix       writev
+Linux 2.4+ sendfile
+Linux 2.6+ sendfile64
+Solaris    sendfilev
+FreeBSD    sendfile
+========== ==========
+
+The best backend is selected at compile time. In case you want to use
+another backend set: ::
+
+  server.network-backend = "writev"
+
+You can find more information about network backend in:
+
+  http://blog.lighttpd.net/articles/2005/11/11/optimizing-lighty-for-high-concurrent-large-file-downloads
+
+
+Max Connections
+---------------
+
+As lighttpd is a single-threaded server, its main resource limit is the
+number of file descriptors, which is set to 1024 by default (on most systems).
+
+If you are running a high-traffic site you might want to increase this limit
+by setting ::
+
+  server.max-fds = 2048
+
+This only works if lighttpd is started as root.
+
+Out-of-fd condition
+-------------------
+
+Since file descriptors are used for TCP/IP sockets, files and directories,
+a simple request for a PHP page might result in using 3 file descriptors:
+
+1. the TCP/IP socket to the client
+2. the TCP/IP and Unix domain socket to the FastCGI process
+3. the filehandle to the file in the document root to check if it exists
+
+If lighttpd runs out of file descriptors, it will stop accepting new
+connections for awhile to use the existing file descriptors to handle the
+currently-running requests.
+
+If more than 90% of the file descriptors are used then the handling of new
+connections is disabled. If it drops below 80% again new connections will
+be accepted again.
+
+Under some circumstances you will see ::
+
+  ... accept() failed: Too many open files
+
+in the error log. This tells you there were too many new requests at once
+and lighttpd could not disable the incoming connections soon enough. The
+connection was dropped and the client received an error message like 'connection
+failed'. This is very rare and might only occur in test setups.
+
+Increasing the ``server.max-fds`` limit will reduce the probability of this
+problem.
+
+stat() cache
+============
+
+A stat(2) can be expensive; caching it saves time and context switches.
+
+Instead of using stat() every time to check for the existence of a file
+you can stat() it once and monitor the directory the file is in for
+modifications. As long as the directory doesn't change, the files in it
+must all still be the same.
+
+With the help of FAM or gamin you can use kernel events to assure that
+your stat cache is up to date. ::
+
+  server.stat-cache-engine = "fam"   # either fam, simple or disabled
+
+
+Platform-Specific Notes
+=======================
+
+Linux
+-----
+
+For Linux 2.4.x you should think about compiling lighttpd with the option
+``--disable-lfs`` to disable the support for files larger than 2GB. lighttpd will
+fall back to the ``writev() + mmap()`` network calls which is ok, but not as
+fast as possible but support files larger than 2GB.
+
+Disabling the TCP options reduces the overhead of each TCP packet and might
+help to get the last few percent of performance out of the server. Be aware that
+disabling these options most likely decreases performance for high-latency and lossy
+links.
+
+- net.ipv4.tcp_sack = 0
+- net.ipv4.tcp_timestamps = 0
+
+Increasing the TCP send and receive buffers will increase the performance a
+lot if (and only if) you have a lot of large files to send.
+
+- net.ipv4.tcp_wmem = 4096 65536 524288
+- net.core.wmem_max = 1048576
+
+If you have a lot of large file uploads, increasing the receive buffers will help.
+
+- net.ipv4.tcp_rmem = 4096 87380 524288
+- net.core.rmem_max = 1048576
+
+Keep in mind that every TCP connection uses the configured amount of memory for socket
+buffers. If you've got many connections this can quickly drain the available memory.
+
+See http://www.acc.umu.se/~maswan/linux-netperf.txt for more information on these parameters.
+
+FreeBSD
+-------
+
+On FreeBSD you might gain some performance by enabling accept filters. Just
+compile your kernel with: ::
+
+  options   ACCEPT_FILTER_HTTP
+
+For more ideas about tuning FreeBSD read: tuning(7)
+
+Reducing the recvspace should always be ok if the server only handles HTTP
+requests without large uploads. Increasing the sendspace would reduce the
+system load if you have a lot of large files to be sent, but keep in mind that
+you have to provide the memory in the kernel for each connection. 1024 * 64KB
+would mean 64MB of kernel RAM. Keep this in mind.
+
+- net.inet.tcp.recvspace = 4096
+

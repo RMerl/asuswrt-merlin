@@ -1,0 +1,192 @@
+==================
+Output Compression
+==================
+
+--------------------
+Module: mod_compress
+--------------------
+
+
+.. meta::
+  :keywords: lighttpd, compress
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+Output compression reduces the network load and can improve the overall
+throughput of the webserver. All major http-clients support compression by
+announcing it in the Accept-Encoding header. This is used to negotiate the
+most suitable compression method. We support deflate, gzip and bzip2.
+
+deflate (RFC1950, RFC1951) and gzip (RFC1952) depend on zlib while bzip2
+depends on libbzip2. bzip2 is only supported by lynx and some other console
+text-browsers.
+
+We currently limit to compression support to static files.
+
+Caching
+-------
+
+mod_compress can store compressed files on disk to optimize the compression
+on a second request away. As soon as compress.cache-dir is set the files are
+compressed.
+
+(You will need to create the cache directory if it doesn't already exist. The web server will not do this for you.  The directory will also need the proper ownership.  For Debian/Ubuntu the user and group ids should both be www-data.)
+
+The names of the cache files are made of the filename, the compression method
+and the etag associated to the file.
+
+Cleaning the cache is left to the user. A cron job deleting files older than
+10 days could do it: ::
+
+  find /var/www/cache -type f -mtime +10 | xargs -r rm
+
+Limitations
+-----------
+
+The module limits the compression of files to files smaller than 128 MByte and
+larger than 128 Byte.
+
+The lower limit is set as small files tend to become larger by compressing due
+to the compression headers, the upper limit is set to work sensibly with
+memory and cpu-time.
+
+Directories containing a tilde ('~') are not created automatically (See ticket
+#113). To enable compression for user dirs you have to create the directories
+by hand in the cache directory.
+
+Options
+=======
+
+compress.allowed-encodings
+  override default set of allowed encodings
+
+  e.g.: ::
+
+    compress.allowed-encodings = ("bzip2", "gzip", "deflate")
+
+compress.cache-dir
+  name of the directory where compressed content will be cached
+
+  e.g.: ::
+
+    compress.cache-dir = "/var/www/cache/"
+
+    # even better with virt-hosting
+    $HTTP["host"] == "docs.example.org" {
+      compress.cache-dir = "/var/www/cache/docs.example.org/"
+    }
+
+  Default: not set, compress the file for every request
+
+compress.filetype
+  mimetypes which might get compressed
+
+  e.g.: ::
+
+    compress.filetype           = ("text/plain", "text/html")
+
+  Keep in mind that compressed JavaScript and CSS files are broken in some
+  browsers. Not setting any filetypes will result in no files being compressed.
+
+  NOTE: You have to specify the full mime-type! If you also define a charset, for example, you have to use "text/plain; charset=utf-8" instead of just "text/plain".
+
+  Default: not set
+
+compress.max-filesize
+  maximum size of the original file to be compressed kBytes.
+
+  This is meant to protect the server against DoSing as compressing large
+  (let's say 1Gbyte) takes a lot of time and would delay the whole operation
+  of the server.
+
+  There is a hard upper limit of 128Mbyte.
+
+  Default: unlimited (== hard-limit of 128MByte)
+
+Display compressed files
+========================
+
+If you enable mod_compress, and you want to force clients to uncompress and display compressed text files, please force mimetype to nothing.
+Exemple :
+If you want to add headers for uncompress and display diff.gz files , add this section in your conf : ::
+
+  $HTTP["url"] =~ "\.diff\.gz" {
+    setenv.add-response-header = ( "Content-Encoding" => "gzip" )
+    mimetype.assign = ()
+  }
+
+
+Compressing Dynamic Content
+===========================
+
+PHP
+---
+
+To compress dynamic content with PHP please enable ::
+
+  zlib.output_compression = 1
+  zlib.output_handler = On
+
+in the php.ini as PHP provides compression support by itself.
+
+mod_compress of lighttpd 1.5 r1992 may not set correct Content-Encoding with php-fcgi. A solution to that problem would be:
+
+1.disable mod_compress when request a php file::
+
+    $HTTP["url"] !~ "\.php$" {
+    	compress.filetype = ("text/plain", "text/html", "text/javascript", "text/css", "text/xml")
+    }
+
+2.enable mod_setenv of your lighttpd::
+
+    server.modules  += ( "mod_setenv" )
+
+3.manually set Content-Encoding::
+
+    $HTTP["url"] =~ "\.php$" {
+  	setenv.add-response-header  = ( "Content-Encoding" => "gzip")
+    }
+
+
+TurboGears
+----------
+
+To compress dynamic content with TurboGears please enable ::
+
+  [/]
+  gzip_filter.on = True
+  gzip_filter.mime_types = ["application/x-javascript", "text/javascript", "text/html", "text/css", "text/plain"]
+
+in the config/app.cfg file in your TurboGears application.  The above lines should already be in the file.  You just need to remove the comment symbol in front of the lines to make them active.
+
+Django
+------
+
+To compress dynamic content with Django please enable the GZipMiddleware ::
+
+  MIDDLEWARE_CLASSES = (
+      'django.middleware.gzip.GZipMiddleware',
+      ...
+  )
+
+in the settings.py file in your Django project.
+
+Catalyst
+--------
+
+To compress dynamic content with Perl/Catalyst, simply use the Catalyst::Plugin::Compress::Gzip module available on CPAN ::
+
+  use Catalyst qw(
+      Compress::Gzip
+      ...
+  );
+
+in your main package (MyApp.pm). Further configuration is not required.
+
+}}}
+
+
+

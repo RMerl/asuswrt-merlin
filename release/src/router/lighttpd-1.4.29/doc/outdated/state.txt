@@ -1,0 +1,170 @@
+============================
+The State Engine of lighttpd
+============================
+
+------------
+Module: core
+------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  This is a short summary of the state-engine which is driving the lighttpd
+  webserver. It describes the basic concepts and the way the different parts
+  of the server are connected.
+
+.. meta::
+  :keywords: lighttpd, state-engine
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+States
+------
+
+The state-engine is currently made of 11 states which are walk-through on
+the way each connection. Some of them are specific for a special operation
+and some may never be hit at all.
+
+:connect:
+  waiting for a connection
+:reqstart:
+  init the read-idle timer
+:read:
+  read http-request-header from network
+:reqend:
+  parse request
+:readpost:
+  read http-request-content from network
+:handlereq:
+  handle the request internally (might result in sub-requests)
+:respstart:
+  prepare response header
+:write:
+  write response-header + content to network
+:respend:
+  cleanup environment, log request
+:error:
+  reset connection (incl. close())
+:close:
+  close connection (handle lingering close)
+
+.. image:: state.png
+
+A simple GET request (green path)
+---------------------------------
+
+The connection is idling in the 'connect' state waiting for a connection.
+As soon as the connection is set up we init the read-timer in 'reqstart'
+and start to read data from the network. As soon as we get the
+HTTP-request terminator (CRLFCRLF) we forward the header to the parser.
+
+The parsed request is handled by 'handlereq' and as soon as a decision out
+the request is made it is sent to 'respstart' to prepare the
+HTTP-response header. In the 'write' state the prepare content is sent out
+to the network. When everything is sent 'respend' is entered to log the
+request and cleanup the environment. After the close() call the connection
+is set back to the 'connect' state again.
+
+Keep-Alive (blue path)
+----------------------
+
+The Keep-Alive handling is implemented by going from the 'respend'
+directly to 'reqstart' without the close() and the accept() calls.
+
+POST requests (grey path)
+-------------------------
+
+As requests might contain a request-body the state 'readpost' entered as
+soon as the header is parsed and we know how much data we expect.
+
+Pipelining
+----------
+
+HTTP/1.1 supportes pipelining (sending multiple requests without waiting
+for the response of the first request). This is handled transparently by
+the 'read' state.
+
+Unexpected errors (red path)
+----------------------------
+
+For really hard errors we use the 'error' state which resets the
+connection and can be call from every state. It is only use if there is no
+other way to handle the issue (e.g. client-side close of the connection).
+If possible we should use http-status 500 ('internal server error') and
+log the issue in the errorlog.
+
+If we have to take care of some data which is coming in after we ran into
+the error condition the 'close' state is used the init a half-close and
+read all the delay packet from the network.
+
+Sub-Requests (lightblue)
+------------------------
+
+The FastCGI, CGI, ... intergration is done by introducing a loop in
+'handlereq' to handle all aspect which are neccesary to find out what has
+to be sent back to the client.
+
+Functions
+=========
+
+Important functions used by the state-engine
+
+:state-engine:
+
+- ``connection_state_machine()``
+
+:connect:
+
+- (nothing)
+
+:reqstart:
+
+- (nothing)
+
+:read:
+
+- ``connection_handle_read_state()``
+- ``connection_handle_read()``
+
+:reqend:
+
+- ``http_request_parse()``
+
+:readpost:
+
+- ``connection_handle_read_state()``
+- ``connection_handle_read()``
+
+:handlereq:
+
+- ``http_response_prepare()``
+
+:respstart:
+
+- ``connection_handle_write_prepare()``
+
+:write:
+
+- ``connection_handle_write()``
+
+:respend:
+
+- ``plugins_call_handle_request_done()``
+- ``plugins_call_handle_connection_close()``
+- ``connection_close()`` (if not keep-alive)
+- ``connection_reset()``
+
+:error:
+
+- ``plugins_call_handle_request_done()``
+- ``plugins_call_handle_connection_close()``
+- ``connection_reset()``
+
+:close:
+
+- ``connection_close()``

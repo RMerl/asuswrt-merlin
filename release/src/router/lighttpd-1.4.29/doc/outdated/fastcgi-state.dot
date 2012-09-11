@@ -1,0 +1,6 @@
+digraph fcgistate {
+  init -> connect -> prepwrite -> write -> read -> close
+  write -> write
+  read -> read
+  connect -> connect
+}

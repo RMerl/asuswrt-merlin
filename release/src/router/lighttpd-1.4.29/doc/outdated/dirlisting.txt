@@ -1,0 +1,126 @@
+==================
+Directory Listings
+==================
+
+----------------------
+Module: mod_dirlisting
+----------------------
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  mod_dirlisting generates HTML based directory listings with full CSS
+  control
+
+.. meta::
+  :keywords: lighttpd, directory listings, dirlisting
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+mod_dirlisting is one of the modules which is loaded by default and don't have to
+be specified on server.modules to work.
+
+A directory listing is generated if a directory is requested and no index-file
+was found in that directory.
+
+To enable directory listings globally: ::
+
+  dir-listing.activate = "enable"
+
+If you need it only for a directory, use conditionals: ::
+
+  $HTTP["url"] =~ "^/download($|/)" {
+    dir-listing.activate = "enable"
+  }
+
+You can also use a external generator for directory listings if you use
+mod_indexfile. ::
+
+  index-file.names = ( "/dir-generator.php" )
+
+If a directory is requested the dir-generator.php is called instead which can
+take the REQUEST_URI to see which directory was requested.
+
+For large folders this is highly recommend.
+
+Options
+=======
+
+dir-listing.activate
+  enables virtual directory listings if a directory is requested no
+  index-file was found
+
+  Default: disabled
+
+dir-listing.hide-dotfiles
+  if enabled, does not list hidden files in directory listings generated
+  by the dir-listing option.
+
+  Default: enabled
+
+dir-listing.external-css
+  path to an external css stylesheet for the directory listing
+
+dir-listing.exclude
+  list of regular expressions.  Files that match any of the specified regular
+  expressions will be excluded from directory listings.
+
+dir-listing.encoding
+  set a encoding for the generated directory listing
+
+  If you file-system is not using ASCII you have to set the encoding of
+  the filenames as they are put into the HTML listing AS IS (with XML
+  encoding)
+
+  Example: ::
+
+    dir-listing.encoding = "utf-8"
+
+dir-listing.show-readme
+  shows README.txt after the dirlisting if it exists in the directory
+
+  Default: disabled
+
+dir-listing.hide-readme-file
+  hides README.txt in the dirlisting
+
+  Default: disabled
+
+dir-listing.show-header
+  shows HEADER.txt before the dirlisting if it exists in the directory
+
+  Default: disabled
+
+dir-listing.hide-header-file
+  hides HEADER.txt in the dirlisting
+
+  Default: disabled
+
+dir-listing.set-footer
+
+  Default: empty, uses server.tag instead
+
+dir-listing.encode-readme
+  encodes all control characers, '&', '<', '>' and '\x7f' as &#x**;
+
+  Default: enabled
+
+dir-listing.encode-header
+  encodes all control characers, '&', '<', '>' and '\x7f' as &#x**;
+
+  Default: enabled
+
+dir-listing.auto-layout
+  Disable this if you want your own html header and footer; specify
+  them in HEADER.txt and README.txt
+
+  you have to enable dir-list.show-readme/header for this of course
+
+  .external-css and .set-footer will be ignored if this is disabled
+
+  Default: enabled

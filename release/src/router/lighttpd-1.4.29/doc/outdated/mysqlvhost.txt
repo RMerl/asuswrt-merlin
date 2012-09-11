@@ -1,0 +1,58 @@
+====================
+MySQL-based vhosting
+====================
+
+-----------------------
+Module: mod_mysql_vhost
+-----------------------
+
+:Author: ada@riksnet.se
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  This module provides virtual hosts (vhosts) based on a MySQL table
+
+.. meta::
+  :keywords: lighttpd, mysql, vhost
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+With MySQL-based vhosting you can store the path to a given host's
+document root in a MySQL database.
+
+.. note:: Keep in mind that only one vhost module should be active at a time.
+          Don't mix mod_simple_vhost with mod_mysql_vhost.
+
+Options
+=======
+
+Example: ::
+
+  mysql-vhost.db             = "lighttpd"
+  mysql-vhost.user           = "lighttpd"
+  mysql-vhost.pass           = "secret"
+  mysql-vhost.sock           = "/var/mysql.lighttpd.sock"
+  mysql-vhost.sql            = "SELECT docroot FROM domains WHERE domain='?'"
+
+
+MySQL setup: ::
+
+  GRANT SELECT ON lighttpd.* TO lighttpd@localhost IDENTIFIED BY 'secret';
+
+  CREATE DATABASE lighttpd;
+
+  USE lighttpd;
+
+  CREATE TABLE domains (
+    domain varchar(64) not null primary key,
+    docroot varchar(128) not null
+  );
+
+  INSERT INTO domains VALUES ('host.dom.ain','/http/host.dom.ain/');
+
+
+

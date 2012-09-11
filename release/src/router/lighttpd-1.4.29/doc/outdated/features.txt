@@ -1,0 +1,116 @@
+===============
+progress report
+===============
+
+:Author: Jan Kneschke
+:Date: $Date: 2011/09/26 06:34:46 $
+:Revision: $Revision: 1.1.1.1 $
+
+:abstract:
+  This document tries to track the requested features and
+  the release when they have been implemented.
+
+.. meta::
+  :keywords: lighttpd, features
+
+.. contents:: Table of Contents
+
+Description
+===========
+
+The document was inspired by a mail from David Phillips:
+
+http://marc.theaimsgroup.com/?l=thttpd&m=108051453226692&w=2
+
+It is used to see what is still missing and what is already done. ::
+
+  zell@zell.best.vwh.net writes:
+  > Now that the author has made the source code available, I am
+  > considering installing and testing the latest version.  From a
+  > quick glance, it seems to support most/all of the features of
+  > Premium thttpd and Zeus.
+
+  If you think it compares to Zeus, then you've obviously never used Zeus.
+
+  lighttpd is currently the only non-blocking open source web server to
+  support FastCGI responders and that's worthwhile.
+
+  The documentation is lacking.  Comments in the configuration file do not
+  make up for a complete manual.
+
+Constantly improving. ::
+
+  The configuration syntax is overly complex, like Apache.  There is no .htaccess
+  support.
+
+.htaccess support is not planed yet. ::
+
+  There is only one server.  You cannot have a separate configuration for each
+  virtual server.  This would seem to be especially problematic when doing
+  SSL.
+
+Works since 1.3.0. ::
+
+  There is no SSI support.  Zeus has full recursive SSI support.  Output from
+  a FastCGI program can get run through the SSI interpreter.  SSI can also do
+  virtual includes recursively.
+
+SSI works since 1.2.4. ::
+
+  Request logging is not configurable.  Zeus supports fully configurable
+  access logging, plus a binary version of CLF that save space.
+
+1.2.6 adds Apache-like logfile config. ::
+
+  Access control only allows authentication via username and password.  There
+  is no way to allow or deny based in IP address.
+
+planed for 1.3.x ::
+
+  The request rewriting appears to only allow regex substitutions.  Zeus has a
+  simple, yet powerful, request rewrite language.
+
+
+
+  There is no support for FastCGI authorizers.  These are very useful for high
+  traffic sites that require complex authentication schemes or that store
+  authorization information in a central database.
+
+since 1.1.9. ::
+
+  There is no bandwidth throttling support.  Zeus does bandwidth throttling
+  correctly (i.e. unlike past versions of thttpd) and can throttle on a
+  per-subserver (thttpd-style virtual hosts) basis.
+
+since 1.3.8. ::
+
+  There is no ISAPI support.  ISAPI is an elegant, open API that allows
+  modification of web server behavior.  While it isn't strictly necessary for
+  an open source web server, it nice to have a documented, consistent API,
+  rather than having to manually patch the server.
+
+If someone requests it it might be implemented. ::
+
+  There is no web based interface.  Zeus has a complete web based interface
+  for everything, including a powerful feature of configuring multiple virtual
+  servers at once.
+
+That is something that should be a special feature of Zeus. :) ::
+
+  There is no support for mapping certain URLs to specific filesystem paths.
+
+since 1.2.6 ::
+
+  There is no referring checking.  This is incredibly important to prevent
+  hotlinking of bandwidth intensive media types (images, movies, etc.).
+
+we have something better: mod_secdownload. And if someone wants referer
+checking we have a condition in the config for it since 1.2.9 ::
+
+  Zeus has a lot of features that lighttpd doesn't have, but I only mentioned
+  the ones I care about and use.
+
+  --
+  David Phillips <david@acz.org>
+  http://david.acz.org/
+

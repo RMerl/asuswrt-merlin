@@ -1,0 +1,49 @@
+body {
+	background-color: #F5F5F5;
+}
+a, a:active {
+	text-decoration: none;
+	color: blue;
+}
+a:visited {
+	color: #48468F;
+}
+a:hover, a:focus {
+	text-decoration: underline;
+	color: red;
+}
+h2 {
+	margin-bottom: 12px;
+}
+table {
+	margin-left: 12px;
+}
+th, td {
+	font-family: "Courier New", Courier, monospace;
+	font-size: 10pt;
+	text-align: left;
+}
+th {
+	font-weight: bold;
+	padding-right: 14px;
+	padding-bottom: 3px;
+}
+td {
+	padding-right: 14px;
+}
+td.s, th.s {
+	text-align: right;
+}
+div.list {
+	background-color: white;
+	border-top: 1px solid #646464;
+	border-bottom: 1px solid #646464;
+	padding-top: 10px;
+	padding-bottom: 14px;
+}
+div.foot {
+	font-family: "Courier New", Courier, monospace;
+	font-size: 10pt;
+	color: #787878;
+	padding-top: 4px;
+}
