@@ -691,19 +691,23 @@ void reinit_hwnat()
 	// in restart_wireless for wlx_mrate_x
 	
 	if (nvram_get_int("hwnat")) {
-		if (is_nat_enabled() && !((nvram_get_int("qos_enable") || nvram_get_int("fw_pt_l2tp") || nvram_get_int("fw_pt_ipsec") || nvram_get_int("wl0_mrate_x") || nvram_get_int("wl1_mrate_x")))) {
+		if (is_nat_enabled() && !((nvram_get_int("qos_enable") /*|| nvram_get_int("fw_pt_l2tp") || nvram_get_int("fw_pt_ipsec") || nvram_get_int("wl0_mrate_x") || nvram_get_int("wl1_mrate_x")*/))) {
 			if (!nvram_get_int("hwnat_disable") && !is_module_loaded("hw_nat")) {
+#if 0
 				system("echo 2 > /proc/sys/net/ipv4/conf/default/force_igmp_version");
 				system("echo 2 > /proc/sys/net/ipv4/conf/all/force_igmp_version");
-				sleep(1);
+#endif
 				modprobe("hw_nat");
+				sleep(1);
 			}
 		}	
 		else if (is_module_loaded("hw_nat")) {
 			modprobe_r("hw_nat");
 			sleep(1);
+#if 0
 			system("echo 0 > /proc/sys/net/ipv4/conf/default/force_igmp_version");
 			system("echo 0 > /proc/sys/net/ipv4/conf/all/force_igmp_version");
+#endif
 		}
 	}
 }

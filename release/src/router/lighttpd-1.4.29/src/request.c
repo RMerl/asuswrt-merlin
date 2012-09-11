@@ -286,7 +286,7 @@ int http_request_parse(server *srv, connection *con) {
 	char *value = NULL, *key = NULL;
 	char *reqline_host = NULL;
 	int reqline_hostlen = 0;
-Cdbg(DBE, "enter..");
+
 	enum { HTTP_CONNECTION_UNSET, HTTP_CONNECTION_KEEPALIVE, HTTP_CONNECTION_CLOSE } keep_alive_set = HTTP_CONNECTION_UNSET;
 
 	int line = 0;
@@ -369,7 +369,8 @@ Cdbg(DBE, "enter..");
 					con->http_status = 501;
 					con->response.keep_alive = 0;
 					con->keep_alive = 0;
-
+					log_sys_write(srv, "ssb", "Request: 501-Error! method=", method, con->request.request);
+					
 					if (srv->srvconf.log_request_header_on_error) {
 						log_error_write(srv, __FILE__, __LINE__, "s", "unknown http-method -> 501");
 						log_error_write(srv, __FILE__, __LINE__, "Sb",

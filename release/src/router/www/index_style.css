@@ -9,7 +9,7 @@ body {
 	width: 998px;
 	border:0px;
 	background:url(images/New_ui/middown_bg.png);
-	/*padding-bottom:24px;*/
+	padding-bottom:24px;	/*for FAQ bottom searching bar */
 	
 	margin-top:-5px \0;	/* \0 for IE8-9 to move upper for covering the hidden form By Viz*/
 	padding-top:15px \0;	/* \0 for IE8-9 to move upper for covering the hidden form By Viz*/

@@ -3,7 +3,7 @@
  * Russ Dill <Russ.Dill@asu.edu> September 2001
  * Rewritten by Vladimir Oleynik <dzo@simtreas.ru> (C) 2003
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 #ifndef UDHCP_COMMON_H
 #define UDHCP_COMMON_H 1
@@ -63,17 +63,15 @@ struct udp_dhcp_packet {
 } PACKED;
 
 enum {
-	IP_UPD_DHCP_SIZE = sizeof(struct ip_udp_dhcp_packet) - CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS,
-	UPD_DHCP_SIZE    = sizeof(struct udp_dhcp_packet) - CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS,
+	IP_UDP_DHCP_SIZE = sizeof(struct ip_udp_dhcp_packet) - CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS,
+	UDP_DHCP_SIZE    = sizeof(struct udp_dhcp_packet) - CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS,
 	DHCP_SIZE        = sizeof(struct dhcp_packet) - CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS,
 };
 
 /* Let's see whether compiler understood us right */
 struct BUG_bad_sizeof_struct_ip_udp_dhcp_packet {
-	char c[IP_UPD_DHCP_SIZE == 576 ? 1 : -1];
+	char c[IP_UDP_DHCP_SIZE == 576 ? 1 : -1];
 };
-
-extern int minpkt;	// zzz
 
 
 /*** Options ***/
@@ -82,6 +80,9 @@ enum {
 	OPTION_IP = 1,
 	OPTION_IP_PAIR,
 	OPTION_STRING,
+	/* Opts of STRING_HOST type will be sanitized before they are passed
+	 * to udhcpc script's environment: */
+	OPTION_STRING_HOST,
 //	OPTION_BOOLEAN,
 	OPTION_U8,
 	OPTION_U16,
@@ -90,6 +91,7 @@ enum {
 	OPTION_S32,
 	OPTION_BIN,
 	OPTION_STATIC_ROUTES,
+	OPTION_6RD,
 #if ENABLE_FEATURE_UDHCP_RFC3397
 	OPTION_DNS_STRING,  /* RFC1035 compressed domain name list */
 	OPTION_SIP_SERVERS,
@@ -105,7 +107,7 @@ enum {
 /* DHCP option codes (partial list). See RFC 2132 and
  * http://www.iana.org/assignments/bootp-dhcp-parameters/
  * Commented out options are handled by common option machinery,
- * uncommented ones have spacial cases (grep for them to see).
+ * uncommented ones have special cases (grep for them to see).
  */
 #define DHCP_PADDING            0x00
 #define DHCP_SUBNET             0x01
@@ -147,7 +149,11 @@ enum {
 //#define DHCP_DOMAIN_SEARCH    0x77 /* RFC 3397. set of ASCIZ string, DNS-style compressed */
 //#define DHCP_SIP_SERVERS      0x78 /* RFC 3361. flag byte, then: 0: domain names, 1: IP addrs */
 //#define DHCP_STATIC_ROUTES    0x79 /* RFC 3442. (mask,ip,router) tuples */
-//#define DHCP_MS_STATIC_ROUTES 0xf9 /* RFC 3442. (mask,ip,router) tuples */
+#define DHCP_VLAN_ID            0x84 /* 802.1P VLAN ID */
+#define DHCP_VLAN_PRIORITY      0x85 /* 802.1Q VLAN priority */
+//#define DHCP_MS_STATIC_ROUTES 0xf9 /* Microsoft's pre-RFC 3442 code for 0x79? */
+//#define DHCP_6RD              0xd4 /* RFC 5969 6RD option */
+//#define DHCP_COMCAST_6RD      0x96 /* Comcast ISP RFC 5969 compatible 6RD option */
 //#define DHCP_WPAD             0xfc /* MSIE's Web Proxy Autodiscovery Protocol */
 #define DHCP_END                0xff
 
@@ -248,6 +254,7 @@ struct option_set *udhcp_find_option(struct option_set *opt_list, uint8_t code) 
 /*** Logging ***/
 
 #if defined CONFIG_UDHCP_DEBUG && CONFIG_UDHCP_DEBUG >= 1
+# define IF_UDHCP_VERBOSE(...) __VA_ARGS__
 extern unsigned dhcp_verbose;
 # define log1(...) do { if (dhcp_verbose >= 1) bb_info_msg(__VA_ARGS__); } while (0)
 # if CONFIG_UDHCP_DEBUG >= 2
@@ -263,6 +270,7 @@ void udhcp_dump_packet(struct dhcp_packet *packet) FAST_FUNC;
 #  define log3(...) ((void)0)
 # endif
 #else
+# define IF_UDHCP_VERBOSE(...)
 # define udhcp_dump_packet(...) ((void)0)
 # define log1(...) ((void)0)
 # define log2(...) ((void)0)
@@ -276,8 +284,6 @@ void udhcp_dump_packet(struct dhcp_packet *packet) FAST_FUNC;
 int FAST_FUNC udhcp_str2nip(const char *str, void *arg);
 /* 2nd param is "struct option_set**" */
 int FAST_FUNC udhcp_str2optset(const char *str, void *arg);
-
-uint16_t udhcp_checksum(void *addr, int count) FAST_FUNC;
 
 void udhcp_init_header(struct dhcp_packet *packet, char type) FAST_FUNC;
 
@@ -306,6 +312,9 @@ int arpping(uint32_t test_nip,
 		uint32_t from_ip,
 		uint8_t *from_mac,
 		const char *interface) FAST_FUNC;
+
+/* note: ip is a pointer to an IPv6 in network order, possibly misaliged */
+int sprint_nip6(char *dest, /*const char *pre,*/ const uint8_t *ip) FAST_FUNC;
 
 POP_SAVED_FUNCTION_VISIBILITY
 

@@ -2,6 +2,47 @@ opengt
 set com 460800n81
 set senddelay 0.05
 waitquiet 1 0.2
+system "nvram set g3state_pin=1"
+let $x=$rpipe("nvram get modem_pincode")
+let a=len($x)
+if a=0 goto ready
+if a<>4 goto pinerror
+let c=0
+:test
+let $c=$mid($x,c,1)
+if $c<"0" goto pinerror
+if $c>"9" goto pinerror
+inc c
+if c<4 goto test
+let a=val($x)
+if a<0 goto pinerror
+if a>9999 goto pinerror
+let $c=$left($x,4)
+:enterpin
+system "nvram set g3state_pin=2"
+send "AT+CPIN=\""
+send $c
+send "\"^m"
+waitfor 20 "OK","ERR","ERROR","+CME ERROR"
+if % = -1 goto pintimeerror
+if % = 0 goto ready
+if % = 1 goto pinerror
+if % = 2 goto pinerror
+if % = 3 goto pinerror
+:pinerror
+system "nvram set pinerr=1"
+system "nvram set g3err=1"
+print "ERROR: PIN code must be 4 decimal digits only\n"
+print "Caution! - entering the wrong PIN code three times will lock the SIM\n"
+send "ATH^m"
+exit 1
+:pintimeerror
+system "nvram set pinerr=2"
+system "nvram set g3err=1"
+print "ERROR: timeout, device did not respond to PIN command entry.\n"
+send "ATH^m"
+exit 1
+:ready
 let $x=$rpipe("nvram get modem_dialnum")
 let a=len($x)
 if a=0 goto error

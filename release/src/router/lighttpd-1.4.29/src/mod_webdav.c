@@ -2168,7 +2168,11 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 
 		/* don't add a second / */
 		if (p->physical.rel_path->ptr[0] == '/') {
-			buffer_append_string_len(p->physical.path, p->physical.rel_path->ptr + 1, p->physical.rel_path->used - 2);
+			//buffer_append_string_len(p->physical.path, p->physical.rel_path->ptr + 1, p->physical.rel_path->used - 2);
+
+			char* tmp = p->physical.rel_path->ptr + 1;
+			int len = p->physical.rel_path->used - 2;
+			buffer_append_string_encoded(p->physical.path, tmp, len, ENCODING_REL_URI);
 		} else {
 			buffer_append_string_buffer(p->physical.path, p->physical.rel_path);
 		}
@@ -3000,7 +3004,7 @@ propmatch_cleanup:
 			buffer_copy_string(share_link_info->auth, base64_auth);
 
 			share_link_info->createtime = time(NULL);
-			share_link_info->expiretime = share_link_info->createtime + expire;
+			share_link_info->expiretime = (expire==0 ? 0 : share_link_info->createtime + expire);
 			share_link_info->toshare = toShare;
 			
 			DLIST_ADD(share_link_info_list, share_link_info);
@@ -3159,6 +3163,7 @@ propmatch_cleanup:
 		char* build_no = nvram_get_build_no();
 				
 		//- Computer Name
+		char* modal_name = nvram_get_productid();
 		char* computer_name = nvram_get_computer_name();
 		char* st_webdav_mode = nvram_get_st_webdav_mode();
 		char* webdav_http_port = nvram_get_webdav_http_port();
@@ -3172,6 +3177,7 @@ propmatch_cleanup:
 		char* firmware_version = "1.0.0";
 		char* build_no = "0";
 
+		char* modal_name = "WebDAV";
 		//- Computer Name
 		char* computer_name = "WebDAV";
 		char* st_webdav_mode = "0";
@@ -3187,38 +3193,41 @@ propmatch_cleanup:
 		
 		b = chunkqueue_get_append_buffer(con->write_queue);
 		
-		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("<result>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("<servertime>\n"));
+		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<result>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<servertime>"));
 		buffer_append_string(b,stime);
-		buffer_append_string_len(b,CONST_STR_LEN("</servertime>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("<mac>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("</servertime>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<mac>"));
 		buffer_append_string(b,router_mac);
-		buffer_append_string_len(b,CONST_STR_LEN("</mac>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("<version>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("</mac>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<version>"));
 		buffer_append_string(b,firmware_version);
 		buffer_append_string(b,".");
 		buffer_append_string(b,build_no);
-		buffer_append_string_len(b,CONST_STR_LEN("</version>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("<computername>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("</version>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<computername>"));
 		buffer_append_string(b,computer_name);
-		buffer_append_string_len(b,CONST_STR_LEN("</computername>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("<webdav_mode>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("</computername>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<modalname>"));
+		buffer_append_string(b,modal_name);
+		buffer_append_string_len(b,CONST_STR_LEN("</modalname>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<webdav_mode>"));
 		buffer_append_string(b,st_webdav_mode);
-		buffer_append_string_len(b,CONST_STR_LEN("</webdav_mode>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("<http_port>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("</webdav_mode>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<http_port>"));
 		buffer_append_string(b,webdav_http_port);
-		buffer_append_string_len(b,CONST_STR_LEN("</http_port>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("<https_port>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("</http_port>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<https_port>"));
 		buffer_append_string(b,webdav_https_port);
-		buffer_append_string_len(b,CONST_STR_LEN("</https_port>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("</https_port>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<misc_http_enable>"));
 		buffer_append_string(b,misc_http_x);
 		buffer_append_string_len(b,CONST_STR_LEN("</misc_http_enable>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<misc_http_port>"));
 		buffer_append_string(b,misc_http_port);
 		buffer_append_string_len(b,CONST_STR_LEN("</misc_http_port>"));
-		buffer_append_string_len(b,CONST_STR_LEN("</result>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("</result>"));
 		
 		con->file_finished = 1;
 		return HANDLER_FINISHED;

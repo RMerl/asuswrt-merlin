@@ -30,7 +30,11 @@
 #include <dlinklist.h>
 #include "mod_smbdav.h"
 
-#define DBE 1
+#define DBE 0
+
+#ifndef EMBEDDED_EANBLE
+char* g_is_webdav_block = "0";
+#endif
 
 handler_t basic_authentication_handler(server *srv, connection *con, plugin_data *p)
 {
@@ -53,9 +57,8 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 		if( con->smb_info->username->used && con->smb_info->password->used ){
 			buffer_copy_string_buffer(user, con->smb_info->username);			
 			buffer_copy_string_buffer(pass, con->smb_info->password);
+			get_account_from_smb_info = 1;
 		}
-
-		get_account_from_smb_info = 1;
 		
 		Cdbg(DBE, "fail smbc_parser_basic_authentication-> %s, %s", user->ptr, pass->ptr);
 	}
@@ -64,13 +67,11 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 		buffer_copy_string(pass, auth_password);
 		free(auth_username);
 		free(auth_password);
-		get_account_from_smb_info = 0;
 	}
 
 	time_t cur_time = time(NULL);
 	
 	double result = difftime(cur_time, con->smb_info->auth_time);
-	Cdbg(DBE, "difftime=[%1f]", result);
 	
 	if(con->smb_info->qflag == SMB_HOST_QUERY) {
 		data_string *ds2 = (data_string *)array_get_element(con->request.headers, "user-Agent");	
@@ -99,24 +100,26 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 		char* is_webdav_block = nvram_get_webdav_acc_lock();
 		int try_times = atoi(nvram_get_webdav_lock_times());
 		int try_interval = atoi(nvram_get_webdav_lock_interval())*60;
-		int isBrowser = ( ds_useragent && strstr( ds_useragent->value->ptr, "Mozilla" ) ) ? 1 : 0;
 		#else
 		char* webav_user = "admin";
 		char* webav_pass = "admin";
 		char* enable_webdav_block = "1";
-		char* is_webdav_block = "0";
+		char* is_webdav_block = g_is_webdav_block;
 		int try_times = 3;
 		int try_interval = 1*60; //- 1 minutes
-		int isBrowser = ( ds_useragent && strstr( ds_useragent->value->ptr, "Mozilla" ) ) ? 1 : 0;
 		#endif
+		int isBrowser = ( ds_useragent && (strstr( ds_useragent->value->ptr, "Mozilla" ) || strstr( ds_useragent->value->ptr, "Opera" ))) ? 1 : 0;
 
-		if( isBrowser==1 && strcmp(enable_webdav_block, "1") == 0 && strcmp(is_webdav_block, "1") == 0 )
+		if( isBrowser==1 && strcmp(enable_webdav_block, "1") == 0 && strcmp(is_webdav_block, "1") == 0 ){
+			Cdbg(DBE, "Direct go to 455 error page");
 			goto error_455;
+		}
 			
 		if( strcmp(user->ptr, webav_user)!=0 || 
 		    strcmp(pass->ptr, webav_pass)!=0 ){
 			
-			if( isBrowser==1 && strcmp(enable_webdav_block, "1") == 0 && con->smb_info ){
+			if( isBrowser==1 && strcmp(enable_webdav_block, "1") == 0 && con->smb_info && ds_auth!=NULL ){
+			//if( isBrowser==1 && strcmp(enable_webdav_block, "1") == 0 && con->smb_info ){
 				con->smb_info->login_count++;
 				
 				time_t current_time = time(NULL);
@@ -129,20 +132,23 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 				if(con->smb_info->login_count==1)
 					con->smb_info->login_begin_time = time(NULL);
 				
-				Cdbg(DBE, "con->smb_info->login_count=[%d]", con->smb_info->login_count);
+				Cdbg(DBE, "con->smb_info->login_count=[%d][%d]", con->smb_info->login_count, try_times);
 				if(con->smb_info->login_count>=try_times){
 
 					con->smb_info->login_count = 0;
 					
 					#if EMBEDDED_EANBLE
 					nvram_set_webdav_acc_lock("1");
+					#else
+					g_is_webdav_block = "1";
 					#endif
+
+					Cdbg(DBE, "error_455...");
 					
 					goto error_455;
 				}
 			}
 			
-			//Cdbg(DBE, "smbc_host_account_authentication fail user=[%s], pass=[%s]", user->ptr, pass->ptr);			
 			goto error_401;
 		}
 		
@@ -182,11 +188,11 @@ handler_t basic_authentication_handler(server *srv, connection *con, plugin_data
 		}
 		
 		int res = smbc_server_check_creds( con->smb_info->server->ptr, 
-									     con->smb_info->share->ptr, 
-									     con->smb_info->workgroup->ptr, 
-									     user->ptr, 
-									     pass->ptr );
-
+									       con->smb_info->share->ptr, 
+									       con->smb_info->workgroup->ptr, 
+									       user->ptr, 
+									       pass->ptr );
+		
 		//if( res == NT_STATUS_V(NT_STATUS_NOT_SUPPORTED)) {
 		if( res == 0xc00000bb ){
 			buffer_free(user);

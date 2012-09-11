@@ -84,6 +84,8 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 
 			break;
 		}
+
+
 		case FILE_CHUNK: {
 #ifdef USE_MMAP
 			char *p = NULL;
@@ -194,18 +196,17 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 			break;
 		}
 
+#if 0
 		case SMB_CHUNK: {
 			ssize_t r;
 			off_t offset;
 			size_t toSend;
 			off_t rest_len;
 			stat_cache_entry *sce = NULL;
-//#define BUFF_SIZE 2048			
-#define BUFF_SIZE 100*1024
 
-		
+#define BUFF_SIZE 256*1024
+
 			char buff[BUFF_SIZE];
-//			char *buff=NULL;
 			int ifd;
 			
 			if (HANDLER_ERROR == stat_cache_get_entry(srv, con, c->file.name, &sce)) {
@@ -219,8 +220,6 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 			toSend = (c->file.length - c->offset>BUFF_SIZE)?
 			   BUFF_SIZE : c->file.length - c->offset ;
 
-//			rest_len = c->file.length - c->offset; 
-//			toSend =  
 			Cdbg(DBE,"offset =%lli, toSend=%d, sce->st.st_size=%lli", offset, toSend, sce->st.st_size);
 
 			if (offset > sce->st.st_size) {
@@ -229,13 +228,12 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 				if(buff) free(buff);
 				return -1;
 			}
-
-//			if (-1 == (ifd = open(c->file.name->ptr, O_RDONLY))) {
-				if (-1 == (ifd = smbc_wrapper_open(con,c->file.name->ptr, O_RDONLY, 0755))) {
-					log_error_write(srv, __FILE__, __LINE__, "ss", "open failed: ", strerror(errno));
-					Cdbg(DBE,"wrapper open failed,ifd=%d,  fn =%s, open failed =%s, errno =%d",ifd, c->file.name->ptr,strerror(errno),errno);
-					return -1;
-				}
+						
+			if (-1 == (ifd = smbc_wrapper_open(con,c->file.name->ptr, O_RDONLY, 0755))) {
+				log_error_write(srv, __FILE__, __LINE__, "ss", "open failed: ", strerror(errno));
+				Cdbg(DBE,"wrapper open failed,ifd=%d,  fn =%s, open failed =%s, errno =%d",ifd, c->file.name->ptr,strerror(errno),errno);
+				return -1;
+			}
 			Cdbg(DBE,"ifd =%d, toSend=%d",ifd, toSend);
 			smbc_wrapper_lseek(con, ifd, offset, SEEK_SET );		
 			if (-1 == (toSend = smbc_wrapper_read(con, ifd, buff, toSend ))) {
@@ -273,16 +271,121 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 			}
 			break;
 		}
+#endif
+		case SMB_CHUNK: {
+
+			ssize_t r, w;
+			off_t offset;
+			size_t toSend;
+			stat_cache_entry *sce = NULL;
+			
+			//#define BUFF_SIZE 2*1024
+
+			//- 128K
+			//#define BUFF_SIZE 131072
+			#define BUFF_SIZE (1460*4)
+			
+			char buff[BUFF_SIZE]={0};
+			offset = c->file.start + c->offset;
+			toSend = (c->file.length - c->offset>BUFF_SIZE)?
+			   BUFF_SIZE : c->file.length - c->offset ;
+
+			/* open file if not already opened */
+			Cdbg(DBE, " fn =[%s]", c->file.name->ptr);	
+			
+			if (-1 == c->file.fd) {
+				Cdbg(DBE, "start to open file...");
+				if (-1 == (c->file.fd = smbc_wrapper_open(con,c->file.name->ptr, O_RDONLY, 0755))) {
+					log_error_write(srv, __FILE__, __LINE__, "ss", "open failed: ", strerror(errno));
+					return -1;
+				}
+			}
+
+			Cdbg(DBE, "c->file.fd=[%d], offset =%lli, to send=%d, c->file.length=%d", c->file.fd, offset, toSend, c->file.length);			
+			
+			smbc_wrapper_lseek(con, c->file.fd, offset, SEEK_SET );		
+
+			r = smbc_wrapper_read(con, c->file.fd, buff, toSend);
+
+			Cdbg(DBE, "toSend=[%d], errno=[%d]", toSend, errno);			
+
+			if (toSend == -1||r<0) {
+				smbc_wrapper_close(con, c->file.fd);
+				switch (errno) {
+				case EAGAIN:
+				case EINTR:
+					/* ok, we can't send more, let's try later again */
+					r = 0;
+					break;
+				case EPIPE:
+				case ECONNRESET:
+					return -2;
+				default:
+					Cdbg(DBE, "11111 %s", strerror(errno));
+					log_error_write(srv, __FILE__, __LINE__, "ssd",
+							"sendfile failed:", strerror(errno), fd);
+					return -1;
+				}
+			} else if (r == 0) {
+				int oerrno = errno;
+				/* We got an event to write but we wrote nothing
+				 *
+				 * - the file shrinked -> error
+				 * - the remote side closed inbetween -> remote-close */
+				
+				if (HANDLER_ERROR == stat_cache_get_entry(srv, con, c->file.name, &sce)) {
+					/* file is gone ? */
+					return -1;
+				}
+
+				if (offset > sce->st.st_size) {
+					/* file shrinked, close the connection */
+					errno = oerrno;
+
+					return -1;
+				}
+
+				errno = oerrno;
+				return -2;
+			}
+
+			r = write(fd, buff, toSend);
+
+			Cdbg(DBE, "write [%d] bytes, fd=%d", r, fd);
+			
+			if(r<=0) {
+				//write error??
+			   	Cdbg(DBE,"errno =%d -> %s",errno,strerror(errno));
+				smbc_wrapper_close(con,c->file.fd);
+				return -1;
+			}
+
+			c->offset += r;
+			cq->bytes_out += r;
+
+			Cdbg(DBE, "c->offset=[%d], c->file.length=[%d]", c->offset, c->file.length);
+			
+			if (c->offset == c->file.length) {
+				chunk_finished = 1;
+
+				Cdbg(DBE, "file finish");
+				/* chunk_free() / chunk_reset() will cleanup for us but it is a ok to be faster :) */
+
+				if (c->file.fd != -1) {
+					smbc_wrapper_close(con,c->file.fd);
+					c->file.fd = -1;
+				}
+			}
+			break;
+		}
+		
 		default:
-
 			log_error_write(srv, __FILE__, __LINE__, "ds", c, "type not known");
-
 			return -1;
 		}
 
 		if (!chunk_finished) {
 			/* not finished yet */
-
 			break;
 		}
 

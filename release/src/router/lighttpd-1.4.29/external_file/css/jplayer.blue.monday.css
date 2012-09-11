@@ -31,7 +31,7 @@ div.jp-video {
 	position:relative;
 }
 div.jp-audio {
-	width:450px;
+	width:430px;
 }
 div.jp-video-270p {
 	width:480px;
@@ -397,6 +397,7 @@ div.jp-playlist ul {
 div.jp-title li {
 	padding:5px 0;
 	font-weight:bold;
+	white-space: nowrap;
 }
 div.jp-playlist li {
 	padding:5px 0 4px 20px;

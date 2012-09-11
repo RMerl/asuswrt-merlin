@@ -340,10 +340,11 @@ define RouterOptions
 	if [ "$(DSL)" = "y" ]; then \
 		sed -i "/RTCONFIG_DSL/d" $(1); \
 		echo "RTCONFIG_DSL=y" >>$(1); \
-	fi; \
-	if [ "$(ANNEX_B)" = "y" ]; then \
-		sed -i "/RTCONFIG_DSL_ANNEX_B/d" $(1); \
-		echo "RTCONFIG_DSL_ANNEX_B=y" >>$(1); \
+		if [ "$(ANNEX_B)" = "y" ]; then \
+			echo "RTCONFIG_DSL_ANNEX_B=y" >>$(1); \
+		else \
+			echo "# RTCONFIG_DSL_ANNEX_B is not set" >>$(1); \
+		fi; \
 	fi; \
 	if [ "$(DUALWAN)" = "y" ]; then \
 		sed -i "/RTCONFIG_DUALWAN/d" $(1); \
@@ -715,6 +716,8 @@ define KernelConfig
 			echo "CONFIG_IPV6_ROUTER_PREF=y" >>$(1); \
 			sed -i "/CONFIG_IPV6_SIT/d" $(1); \
 			echo "CONFIG_IPV6_SIT=m" >>$(1); \
+			sed -i "/CONFIG_IPV6_SIT_6RD/d" $(1); \
+			echo "CONFIG_IPV6_SIT_6RD=y" >>$(1); \
 			sed -i "/CONFIG_IPV6_MULTIPLE_TABLES/d" $(1); \
 			echo "CONFIG_IPV6_MULTIPLE_TABLES=y" >>$(1); \
 			sed -i "/CONFIG_IP6_NF_TARGET_ROUTE/d" $(1); \

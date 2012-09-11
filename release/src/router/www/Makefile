@@ -98,8 +98,8 @@ ifneq ($(RTCONFIG_CLOUDSYNC),y)
 	rm -rf $(INSTALLDIR)/www/images/cloudsync
 	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt/*cloud*.png
 	rm -rf $(INSTALLDIR)/www/update_cloudstatus.asp
+	rm -rf $(INSTALLDIR)/www/get_webdavInfo.asp
 	rm -rf $(INSTALLDIR)/www/*cloud*.asp
-
 endif
 ifeq ($(RTCONFIG_NO_USBSTORAGE),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt
@@ -149,4 +149,14 @@ ifneq ($(RTCONFIG_USB),y)
 endif
 endif
 	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_$(BUILD_NAME).CFG && cd $(TOP)/www 
-
+ifeq ($(RTCONFIG_ODMPID), y)
+ifeq ($(BUILD_NAME), RT-AC66U)
+	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_RT-AC66R.CFG && cd $(TOP)/www
+endif
+ifeq ($(BUILD_NAME), RT-N66U)
+	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_RT-N66R.CFG && cd $(TOP)/www
+endif
+ifeq ($(BUILD_NAME), RT-N65U)
+	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_RT-N65R.CFG && cd $(TOP)/www
+endif
+endif

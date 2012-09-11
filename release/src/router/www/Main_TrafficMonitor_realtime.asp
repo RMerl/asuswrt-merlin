@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE10" />
 <meta name="svg.render.forceflash" content="false" />	
 <title><#Web_Title#> - <#traffic_monitor#> : <#menu4_2_1#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
@@ -20,6 +20,7 @@
 <script language="JavaScript" type="text/javascript" src="tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="tmcal.js"></script>	
 <script language="JavaScript" type="text/javascript" src="popup.js"></script>
+
 <script type='text/javascript'>
 
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
@@ -158,17 +159,17 @@ function switchPage(page){
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 <tr>
 	<td width="23">&nbsp;</td>
+
+<!--=====Beginning of Main Menu=====-->
 	<td valign="top" width="202">
-    <div id="mainMenu"></div>
-  	<div id="subMenu"></div>
-  </td>
+	  <div id="mainMenu"></div>
+	  <div id="subMenu"></div>
+	</td>
 
   <td valign="top">
-		<div id="tabMenu" class="submenuBlock"></div>
-		
+		<div id="tabMenu" class="submenuBlock"></div>		
       	<!--===================================Beginning of Main Content===========================================-->
       	<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
-
   		<tr>
 			<td align="left"  valign="top">
 			<table width="100%" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">		
@@ -176,7 +177,7 @@ function switchPage(page){
 				<!--===================================Beginning of graph Content===========================================-->
 	      		<tr>
 					<td bgcolor="#4D595D" valign="top"  >
-		  				<table width="730px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="TMTable">
+		  				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="TMTable">
         			<tr>
 						<td>
 							<table width="100%" >
@@ -223,7 +224,7 @@ function switchPage(page){
 
         			<tr>
         				<td>
-        					<div id="tab-area"></div>
+							<span id="tab-area"></span>										
 								<!--========= svg =========-->
 								<!--[if IE]>
 									<div id="svg-table" align="left">
@@ -317,15 +318,15 @@ function switchPage(page){
 						</table>					
 					</td>
 				</tr>
-				</tbody>
-				</table>	
-			</td>
-		</tr>		
-		</table>					
-	</td>
-</tr>
+			</tbody>		
+			</table>	
+		</td>
+	</tr>
+	</table>				
+	</td>   	 
+	</tr>
 </table>
 
-	<div id="footer"></div>
+<div id="footer"></div>
 </body>
 </html>

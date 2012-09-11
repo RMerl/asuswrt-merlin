@@ -1147,17 +1147,17 @@ function showMAC(){
 
 							<tr>
 								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,1);"><#IPConnection_ExternalIPAddress_itemname#></a></th>
-								<td><input type="text" name="dslx_ipaddr" maxlength="15" class="input_15_table" value="<% nvram_get("dslx_ipaddr"); %>" onKeyPress="return is_ipaddr(this,event);" onKeyUp="change_ipaddr(this);"></td>
+								<td><input type="text" name="dslx_ipaddr" maxlength="15" class="input_15_table" value="<% nvram_get("dslx_ipaddr"); %>" onKeyPress="return is_ipaddr(this,event);"></td>
 							</tr>
 
 							<tr>
 								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,2);"><#IPConnection_x_ExternalSubnetMask_itemname#></a></th>
-								<td><input type="text" name="dslx_netmask" maxlength="15" class="input_15_table" value="<% nvram_get("dslx_netmask"); %>" onKeyPress="return is_ipaddr(this,event);" onKeyUp="change_ipaddr(this);"></td>
+								<td><input type="text" name="dslx_netmask" maxlength="15" class="input_15_table" value="<% nvram_get("dslx_netmask"); %>" onKeyPress="return is_ipaddr(this,event);"></td>
 							</tr>
 
 							<tr>
 								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,3);"><#IPConnection_x_ExternalGateway_itemname#></a></th>
-								<td><input type="text" name="dslx_gateway" maxlength="15" class="input_15_table" value="<% nvram_get("dslx_gateway"); %>" onKeyPress="return is_ipaddr(this,event);" onKeyUp="change_ipaddr(this);"></td>
+								<td><input type="text" name="dslx_gateway" maxlength="15" class="input_15_table" value="<% nvram_get("dslx_gateway"); %>" onKeyPress="return is_ipaddr(this,event);"></td>
 							</tr>
 						</table>
 					</td>
@@ -1181,11 +1181,11 @@ function showMAC(){
 
           		<tr>
             		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,13);"><#IPConnection_x_DNSServer1_itemname#></a></th>
-            		<td><input type="text" maxlength="15" class="input_15_table" name="dslx_dns1" value="<% nvram_get("dslx_dns1"); %>" onkeypress="return is_ipaddr(this,event)" onkeyup="change_ipaddr(this)"/></td>
+            		<td><input type="text" maxlength="15" class="input_15_table" name="dslx_dns1" value="<% nvram_get("dslx_dns1"); %>" onkeypress="return is_ipaddr(this,event)" /></td>
           		</tr>
           		<tr>
             		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,14);"><#IPConnection_x_DNSServer2_itemname#></a></th>
-            		<td><input type="text" maxlength="15" class="input_15_table" name="dslx_dns2" value="<% nvram_get("dslx_dns2"); %>" onkeypress="return is_ipaddr(this,event)" onkeyup="change_ipaddr(this)"/></td>
+            		<td><input type="text" maxlength="15" class="input_15_table" name="dslx_dns2" value="<% nvram_get("dslx_dns2"); %>" onkeypress="return is_ipaddr(this,event)" /></td>
           		</tr>
         		</table>
         	</td>

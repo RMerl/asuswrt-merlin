@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: et_linux.c 330107 2012-04-27 22:04:17Z $
+ * $Id: et_linux.c 341165 2012-06-26 19:16:22Z $
  */
 
 #include <et_cfg.h>
@@ -858,6 +858,7 @@ et_sendnext(et_info_t *et)
 		          __FUNCTION__, p, PKTISCHAINED(p), PKTCCNT(p), PKTCLINK(p)));
 
 		FOREACH_CHAINED_PKT(p, n) {
+			PKTCLRCHAINED(et->osh, p);
 			/* replicate vlan header contents from curr frame */
 			if (n != NULL) {
 				uint8 *n_evh;
@@ -1468,6 +1469,7 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 	int32 i = 0, cidx = 0;
 	bool chaining = PKTC_ENAB(et);
 #endif
+
 	/* read the buffers first */
 	while ((p = (*chops->rx)(ch))) {
 #ifdef PKTC
@@ -1514,6 +1516,7 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 					ether_rcopy(evh - VLAN_TAG_LEN, evh);
 				}
 				PKTCINCRCNT(cd[i].chead);
+				PKTSETCHAINED(et->osh, p);
 				PKTCADDLEN(cd[i].chead, PKTLEN(et->osh, p));
 			} else
 				PKTCENQTAIL(h, t, p);
@@ -1573,7 +1576,6 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 		h = PKTLINK(h);
 		PKTSETLINK(p, NULL);
 #endif
-
 		/* prefetch the headers */
 		if (h != NULL)
 			ETPREFHDRS(PKTDATA(osh, h), PREFSZ);

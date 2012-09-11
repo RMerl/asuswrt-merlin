@@ -141,6 +141,7 @@ function switchPage(page){
 	else
 		return false;
 }
+
 </script>
 </head>
 

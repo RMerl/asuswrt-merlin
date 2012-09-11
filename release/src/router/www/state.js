@@ -1,8 +1,8 @@
 ﻿//For operation mode;
-sw_mode = '<% nvram_get("sw_mode"); %>';
+var sw_mode = '<% nvram_get("sw_mode"); %>';
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode = 2;
-productid = '<#Web_Title2#>';
+var productid = '<#Web_Title2#>';
 var uptimeStr = "<% uptime(); %>";
 var timezone = uptimeStr.substring(26,31);
 var boottime = parseInt(uptimeStr.substring(32,42));
@@ -33,8 +33,10 @@ function change_wl_unit_status(_unit){
 	
 	document.titleForm.wl_unit.disabled = false;
 	document.titleForm.wl_unit.value = _unit;
-	document.titleForm.current_page.value = "Advanced_Wireless_Content.asp";
-	document.titleForm.next_page.value = "Advanced_Wireless_Content.asp";
+	if(document.titleForm.current_page.value == "")
+		document.titleForm.current_page.value = "Advanced_Wireless_Content.asp";
+	if(document.titleForm.next_page.value == "")
+		document.titleForm.next_page.value = "Advanced_Wireless_Content.asp";
 	document.titleForm.action_mode.value = "change_wl_unit";
 	document.titleForm.action = "apply.cgi";
 	document.titleForm.target = "";
@@ -204,22 +206,26 @@ var cloudsync_support = rc_support.search("cloudsync");
 var modem_support = rc_support.search("modem"); 
 var IPv6_support = rc_support.search("ipv6"); 
 var ParentalCtrl_support = rc_support.search("PARENTAL"); 
+var ParentalCtrl2_support = rc_support.search("PARENTAL2"); 
 var pptpd_support = rc_support.search("pptpd"); 
 var openvpnd_support = rc_support.search("openvpnd"); 
 var dualWAN_support = rc_support.search("dualwan"); 
 var WebDav_support = rc_support.search("webdav"); 
 var HTTPS_support = rc_support.search("HTTPS"); 
 var nodm_support = rc_support.search("nodm"); 
-var no_wimax_support = rc_support.search("nowimax");
+var wimax_support = rc_support.search("wimax");
 
 var downsize_support = -1;
 if(productid == "RT-N10D")
 	downsize_support = 1;
 
-var calculate_height = menuL1_link.length+tablink.length-3;
+var calculate_height = menuL1_link.length+tablink.length-1;
 
 function remove_url(){
 	remove_menu_item(2, "Advanced_Modem_Content.asp");
+	
+	if('<% nvram_get("start_aicloud"); %>' == '0')
+		menuL1_link[6] = "cloud__main.asp"
 
 	if(downsize_support != -1) {
 		remove_menu_item(9, "Main_TrafficMonitor_realtime.asp");
@@ -359,13 +365,12 @@ function remove_url(){
 //		remove_menu_item(7, "Advanced_PerformanceTuning_Content.asp");
 //	}
 
-	if(ParentalCtrl_support == -1){
-		if(sw_mode == 3){
-			menuL1_title[4]="";
-			menuL1_link[4]="";
-		}
+	if(ParentalCtrl2_support == -1){
+		menuL1_title[4]="";
+		menuL1_link[4]="";
 	}
-	else
+
+	if(ParentalCtrl_support == -1)
 		remove_menu_item(6, "Advanced_MACFilter_Content.asp");
 
 	if(IPv6_support == -1){
@@ -394,6 +399,10 @@ function remove_url(){
 	if(SwitchCtrl_support == -1){
 		remove_menu_item(1, "Advanced_SwitchCtrl_Content.asp");		
 	}
+
+        if(repeater_support != -1){
+                remove_menu_item(0, "Advanced_WMode_Content.asp");
+        }
 }
 
 function remove_menu_item(L2, remove_url){
@@ -507,6 +516,7 @@ function show_menu(){
 	show_footer();
 	browser_compatibility();	
 	show_selected_language();
+	autoFocus('<% get_parameter("af"); %>');
 
 	// QIS wizard
 	if(sw_mode == 2){
@@ -586,7 +596,8 @@ function show_menu(){
 
 		$("tabMenu").innerHTML = tab_code;
 	}
-	cal_height();
+
+	setTimeout('cal_height();', 1);
 }
 
 function addOnlineHelp(obj, keywordArray){
@@ -754,55 +765,88 @@ function Block_chars(obj, keywordArray){
 }
 
 function cal_height(){
-	var table_height = 52*calculate_height+80; // index.asp 80
+	var tableClientHeight;
+	var optionHeight = 52;
+	var manualOffSet = 28;
+	var table_height = Math.round(optionHeight*calculate_height - manualOffSet*calculate_height/14 - $("tabMenu").clientHeight);	
+	if(navigator.appName.indexOf("Microsoft") < 0)
+		var contentObj = document.getElementsByClassName("content");
+	else
+		var contentObj = getElementsByClassName_iefix("table", "content");
 
 	if($("FormTitle") && current_url.indexOf("Advanced_AiDisk_ftp") != 0 && current_url.indexOf("Advanced_AiDisk_samba") != 0){
-		var table_height_table = table_height-10;
-
-		if(!current_url.indexOf("ParentalControl") || !current_url.indexOf("Advanced_Modem_Content"))
-			table_height_table = table_height_table + 40;
-
-		$("FormTitle").style.height = table_height_table + "px";
+		table_height = table_height + 24;
+		$("FormTitle").style.height = table_height + "px";
+		tableClientHeight = $("FormTitle").clientHeight;
 	}
-
-	if($("qos_table")){
-		var table_height_table = table_height-30;
-		$("qos_table").style.height = table_height_table + "px";
-	}
-
-	if($("printerServer_table")){
-		$("printerServer_table").style.height = table_height + "px";
-	}
-
-	if($("table_height"))
-		$("table_height").style.height = table_height + 20 + "px";
-	
-	if(table_height < 720)
-		table_height = 720;
-
-	if($("sub_frame"))
-		$("sub_frame").style.height = table_height + 30 + "px";
-
-	if($("NM_table"))
+	// index.asp
+	else if($("NM_table")){
+		var statusPageHeight = 720;
+		if(table_height < 740)
+			table_height = 740;
 		$("NM_table").style.height = table_height + "px";
+		$("NM_table_div").style.marginTop = (table_height - statusPageHeight)/2 + "px";
+		tableClientHeight = $("NM_table").clientHeight;
+	}
+	// QoS_EZQoS.asp
+	else if($("qos_table")){
+		$("qos_table").style.height = table_height + "px";
+		tableClientHeight = $("qos_table").clientHeight;
+	}
+	// aidisk.asp
+	else if($("AiDiskFormTitle")){
+		table_height = table_height + 24;
+		$("AiDiskFormTitle").style.height = table_height + "px";
+		tableClientHeight = $("AiDiskFormTitle").clientHeight;
+	}
+	// mediaserver.asp
+	else if($("upnp_table")){
+		if(table_height < 780)
+			table_height = 780;
+		$("upnp_table").style.height = table_height + "px";
+		tableClientHeight = $("upnp_table").clientHeight;
+	}
+	// APP Install
+	else if($("applist_table")){
+		if(sw_mode == 2)
+				table_height = table_height + 90;
+		else
+				table_height = table_height + 2;
+		$("applist_table").style.height = table_height + "px";		
+		tableClientHeight = $("applist_table").clientHeight;
+		
+		if(navigator.appName.indexOf("Microsoft") >= 0)
+						contentObj[0].style.height = contentObj[0].clientHeight + 18 + "px";
+	}
+	// PrinterServ
+	else if($("printerServer_table")){
+		if(sw_mode == 2)
+				table_height = table_height + 90;
+		else
+				table_height = table_height + 2;
+		$("printerServer_table").style.height = table_height + "px";		
+		tableClientHeight = $("printerServer_table").clientHeight;
+		
+		if(navigator.appName.indexOf("Microsoft") >= 0)
+						contentObj[0].style.height = contentObj[0].clientHeight + 18 + "px";
+	}	
 
-	if($("_NM_table") && sw_mode == '1')
-		$("NM_table_div").style.marginTop = Math.round((table_height-675)/3) + "px";
-
-	if(sw_mode == '3' && navigator.appName.indexOf("Microsoft") == 0)
-		$('NM_table').style.paddingBottom = "20px";
-
+	/*// overflow
+	var isOverflow = parseInt(tableClientHeight) - parseInt(table_height);
+	if(isOverflow >= 0){
+		if(current_url.indexOf("Main_TrafficMonitor_realtime") == 0 && navigator.appName.indexOf("Microsoft") < 0)
+			contentObj[0].style.height = contentObj[0].clientHeight + 45 + "px";
+		else
+			contentObj[0].style.height = contentObj[0].clientHeight + 19 + "px";	
+	}*/
 }
 
 function show_footer(){
 	footer_code = '<div align="center" class="bottom-image"></div>\n';
-	if(dbwww_support != -1)
-		footer_code +='<div align="center" class="copyright">httpd_dir='+httpd_dir+'</div><br>';
-	else
-		footer_code +='<div align="center" class="copyright"><#footer_copyright_desc#></div><br>';
+	footer_code +='<div align="center" class="copyright"><#footer_copyright_desc#></div><br>';
 
-	/*
-	footer_code += '<div style="margin-top:-80px;margin-left:220px;"><table width="740" border="0" align="center" cellpadding="0" cellspacing="0"><tr>';
+	// FAQ searching bar{
+	footer_code += '<div style="margin-top:-75px;margin-left:205px;"><table width="765px" border="0" align="center" cellpadding="0" cellspacing="0"><tr>';
 	footer_code += '<td width="20" align="right"><div id="bottom_help_icon" style="margin-right:3px;"></div></td><td width="100" id="bottom_help_title" align="left">Help & Support</td>';
 
 	if("<#Web_Title2#>" == "RT-N66U")
@@ -813,7 +857,7 @@ function show_footer(){
 	footer_code += '<td width="390" id="bottom_help_FAQ" align="right" style="font-family:Arial, Helvetica, sans-serif;">FAQ&nbsp&nbsp<input type="text" id="FAQ_input" name="FAQ_input" class="input_FAQ_table" maxlength="40"></td>';
 	footer_code += '<td width="30" align="left"><div id="bottom_help_FAQ_icon" class="bottom_help_FAQ_icon" style="cursor:pointer;margin-left:3px;" target="_blank" onClick="search_supportsite();"></div></td>';
 	footer_code += '</tr></table></div>\n';
-	*/
+	//}
 
 	$("footer").innerHTML = footer_code;
 	flash_button();
@@ -899,8 +943,15 @@ function show_top_status(){
 			else
 				ssid_status_5g =  decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl1.1_ssid"); %>');
 		}
-		else
-			$("ssidTitle").style.display = "none";
+		else{
+			// $("ssidTitle").style.display = "none";
+			if('<% nvram_get("wlc_band"); %>' == '0'){
+				$("elliptic_ssid_2g").style.display = "none";
+				$("elliptic_ssid_5g").style.marginLeft = "";
+			}
+			else
+				$("elliptic_ssid_5g").style.display = "none";
+		}
 	}
 	
 	if(band5g_support == -1){
@@ -1455,6 +1506,18 @@ function validate_account(string_obj, flag){
 		else
 			return '<#JS_validstr1#> [&nbsp;&nbsp;&nbsp;]';
 	}
+	else if(string_obj.value.charAt(0) == '-'){
+		if(flag != "noalert")
+			alert('<#JS_validstr1#> [-]');
+
+		string_obj.value = "";
+		string_obj.focus();
+
+		if(flag != "noalert")
+			return false;
+		else
+			return '<#JS_validstr1#> [-]';
+	}
 
 	for(var i = 0; i < string_obj.value.length; ++i){
 		if(string_obj.value.charAt(i) == '"'
@@ -1792,8 +1855,11 @@ function refresh_info_status(xmldoc)
 				$("connect_status").onclick = function(){openHint(24,3);}
 			else
 				$("connect_status").onclick = function(){overHint(3);}
-			if(location.pathname == "/" || location.pathname == "/index.asp")
-			  $("NM_connect_status").innerHTML = "<#Disconnected#>";		 	
+
+			if(location.pathname == "/" || location.pathname == "/index.asp"){
+				$("NM_connect_status").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/QIS_wizard.htm?flag=detect"><#Disconnected#></a>';
+				$("wanIP_div").style.display = "none";		
+			}
 		}
 		$("connect_status").onmouseover = function(){overHint(3);}
 		$("connect_status").onmouseout = function(){nd();}
@@ -1838,8 +1904,10 @@ function refresh_info_status(xmldoc)
 	// usb
 	if(usb_support != -1){
 		if(foreign_disk_total_mounted_number().length == 0){
-			usb_path1 = "usb=";
-			usb_path2 = "usb=";
+			if(usb_path1 == "usb=storage")
+				usb_path1 = "usb=";
+			if(usb_path2 == "usb=storage")
+				usb_path2 = "usb=";
 		}
 		else{
 			var mountNum = 0;
@@ -1849,8 +1917,10 @@ function refresh_info_status(xmldoc)
 					break;
 			}
 			if(mountNum == 0){
-				usb_path1 = "usb=";
-				usb_path2 = "usb=";
+				if(usb_path1 == "usb=storage")
+					usb_path1 = "usb=";
+				if(usb_path1 == "usb=storage")
+					usb_path2 = "usb=";
 			}
 		}
 
@@ -1859,7 +1929,7 @@ function refresh_info_status(xmldoc)
 		    (usb_path2!=usb_path2_tmp&&usb_path2_tmp!="init")))
 			updateUSBStatus();
 
-		if((usb_path1 == "usb=" && usb_path2 == "usb=") || foreign_disk_total_mounted_number()[0] == null){
+		if(usb_path1 == "usb=" && usb_path2 == "usb="){
 			$("usb_status").className = "usbstatusoff";
 			$("usb_status").onclick = function(){overHint(2);}
 			if(printer_support != -1){
@@ -1956,6 +2026,13 @@ function refresh_info_status(xmldoc)
 function db(obj){
 	if(typeof console == 'object')
 		console.log(obj);
+}
+
+function dbObj(obj){
+	for(var j in obj){	
+		if(j!="textContent" && j!="outerHTML" && j!="innerHTML" && j!="innerText" && j!="outerText")
+			db(j+" : "+obj[j]);
+	}
 }
 
 function FormActions(_Action, _ActionMode, _ActionScript, _ActionWait){
@@ -2055,8 +2132,6 @@ function drdiagnose(){
 }
 
 function isMobile(){
-	return false;
-
 	var mobiles = new Array(
 								"midp", "j2me", "avant", "docomo", "novarra", "palmos", "palmsource",
 								"240x320", "opwv", "chtml", "pda", "windows ce", "mmp/",
@@ -2079,4 +2154,36 @@ function isMobile(){
 	}
 
 	return _isMobile;
+}
+
+var stopAutoFocus;
+function autoFocus(str){
+	if(str == "")
+		return false;
+
+	stopAutoFocus = 0;
+	if(document.form){
+		for(var i = 0; i < document.form.length; i++){
+			if(document.form[i].name == str){
+				var sec = 600;
+				var maxAF = 20;
+				if(navigator.userAgent.toLowerCase().search("webkit") < 0){
+					window.onclick = function(){stopAutoFocus=1;document.form[i].style.border='';}
+					for(var j=0; j<maxAF; j++){
+						setTimeout("if(stopAutoFocus==0)document.form["+i+"].style.border='1px solid #56B4EF';", sec*j++);
+						setTimeout("if(stopAutoFocus==0)document.form["+i+"].style.border='';", sec*j);							
+					}
+				}
+				else{
+					window.onclick = function(){stopAutoFocus=1;}
+					document.form[i].focus();
+					for(var j=1; j<maxAF; j++){
+						setTimeout("if(stopAutoFocus==0)document.form["+i+"].blur();", sec*j++);
+						setTimeout("if(stopAutoFocus==0)document.form["+i+"].focus();", sec*j);
+					}
+				}
+				break;
+			}
+		}
+	}
 }

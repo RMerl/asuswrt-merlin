@@ -94,11 +94,13 @@ function submitQoS(){
 		if(document.form.qos_obw.value.length == 0 || document.form.qos_obw.value == 0){
 				alert("<#JS_fieldblank#>");
 				document.form.qos_obw.focus();
+				document.form.qos_obw.select();
 				return;
 		}
 		if(document.form.qos_ibw.value.length == 0 || document.form.qos_ibw.value == 0){
 				alert("<#JS_fieldblank#>");
 				document.form.qos_ibw.focus();
+				document.form.qos_ibw.select();
 				return;
 		}
 		// end
@@ -127,7 +129,7 @@ function showqos_rulelist(){
 	var code = "";
 	code +='<table style="margin-left:3px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="list_table" id="qos_rulelist_table">';
 	if(qos_rulelist_row.length == 1)	// no exist "<"
-		code +='<tr><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
+		code +='<tr><td style="color:#FFCC00;height:30px;" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
 	else{
 		for(var i = 1; i < qos_rulelist_row.length; i++){
 			overlib_str0[i] ="";
@@ -137,23 +139,23 @@ function showqos_rulelist(){
 			var wid=[22, 21, 17, 14, 16, 12];						
 				for(var j = 0; j < qos_rulelist_col.length; j++){
 						if(j != 0 && j !=2 && j!=5){
-							code +='<td width="'+wid[j]+'%">'+ qos_rulelist_col[j] +'</td>';
+							code +='<td width="'+wid[j]+'%" style="height:30px;">'+ qos_rulelist_col[j] +'</td>';
 						}else if(j==0){
 							if(qos_rulelist_col[0].length >15){
 								overlib_str0[i] += qos_rulelist_col[0];
 								qos_rulelist_col[0]=qos_rulelist_col[0].substring(0, 13)+"...";
-								code +='<td width="'+wid[j]+'%"  title="'+overlib_str0[i]+'">'+ qos_rulelist_col[0] +'</td>';
+								code +='<td width="'+wid[j]+'%"  title="'+overlib_str0[i]+'" style="height:30px;">'+ qos_rulelist_col[0] +'</td>';
 							}else
-								code +='<td width="'+wid[j]+'%">'+ qos_rulelist_col[j] +'</td>';
+								code +='<td width="'+wid[j]+'%" style="height:30px;">'+ qos_rulelist_col[j] +'</td>';
 						}else if(j==2){
 							if(qos_rulelist_col[2].length >13){
 								overlib_str[i] += qos_rulelist_col[2];
 								qos_rulelist_col[2]=qos_rulelist_col[2].substring(0, 11)+"...";
-								code +='<td width="'+wid[j]+'%"  title="'+overlib_str[i]+'">'+ qos_rulelist_col[2] +'</td>';
+								code +='<td width="'+wid[j]+'%"  title="'+overlib_str[i]+'" style="height:30px;">'+ qos_rulelist_col[2] +'</td>';
 							}else
-								code +='<td width="'+wid[j]+'%">'+ qos_rulelist_col[j] +'</td>';																						
+								code +='<td width="'+wid[j]+'%" style="height:30px;">'+ qos_rulelist_col[j] +'</td>';
 						}else if(j==5){
-								code += '<td width="'+wid[j]+'%">';
+								code += '<td width="'+wid[j]+'%" style="height:30px;">';
 
 								if(qos_rulelist_col[5] =="0")
 									code += '<#Highest#>';
@@ -189,8 +191,8 @@ function showqos_rulelist(){
 <form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="current_page" value="QoS_EZQoS.asp">
-<input type="hidden" name="next_page" value="QoS_EZQoS.asp">
+<input type="hidden" name="current_page" value="/QoS_EZQoS.asp">
+<input type="hidden" name="next_page" value="/QoS_EZQoS.asp">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_qos">
@@ -249,7 +251,7 @@ function showqos_rulelist(){
 													<td width="130px">
 														<img id="guest_image" src="/images/New_ui/QoS.png">
 													</td>
-													<td>
+													<td style="font-style: italic;font-size: 14px;">
 														<div class="formfontdesc" style="line-height:20px;"><#ezqosDesw#></div>
 														<div class="formfontdesc">
 															<a id="faq" href="" target="_blank" style="text-decoration:underline;">QoS FAQ</a>
@@ -325,11 +327,11 @@ function showqos_rulelist(){
 											<table style="margin-left:3px; margin-top:15px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
 											<thead>
 											<tr>
-													<td colspan="6" id="TriggerList" style="border-right:none;"><#BM_UserList_title#></td>
+													<td colspan="6" id="TriggerList" style="border-right:none;height:22px;"><#BM_UserList_title#></td>
 											</tr>
 											</thead>			
 											<tr>
-													<th width="22%"><#BM_UserList1#></th>
+													<th width="22%" style="height:30px;"><#BM_UserList1#></th>
 													<th width="21%"><a href="javascript:void(0);" onClick="openHint(18,6);"><div class="table_text">Source IP or MAC</div></a></th>
 													<th width="17%"><a href="javascript:void(0);" onClick="openHint(18,4);"><div class="table_text"><#BM_UserList3#></div></a></th>
 													<th width="14%"><div class="table_text"><#IPConnection_VServerProto_itemname#></div></th>

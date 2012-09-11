@@ -157,6 +157,12 @@ lib-$(CONFIG_MOUNT) += find_mount_point.o
 lib-$(CONFIG_HWCLOCK) += rtc.o
 lib-$(CONFIG_RTCWAKE) += rtc.o
 
+lib-$(CONFIG_PING) += inet_cksum.o
+lib-$(CONFIG_TRACEROUTE) += inet_cksum.o
+lib-$(CONFIG_TRACEROUTE6) += inet_cksum.o
+lib-$(CONFIG_UDHCPC) += inet_cksum.o
+lib-$(CONFIG_UDHCPD) += inet_cksum.o
+
 # We shouldn't build xregcomp.c if we don't need it - this ensures we don't
 # require regex.h to be in the include dir even if we don't need it thereby
 # allowing us to build busybox even if uclibc regex support is disabled.

@@ -728,6 +728,9 @@ int SetAdslMode(int EnumAdslModeValue, int FromAteCmd)
 }
 int SetAdslType(int EnumAdslTypeValue, int FromAteCmd)
 {
+#ifdef RTCONFIG_DSL_ANNEX_B /* Paul add 2012/8/22, for Annex B if set adsltype 0 again will change to Annex A. Which is a bug with ADSL driver, so just skip. */
+	return 0;
+#endif
     declare_resp_handling_vars(pRespBuf, pRespLen, RespPktNum, tok, pRespStr);
     char InputCmd[10];
     char UserCmd[256];

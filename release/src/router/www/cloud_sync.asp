@@ -11,7 +11,14 @@
 <title><#Web_Title#> - <#menu3#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
+<script type="text/javascript" src="/state.js"></script>
+<script type="text/javascript" src="/popup.js"></script>
+<script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/detect.js"></script>
+<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
+<script type="text/javascript" src="/aidisk/AiDisk_folder_tree.js"></script>
 <style type="text/css">
 /* folder tree */
 .mask_bg{
@@ -44,45 +51,14 @@
 	display:none;
 	overflow:hidden;
 }
-.panel{
-	width:450px;
-	position:absolute;
-	margin-top:-8%;
-	margin-left:35%;
-	z-index:200;
-	display:none;
-}
-.floder_panel{
-	background-color:#999;	
-	border:2px outset #CCC;
-	font-size:15px;
-	font-family:Verdana, Geneva, sans-serif;
-	color:#333333;
-	width:450px;
-	position:absolute;
-	margin-top:-8%;
-	margin-left:35%;
-	z-index:400;
-	display:none;
-}
 .folderClicked{
 	color:#569AC7;
 	font-size:14px;
-	cursor:text;
+	cursor:pointer;
 }
 .lastfolderClicked{
 	color:#FFFFFF;
 	cursor:pointer;
-}
-.panel_new{
-	font-family:Courier ;
-	width:500px;
-	position:absolute;
-	margin-left:35%;
-	z-index:2000;
-	display:none;
-	background-image:url(images/Tree/bg_01.png);
-	background-repeat:no-repeat;
 }
 #status_gif_Img_L{
 	background-image:url(images/cloudsync/left_right_trans.gif);
@@ -114,15 +90,11 @@
 	background-position: -0px -142px; width: 59px; height: 38px;
 }
 </style>
-<script type="text/javascript" src="/state.js"></script>
-<script type="text/javascript" src="/popup.js"></script>
-<script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
-<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 var $j = jQuery.noConflict();
 <% login_state_hook(); %>
+<% get_AiDisk_status(); %>
+<% disk_pool_mapping_info(); %>
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
@@ -134,34 +106,41 @@ var cloud_obj = "";
 var cloud_msg = "";
 var curRule = -1;
 var enable_cloudsync = '<% nvram_get("enable_cloudsync"); %>';
-
 <% cloud_status(); %>
 
 /* type>user>password>url>dir>rule>enable */
 var cloud_synclist_array = cloud_sync.replace(/>/g, "&#62").replace(/</g, "&#60"); 
+var cloud_synclist_all = new Array(); 
 var isEdit = 0;
 var isonEdit = 0;
 var maxrulenum = 1;
 var rulenum = 1;
 var disk_flag=0;
+var FromObject = "0";
+var lastClickedObj = 0;
+var _layer_order = "";
+var isNotIE = (navigator.userAgent.search("MSIE") == -1); 
+var PROTOCOL = "cifs";
+window.onresize = cal_panel_block;
 
 function initial(){
 	show_menu();
 	showAddTable();
 	showcloud_synclist();
-	_initial_dir();
+	document.aidiskForm.protocol.value = PROTOCOL;
+	initial_dir();
 }
 
-function _initial_dir(){
+function initial_dir(){
 	var __layer_order = "0_0";
 	var url = "/getfoldertree.asp";
 	var type = "General";
 
 	url += "?motion=gettree&layer_order=" + __layer_order + "&t=" + Math.random();
-	$j.get(url,function(data){_initial_dir_status(data);});
+	$j.get(url,function(data){initial_dir_status(data);});
 }
 
-function _initial_dir_status(data){
+function initial_dir_status(data){
 	if(data != ""){
 		eval("var default_dir=" + data);
 		document.form.cloud_dir.value = "/mnt/" + default_dir.substr(0, default_dir.indexOf("#")) + "/MySyncFolder";
@@ -189,8 +168,7 @@ function addRow_Group(upper){
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 		return false;	
-	}			
-				
+	}							
 	Do_addRow_Group();		
 }
 
@@ -204,15 +182,10 @@ function Do_addRow_Group(){
 }
 
 function edit_Row(r){ 	
-	var i=r.parentNode.parentNode.rowIndex;
-  	
-	document.form.cloud_sync_type.value = $('cloud_synclist_table').rows[i].cells[0].innerHTML;
-	document.form.cloud_sync_username.value = $('cloud_synclist_table').rows[i].cells[1].innerHTML; 
-	document.form.cloud_sync_password.value = $('cloud_synclist_table').rows[i].cells[2].innerHTML; 
-	document.form.cloud_sync_dir.value = $('cloud_synclist_table').rows[i].cells[3].innerHTML;
-	document.form.cloud_sync_rule.value = $('cloud_synclist_table').rows[i].cells[4].innerHTML;
-
-  del_Row(r);	
+	document.form.cloud_username.value = cloud_synclist_all[r][1];
+	document.form.cloud_password.value = cloud_synclist_all[r][2];
+	document.form.cloud_dir.value = cloud_synclist_all[r][5];
+	document.form.cloud_rule.value = cloud_synclist_all[r][4];
 }
 
 function del_Row(r){
@@ -220,9 +193,8 @@ function del_Row(r){
 		return false;
 
 	var cloud_synclist_row = cloud_synclist_array.split('&#60'); // resample
-  var i=r.parentNode.parentNode.rowIndex+1;
-
-  var cloud_synclist_value = "";
+	var i=r.parentNode.parentNode.rowIndex+1;
+	var cloud_synclist_value = "";
 	for(k=1; k<cloud_synclist_row.length; k++){
 		if(k == i)
 			continue;
@@ -236,7 +208,6 @@ function del_Row(r){
 				cloud_synclist_value += "&#62";
 		}
 	}
-
 	isonEdit = 1;
 	cloud_synclist_array = cloud_synclist_value;
 	showcloud_synclist();
@@ -266,6 +237,7 @@ function showcloud_synclist(){
 			rulenum++;
 			code +='<tr id="row'+i+'" height="55px">';
 			var cloud_synclist_col = cloud_synclist_row[i].split('&#62');
+			cloud_synclist_all[i] = cloud_synclist_col;
 			var wid = [10, 25, 0, 0, 10, 30, 15];
 			for(var j = 0; j < cloud_synclist_col.length; j++){
 				if(j == 2 || j == 3){
@@ -275,7 +247,7 @@ function showcloud_synclist(){
 					if(j == 0)
 						code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img width="30px" src="/images/cloudsync/ASUS-WebStorage.png"></td>';
 					else if(j == 1)
-						code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;">'+ cloud_synclist_col[j] +'</span></td>';
+						code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;text-decoration:underline; cursor:pointer"  onclick="isEdit=1;showAddTable();">'+ cloud_synclist_col[j] +'</span></td>';
 					else if(j == 4){
 						curRule = cloud_synclist_col[j];
 						if(cloud_synclist_col[j] == 2)
@@ -297,7 +269,7 @@ function showcloud_synclist(){
 		}
 		updateCloudStatus();
 	}
-  code +='</table>';
+	code +='</table>';
 	$("cloud_synclist_Block").innerHTML = code;
 }
 
@@ -386,23 +358,21 @@ function validform(){
 		alert("<#ALERT_OF_ERROR_Input10#>");
 		return false;
 	}
-
 	return true;
 }
 
 function applyRule(){
 	if(validform()){
 		isonEdit = 1;
-		cloud_synclist_array += '0&#62'+document.form.cloud_username.value+'&#62'+document.form.cloud_password.value+'&#62none&#62'+document.form.cloud_rule.value+'&#62'+"/tmp"+document.form.cloud_dir.value+'&#621';
+		// 1 rule.
+		cloud_synclist_array = '0&#62'+document.form.cloud_username.value+'&#62'+document.form.cloud_password.value+'&#62none&#62'+document.form.cloud_rule.value+'&#62'+"/tmp"+document.form.cloud_dir.value+'&#621';
 		showcloud_synclist();
-	
 		document.form.cloud_sync.value = cloud_synclist_array.replace(/&#62/g, ">").replace(/&#60/g, "<");
 		document.form.cloud_username.value = '';
 		document.form.cloud_password.value = '';
 		document.form.cloud_rule.value = '';
 		document.form.cloud_dir.value = '';
 		document.form.enable_cloudsync.value = 1;
-
 		isEdit = 0;
 		showAddTable();
 		$("update_scan").style.display = '';
@@ -416,173 +386,33 @@ function showAddTable(){
 	if(isEdit == 1){ // edit
 		$j("#cloudAddTable").fadeIn();
 		$("creatBtn").style.display = "none";
-		$("applyBtn").style.display = "";
+		$j("#applyBtn").fadeIn();
+		if(cloud_synclist_array != ""){
+			edit_Row(0);
+		}
 	}
 	else{ // list
 		$("cloudAddTable").style.display = "none";
-		$("creatBtn").style.display = "";
-		$("applyBtn").style.display = "none";
+		if(cloud_synclist_array == ""){
+			$j("#creatBtn").fadeIn();
+			$("applyBtn").style.display = "none";
+		}
+		else{
+			$("creatBtn").style.display = "none";
+			$("applyBtn").style.display = "none";			
+		}
 	}
 }
 
 // get folder tree
-var dm_dir = new Array(); 
-var Download_path = '/mnt/';
-var WH_INT=0,Floder_WH_INT=0,General_WH_INT=0;
-var BASE_PATH;
 var folderlist = new Array();
-
-function showPanel(){
-	WH_INT = setInterval("getWH();",1000);
- 	$j("#DM_mask").fadeIn(1000);
-  $j("#panel_add").show(1000);
-	create_tree();
-}
-
-function getWH(){
-	var winWidth;
-	var winHeight;
-	winWidth = document.documentElement.scrollWidth;
-	if(document.documentElement.clientHeight > document.documentElement.scrollHeight)
-		winHeight = document.documentElement.clientHeight;
-	else
-		winHeight = document.documentElement.scrollHeight;
-	$("DM_mask").style.width = winWidth+"px";
-	$("DM_mask").style.height = winHeight+"px";
-}
-
-function getFloderWH(){
-	var winWidth;
-	var winHeight;
-	winWidth = document.documentElement.scrollWidth;
-
-	if(document.documentElement.clientHeight > document.documentElement.scrollHeight)
-		winHeight = document.documentElement.clientHeight;
-	else
-		winHeight = document.documentElement.scrollHeight;
-
-	$("DM_mask_floder").style.width = winWidth+"px";
-	$("DM_mask_floder").style.height = winHeight+"px";
-}
-
-function show_AddFloder(){
-	Floder_WH_INT = setInterval("getFloderWH();",1000);
-	$j("#DM_mask_floder").fadeIn(1000);
-	$j("#panel_addFloder").show(1000);
-}
-
-function hidePanel(){
-	($j("#tree").children()).remove();
-	clearInterval(WH_INT);
-	$j("#DM_mask").fadeOut('fast');
-	$j("#panel_add").hide('fast');
-}
-
-function create_tree(){
-	var rootNode = new Ext.tree.TreeNode({ text:'/mnt', id:'0'});
-	var rootNodechild = new Ext.tree.TreeNode({ text:'', id:'0t'});
-	rootNode.appendChild(rootNodechild);
-	var tree = new Ext.tree.TreePanel({
-			tbar:[{text:"<#CTL_ok#>",handler:function(){$j("#PATH").attr("value",Download_path);hidePanel();}},
-				'->',{text:'X',handler:function(){hidePanel();}}
-			],
-			title:"Please select the desire folder",
-				applyTo:'tree',
-				root:rootNode,
-				height:400,
-				autoScroll:true
-	});
-	tree.on('expandnode',function(node){
-		var allParentNodes = getAllParentNodes(node);
-		var path='';
-
-		for(var j=0; j<allParentNodes.length; j++){
-			path = allParentNodes[j].text + '/' +path;
-		}
-		initial_dir(path,node);
-	});
-	tree.on('collapsenode',function(node){
-		while(node.firstChild){
-			node.removeChild(node.firstChild);
-		}
-		var childNode = new Ext.tree.TreeNode({ text:'', id:'0t'});
-		node.appendChild(childNode);
-	});
-	tree.on('click',function(node){
-		var allParentNodes = getAllParentNodes(node);
-		var path='';
-		for(var j=0; j<allParentNodes.length; j++){
-			if(j == allParentNodes.length-2)
-				continue;
-			else
-				path = allParentNodes[j].text + '/' +path;
-		}
-
-		Download_path = path;
-		path = BASE_PATH + '/' + path;
-		var url = "getfoldertree.asp";
-		var type = "General";
-
-		url += "?motion=gettree&layer_order="+ _layer_order +"&t=" +Math.random();
-		$j.get(url,function(data){initial_folderlist(data);});
-	});
-}
-
-function initial_folderlist(data){
-	eval("folderlist=["+data+"]");
-}
-
-function getAllParentNodes(node) {
-	var parentNodes = [];
-	var _nodeID = node.id;
-	_layer_order = "0";
-
-	for(i=1; i<_nodeID.length; i++){
-		_layer_order += "_" + node.id.charAt(i); // generating _layer_order for initial_dir() via charAt() method
-	}
-	parentNodes.push(node);
-	while (node.parentNode) {
-		parentNodes = parentNodes.concat(node.parentNode);
-		node = node.parentNode;
-	}
-	return parentNodes;
-};
-
-function initial_dir(path,node){
-	var url = "getfoldertree.asp";
-	var type = "General";
-	url += "?motion=gettree&layer_order="+ _layer_order +"&t=" +Math.random();
-	$j.get(url,function(data){initial_dir_status(data,node);});
-}
-
-function initial_dir_status(data,node){
-	dm_dir.length = 0;
-	if(data == "/" || (data != null && data != "")){
-		eval("dm_dir=[" + data +"]");	
-		while(node.lastChild &&(node.lastChild !=node.firstChild)) {
-    			node.removeChild(node.lastChild);
-		}
-		for(var i=0; i<dm_dir.length; i++){
-			var childNodeId = node.id +i;
-			var childnode = new Ext.tree.TreeNode({id:childNodeId,text:dm_dir[i].split("#")[0]});
-			node.appendChild(childnode);
-			var childnodeT = new Ext.tree.TreeNode({id:childNodeId+'t',text:''});
-			childnode.appendChild(childnodeT);
-		}
-		node.removeChild(node.firstChild);
-	}
-	else{
-		while(node.firstChild){
-			node.removeChild(node.firstChild);
-		}
-	}
-}
 function get_disk_tree(){
 	if(disk_flag == 1){
 		alert('<#no_usb_found#>');
 		return false;	
 	}
-	$j("#test_panel").fadeIn(300);
+	cal_panel_block();
+	$j("#folderTree_panel").fadeIn(300);
 	get_layer_items("0");
 }
 function get_layer_items(layer_order){
@@ -598,11 +428,12 @@ function get_layer_items(layer_order){
 		});
 }
 function get_tree_items(treeitems){
+	document.aidiskForm.test_flag.value = 0;
 	this.isLoading = 1;
 	this.Items = treeitems;
-		if(this.Items && this.Items.length > 0){
-			BuildTree();
-		}	
+	if(this.Items && this.Items.length > 0){
+		BuildTree();
+	}	
 }
 function BuildTree(){
 	var ItemText, ItemSub, ItemIcon;
@@ -611,19 +442,17 @@ function BuildTree(){
 	var short_ItemText = "";
 	var shown_ItemText = "";
 	var ItemBarCode ="";
-		
 	var TempObject = "";
+
 	for(var i = 0; i < this.Items.length; ++i){
-	
 		this.Items[i] = this.Items[i].split("#");
 		var Item_size = 0;
 		Item_size = this.Items[i].length;
 		if(Item_size > 3){
-			var temp_array = new Array(3);
+			var temp_array = new Array(3);	
 			
 			temp_array[2] = this.Items[i][Item_size-1];
-			temp_array[1] = this.Items[i][Item_size-2];
-			
+			temp_array[1] = this.Items[i][Item_size-2];			
 			temp_array[0] = "";
 			for(var j = 0; j < Item_size-2; ++j){
 				if(j != 0)
@@ -631,8 +460,7 @@ function BuildTree(){
 				temp_array[0] += this.Items[i][j];
 			}
 			this.Items[i] = temp_array;
-		}
-	
+		}	
 		ItemText = (this.Items[i][0]).replace(/^[\s]+/gi,"").replace(/[\s]+$/gi,"");
 		ItemBarCode = this.FromObject+"_"+(this.Items[i][1]).replace(/^[\s]+/gi,"").replace(/[\s]+$/gi,"");
 		ItemSub = parseInt((this.Items[i][2]).replace(/^[\s]+/gi,"").replace(/[\s]+$/gi,""));
@@ -674,92 +502,63 @@ function BuildTree(){
 			isSubTree += '0';
 		}
 		
-	
-		TempObject += 
-'<table class="tree_table" id="bug_test">\n'+
-'<tr>\n'+
-	// the line in the front.
-	'<td class="vert_line">\n'+ 
-		'<img id="a'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' class="FdRead" src="/images/Tree/vert_line_'+isSubTree+'0.gif">\n'+
-	'</td>\n';
-	
-		if(layer == 3){
-			TempObject += 		/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/
-	'<td>\n'+		
-			'<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">\n'+
-	'</td>\n'+	
-	'<td>\n'+
-			'<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>\n'+		
-	'</td>\n';
-
-		}
-		else if(layer == 2){
-			TempObject += 
-	'<td>\n';
-			
-			TempObject += 
-'<table class="tree_table">\n'+
-'<tr>\n';
-			
-			TempObject += 
-	'<td class="vert_line">\n'+
-			'<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">\n'+
-	'</td>\n'+
-	'<td class="FdText">\n'+
-			'<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>\n'+
-	'</td>\n';
-			
-	
-				TempObject += 
-	'<td></td>';
-			
-			TempObject += 
-'</tr>\n'+
-'</table>\n';
-			
-			TempObject += 
-	'</td>\n'+
-'</tr>\n';
-			
-			TempObject += 
-'<tr><td></td>\n';
-			
-			TempObject += 
-	'<td colspan=2><div id="e'+ItemBarCode+'" ></div></td>\n';
-		}
-		else{
-			TempObject += 		/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/
-	'<td>\n'+
-	//	'<div id="b'+ItemBarCode+'" class="FdText">\n'+		/* style="float:left; width:117px; overflow:hidden;"*/
-	'<table><tr><td>\n'+
-			'<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">\n'+
-	'</td><td>\n'+		
-			'<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>\n'+
-	'</td></tr></table>\n'+		
-		//'</div>\n'+
-	'</td>\n'+
-'</tr>\n';
-			
-			TempObject += 
-'<tr><td></td>\n';
-			
-			TempObject += 
-	'<td><div id="e'+ItemBarCode+'" ></div></td>\n';
+		if(layer == 2 && isSubTree == 'n1'){	// Uee to rebuild folder tree if disk without folder, Jieming add at 2012/08/29
+			document.aidiskForm.test_flag.value = 1;			
 		}
 		
-		TempObject += 
-'</tr>\n';
+		TempObject +='<table class="tree_table" id="bug_test">';
+		TempObject +='<tr>';
+		// the line in the front.
+		TempObject +='<td class="vert_line">';
+		TempObject +='<img id="a'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' class="FdRead" src="/images/Tree/vert_line_'+isSubTree+'0.gif">';
+		TempObject +='</td>';
+	
+		if(layer == 3){
+			/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/
+			TempObject +='<td>';		
+			TempObject +='<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">';
+			TempObject +='</td>';
+			TempObject +='<td>';
+			TempObject +='<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>';
+			TempObject +='</td>';
+		}
+		else if(layer == 2){
+			TempObject +='<td>';
+			TempObject +='<table class="tree_table">';
+			TempObject +='<tr>';
+			TempObject +='<td class="vert_line">';
+			TempObject +='<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">';
+			TempObject +='</td>';
+			TempObject +='<td class="FdText">';
+			TempObject +='<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>';
+			TempObject +='</td>\n';
+			TempObject +='<td></td>';
+			TempObject +='</tr>';
+			TempObject +='</table>';
+			TempObject +='</td>';
+			TempObject +='</tr>';
+			TempObject +='<tr><td></td>';
+			TempObject +='<td colspan=2><div id="e'+ItemBarCode+'" ></div></td>';
+		}
+		else{
+			/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/
+			TempObject +='<td>';
+			TempObject +='<table><tr><td>';
+			TempObject +='<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">';
+			TempObject +='</td><td>';
+			TempObject +='<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>';
+			TempObject +='</td></tr></table>';
+			TempObject +='</td>';
+			TempObject +='</tr>';
+			TempObject +='<tr><td></td>';
+			TempObject +='<td><div id="e'+ItemBarCode+'" ></div></td>';
+		}
+		TempObject +='</tr>';
 	}
-	
-	TempObject += 
-'</table>\n';
-	
+	TempObject +='</table>';
 	$("e"+this.FromObject).innerHTML = TempObject;
-	
 }
-var FromObject = "0";
-var lastClickedObj = 0;
-var _layer_order = "";
+
 function get_layer(barcode){
 	var tmp, layer;
 	layer = 0;
@@ -771,25 +570,25 @@ function get_layer(barcode){
 	return layer;
 }
 function build_array(obj,layer){
-var path_temp ="/mnt";
-var layer2_path ="";
-var layer3_path ="";
+	var path_temp ="/mnt";
+	var layer2_path ="";
+	var layer3_path ="";
 	if(obj.id.length>6){
 		if(layer ==3){
 			layer3_path = "/" + $(obj.id).innerHTML;
 			while(layer3_path.indexOf("&nbsp;") != -1)
 				layer3_path = layer3_path.replace("&nbsp;"," ");
-				if(obj.id.length >8)
-					layer2_path = "/" + $(obj.id.substring(0,obj.id.length-3)).innerHTML;
-				else
-					layer2_path = "/" + $(obj.id.substring(0,obj.id.length-2)).innerHTML;
+				
+			if(obj.id.length >8)
+				layer2_path = "/" + $(obj.id.substring(0,obj.id.length-3)).innerHTML;
+			else
+				layer2_path = "/" + $(obj.id.substring(0,obj.id.length-2)).innerHTML;
 			
 			while(layer2_path.indexOf("&nbsp;") != -1)
 				layer2_path = layer2_path.replace("&nbsp;"," ");
 		}
 	}
 	if(obj.id.length>4 && obj.id.length<=6){
-
 		if(layer ==2){
 			layer2_path = "/" + $(obj.id).innerHTML;
 			while(layer2_path.indexOf("&nbsp;") != -1)
@@ -800,29 +599,49 @@ var layer3_path ="";
 	return path_temp;
 }
 function GetFolderItem(selectedObj, haveSubTree){
-	//var path_directory;
-	
 	var barcode, layer = 0;
 	showClickedObj(selectedObj);
 	barcode = selectedObj.id.substring(1);	
 	layer = get_layer(barcode);
-
+	
 	if(layer == 0)
 		alert("Machine: Wrong");
 	else if(layer == 1){
 		// chose Disk
 		setSelectedDiskOrder(selectedObj.id);
-		path_directory = build_array(selectedObj,layer);	
+		path_directory = build_array(selectedObj,layer);
+		$('createFolderBtn').src = "/images/New_ui/advancesetting/FolderAdd.png";
+		$('deleteFolderBtn').src = "/images/New_ui/advancesetting/FolderDel.png";
+		$('modifyFolderBtn').src = "/images/New_ui/advancesetting/FolderMod.png";
+		$('createFolderBtn').onclick = function(){};
+		$('deleteFolderBtn').onclick = function(){};
+		$('modifyFolderBtn').onclick = function(){};
 	}
 	else if(layer == 2){
 		// chose Partition
 		setSelectedPoolOrder(selectedObj.id);
-		path_directory = build_array(selectedObj,layer);		
+		path_directory = build_array(selectedObj,layer);
+		$('createFolderBtn').src = "/images/New_ui/advancesetting/FolderAdd_0.png";
+		$('deleteFolderBtn').src = "/images/New_ui/advancesetting/FolderDel.png";
+		$('modifyFolderBtn').src = "/images/New_ui/advancesetting/FolderMod.png";
+		$('createFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popCreateFolder.asp');};		
+		$('deleteFolderBtn').onclick = function(){};
+		$('modifyFolderBtn').onclick = function(){};
+		document.aidiskForm.layer_order.disabled = "disabled";
+		document.aidiskForm.layer_order.value = barcode;
 	}
 	else if(layer == 3){
 		// chose Shared-Folder
 		setSelectedFolderOrder(selectedObj.id);
 		path_directory = build_array(selectedObj,layer);
+		$('createFolderBtn').src = "/images/New_ui/advancesetting/FolderAdd.png";
+		$('deleteFolderBtn').src = "/images/New_ui/advancesetting/FolderDel_0.png";
+		$('modifyFolderBtn').src = "/images/New_ui/advancesetting/FolderMod_0.png";
+		$('createFolderBtn').onclick = function(){};		
+		$('deleteFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popDeleteFolder.asp');};
+		$('modifyFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popModifyFolder.asp');};
+		document.aidiskForm.layer_order.disabled = "disabled";
+		document.aidiskForm.layer_order.value = barcode;
 	}
 
 	if(haveSubTree)
@@ -833,7 +652,6 @@ function showClickedObj(clickedObj){
 		this.lastClickedObj.className = "lastfolderClicked";  //this className set in AiDisk_style.css
 	
 	clickedObj.className = "folderClicked";
-
 	this.lastClickedObj = clickedObj;
 }
 function GetTree(layer_order, v){
@@ -846,63 +664,85 @@ function GetTree(layer_order, v){
 	
 	if($('a'+layer_order).className == "FdRead"){
 		$('a'+layer_order).className = "FdOpen";
-		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
-		
-		this.FromObject = layer_order;
-		
+		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";		
+		this.FromObject = layer_order;		
 		$('e'+layer_order).innerHTML = '<img src="/images/Tree/folder_wait.gif">';
 		setTimeout('get_layer_items("'+layer_order+'", "gettree")', 1);
 	}
 	else if($('a'+layer_order).className == "FdOpen"){
 		$('a'+layer_order).className = "FdClose";
-		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"0.gif";
-		
+		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"0.gif";		
 		$('e'+layer_order).style.position = "absolute";
 		$('e'+layer_order).style.visibility = "hidden";
 	}
 	else if($('a'+layer_order).className == "FdClose"){
 		$('a'+layer_order).className = "FdOpen";
-		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
-		
+		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";		
 		$('e'+layer_order).style.position = "";
 		$('e'+layer_order).style.visibility = "";
 	}
 	else
 		alert("Error when show the folder-tree!");
 }
-function cancel_temp(){
-this.FromObject ="";
-$j("#test_panel").fadeOut(300);
+
+function cancel_folderTree(){
+	this.FromObject ="0";
+	$j("#folderTree_panel").fadeOut(300);
 }
-function confirm_temp(){
+
+function confirm_folderTree(){
 	$('PATH').value = path_directory ;
-	this.FromObject ="";
-	$j("#test_panel").fadeOut(300);
+	this.FromObject ="0";
+	$j("#folderTree_panel").fadeOut(300);
 }
 
-
-var isNotIE = (navigator.userAgent.search("MSIE") == -1); 
 function switchType(_method){
+	return 0;
+
 	if(isNotIE){
 		document.form.cloud_password.type = _method ? "text" : "password";		
 	}
 }
 
 function switchType_IE(obj){
-		if(isNotIE) return;		
+	return 0;
+	if(isNotIE) return;		
+	
+	var tmp = "";
+	tmp = obj.value;
+	if(obj.id.indexOf('text') < 0){		//password
+		obj.style.display = "none";
+		document.getElementById('cloud_password_text').style.display = "";
+		document.getElementById('cloud_password_text').value = tmp;						
+		document.getElementById('cloud_password_text').focus();
+	}else{														//text					
+		obj.style.display = "none";
+		document.getElementById('cloud_password').style.display = "";
+		document.getElementById('cloud_password').value = tmp;
+	}
+}
+
+function cal_panel_block(){
+	var blockmarginLeft;
+	if (window.innerWidth)
+		winWidth = window.innerWidth;
+	else if ((document.body) && (document.body.clientWidth))
+		winWidth = document.body.clientWidth;
 		
-		var tmp = "";
-		tmp = obj.value;
-		if(obj.id.indexOf('text') < 0){		//password
-							obj.style.display = "none";
-							document.getElementById('cloud_password_text').style.display = "";
-							document.getElementById('cloud_password_text').value = tmp;						
-							document.getElementById('cloud_password_text').focus();
-		}else{														//text					
-							obj.style.display = "none";
-							document.getElementById('cloud_password').style.display = "";
-							document.getElementById('cloud_password').value = tmp;
-		}
+	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
+		winWidth = document.documentElement.clientWidth;
+	}
+
+	if(winWidth >1050){	
+		winPadding = (winWidth-1050)/2;	
+		winWidth = 1105;
+		blockmarginLeft= (winWidth*0.25)+winPadding;
+	}
+	else if(winWidth <=1050){
+		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
+
+	}
+	$("folderTree_panel").style.marginLeft = blockmarginLeft+"px";
 }
 </script>
 </head>
@@ -912,26 +752,24 @@ function switchType_IE(obj){
 
 <!-- floder tree-->
 <div id="DM_mask" class="mask_bg"></div>
-<div id="panel_add" class="panel">
-	<div id="tree"></div>
-</div>
-<div id="test_panel" class="panel_new" >
-		<div class="machineName" style="font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:25px;margin-left:30px;"><#Web_Title2#></div>
-		<div id="e0" class="FdTemp" style="font-size:10pt; margin-top:8px;margin-left:30px;margin-bottom:1px;height:345px;overflow:auto;width:455px;"></div>
+<div id="folderTree_panel" class="panel_folder" >
+	<table><tr><td>
+		<div class="machineName" style="width:200px;font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:15px;margin-left:30px;"><#Web_Title2#></div>
+		</td>
+		<td>
+			<div style="width:240px;margin-top:15px;margin-left:125px;">
+				<img id="createFolderBtn" src="/images/New_ui/advancesetting/FolderAdd.png" hspace="1" title="<#AddFolderTitle#>" onclick="">
+				<img id="deleteFolderBtn" src="/images/New_ui/advancesetting/FolderDel.png" hspace="1" title="<#DelFolderTitle#>" onclick="">
+				<img id="modifyFolderBtn" src="/images/New_ui/advancesetting/FolderMod.png" hspace="1" title="<#ModFolderTitle#>" onclick="">
+			</div>
+		</td></tr></table>
+		<div id="e0" class="folder_tree"></div>
 	<div style="background-image:url(images/Tree/bg_02.png);background-repeat:no-repeat;height:90px;">		
-		<input class="button_gen" type="button" style="margin-left:27%;margin-top:18px;" onclick="cancel_temp();" value="<#CTL_Cancel#>">
-		<input class="button_gen" type="button"  onclick="confirm_temp();" value="<#CTL_ok#>">
+		<input class="button_gen" type="button" style="margin-left:27%;margin-top:18px;" onclick="cancel_folderTree();" value="<#CTL_Cancel#>">
+		<input class="button_gen" type="button"  onclick="confirm_folderTree();" value="<#CTL_ok#>">
 	</div>
 </div>
 <div id="DM_mask_floder" class="mask_floder_bg"></div>
-<div id="panel_addFloder" class="floder_panel">
-	<span style="margin-left:95px;"><b id="multiSetting_0"></b></span><br /><br />
-	<span style="margin-left:8px;margin-right:8px;"><b id="multiSetting_1"></b></span>
-	<input type="text" id="newFloder" class="input_15_table" value="" /><br /><br />
-	<input type="button" name="AddFloder" id="multiSetting_2" value="" style="margin-left:100px;" onclick="AddFloderName();">
-	&nbsp;&nbsp;
-	<input type="button" name="Cancel_Floder_add" id="multiSetting_3" value="" onClick="hide_AddFloder();">
-</div>
 <!-- floder tree-->
 
 <div id="Loading" class="popup_bg"></div>
@@ -1160,5 +998,18 @@ function switchType_IE(obj){
 <input type="hidden" name="action_wait" value="2">
 <input type="hidden" name="enable_cloudsync" value="<% nvram_get("enable_cloudsync"); %>">
 </form>
+<form method="post" name="aidiskForm" action="" target="hidden_frame">
+<input type="hidden" name="motion" id="motion" value="">
+<input type="hidden" name="layer_order" id="layer_order" value="">
+<input type="hidden" name="test_flag" value="" disabled="disabled">
+<input type="hidden" name="protocol" id="protocol" value="">
+</form>
+<!-- mask for disabling AiDisk -->
+<div id="OverlayMask" class="popup_bg">
+	<div align="center">
+	<iframe src="" frameborder="0" scrolling="no" id="popupframe" width="400" height="400" allowtransparency="true" style="margin-top:150px;"></iframe>
+	</div>
+<!--[if lte IE 6.5]><iframe class="hackiframe"></iframe><![endif]-->
+</div>
 </body>
 </html>

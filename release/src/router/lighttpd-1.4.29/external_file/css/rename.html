@@ -11,6 +11,7 @@ html{
 body{
 	display: block;
 	overflow: hidden;
+	background: #e8e8e8;
 }
 </style>
 <script type="text/javascript" src="/smb/js/tools.js"></script>
@@ -32,7 +33,7 @@ $("document").ready(function() {
 	this_url = getUrlVars()["f"];
 	this_isdir = getUrlVars()["d"];
 	
-	$("input#dir_name").attr("value",decodeURI(this_name));
+	$("input#dir_name").attr("value",mydecodeURI(this_name));
 	
 	select_all();
 });
@@ -53,10 +54,10 @@ function doOK(e) {
 		return;
 	}
 	
-	var regex = /[|\/\\?*"<>&:`]/g;
+	var regex = /[|\/\\?*"<>:`]/g;
 	if(this_isdir==1)
-		regex = /[|\/\\?*"<>&:`.]/g;
-	
+		regex = /[|\/\\?*"<>:`.]/g;
+		
  	if(newName.match(regex)) {
  		alert(m.getString('illegalchar'));
   	return;
@@ -67,7 +68,7 @@ function doOK(e) {
 			oldFile = oldFile.substring(0, oldFile.length-1);
 	}
 	
-	parent.doRENAME(oldFile, newName);
+	parent.doRENAME(oldFile, myencodeURI(newName));
 };
 
 function doCancel(e) {

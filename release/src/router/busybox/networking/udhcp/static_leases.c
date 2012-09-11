@@ -4,7 +4,7 @@
  *
  * Wade Berrier <wberrier@myrealbox.com> September 2004
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #include "common.h"
 #include "dhcpd.h"

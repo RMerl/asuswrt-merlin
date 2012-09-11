@@ -123,11 +123,7 @@ nvram_get_ddns_host_name_EXIT:
 
 char* nvram_get_productid()
 {
-#if 0
-	return nvram_get(PRODUCT_ID);
-#else
 	return get_productid();
-#endif
 }
 
 char* nvram_get_acc_list()

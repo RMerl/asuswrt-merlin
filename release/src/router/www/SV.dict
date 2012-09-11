@@ -1,8 +1,6 @@
-﻿[Language type]
 CHAR_set=UTF-8
 PASS_LANG=Språk:
 LANG_select=Välj språk
-[IPv6]
 IPv6_wan_addr=WAN IPv6-adress
 IPv6_wan_Prefix_len=WAN Prefixlängd
 IPv6_wan_gateway=WAN IPv6 Nätbrygga
@@ -19,17 +17,18 @@ Prefix_lan_Length=LAN Prefixlängd
 IPv6_Prefix_Length=IPv6 prefixlängd
 IPv6_DNS_Setting=IPv6 DNS-inställning
 ipv6_6rd_dhcp_option=DHCP alternativ
+ipv6_6rd_Prefix=IPv6 prefix
 ipv6_client_ip=klient IPv6-adress
 IPv6_static_IP=Statisk IPv6
 tunnel_MTU=Tunnel MTU
 tunnel_TTL=Tunnel TTL
-[VPN server]
 vpn_Adv=VPN-detaljer
 PPTP_desc=VPN-servern ger dig åtkomst till hemmanätverk när som helst, var som helst.
 PPTP_desc2=Använda VPN-servern. Följ dessa steg.<br>(1)Aktivera PPTP VPN-servern<br>(2) Ställ in IP-pool för klient-IP. (Maximum 10 klienter)<br>(3) Ställ in användarnamnet och lösenrodet för VPN-klient.<br>(4) Öppna VPN anslutningsprogrammet på din dator eller smartphone.<br>(5) Lägg till en ny PPTP VPN anslutning och VPN serveradressen är
 PPTP_desc3=(6) Om din WAN IP-adress är dynamisk, <a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">klicka här för att ställa in DDNS.</a>
 vpn_enable=Aktivera PPTP Server
 vpn_broadcast=Sändningssupport
+vpn_network_place=Network Place (Samba) Support
 MPPE_Encryp=MPPE kryptering
 Auto=automatiskt
 No_Encryp=Ingen kryptering
@@ -42,7 +41,6 @@ vpn_conflict_DHCPpool=* Konflikt med routerns DHCP IP-pool:
 vpn_conflict_DHCPstatic=* Konflikt med routerns DHCP statiska IP-adress:
 vlaue_haigher_than=Detta värde bör vara högre än
 vpn_max_clients=VPN-server tillåter endast max 10 klienter!
-[ParentalCtrl]
 Parental_Control=föräldrakontroll
 ParentalCtrl_Desc=Föräldrakontrollen låter dig ställa in tidsgränsen för en klients nätanvändning. Använda föräldrakontrollen:
 ParentalCtrl_Desc1=I kolumnen [Klientnamn], välj den klient vars nätverksanvändning du vill kontrollera. Du kan också knappa in klientens MAC-adress i kolumnen [klients MAC-adress].
@@ -52,18 +50,15 @@ ParentalCtrl_Desc4=Klicka på [OK] för att spara gjorda inställningar.
 ParentalCtrl_username=Klientnamn
 ParentalCtrl_hwaddr=klients MAC-adress
 ParentalCtrl_time=Tidshantering
-[AutoUpdate]
 check_proceeding=Routern kontrollerar ASUS-servern beträffande uppdatering av fast programvara.
 connect_failed=Ingen Internförbindelse har upptäckts. Routern kan inte ansluta till ASUS-servern för att kontrollera uppdateringen av fast programvara. När du är uppkopplad till Internet igen går du tillbaka till denna sida och klickar på Kontrollera för att kontrollera om det finns nya uppdateringar av den fasta programvaran.
 exist_new=Det finns en ny version av den fasta programvaran. Vill du uppgradera den fasta programvaran?
 is_latest=Routerns nuvarande fasta programvara är den senaste versionen.
 unavailable_update=Inga tillgängliga uppdateringar
-[GreenIndicator]
 no_printer_detect=Ingen skrivare upptäcktes
 Eject_usb_disk=Mata ut USB-enhet
 disconnect_internet=Koppla ner Internetförbindelsen
 go_GuestNetwork=Gå till gästnätverket
-[GuestNetwork]
 Guest_Network=Gästnätverk
 GuestNetwork_desc=Gästnätverket tillhandahåller Internetförbindelse åt gäster men begränsar åtkomsten till ditt Intranet.
 Access_Time=Åtkomsttid 
@@ -71,7 +66,6 @@ Limitless=Obegränsat
 Access_Intranet=Koppla upp dig på Intranet
 Guest_network_index=Index över Gästnätverk
 Guest_Network_enable=Aktivera Gästnätverk
-[TrafficManager]
 upload_prio=Uppladdningsprioritet
 min_bound=Minimal bandbreddsgräns
 max_bound=Maximal bandbreddsgräns
@@ -109,12 +103,10 @@ qos_user_prio=Användardefinierad prioritet
 qos_user_rules=Användardefinierade QoS regler
 source_ipmac=För käll-eller mål-IP-adress kan du antingen:<p>(a) ange en specifik IP-adress, t.ex. \"192.168.122.1\";<p>(b) ange IP-adresser inom ett delnät eller inom samma IP-pool, t.ex. \"192.168.123.*\" eller \"192.168.*.*\",<p>eller c) ange alla IP-adresser som \"*.*.*.*\"<p>MAC-adressens format ges i sex grupper med två hexadecimaltecken, kolonseparerade (:) och i överföringsordning (t.ex. 12:34:56:aa:bc:ef )
 QoS_invalid_period=Bandbreddens gräns är inte giltig.
-[Network_PrintServer]
 Network_Printer_Server=Nätverksskrivarserver
 Network_Printer_desc=Nätverksskrivarservern stödjer två metoder: (1) ASUS EZ skrivardelning (2) LPR delar skrivaren.
 asus_ez_print_share=ASUS EZ skrivardelning (endast Windows OS)
 LPR_print_share=Använd ett LPR-protokoll för att dela utskriften.
-[New_201108]
 usb_unmount=USB-funktionen är inaktiverad
 no_usb_found=Ingen USB-enhet upptäcktes
 Menu_usb_application=USB-program
@@ -125,7 +117,6 @@ jumbo_frame=Aktivera Jumbo Frame
 ctf_disable=Inaktivera HW Accelerator
 Enable_WAN=Aktivera WAN
 Enable_NAT=Aktivera NAT
-[New_QIS]
 QIS_Previous_WLKey=Vill du använda de tidigare trådlösa säkerhetsinställningarna?
 QIS_recommand_encryption=Vi rekommenderar starkt att du först ställer in krypteringstyp.
 QIS_confirm_recommand_encryp=Vi rekommenderar starkt att du först ställer in krypteringstyp. Vill du fortsätta?
@@ -143,27 +134,35 @@ QIS_welcome_feature1=Simultan 450+450 dualbandanslutning.
 [###MODEL_DEP###][RT-N56U][RT-N53]QIS_welcome_feature1=Samverkande dubbelband N600. (300 Mbps/ 2.4GHz + 300 Mbps/ 5GHz)
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature1=Flexibel och fördröjningsfri underhållning med dubbla frekvensband.
 [###MODEL_DEP###][RT-N16]QIS_welcome_feature1=Kraftfull CPU ger en högpresterande genommatning.
-[###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1][RT-N10U]QIS_welcome_feature1=Enkelband N300. (300 Mbps/ 2.4GHz)
+[###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature1=Enkelband N300. (300 Mbps/ 2.4GHz)
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature1=Multiple 3-in-1 : Router / Access Point / Repeater wireless modes
+[###MODEL_DEP###][RT-N10U]QIS_welcome_feature1=Enkelband N150. (150 Mbps/ 2.4GHz)
 QIS_welcome_feature2=Dubbel USB-port för USB-lagring och multifunktionsskrivare.
+[###MODEL_DEP###][RT-AC66U]QIS_welcome_feature2=ASUS AiCloud unlimitedly access, streaming, and sync files everywhere with any devices.
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature2=4 x Gigabit Ethernetportar.
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature2=4 x Gigabit Ethernetportar. 2 x USB 2.0 portar för snabb fil- och skrivardelning.
+[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature2=Twin USB ports enable multi-role usability.
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature2=4 x 10/100 Ethernetportar.
 [###MODEL_DEP###][RT-N15U]QIS_welcome_feature2=4 x Gigabit Ethernetportar. 1 x USB 2.0 portar för snabb fil- och skrivardelning.
 [###MODEL_DEP###][RT-N12B1][RT-N12C1]QIS_welcome_feature2=4 x 10/100 Ethernetportar. 2 x 5DBi antenn för att uppnå bättre signaltäckning.
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature2=Two detachable external 9dbi high gain antennas with adjustable output power.
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature2=4 x 10/100 Ethernetportar. 1 x USB 2.0 portar för skrivardelning.
 QIS_welcome_feature3=Gigabit internetsurfing med turbo NAT.
+[###MODEL_DEP###][RT-AC66U]QIS_welcome_feature3=4 x Gigabit Ethernetportar. 2 x USB 2.0 portar för snabb fil- och skrivardelning.
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature3=2 x USB 3.0 portar för snabb fil- och skrivardelning.
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature3=Inbyggd strålformningsteknologi för bredare täckning.
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature3=Kraftfull flerprogramskörning med upp till 300,000 datasessioner.
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature3=Upp till 3 x gäst SSID.
 [###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature3=Upp till 3 x gäst SSID.
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature3=Excellent wireless signal and antenna transmission for 300% wider signal coverage.
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature3=1 x 5DBi antenn för att uppnå bättre signaltäckning.
 QIS_welcome_feature4=20X datasessioner för stabil anslutning vid P2P nedladdning.
-[###MODEL_DEP###][RT-N65U][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature4=Grafiskt användargränssnitt för enkel installation och hantering.
+[###MODEL_DEP###][RT-AC66U][RT-N65U][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature4=Grafiskt användargränssnitt för enkel installation och hantering.
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature4=Hårdvara NAT-aktiverad för 5X snabbare WAN till LAN upplevelse.
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature4=Dubbla USB-portar möjliggör användning för flera ändamål.
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature4=Tidskontroll användaråtkomst.
-[###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=Upp till 4 x gäst SSID.
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature4=Optimized coverage throughout multi-level households.
+[###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=Upp till 3 x gäst SSID.
 QIS_pass_title=Inställning av routerns inloggningslösenord
 QIS_pass_desc1=Ändra routerns lösenord för att förhindra obehörig åtkomst till din ASUS trådlösa router.
 QIS_pass_desc3=Routerlösenordet är administrationsnyckeln till din ASUS router. När du loggar in till routerns webbanvändargränssnitt behöver du knappa in användarnamnet och lösenordet. Standardanvändarnamn och lösenord för routern är "admin / admin".
@@ -207,11 +206,8 @@ qis_tutor_desc2=1. I meddelandefältet klicka på nätverksikonen ( <img src="/i
 qis_tutor_desc3=2. Från listan med nätverk, klicka på det nätverk som du vill ansluta till och klicka sedan på "anslut".
 qis_tutor_desc4=1. I meddelandefältet, klicka på nätverksikonen, klicka sedan på "View Available Wireless Networks" (visa tillgängliga trådlösa nätverk).
 qis_tutor_desc5=1. Klicka på flygplatsstatusikonen ( <img src="/images/qis/osx_network_icon.jpg"> ) i menyfältet och välj sedan det trådlösa namnet som du vill ansluta till.
-
-[System log]
 System_Log=Systemlogg
-[New_0622]
-upnp_Desc=Set up the DLNA, iTUnes, FTP and Network Place (Samba) server.
+upnp_Desc=Set up the DLNA, iTunes, FTP and Network Place (Samba) server.
 Route_title=Den här sedan visar detaljerad routingstatus.
 PortForward_title=Den här sedan visar detaljerad portvidarebefordringsstatus. Vissa P2P-program använder sig av UPnP-protokollet för att öppna porten. Portnumret visas på den här sidan.
 WLLog_title=Den här sedan visar detaljerad trådlös status.
@@ -222,16 +218,16 @@ FTP_desc=Ställ in konto och tillstånd för FTP-tjänsten.
 Samba_desc=Ställ in konto och tillstånd för nätverksplatsdelningstjänsten (Samba).
 LANHostConfig_x_DDNSHostNames_itemdesc=Värdnamnet kan inte innehålla sifferprefix och \".\". (t.ex. \"123abc\" eller \"aaa.bbb\") 
 LANHostConfig_x_DDNSEnable_sectiondesc2=Den trådlösa routern använder för närvarande en privat WAN-IP-adress (192.168.x.x, 10,x,x,x, eller 172.16.x.x). Den här routern kanske finnas i en miljö med ett flertal NAT och DDNS-tjänsten kan inte fungera i den miljön.
-LANHostConfig_x_DDNSEnable_sectiondesc3=Värdnamnet har integrerats framgångsrikt. Du kan använda "[värdnamn].asuscomm.com" för att komma åt tjänsten på hemnätverket från WAN. Använd "[värdnamn].asuscomm.com" för fjärråtkomst till ditt nätverk.<p>Gå till Advanced Setting (Avancerade inställningar) > WAN för att konfigurera portvidarebefordran eller DMZ-inställningar för att ge andra WAN-klienter fjärråtkomst till ditt nätverk.<p>Om du vill fjärrkonfigurera den trådlösa routern, gå till <a href="../Advanced_BasicFirewall_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">här</a>.
-IPConnection_LocalPort_itemdesc=Lämna detta fält tomt om du vill att inkommande paket ska dirigeras om till den här porten.
+LANHostConfig_x_DDNSEnable_sectiondesc3=Värdnamnet har integrerats framgångsrikt. Du kan använda "[värdnamn].asuscomm.com" för att komma åt tjänsten på hemnätverket från WAN. Använd "[värdnamn].asuscomm.com" för fjärråtkomst till ditt nätverk.<p>Gå till Advanced Setting (Avancerade inställningar) > WAN för att konfigurera portvidarebefordran eller DMZ-inställningar för att ge andra WAN-klienter fjärråtkomst till ditt nätverk.<p>Om du vill fjärrkonfigurera den trådlösa routern, gå till <a href="/Advanced_System_Content.asp?af=misc_http_x" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">här</a>.
 IPConnection_LocalIP_itemdesc=Ange i LAN-klientens IP-adress.
+IPConnection_LocalPort_itemdesc=Lämna detta fält tomt om du vill att inkommande paket ska dirigeras om till den här porten.
 IPConnection_PortRange_itemdesc=Portintervallet accepterar olika format, t.ex. portintervall (300:350), individuella portar (566,789) eller Mix (1015:1024,3021).
 IPConnection_UPnP_itemdesc=UPnP (Universal Plug and Play) låter flera enheter (routrar, tv-apparater, stereoanläggningar, spelkonsoler, mobiltelefoner) kontrolleras via ett IP-baserat nätverk med eller utan central kontroll via en nätbrygga.
 LANHostConfig_ManualDHCPSTB_itemdesc=Den LAN-port som din IPTV-set-top-box ansluter till.
 LANHostConfig_ManualDHCPMulticast_itemdesc=Låter den trådlösa routern hantera multicastpaketen. Aktivering av multicastroutern aktiverar också RTP- och RTSP-funktionerna.
 LANHostConfig_ManualDHCPMacaddr_itemdesc=MAC-adressens format ges i sex grupper med två hexadecimaltecken, kolonseparerade (:) och i överföringsordning (t.ex. 12:34:56:aa:bc:ef)
-WPS_weptkip_hint=OBS: På grund av WPS 2.0-reglerna måste WPS inaktiveras om routern använder WEP- eller TKIP-kryptering.
 WPS_add_client=Du kan enkelt ansluta en WPS-klient till nätverket på ett av följande två sätt:<ul><li>Metod 1: Klicka på WPS-knappen i det här gränssnittet (eller tryck på WPS-knappen på routern). Tryck sedan på WPS-knappen på klientens WLAN-adapter i ungefär tre minuter.</li><li>Metod 2: Starta klient-WPS-processen och hämta klientens PIN-kod. Ange klientens PIN-kod i fältet Client PIN code (Klientens PIN-kod) och klicka sedan på Start (Starta).<p>Läs igenom den trådlösa klientens användarhandbok för att se om den stöder WPS-funktionen. Om din trådlösa klient inte stöder WPS-funktionen måste du konfigurera den manuellt och ange samma nätverksnamn (SSID) och säkerhetsinställningar som för den här routern.</li></ul>
+WPS_weptkip_hint=OBS: På grund av WPS 2.0-reglerna måste WPS inaktiveras om routern använder WEP- eller TKIP-kryptering.
 adv_wl_desc=Ange trådlösrelaterad information nedan.
 UserQoS_transferred_hint=I spalten Transferred (Överfört ), ställ in begränsningen för nätverkstrafik (i KB) för en specifik tjänst för att skapa specifika prioriteter för den tjänst som tilldelats en specifik port. Till exempel, om två nätverksklienter, dator 1 och dator 2, båda är anslutna till internet (inställt till port 80) men dator 1 överskrider gränsen för nätverkstrafik på grund av nedladdningsuppgifter tilldelas dator 1 lägre prioritet. Spalten Transferred (Överfört) hänvisar till uppströms och nedströms trafik (utgående och inkommande nätverkstrafik) för en session. Om du inte vill begränsa trafiken, lämna det tomt.
 UserQoS_desc=I rullgardinsmenyn i User-defined QoS rules (Användardefinierade QoS-regler) kan du prioritera nätverksapplikationer eller -enheter i fem olika nivåer. Beroende på prioritetsnivå använder QoS följande metoder vid sändning av datapaket:<ul><li>Byt turordning för uppströms nätverkspaket vilket hänvisar till den turordning i vilken paket sänds till internet.</li><li>Paket med låg prioritet ignoreras för att garantera överföringen av högprioritetspaket. Uppströmspaket med högre prioritet orsakar nedströmspaket med högre prioritet.</li><li>Om inga paket skickas från högprioritetsapplikationer görs internetanslutningens hela överföringshastighet tillgänglig för paket med låg prioritet.</li></ul>
@@ -240,14 +236,12 @@ Aidisk_authority_hint=Varning: AiDisk har ställts in. Om du ställer in AiDisk 
 remove_usb_hint=För att säkert kunna ta bort hårddisken från routern, klicka på USB-ikonen i det övre högra hörnet på skärmen.
 UserQoSRule_desc_zero=Aktivera QoS och ställ sedan in användardefinierade regler.
 prio_packet_note=Standard ACK, SYN och ICMP paketen används för att förbättra spelets smidighet.
-[NAT Passthrough]
 NAT_PPTP_Passthrough=PPTP Genompassering
 NAT_L2TP_Passthrough=L2TP Genompassering
 NAT_IPSec_Passthrough=IPSec Genompassering
 NAT_RTSP_Passthrough=RTSP Genompassering
 NAT_passthrough_itemname=NAT Genompassering
 NAT_passthrough_desc=Aktivera NAT genompassering för att tillåta ett Virtual Private Network (VPN/virtuellt privat nätverk) anslutning passera genom routern till nätverksklienterna.
-[opmode strings]
 wireless_router=Trådlös router
 BasicConfig_EnableiTunesServer_itemname=Enable iTunes Server?
 OP_GW_item=Trådlös router (standard)
@@ -256,7 +250,7 @@ OP_RE_item=Repeterarläge
 OP_RE_desc=I Repeterarläget ansluter ZVMODELVZ trådlöst till ett befintligt trådlöst nätverk för att utöka den trådlösa nätverkstäckningen. I detta läge är brandväggen, IP-delning och NAT-funktionerna avaktiverade.
 OP_AP_item=Access Point(AP/åtkomstpunkt) läge
 OP_AP_desc=I Access Point (AP) läge ansluter ZVMODELVZ till en trådlös router via en Ethernet-kabel för att förlänga den trådlösa signaltäckningen till andra nätverksklienter. I detta läge är brandväggs-, IP-delnings- och NAT-funktionerna inaktiverade som standard.
-deviceDiscorvy=I Access Point (AP) läge, ändras DHCP-tilldelade IP-adressen.  Installera och använd <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery Utility</a> för att upptäcka den trådlösa routerns IP-adressen.
+deviceDiscorvy=I Access Point (AP) läge, ändras DHCP-tilldelade IP-adressen. Installera och använd <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery Utility</a> för att upptäcka den trådlösa routerns IP-adressen.
 IPConnection_VSList_ftpport=FTP-serverport
 wps_start_btn=Start
 USB_Application_account_alert=Användarkontot kan inte vara 'root', 'guest', 'anonymous'! Ange ett giltigt konto.
@@ -265,13 +259,11 @@ RouterConfig_GWMulticast_unknownUni_itemname=Okänd unicast-stormkontroll (Mbps)
 RouterConfig_GWMulticast_unknownMul_itemname=Okänd multicast-stormkontroll (Mbps):
 RouterConfig_GWMulticast_Multicast_itemname=Multicast-stormkontroll (Mbps):
 RouterConfig_GWMulticast_Broadcast_itemname=Sändningsstormkontroll (Mbps):
-[keyword_filter]
 menu5_5_5=Nyckelordsfilter
 FirewallConfig_KeywordFilterEnable_sectiondesc=Med nyckelordsfiltret kan du blockera klientens åtkomst av webbsidor som innehåller de angivna nyckelorden.
 FirewallConfig_KeywordFilterEnable_sectiondesc2=Begränsningar i filtreringsfunktionen med nyckelord :<ol><li>Komprimerade webbsidor som använder http komprimeringsteknologi kan inte filtreras. <a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">Se här för ytterligare detaljer</a></li><li>Https webbsidor kan inte filtreras.</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=Aktivera nyckelordsfiltret
 FirewallConfig_KeywordList_groupitemname=Lista över nyckelordsfilter
-[New translated]
 JS_field_wanip_rule3=Ange ett värde mellan 1 och 2 592 000 (sekunder).
 FirewallConfig_Port80_itemdesc=Om du när brandväggen för ditt nätverk inaktiverats anger 80 som HTTP-serverns intervall i dina WAN-inställningar kommer http-servern/webbservern att vara i konflikt med ZVMODELVZs webbgränssnitt.
 FirewallConfig_FTPPrompt_itemdesc=Om du ställer in 20:21 som portintervall för din FTP-server i dina WAN-inställningar kommer din FTP-server att vara i konflikt med ZVMODELVZs inbyggda FTP-server.
@@ -285,12 +277,10 @@ WLANConfig11b_TxPower_itemname=Tx strömjustering
 WLANConfig11b_TxPower_itemdesc=Justera antennkraften för att förbättra överföringskvaliteten. 
 WLANConfig11b_Wireless_Speed_itemname_3=Använder 40 Mhz bandbredd för att maximera det trådlösa dataflödet. Om du upplever problem med den trådlösa stabiliteten, välj standardläge (20MHz).
 hwnat_desc=NAT (Network Address Translation) är en process som används i routrar för att ersätta adressinformationen för nätverkspaket med ny adressinformation. Typiska applikationer för NAT är routrar som ansluts till LAN med WAN:et. I LAN har varje nätverksenhet en privat IP (LAN-IP) men det finns bara en publik IP (WAN-IP). För att låta nätverksenheterna komma åt Internet ersätter routern sändarens privata IP-adress med sin egen publika IP-adress för alla utgående datapaket. Routern sparar all nödvändig information i en tabell (NAT-tabell) så att inkommande datapaket kan skickas till rätt nätverksenhet.
-[error_page.htm]
 web_redirect_reason6=IP-konflikt upptäcktes. Klicka på Nästa för att få en ny IP-address.
 web_redirect_case6_desc1=Routerns uppdaterade IP-adress:
 web_redirect_case6_desc2=När du klickat på Nästa, se till att du uppdaterar IP-adressinställningarna för varje relaterad tjänst, t.ex. portvidarebefordran eller DMZ.
 error_page_lanip_changed_desc1=IP-adressen uppdateras. Om denna process tar mer än två minuter, föj dessa tre steg för att uppdatera IP-numret manuellt: (1) dra ur nätverkskabeln; (2) vänta i c:a 10 sekunder, och (3) sätt i den igen för att få en ny IP-adress.
-[QIS]
 QIS_autoMAC_desc1=Börjar klona datorns MAC-adress in i routern…
 QIS_autoMAC_desc2=Vänta lite...
 QIS_autoMAC_desc3=Verifiera WAN-IP-adressen
@@ -314,7 +304,6 @@ QIS_internet_success_desc1=Det kan finnas en proxyserver i ditt nätverk. Kontro
 QIS_internet_success_desc2=Det kan finnas en del fel i Internetleverantörens domännamnsserver. Kontrollera med din ISP eller nätverksadministratör eller gå till sidan för avancerade inställningar för att ange öppen DNS.
 QIS_internet_success_desc3=Kontrollera med din Internetleverantör eller nätverksadministratör.
 QIS_internet_success_desc4=Dra ut modemets elsladd ur modemet. Vänta i ungefär två minuter och sätt sedan i den igen. Klicka på Upptäck anslutning.
-[Traffic Monitor]
 Date=Datum
 Scale=Skala
 Last30days=De senaste 30 dagarna
@@ -327,13 +316,11 @@ Current=Nuvarande
 Average=Genomsnitt
 Maximum=Max
 Total=Totalt antal
-[RT-N66U new item]
 LAN_IP_changed_suggedtion1=LAN IP för ZVMODELVZ är
 LAN_IP_changed_suggedtion2=.Om du inte kan återvända till inställningssidan senare, uppdatera IP-konfigurationen på datorn.
 WLANConfig11b_x_WPSband_itemname=Nuvarande band
 WLANConfig11b_x_WPSband_itemdesc=Välj driftband (2.4 GHz eller 5 GHz) innan du använder WPS-funktionen (Wi-Fi-skyddad installation).
 LANConfig_ChangedLANIP=Routerns IP-adress har ändrats. Använd enhetsidentifieringsverktyget för att söka efter routerns nya IP-adress.
-[RT-N1X new item]
 LANHostConfig_x_Password_itemdesc=Lösenordet får inte vara längre än 16 tecken.
 WLANConfig11n_nmode_limition_hint=ZVMODELVZ byter från WEP- eller TKIP-kryptering till AES i [n Endast] läge för att garantera att klienterna ansluts ordentligt.
 WLANConfig11n_automode_limition_hint=I Autoläge med WEP-eller TKIP-kryptering stöder ZVMODELVZ en max överföringshastighet på 54 Mbps.
@@ -353,7 +340,6 @@ ShareNode_Seeding_itemname=Seedning
 ShareNode_Seeding_itemdesc=Tillåter aktivering eller inaktivering av seedningsfunktionen. ZVMODELVZ är äppen tills nedladdningsprocessen avslutats.
 ShareNode_MaxUpload_itemname=Max uppladdningshastighet
 ShareNode_MaxUpload_itemdesc=Ange ett värde mellan 0 och 999. Standardvärdet är 0, vilket innebär att uppladdningen inte begränsas.
-[New item]
 HSDPAConfig_hsdpa_enable_hint1=Nuvarande 3G/4G-inställning är inställd på 3G/4G säkerhetskopieringsläge. Om WAN-porten kopplats ifrån kommer nätverksläget automatiskt att ändras till 3G/4G-läge.
 HSDPAConfig_hsdpa_enable_hint2=Om du vill byta anslutningstyp, gå till <a href="/Advanced_Modem_others.asp">USB Modem</a> för att inaktivera 3G/4G/3.5G-adaptern.
 HSDPAConfig_USBAdapter_itemname=USB-adapter
@@ -368,7 +354,7 @@ Browser_action_not_support_addfavorite=Din webbläsare stöder inte den här fun
 page_not_support_mode_hint=Den här funktionen är inaktiverad.
 APSurvey_action_ConnectingStatus0=Moder-AP kan vara avstängd. Kontrollera igen.
 APSurvey_action_ConnectingStatus3=Startar om webbläsaren. I URL adressfältet skriv in "http://www.asusnetwork.net/" för åtkomst till repeterarens anslutningsstatus.
-APSurvey_action_ConnectingStatus1=Anslutning misslyckades. Ange säkerhetsnyckeln en gång till eller klicka på [Avbryt] för att välja ett annat nätverk att ansluta till.
+APSurvey_action_ConnectingStatus1=Connection failed. Password is not correct. Please click [skanna] to select another network to connect to.
 APSurvey_action_ConnectingStatus24=Trådlös anslutning har etablerats.
 APSurvey_action_ConnectingStatus35=Kunde inte verifiera WPA-nyckeln. Ange WPA-nyckeln en gång till.
 APSurvey_action_renew_success=IP-inställningarna uppdaterade. Du kommer att vidarebefordras till ZVMODELVZ\'s webbgränssnitt.
@@ -384,7 +370,6 @@ AP_fail_get_IPaddr=Kunde inte hämta IP-information.
 AP_Remote_IP=AP IP-adress
 AP_survey=AP-överblick
 statusTitle_AP=Åtkomstpunktsstatus
-[USB Application - HSDPA]
 HSDPAConfig_pin_code_itemdesc=Ange det personliga identifikationsnumret (PIN) för ditt SIM-kort. Numret måste vara mellan fyra och åtta siffrorlångt.Om du inte kan PIN-koden, kontakta din ISP.
 HSDPAConfig_private_apn_itemname=APN-tjänst (tillval)
 HSDPAConfig_private_apn_itemdesc=Om du inte vet APN-tjänstens namn, kontakta din ISP.
@@ -394,12 +379,10 @@ HSDPAConfig_hsdpa_enable_itemname=Aktivera USB Modem
 HSDPAConfig_hsdpa_mode_itemname=USB Modem-läge
 HSDPAConfig_DNSServers_itemname=DNS-server
 AiDisk_Wizard_failedreson1=Aidisk Wizard fungerade utmärkt. Försök igen senare.
-[state.js-Dr.Surf.]
 QKSet_ISP_desc3=Automatisk IP-anslutning misslyckades. Den kan konfigureras manuellt här.
 QKSet_ISP_desc2=Statisk IP-anslutning misslyckades.
 QIS_internet_vpn_confirm=Om anslutningstypen är PPTP/L2TP, klicka på [OK] för att [Ansluta till VPN-server].\nOm inte, klicka på [Avbryt] och kontrollera informationen innan du tillämpar inställningarna.
 Full_Clients=Klienter
-[QIS_internet_vpn.htm]
 QIS_if_vpn_existed=Ansluta till VPN-servern?
 QIS_internet_vpn_title=VPN-objekt
 QIS_internet_vpn_type=VPN-typ
@@ -420,14 +403,11 @@ Device_service_iTune=iTunes-tjänst:
 Device_service_Printer=Skrivartjänst:
 JS_storageright=När namnet ställts in (t.ex. aabbcc), ange //aabbcc i Internet Explorers adressfält för snabb åtkomst till nätverksplatstjänsten. Standardtecken för inmatning inkluderar bokstäver (A-Z, a-z), siffror (0-9), mellanslag, understreck (_) och bindestreck (-). Det första och sista tecknet får inte vara ett mellanslag.
 not_support_script=Din webbläsare stöder inte JavaScript. Välj en webbläsare som stöder JavaScript eller aktivera det för att kunna använda den multifunktionella routern, ASUS ZVMODELVZ.
-[Advanced_AiDisk_others.asp]
 Help_of_Workgroup=Det är namnet på ZVMODELVZ i nätverksmiljön. Standardtecken för inmatning inkluderar bokstäver (A-Z, a-z), siffror (0-9), mellanslag, understreck (_) och bindestreck (-). Första och sista tecknet får inte vara ett mellanslag. Om du använder ett icke-standardiserat namn kan andra användare inte hitta din datorn på LAN:et.
-[state.js-Dr.Surf.]
 DrSurf_refresh_page=Uppdatera sidan
 DrSurf_sweet_advise1=Du har ändrat SSID- eller säkerhetsinställningar. Det kommer att resultera i att de trådlösa klienterna kopplas bort. Justera klientens inställningar för att kunna återansluta.
 DrSurf_sweet_advise2=Anslutningen har återetablerats.
 DrSurf_sweet_advise3=Du kan inte öppna sidan med inställningar för ZVMODELVZ eftersom den inaktiverade DHCP-funktionen när den slog om till AP-läge.<p>Vi rekommenderar att du använder ASUS hjälpprogram/enhetsupptäckt för att söka efter AP:ns IP och öppnar inställningssidan igen.</p>
-[AiDisk Wizard]
 File_Pop_content_alert_desc1=Användarnamnet måste fyllas i.
 File_Pop_content_alert_desc2=Användarnamnet får inte vara kortare än två tecken.
 File_Pop_content_alert_desc3=Användarnamnet får inte vara längre än 20 tecken.
@@ -440,7 +420,6 @@ File_content_alert_desc6=Delningsnamnet måste fyllas i.
 File_content_alert_desc7=Delningsnamn får endast innehålla alfanumeriska tecken/tankestreck/understreck/mellanslag.
 File_content_alert_desc8=Delningsnamnet finns redan på den här volymen. \nAnge ett annat namn!
 File_content_alert_desc10=Om du skapar en delning med fler än 12 tecken kan den bli osynlig i  Windows®-version.\nVill du fortsätta?
-[AiDisk Advanced] 
 enableCIFS=Aktivera delning
 disableCIFS=Inaktivera delning
 enableFTP=Aktivera FTP
@@ -468,28 +447,14 @@ Confirmpassword=Ange lösenordet på nytt
 ModAccountPassword=Nytt lösenord
 FolderName=Mappnamn
 in=in
-DelFolderAlert1=Är du säker på att du vill radera mappen?
-DelFolderAlert2= \"och rättigheter tillhörande kontot? Är du säker på att du vill fortsätta?
 PoolName=Partitionens namn
 NewFolderName=Nytt mappnamn
 AddFolderAlert=Standardrättigheter för en ny mapp är läs/skriv.
 DelFolderAlert=Se till att mappen är tom innan du raderar den.<br><br>Är du säker på att du vill radera mappen?
 ModFolderAlert=Åtkomsträttigheterna för mappen och dess undermappar ändras inte när namnet ändras.
-SambaClose=Delning via nätverk har inaktiverats.
-FTPClose=Delning via FTP har inaktiverats.
-Clickhere=Klicka här
-HowToSharebySamba1=för att öppna det delade utrymmet eller klicka på Start > Kör och ange
-HowToSharebySamba2=klicka sedan på [OK] för att öppna det delade utrymmet.
-HowToSharebySamba_notIE1=Exempel: på Microsoft Windows® skrivbord, klicka på Starta > Kör och ange:
-HowToSharebySamba_notIE2=klicka sedan på [OK] för att öppna det delade nätverksutrymmet.
-HowToSharebyFTP1=för att öppna det delade FTP-utrymmet.
-HowToSharebyFTP3=Aktivera DDNS-tjänsten för att tillåta åtkomst via FTP eller klicka på följande länk:
-HowToSharebyFTP4=(endast åtkomlig via LAN.)
-[LeftMenu] 
 menu1=Nätverkskarta
 menu2=Medietjänst
 menu3=AiDisk
-menu4=EzQoS bandbredds hantering
 menu5=Avancerade inställningar
 menu5_1=Trådlös
 menu5_2=LAN
@@ -531,7 +496,6 @@ menu5_7_3=DHCP-lån
 menu5_7_4=Trådlös logg
 menu5_7_5=Portvidarebefordran
 menu5_7_6=Routningstabell
-[Network Map]
 block_client=Klicka här för att blockera klienten
 statusTitle_System=ASUS ZVMODELVZ
 statusTitle_Internet=Internetstatus
@@ -553,14 +517,15 @@ MAC_Address=MAC-adress
 ConnectionStatus=Anslutningsstatus
 WAN_IP=WAN-IP
 Connectiontype=Anslutningstyp
+LeaseExpires=Lease expires
 QIS=Snabb Internetinställning
 QIS_title=Snabb Internetinställning
 Connected=Ansluten
 Disconnected=Frånkopplad
 btn_go=GÅ
+MoreConfig=Mer konfig
 Printing_status=Utskriftstatus:
 Printing_button_item=Monopolläge:
-MoreConfig=Mer konfig
 ConnectedClient=Klientlista
 BlockedClient=Lista över blockerade klienter
 Block=Blockera
@@ -591,7 +556,6 @@ Minute=minuter
 Second=sekunder
 upload_bandwidth=Bandbredd för uppladdning
 download_bandwidth=Bandbredd för nedladdning
-[AiDisk Wizard] 
 AiDiskWelcome_title=Välkommen till AiDisk-guiden
 AiDiskWelcome_desp=Med AiDisk kan du:
 AiDiskWelcome_desp1=dela filer på USB-disken via Internet.
@@ -629,9 +593,8 @@ linktoFTP_no_2=DDNS är inte aktiverad. Aktivera det i WAN / DDNS när det behö
 linktoFTP_no_3=DDNS har aktiverats men domännamnet kunde inte registreras. Det går fortfarande inte att komma åt FTP via domännamnet från WAN.
 AiDisk_wizard_text_box_title3=När du konfigurerat inställningarna i AiDisk-guiden, se nedanstående information om hur man kommer åt disken:
 yoursharesetting=Inställningen för din delade mapp är
-neednotDDNS=Hoppa over ASUS DDNS-inställning.
+neednotDDNS=Inaktivera DDNS.
 asusddns_inputhint=Ange namnet
-[WPS] 
 WPS_PBCbutton_hint_success=Anslutningen lyckades.
 WLANConfig11b_display6_sectiondesc=WPS (Wi-Fi Protected Setup, Wi-Fi-skyddad inställning) etablerar ett trådlöst nätverk på ett enkelt och säkert sätt. Konfigurera WPS här via PIN-kod eller WPS-knappen.
 WLANConfig11b_x_WPS_itemname=Aktivera WPS:
@@ -663,7 +626,6 @@ bottom_Link=http://support.asus.com/download.aspx?SLanguage=en&m=ZVMODELVZ
 Help_init_word1=Hjälpen ger dig riktlinjer och information om hur man använder routerns funktioner. Klicka på
 Help_init_word2=länkade ord med gula och blåa understrykningar.
 Help_init_word3=för att få hjälp.
-[hook error] 
 ALERT_OF_ERROR_Input1=Det finns ingen inmatning om PROTOKOLL! 
 ALERT_OF_ERROR_Input2=Inmatningen om PROTOKOLL är fel! 
 ALERT_OF_ERROR_Input3=Det finns ingen inmatning om LÄGE!
@@ -704,8 +666,6 @@ ALERT_OF_ERROR_Action12=Kunde inte formatera disken.
 ALERT_OF_ERROR_System1=Systemfel: Kan inte tilldela minnet!
 ALERT_OF_ERROR_System2=Systemfel: Kan inte läsa data på disken!
 ALERT_OF_ERROR_System3=Systemfel: Disken är upptagen!
-[QIS wizard]
-[QIS_detect.js]
 Web_Title=ASUS Wireless Router ZVMODELVZ
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]Web_Title=ASUS ZVMODELVZ Dual-Band Wireless-N Gigabit ADSL2/2+ Modem Router
 Web_Title2=ZVMODELVZ
@@ -715,17 +675,14 @@ QKSet_detect_desc2=Återidentifiering av anslutningsstatus
 QKSet_detect_wanconnfault=Kontrollera att ethernetkabeln är ordentligt ansluten till WAN-porten.
 QKSet_detect_freshbtn=Identifiera igen
 QKSet_detect_waitdesc=Identifiera anslutningstyp...
-[QIS_finish.js]
 QIS_finish_Desc=ZVMODELVZ är inställt med dessa internet- och trådlösa inställningar. 
 QKSet_all_title=Snabbstart
 QKSet_finishpre_rebootnow=Avsluta
-[QIS_internet_account.js]
 QKSet_account_webtitle=ISP-kontoinställningar
 QKSet_ISP_head=ISP-informationsinställningar
 QKSet_ISP_desc=Se dina ISP-inställningar och ange relevant information.
 PPPConnection_UserName_itemdesc=Fältet är endast tillgängligt när du ställer in en WAN-anslutning av typ USB Modem, PPPoE, PPTP eller L2TP.
 QKSet_account_nameblank=Kontonamnet måste fyllas i.
-[QIS_internet_ip.js]
 Layer3Forwarding_x_DHCPClient_itemname=Hämta WAN-IP automatiskt
 Layer3Forwarding_x_UseStaticIP_itemname=Använd följande IP-adress:
 qis_dns=Använd följande DNS-serveradresser
@@ -748,13 +705,11 @@ IPConnection_x_DNSServer_blank=Ställ in DNS-servern på klientenheten.
 IPConnection_warning_WANIPEQUALGatewayIP=Du har angivit WAN-IP:n som ZVMODELVZ:s nätbrygga och ZVMODELVZ kan kanske inte anslutas till Internet. Ställ in korrekt värde för nätbryggan.
 IPConnection_x_WAN_LAN_conflict=WAN och LAN bör ha olika IP-adresser och subnet.
 IPConnection_x_illegal_mac=MAC-adressen är ogiltig.
-[QIS_internet_isp.js]
 BOP_isp_host_desc=Det här fältet gör det möjligt att ange ett värdnamn för ZVMODELVZ. Det krävs normalt av Internetleverantören.
 BOP_isp_host_item=Värdnamn (tillval):
 PPPConnection_x_MacAddressForISP_itemdesc=MAC (Media Access Control)-adressen är en unik ID som identifierar din dator eller enhet i nätverket. Internetleverantörer övervakar MAC-adresser för enheter som ansluts till deras tjänster och förhindrar internetanslutningar för nya MAC-adresser. Korrigera detta problem på ett av följande sätt:<p>* Kontakta din internetleverantör och begär uppdatering av MAC-adressen för din internetprenumeration.<p>* Klona eller ändra MAC-adressen för den nya enheten så att den överensstämmer med den ursprungliga enhetens MAC-adress.
 BOP_isp_mac_item=MAC-adress (tillval)
 BOP_isp_MACclone=MAC-klon
-[QIS_internet_success.htm]
 QKSet_Internet_Setup_fail_reason1=DHCP-anslutningen misslyckades.
 QKSet_Internet_Setup_fail_reason2=Ogiltigt konto eller lösenord. Klicka på länken för att ändra det.
 QKSet_Internet_Setup_fail_reason3=PPPoE-anslutningen misslyckades. Klicka på länken för att försöka igen.
@@ -768,9 +723,7 @@ QKSet_finish_moveto5=Enkel trådlös säkerhetsinställning
 QKSet_finish_moveto6=Leta reda på och konfigurera krypteringsinställning.
 QKSet_finish_moveto7=Sidan för avancerade inställningar
 QKSet_finish_moveto8=Manuell konfiguration och finjusteringar.
-[QIS_internet_success.js] 
 QKSet_finish_desc=Inställningarna för Internetanslutningen är avslutade.
-[QIS_internet_type.js] 
 QKSet_type_head=Internet WAN-anslutningstyp
 QKSet_type_desc=Välj den typ av WAN-anslutning som erbjuds av din ISP.
 BOP_ctype_title1=Automatisk IP
@@ -791,7 +744,6 @@ WLANConfig11b_WEPDefaultKey_itemname=Nyckelindex:
 JS_passzero=Den fördelade nyckeln ska ha mellan 8 och 63 tecken eller 64 hex-siffror. Om detta fält är tomt tilldelas du standardlösenordet [00000000].
 JS_PSK64Hex=Den fördelade nyckeln ska ha mellan 8 och 63 tecken eller 64 hex-siffror!
 JS_wepkey=Ange korrekt WEP-nyckel.
-[error_page.htm] 
 web_redirect_message=Du kunde inte komma åt den webbsida du ville visa.
 web_redirect_fail_reason0=Skäl för den misslyckade anslutningen
 web_redirect_suggestion0=Vi föreslår att du
@@ -809,7 +761,6 @@ web_redirect_suggestion_final=Om denna diagnos inte löser ditt problem
 web_redirect_suggestion_etc=Gå till inställningssidan för ZVMODELVZ
 web_redirect_suggestion_etc_desc= där du kan kontrollera och konfigurera inställningarna.
 web_redirect_suggestion_manually_start_wan=Uppdatera WAN.
-[error_page.js] 
 web_redirect_reason1=Ethernetkabeln är inte ansluten.
 web_redirect_reason2_1=PPPoE- eller VPN-verifieringen misslyckades.
 web_redirect_reason2_2=Inget svar från fjärrservern.
@@ -818,7 +769,6 @@ web_redirect_reason3_2=Vi har upptäckt att din WAN-anslutningstyp är PPPoE men
 web_redirect_reason4=Internetanslutningen misslyckades. Routerns IP-adress är densamma som nätbryggans IP-adress.
 web_redirect_reason5_1=Du har förmodligen avbrutit WAN-anslutningen manuellt.
 web_redirect_reason5_2=Du har ställt in fel dynamisk eller statisk IP-adress för din ZVMODELVZ.
-[objcommon.js] 
 CTL_nonsupported=Stöds inte
 CTL_localdevice=Lokal enhet
 CTL_unknown=Okänd enhet
@@ -839,13 +789,11 @@ CTL_AdvSetting=Gå till avancerade inställningar
 CTL_Enabled=Aktiverad
 CTL_Disabled=Inaktiverad
 CTL_Disconnect=Frånkopplad
-[popup.js] 
 Main_alert_proceeding_desc1=Går vidare
 Main_alert_proceeding_desc4=Vänta, 
 Main_alert_proceeding_desc3=Avslutad!
 Main_content_Login_Item7=Det tar ungefär 60 sekunder att starta om routern. Är du säker på att du vill starta om routern nu?
 [###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=Det tar ungefär 80 sekunder att starta om routern. Är du säker på att du vill starta om routern nu?
-[QIS-general.js] 
 JS_fieldblank=Fältet får inte vara tomt.
 JS_validip=är inte en giltig IP-adress.
 JS_itemlimit1=Den här tabellen tillåter endast
@@ -858,11 +806,7 @@ JS_validSSID2=＂.
 JS_validrange=Ange ett värde mellan
 JS_validrange_to=och
 JS_validport=är inte ett giltigt portnummer.
-JS_WanLanAlert=Om du väljer DROPPA kommer alla WAN till LAN-paket att överges med undantag för de som överensstämmer med filtertabellen. Använd det med försiktighet.
-JS_LanWanAlert=Om du väljer DROPPA kommer alla LAN till WAN-paket att överges med undantag för de som överensstämmer med filtertabellen. Använd det med försiktighet.
 JS_fixchannel=Välj en fast kanal för bryggan.
-JS_AES2=Om du vill aktivera unik AES måste verifiering ställas till Öppet system!
-JS_AES3=Om du vill aktivera unik AES måste WEP också aktiveras!
 JS_DHCP1=Subnetmasken är ändrad och IP-poolen för ZVMODELVZ bör ändras. Vill du ändra den automatiskt?
 JS_DHCP3=Den nya IP Pool matchar inte subnetmasken. Vill du tillåta att ZVMODELVZ ändrar IP pool automatiskt?
 BOP_isp_desc=Värdnamn givet av ISP:n:
@@ -1116,7 +1060,7 @@ LANHostConfig_x_DDNSWildcard_itemdesc=Om funktionen aktiveras kommer domännamn 
 LANHostConfig_x_DDNSStatus_itemname=Uppdatera manuellt:
 LANHostConfig_x_DDNSStatus_itemdesc=Denna knapp gör det möjligt att uppdatera DDNS-databasen manuellt. Den är endast tillgänglig om automatisk uppdatering av DDNS misslyckats. Kontrollera nuvarande status för DDNS-uppdateringen i systemloggen.
 DeviceSecurity11a_display1_sectiondesc=Det trådlösa MAC-filtret gör det möjligt att kontrollera paket från enheter med angivna MAC-adresser i ditt trådlösa LAN.
-WLANAuthentication11a_display1_sectiondesc=Detta avsnitt gör det möjligt att ställa in ytterligare parametrar för verifiering av trådlösa klienter via en RADIUS-server. Det krävs när du väljer ”WPA-Enterprise/WPA2-Enterprise” i “Verifieringsmetod” i “Trådlös - allmänt”.
+WLANAuthentication11a_display1_sectiondesc=Detta avsnitt gör det möjligt att ställa in ytterligare parametrar för verifiering av trådlösa klienter via en RADIUS-server. Det krävs när du väljer ”WPA-Enterprise/ WPA2-Enterprise/ Radius with 802.1x” i “Verifieringsmetod” i “Trådlös - allmänt”.
 WLANAuthentication11a_ExAuthDBIPAddr_itemname=Serverns IP-adress
 WLANAuthentication11a_ExAuthDBIPAddr_itemdesc=RADIUS-serverns IP-adress för trådlös verifiering och dynamisk WEP nyckelderivering.
 WLANAuthentication11a_ExAuthDBPortNumber_itemname=Server-port:
@@ -1331,7 +1275,6 @@ HSDPAConfig_usbadaptor_itemdesc=Välj din USB-adapter.
 confirm_disableftp_dm=Inaktivering av nätverksdelning innebär att nedladdningshanteraren inte kan användas.
 LANHostConfig_IPRouters_itemdesc=LAN-IP-adressen för ZVMODELVZ. Standardvärdet är 192.168.1.1. På IP-baserade nätverk skickas datapaket till nätverkenheternas specifika IP-adresser.<p>ASUS-routrar använder IP-adresser med punktseparering som hänvisar till en sträng med fyra oktetter separerade med punkter (t.ex. 192.168.1.1).<p>Det finns tre IP-intervall som kan användas av lokala nätverk: 192.168.0.1 - 192.168.255.254, 172.16.0.1 - 172.31.255.254, 10.0.0.1 - 10.255.255.254.
 GO_HSDPA_SETTING=Gå till USB Modem-inställningar
-[adsl start]
 pvccfg_JS_enbsvc=Aktivera WAN-tjänsten den
 pvccfg_title=WAN-konfiguration
 pvccfg_atmcfg=ATM PVC-konfiguration
@@ -1427,7 +1370,6 @@ dns_server_no_set=Ställ in DNS-servern på klientenheten.
 dsl_wan_page_desc=Click the Edit icon to edit a PVC setting. Klicka på lägg till (+) eller radera (-) ikonen för att lägga till eller radera en PVC-inställning.
 dsl_web_redirect_reason1=The telephone cable or cable for Ethernet is not plugged in.
 dsl_web_redirect_reason2_1=PPPoE, PPPoA or VPN authentication failed.
-[adsl end]
 step_use_aicloud=Använda AiCloud :
 download_aicloud=Ladda ned ASUS AiCloud-appen till telefonen eller pad från :
 connect_through_wifi=Anslut iOS- eller Android-enheten till ZVMODELVZ via Wi-Fi. AiCloud-appen kommer automatiskt att guida dig genom installationsprocessen.
@@ -1437,10 +1379,10 @@ aicloud_for_privateIP2=Använd ports 8082 och 443 för AiCloud. Du kan ändra po
 aicloud_for_privateIP3=För ytterligare detaljer kan du också se <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Portvidarebefordran FAQ</a> och <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=För att skapa en molndisk behöver du installera en USB-lagringsenhet i denna router, sedan slå PÅ (<b>ON</b>) molndisken.
 aicloud_disk2=Använd routerns inloggningskonto för att logga in till standardmolndisken.
-aicloud_disk_case0=Kom åt molndisken från <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net:443" target="_blank">https://www.asusnetwork.net:443</a>.
+aicloud_disk_case0=Kom åt molndisken från <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net" target="_blank">https://www.asusnetwork.net</a>.
 aicloud_disk_case11=Du kan komma åt molndisken via denna URL :
-aicloud_disk_case12=För att modifiera ddns-namnet klicka <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">här</a>.
-aicloud_disk_case21=Kom åt molndisken från <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net:443" target="_blank">https://www.asusnetwork.net:443</a>.
+aicloud_disk_case12=För att modifiera ddns-namnet klicka <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName" target="_blank">här</a>.
+aicloud_disk_case21=Kom åt molndisken från <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net" target="_blank">https://www.asusnetwork.net</a>.
 aicloud_disk_case22=Registrera för en ASUS DDNS <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">här</a> för åtkomst till molndisken online.
 smart_access1=Smart Access ger inställningarna för din nätverksplats såsom användarkonton, dela mappar och annat. Detta ger dig åtkomst till ditt hemmanätverk (<a id="faq0" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Network Place/Samba</a>) när som helst, var som helst.
 smart_access2=WOL (Wake-On-LAN) funktionen låter dig väcka en dator från någon enhet i nätverket.
@@ -1454,4 +1396,7 @@ aicloud_bandwidth2_2=5 Mbps eller snabbare rekommenderas för SD-video.
 aicloud_bandwidth2_3=15 Mbps eller snabbare rekommenderas för 720p video.
 aicloud_bandwidth2_4=30 Mbps eller snabbare rekommenderas för 1080p HD videoströmning.
 aicloud_bandwidth3=Internetuppladdningshastigheten kan variera beroende på din internetleverantör och andra faktorer. Om du är osäker på vilken internethastighet du har kan du kontakta din internetleverantör eller använda bandbreddstest online från en datorn ansluten till ASUS routern.
-[untrans]
+QIS_rescan=skanna
+GuestNetwork_Radio_Status=Wi-Fi är avstängt.
+use_DevDiscoveryUtil=Installera och använd <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery Utility</a> för att upptäcka den trådlösa routerns IP-adressen.
+System_Change_TimeZone=Ändra tidszon

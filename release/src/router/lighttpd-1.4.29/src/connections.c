@@ -38,7 +38,7 @@
 
 #include "sys-socket.h"
 
-#define DBG_ENABLE_CONNECTIONS 1
+#define DBG_ENABLE_CONNECTIONS 0
 #define DBE DBG_ENABLE_CONNECTIONS
 
 typedef struct {
@@ -651,7 +651,7 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 }
 
 static int connection_handle_write(server *srv, connection *con) {
-//Cdbg(DBE, "enter");	
+Cdbg(DBE, "enter %s", con->url.path->ptr);	
 	switch(network_write_chunkqueue(srv, con, con->write_queue)) {
 	case 0:
 		if (con->file_finished) {
@@ -840,6 +840,8 @@ static int parser_share_file(server *srv, connection *con){
 		
 		if( y <= 8 )
 			return -1;
+
+		Cdbg(DBE, "AICLOUD sharelink");
 		
 		buffer* filename = buffer_init();
 		buffer_copy_string_len(filename, con->request.uri->ptr+y+1, con->request.uri->used-y);
@@ -852,37 +854,16 @@ static int parser_share_file(server *srv, connection *con){
 		for (c = share_link_info_list; c; c = c->next) {
 			if(buffer_is_equal(c->shortpath, sharepath)){				
 
-				#if 1
 				time_t cur_time = time(NULL);
 				double offset = difftime(c->expiretime, cur_time);					
-				if( offset < 0.0 ){
+				if( c->expiretime!=0 && offset < 0.0 ){
 					buffer_reset(con->share_link_basic_auth);	
 					bExpired = 1;
 					free_share_link_info(c);
 					DLIST_REMOVE(share_link_info_list, c);
 					break;
 				}
-				#else
-				struct tm tm;
-				time_t expire_time;				
-				if (strptime(c->expiretime->ptr, "%Y-%m-%d-%H:%M:%S", &tm) ){					
-					expire_time = mktime(&tm);
-					time_t cur_time = time(NULL);
-
-					char strTime[25] = {0};
-					strftime(strTime, sizeof(strTime), "%Y-%m-%d-%H:%M:%S", localtime(&cur_time));	
-
-					double offset = difftime(expire_time, cur_time);					
-					if( offset < 0.0 ){
-						buffer_reset(con->share_link_basic_auth);	
-						bExpired = 1;
-						free_share_link_info(c);
-						DLIST_REMOVE(share_link_info_list, c);
-						break;
-					}
-				}
-				#endif
-				
+								
 				buffer_copy_string( con->share_link_basic_auth, "Basic " );
 				buffer_append_string_buffer( con->share_link_basic_auth, c->auth );
 				
@@ -1072,20 +1053,20 @@ static int connection_smb_info_init(server *srv, connection *con, plugin_data *p
 	if(pWorkgroup[0] != '\0')
 		buffer_copy_string(bworkgroup, pWorkgroup);
 	
-	if(pServer[0] != '\0') {		
-		int isHost = smbc_check_connectivity(con->physical_auth_url->ptr);		
+	if(pServer[0] != '\0') {
+		int isHost = smbc_check_connectivity(con->physical_auth_url->ptr);
 		if(isHost) {
 			buffer_copy_string(bserver, pServer);
 		}
 		else{
-			Cdbg(DBE, "fail to smbc_check_connectivity....");
 			buffer_free(bworkgroup);
 			buffer_free(bserver);
 			buffer_free(bshare);
 			buffer_free(bpath);
-			return 0;
+			return 2;
 		}
-	} else {
+	} 
+	else {
 		if(qflag == SMB_FILE_QUERY) {
 			qflag = SMB_HOST_QUERY;
 		}
@@ -1093,7 +1074,8 @@ static int connection_smb_info_init(server *srv, connection *con, plugin_data *p
 	
 	if(pServer[0] != '\0' && pShare[0] != '\0') {
 		buffer_copy_string(bshare, pShare);
-	} else {
+	} 
+	else {
 		if(qflag == SMB_FILE_QUERY)  {
 			qflag = SMB_SHARE_QUERY;
 		}
@@ -1105,136 +1087,13 @@ static int connection_smb_info_init(server *srv, connection *con, plugin_data *p
 	}
 
 	data_string *ds = (data_string *)array_get_element(con->request.headers, "user-Agent");
-#if 0
-	smb_info_t *smb_info;
 
-	//if(con->smb_info)
-	//free(con->smb_info);
-	
-	if( ds && 
-	    ( strstr( ds->value->ptr, "Mozilla" ) || con->mode == SMB_NTLM ) ){
-		//- From browser, like IE, Chrome, Firefox, Safari		
-
-		Cdbg(DBE, "dsdsdsd");
-		
-		if(smb_info = smbdav_get_smb_info_from_pool(srv, con, p)){ 
-			
-			//copy_smb_info(con, s);
-			Cdbg(DBE, "Get smb_info from pool smb_info");
-		/*
-			Cdbg(DBE, "Get smb_info from pool smb_info->qflag=[%d], smb_info->user=[%s], smb_info->pass=[%s]", 
-				smb_info->qflag, smb_info->username->ptr, smb_info->password->ptr);*/
-		}
-		else{
-			smb_info = calloc(1, sizeof(smb_info_t));
-			smb_info->username = buffer_init();
-			smb_info->password = buffer_init();
-			smb_info->workgroup = buffer_init();
-			smb_info->server = buffer_init();
-			smb_info->share = buffer_init();
-			smb_info->path = buffer_init();
-			smb_info->user_agent = buffer_init();
-			smb_info->src_ip = buffer_init();			
-
-			if(con->mode == SMB_NTLM){
-				smb_info->cli = smbc_cli_initialize();
-				if(!buffer_is_empty(bserver)){
-					smbc_cli_connect(smb_info->cli, bserver->ptr, SMB_PORT);
-				}
-				smb_info->ntlmssp_state = NULL; 
-				smb_info->state = NTLMSSP_INITIAL;
-			}
-
-			if(ds)
-				buffer_copy_string(smb_info->user_agent, ds->value->ptr);
-			buffer_copy_string_buffer(smb_info->src_ip, con->dst_addr_buf);
-			
-			DLIST_ADD(p->smb_info_list, smb_info);
-
-			//con->smb_info = smb_info;
-			//copy_smb_info(con, smb_info);
-		}		
-	}
-	else{
-		Cdbg(DBE, "asdadasduiqowueioqueioqueoiqwueoiqwueoquweoiqwueioqwueoiq");
-		/*if(con->smb_info==NULL){
-			con->smb_info = calloc(1, sizeof(smb_info_t));
-			con->smb_info->username = buffer_init();
-			con->smb_info->password = buffer_init();
-			con->smb_info->workgroup = buffer_init();
-			con->smb_info->server = buffer_init();
-			con->smb_info->share = buffer_init();
-			con->smb_info->path = buffer_init();
-			con->smb_info->user_agent = buffer_init();
-			con->smb_info->src_ip = buffer_init();
-		}
-		else{
-			buffer_reset(con->smb_info->username);
-			buffer_reset(con->smb_info->password);
-			buffer_reset(con->smb_info->workgroup);
-			buffer_reset(con->smb_info->server);
-			buffer_reset(con->smb_info->share);
-			buffer_reset(con->smb_info->path);
-			buffer_reset(con->smb_info->user_agent);
-			buffer_reset(con->smb_info->src_ip);
-		}*/
-
-		smb_info = calloc(1, sizeof(smb_info_t));
-		smb_info->username = buffer_init();
-		smb_info->password = buffer_init();
-		smb_info->workgroup = buffer_init();
-		smb_info->server = buffer_init();
-		smb_info->share = buffer_init();
-		smb_info->path = buffer_init();
-		smb_info->user_agent = buffer_init();
-		smb_info->src_ip = buffer_init();			
-			
-		if(ds)
-			buffer_copy_string(smb_info->user_agent, ds->value->ptr);
-				
-		buffer_copy_string_buffer(smb_info->src_ip, con->dst_addr_buf);
-
-		//con->smb_info = smb_info;
-		//copy_smb_info(con, smb_info);
-	}
-
-	//smb_info->auth_time = time(NULL);	
-	//smb_info->auth_right = 0;
-
-	//if(ds)
-	//	buffer_copy_string(con->smb_info->user_agent, ds->value->ptr);
-	
-	
-	buffer_copy_string_buffer(smb_info->workgroup, bworkgroup);
-	buffer_copy_string_buffer(smb_info->server, bserver);
-	buffer_copy_string_buffer(smb_info->share, bshare);
-	buffer_copy_string_buffer(smb_info->path, bpath);
-	//buffer_copy_string_buffer(con->smb_info->src_ip, con->dst_addr_buf);
-
-	copy_smb_info(con, smb_info);
-
-	con->smb_info->auth_time = time(NULL);	
-	con->smb_info->auth_right = 0;
-	con->smb_info->qflag = qflag;
-	
-	Cdbg(DBE, "con->smb_info->workgroup=[%s]", con->smb_info->workgroup->ptr);
-	Cdbg(DBE, "con->smb_info->server=[%s]", con->smb_info->server->ptr);
-	Cdbg(DBE, "con->smb_info->share=[%s]", con->smb_info->share->ptr);
-	Cdbg(DBE, "con->smb_info->path=[%s]", con->smb_info->path->ptr);
-	Cdbg(DBE, "con->smb_info->user_agent=[%s]", con->smb_info->user_agent->ptr);
-	Cdbg(DBE, "con->smb_info->src_ip=[%s]", con->smb_info->src_ip->ptr);
-	Cdbg(DBE, "con->smb_info->username=[%s]", con->smb_info->username->ptr);
-	Cdbg(DBE, "con->smb_info->password=[%s]", con->smb_info->password->ptr);
-		
-	buffer_free(bworkgroup);
-	buffer_free(bserver);
-	buffer_free(bshare);
-	buffer_free(bpath);
-#else
 	smb_info_t *smb_info;
 	
 	if( ds && 
-	    ( strstr( ds->value->ptr, "Mozilla" ) || con->mode == SMB_NTLM ) ){
+	    ( strstr( ds->value->ptr, "Mozilla" ) || 
+	      strstr( ds->value->ptr, "Opera" ) || 
+	      con->mode == SMB_NTLM ) ){
 	    
 		//- From browser, like IE, Chrome, Firefox, Safari		
 		if(smb_info = smbdav_get_smb_info_from_pool(srv, con, p)){ 
@@ -1266,30 +1125,7 @@ static int connection_smb_info_init(server *srv, connection *con, plugin_data *p
 		con->smb_info = smb_info;
 			
 	}
-	else{
-		
-		/*if(con->smb_info==NULL){
-			con->smb_info = calloc(1, sizeof(smb_info_t));
-			con->smb_info->username = buffer_init();
-			con->smb_info->password = buffer_init();
-			con->smb_info->workgroup = buffer_init();
-			con->smb_info->server = buffer_init();
-			con->smb_info->share = buffer_init();
-			con->smb_info->path = buffer_init();
-			con->smb_info->user_agent = buffer_init();
-			con->smb_info->src_ip = buffer_init();
-		}
-		else{
-			buffer_reset(con->smb_info->username);
-			buffer_reset(con->smb_info->password);
-			buffer_reset(con->smb_info->workgroup);
-			buffer_reset(con->smb_info->server);
-			buffer_reset(con->smb_info->share);
-			buffer_reset(con->smb_info->path);
-			buffer_reset(con->smb_info->user_agent);
-			buffer_reset(con->smb_info->src_ip);
-		}*/
-		
+	else{		
 		smb_info = calloc(1, sizeof(smb_info_t));
 		smb_info->username = buffer_init();
 		smb_info->password = buffer_init();
@@ -1327,91 +1163,12 @@ static int connection_smb_info_init(server *srv, connection *con, plugin_data *p
 	buffer_free(bserver);
 	buffer_free(bshare);
 	buffer_free(bpath);
-#endif
 
 	return 1;
 }
 
 static void connection_smb_info_url_patch(server *srv, connection *con)
 {
-#if 0
-	UNUSED(srv);
-	
-	char* uri = NULL;
-	char* strr = NULL;
-	int len = 0;
-	
-	char* pch = strchr(con->request.uri->ptr,'?');
-	if(pch){	
-		buffer_copy_string_len(con->url_options, pch+1, strlen(pch)-1);
-		//buffer_copy_string_len(uri, con->request.uri->ptr, pch -con->request.uri->ptr);
-
-		len = pch -con->request.uri->ptr + 1;
-		uri = (char*)malloc(len);
-		memset(strr, '\0', len);
-		strncpy(uri, con->request.uri->ptr, pch -con->request.uri->ptr);
-	}
-	else{
-		len = con->request.uri->used + 1;
-		uri = (char*)malloc(len);
-		memset(uri, '\0', len);
-		strcpy(uri, con->request.uri->ptr);		
-	}
-
-	Cdbg(DBE, "sadsad %s, con->mode=%d", uri, con->mode);
-	if(con->mode == DIRECT){
-		len = strlen(uri) + 1;
-		strr = (char*)malloc(len);
-		memset(strr, '\0', len);
-		sprintf(strr, "%s", uri);
-	}
-	else {
-		if(con->smb_info&&con->smb_info->server->used) {
-			if(con->mode == SMB_BASIC){				
-				Cdbg(DBE, "2");
-				if(con->smb_info->username->used&&con->smb_info->password->used){
-					Cdbg(DBE, "3");
-					len = con->smb_info->username->used + con->smb_info->password->used + strlen(uri) + 9;
-					strr = (char*)malloc(len);
-					memset(strr, '\0', len);
-					sprintf(strr, "smb://%s:%s@%s", con->smb_info->username->ptr, con->smb_info->password->ptr, uri+1);
-					Cdbg(DBE, "4");
-				}
-				else{
-					Cdbg(DBE, "5");
-					len = strlen(uri) + 7;
-					strr = (char*)malloc(len);
-					memset(strr, '\0', len);
-					sprintf(strr, "smb://%s", uri+1);
-					Cdbg(DBE, "6");
-				}
-			}
-			else if(con->mode == SMB_NTLM){
-				len = strlen(uri) + 7;
-				strr = (char*)malloc(len);
-				memset(strr, '\0', len);
-				sprintf(strr, "smb://%s", uri+1);		
-			}
-		} else {
-			len = 7;
-			strr = (char*)malloc(len);
-			memset(strr, '\0', len);
-			sprintf(strr, "smb://");
-		}
-	}
-
-	if(strr){
-		Cdbg(DBE, "strr=%s", strr);
-		buffer_copy_string_len(con->url.path, strr, strlen(strr));
-		free(strr);
-	}
-	
-	if(uri){
-		Cdbg(DBE, "uri=%s", uri);
-		buffer_copy_string_len(con->url.rel_path, uri, strlen(uri));
-		free(uri);
-	}
-#else
 	char strr[2048]="\0";
 	char uri[2048]="\0";
 	
@@ -1449,7 +1206,6 @@ static void connection_smb_info_url_patch(server *srv, connection *con)
 	
 	buffer_copy_string(con->url.path, strr);
 	buffer_copy_string(con->url.rel_path, uri);
-#endif
 }
 
 static int do_connection_auth(server *srv, connection *con)
@@ -1479,10 +1235,14 @@ static int do_connection_auth(server *srv, connection *con)
 	buffer_copy_string_buffer(con->physical_auth_url, con->conf.document_root);
 	buffer_append_string(con->physical_auth_url, con->request.uri->ptr+1);
 	
-	//Cdbg(DBE, "con->physical_auth_url = %s", con->physical_auth_url->ptr);
-
-	if( connection_smb_info_init(srv, con, p) == 0 ){
-		Cdbg(DBE,"Fail to connection_smb_info_init!");
+	
+	int result = connection_smb_info_init(srv, con, p);	
+	if( result == 0 ){
+		return HANDLER_FINISHED;
+	}
+	else if( result == 2 ){
+		//- Unable to complete the connection, the device is not turned on, or network problems caused!
+		con->http_status = 451;
 		return HANDLER_FINISHED;
 	}
 	
@@ -2686,7 +2446,8 @@ int connection_state_machine(server *srv, connection *con) {
 						con->write_queue->used);
 #endif
 			}
-			if (!chunkqueue_is_empty(con->write_queue) && con->is_writable) {
+			
+			if (!chunkqueue_is_empty(con->write_queue) && con->is_writable) {				
 				if (-1 == connection_handle_write(srv, con)) {
 					log_error_write(srv, __FILE__, __LINE__, "ds",
 							con->fd,

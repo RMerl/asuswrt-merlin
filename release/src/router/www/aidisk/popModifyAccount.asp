@@ -14,9 +14,9 @@
 var selectedAccount = parent.getSelectedAccount();
 
 function initial(){
-	$("new_account").value = selectedAccount;
+	$("new_account").value = decodeURIComponent(selectedAccount);
 	
-	showtext($("selected_account"), selectedAccount);
+	showtext($("selected_account"), decodeURIComponent(selectedAccount));
 	
 	clickevent();
 }
@@ -24,13 +24,26 @@ function initial(){
 function clickevent(){
 	$("Submit").onclick = function(){
 			if(validForm()){
-				$("account").value = selectedAccount;
+				$("account").value = decodeURIComponent(selectedAccount);
 				
 				parent.showLoading();
 				document.modifyAccountForm.submit();
 				parent.hidePop("apply");
 			}
 		};
+}
+
+function checkDuplicateName(newname, teststr){
+	var existing_string = decodeURIComponent(teststr.join(','));
+	existing_string = "," + existing_string + ",";
+	var newstr = "," + trim(newname) + ","; 
+
+	var re = new RegExp(newstr,"gi")
+	var matchArray =  existing_string.match(re);
+	if (matchArray != null)
+		return true;
+	else
+		return false;
 }
 
 function validForm(){
@@ -71,7 +84,7 @@ function validForm(){
 		}
 
 		if(checkDuplicateName($("new_account").value, parent.get_accounts()) &&
-				$("new_account").value != selectedAccount){
+				$("new_account").value != decodeURIComponent(selectedAccount)){
 			showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
 			$("new_account").focus();
 			return false;
@@ -111,19 +124,6 @@ function validForm(){
 	}
 
 	return true;
-}
-
-function checkDuplicateName(newname, teststr){
-	var existing_string = teststr.join(',');
-	existing_string = "," + existing_string + ",";
-	var newstr = "," + trim(newname) + ","; 
-
-	var re = new RegExp(newstr,"gi")
-	var matchArray =  existing_string.match(re);
-	if (matchArray != null)
-		return true;
-	else
-		return false;
 }
 </script>
 </head>

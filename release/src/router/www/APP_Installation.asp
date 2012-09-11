@@ -71,10 +71,6 @@ function initial(){
 												["Servers Center", tablink[3][1], "<#UPnPMediaServer_Help#>", "server.png"],
 												["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer.png"],
 												["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png"]];
-  if(no_wimax_support >= 0){
-  	default_apps_array.splice(3, 1, ["3G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png"]);  	
-  	//alert(default_apps_array);
-  }
 
 	if(sw_mode == 2 || sw_mode == 3){
 		default_apps_array.splice(3, 1);
@@ -112,10 +108,13 @@ function initial(){
 
 function calHeight(_trNum){
 	$("applist_table").style.height = "auto";
+
 	if(_trNum != 0)
 		_trNum = document.getElementById("applist_table").clientHeight;
 
-	menu_height = parseInt(52*calculate_height+90);
+	var optionHeight = 52;
+	var manualOffSet = 28;
+	menu_height = Math.round(optionHeight*calculate_height - manualOffSet*calculate_height/14 - $("tabMenu").clientHeight) - 18;
 
 	if(menu_height > _trNum)
 		$("applist_table").style.height = menu_height + "px";

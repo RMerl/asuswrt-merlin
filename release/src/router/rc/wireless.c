@@ -202,6 +202,7 @@ static void wlcconnect_safeleave(int signo) {
 //	when wlc_list, then connect to it according to priority
 int wlcconnect_main(void)
 {
+_dprintf("%s: Start to run...\n", __FUNCTION__);
 	int ret;
 	int old_ret = -1;
 
@@ -216,6 +217,10 @@ int wlcconnect_main(void)
 	nvram_set_int("wlc_state", WLC_STATE_CONNECTING);
 
 	int link_setup = 0, wlc_count = 0;
+#define NOTIFY_IDLE 0
+#define NOTIFY_CONN 1
+#define NOTIFY_DISCONN -1
+	int wanduck_notify = NOTIFY_IDLE;
 	while(1) {
 		ret = wlcconnect_core();
 
@@ -258,22 +263,10 @@ _dprintf("Ready to disconnect...%d.\n", wlc_count);
 				}//*/
 			}
 
-#ifdef WEB_REDIRECT
-			if(link_setup == 1){
-				if(ret == WLC_STATE_CONNECTED)
-					repeater_nat_setting();
-
-				logmessage("notify wanduck", "wlc state change!");
-				_dprintf("%s: notify wanduck: wlcstate=%d.\n", __FUNCTION__, ret);
-				// notify the change to wanduck.
-				kill_pidfile_s("/var/run/wanduck.pid", SIGUSR1);
-
-				// run the actions of wanduck first, and then run restart_wlcmode.
-				int wait = 5;
-				while(strstr(nvram_safe_get("rc_service"), "nat_rules") == NULL && (wait-- > 0))
-					sleep(1);
-			}
-#endif
+			if(ret == WLC_STATE_CONNECTED)
+				wanduck_notify = NOTIFY_CONN;
+			else
+				wanduck_notify = NOTIFY_DISCONN;
 
 			// notify the change to init.
 			if(ret == WLC_STATE_CONNECTED)
@@ -283,6 +276,19 @@ _dprintf("Ready to disconnect...%d.\n", wlc_count);
 
 			old_ret = ret;
 		}
+#ifdef WEB_REDIRECT
+		else if(wanduck_notify != NOTIFY_IDLE){
+			wanduck_notify = NOTIFY_IDLE;
+
+			if(ret == WLC_STATE_CONNECTED)
+				repeater_nat_setting();
+
+			logmessage("notify wanduck", "wlc state change!");
+			_dprintf("%s: notify wanduck: wlcstate=%d.\n", __FUNCTION__, ret);
+			// notify the change to wanduck.
+			kill_pidfile_s("/var/run/wanduck.pid", SIGUSR1);
+		}
+#endif
 
 		sleep(5);
 	}

@@ -186,6 +186,7 @@ extern int update_resolvconf();
 // udhcpc.c
 extern int udhcpc_wan(int argc, char **argv);
 extern int udhcpc_lan(int argc, char **argv);
+extern int start_udhcpc(char *wan_ifname, int unit, pid_t *ppid);
 extern int zcip_wan(int argc, char **argv);
 extern int start_zcip(char *wan_ifname);
 
@@ -223,6 +224,12 @@ extern int usbled_main(int argc, char *argv[]);
 #ifdef RTCONFIG_FANCTRL
 // phy_tempsense.c
 extern int phy_tempsense_main(int argc, char *argv[]);
+#endif
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+// psta_monitor.c
+extern int psta_monitor_main(int argc, char *argv[]);
+#endif
 #endif
 extern int radio_main(int argc, char *argv[]);
 
@@ -336,7 +343,12 @@ extern int asus_usb_interface(const char *device_name, const char *action);
 #endif
 
 //service.c
+extern void write_static_leases(char *file);
+#ifdef RTCONFIG_DNSMASQ
+extern void restart_dnsmasq();
+#else
 extern int restart_dns();
+#endif
 extern int ddns_updated_main(int argc, char *argv[]);
 #ifdef RTCONFIG_IPV6
 extern void start_ipv6_tunnel(void);

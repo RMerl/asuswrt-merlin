@@ -177,9 +177,15 @@ function submitForm(){
 		}
 	}
 
-	document.form.dslx_dhcp_clientid.value = document.form.ppp_username.value + "|" + document.form.ppp_password.value;
-	document.form.ppp_username.disabled = true;
-	document.form.ppp_password.disabled = true;
+	if (country_str == "United Kingdom" && ispname_str == "SKY (MER)")
+	{
+		//Only for UK ISP SKY Broadband
+		if(document.form.ppp_username.value != "")
+			document.form.dslx_dhcp_clientid.value = document.form.ppp_username.value + "|" + document.form.ppp_password.value;
+
+		document.form.ppp_username.disabled = true;
+		document.form.ppp_password.disabled = true;
+	}
 
 	document.form.next_page.value = "/qis/QIS_wireless.htm";
 	document.form.submit();
@@ -269,7 +275,7 @@ function gotoHome() {
 				<#IPConnection_ExternalIPAddress_itemname#>
 			</th>
 			<td class="QISformtd">
-				<input type="hidden" id="dsl_ipaddr" name="dsl_ipaddr" value="" maxlength="15" onkeypress="return is_ipaddr(this);" onkeyup="change_ipaddr(this);"  title="WAN IP">
+				<input type="hidden" id="dsl_ipaddr" name="dsl_ipaddr" value="" maxlength="15" onkeypress="return is_ipaddr(this);" title="WAN IP">
 				<div class="IPaddr" id="dsl_ipaddr_div">
 					<input maxlength="3"
 								 name="dsl_ipaddr1";
@@ -347,7 +353,7 @@ function gotoHome() {
 				<#IPConnection_x_ExternalGateway_itemname#>
 			</th>
 			<td class="QISformtd">
-				<input type="hidden" id="dsl_gateway" name="dsl_gateway" value="" maxlength="15" onkeypress="return is_ipaddr(this);" onkeyup="return change_ipaddr(this);" class="input">
+				<input type="hidden" id="dsl_gateway" name="dsl_gateway" value="" maxlength="15" onkeypress="return is_ipaddr(this);"  class="input">
 				<div class="IPaddr" id="dsl_gateway_div">
 					<input maxlength="3"
 								 onkeypress="return checkIP(this,event);"
@@ -399,7 +405,7 @@ function gotoHome() {
 	  	<#IPConnection_x_DNSServer1_itemname#>
 	  </th>
 	  <td class="QISformtd">
-			<input type="hidden" id="dsl_dns1_x" name="dsl_dns1_x" value="" onkeypress="return is_ipaddr(this);" onkeyup="return change_ipaddr(this);" maxlength="15">
+			<input type="hidden" id="dsl_dns1_x" name="dsl_dns1_x" value="" onkeypress="return is_ipaddr(this);" maxlength="15">
 			<div class="IPaddr" id="dsl_dns1_x_div">
 				<input maxlength="3"
 							 name="dsl_dns1_x1"
@@ -439,7 +445,7 @@ function gotoHome() {
 	  	<#IPConnection_x_DNSServer2_itemname#>
 	  </th>
 	  <td class="QISformtd">
-			<input type="hidden" id="dsl_dns2_x" name="dsl_dns2_x" value="" maxlength="15" onkeypress="return is_ipaddr(this);" onkeyup="return change_ipaddr(this);">
+			<input type="hidden" id="dsl_dns2_x" name="dsl_dns2_x" value="" maxlength="15" onkeypress="return is_ipaddr(this);">
 			<div class="IPaddr" id="dsl_dns2_x_div">
 				<input maxlength="3"
 							 onkeypress="return checkIP(this,event);"

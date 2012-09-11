@@ -41,7 +41,7 @@
 # define lstat stat
 #endif
 
-#define DBE 1
+#define DBE 0
 #if 0
 /* enables debug code for testing if all nodes in the stat-cache as accessable */
 #define DEBUG_STAT_CACHE
@@ -485,6 +485,7 @@ handler_t stat_cache_get_entry(server *srv, connection *con, buffer *name, stat_
 	 *
 	 * */
 	 int r;
+	
 #ifdef HAVE_LIBSMBCLIENT
 	if(con->mode == DIRECT) 
 		r =  stat(name->ptr, &st);

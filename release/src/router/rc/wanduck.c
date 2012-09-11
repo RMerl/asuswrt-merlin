@@ -1016,8 +1016,14 @@ void handle_dns_req(int sfd, char *line, int maxlen, struct sockaddr *pcliaddr, 
 		if(query_name[i] < 32)
 			query_name[i] = '.';
 	
-	if(!upper_strcmp(query_name, router_name))
-		d_reply.answers.addr = inet_addr_(nvram_safe_get("lan_ipaddr"));	// router's ip
+	if(!upper_strcmp(query_name, router_name)){
+#ifdef RTCONFIG_WIRELESSREPEATER
+		if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_state") != WLC_STATE_CONNECTED)
+			d_reply.answers.addr = inet_addr_(nvram_default_get("lan_ipaddr"));
+		else
+#endif
+			d_reply.answers.addr = inet_addr_(nvram_safe_get("lan_ipaddr"));	// router's ip
+	}
 	else
 		d_reply.answers.addr = htonl(0x0a000001);	// 10.0.0.1
 	

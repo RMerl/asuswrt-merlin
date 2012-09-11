@@ -585,6 +585,7 @@ ssize_t recv_from_to(int fd, void *buf, size_t len, int flags,
 		struct sockaddr *to,
 		socklen_t sa_size) FAST_FUNC;
 
+uint16_t inet_cksum(uint16_t *addr, int len) FAST_FUNC;
 
 char *xstrdup(const char *s) FAST_FUNC RETURNS_MALLOC;
 char *xstrndup(const char *s, int n) FAST_FUNC RETURNS_MALLOC;

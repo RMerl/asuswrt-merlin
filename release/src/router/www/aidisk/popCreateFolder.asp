@@ -8,44 +8,67 @@
 <link rel="icon" href="images/favicon.png">
 <title>Add New Folder</title>
 <link rel="stylesheet" href="../form_style.css"  type="text/css">
-
 <script type="text/javascript" src="../state.js"></script>
 <script type="text/javascript">
+
 var PoolDevice = parent.pool_devices()[parent.getSelectedPoolOrder()];
 var PoolName = parent.pool_names()[parent.getSelectedPoolOrder()];
 var folderlist = parent.get_sharedfolder_in_pool(PoolDevice);
 
 function initial(){
 	showtext($("poolName"), PoolName);
-	
+	document.createFolderForm.folder.focus();
 	clickevent();
 }
 
 function clickevent(){
-	$("Submit").onclick = function(){
-			if(validForm()){
+	if(navigator.userAgent.search("MSIE") == -1)
+		document.getElementById('folder').addEventListener('keydown',keyDownHandler,false);
+	else
+		document.getElementById('folder').attachEvent('onkeydown',keyDownHandler);
+	
+	$("Submit").onclick = submit;
+}
+function submit(){
+	if(validForm()){
 				if(parent.get_manage_type(parent.document.aidiskForm.protocol.value) == 1)
 					document.createFolderForm.account.value = parent.getSelectedAccount();
 				else
 					document.createFolderForm.account.disabled = 1;
+					
 				document.createFolderForm.pool.value = PoolDevice;
-				
-				/*alert('action = '+document.createFolderForm.action+'\n'+
-						'account = '+document.createFolderForm.account.value+'\n'+
-					  'pool = '+document.createFolderForm.pool.value+'\n'+
-					  'folder = '+document.createFolderForm.folder.value
-					  );//*/
-				
-				parent.showLoading();
+				if(parent.document.form.current_page.value != "mediaserver.asp" && parent.document.form.current_page.value != "cloud_sync.asp")
+					parent.showLoading();
+					
 				document.createFolderForm.submit();
-				parent.hidePop("apply");//*/
+				parent.hidePop("apply");
+				setTimeout(" ",2000);							
+				if(parent.document.form.current_page.value == "mediaserver.asp" || parent.document.form.current_page.value == "cloud_sync.asp"){
+					if(parent.document.aidiskForm.test_flag.value == 1){
+						parent.FromObject = parent.document.aidiskForm.layer_order.value.substring(0,3);
+						parent.get_layer_items(parent.document.aidiskForm.layer_order.value.substring(0,3));
+					}	
+					else{
+						parent.FromObject = parent.document.aidiskForm.layer_order.value;
+						parent.get_layer_items(parent.document.aidiskForm.layer_order.value);						
+					}
+				}	
 			}
-		};
+}
+function keyDownHandler(event){
+	var keyPressed = event.keyCode ? event.keyCode : event.which;
+
+	if(keyPressed == 13){   // Enter key
+		submit();
+	}	
+	else if(keyPressed == 27){  // Escape key
+		parent.hidePop("apply");
+	}	
 }
 
 function validForm(){
 	$("folder").value = trim($("folder").value);
-	
+
 	// share name
 	if($("folder").value.length == 0){
 		alert("<#File_content_alert_desc6#>");

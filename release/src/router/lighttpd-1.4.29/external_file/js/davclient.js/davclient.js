@@ -310,15 +310,19 @@ global.davlib = new function() {
         if(request.upload){
         	request.upload.onprogress = updateProgress;
         }
-        
+       	
         try{
-        	if(sliceAsBinary == 0 && request.sendAsBinary != null)
-						request.sendAsBinary(content);
-					else if(sliceAsBinary == 1)
-        		request.send(content);
-        	else
+        	if(sliceAsBinary == 0 && request.sendAsBinary != null){
+        		request.sendAsBinary(content);
+					}
+					else if(sliceAsBinary == 1){
+						request.send(content);
+        	}
+        	else{
         		throw '';
-        } catch(e) {
+        	}
+        } 
+        catch(e) {
           // not a Mozilla or Konqueror based browser
           alert("Fail to PUT data to webdav " + e);
         };
@@ -604,7 +608,7 @@ global.davlib = new function() {
         request.setRequestHeader("Lock-Token", '<' + locktoken + '>');
         request.send('');
     };
-//charles mark
+
     this.DavClient.prototype._getRequest = function(method, path, 
                                                     handler, context) {
         /* prepare a request */
@@ -1087,30 +1091,45 @@ global.davlib = new function() {
         };
     };
 
-//charles
     // some helper functions
     this.getXmlHttpRequest = function() {
+    		
     		var sAgent = navigator.userAgent.toLowerCase();
     		var isIE = (sAgent.indexOf("msie")!=-1); //IE
-    		
-        /* instantiate an XMLHTTPRequest 
+    		var getInternetExplorerVersion = function(){
+				   var rv = -1; // Return value assumes failure.
+				   if (navigator.appName == 'Microsoft Internet Explorer')
+				   {
+				      var ua = navigator.userAgent;
+				      var re  = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
+				      if (re.exec(ua) != null)
+				         rv = parseFloat( RegExp.$1 );
+				   }
+				   return rv;
+				};
+				
+    		/*
+         instantiate an XMLHTTPRequest 
 
             this can be improved by testing the user agent better and, in case 
             of IE, finding out which MSXML is installed and such, but it 
             seems to work just fine for now
         */
-        if(!isIE){
-	        try{
-	            return new XMLHttpRequest();
-	        } catch(e) {
-	            // not a Mozilla or Konqueror based browser
-	        };
-      	}
-        try {        	
-            return new ActiveXObject('Microsoft.XMLHTTP');
-        } catch(e) {
-            // not IE either...
+        
+        try{
+        	if(isIE&&getInternetExplorerVersion()<=8&&window.ActiveXObject)
+          	return new window.ActiveXObject("Microsoft.XMLHTTP");
+        } 
+        catch(e) { 
         };
+				
+				try{
+	      	return new XMLHttpRequest();
+	      } 
+	      catch(e) {
+	      	// not a Mozilla or Konqueror based browser
+	      };
+        
         alert('Your browser does not support XMLHttpRequest, required for ' +
                 'WebDAV access.');
         throw('Browser not supported');

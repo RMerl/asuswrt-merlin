@@ -2,7 +2,7 @@
 /*
  * Russ Dill <Russ.Dill@asu.edu> July 2001
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #include "common.h"
 #include "dhcpd.h"
@@ -137,21 +137,42 @@ uint32_t FAST_FUNC find_free_or_expired_nip(const uint8_t *safe_mac)
 	uint32_t addr;
 	struct dyn_lease *oldest_lease = NULL;
 
-	addr = server_config.start_ip; /* addr is in host order here */
-	for (; addr <= server_config.end_ip; addr++) {
+#if ENABLE_FEATURE_UDHCPD_BASE_IP_ON_MAC
+	uint32_t stop;
+	unsigned i, hash;
+
+	/* hash hwaddr: use the SDBM hashing algorithm.  Seems to give good
+	 * dispersal even with similarly-valued "strings".
+	 */
+	hash = 0;
+	for (i = 0; i < 6; i++)
+		hash += safe_mac[i] + (hash << 6) + (hash << 16) - hash;
+
+	/* pick a seed based on hwaddr then iterate until we find a free address. */
+	addr = server_config.start_ip
+		+ (hash % (1 + server_config.end_ip - server_config.start_ip));
+	stop = addr;
+#else
+	addr = server_config.start_ip;
+#define stop (server_config.end_ip + 1)
+#endif
+	do {
 		uint32_t nip;
 		struct dyn_lease *lease;
 
 		/* ie, 192.168.55.0 */
 		if ((addr & 0xff) == 0)
-			continue;
+			goto next_addr;
 		/* ie, 192.168.55.255 */
 		if ((addr & 0xff) == 0xff)
-			continue;
+			goto next_addr;
 		nip = htonl(addr);
+		/* skip our own address */
+		if (nip == server_config.server_nip)
+			goto next_addr;
 		/* is this a static lease addr? */
 		if (is_nip_reserved(server_config.static_leases, nip))
-			continue;
+			goto next_addr;
 
 		lease = find_lease_by_nip(nip);
 		if (!lease) {
@@ -162,7 +183,14 @@ uint32_t FAST_FUNC find_free_or_expired_nip(const uint8_t *safe_mac)
 			if (!oldest_lease || lease->expires < oldest_lease->expires)
 				oldest_lease = lease;
 		}
-	}
+
+ next_addr:
+		addr++;
+#if ENABLE_FEATURE_UDHCPD_BASE_IP_ON_MAC
+		if (addr > server_config.end_ip)
+			addr = server_config.start_ip;
+#endif
+	} while (addr != stop);
 
 	if (oldest_lease
 	 && is_expired_lease(oldest_lease)

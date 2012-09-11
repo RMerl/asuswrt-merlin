@@ -14,6 +14,7 @@
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="NM_style.css">
 <link rel="stylesheet" type="text/css" href="other.css">
+<script type="text/javascript" src="/md5.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
@@ -50,9 +51,11 @@ var usb_path2_index = '<% nvram_get("usb_path2"); %>';
 <% wanlink(); %>
 <% get_printer_info(); %>
 
+var all_disks;
+var all_disk_interface;
 if(usb_support != -1){
-	var all_disks = foreign_disks().concat(blank_disks());
-	var all_disk_interface = foreign_disk_interface_names().concat(blank_disk_interface_names());
+	all_disks = foreign_disks().concat(blank_disks());
+	all_disk_interface = foreign_disk_interface_names().concat(blank_disk_interface_names());
 }
 
 var leases = [<% dhcp_leases(); %>];	// [[hostname, MAC, ip, lefttime], ...]
@@ -66,6 +69,10 @@ var $j = jQuery.noConflict();
 
 function initial(){
 	show_menu();
+
+	var isIE6 = navigator.userAgent.search("MSIE 6") > -1;
+	if(isIE6)
+		alert("We've detected that you're using IE6. Please Try Google Chrome, IE7 or higher for best browsing experience.");
 
 	if(psta_support != -1 && sw_mode == 2)
 		show_middle_status('<% nvram_get("wlc_auth_mode"); %>', "", 0);		
@@ -91,22 +98,43 @@ function initial(){
 		$("deviceIcon_1").style.display = "none";
 		$("deviceDec_1").style.display = "none";
 	}
-	show_device();
 
-	if(sw_mode == "3")
-		showMapWANStatus(3);
-	else if(sw_mode == "2")
-		$("internetDesc").innerHTML = "<#statusTitle_AP#>: ";
+	show_device();
+	showMapWANStatus(sw_mode);
+
+	if(sw_mode != "1"){
+		$("wanIP_div").style.display = "none";
+		$("ddnsHostName_div").style.display = "none";
+		$("NM_connect_title").style.fontSize = "14px";
+		$("NM_connect_status").style.fontSize = "20px";
+	}
+	else{
+		var ddnsName = decodeURIComponent('<% nvram_char_to_ascii("", "ddns_hostname_x"); %>');
+		$("index_status").innerHTML = '<span style="word-break:break-all;">' + wanlink_ipaddr() + '</span>'
+		if('<% nvram_get("ddns_enable_x"); %>' == '0')
+			$("ddnsHostName").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/Advanced_ASUSDDNS_Content.asp?af=ddns_enable_x"><#btn_go#></a>';
+		else if(ddnsName == '')
+			$("ddnsHostName").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName">Sign up</a>';
+		else if(ddnsName == isMD5DDNSName())
+			$("ddnsHostName").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName">Sign up</a>';
+		else{
+			$("ddnsHostName").innerHTML = '<span style="word-break:break-all;">'+ ddnsName +'</span>';
+		}
+
+		if(wanlink_ipaddr() == '0.0.0.0' || wanlink_ipaddr() == '')
+			$("wanIP_div").style.display = "none";
+	}
 
 	var NM_table_img = getCookie("NM_table_img");
 	if(NM_table_img != "" && NM_table_img != null){
 		customize_NM_table(NM_table_img);
 		$("bgimg").options[NM_table_img[4]].selected = 1;
 	}
+}
 
-	var isIE6 = navigator.userAgent.search("MSIE 6") > -1;
-	if(isIE6)
-		alert("We've detected that you're using IE6. Please Try Chrome, IE7 or higher for best browsing experience.");
+var isMD5DDNSName = function(){
+	var macAddr = '<% nvram_get("et0macaddr"); %>'.toUpperCase().replace(/:/g, "");
+	return "A"+hex_md5(macAddr).toUpperCase()+".asuscomm.com";
 }
 
 function detectUSBStatusIndex(){
@@ -136,15 +164,15 @@ function setCookie(color){
 function getCookie(c_name)
 {
 	if (document.cookie.length>0){ 
-		c_start=document.cookie.indexOf(c_name + "=")
+		c_start=document.cookie.indexOf(c_name + "=");
 		if (c_start!=-1){ 
-			c_start=c_start + c_name.length+1 
-			c_end=document.cookie.indexOf(";",c_start)
-			if (c_end==-1) c_end=document.cookie.length
-			return unescape(document.cookie.substring(c_start,c_end))
+			c_start=c_start + c_name.length+1;
+			c_end=document.cookie.indexOf(";",c_start);
+			if (c_end==-1) c_end=document.cookie.length;
+			return unescape(document.cookie.substring(c_start,c_end));
 		} 
 	}
-	return null
+	return null;
 }
 
 function set_default_choice(){
@@ -180,8 +208,13 @@ function set_default_choice(){
 
 function showMapWANStatus(flag){
 	if(sw_mode == "3"){
-		showtext($("NM_connect_status"), "<#WLANConfig11b_x_APMode_itemname#>");
+		showtext($("NM_connect_status"), "<div style='margin-top:10px;'><#WLANConfig11b_x_APMode_itemname#></div>");
 	}
+	else if(sw_mode == "2"){
+		showtext($("NM_connect_title"), "<div style='margin-top:10px;'><#statusTitle_AP#>:</div><br>");
+	}
+	else
+		return 0;
 }
 
 function show_middle_status(auth_mode, wpa_mode, wl_wep_x){
@@ -249,11 +282,14 @@ function show_device(){
 
 	switch(usb_path1_index){
 		case "storage":
-			for(var i = 0; i < all_disks.length; ++i)
+			for(var i = 0; i < all_disks.length; ++i){
 				if(foreign_disk_interface_names()[i] == "1"){
-					disk_html(0, i);
+					disk_html(0, i);	
 					break;
 				}
+			}
+			if(all_disk_interface.getIndexByValue("1") == -1)
+				no_device_html(0);
 			break;
 		case "printer":
 			printer_html(0, 0);
@@ -270,11 +306,14 @@ function show_device(){
 	// show the upper usb device
 	switch(usb_path2_index){
 		case "storage":
-			for(var i = 0; i < all_disks.length; ++i)
+			for(var i = 0; i < all_disks.length; ++i){
 				if(foreign_disk_interface_names()[i] == "2"){
 					disk_html(1, i);
 					break;
 				}
+			}
+			if(all_disk_interface.getIndexByValue("2") == -1)
+				no_device_html(1);
 			break;
 		case "printer":
 			printer_html(1, 1);
@@ -315,7 +354,7 @@ function disk_html(device_order, all_disk_order){
 
 	icon_html_code += '</a>\n';
 	
-	dec_html_code += '<div class="formfonttitle_nwm" style="text-align:center;margin-top:10px;">'+disk_model_name+'</div>\n';
+	dec_html_code += '<div class="formfonttitle_nwm" style="text-shadow: 1px 1px 0px black;text-align:center;margin-top:10px;">'+disk_model_name+'</div>\n';
 
 	if(mount_num > 0){
 		if(all_disk_order < foreign_disks().length)
@@ -356,7 +395,7 @@ function printer_html(device_seat, printer_order){
 	icon_html_code += '    <div id="iconPrinter'+printer_order+'" class="iconPrinter" onclick="clickEvent(this);"></div>\n';
 	icon_html_code += '</a>\n';
 	
-	dec_html_code += '<div class="formfonttitle_nwm" style="text-align:center;margin-top:10px;"><span id="printerName'+device_seat+'">'+ printer_name +'</span></div>\n';
+	dec_html_code += '<div class="formfonttitle_nwm" style="text-shadow: 1px 1px 0px black;text-align:center;margin-top:10px;"><span id="printerName'+device_seat+'">'+ printer_name +'</span></div>\n';
 	//dec_html_code += '<span class="style5">'+printer_status+'</span>\n';
 	
 	device_icon.innerHTML = icon_html_code;
@@ -598,12 +637,22 @@ function showstausframe(page){
 					<td height="115" align="right" class="NM_radius_left" valign="middle" bgcolor="#444f53" onclick="showstausframe('Internet');">
 						<a href="/device-map/internet.asp" target="statusframe"><div id="iconInternet" onclick="clickEvent(this);"></div></a>
 					</td>
-					<td colspan="2" valign="middle" bgcolor="#444f53" class="NM_radius_right" onclick="showstausframe('Internet');">
-						<span style="font-size:14px;font-family: Verdana, Arial, Helvetica, sans-serif;" id="internetDesc"><#statusTitle_Internet#>:</span><br/><br/>
-						<strong id="NM_connect_status" class="index_status"><#QKSet_Internet_Setup_fail_method1#>...</strong>
+					<td colspan="2" valign="middle" bgcolor="#444f53" class="NM_radius_right" onclick="" style="padding:5px;cursor:auto;">
+						<div>
+							<span id="NM_connect_title" style="font-size:12px;font-family: Verdana, Arial, Helvetica, sans-serif;"><#statusTitle_Internet#>:</span>
+							<strong id="NM_connect_status" class="index_status" style="font-size:14px;"><#QKSet_Internet_Setup_fail_method1#>...</strong>
+						</div>
+						<div id="wanIP_div" style="margin-top:5px;">
+							<span style="font-size:12px;font-family: Verdana, Arial, Helvetica, sans-serif;">WAN IP:</span>
+							<strong id="index_status" class="index_status" style="font-size:14px;"></strong>
+						</div>
+						<div id="ddnsHostName_div" style="margin-top:5px;">
+							<span style="font-size:12px;font-family: Verdana, Arial, Helvetica, sans-serif;">DDNS:</span>
+							<strong id="ddnsHostName" class="index_status" style="font-size:14px;"></strong>
+						</div>
 					</td>
 					<td width="40" rowspan="11" valign="top">
-						<div class="statusTitle">
+						<div class="statusTitle" id="statusTitle_NM">
 							<div id="helpname" style="padding-top:10px;font-size:16px;"></div>
 						</div>							
 						<div>

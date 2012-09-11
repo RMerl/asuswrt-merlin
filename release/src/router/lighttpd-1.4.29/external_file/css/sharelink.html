@@ -5,12 +5,13 @@
 <title></title>
 <style>
 html{
-margin:0 0;
-padding:0px;
+	margin:0 0;
+	padding:0px;
 }
 body{
-display: block;
-overflow: hidden;
+	display: block;
+	overflow: hidden;
+	background: #e8e8e8;
 }
 </style>
 <script type="text/javascript" src="/smb/js/tools.js"></script>
@@ -43,7 +44,10 @@ $("document").ready(function() {
 	content += m.getString('msg_sharelink_desc1');
 	content += 	this_url;
 	content += m.getString('msg_sharelink_desc2');
-		
+	
+	if(isPrivateIP()){
+		content += m.getString('msg_sharelink_desc3');
+	}
 	//$("#sharelink").html(content);
 	
 	$("#sharelink").val(content);

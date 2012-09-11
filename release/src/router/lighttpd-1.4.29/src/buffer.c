@@ -894,7 +894,11 @@ static int buffer_urldecode_internal(buffer *url, int is_query) {
 					high = (high << 4) | low;
 
 					/* map control-characters out */
-					if (high < 32 || high == 127) high = '_';
+					//if (high < 32 || high == 127) high = '_';
+
+					//- JerryLin Modify
+					if (high < 32) high = '_';
+					//else if (high == 127) high = '~';
 
 					*dst = high;
 					src += 2;

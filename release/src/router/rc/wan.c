@@ -443,71 +443,53 @@ add_routes(char *prefix, char *var, char *ifname)
 static void
 add_dhcp_routes(char *prefix, char *ifname, int metric)
 {
-	char *routes, *msroutes, *tmp;
-	char buf[30];
-
-	char ipaddr[] = "255.255.255.255";
-	char gateway[] = "255.255.255.255";
+	char *routes, *tmp;
+	char nvname[sizeof("wanXXXXXXXXXX_routesXXX")];
+	char *ipaddr, *gateway;
 	char netmask[] = "255.255.255.255";
+	struct in_addr mask;
+	int netsize;
 
-	if (!nvram_match("dr_enable_x", "1"))
+	if (nvram_get_int("dr_enable_x") == 0)
 		return;
 
-	/* routes */
-	routes = strdup(nvram_safe_get(strcat_r(prefix, "routes", buf)));
-	for (tmp = routes; tmp && *tmp; )
-	{
-		char *ipaddr = strsep(&tmp, " ");
-		char *gateway = strsep(&tmp, " ");
-		if (gateway) {
+	/* classful static routes */
+	routes = strdup(nvram_safe_get(strcat_r(prefix, "routes", nvname)));
+	for (tmp = routes; tmp && *tmp; ) {
+		ipaddr  = strsep(&tmp, "/");
+		gateway = strsep(&tmp, " ");
+		if (gateway && inet_addr(ipaddr) != INADDR_ANY)
+			route_add(ifname, metric + 1, ipaddr, gateway, netmask);
+	}
+	free(routes);
+
+	/* ms claseless static routes */
+	routes = strdup(nvram_safe_get(strcat_r(prefix, "routes_ms", nvname)));
+	for (tmp = routes; tmp && *tmp; ) {
+		ipaddr  = strsep(&tmp, "/");
+		netsize = atoi(strsep(&tmp, " "));
+		gateway = strsep(&tmp, " ");
+		if (gateway && netsize > 0 && netsize <= 32 && inet_addr(ipaddr) != INADDR_ANY) {
+			mask.s_addr = htonl(0xffffffff << (32 - netsize));
+			strcpy(netmask, inet_ntoa(mask));
 			route_add(ifname, metric + 1, ipaddr, gateway, netmask);
 		}
 	}
 	free(routes);
-	
-	/* ms routes */
-	for (msroutes = nvram_safe_get(strcat_r(prefix, "msroutes", buf)); msroutes && isdigit(*msroutes); )
-	{
-		/* read net length */
-		int bit, bits = strtol(msroutes, &msroutes, 10);
-		struct in_addr ip, gw, mask;
-		
-		if (bits < 1 || bits > 32 || *msroutes != ' ')
-			break;
-		mask.s_addr = htonl(0xffffffff << (32 - bits));
 
-		/* read network address */
-		for (ip.s_addr = 0, bit = 24; bit > (24 - bits); bit -= 8)
-		{
-			if (*msroutes++ != ' ' || !isdigit(*msroutes))
-				goto bad_data;
-
-			ip.s_addr |= htonl(strtol(msroutes, &msroutes, 10) << bit);
+	/* rfc3442 classless static routes */
+	routes = strdup(nvram_safe_get(strcat_r(prefix, "routes_rfc", nvname)));
+	for (tmp = routes; tmp && *tmp; ) {
+		ipaddr  = strsep(&tmp, "/");
+		netsize = atoi(strsep(&tmp, " "));
+		gateway = strsep(&tmp, " ");
+		if (gateway && netsize > 0 && netsize <= 32 && inet_addr(ipaddr) != INADDR_ANY) {
+			mask.s_addr = htonl(0xffffffff << (32 - netsize));
+			strcpy(netmask, inet_ntoa(mask));
+			route_add(ifname, metric + 1, ipaddr, gateway, netmask);
 		}
-		
-		/* read gateway */
-		for (gw.s_addr = 0, bit = 24; bit >= 0 && *msroutes; bit -= 8)
-		{
-			if (*msroutes++ != ' ' || !isdigit(*msroutes))
-				goto bad_data;
-
-			gw.s_addr |= htonl(strtol(msroutes, &msroutes, 10) << bit);
-		}
-		
-		/* clear bits per RFC */
-		ip.s_addr &= mask.s_addr;
-		
-		strcpy(ipaddr, inet_ntoa(ip));
-		strcpy(gateway, inet_ntoa(gw));
-		strcpy(netmask, inet_ntoa(mask));
-		
-		route_add(ifname, metric + 1, ipaddr, gateway, netmask);
-		
-		if (*msroutes == ' ')
-			msroutes++;
 	}
-bad_data:
-	return;
+	free(routes);
 }
 
 int
@@ -720,6 +702,11 @@ void update_wan_state(char *prefix, int state, int reason)
 			nvram_set(strcat_r(prefix, "netmask", tmp), "0.0.0.0");
 			nvram_set(strcat_r(prefix, "gateway", tmp), "0.0.0.0");
 		}
+		nvram_unset(strcat_r(prefix, "lease", tmp));
+		nvram_unset(strcat_r(prefix, "expires", tmp));
+		nvram_unset(strcat_r(prefix, "routes", tmp));
+		nvram_unset(strcat_r(prefix, "routes_ms", tmp));
+		nvram_unset(strcat_r(prefix, "routes_rfc", tmp));
 
 		strcpy(tmp1, "");
 		if (nvram_match(strcat_r(prefix, "dnsenable_x", tmp), "0")) {
@@ -737,7 +724,12 @@ void update_wan_state(char *prefix, int state, int reason)
 		nvram_set(strcat_r(prefix, "xnetmask", tmp), nvram_safe_get(strcat_r(prefix, "netmask", tmp1)));
 		nvram_set(strcat_r(prefix, "xgateway", tmp), nvram_safe_get(strcat_r(prefix, "gateway", tmp1)));
 		nvram_set(strcat_r(prefix, "xdns", tmp), nvram_safe_get(strcat_r(prefix, "dns", tmp1)));
-	
+		nvram_unset(strcat_r(prefix, "xlease", tmp));
+		nvram_unset(strcat_r(prefix, "xexpires", tmp));
+		nvram_unset(strcat_r(prefix, "xroutes", tmp));
+		nvram_unset(strcat_r(prefix, "xroutes_ms", tmp));
+		nvram_unset(strcat_r(prefix, "xroutes_rfc", tmp));
+
 #ifdef RTCONFIG_IPV6
 		nvram_set(strcat_r(prefix, "6rd_ip4size", tmp), "");
 		nvram_set(strcat_r(prefix, "6rd_router", tmp), "");
@@ -1064,7 +1056,12 @@ TRACE_PT("kill 3g's pppd.\n");
 			// run as ppp proto.
 			nvram_set(strcat_r(prefix, "proto", tmp), "pppoe");
 #ifndef RTCONFIG_DUALWAN
+#if 1 /* TODO: tmporary change! remove after WEB UI support */
 			nvram_set(strcat_r(prefix, "dhcpenable_x", tmp), "1");
+			nvram_set(strcat_r(prefix, "vpndhcp", tmp), "0");
+#else /* TODO: tmporary change! remove after WEB UI support */
+			nvram_set(strcat_r(prefix, "dhcpenable_x", tmp), "2");
+#endif
 			nvram_set(strcat_r(prefix, "dnsenable_x", tmp), "1");
 #endif
 
@@ -1128,18 +1125,8 @@ TRACE_PT("kill 3g's pppd.\n");
 #endif
 
 			if(!strncmp(wan_ifname, "usb", 3)){ // RNDIS interface.
-				char *wan_hostname = nvram_get(strcat_r(prefix, "hostname", tmp));
-				char *dhcp_argv[] = { "udhcpc",
-						"-i", wan_ifname,
-						"-p", dhcp_pid_file,
-						"-s", "/tmp/udhcpc",
-						wan_hostname && *wan_hostname ? "-H" : NULL,
-						wan_hostname && *wan_hostname ? wan_hostname : NULL,
-						NULL};
-
 				if(!nvram_match("stop_conn_3g", "1")){
-					_eval(dhcp_argv, NULL, 0, &pid);
-
+					start_udhcpc(wan_ifname, unit, &pid);
 					update_wan_state(prefix, WAN_STATE_CONNECTING, 0);
 				}
 				else
@@ -1286,7 +1273,7 @@ TRACE_PT("3g end.\n");
 			/* update demand option */
 			nvram_set(strcat_r(prefix, "pppoe_demand", tmp), demand ? "1" : "0");
 
-			if (nvram_match(strcat_r(prefix, "dhcpenable_x", tmp), "0") &&
+			if ((dhcpenable == 0) &&
 /* TODO: remake it as macro */
 			    (inet_network(nvram_safe_get(strcat_r(prefix, "xipaddr", tmp))) &
 			     inet_network(nvram_safe_get(strcat_r(prefix, "xnetmask", tmp)))) ==
@@ -1304,21 +1291,11 @@ TRACE_PT("3g end.\n");
 			/* launch dhcp client and wait for lease forawhile */
 			if (dhcpenable)
 			{
-				char *wan_hostname = nvram_safe_get(strcat_r(prefix, "hostname", tmp));
-				char *dhcp_argv[] = { "udhcpc",
-					"-i", wan_ifname,
-					"-p", (sprintf(tmp, "/var/run/udhcpc%d.pid", unit), tmp),
-					"-s", "/tmp/udhcpc",
-					"-b",
-					*wan_hostname && is_valid_hostname(wan_hostname) ? "-H" : NULL,
-					wan_hostname,
-					NULL};
-
 				/* Skip DHCP, but ZCIP for PPPOE, if desired */
 				if (strcmp(wan_proto, "pppoe") == 0 && dhcpenable == 2)
 					start_zcip(wan_ifname);
 				else
-					_eval(dhcp_argv, NULL, 0, NULL);
+					start_udhcpc(wan_ifname, unit, NULL);
 			} else {
 				/* start firewall */
 // TODO: handle different lan_ifname
@@ -1406,37 +1383,16 @@ TRACE_PT("3g end.\n");
 		 * renew and release.
 		 */
 		else if (strcmp(wan_proto, "dhcp") == 0) {
-			char *wan_hostname = nvram_safe_get(strcat_r(prefix, "hostname", tmp));
 #ifdef RTCONFIG_DSL
-			char *clientid = nvram_safe_get("dslx_dhcp_clientid");
-			int need_clientid = 0;
-			if(strlen(clientid) > 0) 
-				need_clientid = 1;
-#else
-			char *dhcp_options = nvram_safe_get(strcat_r(prefix,"dhcpc_options",tmp));
+			nvram_set(strcat_r(prefix, "clientid", tmp), nvram_safe_get("dslx_dhcp_clientid"));
 #endif
-			char *dhcp_argv[] = { "udhcpc",
-#ifdef RTCONFIG_DSL
-					need_clientid ? "-c" : "",
-					need_clientid ? clientid : "",
-#else
-					*dhcp_options ? "-c" : "",
-					dhcp_options,
-#endif
-					"-i", wan_ifname,
-					"-p", (sprintf(tmp, "/var/run/udhcpc%d.pid", unit), tmp),
-					"-s", "/tmp/udhcpc",
-					*wan_hostname && is_valid_hostname(wan_hostname) ? "-H" : NULL,
-					wan_hostname,
-					NULL};
-
 			/* Start pre-authenticator */
 			if (start_auth(unit, 0) == 0) {
 				update_wan_state(prefix, WAN_STATE_CONNECTING, 0);
 			}
 
 			/* Start dhcp daemon */
-			_eval(dhcp_argv, NULL, 0, &pid);
+			start_udhcpc(wan_ifname, unit, &pid);
 
 			update_wan_state(prefix, WAN_STATE_CONNECTING, 0);
 		}
@@ -2091,12 +2047,9 @@ dump_ns()
 #ifdef RTCONFIG_IPV6
 void wan6_up(const char *wan_ifname)
 {
+	char addr6[INET6_ADDRSTRLEN + 4];
 	struct in_addr addr4;
 	struct in6_addr addr;
-	static char addr6[INET6_ADDRSTRLEN];
-	static char addr62[INET6_ADDRSTRLEN];
-	int wait_count;
-
 	int service = get_ipv6_service();
 
 	if (!wan_ifname || (strlen(wan_ifname) <= 0) ||
@@ -2110,59 +2063,77 @@ void wan6_up(const char *wan_ifname)
 		if ((nvram_get_int("ipv6_accept_ra") & 1) != 0)
 			set_intf_ipv6_accept_ra(wan_ifname, 1);
 		break;
+	case IPV6_6RD:
+		update_6rd_info();
+		break;
 	}
 
 	set_intf_ipv6_dad(wan_ifname, 0, 1);
 
 	switch (service) {
 	case IPV6_NATIVE:
-		eval("ip", "route", "add", "::/0", "dev", (char *)wan_ifname, "metric", "2048");
+		eval("ip", "-6", "route", "add", "::/0", "dev", (char *)wan_ifname, "metric", "2048");
 		break;
 	case IPV6_NATIVE_DHCP:
-		eval("ip", "route", "add", "::/0", "dev", (char *)wan_ifname);
+		eval("ip", "-6", "route", "add", "::/0", "dev", (char *)wan_ifname);
 		stop_dhcp6c();
 		start_dhcp6c();
 		break;
 	case IPV6_MANUAL:
-		if (strcmp(nvram_safe_get("ipv6_ipaddr"), ipv6_router_address(NULL)))
-		{
-			doSystem("ifconfig %s add %s/%s", (char *)wan_ifname, nvram_safe_get("ipv6_ipaddr"), nvram_safe_get("ipv6_prefix_len_wan"));
-			eval("route", "-A", "inet6", "del", "default");
-			eval("route", "-A", "inet6", "add", "default", "gw", nvram_safe_get("ipv6_gateway"), "dev", (char *)wan_ifname);
+		if (nvram_match("ipv6_ipaddr", ipv6_router_address(NULL))) {
+			dbG("WAN IPv6 address is the same as LAN IPv6 address!\n");
+			break;
 		}
-		else dbG("WAN IPv6 address is the same as LAN IPv6 address!\n");
+		snprintf(addr6, "%s/%d", nvram_safe_get("ipv6_ipaddr"), nvram_get_int("ipv6_prefix_len_wan"));
+		eval("ip", "-6", "addr", "add", addr6, "dev", (char *)wan_ifname);
+		eval("ip", "-6", "route", "del", "::/0");
+		eval("ip", "-6", "route", "add", "::/0", "via", nvram_safe_get("ipv6_gateway"), "dev", (char *)wan_ifname, "metric", "1");
 		break;
 	case IPV6_6TO4:
 	case IPV6_6IN4:
 	case IPV6_6RD:
 		stop_ipv6_tunnel();
 		if (service == IPV6_6TO4) {
+			int prefixlen = 16;
+			int mask4size = 0;
+
+			/* prefix */
 			addr4.s_addr = 0;
 			memset(&addr, 0, sizeof(addr));
 			inet_aton(get_wanip(), &addr4);
 			addr.s6_addr16[0] = htons(0x2002);
-			ipv6_mapaddr4(&addr, 16, &addr4, 0);
-			addr.s6_addr16[3] = htons(0x0001);
+			prefixlen = ipv6_mapaddr4(&addr, prefixlen, &addr4, mask4size);
+			//addr4.s_addr = htonl(0x00000001);
+			//prefixlen = ipv6_mapaddr4(&addr, prefixlen, &addr4, (32 - 16));
 			inet_ntop(AF_INET6, &addr, addr6, sizeof(addr6));
 			nvram_set("ipv6_prefix", addr6);
-			sprintf(addr62, "%s1", addr6);
-			nvram_set("ipv6_rtr_addr", addr62);
+			nvram_set_int("ipv6_prefix_length", prefixlen);
+
+			/* address */
+			addr.s6_addr16[7] |= htons(0x0001);
+			inet_ntop(AF_INET6, &addr, addr6, sizeof(addr6));
+			nvram_set("ipv6_rtr_addr", addr6);
 		}
 		else if (service == IPV6_6RD) {
+			int prefixlen = nvram_get_int("ipv6_6rd_prefixlen");
+			int masklen = nvram_get_int("ipv6_6rd_ip4size");
+
+			/* prefix */
 			addr4.s_addr = 0;
 			memset(&addr, 0, sizeof(addr));
 			inet_aton(get_wanip(), &addr4);
-#if 0
-			addr.s6_addr16[0] = htons(0x2001);
-			addr.s6_addr16[1] = htons(0x55c);
-#else
 			inet_pton(AF_INET6, nvram_safe_get("ipv6_6rd_prefix"), &addr);
-#endif
-			ipv6_mapaddr4(&addr, 32, &addr4, nvram_get_int("ipv6_6rd_ip4size"));
+			prefixlen = ipv6_mapaddr4(&addr, prefixlen, &addr4, masklen);
+			//addr4.s_addr = htonl(0x00000001);
+			//prefixlen = ipv6_mapaddr4(&addr, prefixlen, &addr4, (32 - 1));
 			inet_ntop(AF_INET6, &addr, addr6, sizeof(addr6));
 			nvram_set("ipv6_prefix", addr6);
-			sprintf(addr62, "%s1", addr6);
-			nvram_set("ipv6_rtr_addr", addr62);
+			nvram_set_int("ipv6_prefix_length", prefixlen);
+
+			/* address */
+			addr.s6_addr16[7] |= htons(0x0001);
+			inet_ntop(AF_INET6, &addr, addr6, sizeof(addr6));
+			nvram_set("ipv6_rtr_addr", addr6);
 		}
 		start_ipv6_tunnel();
 		// FIXME: give it a few seconds for DAD completion
@@ -2793,9 +2764,8 @@ void convert_wan_nvram(char *prefix, int unit)
 #endif
 
 	// sync proto
-	if(nvram_match(strcat_r(prefix, "proto", tmp), "static")) {	
-		nvram_set(strcat_r(prefix, "dhcpenable_x", tmp), "0");
-	}
+	if (nvram_match(strcat_r(prefix, "proto", tmp), "static"))
+		nvram_set_int(strcat_r(prefix, "dhcpenable_x", tmp), 0);
 	// backlink unit for ppp
 	nvram_set_int(strcat_r(prefix, "unit", tmp), unit);
 }

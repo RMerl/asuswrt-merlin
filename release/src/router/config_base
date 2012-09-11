@@ -29,6 +29,7 @@ RTCONFIG_L7PAT=y
 # RTCONFIG_PPTPD is not set
 # RTCONFIG_ACCEL_PPTPD is not set
 # RTCONFIG_DSL is not set
+# RTCONFIG_DSL_ANNEX_B is not set
 # RTCONFIG_DUALWAN is not set
 # RTCONFIG_SHP is not set
 # RTCONFIG_SFP is not set

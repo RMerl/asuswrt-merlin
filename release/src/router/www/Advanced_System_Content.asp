@@ -59,16 +59,13 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-
 time_day = uptimeStr.substring(5,7);//Mon, 01 Aug 2011 16:25:44 +0800(1467 secs since boot....
 time_mon = uptimeStr.substring(9,12);
 time_time = uptimeStr.substring(18,20);
 dstoffset = '<% nvram_get("time_zone_dstoff"); %>';
-
 <% login_state_hook(); %>
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var http_clientlist_array = '<% nvram_get("http_clientlist"); %>';
-
 var accounts = [<% get_all_accounts(); %>];
 
 function initial(){
@@ -92,6 +89,7 @@ function initial(){
 	else{
 		showLANIPList();
 		hide_https_lanport(document.form.http_enable.value);
+		hide_https_wanport(document.form.http_enable.value);
 	}	
 
 	if(WebDav_support != -1){
@@ -102,18 +100,32 @@ function initial(){
 		document.form.http_username.disabled = true;
 		document.getElementById('http_username').style.display = "none";
 	}
-/*	
-	if(wifi_hw_sw_support != -1){
-			document.form.btn_ez_radiotoggle[0].disabled = true;
-			document.form.btn_ez_radiotoggle[1].disabled = true;
-			document.getElementById('btn_ez_radiotoggle_tr').style.display = "none";
-	}else{
-			//document.getElementById('btn_ez_radiotoggle_tr').style.display = "";
-			document.form.btn_ez_radiotoggle[0].disabled = true;
-			document.form.btn_ez_radiotoggle[1].disabled = true;
-			document.getElementById('btn_ez_radiotoggle_tr').style.display = "none";			
+
+//	if(wifi_hw_sw_support != -1){
+//			document.form.btn_ez_radiotoggle[0].disabled = true;
+//			document.form.btn_ez_radiotoggle[1].disabled = true;
+//			document.getElementById('btn_ez_radiotoggle_tr').style.display = "none";
+//	}else{
+//			//document.getElementById('btn_ez_radiotoggle_tr').style.display = "";
+//			document.form.btn_ez_radiotoggle[0].disabled = true;
+//			document.form.btn_ez_radiotoggle[1].disabled = true;
+//			document.getElementById('btn_ez_radiotoggle_tr').style.display = "none";			
+//	}
+
+	if(sw_mode != 1){
+		$('misc_http_x_tr').style.display ="none";
+		hideport(0);
+		document.form.misc_http_x.disabled = true;
+		document.form.misc_httpsport_x.disabled = true;
+		document.form.misc_httpport_x.disabled = true;
 	}
-*/
+	else
+		hideport(document.form.misc_http_x[0].checked);
+	
+	if(HTTPS_support == -1 || '<% nvram_get("http_enable"); %>' == 0)
+		$("https_port").style.display = "none";
+	else if('<% nvram_get("http_enable"); %>' == 1)
+		$("http_port").style.display = "none";
 }
 
 var time_zone_tmp="";
@@ -158,10 +170,36 @@ function applyRule(){
 				document.form.time_zone_dstoff.value="";
 				document.form.time_zone.value = document.form.time_zone_select.value;
 		}
+		
+		if(document.form.misc_http_x[1].checked == true){
+				document.form.misc_httpport_x.disabled = true;
+				document.form.misc_httpsport_x.disabled = true;
+		}		
+		if(document.form.misc_http_x[0].checked == true 
+				&& document.form.http_enable[0].selected == true){
+				document.form.misc_httpsport_x.disabled = true;
+		}	
+		if(document.form.misc_http_x[0].checked == true 
+				&& document.form.http_enable[1].selected == true){
+				document.form.misc_httpport_x.disabled = true;
+		}
 
 		showLoading();
 		document.form.submit();
 	}
+}
+
+function checkDuplicateName(newname, teststr){
+	var existing_string = decodeURIComponent(teststr.join(','));
+	existing_string = "," + existing_string + ",";
+	var newstr = "," + trim(newname) + ","; 
+
+	var re = new RegExp(newstr,"gi")
+	var matchArray =  existing_string.match(re);
+	if (matchArray != null)
+		return true;
+	else
+		return false;
 }
 
 function validForm(){	
@@ -259,6 +297,19 @@ function validForm(){
 
 	if(document.form.http_passwd2.value.length > 0)
 		alert("<#File_Pop_content_alert_desc10#>");
+		
+	if (document.form.misc_http_x[0].checked) {
+		if (!validate_range(document.form.misc_httpport_x, 1024, 65535))
+			return false;
+
+		if (HTTPS_support != -1 &&
+		    !validate_range(document.form.misc_httpsport_x, 1024, 65535))
+			return false;
+	}
+	else{
+		document.form.misc_httpport_x.value = '<% nvram_get("misc_httpport_x"); %>';
+		document.form.misc_httpsport_x.value = '<% nvram_get("misc_httpsport_x"); %>';
+	}	
 
 	return true;
 }
@@ -566,6 +617,11 @@ function hide_https_lanport(_value){
 	$("https_lanport").style.display = (_value == "0") ? "none" : "";
 }
 
+function hide_https_wanport(_value){
+	$("http_port").style.display = (_value == "1") ? "none" : "";	
+	$("https_port").style.display = (_value == "0") ? "none" : "";	
+}
+
 // show clientlist
 function show_http_clientlist(){
 	var http_clientlist_row = http_clientlist_array.split('&#60');
@@ -700,8 +756,11 @@ function pullLANIPList(obj){
 	else
 		hideClients_Block();
 }
-
 //Viz add 2012.02 LAN client ip } end 
+
+function hideport(flag){
+	$("accessfromwan_port").style.display = (flag == 1) ? "" : "none";
+}
 </script>
 </head>
 
@@ -921,7 +980,7 @@ function pullLANIPList(obj){
 		  	<tr id="https_tr">
 					<th><#WLANConfig11b_AuthenticationMethod_itemname#></th>
 					<td>
-				  	<select name="http_enable" class="input_option" onchange="hide_https_lanport(this.value);">
+				  	<select name="http_enable" class="input_option" onchange="hide_https_lanport(this.value);hide_https_wanport(this.value);">
 							<option value="0" <% nvram_match("http_enable", "0", "selected"); %>>HTTP</option>
 							<option value="1" <% nvram_match("http_enable", "1", "selected"); %>>HTTPS</option>
 							<option value="2" <% nvram_match("http_enable", "2", "selected"); %>>BOTH</option>
@@ -935,6 +994,22 @@ function pullLANIPList(obj){
 						<input type="text" maxlength="5" class="input_6_table" name="https_lanport" value="<% nvram_get("https_lanport"); %>">
 					</td>
 		  	</tr>
+		  	
+        <tr id="misc_http_x_tr">
+          	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,2);"><#FirewallConfig_x_WanWebEnable_itemname#></a></th>
+           	<td>
+             		<input type="radio" value="1" name="misc_http_x" class="input" onClick="hideport(1);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '1')" <% nvram_match("misc_http_x", "1", "checked"); %>><#checkbox_Yes#>
+             		<input type="radio" value="0" name="misc_http_x" class="input" onClick="hideport(0);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '0')" <% nvram_match("misc_http_x", "0", "checked"); %>><#checkbox_No#>
+           	</td>
+        </tr>   					
+        
+        <tr id="accessfromwan_port">
+           	<th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,3);"><#FirewallConfig_x_WanWebPort_itemname#></a></th>
+           	<td>
+								<span style="margin-left:5px;" id="http_port">HTTP: <input type="text" maxlength="5" name="misc_httpport_x" class="input_6_table" value="<% nvram_get("misc_httpport_x"); %>" onKeyPress="return is_number(this,event);"/>&nbsp;&nbsp;</span>
+								<span style="margin-left:5px;" id="https_port">HTTPS: <input type="text" maxlength="5" name="misc_httpsport_x" class="input_6_table" value="<% nvram_get("misc_httpsport_x"); %>" onKeyPress="return is_number(this,event);"/></span>
+						</td>
+        </tr>		  	
 
 				<tr id="http_client_tr">
 				  <th>Only allow specific IP</th>

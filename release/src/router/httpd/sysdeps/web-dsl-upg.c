@@ -290,10 +290,11 @@ int check_tc_firmware_crc()
 	fseek(fpSrc, 0x0100, SEEK_SET);
 	
 	//check Annex mode
-#ifdef DSL_N55U_ANNEX_B
+#ifdef RTCONFIG_DSL_ANNEX_B
 	if(bBuf[read_idx+14] != 'B') {	//ASUS_Annex'B'_..
 		if(bBuf[read_idx+9] != '1') {	//check for the old ras info ASUS_1020
 			RetVal = -1;
+			printf("check annex failed\n");
 			goto exit;
 		}
 	}
@@ -301,6 +302,7 @@ int check_tc_firmware_crc()
 	if(bBuf[read_idx+14] != 'A') {	//ASUS_ANNEX'A'IJLM_..
 		if(bBuf[read_idx+9] != '1') {	//check for the old ras info ASUS_1020
 			RetVal = -1;
+			printf("check annex failed\n");
 			goto exit;
 		}
 	}
@@ -339,7 +341,7 @@ int check_tc_firmware_crc()
 		fgets(ver_info_buf, 256, fpCur);
 		fclose(fpCur);
 		printf("cur ras: %s\n", ver_info_buf);
-#ifdef DSL_N55U_ANNEX_B
+#ifdef RTCONFIG_DSL_ANNEX_B
 		if(!strncmp(ver_info_buf, (char*)bBuf+read_idx+4, 20))	//ASUS_AnnexB_20111031
 #else
 		if(!strncmp(ver_info_buf, (char*)bBuf+read_idx+4, 24))	//ASUS_ANNEXAIJLM_20120423
@@ -514,6 +516,7 @@ exit:
 
 	if((calc_crc != crc_value) || cmpHeaderErr)
 	{
+		printf("header crc error\n");
 		RetVal = -1;
 	}
 

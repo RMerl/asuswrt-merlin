@@ -376,7 +376,41 @@ $("document").ready(function() {
 	    bSliceAsBinary = 0;
 	  }
   }
-
+	/*
+	function requiredFeaturesSupported() {
+ 		return ( BlobBuilderSupported() && msSaveOrOpenBlobSupported() );
+  }
+  
+  function BlobBuilderSupported() {
+  	if (window.BlobBuilder) {
+    	// No change needed - the W3C standard API will be used by default.
+    } 
+    else if (window.MSBlobBuilder) {
+      window.BlobBuilder = window.MSBlobBuilder;
+    }
+    else if (window.WebKitBlobBuilder) {
+      window.BlobBuilder = window.WebKitBlobBuilder;
+    }
+    else if (window.MozBlobBuilder) {
+      window.BlobBuilder = window.MozBlobBuilder;
+    }   
+    else {
+      document.getElementById('bodyElement').innerHTML = "<h1>The BlobBuilder API is not supported - try upgrading your browser to the latest version.</h1>";
+      return false;
+    } // if-else
+      
+    return true;
+  } // BlobBuilderSupported
+    
+  function msSaveOrOpenBlobSupported() {
+    if (!window.navigator.msSaveOrOpenBlob) {
+       document.getElementById('bodyElement').innerHTML = "<h1>The msSaveOrOpenBlob API is not supported - try upgrading your version of IE to the latest version.</h1>";            
+      return false;
+    }
+      
+  	return true;
+  } // msSaveOrOpenBlobSupported
+  */   
  	function PutToWeb(pfile, opt_startByte, opt_stopByte, filesize) {		
 		var start = opt_startByte;
 		var stop = opt_stopByte;
@@ -387,10 +421,9 @@ $("document").ready(function() {
 		// If we use onloadend, we need to check the readyState.
 		reader.onloadend = function(evt) {			
 			if (evt.target.readyState == FileReader.DONE) { // DONE == 2      	
-			var tURL = this_url + pfile.name;
-			
-			webdav_client.PUT(tURL, evt.target.result, bSliceAsBinary, start, stop, filesize,
-				  webdav_put_callbackfunction, webdav_put_progress_callbackfunction  );
+				var tURL = this_url + pfile.name;
+				webdav_client.PUT(tURL, evt.target.result, bSliceAsBinary, start, stop, filesize,
+					  webdav_put_callbackfunction, webdav_put_progress_callbackfunction  );
 			}
 		};
 		
@@ -405,9 +438,30 @@ $("document").ready(function() {
 			bSliceAsBinary = 0;
 		}
 		else {
+			/*
+			if (requiredFeaturesSupported()) {				
+				var builderObject = new BlobBuilder(); // Create a blob builder object so that we can append content to it.
+      	
+	      //builderObject.append("I scream, you scream, we all scream for ice scream."); // Append some content to the builder object.
+	      //window.navigator.msSaveBlob(builderObject.getBlob(), 'msSaveBlob_testFile.txt'); // Move the builder object content to a blob and save it to a file - buildObject is now devoid of any content.
+	      //alert('File saved using msSaveBlob() - note the single "Save" button below.');
+	      
+	      var fileData = pfile.slice(start, stop + 1);
+	      builderObject.append(fileData);
+        var blob = builderObject.getBlob();
+        
+        // Move the builder object content to a blob and save it to a file - buildObject is now devoid of any content.
+        //window.navigator.msSaveBlob(blob, 'msSaveBlob_testFile.jpg');
+        
+        reader.readAsArrayBuffer(blob);
+				bSliceAsBinary = 1;
+			}
+			*/
+			
 			var blob = pfile.slice(start, stop + 1);
 			reader.readAsArrayBuffer(blob);
 			bSliceAsBinary = 1;
+			
     }
 	}
 	

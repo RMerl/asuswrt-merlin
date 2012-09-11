@@ -117,6 +117,10 @@ config RTCONFIG_DSL
 	bool "DSL Support"
 	default n
 
+config RTCONFIG_DSL_ANNEX_B
+	bool "DSL Annex B Support"
+	default n
+
 config RTCONFIG_DUALWAN
 	bool "Dual WAN Support"
 	default n

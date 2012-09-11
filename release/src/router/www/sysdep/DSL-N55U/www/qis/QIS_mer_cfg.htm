@@ -45,11 +45,17 @@ function QKfinish_load_body(){
 }
 
 function submitForm(){
-		document.form.dslx_dhcp_clientid.value = document.form.ppp_username.value + "|" + document.form.ppp_password.value;
+	if (vpi_val == "0" && vci_val == "40" && encap_val == "1")
+	{
+		//Only for UK ISP SKY Broadband
+		if(document.form.ppp_username.value != "")
+			document.form.dslx_dhcp_clientid.value = document.form.ppp_username.value + "|" + document.form.ppp_password.value;
+
 		document.form.ppp_username.disabled = true;
 		document.form.ppp_password.disabled = true;
-		document.form.next_page.value = "/qis/QIS_wireless.htm";
-		document.form.submit();
+	}
+	document.form.next_page.value = "/qis/QIS_wireless.htm";
+	document.form.submit();
 }
 
 function gotoHome() {

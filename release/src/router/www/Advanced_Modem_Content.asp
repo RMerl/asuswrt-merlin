@@ -124,7 +124,7 @@ function initial(){
 		$("option5").className = "m5_r";
 	}
 
-  if(no_wimax_support >= 0){  	
+  if(wimax_support < 0){
   	for (var i = 0; i < document.form.modem_enable_option.options.length; i++) {
 			if (document.form.modem_enable_option.options[i].value == "4") {
 				document.form.modem_enable_option.options.remove(i);
@@ -296,7 +296,7 @@ function show_ISP_list(){
 	$("modem_isp").options.length = isplist.length;
 
 	for(var i = 0; i < isplist.length; i++){
-	  if(protolist[i] == 4 && no_wimax_support != -1){
+	  if(protolist[i] == 4 && wimax_support < 0){
 			$("modem_isp").options.length = $("modem_isp").options.length - 1;
 
 			if($("modem_isp").options.length > 0)
@@ -635,7 +635,7 @@ function done_validating(action){
 					</tr>
 
 					<tr>
-						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,10);"><#HSDPAConfig_DialNum_itemname#></a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(21,10);"><#HSDPAConfig_DialNum_itemname#></a></th>
 						<td>
 							<input id="modem_dialnum" name="modem_dialnum" class="input_20_table" type="text" value=""/>
 						</td>

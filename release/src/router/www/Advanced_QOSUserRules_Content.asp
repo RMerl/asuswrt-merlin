@@ -278,7 +278,7 @@ function showqos_rulelist(){
 							}else
 								code +='<td width="'+wid[j]+'%">'+ qos_rulelist_col[j] +'</td>';																						
 						}else if(j==5){
-								code += '<td width="'+wid[j]+'%"><select class="input_option">';
+								code += '<td width="'+wid[j]+'%"><select class="input_option" style="width:85px;">';
 
 
 								if(qos_rulelist_col[5] =="0")
@@ -766,7 +766,7 @@ function valid_IPorMAC(obj){
         			</tr>
 					<tr id="is_qos_enable_desc">
 					<td>
-		  			<div class="formfontdesc"  style="color:#FFCC00;"><ul><li><#UserQoSRule_desc_zero#></li></ul></div>
+		  			<div class="formfontdesc" style="font-style: italic;font-size: 14px;color:#FFCC00;"><ul><li><#UserQoSRule_desc_zero#></li></ul></div>
 					</td>
 					</tr>
 					<tr>
@@ -801,7 +801,7 @@ function valid_IPorMAC(obj){
 								<td width="19%"><input type="text" maxlength="17" class="input_15_table" name="qos_ip_x_0" style="width:125px;"></td>
 								<td width="15%"><input type="text" class="input_12_table" name="qos_port_x_0" onKeyPress="return is_portrange(this, event)"></td>
 								<td width="13%">
-									<select name='qos_proto_x_0' class="input_option" style="width:87px;">
+									<select name='qos_proto_x_0' class="input_option" style="width:75px;">
 										<option value='tcp'>TCP</option>
 										<option value='udp'>UDP</option>
 										<option value='tcp/udp' selected>TCP/UDP</option>
@@ -817,7 +817,7 @@ function valid_IPorMAC(obj){
 									<input type="hidden" name="qos_transferred_x_0" value="">
 								</td>
 								<td width="11%">
-									<select name='qos_prio_x_0' class="input_option" style="width:auto;">
+									<select name='qos_prio_x_0' class="input_option" style="width:87px;"> <!--style="width:auto;"-->
 										<option value='0'><#Highest#></option>
 										<option value='1' selected><#High#></option>
 										<option value='2'><#Medium#></option>
@@ -831,11 +831,12 @@ function valid_IPorMAC(obj){
 								</td>
 							</tr>
 							</table>
-							</td>
-						</tr>
-						<tr><td>
 							<div id="qos_rulelist_Block"></div>
-						</td></tr>
+							</td>							
+						</tr>
+						<!--tr><td>
+							<div id="qos_rulelist_Block"></div>
+						</td></tr-->
 						<tr><td>
 							<div class="apply_gen">
 								<input name="button" type="button" class="button_gen" onClick="applyRule()" value="<#CTL_apply#>"/>

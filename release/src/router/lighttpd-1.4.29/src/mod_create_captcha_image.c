@@ -13,7 +13,7 @@
 #include "disk_share.h"
 #endif
 
-#define DBE 1
+#define DBE 0
 
 typedef struct {
 	array *access_deny;

@@ -1059,22 +1059,6 @@ INSERT
 #define dumpkmap_example_usage \
        "$ dumpkmap > keymap\n"
 
-#define dumpleases_trivial_usage \
-       "[-r|-a] [-f LEASEFILE]"
-#define dumpleases_full_usage "\n\n" \
-       "Display DHCP leases granted by udhcpd\n" \
-     "\nOptions:" \
-	IF_LONG_OPTS( \
-     "\n	-f,--file=FILE	Lease file" \
-     "\n	-r,--remaining	Show remaining time" \
-     "\n	-a,--absolute	Show expiration time" \
-	) \
-	IF_NOT_LONG_OPTS( \
-     "\n	-f FILE	Lease file" \
-     "\n	-r	Show remaining time" \
-     "\n	-a	Show expiration time" \
-	)
-
 /*
 #define e2fsck_trivial_usage \
        "[-panyrcdfvstDFSV] [-b superblock] [-B blocksize] " \
@@ -4500,95 +4484,6 @@ INSERT
 #define tunctl_example_usage \
        "# tunctl\n" \
        "# tunctl -d tun0\n"
-
-#if defined CONFIG_UDHCP_DEBUG && CONFIG_UDHCP_DEBUG >= 1
-# define IF_UDHCP_VERBOSE(...) __VA_ARGS__
-#else
-# define IF_UDHCP_VERBOSE(...)
-#endif
-#define udhcpc_trivial_usage \
-       "[-fbnq"IF_UDHCP_VERBOSE("v")"oCR] [-i IFACE] [-r IP] [-s PROG] [-p PIDFILE]\n" \
-       "	[-H HOSTNAME] [-c CID] [-V VENDOR] [-O DHCP_OPT]..." IF_FEATURE_UDHCP_PORT(" [-P N]")
-#define udhcpc_full_usage "\n" \
-	IF_LONG_OPTS( \
-     "\n	-i,--interface IFACE	Interface to use (default eth0)" \
-     "\n	-p,--pidfile FILE	Create pidfile" \
-     "\n	-r,--request IP		IP address to request" \
-     "\n	-s,--script PROG	Run PROG at DHCP events (default "CONFIG_UDHCPC_DEFAULT_SCRIPT")" \
-     "\n	-t,--retries N		Send up to N discover packets" \
-     "\n	-T,--timeout N		Pause between packets (default 3 seconds)" \
-     "\n	-A,--tryagain N		Wait N seconds after failure (default 20)" \
-     "\n	-f,--foreground		Run in foreground" \
-	USE_FOR_MMU( \
-     "\n	-b,--background		Background if lease is not obtained" \
-	) \
-     "\n	-S,--syslog		Log to syslog too" \
-     "\n	-n,--now		Exit if lease is not obtained" \
-     "\n	-q,--quit		Exit after obtaining lease" \
-     "\n	-R,--release		Release IP on exit" \
-	IF_FEATURE_UDHCP_PORT( \
-     "\n	-P,--client-port N	Use port N (default 68)" \
-	) \
-	IF_FEATURE_UDHCPC_ARPING( \
-     "\n	-a,--arping		Use arping to validate offered address" \
-	) \
-     "\n	-O,--request-option OPT	Request DHCP option OPT (cumulative)" \
-     "\n	-o,--no-default-options	Don't request any options (unless -O is given)" \
-     "\n	-x OPT:VAL		Include option OPT in sent packets (cumulative)" \
-     "\n	-F,--fqdn NAME		Ask server to update DNS mapping for NAME" \
-     "\n	-H,-h,--hostname NAME	Send NAME as client hostname (default none)" \
-     "\n	-V,--vendorclass VENDOR	Vendor identifier (default 'udhcp VERSION')" \
-     "\n	-c,--clientid CLIENTID	Client identifier (default own MAC)" \
-     "\n	-C,--clientid-none	Don't send client identifier" \
-	IF_UDHCP_VERBOSE( \
-     "\n	-v			Verbose" \
-	) \
-	) \
-	IF_NOT_LONG_OPTS( \
-     "\n	-i IFACE	Interface to use (default eth0)" \
-     "\n	-p FILE		Create pidfile" \
-     "\n	-r IP		IP address to request" \
-     "\n	-s PROG		Run PROG at DHCP events (default "CONFIG_UDHCPC_DEFAULT_SCRIPT")" \
-     "\n	-t N		Send up to N discover packets" \
-     "\n	-T N		Pause between packets (default 3 seconds)" \
-     "\n	-A N		Wait N seconds (default 20) after failure" \
-     "\n	-x OPT:VAL	Include option OPT in sent packets" \
-     "\n	-O OPT		Request DHCP option OPT (cumulative)" \
-     "\n	-o		Don't request any options (unless -O is given)" \
-     "\n	-f		Run in foreground" \
-	USE_FOR_MMU( \
-     "\n	-b		Background if lease is not obtained" \
-	) \
-     "\n	-S		Log to syslog too" \
-     "\n	-n		Exit if lease is not obtained" \
-     "\n	-q		Exit after obtaining lease" \
-     "\n	-R		Release IP on exit" \
-	IF_FEATURE_UDHCP_PORT( \
-     "\n	-P N		Use port N (default 68)" \
-	) \
-	IF_FEATURE_UDHCPC_ARPING( \
-     "\n	-a		Use arping to validate offered address" \
-	) \
-     "\n	-F NAME		Ask server to update DNS mapping for NAME" \
-     "\n	-H,-h NAME	Send NAME as client hostname (default none)" \
-     "\n	-V VENDOR	Vendor identifier (default 'udhcp VERSION')" \
-     "\n	-c CLIENTID	Client identifier (default own MAC)" \
-     "\n	-C		Don't send client identifier" \
-	IF_UDHCP_VERBOSE( \
-     "\n	-v		Verbose" \
-	) \
-	) \
-
-#define udhcpd_trivial_usage \
-       "[-fS]" IF_FEATURE_UDHCP_PORT(" [-P N]") " [configfile]" \
-
-#define udhcpd_full_usage "\n\n" \
-       "DHCP server\n" \
-     "\n	-f	Run in foreground" \
-     "\n	-S	Log to syslog too" \
-	IF_FEATURE_UDHCP_PORT( \
-     "\n	-P N	Use port N (default 67)" \
-	)
 
 #define umount_trivial_usage \
        "[OPTIONS] FILESYSTEM|DIRECTORY"

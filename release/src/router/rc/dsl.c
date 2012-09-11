@@ -142,6 +142,8 @@ void convert_dsl_wan()
 	{
 		if (nvram_match("dsl0_proto","pppoe") || nvram_match("dsl0_proto","pppoa")) {
 			nvram_set("wan0_proto","pppoe");
+			/* Turn off DHCP on MAN interface */
+			nvram_set_int("wan0_dhcpenable_x", 2);
 		}
 		else if (nvram_match("dsl0_proto","ipoa")) {
 			nvram_set("wan0_proto","static");
@@ -168,6 +170,8 @@ void convert_dsl_wan()
 	{
 		if (nvram_match("dsl0_proto","pppoe") || nvram_match("dsl0_proto","pppoa")) {
 			nvram_set("wan1_proto","pppoe");
+			/* Turn off DHCP on MAN interface */
+			nvram_set_int("wan1_dhcpenable_x", 2);
 		}
 		else if (nvram_match("dsl0_proto","ipoa")) {
 			nvram_set("wan1_proto","static");
@@ -305,6 +309,7 @@ void start_dsl()
 	{
 		if (nvram_get_int("dslx_annex") != 0)
 		{
+			nvram_set_int("dslx_annex", 0); //Paul add 2012/8/22, for Annex B model should always be 0
 			nvram_set_int("dslx_config_num", 0);
 		}
 	}

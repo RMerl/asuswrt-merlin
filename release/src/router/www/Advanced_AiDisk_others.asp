@@ -79,12 +79,12 @@ function copytob2(){
 }
 
 function applyRule(){
-        if(validForm()){
-                showLoading();
-                document.form.current_page.value = "/Advanced_AiDisk_others.asp";
-                document.form.next_page.value = "";                
-                document.form.submit();
-        }
+    if(validForm()){
+        showLoading();
+        document.form.current_page.value = "/Advanced_AiDisk_others.asp";
+        document.form.next_page.value = "";                
+		document.form.submit();
+     }
 }
 
 function trim(str){
@@ -92,26 +92,29 @@ function trim(str){
 }
 
 function validForm(){
-        if(!validate_range(document.form.st_max_user, 1, 10)){
-                document.form.st_max_user.focus();
-                document.form.st_max_user.select();
-                return false;
-        }
+    if(!validate_range(document.form.st_max_user, 1, 10)){
+		document.form.st_max_user.focus();
+		document.form.st_max_user.select();
+		return false;
+    }
         
-        //var re = new RegExp("[^a-zA-Z0-9 _-]+", "gi");
-        var re = new RegExp('^[a-zA-Z0-9][a-zA-Z0-9\-\_\.\ ]*[a-zA-Z0-9\-\_]$','gi');        
-        if(!re.test(document.form.computer_name.value)){
-                alert("<#JS_validchar#>");
-                
-                document.form.computer_name.focus();
-                document.form.computer_name.select();
-                return false;
-        }
-        
-        String.prototype.Trim = function(){return this.replace(/(^\s*)|(\s*$)/g,"");}
-        document.form.st_samba_workgroup.value = document.form.st_samba_workgroup.value.Trim();
+    var computer_name_check = new RegExp('^[a-zA-Z0-9\-\_\.\][a-zA-Z0-9\-\_\.\ ]*[a-zA-Z0-9\-\_]$','gi');      	
+    if(!computer_name_check.test(document.form.computer_name.value)){
+        alert("<#JS_validchar#>");               
+        document.form.computer_name.focus();
+        document.form.computer_name.select();
+        return false;
+    }
+		
+	var workgroup_check = new RegExp('^[a-zA-Z0-9\-\_\.\][a-zA-Z0-9\-\_\.\ ]*[a-zA-Z0-9\-\_]$','gi'); 
+	if(!workgroup_check.test(document.form.st_samba_workgroup.value)){
+        alert("<#JS_validchar#>");                
+        document.form.st_samba_workgroup.focus();
+        document.form.st_samba_workgroup.select();
+        return false;
+    }
 
-        return true;
+    return true;
 }
 
 function done_validating(action){
@@ -223,8 +226,8 @@ function done_validating(action){
                                                         <option value="TW" <% nvram_match("ftp_lang", "TW", "selected"); %>><#ShareNode_FTPLANG_optionname2#></option>
                                                         <option value="EN" <% nvram_match("ftp_lang", "EN", "selected"); %>>UTF-8</option><!--<#ShareNode_FTPLANG_optionname1#>-->
                                                         <!-- Viz for Common N16 : RU CZ  -->	
-																												<option value="RU" <% nvram_match("ftp_lang", "RU", "selected"); %>><#ShareNode_FTPLANG_optionname4#></option>
-																		 										<option value="CZ" <% nvram_match("ftp_lang", "CZ", "selected"); %>><#ShareNode_FTPLANG_optionname5#></option>
+														<option value="RU" <% nvram_match("ftp_lang", "RU", "selected"); %>><#ShareNode_FTPLANG_optionname4#></option>
+														<option value="CZ" <% nvram_match("ftp_lang", "CZ", "selected"); %>><#ShareNode_FTPLANG_optionname5#></option>
                                                 </select>
                                         </td>
                                 </tr>

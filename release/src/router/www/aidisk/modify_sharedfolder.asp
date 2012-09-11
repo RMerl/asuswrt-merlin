@@ -12,7 +12,8 @@ function modify_sharedfolder_error(error_msg){
 }
 
 function modify_sharedfolder_success(){
-	parent.refreshpage();
+	if(parent.document.form.current_page.value != "mediaserver.asp" && parent.document.form.current_page.value != "cloud_sync.asp")
+		parent.refreshpage();
 }
 </script>
 </head>

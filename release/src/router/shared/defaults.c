@@ -401,7 +401,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_wds_timeout",		"1"		},	// WDS link detection interval defualt 1 sec*/
 
 	{ "wl_mode_x", "0"},   					// 0/1/2(ap/wds/hybrid)
-	{ "wl_wdsapply_x", "1"},
+	{ "wl_wdsapply_x", "0"},
 	{ "wl_wdslist", ""}, 					// xxxxxxxxxxxx ...
 
 
@@ -667,7 +667,13 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_DSL
 	{ "dslx_modulation", "5" }, // multiple mode
-	{ "dslx_annex", "4" }, // AIJLM
+
+#ifdef RTCONFIG_DSL_ANNEX_B //Paul add 2012/8/21
+	{ "dslx_annex", "0" }, // Annex B
+#else
+	{ "dslx_annex", "4" }, // Annex AIJLM
+#endif
+
 // the following variables suppose can be removed
 	{ "dslx_nat", "1" },	
 	{ "dslx_upnp_enable", "1" },	
@@ -800,7 +806,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "qos_rulelist", "<Web Surf>>80>tcp>0~512>0<HTTPS>>443>tcp>0~512>0<File Transfer>>80>tcp>512~>3<File Transfer>>443>tcp>512~>3"},
 
 	{ "qos_orates",	"80-100,10-100,5-100,3-100,2-95,0-0,0-0,0-0,0-0,0-0"},
-	{ "qos_irates",	"0,0,0,0,0,0,0,0,0,0"},
+	{ "qos_irates",	"100,100,100,100,100,0,0,0,0,0"},
 	{ "qos_enable",			"0"				},
 	{ "qos_method",			"0"				},
 	{ "qos_sticky",			"1"				},
@@ -1392,10 +1398,10 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_tun_mtu",	"0"		},	// Tunnel MTU, 0 for default
 	{ "ipv6_tun_ttl",	"255"		},	// Tunnel TTL
 	{ "ipv6_6rd_dhcp",	"1"		},
-	{ "ipv6_6rd_router", 	"69.252.80.66"	},
+	{ "ipv6_6rd_router", 	"0.0.0.0"	},
 	{ "ipv6_6rd_ip4size", 	"0"		},
-	{ "ipv6_6rd_prefix",	"2001:55c::"	},
-	{ "ipv6_6rd_prefixlen", ""		},
+	{ "ipv6_6rd_prefix",	""		},
+	{ "ipv6_6rd_prefixlen", "32"		},
 #if 0
 	{ "ipv6_dns",		""		},	// DNS server(s) IPs
 #else
@@ -1589,6 +1595,7 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "apps_state_update", "" },
 	{ "apps_state_upgrade", "" },
 	{ "apps_state_error", "" },
+	{ "apps_state_autofix", "1" },
 
 	{ "webs_state_update", "" },
 	{ "webs_state_upgrade", "" },
@@ -1657,7 +1664,7 @@ struct nvram_tuple router_state_defaults[] = {
 #endif
 	{ "ddns_return_code", ""},
 	{ "ddns_return_code_chk", ""},
-	{ "reboot_time", "60"},
+	{ "reboot_time", "70"},	
 	{ NULL, NULL }
 };
 

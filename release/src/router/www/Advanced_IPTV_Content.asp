@@ -320,8 +320,8 @@ function add_options_value(o, str, arr, orig){
 
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
-<input type="hidden" name="current_page" value="Advanced_IPTV_Content.asp">
-<input type="hidden" name="next_page" value="">
+<input type="hidden" name="current_page" value="/Advanced_IPTV_Content.asp">
+<input type="hidden" name="next_page" value="/Advanced_IPTV_Content.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
@@ -440,7 +440,7 @@ function add_options_value(o, str, arr, orig){
 		<th width="30%"><#Layer3Forwarding_x_STB_itemname#></th>
 		<td align="left">
 		    <select name="switch_stb_x" class="input_option">
-			<option value="0" <% nvram_match( "switch_stb_x", "0", "selected"); %>>None</option>
+			<option value="0" <% nvram_match( "switch_stb_x", "0", "selected"); %>><#wl_securitylevel_0#></option>
 			<option value="1" <% nvram_match( "switch_stb_x", "1", "selected"); %>>LAN1</option>
 			<option value="2" <% nvram_match( "switch_stb_x", "2", "selected"); %>>LAN2</option>
 			<option value="3" <% nvram_match( "switch_stb_x", "3", "selected"); %>>LAN3</option>
@@ -463,25 +463,18 @@ function add_options_value(o, str, arr, orig){
             	<td colspan="2"><#IPConnection_BattleNet_sectionname#></td>
             	</tr>
 		</thead>
-		  
 
-			<!-- 2008.03 James. patch for Oleg's patch. { -->		  
-			<!--tr>
-				<th><#RouterConfig_GWDHCPEnable_itemname#></th>
-				<td>
-					<input type="radio" value="1" name="dr_enable_x" class="input" onClick="return change_common_radio(this, 'RouterConfig', 'dr_enable_x', '1')" <% nvram_match("dr_enable_x", "1", "checked"); %>><#checkbox_Yes#>
-					<input type="radio" value="0" name="dr_enable_x" class="input" onClick="return change_common_radio(this, 'RouterConfig', 'dr_enable_x', '0')" <% nvram_match("dr_enable_x", "0", "checked"); %>><#checkbox_No#>
-				</td>
-			</tr-->
-			<tr>
-				<th><#RouterConfig_GWDHCPEnable_itemname#></th>
-				<td>
-          <select name="dr_enable_x" class="input_option">
-          	<option value="0" <% nvram_match("dr_enable_x", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
-            <option value="1" <% nvram_match("dr_enable_x", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
-          </select>
-				</td>
-			</tr>
+		<tr>
+			<th><#RouterConfig_GWDHCPEnable_itemname#></th>
+			<td>
+				<select name="dr_enable_x" class="input_option">
+				<option value="0" <% nvram_match("dr_enable_x", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+				<option value="1" <% nvram_match("dr_enable_x", "1","selected"); %> >Microsoft</option>
+				<option value="2" <% nvram_match("dr_enable_x", "2","selected"); %> >RFC3442</option>
+				<option value="3" <% nvram_match("dr_enable_x", "3","selected"); %> >RFC3442 & Microsoft</option>
+				</select>
+			</td>
+		</tr>
 
 			<!--tr>
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,11);"><#RouterConfig_GWMulticastEnable_itemname#></a></th>

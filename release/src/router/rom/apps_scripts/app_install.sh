@@ -196,11 +196,14 @@ fi
 
 nvram set apps_state_install=3 # INSTALLING
 link_internet=`nvram get link_internet`
-if [ "$link_internet" == "1" ] && [ -n "$apps_from_internet" ]; then
-	app_update.sh
-else
+if [ "$link_internet" != "1" ]; then
 	cp -f $apps_local_space/optware.asus $APPS_INSTALL_PATH/lib/ipkg/lists/
 	cp -f $apps_local_space/optware.oleg $APPS_INSTALL_PATH/lib/ipkg/lists/
+elif [ "$1" == "downloadmaster" ] && [ -z "$apps_from_internet" ]; then
+	cp -f $apps_local_space/optware.asus $APPS_INSTALL_PATH/lib/ipkg/lists/
+	cp -f $apps_local_space/optware.oleg $APPS_INSTALL_PATH/lib/ipkg/lists/
+else
+	app_update.sh
 fi
 
 _install_package $1 $APPS_INSTALL_PATH

@@ -60,8 +60,8 @@ enum {
 //UNUSED: unsigned FAST_FUNC unicode_padding_to_width(unsigned width, const char *src);
 //UNUSED: char* FAST_FUNC unicode_conv_to_printable2(uni_stat_t *stats, const char *src, unsigned width, int flags);
 char* FAST_FUNC unicode_conv_to_printable(uni_stat_t *stats, const char *src);
-char* FAST_FUNC unicode_conv_to_printable_maxwidth(uni_stat_t *stats, const char *src, unsigned maxwidth);
-char* FAST_FUNC unicode_conv_to_printable_fixedwidth(uni_stat_t *stats, const char *src, unsigned width);
+//UNUSED: char* FAST_FUNC unicode_conv_to_printable_maxwidth(uni_stat_t *stats, const char *src, unsigned maxwidth);
+char* FAST_FUNC unicode_conv_to_printable_fixedwidth(/*uni_stat_t *stats,*/ const char *src, unsigned width);
 
 # if ENABLE_UNICODE_USING_LOCALE
 

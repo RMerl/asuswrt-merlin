@@ -100,14 +100,12 @@ int is_hwnat_loaded()
 int
 ej_nat_table(int eid, webs_t wp, int argc, char_t **argv)
 {
-    	int needlen = 0, listlen, i, ret;
 #ifdef REMOVE
     	netconf_nat_t *nat_list = 0;
 //	netconf_nat_t **plist, *cur;
 #endif
-	char line[256], tstr[32];
 	// value need to init
-	ret = 0;
+	int ret = 0;
 
 	if (nvram_match("wan_nat_x", "1"))
 	{
@@ -450,7 +448,6 @@ getRate(MACHTTRANSMIT_SETTING HTSetting)
 {
 	int rate_count = sizeof(MCSMappingRateTable)/sizeof(int);
 	int rate_index = 0;  
-	int value = 0;
 
     if (HTSetting.field.MODE >= MODE_HTMIX)
     {
@@ -476,7 +473,6 @@ getRate_2g(MACHTTRANSMIT_SETTING_2G HTSetting)
 {
 	int rate_count = sizeof(MCSMappingRateTable)/sizeof(int);
 	int rate_index = 0;  
-	int value = 0;
 
     if (HTSetting.field.MODE >= MODE_HTMIX)
     {
@@ -497,6 +493,7 @@ getRate_2g(MACHTTRANSMIT_SETTING_2G HTSetting)
 	return (MCSMappingRateTable[rate_index] * 5)/10;
 }
 
+int
 ej_wl_status(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int retval = 0;
@@ -513,6 +510,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv)
 	return retval;
 }
 
+int
 ej_wl_status_2g(int eid, webs_t wp, int argc, char_t **argv)
 {
 	return ej_wl_status(eid, wp, argc, argv);
@@ -531,14 +529,23 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit, const char *ifn
 	struct iwreq wrq3;
 	unsigned long phy_mode;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+	int wl_mode_x;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
+#if 0
 	if (nvram_match(strcat_r(prefix, "radio", tmp), "0"))
 	{
 		ret+=websWrite(wp, "Radio is disabled\n");
 		return ret;
 	}
+#else
+	if (!get_radio_status(nvram_safe_get(strcat_r(prefix, "ifname", tmp))))
+	{
+		ret+=websWrite(wp, "Radio is disabled\n");
+		return ret;
+	}
+#endif
 
 	if (wl_ioctl(ifname, SIOCGIWAP, &wrq0) < 0)
 	{
@@ -590,18 +597,13 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit, const char *ifn
 			return ret;
 	}
 
-	if (nvram_match(strcat_r(prefix, "mode", tmp), "ap"))
-	{
-		if (nvram_match(strcat_r(prefix, "lazywds", tmp), "1")
-			|| nvram_match(strcat_r(prefix, "wdsapply_x", tmp), "1"))
-			ret+=websWrite(wp, "OP Mode		: Hybrid\n");
-		else
-			ret+=websWrite(wp, "OP Mode		: AP\n");
-	}
-	else if (nvram_match(strcat_r(prefix, "mode", tmp), "wds"))
-	{
+	wl_mode_x = nvram_get_int(strcat_r(prefix, "mode_x", tmp));
+	if      (wl_mode_x == 1)
 		ret+=websWrite(wp, "OP Mode		: WDS Only\n");
-	}
+	else if (wl_mode_x == 2)
+		ret+=websWrite(wp, "OP Mode		: Hybrid\n");
+	else
+		ret+=websWrite(wp, "OP Mode		: AP\n");
 
 	if (phy_mode==PHY_11BG_MIXED)
 		ret+=websWrite(wp, "Phy Mode	: 11b/g\n");
@@ -1186,6 +1188,7 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	return retval;
 }
 
+int
 ej_wl_scan(int eid, webs_t wp, int argc, char_t **argv)
 {
 	return wl_scan(eid, wp, argc, argv, 0);

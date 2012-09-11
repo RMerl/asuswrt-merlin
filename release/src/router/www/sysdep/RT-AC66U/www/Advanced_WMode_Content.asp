@@ -377,7 +377,7 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
 		  	<div class="formfonttitle"><#menu5_1#> - <#menu5_1_3#></div>
 		  	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		  	<div class="formfontdesc"><#WLANConfig11b_display3_sectiondesc#></div>
-				<div id="wl_bw_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;">4. You are currently using the Auto channel. Click <a style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;text-decoration:underline;" href="/Advanced_Wireless_Content.asp">Here</a> to modify.</div>
+				<div id="wl_bw_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;">4. You are currently using the Auto channel. Click <a style="font-size:13px;font-family: Lucida Console;color:#FC0;text-decoration:underline;" href="/Advanced_Wireless_Content.asp?af=wl_bw">Here</a> to modify.</div>
 		  	<div style="margin-left:10px;">(2.4GHz MAC) <% nvram_get("wl0_hwaddr"); %></div>
 		  	<div id="mac_5g" style="margin-left:10px;">(5GHz MAC) <% nvram_get("wl1_hwaddr"); %></div>
 			
@@ -423,8 +423,8 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
 						</a>
 					</th>
 					<td>
-						<input type="radio" value="1" name="wl_wdsapply_x" class="input" onClick="return change_common_radio(this, 'WLANConfig11b', 'wl_wdsapply_x', '1')" <% nvram_match("wl_wdsapply_x", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" value="0" name="wl_wdsapply_x" class="input" onClick="return change_common_radio(this, 'WLANConfig11b', 'wl_wdsapply_x', '0')" <% nvram_match("wl_wdsapply_x", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" value="1" name="wl_wdsapply_x" class="input" <% nvram_match("wl_wdsapply_x", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" value="0" name="wl_wdsapply_x" class="input" <% nvram_match("wl_wdsapply_x", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>			
 			</table>

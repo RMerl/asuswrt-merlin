@@ -21,6 +21,19 @@ function clickevent(){
 		};
 }
 
+function checkDuplicateName(newname, teststr){
+	var existing_string = decodeURIComponent(teststr.join(','));
+	existing_string = "," + existing_string + ",";
+	var newstr = "," + trim(newname) + ","; 
+
+	var re = new RegExp(newstr,"gi")
+	var matchArray =  existing_string.match(re);
+	if (matchArray != null)
+		return true;
+	else
+		return false;
+}
+
 function validForm(){
 	showtext($("alert_msg1"), "");
 	showtext($("alert_msg2"), "");

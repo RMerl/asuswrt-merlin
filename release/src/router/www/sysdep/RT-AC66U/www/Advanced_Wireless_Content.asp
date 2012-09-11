@@ -181,7 +181,8 @@ function applyRule(){
 		
 		if(auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius")
 			document.form.next_page.value = "/Advanced_WSecurity_Content.asp";
-		
+			
+		/*  Viz 2012.08.15 seems ineeded
 		inputCtrl(document.form.wl_crypto, 1);
 		inputCtrl(document.form.wl_wpa_psk, 1);
 		inputCtrl(document.form.wl_wep_x, 1);
@@ -191,7 +192,7 @@ function applyRule(){
 		inputCtrl(document.form.wl_key3, 1);
 		inputCtrl(document.form.wl_key4, 1);
 		inputCtrl(document.form.wl_phrase_x, 1);
-		inputCtrl(document.form.wl_wpa_gtk_rekey, 1);
+		inputCtrl(document.form.wl_wpa_gtk_rekey, 1);*/
 
 		if(sw_mode == 2)
 			document.form.action_wait.value = "5";
@@ -410,7 +411,7 @@ function checkBW(){
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 4);"><#WLANConfig11b_x_Mode11g_itemname#></a></th>
 					<td>									
 						<select name="wl_nmode_x" class="input_option" onChange="change_wl_nmode(this);">
-							<option value="0" <% nvram_match("wl_nmode_x", "0","selected"); %>>Auto</option>
+							<option value="0" <% nvram_match("wl_nmode_x", "0","selected"); %>><#Auto#></option>
 							<option value="1" <% nvram_match("wl_nmode_x", "1","selected"); %>>N Only</option>
 							<option value="2" <% nvram_match("wl_nmode_x", "2","selected"); %>>Legacy</option>
 						</select>
@@ -496,7 +497,7 @@ function checkBW(){
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);"><#WLANConfig11b_WEPType_itemname#></a></th>
 					<td>
 				  		<select name="wl_wep_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_wep_x');">
-								<option value="0" <% nvram_match("wl_wep_x", "0", "selected"); %>>None</option>
+								<option value="0" <% nvram_match("wl_wep_x", "0", "selected"); %>><#wl_securitylevel_0#></option>
 								<option value="1" <% nvram_match("wl_wep_x", "1", "selected"); %>>WEP-64bits</option>
 								<option value="2" <% nvram_match("wl_wep_x", "2", "selected"); %>>WEP-128bits</option>
 				  		</select>

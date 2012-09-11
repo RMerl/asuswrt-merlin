@@ -3,7 +3,7 @@
  * Mostly stolen from: dhcpcd - DHCP client daemon
  * by Yoichi Hariguchi <yoichi@fore.com>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #include <netinet/if_ether.h>
 #include <net/if_arp.h>
@@ -118,8 +118,13 @@ int FAST_FUNC arpping(uint32_t test_nip,
 				break;
 			}
 		}
-		timeout_ms -= (unsigned)monotonic_ms() - prevTime;
-	} while (timeout_ms > 0);
+		timeout_ms -= (unsigned)monotonic_ms() - prevTime + 1;
+
+		/* We used to check "timeout_ms > 0", but
+		 * this is more under/overflow-resistant
+		 * (people did see overflows here when system time jumps):
+		 */
+	} while ((unsigned)timeout_ms <= 2000);
 
  ret:
 	close(s);

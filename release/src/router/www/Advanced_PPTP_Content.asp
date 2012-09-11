@@ -245,6 +245,7 @@ function addRow_Group(upper){
 		return false;	
 	}			
 
+	if(validForm()){
 		//Viz check same rule  //match(username) is not accepted
 		if(item_num >=2){
 			for(i=0; i<rule_num; i++){	
@@ -260,6 +261,8 @@ function addRow_Group(upper){
 		addRow(document.form.pptpd_clientlist_username ,1);
 		addRow(document.form.pptpd_clientlist_password, 0);
 		showpptpd_clientlist();		
+		
+	}
 }
 
 function del_Row(r){
@@ -464,7 +467,7 @@ function set_pptpd_broadcast(obj){
 											</td>
 									  </tr>
 										<tr>
-											<th><#vpn_broadcast#></th>
+											<th><#vpn_network_place#></th>
 											<td>
 												<input type="radio" value="1" id="pptpd_broadcast_ppp_yes" name="pptpd_broadcast_ppp" onchange="set_pptpd_broadcast(this);"/><#checkbox_Yes#>
 												<input type="radio" value="0" id="pptpd_broadcast_ppp_no" name="pptpd_broadcast_ppp" onchange="set_pptpd_broadcast(this);"/><#checkbox_No#>										

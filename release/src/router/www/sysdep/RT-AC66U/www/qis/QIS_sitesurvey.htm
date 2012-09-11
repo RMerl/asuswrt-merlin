@@ -6,6 +6,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="stylesheet" type="text/css" href="/form_style.css">
 <link rel="stylesheet" type="text/css" href="qis_style.css">
+<script type="text/javascript" src="/general.js"></script>
 <script type="text/JavaScript">
 
 var wlc_state = '<% nvram_get("wlc_state"); %>';
@@ -13,10 +14,12 @@ var wlc_sbstate = '<% nvram_get("wlc_sbstate"); %>';
 var wlc_scan_state = '<% nvram_get("wlc_scan_state"); %>';
 var aplist = new Array();
 var waitingTime = 50;
+var curState = "init";
 
 function QKInternet_load_body(){
 	parent.set_step("t2");
 	changeAuthMode("open");
+	setParentAP();
 
 	if(parent.getBand != "" && parseInt(parent.getBand) < document.form._wlc_band.length && parseInt(parent.getBand) > -1)
 		document.form._wlc_band[parseInt(parent.getBand)].selected = true;
@@ -25,8 +28,13 @@ function QKInternet_load_body(){
 }
 
 function key_event(evt){
-	if(evt.keyCode == 13)
-		gen_aplist();
+	if(evt.keyCode == 13){
+		if(curState == "setAuth")
+			submitForm();
+		else
+			setAuthMethod();
+	}
+
 	return;
 }
 
@@ -54,7 +62,7 @@ function gen_aplist(){
 	aplist[0][7] = "";
 	aplist[0][8] = "";
 
-	submitForm(0);
+	return cehckPAP(0);
 }
 
 function validate_psk(psk_obj){
@@ -114,9 +122,14 @@ function validForm(_idx){
 }
 
 /* ["band","ssid","channel","auth","encrypt","signal","macaddr","wlmode","status"] */
-function submitForm(_idx){
+function cehckPAP(_idx){
 	if(_idx != null){
 		if(validForm(_idx)){
+			if(aplist[_idx][1] == ""){
+				alert("Please select a parent AP!");
+				return false;
+			}
+		
 			// band
 			if(aplist[_idx][0] == "2G")
 				document.form.wlc_band.value = 0;
@@ -145,23 +158,16 @@ function submitForm(_idx){
 				document.form.wlc_wep.value = 0;
 				document.form.wlc_wpa_psk.value = document.form.thekey.value;
 			}
+
+			return true;				
 		}
 		else
-			return;				
+			return false;
 	}
 	else{
 		alert("Please select a parent AP!");
-		return;
+		return false;
 	}
-
-	document.getElementById("loadingIcon").style.display = "";
-	parent.document.getElementById("stassid").innerHTML = document.form.wlc_ssid.value;
-	parent.document.getElementById("stassid").innerHTML += "<br/><span style='color:#FC0;font-weight:normal;'>Please unplug the network cable connected to WAN port in media bridge mode.</span>";
-	parent.w_Setting_tmp = document.form.w_Setting.value;
-	document.form.http_username.value = parent.document.QKform.http_username.value;
-	document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
-	document.form.target = "hidden_frame";
-	document.form.submit();
 }
 
 function changeAuthMode(_val){
@@ -203,6 +209,121 @@ function changeCrypto(_val){
 
 	document.form._wlc_crypto.value = _val;
 }
+
+function setAuthMethod(){
+	if(!gen_aplist())
+		return false;
+
+	curState = "setAuth";
+	document.getElementById("setPAP").style.display = "none";
+	document.getElementById("setAuth").style.display = "";
+	document.getElementById("btnPre").style.display = "";
+	document.getElementById("btnNext").style.display = "none";
+	document.getElementById("btnSubmit").style.display = "";
+
+	if(document.form.wlc_band.value == 1){
+		document.getElementById("wl0_ssid").disabled = false;
+		document.getElementById("wl0_ssid").style.display = "";
+		document.getElementById("wl0_wpa_psk").disabled = false;
+		document.getElementById("wl0_wpa_psk").style.display = "";
+		document.getElementById("wl0_auth_mode_x").disabled = false;
+		document.getElementById("wl0_crypto").disabled = false;
+		document.getElementById("wl1_ssid").disabled = true;
+		document.getElementById("wl1_ssid").style.display = "none";
+		document.getElementById("wl1_wpa_psk").disabled = true;
+		document.getElementById("wl1_wpa_psk").style.display = "none";
+		document.getElementById("wl1_auth_mode_x").disabled = true;
+		document.getElementById("wl1_crypto").disabled = true;
+		document.getElementById("wl0_ssid").focus();
+	}
+	else{
+		document.getElementById("wl0_ssid").disabled = true;
+		document.getElementById("wl0_ssid").style.display = "none";
+		document.getElementById("wl0_wpa_psk").disabled = true;
+		document.getElementById("wl0_wpa_psk").style.display = "none";
+		document.getElementById("wl0_auth_mode_x").disabled = true;
+		document.getElementById("wl0_crypto").disabled = true;
+		document.getElementById("wl1_ssid").disabled = false;
+		document.getElementById("wl1_ssid").style.display = "";
+		document.getElementById("wl1_wpa_psk").disabled = false;
+		document.getElementById("wl1_wpa_psk").style.display = "";
+		document.getElementById("wl1_auth_mode_x").disabled = false;
+		document.getElementById("wl1_crypto").disabled = false;
+		document.getElementById("wl1_ssid").focus();
+	}
+}
+
+function submitForm(){
+	if(document.getElementById('wl0_ssid').disabled == false){
+		if(document.form.wl0_wpa_psk.value == ""){
+				if(!confirm("<#QIS_confirm_recommand_encryp#>")){
+						document.form.wl0_wpa_psk.focus();				
+						return false;
+				}		
+		}
+
+		if(!validate_string_ssid(document.form.wl0_ssid))
+			return false;
+
+		if(document.form.wl0_wpa_psk.value.length > 0){
+			document.form.wl0_auth_mode_x.value = "psk2";
+			if(!validate_psk(document.form.wl0_wpa_psk))
+					return false;
+		}else
+			document.form.wl0_auth_mode_x.value = "open";
+
+	}else{
+		/* use previous settings */		
+		document.form.wl0_ssid.value = decodeURIComponent("<% nvram_char_to_ascii("", "wl0_ssid"); %>");
+		document.form.wl0_wpa_psk.value = decodeURIComponent("<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>");
+		document.form.wl0_auth_mode_x.value = "<% nvram_get("wl0_auth_mode_x"); %>";
+	}
+
+	if (document.getElementById('wl1_ssid').disabled == false){
+		if(document.form.wl1_wpa_psk.value == ""){
+				if(!confirm("<#QIS_confirm_recommand_encryp#>")){
+						document.form.wl1_wpa_psk.focus();
+						document.form.wl1_wpa_psk.select();
+						return false;
+				}		
+		}	
+
+		if(!validate_string_ssid(document.form.wl1_ssid))
+				return false;
+
+		if(document.form.wl1_wpa_psk.value.length > 0){
+				document.form.wl1_auth_mode_x.value = "psk2";
+				if(!validate_psk(document.form.wl1_wpa_psk))
+						return false;
+		}else
+				document.form.wl1_auth_mode_x.value = "open";
+
+	}else{
+		/* use previous settings */		
+		document.form.wl1_ssid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>');
+		document.form.wl1_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>');
+		document.form.wl1_auth_mode_x.value = "<% nvram_get("wl1_auth_mode_x"); %>";		
+	}
+
+	document.getElementById("loadingIcon").style.display = "";
+	parent.document.getElementById("stassid").innerHTML = document.form.wlc_ssid.value;
+	parent.document.getElementById("stassid").innerHTML += "<br/><span style='color:#FC0;font-weight:normal;'>Please unplug the network cable connected to WAN port in media bridge mode.</span>";
+	parent.w_Setting_tmp = document.form.w_Setting.value;
+	document.form.http_username.value = parent.document.QKform.http_username.value;
+	document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
+	document.form.target = "hidden_frame";
+
+	document.form.submit();
+}
+
+function setParentAP(){
+	curState = "setPAP";
+	document.getElementById("setPAP").style.display = "";
+	document.getElementById("setAuth").style.display = "none";
+	document.getElementById("btnPre").style.display = "none";
+	document.getElementById("btnNext").style.display = "";
+	document.getElementById("btnSubmit").style.display = "none";
+}
 </script>
 </head>
 <body onkeydown="key_event(event);" onLoad="QKInternet_load_body();" onunload="">
@@ -227,6 +348,10 @@ function changeCrypto(_val){
 <input type="hidden" name="wlc_crypto" value="<% nvram_get("wlc_crypto"); %>">
 <input type="hidden" name="wlc_wpa_psk" value="<% nvram_get("wlc_wpa_psk"); %>">
 <input type="hidden" name="wlc_nbw_cap" value="2">
+<input type="hidden" name="wl0_auth_mode_x" id="wl0_auth_mode_x" value="psk2" disabled>
+<input type="hidden" name="wl0_crypto" id="wl0_crypto" value="aes" disabled>
+<input type="hidden" name="wl1_auth_mode_x" id="wl1_auth_mode_x" value="psk2" >
+<input type="hidden" name="wl1_crypto" id="wl1_crypto" value="aes">
 <!-- wireless client end -->
 <input type="hidden" name="sw_mode" value="3">
 <input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>">
@@ -252,7 +377,7 @@ function changeCrypto(_val){
 		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 </div>
 
-<div>
+<div id="setPAP">
 		<div style="margin-left:25px;" class="QISGeneralFont">
 			<#APSurvey_action_search_again_hint2#>
 			<br/>
@@ -303,7 +428,7 @@ function changeCrypto(_val){
 			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);"><#WLANConfig11b_WEPType_itemname#></a></th>
 			<td>
 		  		<select name="__wlc_crypto" id="__wlc_crypto" class="input_option" onChange="changeCrypto(this.value);">
-						<option value="None">None</option>
+						<option value="None"><#wl_securitylevel_0#></option>
 						<option value="WEP">WEP</option>
 		  		</select>
 					<input type="hidden" name="_wlc_crypto" value="">
@@ -332,8 +457,33 @@ function changeCrypto(_val){
 		</table>
 </div>
 
+<div id="setAuth">
+		<div style="margin-left:25px;" class="QISGeneralFont">
+			<#qis_wireless_setting#>
+		</div>
+		<br><br>
+		<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="padding-left:100px;">
+			<tr id="wl_unit_field">
+				<th width="25%"><#QIS_finish_wireless_item1#></th>
+				<td>
+					<input type="text" id="wl0_ssid" name="wl0_ssid" onkeypress="return is_string(this, event);" style="height:25px;display:none;" class="input_32_table" maxlength="32" value="" disabled>
+					<input type="text" id="wl1_ssid" name="wl1_ssid" onkeypress="return is_string(this, event);" style="height:25px;" class="input_32_table" maxlength="32" value="">
+				</td>
+	  	</tr>
+			<tr id="wl_unit_field">
+				<th width="25%"><#Network_key#></th>
+				<td>
+					<input id="wl0_wpa_psk" name="wl0_wpa_psk" type="password" autocapitalization="off" value="" style="height:25px;display:none;" class="input_32_table" maxlength="65" disabled>
+					<input id="wl1_wpa_psk" name="wl1_wpa_psk" type="password" autocapitalization="off" value="" style="height:25px;" class="input_32_table" maxlength="65">
+				</td>
+	  	</tr>
+		</table>
+</div>
+
 <div class="apply_gen" style="margin-top:30px">
-	<input type="button" value="<#CTL_Add_enrollee#>" onclick="gen_aplist();" class="button_gen" >
+	<input id="btnPre" type="button" value="<#btn_pre#>" onclick="setParentAP();" class="button_gen" >
+	<input id="btnNext" type="button" value="<#CTL_next#>" onclick="setAuthMethod();" class="button_gen" >
+	<input id="btnSubmit" type="button" value="<#CTL_Add_enrollee#>" onclick="submitForm();" class="button_gen" >
 	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 </div> 
 

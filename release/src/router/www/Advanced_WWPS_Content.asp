@@ -238,11 +238,14 @@ function show_wsc_status(wps_infos){
 		  || wps_infos[11].firstChild.nodeValue == "shared"
 		  || wps_infos[11].firstChild.nodeValue == "psk"
 			|| wps_infos[11].firstChild.nodeValue == "wpa"
+			|| wps_infos[11].firstChild.nodeValue == "wpa2"
+			|| wps_infos[11].firstChild.nodeValue == "wpawpa2"
 			|| wps_infos[11].firstChild.nodeValue == "radius"){
-		$("wps_enable_hint").innerHTML = "<#WPS_weptkip_hint#><br><#wsc_mode_hint1#><a href=\"Advanced_Wireless_Content.asp\"> <#menu5_1_1#></a> <#wsc_mode_hint2#>"
+		$("wps_enable_hint").innerHTML = "<#WPS_weptkip_hint#><br><#wsc_mode_hint1#> <a style='color:#FC0; text-decoration: underline; font-family:Lucida Console;' href=\"Advanced_Wireless_Content.asp?af=wl_auth_mode_x\"><#menu5_1_1#></a> <#wsc_mode_hint2#>"
 		$("wps_state_tr").style.display = "none";
 		$("devicePIN_tr").style.display = "none";
 		$("wpsmethod_tr").style.display = "none";
+		$("wps_band").style.display = "none";
 
 		return;
 	}
@@ -454,7 +457,7 @@ function changemethod(wpsmethod){
 
 		<table id="WPSConnTble" width="100%" border="1" align="center" cellpadding="4" cellspacing="0"  class="FormTable" style="display:none;">	
 
-			<div  class="formfontdesc" style="padding-bottom:10px;padding-top:10px;display:none;" id="wpsDesc">
+			<div  class="formfontdesc" style="width:97%;padding-bottom:10px;padding-top:10px;display:none;" id="wpsDesc">
 				<#WPS_add_client#>
 			</div>
 			

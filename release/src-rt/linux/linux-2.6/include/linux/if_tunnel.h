@@ -3,10 +3,19 @@
 
 #include <linux/types.h>
 
+#ifdef __KERNEL__
+#include <linux/ip.h>
+#include <linux/in6.h>
+#endif
+
 #define SIOCGETTUNNEL   (SIOCDEVPRIVATE + 0)
 #define SIOCADDTUNNEL   (SIOCDEVPRIVATE + 1)
 #define SIOCDELTUNNEL   (SIOCDEVPRIVATE + 2)
 #define SIOCCHGTUNNEL   (SIOCDEVPRIVATE + 3)
+#define SIOCGET6RD      (SIOCDEVPRIVATE + 8)
+#define SIOCADD6RD      (SIOCDEVPRIVATE + 9)
+#define SIOCDEL6RD      (SIOCDEVPRIVATE + 10)
+#define SIOCCHG6RD      (SIOCDEVPRIVATE + 11)
 
 #define GRE_CSUM	__constant_htons(0x8000)
 #define GRE_ROUTING	__constant_htons(0x4000)
@@ -26,6 +35,13 @@ struct ip_tunnel_parm
 	__be32			i_key;
 	__be32			o_key;
 	struct iphdr		iph;
+};
+
+struct ip_tunnel_6rd {
+	struct in6_addr		prefix;
+	__be32			relay_prefix;
+	__u16			prefixlen;
+	__u16			relay_prefixlen;
 };
 
 #endif /* _IF_TUNNEL_H_ */

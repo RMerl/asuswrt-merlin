@@ -18,7 +18,9 @@ CFLAGS	+= $(if $(WLAN_ComponentIncPath),$(WLAN_ComponentIncPath),$(addprefix -I,
 CFLAGS	+= -s -O2
 LDFLAGS += -L$(TOP)/nvram -L$(INSTALLDIR)/nvram/usr/lib -lnvram
 LDFLAGS += -L$(TOP)/shared -L$(INSTALLDIR)/shared/usr/lib -lshared
-
+ifeq ($(RTAC66U), y)
+#CFLAGS  += -DACS_ONCE
+endif
 
 vpath %.c $(SRCBASE)/shared/
 

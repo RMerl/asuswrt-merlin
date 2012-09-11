@@ -652,6 +652,9 @@ int smbc_check_connectivity(char *puri)
 	struct cli_state *cli = cli_initialise();
 	struct sockaddr_storage ss;
 
+	//- JerryLin add
+	cli->timeout = 300;
+
 	zero_sockaddr(&ss);
 	cli->port = SMB_PORT1;
 	status = cli_connect(cli, server, &ss);

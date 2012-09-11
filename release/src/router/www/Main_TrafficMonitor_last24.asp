@@ -4,9 +4,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
-<meta name="svg.render.forceflash" content="false" />	
-
+<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE10" />
+<meta name="svg.render.forceflash" content="false" />
 <title><#Web_Title#> - <#traffic_monitor#> : <#menu4_2_2#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
@@ -210,10 +209,10 @@ function Zoom(func){
 	      		<tr>
 					<td bgcolor="#4D595D" valign="top"  >
 		  				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="TMTable">
-
         			<tr>
 						<td>
-						<table width="100%" ><tr>
+						<table width="100%" >
+							<tr>
 							<td  class="formfonttitle" align="left">								
 										<div style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
 									</td>
@@ -253,6 +252,7 @@ function Zoom(func){
 							<div class="formfontcontent"><p><a id="faq0" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;"><#traffic_monitor#> FAQ</a></p></div>	
           				</td>
         			</tr>    			
+
         			<tr>
 						<td>
 							<span id="tab-area"></span>										
@@ -361,21 +361,6 @@ function Zoom(func){
 							</div>							
 						</table>
 					</td>
-				</tr>
- 
-				<!--tr>
-					<td bgcolor="#FFFFFF">
-						<table width="100%"  border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-							<tr align="right">
-							<td colspan="2">
-								 <input type="submit" class="button" onclick="onSubmitCtrl(this, ' Refresh ')" value="<#CTL_refresh#>" name="action" />
-							</td>
-		 				 	</tr>
-						</table>
-					</td>
-				</tr-->
-
-				</td>
 				</tr>
 			</tbody>		
 			</table>	

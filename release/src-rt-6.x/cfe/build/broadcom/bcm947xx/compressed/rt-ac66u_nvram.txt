@@ -914,7 +914,7 @@ secret_code=12345670
 hw_version=1.5
 
 # Bootloader version
-bl_version=1.0.1.0
+bl_version=1.0.1.1
 
 # for NAND flash
 bootflags=1
@@ -922,3 +922,6 @@ ntype=0
 
 # serial number
 serial_no=CAIAA2000001
+
+# ODM Product ID
+odmpid=ASUS

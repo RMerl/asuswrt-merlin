@@ -48,6 +48,7 @@ var ddns_server = '<% nvram_get("ddns_server_x"); %>';
 var ddns_hostname = '<% nvram_get("ddns_hostname_x"); %>';
 var apps_array = <% apps_info("asus"); %>;
 var apps_dev = "<% nvram_get("apps_dev"); %>";
+var dummyShareway = '<% nvram_get("dummyShareway"); %>';
 
 function initial(){
 	flash_button();
@@ -103,13 +104,14 @@ function showdisklink(){
 		}
 		else{
 			$("ddnslink2").style.display = "";
-			$("desc_2").style.display = "";
+			$("desc_2").style.display = "";			
 			$("ddnslink2_LAN").style.display = "";
-			$("selected_account_link").href = 'ftp://'+accounts[0]+'@<% nvram_get("ddns_hostname_x"); %>';
-			showtext($("selected_account_str"), 'ftp://'+accounts[0]+'@<% nvram_get("ddns_hostname_x"); %>');
-			$("selected_account_link_LAN").href = 'ftp://'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
-			showtext($("selected_account_str_LAN"), 'ftp://'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>');
+			$("selected_account_link").href = 'ftp://'+accounts[0]+':'+accounts[0]+'@<% nvram_get("ddns_hostname_x"); %>';
+			showtext($("selected_account_str"), 'ftp://<% nvram_get("ddns_hostname_x"); %>');
+			$("selected_account_link_LAN").href = 'ftp://'+accounts[0]+':'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
+			showtext($("selected_account_str_LAN"), 'ftp://<% nvram_get("lan_ipaddr"); %>');
 		}
+		
 		if('<% nvram_get("enable_samba"); %>' == '1' && navigator.appName.indexOf("Microsoft") >= 0){
 			$("desc_3").style.display = "";
 			$("ddnslink3_LAN").style.display = "";
@@ -118,6 +120,12 @@ function showdisklink(){
 	else{
 		$("noWAN_link").style.display = "";
 		$("ddnslink3").style.display = "";
+		if(FTP_mode == 1){
+				$("ftp_account_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
+		}else{
+				$("ftp_account_link").href = 'ftp://'+accounts[0]+':'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
+				$("ftp_account_link").innerHTML = 'ftp://<% nvram_get("lan_ipaddr"); %>';
+		}		
 		if('<% nvram_get("enable_samba"); %>' == '1' && navigator.appName.indexOf("Microsoft") >= 0){
 			$("desc_3").style.display = "";
 			$("ddnslink3_LAN").style.display = "";
@@ -261,7 +269,7 @@ function DMhint(){
 	<li id="desc_1">
 	  <span id="ddnslink1" style="display:none;"><#Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#><br><a target="_blank" href="ftp://<% nvram_get("ddns_hostname_x"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a></span>
 	  <span id="ddnslink2" style="display:none;"><#Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#><br><a id="selected_account_link" href="" onclick="alert('<#AiDiskWelcome_desp1#>');" target="_blank"><span id="selected_account_str"></span></a></span>
-	  <span id="ddnslink3" style="display:none;"><#AiDisk_linktoFTP_fromInternet#><br><a target="_blank" href="ftp://<% nvram_get("lan_ipaddr"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a></span>
+	  <span id="ddnslink3" style="display:none;"><#AiDisk_linktoFTP_fromInternet#><br><a id="ftp_account_link" target="_blank" href="" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a></span>
 		<span id="noWAN_link" style="display:none;"></span>
 	</li>
 	<li id="desc_2" style="display:none;">

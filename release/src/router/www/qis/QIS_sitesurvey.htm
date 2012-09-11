@@ -215,7 +215,6 @@ function showSiteTable(){
 					htmlCode +=	'<td width="10%" style="text-align:center;">5GHz</td>';
 				
 				// signal
-				//htmlCode += '<td width="10%" style="text-align:center;"><img src="/images/survey/radio'+ Math.ceil(aplist[i][5]/20) +'.png"/></td></tr>';
 				htmlCode += '<td width="10%" style="text-align:center;"><div style="margin-left:13px;" id="radio_'+ Math.ceil(aplist[i][5]/20) +'"></div></td></tr>';
 				
 			}
@@ -454,6 +453,7 @@ function submitForm(_idx){	//["band","ssid","channel","auth","encrypt","signal",
 
 function rescan(){
 	issubmit = 0;
+	document.form.wlc_ssid.value = decodeURIComponent(document.form.wlc_ssid_orig.value); // Here is ascii code!!
 	document.getElementById("SearchingIcon").style.display = "";
 	document.form.flag.value = "sitesurvey";
 	document.form.target = "hidden_frame";
@@ -487,7 +487,7 @@ function gotoPage(dst_url, flag){
 <input type="hidden" name="action_script" value="restart_wlcscan">
 <!-- wireless client -->
 <input type="hidden" name="wlc_band" value="<% nvram_get("wlc_band"); %>">
-<input type="hidden" name="wlc_ssid" value="<% nvram_char_to_ascii("", "wlc_ssid"); %>">
+<input type="hidden" name="wlc_ssid_orig" value="<% nvram_char_to_ascii("", "wlc_ssid"); %>">
 <input type="hidden" name="wlc_wep" value="<% nvram_get("wlc_wep"); %>">
 <input type="hidden" name="wlc_key" value="<% nvram_get("wlc_key"); %>">
 <input type="hidden" name="wlc_wep_key" value="<% nvram_get("wlc_wep_key"); %>">
@@ -496,6 +496,7 @@ function gotoPage(dst_url, flag){
 <input type="hidden" name="wlc_wpa_psk" value="<% nvram_get("wlc_wpa_psk"); %>">
 <input type="hidden" name="wlc_nbw_cap" value="<% nvram_get("wlc_nbw_cap"); %>">
 <input type="hidden" name="wlc_ure_ssid" value="<% nvram_get("wlc_ure_ssid"); %>">
+<input type="hidden" name="wlc_ssid" value="">
 <!-- wireless client end -->
 <input type="hidden" name="lan_proto" value="dhcp">
 <input type="hidden" name="sw_mode" value="2" disabled>
@@ -533,7 +534,7 @@ function gotoPage(dst_url, flag){
 </div>
 
 <div class="apply_gen" style="margin-top:10px">
-	<input type="button" id="nextButton" value="Rescan" onclick="rescan();" class="button_gen" >
+	<input type="button" id="nextButton" value="<#QIS_rescan#>" onclick="rescan();" class="button_gen" >
 	<img id="SearchingIcon" style="display:none;" src="/images/InternetScan.gif">
 </div> 
 

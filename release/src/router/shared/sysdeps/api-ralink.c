@@ -7,7 +7,9 @@
 #include <fcntl.h>
 #include <typedefs.h>
 #include <bcmnvram.h>
+#include <sys/ioctl.h>
 #include <ralink.h>
+#include <iwlib.h>
 #include "utils.h"
 #include "shutils.h"
 #include <shared.h>
@@ -189,9 +191,24 @@ int check_imagefile(char *fname)
 	else return 1;
 }
 
+unsigned int get_radio_status(char *ifname)
+{
+	int socket_id;
+	struct iwreq wrq;
+	unsigned int data = 0;
+	socket_id = socket(AF_INET, SOCK_DGRAM, 0);
+	strcpy(wrq.ifr_name, ifname);
+	wrq.u.data.length = sizeof(data);
+	wrq.u.data.pointer = (caddr_t) &data;
+	wrq.u.data.flags = 0;
+	if(ioctl(socket_id, RTPRIV_IOCTL_RADIO_STATUS, &wrq) == -1)
+		printf("ioctl error\n");
+	close(socket_id);
+	return data;
+}
+
 int get_radio(int unit, int subunit)
 {
-	uint32 n;
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 
 	if (subunit > 0)
@@ -199,14 +216,15 @@ int get_radio(int unit, int subunit)
 	else
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
-	// TODO: retrieve radio status through driver ioctl
-	return nvram_match(strcat_r(prefix, "radio", tmp), "1");
+	// TODO: handle subunit
+	if (subunit > 0)
+		return nvram_match(strcat_r(prefix, "radio", tmp), "1");
+	else
+		return get_radio_status(nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
 }
 
 void set_radio(int on, int unit, int subunit)
 {
-	uint32 n;
-	char tmpstr[32];
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 
 	if (subunit > 0)
@@ -221,11 +239,5 @@ void set_radio(int on, int unit, int subunit)
 	if(unit==0)
 		doSystem("iwpriv %s set RadioOn=%d", WIF_2G, on);
 	else doSystem("iwpriv %s set RadioOn=%d", WIF, on);
-
-#if 0
-	sprintf(tmpstr, "%d", on);
-        nvram_set(strcat_r(prefix, "radio", tmp),  tmpstr);
-	nvram_commit();
-#endif
 }
 

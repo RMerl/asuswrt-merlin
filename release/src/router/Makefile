@@ -64,6 +64,7 @@ ifeq ($(RTCONFIG_DNSMASQ),y)
 obj-y += dnsmasq
 else
 obj-y += dproxy
+obj-y += udhcpd
 endif
 obj-y += etc
 # obj-y += vlan # use Busybox vconfig
@@ -114,9 +115,12 @@ obj-$(RTCONFIG_USB_MODEM) += sdparm-1.02
 obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch
 obj-$(RTCONFIG_USB_MODEM) += comgt-0.32
 
-obj-$(RTCONFIG_USB_MODEM) += madwimax-0.1.1 # for Samsung WiMAX
-obj-$(RTCONFIG_USB_BECEEM) += openssl # Beceem need it.
+obj-$(RTCONFIG_USB_BECEEM) += madwimax-0.1.1 # for Samsung WiMAX
+obj-$(RTCONFIG_USB_BECEEM) += openssl # for Beceem, GCT WiMAX
 obj-$(RTCONFIG_USB_BECEEM) += Beceem_BCMS250 # for Beceem WiMAX
+obj-$(RTCONFIG_USB_BECEEM) += wpa_supplicant-0.7.3 # for GCT WiMAX
+obj-$(RTCONFIG_USB_BECEEM) += zlib # for GCT WiMAX
+obj-$(RTCONFIG_USB_BECEEM) += gctwimax-0.0.3rc4 # for GCT WiMAX
 
 obj-y += libdisk
 
@@ -218,7 +222,6 @@ obj-$(RTCONFIG_WEBDAV) += lighttpd-1.4.29
 
 # Add for ASUS Components
 obj-y += udpxy
-obj-y += udhcpd
 ifeq ($(CONFIG_BCMWL5),y)
 obj-y += lltd
 ifeq ($(RTCONFIG_BCMWL6),y)
@@ -592,8 +595,9 @@ rmconf: config/mconf
 
 roldconf: config/conf
 	@config/conf -o $(CONFIG_IN)
-	@$(MAKE) shared-clean rc-clean nvram-clean httpd-clean prebuilt-clean libbcmcrypto-clean dnsmasq-clean
+	@$(MAKE) shared-clean rc-clean nvram-clean httpd-clean prebuilt-clean libbcmcrypto-clean
 #	@$(MAKE) iptables-clean ebtables-clean pppd-clean zebra-clean openssl-clean mssl-clean mdu-clean ppp-clean
+	@$(MAKE) dnsmasq-clean iproute2-clean
 
 kconf:
 	@$(MAKE) -C $(LINUXDIR) config
@@ -1193,6 +1197,39 @@ bpalogin-install:
 	install -D bpalogin/bpalogin $(INSTALLDIR)/bpalogin/usr/sbin/bpalogin
 	$(STRIP) $(INSTALLDIR)/bpalogin/usr/sbin/bpalogin
 
+wpa_supplicant-0.7.3/stamp-h1:
+	touch $@
+
+wpa_supplicant-0.7.3: $@/stamp-h1
+	$(MAKE) -C $@/src/eap_peer
+
+wpa_supplicant-0.7.3-install: wpa_supplicant-0.7.3
+	install -D wpa_supplicant-0.7.3/src/eap_peer/libeap.so.0.0.0 $(INSTALLDIR)/wpa_supplicant-0.7.3/usr/lib/libeap.so.0.0.0
+	$(STRIP) $(INSTALLDIR)/wpa_supplicant-0.7.3/usr/lib/libeap.so.0.0.0
+	cd $(INSTALLDIR)/wpa_supplicant-0.7.3/usr/lib && \
+	ln -sf libeap.so.0.0.0 $(INSTALLDIR)/wpa_supplicant-0.7.3/usr/lib/libeap.so.0
+	ln -sf libeap.so.0.0.0 $(INSTALLDIR)/wpa_supplicant-0.7.3/usr/lib/libeap.so
+
+wpa_supplicant-0.7.3-clean:
+	$(MAKE) -C wpa_supplicant-0.7.3/src/eap_peer clean
+	rm -f wpa_supplicant-0.7.3/stamp-h1
+
+gctwimax-0.0.3rc4/stamp-h1:
+	touch $@
+
+gctwimax-0.0.3rc4: $@/stamp-h1
+	$(MAKE) -C $@
+
+gctwimax-0.0.3rc4-install: gctwimax-0.0.3rc4
+	install -D gctwimax-0.0.3rc4/gctwimax $(INSTALLDIR)/gctwimax-0.0.3rc4/usr/sbin/gctwimax
+	$(STRIP) $(INSTALLDIR)/gctwimax-0.0.3rc4/usr/sbin/gctwimax
+	install -D gctwimax-0.0.3rc4/src/event.sh $(INSTALLDIR)/gctwimax-0.0.3rc4/usr/share/event.sh
+	install -D gctwimax-0.0.3rc4/src/gctwimax.conf $(INSTALLDIR)/gctwimax-0.0.3rc4/usr/share/gctwimax.conf
+
+gctwimax-0.0.3rc4-clean:
+	$(MAKE) -C gctwimax-0.0.3rc4 clean
+	rm -f gctwimax-0.0.3rc4/stamp-h1
+
 wpa_supplicant:
 	$(MAKE) -C $@/wpa_supplicant EXTRACFLAGS="-Os $(EXTRACFLAGS)"
 
@@ -1442,6 +1479,11 @@ zlib-install: zlib
 	@$(SEP)
 # commented out for mt-daapd-svn-1696
 ifneq ($(MEDIA_SERVER_STATIC),y)
+	install -d $(INSTALLDIR)/zlib/usr/lib
+	install -D zlib/libz.so.1 $(INSTALLDIR)/zlib/usr/lib/
+	$(STRIP) $(INSTALLDIR)/zlib/usr/lib/libz.so.1
+endif
+ifeq ($(RTCONFIG_USB_BECEEM),y)
 	install -d $(INSTALLDIR)/zlib/usr/lib
 	install -D zlib/libz.so.1 $(INSTALLDIR)/zlib/usr/lib/
 	$(STRIP) $(INSTALLDIR)/zlib/usr/lib/libz.so.1

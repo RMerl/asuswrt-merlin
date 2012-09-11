@@ -69,26 +69,38 @@ function show_share_link(){
 		if(FTP_mode == 1 || dummyShareway == 0){
 			$("ddnslink1").style.display = ""; 
 			$("desc_2").style.display = ""; 
-			$("ddnslink1_LAN").style.display = ""; 
+			$("ddnslink1_LAN").style.display = ""; 			
+			showtext($("ddnslink1_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink1_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
+			$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 		}
 		else if(FTP_mode == 2){
 			$("ddnslink2").style.display = "";
 			$("desc_2").style.display = ""; 
-			$("ddnslink2_LAN").style.display = ""; 
+			$("ddnslink2_LAN").style.display = ""; 			
+			showtext($("ddnslink2_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink2_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
+			$("ddnslink2_LAN_link").href = 'ftp://'+accounts[0]+':'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
+			$("ddnslink2_LAN_link").innerHTML = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 		}
 	}
 	else{
-		$("noWAN_link").style.display = "";
-		
+		$("noWAN_link").style.display = "";		
 		if(FTP_status != 1)
 			showtext($("noWAN_link"), '<#linktoFTP_no_1#>');
-		else if(ddns_enable != 1){	//Viz 2011.10{
+		else if(ddns_enable != 1){
 			showtext($("noWAN_link"), "<#linktoFTP_no_2#>");
 			$("desc_2").style.display = ""; 
-			$("ddnslink1_LAN").style.display = ""; //Viz 2011.10}
-		}else if(ddns_hostname.length <= 0)
+			$("ddnslink1_LAN").style.display = "";			
+			if(FTP_mode == 1){
+					showtext($("ddnslink1_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink1_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
+					$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
+			}else{
+					showtext($("ddnslink1_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink1_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
+					$("ddnslink1_LAN_link").href = 'ftp://'+accounts[0]+':'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
+					$("ddnslink1_LAN_link").innerHTML = 'ftp://<% nvram_get("lan_ipaddr"); %>';
+			}		
+		}else if(ddns_hostname.length <= 0){
 			showtext($("noWAN_link"), "<#linktoFTP_no_3#>");
-		else
+		}else
 			alert("FTP and ddns exception");
 	}
 }
@@ -159,10 +171,10 @@ function go_next_page(){
 		  				</li>
 		  				<li id="desc_2" style="display:none;margin-top:8px;">
 		  					<span id="ddnslink1_LAN" style="display:none;">
-		  					<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a target="_blank" href="ftp://<% nvram_get("lan_ipaddr"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>
+		  					<!-- #t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a target="_blank" href="ftp://<% nvram_get("lan_ipaddr"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a -->
 		  					</span>
 		  					<span id="ddnslink2_LAN" style="display:none;">
-		  					<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a target="_blank" href="ftp://<% nvram_get("lan_ipaddr"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>
+		  					<!-- #t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a target="_blank" href="ftp://<% nvram_get("lan_ipaddr"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a -->
 		  					</span>
 		  				</li>
 							<li><#AiDisk_moreconfig#></li>

@@ -93,6 +93,14 @@ static int rctest_main(int argc, char *argv[])
 			else stop_phy_tempsense();
 		}
 #endif
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+		else if (strcmp(argv[1], "psta_monitor") == 0) {
+			if(on) start_psta_monitor();
+			else stop_psta_monitor();
+		}
+#endif
+#endif
 		else if (strcmp(argv[1], "qos") == 0) {//qos test
 			if(on){
 #ifdef RTCONFIG_RALINK
@@ -100,8 +108,10 @@ static int rctest_main(int argc, char *argv[])
 				{
 					modprobe_r("hw_nat");
 					sleep(1);
+#if 0
 					system("echo 0 > /proc/sys/net/ipv4/conf/default/force_igmp_version");
 					system("echo 0 > /proc/sys/net/ipv4/conf/all/force_igmp_version");
+#endif
 				}
 #endif
 				add_iQosRules(get_wan_ifname(0));
@@ -111,13 +121,15 @@ static int rctest_main(int argc, char *argv[])
 			{
 #ifdef RTCONFIG_RALINK
 				if (nvram_get_int("hwnat") &&
-					!((nvram_get_int("fw_pt_l2tp") || nvram_get_int("fw_pt_ipsec") || nvram_get_int("wl0_mrate_x") || nvram_get_int("wl1_mrate_x"))) &&
+//					!((nvram_get_int("fw_pt_l2tp") || nvram_get_int("fw_pt_ipsec") || nvram_get_int("wl0_mrate_x") || nvram_get_int("wl1_mrate_x"))) &&
 					!is_module_loaded("hw_nat"))
 				{
+#if 0
 					system("echo 2 > /proc/sys/net/ipv4/conf/default/force_igmp_version");
 					system("echo 2 > /proc/sys/net/ipv4/conf/all/force_igmp_version");
-					sleep(1);
+#endif
 					modprobe("hw_nat");
+					sleep(1);
 				}
 #endif
 				del_iQosRules();
@@ -215,6 +227,11 @@ static const applets_t applets[] = {
 #endif
 #ifdef RTCONFIG_FANCTRL
 	{ "phy_tempsense",		phy_tempsense_main		},
+#endif
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+	{ "psta_monitor",		psta_monitor_main		},
+#endif
 #endif
 #ifdef RTCONFIG_USB
 	{ "usbled",			usbled_main			},
@@ -415,6 +432,15 @@ int main(int argc, char **argv)
 			printf("ATE_ERROR\n");
                 return 0;
 	}
+#ifdef RTCONFIG_DSL
+	else if(!strcmp(base, "gen_ralink_config")){
+		if(argc != 3){
+			printf("Usage: gen_ralink_config [band] [is_iNIC]\n");
+			return 0;
+		}
+		return gen_ralink_config(atoi(argv[1]), atoi(argv[2]));
+	}
+#endif
 	else if(!strcmp(base, "run_telnetd")) {
 		run_telnetd();
 		return 0;
@@ -446,10 +472,12 @@ int main(int argc, char **argv)
 	}
 #endif
 #ifdef RTCONFIG_BCMWL6
+#ifdef ACS_ONCE
         else if (!strcmp(base, "acsd_restart_wl")) {
 		restart_wireless_acsd();
 		return 0;
         }
+#endif
 #endif
 	else if (!strcmp(base, "add_multi_routes")) {
 		return add_multi_routes();

@@ -1,5 +1,6 @@
-Asuswrt-Merlin - build 3.0.0.3.178.16 (xx-Sept-2012)
+Asuswrt-Merlin - build 3.0.0.4.220.17 (xx-Sept-2012)
 ====================================================
+
 
 About
 -----
@@ -55,7 +56,8 @@ Here is a list of features that Asuswrt-merlin brings over the original firmware
 - User-defined options for WAN DHCP queries (required by some ISPs)
 - Name field on the DHCP reservation list
 - Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
-- Dual WAN support (both failover and load balancing supported) (EXPERIMENTAL)
+- *** Disabled - currently broken *** Dual WAN support (both failover and 
+  load balancing supported) (EXPERIMENTAL)
 - Disk spindown after user-configurable inactivity timeout
 - System info summary page
 - Wireless client IP and hostname on the Wireless Log page
@@ -227,6 +229,8 @@ mount \\\\192.168.1.100\\ShareName /cifs1 -t cifs -o "username=User,password=Pas
 
 
 * Dual WAN (EXPERIMENTAL) *
+(***Disabled as of 3.0.0.4.220.17, since it's currently broken***)
+
 Asuswrt originally supports using a USB 3G/4G modem to use as a 
 failover Internet connection.  Dual WAN is the next step, also 
 developped by Asus but left disabled so far in their official 
@@ -273,6 +277,8 @@ Asuswrt-Merlin.  One such guide I recommend is this one:
 
 http://www.howtogeek.com/60774/connect-to-your-home-network-from-anywhere-with-openvpn-and-tomato/
 
+Also look at the Wiki on Github, I have posted some 
+information there.
 
 
 
@@ -287,19 +293,29 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.3.178.16:
+3.0.0.4.220.17:
+   - NEW: Rebased on 3.0.0.4.220, which includes:
+            * Fixes to IPv6 6rd
+            * Fixes to AC66U Wifi + QoS
+            * AiCloud launch
+            * Interference mode once again enabled
+
+
+3.0.0.3.178.16 Beta:
    - NEW: (RT-N66U, RT-AC66U) Implemented OpenVPN, based on code written by
           Keith Moyer (from the Tomato project).
    - NEW: Added crontab command
+   - NEW: Enabled AiCloud, now that it's been launched by Asus
    - FIXED: (RT-AC66U) Would crash when accessing a LAN device through either 
             VPN or the NAT Loopback (GRO is now disabled for that device)
    - FIXED: dnsmasq was listening to all interfaces by default, allowing 
             even dhcp requests to be serviced from the wan side if you
             had the firewall disabled (Asus bug) (fixed by dev0id)
    - FIXED: Default disk idle spindown now set to 0 (disabled).
+   - FIXED: Corrupted WOL list when using IE.
    - CHANGED: Upgraded openssl to 1.0.0j.
-   - CHANGED: Included fully working openssl command (show allow to
-              create keypairs and certs now).
+   - CHANGED: Included fully functional openssl command (will allow you to
+              create keypairs and certificates from the router).
    - CHANGED: Removed power adjustments from the Performance page, as they
               are redundant, and not as reliable.
    - CHANGED: (RT-N16) Disabled Dual WAN, as it exhibited many issues, and I 

@@ -138,6 +138,11 @@ function initial(){
 		parent.showLoading(restart_time, "waiting");
 		setTimeout("top_delay_redirect('"+current_page+"');", restart_time*1000); 
 	}
+	else if(action_script == "reboot"){
+		parent.stopFlag = 1;
+		parent.showLoading(restart_time);
+		setTimeout("parent.parent.location.href='"+next_page+"';", (restart_time+2)*1000);
+	}
 	else if(page_modified == 1){
 		parent.showLoading(restart_time, "waiting");
 		if(current_page.length > 0){
@@ -167,11 +172,6 @@ function initial(){
 				setTimeout("parent.parent.detectLANstatus('"+current_page+"', '');", restart_time*1000);
 			}
 		}
-	}
-	else if(action_script == "reboot"){
-		parent.stopFlag = 1;
-		parent.showLoading(restart_time);
-		setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
 	}
 	else{
 		if(current_page.length > 0){

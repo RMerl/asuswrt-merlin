@@ -11,29 +11,53 @@
 
 <script type="text/javascript" src="../state.js"></script>
 <script type="text/javascript">
-var PoolDevice = parent.pool_devices()[parent.getSelectedPoolOrder()];
-var PoolName = parent.pool_names()[parent.getSelectedPoolOrder()];
-var folderlist = parent.get_sharedfolder_in_pool(PoolDevice);
+<% get_AiDisk_status(); %>
+var PoolDevice = pool_devices()[parent.getSelectedPoolOrder()];
+var PoolName = pool_names()[parent.getSelectedPoolOrder()];
+var folderlist = get_sharedfolder_in_pool(PoolDevice);
 var selectedFolder = folderlist[parent.getSelectedFolderOrder()];
 
 function initial(){
 	showtext($("selected_Pool"), PoolName);
 	showtext($("selected_Folder"), showhtmlspace(showhtmland(selectedFolder)));
-	
+	document.modifyFolderForm.new_folder.focus();
 	clickevent();
 }
 
 function clickevent(){
-	$("Submit").onclick = function(){
-			if(validForm()){
-				$("pool").value = PoolDevice;
-				$("folder").value = selectedFolder;
+	if(navigator.userAgent.search("MSIE") == -1)
+		document.getElementById('new_folder').addEventListener('keydown',keyDownHandler,false);		
+	else
+		document.getElementById('new_folder').attachEvent('onkeydown',keyDownHandler);
+	
+	$("Submit").onclick = submit;
+}
+function submit(){
+	if(validForm()){
+		$("pool").value = PoolDevice;
+		$("folder").value = selectedFolder;
+		if(parent.document.form.current_page.value != "mediaserver.asp" && parent.document.form.current_page.value != "cloud_sync.asp")
+			parent.showLoading();
 				
-				parent.showLoading();
-				document.modifyFolderForm.submit();
-				parent.hidePop("apply");
-			}
-		};
+		document.modifyFolderForm.submit();
+		parent.hidePop("apply");
+		setTimeout(" ",2000);
+		if(parent.document.form.current_page.value == "mediaserver.asp" || parent.document.form.current_page.value == "cloud_sync.asp"){
+			parent.FromObject = parent.document.aidiskForm.layer_order.value.substring(0,5);
+			setTimeout(" ",2000);
+			parent.get_layer_items(parent.document.aidiskForm.layer_order.value.substring(0,5));				
+		}
+	}
+}
+function keyDownHandler(event){
+	var keyPressed = event.keyCode ? event.keyCode : event.which;
+
+	if(keyPressed == 13){   // Enter key
+		submit();
+	}	
+	else if(keyPressed == 27){  // Escape key
+		parent.hidePop("apply");
+	}	
 }
 
 function validForm(){
@@ -100,7 +124,7 @@ function NoSubmit(e){
       </tr>
       <tr>
         <th><#NewFolderName#>: </th>
-        <td><input class="input_25_table" type="text" name="new_folder" id="new_folder" onkeypress="return NoSubmit(event)"></td>
+        <td><input class="input_25_table" type="text" name="new_folder" id="new_folder" onkeypress="return NoSubmit(event)" ></td>
       </tr>
       <tr bgcolor="#E6E6E6">
         <th colspan="2" align="right"><input id="Submit" type="button" class="button_gen" value="<#CTL_modify#>"></th>

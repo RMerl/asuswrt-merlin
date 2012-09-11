@@ -4,7 +4,7 @@
  *
  * Loosely based on the isc-dhcpd implementation by dhankins@isc.org
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 #ifdef DNS_COMPR_TESTING
 # define FAST_FUNC /* nothing */

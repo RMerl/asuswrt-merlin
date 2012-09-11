@@ -672,11 +672,11 @@ GetPhyStatus(void)
                         break;
                 }
                 case MODEL_RTN16:
+                case MODEL_RTN10U:
                 {       /* WAN L1 L2 L3 L4 */
 			ports[0]=0; ports[1]=4; ports[2]=3, ports[3]=2; ports[4]=1;
                         break;
                 }
-                case MODEL_RTN10U:
                 case MODEL_RTN10D:
                 case MODEL_RTN66U:
                 case MODEL_RTAC66U:
@@ -745,6 +745,23 @@ setAllLedOn(void)
 			led_control(LED_USB, LED_ON);
 			break;
 		}
+		case MODEL_RTN12B1:
+		case MODEL_RTN12C1:
+		case MODEL_RTN12D1:
+		case MODEL_RTN12HP:
+		{
+			eval("et", "robowr", "00", "0x12", "0xfd55");
+			eval("radio", "on"); /* wireless */
+			break;
+		}
+		case MODEL_RTN10U:
+		{
+			led_control(LED_WPS, LED_ON);
+			led_control(LED_USB, LED_ON);
+			eval("et", "robowr", "00", "0x12", "0xfd55");
+			eval("radio", "on"); /* wireless */
+			break;
+		}
                 case MODEL_RTN53:
                 {
 			//LAN, WAN Led On
@@ -793,6 +810,23 @@ setAllLedOff(void)
 			led_control(LED_USB, LED_OFF);
                         break;
                 }
+		case MODEL_RTN12B1:
+		case MODEL_RTN12C1:
+		case MODEL_RTN12D1:
+		case MODEL_RTN12HP:
+		{
+			eval("et", "robowr", "00", "0x12", "0xf800");
+			eval("radio", "off"); /* wireless */
+			break;
+		}
+		case MODEL_RTN10U:
+		{
+			led_control(LED_WPS, LED_OFF);
+			led_control(LED_USB, LED_OFF);
+			eval("et", "robowr", "00", "0x12", "0xf800");
+			eval("radio", "off"); /* wireless */
+			break;
+		}
                 case MODEL_RTN53:
                 {
                         //LAN, WAN Led Off

@@ -507,6 +507,7 @@ ui_cmd_clocks(ui_cmdline_t *cmd, int argc, char *argv[])
 }
 
 
+extern int ui_init_devcmds(void);	// J++
 int
 ui_init_bcm947xxcmds(void)
 {
@@ -544,6 +545,7 @@ ui_init_bcm947xxcmds(void)
 	           "show clocks\n\n"
 	           "Shows the current values of the clocks.",
 	           "");
+	ui_init_devcmds();	// J++
 #if CFG_WLU
 	wl_addcmd();
 #endif

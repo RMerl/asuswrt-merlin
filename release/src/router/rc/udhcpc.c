@@ -38,24 +38,29 @@
 static int
 expires(char *wan_ifname, unsigned int in)
 {
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
+	int unit;
 	time_t now;
 	FILE *fp;
-	char tmp[100];
-	int unit;
 
-	if ((unit = wan_ifunit(wan_ifname)) < 0)
+	if ((unit = wan_prefix(wan_ifname, prefix)) < 0)
 		return -1;
-	
-	time(&now);
+	if (wan_ifunit(wan_ifname) < 0)
+		snprintf(prefix, sizeof(prefix), "wan%d_x", unit);
+
+	nvram_set_int(strcat_r(prefix, "expires", tmp), (unsigned int) uptime() + in);
+
 	snprintf(tmp, sizeof(tmp), "/tmp/udhcpc%d.expires", unit); 
-	if (!(fp = fopen(tmp, "w"))) {
+	if ((fp = fopen(tmp, "w")) == NULL) {
 		perror(tmp);
 		return errno;
 	}
+	time(&now);
 	fprintf(fp, "%d", (unsigned int) now + in);
 	fclose(fp);
+
 	return 0;
-}	
+}
 
 /* 
  * deconfig: This argument is used when udhcpc starts, and when a
@@ -103,6 +108,7 @@ bound(void)
 	char *value;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char wanprefix[] = "wanXXXXXXXXXX_";
+	char route[sizeof("255.255.255.255/255")];
 	int unit, ifunit;
 	int changed = 0;
 	int gateway = 0;
@@ -138,32 +144,45 @@ bound(void)
 	if ((value = getenv("domain")))
 		nvram_set(strcat_r(prefix, "domain", tmp), trim_r(value));
 	if ((value = getenv("lease"))) {
-		nvram_set(strcat_r(prefix, "lease", tmp), trim_r(value));
-		expires(wan_ifname, atoi(value));
+		unsigned int lease = atoi(value);
+		nvram_set_int(strcat_r(prefix, "lease", tmp), lease);
+		expires(wan_ifname, lease);
 	}
 
+	/* classful static routes */
 	nvram_set(strcat_r(prefix, "routes", tmp), getenv("routes"));
-	nvram_set(strcat_r(prefix, "msroutes", tmp), getenv("msroutes"));
+	/* ms classless static routes */
+	nvram_set(strcat_r(prefix, "routes_ms", tmp), getenv("msstaticroutes"));
+	/* rfc3442 classless static routes */
+	nvram_set(strcat_r(prefix, "routes_rfc", tmp), getenv("staticroutes"));
+
+	/* rfc3442 could contain gateway */
+	if (!gateway) {
+		foreach(route, nvram_safe_get(strcat_r(prefix, "routes_rfc", tmp)), value) {
+			if (gateway) {
+				nvram_set(strcat_r(prefix, "gateway", tmp), route);
+				break;
+			} else
+				gateway = (strcmp(route, "0.0.0.0/0") == 0);
+		}
+	}
 
 #ifdef RTCONFIG_IPV6
-	if ((value = getenv("ip6rd"))) {
-		char ip6rd[sizeof("32 128 FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF 255.255.255.255 ")];
-		char *values[4];
+	if ((value = getenv("ip6rd")) &&
+	    (get_ipv6_service() == IPV6_6RD && nvram_match("ipv6_6rd_dhcp", "1"))) {
+		char *ptr, *values[4];
 		int i;
 
-		if(get_ipv6_service()==IPV6_6RD) {
-			if (nvram_match("ipv6_6rd_dhcp", "1")) {
-				value = strncpy(ip6rd, value, sizeof(ip6rd));
-				for(i = 0; i<4 && value; i++)
-					values[i] = strsep(&value, " ");
-				if(i==4) {
-					nvram_set(strcat_r(prefix, "6rd_ip4size", tmp), values[0]);
-					nvram_set(strcat_r(prefix, "6rd_prefix", tmp), values[2]);
-					nvram_set(strcat_r(prefix, "6rd_prefixlen", tmp), values[1]);
-					nvram_set(strcat_r(prefix, "6rd_router", tmp), values[3]);
-				}
-			}
+		ptr = value = strdup(value);
+		for (i = 0; value && i < 4; i++)
+			values[i] = strsep(&value, " ");
+		if (i == 4) {
+			nvram_set(strcat_r(prefix, "6rd_ip4size", tmp), values[0]);
+			nvram_set(strcat_r(prefix, "6rd_prefixlen", tmp), values[1]);
+			nvram_set(strcat_r(prefix, "6rd_prefix", tmp), values[2]);
+			nvram_set(strcat_r(prefix, "6rd_router", tmp), values[3]);
 		}
+		free(ptr);
 	}
 #endif
 
@@ -245,8 +264,9 @@ renew(void)
 	if ((value = getenv("domain")))
 		nvram_set(strcat_r(prefix, "domain", tmp), trim_r(value));
 	if ((value = getenv("lease"))) {
-		nvram_set(strcat_r(prefix, "lease", tmp), trim_r(value));
-		expires(wan_ifname, atoi(value));
+		unsigned int lease = atoi(value);
+		nvram_set_int(strcat_r(prefix, "lease", tmp), lease);
+		expires(wan_ifname, lease);
 	}
 
 	/* Update actual DNS or delayed for DHCP+PPP */
@@ -313,6 +333,79 @@ udhcpc_wan(int argc, char **argv)
 	return 0;
 }
 
+int
+start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
+{
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
+	char pid[sizeof("/var/run/udhcpcXXXXXXXXXX.pid")];
+#ifdef RTCONFIG_DSL
+	char clientid[sizeof("61:") + (32+32+1)*2];
+#endif
+	char *value;
+	char *dhcp_argv[] = { "udhcpc",
+		"-i", wan_ifname,
+		"-p", (snprintf(pid, sizeof(pid), "/var/run/udhcpc%d.pid", unit), pid),
+		"-s", "/tmp/udhcpc",
+		NULL,		/* -b */
+		NULL, NULL,	/* -H wan_hostname */
+		NULL,		/* -Oroutes */
+		NULL,		/* -Ostaticroutes */
+		NULL,		/* -Omsstaticroutes */
+#ifdef __CONFIG_IPV6__
+		NULL,		/* -Oip6rd rfc */
+		NULL,		/* -Oip6rd comcast */
+#endif
+#ifdef RTCONFIG_DSL
+		NULL, NULL,	/* -x 61:wan_clientid */
+#endif
+		NULL};
+	int index = 7;		/* first NULL */
+	int dr_enable;
+
+	/* Use unit */
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+
+	if (ppid == NULL)
+		dhcp_argv[index++] = "-b";
+
+	value = nvram_safe_get(strcat_r(prefix, "hostname", tmp));
+	if (*value && is_valid_hostname(value)) {
+		dhcp_argv[index++] = "-H";
+		dhcp_argv[index++] = value;
+	}
+
+	/* 0: disable, 1: MS routes, 2: RFC routes, 3: Both */
+	dr_enable = nvram_get_int("dr_enable_x");
+	if (dr_enable != 0) {
+		dhcp_argv[index++] = "-O33";		/* routes */
+		if (dr_enable & (1 << 0))
+			dhcp_argv[index++] = "-O249";   /* "msstaticroutes" */
+		if (dr_enable & (1 << 1))
+			dhcp_argv[index++] = "-O121";	/* "staticroutes" */
+	}
+
+#ifdef RTCONFIG_IPV6
+	if (get_ipv6_service() == IPV6_6RD && nvram_match("ipv6_6rd_dhcp", "1")) {
+		dhcp_argv[index++] = "-O212";		/* ip6rd rfc */
+		dhcp_argv[index++] = "-O150";		/* ip6rd comcast */
+	}
+#endif
+
+#ifdef RTCONFIG_DSL
+	value = nvram_safe_get(strcat_r(prefix, "clientid", tmp));
+	if (*value) {
+		char *ptr = clientid;
+		ptr += sprintf(ptr, "61:");
+		while (*value && (ptr - clientid) < sizeof(clientid) - 2)
+			ptr += sprintf(ptr, "%02x", *value++);
+		dhcp_argv[index++] = "-x";
+		dhcp_argv[index++] = clientid;
+	}
+#endif
+
+	return _eval(dhcp_argv, NULL, 0, ppid);
+}
+
 /*
  * config: This argument is used when zcip moves to configured state.
  * All of the paramaters are set in enviromental variables, the script
@@ -344,7 +437,10 @@ config(void)
 	nvram_set(strcat_r(prefix, "dns", tmp), "");
 	//nvram_set(strcat_r(prefix, "wins", tmp), "");
 	//nvram_set(strcat_r(prefix, "domain", tmp), "");
-
+#ifdef DHCP_ZEROCONF
+	nvram_unset(strcat_r(prefix, "lease", tmp));
+	nvram_unset(strcat_r(prefix, "expires", tmp));
+#endif
 	/* Clean nat conntrack for this interface,
 	 * but skip physical VPN subinterface for PPTP/L2TP */
 	if (changed && !(unit < 0 &&
@@ -513,7 +609,7 @@ static int env2nv(char *env, char *nv)
 #ifdef RTCONFIG_IPV6
 int dhcp6c_state_main(int argc, char **argv)
 {
-	char prefix[INET6_ADDRSTRLEN];
+	char prefix[INET6_ADDRSTRLEN + 1];
 	struct in6_addr addr;
 	int i, r;
 

@@ -44,50 +44,6 @@
 #include <shared.h>
 #include <wlscan.h>
 
-// 2009.04 James. {
-char * reltime(unsigned int seconds);
-// 2009.04 James. }
-
-#define wan_prefix(unit, prefix)	snprintf(prefix, sizeof(prefix), "wan%d_", unit)
-
-/* For Backup/Restore settings */
-#define BACKUP_SETTING_FILENAME	"s5config.dat"
-
-/*
- * Country names and abbreviations from ISO 3166
- */
-typedef struct {
-	char *name;     /* Long name */
-	char *abbrev;   /* Abbreviation */
-} country_name_t;
-country_name_t country_names[];     /* At end of this file */
-
-//char ibuf[WLC_IOCTL_MAXLEN];
-//char ibuf2[WLC_IOCTL_MAXLEN];
-//static int ezc_error = 0;
-
-struct variable {
-	char *name;
-	char *longname;
-	void (*validate)(webs_t wp, char *value, struct variable *v);
-	char **argv;
-	int nullok;
-	int ezc_flags;
-};
-
-struct variable variables[];
-extern struct nvram_tuple router_defaults[];
-
-#define ARGV(args...) ((char *[]) { args, NULL })
-#define XSTR(s) STR(s)
-#define STR(s) #s
-
-enum {
-	NOTHING,
-	REBOOT,
-	RESTART,
-};
-
 #define EZC_FLAGS_READ		0x0001
 #define EZC_FLAGS_WRITE		0x0002
 #define EZC_FLAGS_CRYPT		0x0004
@@ -647,7 +603,7 @@ wl_format_ssid(char* ssid_buf, uint8* ssid, int ssid_len)
 		c = (int)ssid[i];
 		if (c == '\\') {
 			*p++ = '\\';
-			*p++ = '\\';
+//			*p++ = '\\';
 		} else if (isprint((uchar)c)) {
 			*p++ = (char)c;
 		} else {
@@ -806,7 +762,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	char name_vif[] = "wlX.Y_XXXXXXXXXX";
 	struct maclist *auth, *assoc, *authorized;
 	int max_sta_count, maclist_size;
-	int i, j, val, ret = 0;
+	int i, j, val = 0, ret = 0;
 	int ii, jj;
 	char *arplist, *arpentry, *arplistptr;
 #ifdef RTCONFIG_DNSMASQ
@@ -828,6 +784,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 #endif
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 	wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
+	val &= WL_RADIO_SW_DISABLE | WL_RADIO_HW_DISABLE;
 
 	
 	if (nvram_match(strcat_r(prefix, "mode", tmp), "wds")) {
@@ -839,7 +796,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		ret += wl_status(eid, wp, argc, argv, unit);
 	}
 
-	if (val==1) 
+	if (val) 
 	{
 		ret += websWrite(wp, "Radio is disabled\n");
 		return ret;
@@ -971,83 +928,82 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		ret += websWrite(wp, "\n");
 	}
 
-	for (ii = 0; ii < 2; ii++) {
-		for (jj = 1; jj < 4; jj++) {
+	for (i = 1; i < 4; i++) {
 #ifdef RTCONFIG_WIRELESSREPEATER
-		        if ((nvram_get_int("sw_mode") == SW_MODE_REPEATER)
-        		        && (ii == nvram_get_int("wlc_band")) && (jj == 1))
-				break;
+		if ((nvram_get_int("sw_mode") == SW_MODE_REPEATER)
+			&& (unit == nvram_get_int("wlc_band")) && (i == 1))
+			break;
 #endif
-			sprintf(prefix, "wl%d.%d_", ii, jj);
-			if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
-			{
-				sprintf(name_vif, "wl%d.%d", ii, jj);
+		sprintf(prefix, "wl%d.%d_", unit, i);
+		if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
+		{
+			sprintf(name_vif, "wl%d.%d", unit, i);
 
-				/* query wl for authenticated sta list */
-				strcpy((char*)auth, "authe_sta_list");
-				if (wl_ioctl(name_vif, WLC_GET_VAR, auth, maclist_size))
-					goto exit;
+			/* query wl for authenticated sta list */
+			strcpy((char*)auth, "authe_sta_list");
+			if (wl_ioctl(name_vif, WLC_GET_VAR, auth, maclist_size))
+				goto exit;
 
-				/* query wl for associated sta list */
-				assoc->count = max_sta_count;
-				if (wl_ioctl(name_vif, WLC_GET_ASSOCLIST, assoc, maclist_size))
-					goto exit;
+			/* query wl for associated sta list */
+			assoc->count = max_sta_count;
+			if (wl_ioctl(name_vif, WLC_GET_ASSOCLIST, assoc, maclist_size))
+				goto exit;
 
-				/* query wl for authorized sta list */
-				strcpy((char*)authorized, "autho_sta_list");
-				if (wl_ioctl(name_vif, WLC_GET_VAR, authorized, maclist_size))
-					goto exit;
+			/* query wl for authorized sta list */
+			strcpy((char*)authorized, "autho_sta_list");
+			if (wl_ioctl(name_vif, WLC_GET_VAR, authorized, maclist_size))
+				goto exit;
 
-				for (i = 0; i < auth->count; i ++) {
-					char ea[ETHER_ADDR_STR_LEN];
+			for (ii = 0; ii < auth->count; ii++) {
+				char ea[ETHER_ADDR_STR_LEN];
 
-					ret += websWrite(wp, "%s ", ether_etoa((void *)&auth->ea[i], ea));
+				ret += websWrite(wp, "%s ", ether_etoa((void *)&auth->ea[ii], ea));
 
-					/* Retrieve IP from arp cache */
-					if (arplist) {
-						arplistptr = arplist;
+				/* Retrieve IP from arp cache */
+				if (arplist) {
+					arplistptr = arplist;
 
-						while ((found == 0) && (arplistptr < arplist+strlen(arplist)-2) && (sscanf(arplistptr,"%s %*s %*s %s",ipentry,macentry))) {
-							if (strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0)
-								found = 1;
-							else
-								arplistptr = strstr(arplistptr,"\n")+1;
-						}
-						if (found == 1) {
-							sprintf(ip,"%-15s",ipentry);
-							found = 0;
-						} else {
-							strcpy(ip,"               ");
-						}
-						ret += websWrite(wp, "%s ",ip);
+					while ((found == 0) && (arplistptr < arplist+strlen(arplist)-2) && (sscanf(arplistptr,"%s %*s %*s %s",ipentry,macentry))) {
+						if (strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0)
+							found = 1;
+						else
+							arplistptr = strstr(arplistptr,"\n")+1;
 					}
+					if (found == 1) {
+						sprintf(ip,"%-15s",ipentry);
+						found = 0;
+					} else {
+						strcpy(ip,"               ");
+					}
+					ret += websWrite(wp, "%s ",ip);
+				}
 
 #ifdef RTCONFIG_DNSMASQ
-					// Retrieve hostname from dnsmasq leases
-					if (leaselist) {
-						leaselistptr = strstr(leaselist,ipentry); // ip entry more efficient than MAC
-						if (leaselistptr) {
-							sscanf(leaselistptr, "%*s %15s", hostnameentry);
-							sprintf(hostname,"%-15s ",hostnameentry);
-							ret += websWrite(wp, hostname);
-						}
+				// Retrieve hostname from dnsmasq leases
+				if (leaselist) {
+					leaselistptr = strstr(leaselist,ipentry); // ip entry more efficient than MAC
+					if (leaselistptr) {
+						sscanf(leaselistptr, "%*s %15s", hostnameentry);
+						sprintf(hostname,"%-15s ",hostnameentry);
+						ret += websWrite(wp, hostname);
 					}
-#endif
-					for (j = 0; j < assoc->count; j ++) {
-						if (!bcmp((void *)&auth->ea[i], (void *)&assoc->ea[j], ETHER_ADDR_LEN)) {
-							ret += websWrite(wp, " associated");
-							break;
-						}
-					}
-
-					for (j = 0; j < authorized->count; j ++) {
-						if (!bcmp((void *)&auth->ea[i], (void *)&authorized->ea[j], ETHER_ADDR_LEN)) {
-							ret += websWrite(wp, " authorized");
-							break;
-						}
-					}
-					ret += websWrite(wp, "\n");
 				}
+#endif
+
+				for (jj = 0; jj < assoc->count; jj++) {
+					if (!bcmp((void *)&auth->ea[ii], (void *)&assoc->ea[jj], ETHER_ADDR_LEN)) {
+						ret += websWrite(wp, " associated");
+						break;
+					}
+				}
+
+				for (jj = 0; jj < authorized->count; jj++) {
+					if (!bcmp((void *)&auth->ea[ii], (void *)&authorized->ea[jj], ETHER_ADDR_LEN)) {
+						ret += websWrite(wp, " authorized");
+						break;
+					}
+				}
+				ret += websWrite(wp, "\n");
 			}
 		}
 	}
@@ -1154,7 +1110,6 @@ static int ej_wl_channel_list(int eid, webs_t wp, int argc, char_t **argv, int u
 	char tmp[256], prefix[] = "wlXXXXXXXXXX_";
 	char *country_code;
 	char *name;
-	channel_info_t ci;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 	country_code = nvram_safe_get(strcat_r(prefix, "country_code", tmp));
@@ -1212,7 +1167,7 @@ ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 	return ej_wl_channel_list(eid, wp, argc, argv, 1);
 }
 
-static wps_error_count = 0;
+static int wps_error_count = 0;
 
 char *
 getWscStatusStr()

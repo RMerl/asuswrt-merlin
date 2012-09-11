@@ -118,6 +118,8 @@ static struct language_table language_tables[] = {
 	{"zh-hk", "CN"},
 	{"zh-cn", "CN"},
 	{"ms", "MS"},
+	{"ms-MY", "MS"},
+	{"ms-BN", "MS"},
 	{"th", "TH"},
 	{"th-TH", "TH"},
 	{"th-TH-TH", "TH"},

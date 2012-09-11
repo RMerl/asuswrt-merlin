@@ -5,8 +5,13 @@
 <title></title>
 <style>
 html{
-	margin:0px;
+	margin:0 0;
 	padding:0px;
+}
+body{
+	display: block;
+	overflow: hidden;
+	background: #e8e8e8;
 }
 #errorpage{
 	background-image:url('vlc_bg_img.jpg');
@@ -188,6 +193,7 @@ function createVLC() {
 		vlc = document.getElementById("vlcPlayer2");		
 	
 	if(vlc){
+		
 		var id = vlc.playlist.add(this_video);
 		vlc.playlist.playItem(id);
 		

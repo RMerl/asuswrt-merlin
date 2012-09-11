@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.h 330107 2012-04-27 22:04:17Z $
+ * $Id: linux_osl.h 341165 2012-06-26 19:16:22Z $
  */
 
 #ifndef _linux_osl_h_
@@ -471,14 +471,22 @@ do { \
 #ifdef HNDCTF
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 22)
 #define	SKIPCT	(1 << 6)
+#define	CHAINED	(1 << 7)
 #define	PKTSETSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->ctf_mac_len |= SKIPCT)
 #define	PKTCLRSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->ctf_mac_len &= (~SKIPCT))
 #define	PKTSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->ctf_mac_len & SKIPCT)
+#define	PKTSETCHAINED(osh, skb)	(((struct sk_buff*)(skb))->mac_len |= CHAINED)
+#define	PKTCLRCHAINED(osh, skb)	(((struct sk_buff*)(skb))->mac_len &= (~CHAINED))
+#define	PKTISCHAINED(skb)	(((struct sk_buff*)(skb))->mac_len & CHAINED)
 #else /* 2.6.22 */
 #define	SKIPCT	(1 << 2)
+#define	CHAINED	(1 << 3)
 #define	PKTSETSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->__unused |= SKIPCT)
 #define	PKTCLRSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->__unused &= (~SKIPCT))
 #define	PKTSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->__unused & SKIPCT)
+#define	PKTSETCHAINED(osh, skb)	(((struct sk_buff*)(skb))->__unused |= CHAINED)
+#define	PKTCLRCHAINED(osh, skb)	(((struct sk_buff*)(skb))->__unused &= (~CHAINED))
+#define	PKTISCHAINED(skb)	(((struct sk_buff*)(skb))->__unused & CHAINED)
 #endif /* 2.6.22 */
 #else /* HNDCTF */
 #define	PKTSETSKIPCT(osh, skb)
@@ -799,17 +807,18 @@ struct chain_node {
 #define	PKTCADDLEN(skb, l)	(CHAIN_NODE(skb)->bytes += (l))
 #define	PKTCSETFLAG(skb, fb)	(CHAIN_NODE(skb)->flags |= (fb))
 #define	PKTCCLRFLAG(skb, fb)	(CHAIN_NODE(skb)->flags &= ~(fb))
-#define	PKTCLINK(skb)		(PKTISCTF(NULL, (skb)) ? CHAIN_NODE(skb)->link : NULL)
+#define	PKTCLINK(skb)		(CHAIN_NODE(skb)->link)
 #define	PKTSETCLINK(skb, x)	(CHAIN_NODE(skb)->link = (struct sk_buff*)(x))
-#define	PKTISCHAINED(skb)	(PKTCLINK(skb) != NULL)
 #define FOREACH_CHAINED_PKT(skb, nskb) \
 	for (; (skb) != NULL; (skb) = (nskb)) \
-		if ((nskb) = PKTCLINK(skb), PKTSETCLINK((skb), NULL), 1)
+		if ((nskb) = (PKTISCHAINED(skb) ? PKTCLINK(skb) : NULL), \
+		    PKTSETCLINK((skb), NULL), 1)
 #define	PKTCFREE(osh, skb, send) \
 do { \
 	void *nskb; \
 	ASSERT((skb) != NULL); \
 	FOREACH_CHAINED_PKT((skb), nskb) { \
+		PKTCLRCHAINED((osh), (skb)); \
 		PKTFREE((osh), (skb), (send)); \
 	} \
 } while (0)

@@ -31,11 +31,14 @@ var now_flag = '<% get_parameter("flag"); %>';
 var original_switch_wantag = '<% nvram_get("switch_wantag"); %>';
 var contentM_height_orig = parent.document.getElementById("contentM").height;
 
+<% start_autodet(); %>
+
 function QKinternettype_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_type_head#>";
 	parent.set_step("t2");
 	document.applyForm.wan_proto.value = '<% nvram_get("wan_proto"); %>';
-	
+	detect_if_wan_plug();
+
 	if(document.applyForm.wan_proto.value == 'pppoe')
 		inputCCtrl4(document.applyForm.x_WANType, 1);
 	else if(document.applyForm.wan_proto.value == 'static')
@@ -302,6 +305,25 @@ function focus_radio(obj){
  	else
  			document.applyForm.x_WANType[0].focus(); 			 			
 }
+
+function detect_if_wan_plug(flag){
+	$.ajax({
+		url: '/result_of_get_changed_status_QIS.asp',
+		dataType: 'script',
+		
+		error: function(xhr){
+			detect_if_wan_plug();		
+		},
+		success: function(response){
+			if(autodet_state == 4) // ethernet did not plug
+				document.getElementById("wan_unplug").style.display = "";
+			else if(autodet_state == 0)
+				detect_if_wan_plug();
+			else
+				return true;
+		}
+	});	
+}
 </script>                      
 </head>  
 
@@ -330,6 +352,7 @@ function focus_radio(obj){
 <div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 
 <p class="QISGeneralFont"><#QIS_type_desc1#></p>
+<p id="wan_unplug" class="QISGeneralFont" style="color:#FC0;display:none;"><#web_redirect_suggestion1#></p>
 
 <div id='dhcppppoe_sec' style="margin-top:15px; margin-left:-40px;">
   <table id="tblsetting" class="QISform2" style="width:400px;margin-left:110px" border=0 align="left" cellpadding="2" cellspacing="0"> 
@@ -404,7 +427,7 @@ function focus_radio(obj){
 		<span>
 			<p style="color:#66CCFF;"><#Select_ISPfile#></p>
 			<select name="switch_wantag" class="input_option" onChange="ISP_Profile_Selection(this.value)">
-				<option value="none" <% nvram_match( "switch_wantag", "none", "selected"); %>>None</option>
+				<option value="none" <% nvram_match( "switch_wantag", "none", "selected"); %>><#wl_securitylevel_0#></option>
 				<option value="unifi_home" <% nvram_match( "switch_wantag", "unifi_home", "selected"); %>>Unifi-Home</option>
 				<option value="unifi_biz" <% nvram_match( "switch_wantag", "unifi_biz", "selected"); %>>Unifi-Business</option>
 				<option value="singtel_mio" <% nvram_match( "switch_wantag", "singtel_mio", "selected"); %>>Singtel-MIO</option>

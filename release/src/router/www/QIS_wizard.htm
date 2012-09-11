@@ -140,7 +140,10 @@ function QIS_load_body(){
 			submit();
 		}
 		else if(showCase != ""){
-			action = "/qis/QIS_" + showCase + ".htm";
+			if(showCase.split("?").length == 1)
+				action = "/qis/QIS_" + showCase + ".htm";
+			else
+				action = "/qis/QIS_" + showCase.split("?")[0] + ".htm?" + showCase.split("?")[1];
 			submit();
 		}
 		else{

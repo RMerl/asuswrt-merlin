@@ -34,12 +34,14 @@ function initial(){
 		hideAll(1);
 	}
 
+	/* Viz 2012.08.14 move to System page
 	if(HTTPS_support == -1 || '<% nvram_get("http_enable"); %>' == 0)
 		$("https_port").style.display = "none";
 	else if('<% nvram_get("http_enable"); %>' == 1)
 		$("http_port").style.display = "none";
 
 	hideport(document.form.misc_http_x[0].checked);
+	*/
 }
 
 function hideAll(_value){
@@ -80,7 +82,7 @@ function showPortItem(_value){
 
 function applyRule(){
 	if(validForm()){	
-		inputRCtrl1(document.form.misc_http_x, 1);
+		//Viz 2012.08.14 move to System page inputRCtrl1(document.form.misc_http_x, 1);
 		inputRCtrl1(document.form.misc_ping_x, 1);
 
 		showLoading();
@@ -89,6 +91,7 @@ function applyRule(){
 }
 
 function validForm(){
+	/*Viz 2012.08.14 move to System page
 	if (document.form.misc_http_x[0].checked) {
 		if (!validate_range(document.form.misc_httpport_x, 1024, 65535))
 			return false;
@@ -99,7 +102,7 @@ function validForm(){
 	} else {
 		document.form.misc_httpport_x.value = '<% nvram_get("misc_httpport_x"); %>';
 		document.form.misc_httpsport_x.value = '<% nvram_get("misc_httpsport_x"); %>';
-	}
+	}*/
 	
 	return true;
 }
@@ -190,7 +193,7 @@ function done_validating(action){
               		</select>
             	</td>
           	</tr>					
-          	<tr>
+          	<!-- Viz 2012.08.14 move to System page tr>
             	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,2);"><#FirewallConfig_x_WanWebEnable_itemname#></a></th>
             	<td>
               		<input type="radio" value="1" name="misc_http_x" class="input" onClick="hideport(1);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '1')" <% nvram_match("misc_http_x", "1", "checked"); %>><#checkbox_Yes#>
@@ -204,7 +207,7 @@ function done_validating(action){
 								&nbsp;
 								<span style="margin-left:5px;" id="https_port">HTTPS: <input type="text" maxlength="5" name="misc_httpsport_x" class="input_6_table" value="<% nvram_get("misc_httpsport_x"); %>" onKeyPress="return is_number(this,event);"/></span>
 							</td>
-          	</tr>         
+          	</tr -->
           	<tr>
           		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,5);"><#FirewallConfig_x_WanPingEnable_itemname#></a></th>
           		<td>

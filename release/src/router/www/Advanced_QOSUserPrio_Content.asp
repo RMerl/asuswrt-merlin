@@ -288,12 +288,13 @@ function switchPage(page){
 		  			<tr>
           				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
-					<tr><td>
-		  			<div class="formfontdesc"><#UserQoS_desc#></div>
-		  			</td></tr>
-					<tr><td>
-					<div class="formfontdesc" id="is_qos_enable_desc" style="color:#FFCC00;"><#UserQoS_desc_zero#></div>
-					</td></tr>
+					<tr>
+						<td style="font-style: italic;font-size: 14px;">
+		  				<div class="formfontdesc"><#UserQoS_desc#></div>
+							<div class="formfontdesc" id="is_qos_enable_desc" style="color:#FFCC00;"><#UserQoS_desc_zero#></div>
+		  			</td>
+					</tr>
+
 					<tr><td>		
 						<table width="100%"  border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
 							<thead>	
@@ -467,7 +468,7 @@ function switchPage(page){
 						<table width="100%"  border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" style="margin-top:8px;">
 							<thead>
 							<tr>
-							<td><#highest_prio_packet#> &nbsp;&nbsp;&nbsp;&nbsp;( <#prio_packet_note#> )
+							<td><#highest_prio_packet#><!-- &nbsp;&nbsp;&nbsp;&nbsp;( <#prio_packet_note#> ) -->
 									<a id="packet_table_display_id" style="margin-left:490px;display:none;" onclick='bw_crtl_display("packet_table_display_id", "packet_table");'>-</a>
 								</td>
 							</tr>
@@ -477,6 +478,10 @@ function switchPage(page){
 								<td>
 									<div id="packet_table">
 										<table width="100%" border="0" cellpadding="4" cellspacing="0">
+											<tr><td colspan="5" style="font-size:12px; border-collapse: collapse;border:0;">
+														<span><#prio_packet_note#></span>
+													</td>
+											</tr>
 											<tr>
 												<td style="font-size:12px; border-collapse: collapse;border:0;">		
 													<input type="checkbox" name="qos_ack_checkbox" <% nvram_match("qos_ack", "on", "checked"); %>>ACK

@@ -199,7 +199,7 @@ int chunkqueue_append_smb_file(chunkqueue *cq, buffer *fn, off_t offset, off_t l
 
 int chunkqueue_append_file(chunkqueue *cq, buffer *fn, off_t offset, off_t len) {
 	chunk *c;
-
+	
 	if (len == 0) return 0;
 
 	c = chunkqueue_get_unused_chunk(cq);

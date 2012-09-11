@@ -23,7 +23,7 @@ typedef li_MD5_CTX MD5_CTX;
 #define MD5_Final li_MD5_Final
 #endif
 
-#define DBE 1
+#define DBE 0
 
 const char base64_pad = '=';
 
@@ -448,13 +448,11 @@ void smbc_wrapper_response_401(server *srv, connection *con)
 	data_string *ds = (data_string *)array_get_element(con->request.headers, "user-Agent");
 
 	//- Browser response
-	if( ds && strstr( ds->value->ptr, "Mozilla" ) ){
+	if( ds && (strstr( ds->value->ptr, "Mozilla" )||strstr( ds->value->ptr, "Opera" )) ){
 		if(con->mode == SMB_BASIC||con->mode == DIRECT){
-			//if(con->smb_info&&con->smb_info->server->used){
-				Cdbg(DBE, "con->mode == SMB_BASIC -> return 401");
-				con->http_status = 401;
-				return;
-			//}
+			Cdbg(DBE, "con->mode == SMB_BASIC -> return 401");
+			con->http_status = 401;
+			return;
 		}
 	}
 	
@@ -546,10 +544,10 @@ void smbc_wrapper_response_404(server *srv, connection *con)
 
 buffer* smbc_wrapper_physical_url_path(server *srv, connection *con)
 {	
-	if(con->mode==SMB_BASIC||con->mode==SMB_NTLM)
+	if(con->mode==SMB_BASIC||con->mode==SMB_NTLM){
 		return con->url.path;
-	
-	return con->physical.path;
+	}
+	return con->physical.path;	
 }
 
 int smbc_get_usbdisk_permission(const char* user_name, const char* usbdisk_rel_sub_path, const char* usbdisk_sub_share_folder)
@@ -1364,7 +1362,7 @@ void read_sharelink_list(){
 				smb_sharelink_info->expiretime = atoi(pch);	
 				time_t cur_time = time(NULL);				
 				double offset = difftime(smb_sharelink_info->expiretime, cur_time);					
-				if( offset < 0.0 ){
+				if( smb_sharelink_info->expiretime !=0 && offset < 0.0 ){
 					free_share_link_info(smb_sharelink_info);
 					free(smb_sharelink_info);
 					b_addto_list = 0;
@@ -1442,7 +1440,7 @@ void read_sharelink_list(){
 				smb_sharelink_info->expiretime = atoi(pch);	
 				time_t cur_time = time(NULL);				
 				double offset = difftime(smb_sharelink_info->expiretime, cur_time);					
-				if( offset < 0.0 ){
+				if( smb_sharelink_info->expiretime !=0 && offset < 0.0 ){
 					free_share_link_info(smb_sharelink_info);
 					free(smb_sharelink_info);
 					b_addto_list = 0;

@@ -286,7 +286,8 @@ int mtd_write_main(int argc, char *argv[])
 	}
 
 	sysinfo(&si);
-	if ((si.freeram * si.mem_unit) > (total + (256 * 1024))) {
+	//if ((si.freeram * si.mem_unit) > (total + (256 * 1024))) {
+	if ((si.freeram * si.mem_unit) > (total + (4096 * 1024))) {
 		ei.length = total;
 	}
 	else {

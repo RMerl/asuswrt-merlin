@@ -7,11 +7,11 @@
 html{
 	margin:0 0;
 	padding:0px;
-	width:100%;
-	height:100%;
 }
 body{
 	display: block;
+	overflow: hidden;
+	background: #e8e8e8;
 }
 </style>
 <script type="text/javascript" src="/smb/js/tools.js"></script>
@@ -34,13 +34,13 @@ function doOK(e) {
 	var name = $('input#dir_name').val();
 	
 	if(name==''){
-		alert(getErrorMsg('blankchar'));
+		alert(m.getString('blankchar'));
 		return;
 	}
 	
-	var regex = /[|~\/\\?*"<>&:`.]/g;
+	var regex = /[|~\/\\?*"<>:`.]/g;
  	if(name.match(regex)) {
- 		alert(getErrorMsg('illegalchar'));
+ 		alert(m.getString('illegalchar'));
   	return;
  	}
  	

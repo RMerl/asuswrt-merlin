@@ -1,6 +1,7 @@
 jQuery.fn.iphoneSwitch = function(start_state, switched_on_callback, switched_off_callback, options) {
 
 	var state = start_state == '1' ? start_state : '0';
+
 	// define default settings
 	var settings = {
 		mouse_over: 'pointer',
@@ -41,6 +42,9 @@ jQuery.fn.iphoneSwitch = function(start_state, switched_on_callback, switched_of
 
 		// click handling
 		jQuery(this).click(function() {
+			if(this.id == "radio_clouddisk_enable" && typeof(curState))
+				state = curState;
+
 			if(state == '1') {
 				jQuery(this).find('.iphone_switch').animate({backgroundPosition: -37}, "slow", function() {
 					jQuery(this).attr('src', settings.switch_off_container_path);

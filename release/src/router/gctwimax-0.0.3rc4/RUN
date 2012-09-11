@@ -1,0 +1,21 @@
+gctWiMAX: RUN
+
+ $ sudo gctwimax -h
+
+Usage: ./gctwimax [options]
+Options:
+  -C, --cfg-file=FILE         path to configuration file
+      --dl-xml=FILE           DL XML Image & exit
+  -D,                         Switch device & exit
+  -v,                         verbose log level (even more -vv)
+  -p, --pid-file=FILE         PID file (only for daemonize mode)
+  -d, --daemonize             daemonize after startup
+  -V, --version               print the version number
+      --with-dbus             Run with dbus support
+  -h, --help                  display this help
+  
+
+ $ gctwimax --cfg-file=/usr/share/gctwimax/gctwimax.conf
+ 
+If the driver did not get IP Address automatically enter:
+ $ dhclient wimaxX

@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: osl.h 330107 2012-04-27 22:04:17Z $
+ * $Id: osl.h 341165 2012-06-26 19:16:22Z $
  */
 
 #ifndef _osl_h_
@@ -153,11 +153,15 @@ MAKE_PREFETCH_RANGE_FN(PREF_STORE_RETAINED)
 #define	PKTCCLRFLAG(skb, fb)
 #define	PKTCLINK(skb)		NULL
 #define	PKTSETCLINK(skb, x)
-#define	PKTISCHAINED(skb)	FALSE
 #define FOREACH_CHAINED_PKT(skb, nskb) \
 	for ((nskb) = NULL; (skb) != NULL; (skb) = (nskb))
 #define	PKTCFREE		PKTFREE
 #endif /* !linux || !PKTC */
 
+#ifndef HNDCTF
+#define PKTSETCHAINED(osh, skb)
+#define PKTCLRCHAINED(osh, skb)
+#define PKTISCHAINED(skb)	(FALSE)
+#endif
 
 #endif	/* _osl_h_ */

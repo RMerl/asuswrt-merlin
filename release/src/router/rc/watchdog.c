@@ -64,8 +64,6 @@
 #define SETUP_TIMEOUT_COUNT	SETUP_TIMEOUT * 10 /* 60 times a second */
 #endif // BTN_SETUP
 
-static int nm_timer = 0;
-static int httpd_timer = 0;
 #if 0
 static int cpu_timer = 0;
 static int ddns_timer = 1;
@@ -120,6 +118,16 @@ alarmtimer(unsigned long sec, unsigned long usec)
 }
 
 extern int no_need_to_start_wps();
+
+void led_control_normal(void)
+{
+	// the behaviro in normal when wps led != power led
+	// wps led = on, power led = on
+
+	led_control(LED_WPS, LED_ON);
+	// in case LED_WPS != LED_POWER
+	led_control(LED_POWER, LED_ON);
+}
  
 void btn_check(void)
 {
@@ -603,12 +611,11 @@ void timecheck(void)
 					if (!need_commit) need_commit = 1;
 #ifdef CONFIG_BCMWL5
 					eval("wl", "-i", word, "closed", "1");
-					eval("wl", "-i", word, "maxassoc", "0");
+					eval("wl", "-i", word, "bss_maxassoc", "1");
 					eval("wl", "-i", word, "bss", "down");
-//	 				eval("wlconf", word, "down");
 #endif
-	                        	ifconfig(word, 0, NULL, NULL);
-	                        	eval("brctl", "delif", lan_ifname, word);
+					ifconfig(word, 0, NULL, NULL);
+					eval("brctl", "delif", lan_ifname, word);
 				}
 				else
 				{
@@ -841,11 +848,9 @@ void swmode_check()
 
 void ddns_check(void)
 {
-	char ddns_return[16];
-
-        if( nvram_match("ddns_enable_x", "1") &&
-           (nvram_match("wan0_state_t", "2") && nvram_match("wan0_auxstate_t", "0")) )
-        {
+	if( nvram_match("ddns_enable_x", "1") &&
+	   (nvram_match("wan0_state_t", "2") && nvram_match("wan0_auxstate_t", "0")) )
+	{
 		if (pids("ez-ipupdate")) //ez-ipupdate is running!
 			return;
 
@@ -859,10 +864,10 @@ void ddns_check(void)
 			 if( nvram_match("ddns_updated", "1") )
 				return;
 		}
-                logmessage("watchdog", "start ddns.");
+		logmessage("watchdog", "start ddns.");
 		unlink("/tmp/ddns.cache");
-                notify_rc("start_ddns");
-        }
+		notify_rc("start_ddns");
+	}
 	return;
 }
 
@@ -906,16 +911,6 @@ void watchdog(int sig)
 	ddns_check();
 
 	return;
-}
-
-void led_control_normal(void)
-{
-	// the behaviro in normal when wps led != power led
-	// wps led = on, power led = on
-	
-	led_control(LED_WPS, LED_ON);
-	// in case LED_WPS != LED_POWER
-	led_control(LED_POWER, LED_ON);
 }
 
 int 

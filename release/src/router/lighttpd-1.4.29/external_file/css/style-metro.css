@@ -5,7 +5,8 @@ padding:0;
 overflow-y: hidden;
 font-family:"Segoe UI",Arial;
 font-weight:lighter;
-min-width:695px;
+/*min-width:695px;*/
+min-width:1130px;
 background-color:#014051;
 }
 
@@ -66,49 +67,26 @@ background: rgba(129, 165, 194, 0.4);
 /*--------------------------------------*/
 
 /*--Loading------------------------------------*/
-#loading { 
-width: 280px; 
-height: 64px; 
+#loading {
+float: left;
+padding-top: 0px;
+padding-left: 20px;
 float:left;
-padding-top:0px;
-padding-left:20px;
 } 
 
 #loading img{
 float:left;
+padding-top: 37px;
 }
 
 #loading div{
 float:left;
 height:100%;
 padding-left:10px;
-padding-top:30px;
+padding-top:32px;
 color:#fff;
-font-size:22px;
+font-size:18px;
 }
-
-/*
-#loading { 
-width: 100%; 
-height: 100%; 
-position: absolute; 
-left: 0px; 
-top: 0px; 
-text-align: center; 
-background-color: #ffffff;
-filter:alpha(opacity=70);
--moz-opacity:0.7;
-opacity:0.7;
-z-index: 999;
-} 
-
-#loading img{
-opacity:0.7;
-left: 50%; 
-top: 50%;
-background:transparent url("load.gif") no-repeat top left;
-}
-*/
 /*--------------------------------------*/
 
 /*--Header Region------------------------------------*/
@@ -135,6 +113,7 @@ color:#fff;
 font-size:22px;
 margin-top:29px;
 float:left;
+white-space: nowrap;
 }
 /*--------------------------------------*/
 
@@ -177,13 +156,16 @@ overflow-x: hidden;
 padding-left:60px;
 }
   
-#hostview .host_item{
+#hostview .host_item, #hostview .scan_item{
 width:100%;
 height:40px;	
 background-color:#014051;	
 color:#ffffff;
 font-size:18px;
-/*font-weight:bold;*/
+cursor: default;
+}
+
+#hostview .host_item{
 cursor: pointer;
 }
 
@@ -195,15 +177,14 @@ color:#5A5A5A;
 font-size:20px;	
 }
 
-#hostview .host_item #hostname{ 
+#hostview .host_item #hostname, #hostview .scan_item #scanlabel{ 
 height:100%;
-cursor:point;
 white-space:nowrap;
 font-family:"Segoe UI",Arial;
 font-weight:lighter;
 }
 
-#hostview .host_item #hostname p{ 
+#hostview .host_item #hostname p, #hostview .scan_item #scanlabel p{ 
 margin:0;
 padding-top:8px;
 align:left;
@@ -223,6 +204,13 @@ background-position: -40px -55px;
 
 #hosticon.sambapcoff{
 background-position: -80px -55px;
+}
+
+#hosticon.sambapcrescan{
+background:transparent url("load.gif") no-repeat top left;
+margin: 11px;
+width: 18px;
+height: 18px;
 }
 
 #settingbar{
@@ -255,6 +243,7 @@ float:left;
 overflow: hidden;
 width:75%;
 height:100%;
+min-width:810px;
 }
 /*--------------------------------------*/
 
@@ -641,6 +630,10 @@ background-position: -600px -55px;
 background-position: 0 -95px;
 }
 
+#btnFavorite .ticon{
+background-position: -200px -95px;
+}
+
 #btnSetting .ticon{
 background-position: -80px -95px;
 }
@@ -760,4 +753,9 @@ height:70px;
 position: relative;
 top: 80px;
 left: 40px;
+}
+
+#table_login fieldset {  
+font-family:Verdana, Arial, Helvetica, sans-serif;  
+font-size:14px;  
 }

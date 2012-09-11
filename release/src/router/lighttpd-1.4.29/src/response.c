@@ -303,10 +303,10 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 
 		/** extract query string from request.uri */
 		if (NULL != (qstr = strchr(con->request.uri->ptr, '?'))) {
-			buffer_copy_string    (con->uri.query, qstr + 1);
+			buffer_copy_string(con->uri.query, qstr + 1);
 			buffer_copy_string_len(con->uri.path_raw, con->request.uri->ptr, qstr - con->request.uri->ptr);
 		} else {
-			buffer_reset     (con->uri.query);
+			buffer_reset(con->uri.query);
 			buffer_copy_string_buffer(con->uri.path_raw, con->request.uri);
 		}
 
@@ -351,8 +351,8 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 			buffer_copy_string_buffer(con->uri.path, con->uri.path_raw);
 		} else {
 			buffer_copy_string_buffer(srv->tmp_buf, con->uri.path_raw);
-			buffer_urldecode_path(srv->tmp_buf);
-			buffer_path_simplify(con->uri.path, srv->tmp_buf);
+			buffer_urldecode_path(srv->tmp_buf);			
+			buffer_path_simplify(con->uri.path, srv->tmp_buf);			
 		}
 
 		if (con->conf.log_request_handling) {
@@ -519,8 +519,12 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 		buffer_copy_string_buffer(con->physical.basedir, con->physical.path);
 		if (con->physical.rel_path->used &&
 		    con->physical.rel_path->ptr[0] == '/') {
+		    
 			buffer_append_string_len(con->physical.path, con->physical.rel_path->ptr + 1, con->physical.rel_path->used - 2);
-		} else {
+			
+			//buffer_append_string_encoded(con->physical.path, con->physical.rel_path->ptr + 1, con->physical.rel_path->used - 2, ENCODING_REL_URI);
+			//Cdbg(1,"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa %s", con->physical.path->ptr);
+		} else {		
 			buffer_append_string_buffer(con->physical.path, con->physical.rel_path);
 		}
 		
@@ -726,7 +730,7 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 			log_error_write(srv, __FILE__, __LINE__,  "s",  "-- handling subrequest");
 			log_error_write(srv, __FILE__, __LINE__,  "sb", "Path         :", con->physical.path);
 		}
-
+		
 		/* call the handlers */
 		switch(r = plugins_call_handle_subrequest_start(srv, con)) {
 		case HANDLER_GO_ON:

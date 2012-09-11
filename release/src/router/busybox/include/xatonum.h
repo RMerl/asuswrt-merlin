@@ -168,6 +168,15 @@ uint32_t bb_strtou32(const char *arg, char **endp, int base)
 		return bb_strtoul(arg, endp, base);
 	return BUG_bb_strtou32_unimplemented();
 }
+static ALWAYS_INLINE
+int32_t bb_strtoi32(const char *arg, char **endp, int base)
+{
+	if (sizeof(int32_t) == sizeof(int))
+		return bb_strtoi(arg, endp, base);
+	if (sizeof(int32_t) == sizeof(long))
+		return bb_strtol(arg, endp, base);
+	return BUG_bb_strtou32_unimplemented();
+}
 
 /* Floating point */
 

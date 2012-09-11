@@ -436,6 +436,7 @@ int log_sys_write(server *srv, const char *fmt, ...) {
 			break;
 		case 'b':           /* buffer */
 			b = va_arg(ap, buffer *);
+			buffer_urldecode_path(b);
 			buffer_append_string_buffer(srv->syslog_buf, b);
 			buffer_append_string_len(srv->syslog_buf, CONST_STR_LEN(" "));
 			break;

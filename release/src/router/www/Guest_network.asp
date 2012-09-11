@@ -33,6 +33,10 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
+var radio_2 = '<% nvram_get("wl0_radio"); %>';
+var radio_5 = '<% nvram_get("wl1_radio"); %>';
+<% radio_status(); %>
+
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var modify_mode = '<% get_parameter("flag"); %>';
 
@@ -75,6 +79,18 @@ function initial(){
 
 	$("wl_vifname").innerHTML = document.form.wl_subunit.value;
 	change_wl_expire_radio();
+	
+	if(radio_2 != 1){
+		$('2g_radio_hint').style.display ="";
+	}
+	if(radio_5 != 1){
+		$('5g_radio_hint').style.display ="";
+	}
+
+	if(document.form.preferred_lang.value == "JP"){    //use unique font-family for JP
+		$('2g_radio_hint').style.fontFamily = "MS UI Gothic,MS P Gothic";
+		$('5g_radio_hint').style.fontFamily = "MS UI Gothic,MS P Gothic";
+	}	
 }
 
 function change_wl_expire_radio(){
@@ -189,16 +205,24 @@ function gen_gntable_tr(unit, gn_array){
 	return htmlcode;
 }
 
+function _change_wl_unit_status(__unit){
+	document.titleForm.current_page.value = "Advanced_WAdvanced_Content.asp?af=wl_radio";
+	document.titleForm.next_page.value = "Advanced_WAdvanced_Content.asp?af=wl_radio";
+	change_wl_unit_status(__unit);
+}
+
 function gen_gntable(){
 	var htmlcode = ""; 
 
 	htmlcode += '<table style="margin-left:20px;margin-top:25px;" width="95%" align="center" cellpadding="4" cellspacing="0" class="gninfo_table" id="gninfo_table_2g">';
-	htmlcode += '<tr id="2g_title"><td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;">2.4GHz</td></tr>';
+	htmlcode += '<tr id="2g_title"><td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><span>2.4GHz</span>';
+	htmlcode += '<span id="2g_radio_hint" style="font-size: 14px;display:none;color:#FC0;margin-left:17px;">* <#GuestNetwork_Radio_Status#>	<a style="font-family:Lucida Console;color:#FC0;text-decoration:underline;cursor:pointer;" onclick="_change_wl_unit_status(0);"><#btn_go#></a></span></td></tr>';
 	htmlcode += gen_gntable_tr(0, gn_array_2g);
 	htmlcode += '</table>';
 
 	htmlcode += '<table style="margin-left:20px;margin-top:25px;" width="95%" align="center" cellpadding="4" cellspacing="0" class="gninfo_table" id="gninfo_table_5g">';
-	htmlcode += '<tr><td align="left" colspan="4" style="color:#5AD; font-size:16px; border-bottom:1px dashed #AAA;">5GHz</td></tr>';
+	htmlcode += '<tr><td align="left" colspan="4" style="color:#5AD; font-size:16px; border-bottom:1px dashed #AAA;"><span>5GHz</span>';
+	htmlcode += '<span id="5g_radio_hint" style="font-size: 14px;display:none;color:#FC0;margin-left:17px;">* <#GuestNetwork_Radio_Status#>	<a style="font-family:Lucida Console;color:#FC0;text-decoration:underline;cursor:pointer;" onclick="_change_wl_unit_status(1);"><#btn_go#></a></span></td></tr>';
 	htmlcode += gen_gntable_tr(1, gn_array_5g);
 	htmlcode += '</table>';
 
@@ -445,7 +469,8 @@ function create_guest_unit(_unit, _subunit){
 							<img id="guest_image" src="/images/New_ui/network_config.png">
 						</td>
 						<td>
-							<span><#GuestNetwork_desc#></span>
+							<div class="formfontdesc" style="font-style: italic;font-size: 14px;"><#GuestNetwork_desc#></div>
+							
 						</td>
 					</tr>
 				</table>
@@ -576,7 +601,7 @@ function create_guest_unit(_unit, _subunit){
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);"><#WLANConfig11b_WEPType_itemname#></a></th>
 					<td>
 			  		<select name="wl_wep_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_wep_x');">
-							<option value="0" <% nvram_match("wl_wep_x", "0", "selected"); %>>None</option>
+							<option value="0" <% nvram_match("wl_wep_x", "0", "selected"); %>><#wl_securitylevel_0#></option>
 							<option value="1" <% nvram_match("wl_wep_x", "1", "selected"); %>>WEP-64bits</option>
 							<option value="2" <% nvram_match("wl_wep_x", "2", "selected"); %>>WEP-128bits</option>
 			  		</select>

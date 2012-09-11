@@ -31,17 +31,21 @@ function initial(){
 			}
 		}
 		else{
-			$("WLnetworkmap").style.display = "none";
-			$("applySecurity").style.display = "none";
-			$("WLnetworkmap_re").style.display = "";
-			if('<% nvram_get("wl_unit"); %>' != '<% nvram_get("wlc_band"); %>'){
-				tabclickhandler('<% nvram_get("wlc_band"); %>');
+			if('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
+				$("WLnetworkmap").style.display = "none";
+				$("applySecurity").style.display = "none";
+				$("WLnetworkmap_re").style.display = "";
+			}
+			else{
+				if('<% nvram_get("wl_subunit"); %>' != '-1'){
+					tabclickhandler('<% nvram_get("wl_unit"); %>');
+				}
 			}
 		}
 	}
 	else{
-		if("<% nvram_get("wl_subunit"); %>" != "0" && "<% nvram_get("wl_subunit"); %>" != "-1"){
-			tabclickhandler("<% nvram_get("wl_unit"); %>");
+		if("<% nvram_get("wl_unit"); %>" == "-1" || "<% nvram_get("wl_subunit"); %>" != "-1"){
+			tabclickhandler(0);
 		}
 	}
 
@@ -56,8 +60,10 @@ function initial(){
 	if(band5g_support != -1){
 		$("t0").style.display = "";
 		$("t1").style.display = "";
+		/* allow to use the other band as a wireless AP
 		if(sw_mode == 2 && parent.psta_support != -1)
 			$('t'+((parseInt(<% nvram_get("wlc_band"); %>+1))%2)).style.display = 'none';
+		*/
 	}
 
 	$("t0").className = <% nvram_get("wl_unit"); %> ? "tab_NW" : "tabclick_NW";
@@ -420,6 +426,10 @@ function submitForm(){
 		if(!validate_psk(document.form.wl_wpa_psk))
 			return false;
 	}
+	else if(auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius"){
+		document.form.target = "";
+		document.form.next_page.value = "/Advanced_WSecurity_Content.asp";
+	}
 	else{
 		if(!validate_wlkey(document.form.wl_asuskey1))
 			return false;
@@ -437,11 +447,6 @@ function submitForm(){
 		document.form.wps_enable.value = "0";
 	}
 	document.form.wsc_config_state.value = "1";
-	
-	if(auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius"){
-		document.form.target = "";
-		document.form.next_page.value = "/Advanced_WSecurity_Content.asp";
-	}
 
 	if(wl6_support != -1)
 		document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
@@ -643,7 +648,7 @@ function gotoSiteSurvey(){
   		</tr>  
   		<tr>
     			<td style="padding:5px 10px 0px 10px; *padding:1px 10px 0px 10px;">
-    				<p class="formfonttitle_nwm" ><#WLANConfig11b_AuthenticationMethod_itemname#></p>
+    					<p class="formfonttitle_nwm" ><#WLANConfig11b_AuthenticationMethod_itemname#></p>
 				  		<select style="*margin-top:-7px;" name="wl_auth_mode_x" class="input_option" onChange="return change_authmode(this, 'WLANConfig11b', 'wl_auth_mode_x');">
 							<option value="open"    <% nvram_match("wl_auth_mode_x", "open",   "selected"); %>>Open System</option>
 							<option value="shared"  <% nvram_match("wl_auth_mode_x", "shared", "selected"); %>>Shared Key</option>
@@ -655,15 +660,15 @@ function gotoSiteSurvey(){
 							<option value="wpawpa2" <% nvram_match("wl_auth_mode_x", "wpawpa2","selected"); %>>WPA-Auto-Enterprise</option>
 							<option value="radius"  <% nvram_match("wl_auth_mode_x", "radius", "selected"); %>>Radius with 802.1x</option>
 				  		</select>
-					<div id="wl_nmode_x_hint"  style="display:none;"><#WLANConfig11n_automode_limition_hint#></div>				 		
-	  				<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
+							<img style="display:none;margin-top:-30px;margin-left:185px;cursor:pointer;" id="wl_nmode_x_hint" src="/images/alertImg.png" width="30px" onClick="parent.overlib(parent.helpcontent[0][24], parent.FIXX, 870, parent.FIXY, 350);" onMouseOut="parent.nd();">
+	  					<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
     			</td>
   		</tr>
   		<tr id='all_related_wep' style='display:none;'>
 			<td style="padding:5px 10px 0px 10px; *padding:1px 10px 0px 10px;">
 				<p class="formfonttitle_nwm" ><#WLANConfig11b_WEPType_itemname#></p>
 	  			<select style="*margin-top:-7px;" name="wl_wep_x" id="wl_wep_x" class="input_option" onfocus="parent.showHelpofDrSurf(0, 9);" onchange="change_wlweptype(this);">
-						<option value="0" <% nvram_match("wl_wep_x", "0", "selected"); %>>None</option>
+						<option value="0" <% nvram_match("wl_wep_x", "0", "selected"); %>><#wl_securitylevel_0#></option>
 						<option value="1" <% nvram_match("wl_wep_x", "1", "selected"); %>>WEP-64bits</option>
 						<option value="2" <% nvram_match("wl_wep_x", "2", "selected"); %>>WEP-128bits</option>
 	  			</select>	  			

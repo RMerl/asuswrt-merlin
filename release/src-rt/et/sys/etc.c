@@ -392,7 +392,7 @@ etc_ioctl(etc_info_t *etc, int cmd, void *arg)
 #ifdef ETROBO
 			/* Invalidate current robo page */
 			if (etc->robo && etc->phyaddr == EPHY_NOREG && vec[0] == 0x10)
-				((robo_info_t *)etc->robo)->page = -1;
+				((robo_info_t *)etc->robo)->page = ((uint16)vec[1] >> 8);
 #endif
 		}
 		break;
@@ -407,7 +407,7 @@ etc_ioctl(etc_info_t *etc, int cmd, void *arg)
 #ifdef ETROBO
 				/* Invalidate current robo page */
 				if (etc->robo && phyaddr == EPHY_NOREG && reg == 0x10)
-					((robo_info_t *)etc->robo)->page = -1;
+					((robo_info_t *)etc->robo)->page = ((uint16)vec[1] >> 8);
 #endif
 				ET_TRACE(("etc_ioctl: ETCPHYWR2 to phy 0x%x, reg 0x%x <= 0x%x\n",
 				          phyaddr, reg, vec[1]));

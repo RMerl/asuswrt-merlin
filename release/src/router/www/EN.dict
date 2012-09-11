@@ -1,8 +1,6 @@
-﻿[Language type]
 CHAR_set=UTF-8
 PASS_LANG=Language:
 LANG_select=Select Language
-[IPv6]
 IPv6_wan_addr=WAN IPv6 Address
 IPv6_wan_Prefix_len=WAN Prefix Length
 IPv6_wan_gateway=WAN IPv6 Gateway
@@ -19,17 +17,18 @@ Prefix_lan_Length=LAN Prefix Length
 IPv6_Prefix_Length=IPv6 Prefix Length
 IPv6_DNS_Setting=IPv6 DNS Setting
 ipv6_6rd_dhcp_option=DHCP Option
+ipv6_6rd_Prefix=IPv6 Prefix
 ipv6_client_ip=Client IPv6 Address
 IPv6_static_IP=Static IPv6
 tunnel_MTU=Tunnel MTU
 tunnel_TTL=Tunnel TTL
-[VPN server]
 vpn_Adv=VPN Details
 PPTP_desc=The VPN server allows you to access your home network anytime, anywhere.
 PPTP_desc2=To use the VPN server. Please follow these steps.<br>(1) Enable the PPTP VPN server<br>(2) Set the IP pool for client IP. (Maximum 10 clients)<br>(3) Set up the username and password for VPN client.<br>(4) Open the VPN connection program on your computer or smartphone.<br>(5) Add a new PPTP VPN connection and the VPN server address is
 PPTP_desc3=(6) If your WAN IP address is dynamic, <a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">please click here to set the DDNS.</a>
 vpn_enable=Enable PPTP Server
 vpn_broadcast=Broadcast Support
+vpn_network_place=Network Place (Samba) Support
 MPPE_Encryp=MPPE Encryption
 Auto=auto
 No_Encryp=No Encryption
@@ -42,7 +41,6 @@ vpn_conflict_DHCPpool=* Conflict with the router's DHCP IP pool:
 vpn_conflict_DHCPstatic=* Conflict with the router's DHCP static IP address:
 vlaue_haigher_than=This value should be higher than
 vpn_max_clients=VPN server only allows max 10 clients!
-[ParentalCtrl]
 Parental_Control=Parental control
 ParentalCtrl_Desc=Parental control allows you to set the time limit for a client's network usage. To use parental control:
 ParentalCtrl_Desc1=In the [Clients Name] column, select the client whose network usage you want to control. You may also key in the clients MAC address in the [Clients MAC Address] column.
@@ -52,18 +50,15 @@ ParentalCtrl_Desc4=Click [OK] to save the settings made.
 ParentalCtrl_username=Clients Name
 ParentalCtrl_hwaddr=Clients MAC Address
 ParentalCtrl_time=Time Management
-[AutoUpdate]
 check_proceeding=The router is checking the ASUS server for the firmware update.
 connect_failed=No Internet connection is detected. The router cannot connect to ASUS server to check for the firmware update. After reconnecting to the Internet, go back to this page and click Check to check for the latest firmware updates.
 exist_new=There is a new firmware version available. Do you want to upgrade the firmware?
 is_latest=The router's current firmware is the latest version.
 unavailable_update=No available updates
-[GreenIndicator]
 no_printer_detect=No Printer detected
 Eject_usb_disk=Eject USB disk
 disconnect_internet=Disconnect the Internet connection
 go_GuestNetwork=Go to the Guest Network
-[GuestNetwork]
 Guest_Network=Guest Network
 GuestNetwork_desc=The Guest Network provides Internet connection for guests but restricts access to your Intranet.
 Access_Time=Access time 
@@ -71,7 +66,6 @@ Limitless=Limitless
 Access_Intranet=Access Intranet
 Guest_network_index=Guest Network index
 Guest_Network_enable=Enable Guest Network
-[TrafficManager]
 upload_prio=Upload Priority
 min_bound=Minimum Reserved Bandwidth
 max_bound=Maximum Bandwidth Limit
@@ -109,12 +103,10 @@ qos_user_prio=User-defined Priority
 qos_user_rules=User-defined QoS rules
 source_ipmac=For source or destination IP address, you can:<p>(a) enter a specific IP address, such as \"192.168.122.1\";<p>(b) enter IP addresses within one subnet or within the same IP pool, such as \"192.168.123.*\", or  \"192.168.*.*\"; or<p>(c) enter all IP addresses as \"*.*.*.*\". <p>The format for the MAC address is six groups of two hexadecimal digits, separated bycolons (:), in transmission order (e.g. 12:34:56:aa:bc:ef )
 QoS_invalid_period=Bandwidth limit is not valid.
-[Network_PrintServer]
 Network_Printer_Server=Network Printer Server
 Network_Printer_desc=The network printer server supports two methods: (1) ASUS EZ printer sharing (2) LPR to share printer.
 asus_ez_print_share=ASUS EZ printer sharing (Windows OS only)
 LPR_print_share=Use LPR protocol to sharing printing
-[New_201108]
 usb_unmount=USB function is disabled.
 no_usb_found=No USB disk detected.
 Menu_usb_application=USB application
@@ -125,7 +117,6 @@ jumbo_frame=Enable Jumbo Frame
 ctf_disable=Disable HW Accelerator
 Enable_WAN=Enable WAN
 Enable_NAT=Enable NAT
-[New_QIS]
 QIS_Previous_WLKey=Do you want to use the previous wireless security settings?
 QIS_recommand_encryption=We strongly recommend that you set the encryption type first.
 QIS_confirm_recommand_encryp=We strongly recommend that you set the encryption type first, do you want to continue?
@@ -143,7 +134,9 @@ QIS_welcome_feature1=Concurrent 2.4 and 5 GHz 450 Mbps Dual Band Router.
 [###MODEL_DEP###][RT-N56U][RT-N53]QIS_welcome_feature1=Concurrent Dual-band N600. (300 Mbps/ 2.4GHz + 300 Mbps/ 5GHz)
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature1=Flexible dual-band lag-free entertainment.
 [###MODEL_DEP###][RT-N16]QIS_welcome_feature1=Powerful CPU provides a high-performance throughput.
-[###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1][RT-N10U]QIS_welcome_feature1=Single band N300. (300 Mbps/ 2.4GHz)
+[###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature1=Single band N300. (300 Mbps/ 2.4GHz)
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature1=Multiple 3-in-1 : Router / Access Point / Repeater wireless modes
+[###MODEL_DEP###][RT-N10U]QIS_welcome_feature1=Single band N150. (150 Mbps/ 2.4GHz)
 QIS_welcome_feature2=High Speed and High Powered USB Ports for network Storage and Multifunction printer support.
 [###MODEL_DEP###][RT-AC66U]QIS_welcome_feature2=ASUS AiCloud unlimitedly access, streaming, and sync files everywhere with any devices.
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature2=4 x Gigabit Ethernet ports.
@@ -152,6 +145,7 @@ QIS_welcome_feature2=High Speed and High Powered USB Ports for network Storage a
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature2=4 x 10/100 Ethernet ports.
 [###MODEL_DEP###][RT-N15U]QIS_welcome_feature2=4 x Gigabit Ethernet ports. 1 x USB 2.0 ports for fast file and printer sharing.
 [###MODEL_DEP###][RT-N12B1][RT-N12C1]QIS_welcome_feature2=4 x 10/100 Ethernet ports. 2 x 5DBi antenna to achieve better signal coverage.
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature2=Two detachable external 9dbi high gain antennas with adjustable output power.
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature2=4 x 10/100 Ethernet ports. 1 x USB 2.0 ports for printer sharing.
 QIS_welcome_feature3=High Performance Gigabit Switch with Turbo NAT.
 [###MODEL_DEP###][RT-AC66U]QIS_welcome_feature3=4 x Gigabit Ethernet ports. 2 x USB 2.0 ports for fast file and printer sharing.
@@ -160,13 +154,15 @@ QIS_welcome_feature3=High Performance Gigabit Switch with Turbo NAT.
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature3=Gigabit internet surfing with hardware NAT. (While ISP support)
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature3=Up to 3 x Guest SSID.
 [###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature3=Up to 3 x Guest SSID.
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature3=Excellent wireless signal and antenna transmission for 300% wider signal coverage.
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature3=1 x 5DBi antenna to achieve better signal coverage.
 QIS_welcome_feature4=High Level Current Usage for superior download and gaming performance or multi client connections.
 [###MODEL_DEP###][RT-AC66U][RT-N65U][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature4=Graphical user interface for easy setup and management.
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature4=Hardware NAT enable for 5X faster WAN to LAN experience.
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature4=Powerful Online Multitasking at up to 300,000 Data Sessions.
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature4=User Access Time control.
-[###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=Up to 4 x Guest SSID.
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature4=Optimized coverage throughout multi-level households.
+[###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=Up to 3 x Guest SSID.
 QIS_pass_title=Setup of router ( ZVMODELVZ ) administrator password
 QIS_pass_desc1=Change the router password to prevent unauthorized access to your ASUS wireless router.
 QIS_pass_desc3=The router password is the administration key to your ASUS router. When you log into the router's web user interface, you will need to key in the username and password. The default router username and password is "admin / admin".
@@ -210,10 +206,8 @@ qis_tutor_desc2=1. In the notification area, click the network icon ( <img src="
 qis_tutor_desc3=2. From the list of networks, click the network you want to connect to, then click "Connect".
 qis_tutor_desc4=1. In the notification area, click the network icon, then click "View Available Wireless Networks".
 qis_tutor_desc5=1.Click the Airport status icon( <img src="/images/qis/osx_network_icon.jpg"> ) in the menu bar, and then select the wireless name you want to connect to.
-[System log]
 System_Log=System Log
-[New_0622]
-upnp_Desc=Set up the DLNA, iTUnes, FTP and Network Place (Samba) server.
+upnp_Desc=Set up the DLNA, iTunes, FTP and Network Place (Samba) server.
 Route_title=This page shows the detailed routing status.
 PortForward_title=This page shows the port forwarding status.  Some P2P programs use the UPnP protocol to open the port and the port number is shown on this page.
 WLLog_title=This page shows the detailed wireless status.
@@ -224,7 +218,7 @@ FTP_desc=Set the account and permission of FTP service.
 Samba_desc=Set the account and permission of network place(samba) service.
 LANHostConfig_x_DDNSHostNames_itemdesc=The host name cannot accept number prefix and \".\" (such as \"123abc\" or \"aaa.bbb\").
 LANHostConfig_x_DDNSEnable_sectiondesc2=The wireless router currently uses a private WAN IP address (192.168.x.x, 10,x,x,x, or 172.16.x.x).<p>This router may be in the multiple-NAT environment and DDNS service cannot work in this environment.
-LANHostConfig_x_DDNSEnable_sectiondesc3=The host name is successfully registered. You can use "[hostname].asuscomm.com" to access the service in home network from WAN. Use "[hostname].asuscomm.com" to remotely access your network.<p>  Go to Advanced Settings > WAN to configure the port forwarding or DMZ settings to allow other WAN clients to remotely access your network.<p> If you want to remotely configure the wireless router, go to <a href="../Advanced_BasicFirewall_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">here</a>.
+LANHostConfig_x_DDNSEnable_sectiondesc3=The host name is successfully registered. You can use "[hostname].asuscomm.com" to access the service in home network from WAN. Use "[hostname].asuscomm.com" to remotely access your network.<p>  Go to Advanced Settings > WAN to configure the port forwarding or DMZ settings to allow other WAN clients to remotely access your network.<p> If you want to remotely configure the wireless router, go to <a href="/Advanced_System_Content.asp?af=misc_http_x" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">here</a>.
 IPConnection_LocalIP_itemdesc=Key in the LAN client's IP address.
 IPConnection_LocalPort_itemdesc=Leave this field blank if you want the incoming packets to be redirected to this port.
 IPConnection_PortRange_itemdesc=Port range accepts various formats such as Port Range (300:350), individual ports (566,789) or Mix (1015:1024,3021)
@@ -242,14 +236,12 @@ Aidisk_authority_hint=Warning: The AiDisk had been set. If you set the AiDisk ag
 remove_usb_hint=To remove the hard disk from the router, click the USB icon at the upper right corner of your screen.
 UserQoSRule_desc_zero=Enable QoS then set up the user-defined rules.
 prio_packet_note=The default ACK, SYN and ICMP packets are used to improve the game smoothness.
-[NAT Passthrough]
 NAT_PPTP_Passthrough=PPTP Passthrough
 NAT_L2TP_Passthrough=L2TP Passthrough
 NAT_IPSec_Passthrough=IPSec Passthrough
 NAT_RTSP_Passthrough=RTSP Passthrough
 NAT_passthrough_itemname=NAT Passthrough
 NAT_passthrough_desc=Enable NAT Passthrough to allow a Virtual Private Network (VPN) connection to pass through the router to the network clients.
-[opmode strings]
 wireless_router=Wireless router
 BasicConfig_EnableiTunesServer_itemname=Enable iTunes Server?
 OP_GW_item=Wireless router mode (Default)
@@ -267,13 +259,11 @@ RouterConfig_GWMulticast_unknownUni_itemname=Unknown unicast storm control(Mbps)
 RouterConfig_GWMulticast_unknownMul_itemname=Unknown multicast storm control(Mbps):
 RouterConfig_GWMulticast_Multicast_itemname=Multicast storm control(Mbps):
 RouterConfig_GWMulticast_Broadcast_itemname=Broadcast storm control(Mbps):
-[keyword_filter]
 menu5_5_5=Keyword Filter
 FirewallConfig_KeywordFilterEnable_sectiondesc=Keyword Filter allows you to block the clients' access to webpages containing the specified keywords.
 FirewallConfig_KeywordFilterEnable_sectiondesc2=Limitations of the keyword filtering function :<ol><li>Compressed webpages that use HTTP compression technology cannot be filtered. <a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">See here for more details.</a></li><li>Https webpages cannot be filtered.</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=Enable Keyword Filter
 FirewallConfig_KeywordList_groupitemname=Keyword Filter List
-[New translated]
 JS_field_wanip_rule3=Please input the value between 1 to 2592000(Secondes).
 FirewallConfig_Port80_itemdesc=When your network's firewall is disabled and you set 80 as the HTTP server's port range for your WAN setup, then your http server/web server would be in conflict with ZVMODELVZ's web user interface.
 FirewallConfig_FTPPrompt_itemdesc=When you set 20:21 as your FTP server's port range for your WAN setup, then your FTP server would be in conflict with ZVMODELVZ's native FTP server.
@@ -287,12 +277,10 @@ WLANConfig11b_TxPower_itemname=Tx Power adjustment
 WLANConfig11b_TxPower_itemdesc=Adjust antenna power to enhance the quality of trasmittion. 
 WLANConfig11b_Wireless_Speed_itemname_3=Uses 40MHz coexistent bandwidth to maximize the wireless throughput. If you experience issues with wireless stability, please choose the default mode (20MHz).
 hwnat_desc=NAT (Network Address Translation) is a process used in routers to replace the address information of network packet with new address information. Typical applications for NAT is router which connect to LAN with the WAN. In LAN every network devices had a private IP(LAN IP) but there is only one public IP(WAN IP). To grant the network devices access to the Internet, the router replaces the private IP address of the sender with its own public IP address in all outgoing data packets. The router saves all necessary information in a table(NAT table) so that incoming data packets can then be assigned on the correct network device.
-[error_page.htm]
 web_redirect_reason6=IP conflict detected. Click Next to get a new IP address.
 web_redirect_case6_desc1=Router's updated IP address:
 web_redirect_case6_desc2=After clicking Next, please ensure that you update the IP address settings for each related service such as Port Forwarding or DMZ.
 error_page_lanip_changed_desc1=The IP address is being renewed. If this process takes more than two minutes, please follow these three steps to renew the IP manually: (1) unplug the network cable; (2) wait for about ten seconds; and (3) plug it back again to get a new IP address.
-[QIS]
 QIS_autoMAC_desc1=Starting to clone the computer's MAC address into the router.
 QIS_autoMAC_desc2=Please wait...
 QIS_autoMAC_desc3=Verify the WAN IP address
@@ -316,7 +304,6 @@ QIS_internet_success_desc1=There might be a proxy server in your network. Please
 QIS_internet_success_desc2=There might be some error in the Internet Service Provider Domain Name Server. Please check with your ISP or network administrator or go to the Advanced Setting page to set the public DNS.
 QIS_internet_success_desc3=Please check with your Internet Service Provider or network administrator.
 QIS_internet_success_desc4=Please unplug the power cord from the modem. Wait for about two minutes, then plug it back in again. Click Detect connection.
-[Traffic Monitor]
 Date=Date
 Scale=Scale
 Last30days=Last 30 Days
@@ -329,18 +316,17 @@ Current=Current
 Average=Average
 Maximum=Maximum
 Total=Total
-[RT-N66U new item]
 LAN_IP_changed_suggedtion1=The LAN IP of ZVMODELVZ is
 LAN_IP_changed_suggedtion2=.If you can't back setting page later, please renew IP configuration of your computer.
 WLANConfig11b_x_WPSband_itemname=Current Band
 WLANConfig11b_x_WPSband_itemdesc=Select an operating band (2.4GHz or 5GHz) before using the WPS (Wi-Fi Protected Setup) function. If you want to change the operating band, please disable the WPS function first.
 LANConfig_ChangedLANIP=The IP address for your router has been changed. Please use the Device Discovery utility to search for your router's new IP address.
-[RT-N1X new item]
 LANHostConfig_x_Password_itemdesc=Password cannot be greater than 16 characters.
 WLANConfig11n_nmode_limition_hint=ZVMODELVZ will change WEP or TKIP encryption to AES in [n Only] mode to ensure that clients to get the proper connection.
 WLANConfig11n_automode_limition_hint=Under Auto mode with WEP or TKIP encryption, ZVMODELVZ supports the maximum transmission rate of 54Mbps.
 WhiteList=White List
 BlackList=Black List
+mssid_time_remaining=Time Remaining
 op_already_configured=is already configured to this mode.
 WLANConfig11n_PremblesType_itemname=Preamble Type
 WLANConfig11n_PremblesType_itemdesc=The Preamble type defines the length of the CRC (Cyclic Redundancy Check) block, which is a technique for detecting data transmission errors among wireless devices. We recommend that you configure all wireless devices to the same preamble type. Use short preamble for wireless devices in high network traffic areas. Use long preamble for older wireless devices.
@@ -354,7 +340,6 @@ ShareNode_Seeding_itemname=Seeding
 ShareNode_Seeding_itemdesc=Allows you to enable or disable the seeding function. ZVMODELVZ remains open until downloading process is completed.
 ShareNode_MaxUpload_itemname=Maximum Upload Rate
 ShareNode_MaxUpload_itemdesc=Enter a value between 0 to 999. The default value is 0, which denotes that there is no upload limit.
-[New item]
 HSDPAConfig_hsdpa_enable_hint1=The current 3G/4G setting is set to 3G/4G Backup mode. If WAN port was disconnected, the network mode will automatically turn to 3G/4G mode.
 HSDPAConfig_hsdpa_enable_hint2=If you want to change the connection type, please go to <a href="/Advanced_Modem_others.asp">USB Modem</a> to disable USB adapter.
 HSDPAConfig_USBAdapter_itemname=USB Adapter
@@ -369,7 +354,7 @@ Browser_action_not_support_addfavorite=Your browser does not support this functi
 page_not_support_mode_hint=This function is disabled.
 APSurvey_action_ConnectingStatus0=The Parent-AP might be turned off. Please check again.
 APSurvey_action_ConnectingStatus3=Relaunch the browser. In the URL address bar, key in "http://www.asusnetwork.net/" to access the repeater connection status.
-APSurvey_action_ConnectingStatus1=Connection failed. Please enter the security key again or click [Cancel] to select another network to connect to.
+APSurvey_action_ConnectingStatus1=Connection failed. Password is not correct. Please click [Rescan] to select another network to connect to.
 APSurvey_action_ConnectingStatus24=Successfully established the wireless connection.
 APSurvey_action_ConnectingStatus35=Failed to authenticate the WPA key. Please enter the WPA key again.
 APSurvey_action_renew_success=Successfully updated the IP settings. You will be redirected to ZVMODELVZ\'s web GUI.
@@ -385,7 +370,6 @@ AP_fail_get_IPaddr=Failed to get the IP information.
 AP_Remote_IP=AP IP address
 AP_survey=AP Survey
 statusTitle_AP=Access Point status
-[USB Application - HSDPA]
 HSDPAConfig_pin_code_itemdesc=Please input the Personal Identification Number(PIN) code of your SIM card. It must be the number which length is greater than 4 and smaller than 8. If you do not know the PIN code, please contact your ISP.
 HSDPAConfig_private_apn_itemname=APN service(optional)
 HSDPAConfig_private_apn_itemdesc=If you do not know the APN service name, please contact your ISP.
@@ -395,12 +379,10 @@ HSDPAConfig_hsdpa_enable_itemname=Enable USB Modem
 HSDPAConfig_hsdpa_mode_itemname=USB Modem mode
 HSDPAConfig_DNSServers_itemname=DNS Server
 AiDisk_Wizard_failedreson1=Aidisk Wizard worked exceptionally. Please try again later.
-[state.js-Dr.Surf.]
 QKSet_ISP_desc3=Automatic IP connection failed. You can configure here manually.
 QKSet_ISP_desc2=Static IP connection failed.
 QIS_internet_vpn_confirm=If your connection type is PPTP/L2TP, Please click [OK] to [Connecting the VPN server].\nIf not, please click [Concel] and check the information then Apply the settings.
 Full_Clients=Clients
-[QIS_internet_vpn.htm]
 QIS_if_vpn_existed=Connecting the VPN server?
 QIS_internet_vpn_title=VPN Item
 QIS_internet_vpn_type=VPN type
@@ -421,14 +403,11 @@ Device_service_iTune=iTunes Service:
 Device_service_Printer=Printer Service:
 JS_storageright=After setting up the name (such as aabbcc), enter //aabbcc in Internet Explorer's URL field to quickly access the Network Place service. The standard input characters include letters(A-Z,a-z), digits(0-9), spaces, underscores(_) and hyphens(-). The first and last character should not contain any spaces.
 not_support_script=Your browser does not support JavaScript. Choose a browser that supports JavaScript, or enable it to use the multi-functional router, ASUS ZVMODELVZ.
-[Advanced_AiDisk_others.asp]
 Help_of_Workgroup=It is the group name of the ZVMODELVZ in the Network Neighborhood, and standard input characters include letters(A-Z,a-z), digits(0-9), spaces, underscores(_), and hyphens(-). There should not be any space in the first and last character . Using a non-standard  name results in other users cannot find your computer in LAN.
-[state.js-Dr.Surf.]
 DrSurf_refresh_page=Refresh page
 DrSurf_sweet_advise1=You have changed SSID or security setting. Thus it will result in wireless clients disconnect. Please adjust client's setting for connecting again.
 DrSurf_sweet_advise2=Connection is reestablished.
 DrSurf_sweet_advise3=You may not enter setting page of ZVMODELVZ because it disabled DHCP function after switching to AP mode.<p>We recommend you to use ASUS Utility / Device Discovery and search IP of AP for enter setting page again.</p>
-[AiDisk Wizard]
 File_Pop_content_alert_desc1=Username cannot be blank.
 File_Pop_content_alert_desc2=Username cannot be less than two characters.
 File_Pop_content_alert_desc3=Username cannot be greater than 20 characters.
@@ -441,7 +420,6 @@ File_content_alert_desc6=Share name cannot be blank.
 File_content_alert_desc7=Share name can only contain alphanumeric/dash/underscore/space characters.
 File_content_alert_desc8=The share name already exists in this volume. \nPlease enter a different name!
 File_content_alert_desc10=Creating a share with more than 12 characters may make it invisible in some WindowsR version.\nDo you want to continue?
-[AiDisk Advanced]		
 enableCIFS=Enable Share
 disableCIFS=Disable Share
 enableFTP=Enable FTP
@@ -474,7 +452,6 @@ NewFolderName=New Folder Name
 AddFolderAlert=The default access rights for a new folder is read/write.
 DelFolderAlert=Before deleting the folder, ensure that it is empty.<br><br>Are you sure you want to delete the folder?
 ModFolderAlert=After renaming, the access rights for the folder and its sub-folder do not change.
-[LeftMenu]		
 menu1=Network Map
 menu2=Media Server
 menu3=AiDisk
@@ -519,7 +496,6 @@ menu5_7_3=DHCP leases
 menu5_7_4=Wireless Log
 menu5_7_5=Port Forwarding
 menu5_7_6=Routing Table
-[Network Map]
 block_client=Click here to block the client
 statusTitle_System=ASUS ZVMODELVZ
 statusTitle_Internet=Internet status
@@ -541,6 +517,7 @@ MAC_Address=MAC address
 ConnectionStatus=Connection status
 WAN_IP=WAN IP
 Connectiontype=Connection type
+LeaseExpires=Lease expires
 QIS=Quick Internet Setup
 QIS_title=Quick Internet Setup
 Connected=Connected
@@ -579,7 +556,6 @@ Minute=minutes
 Second=seconds
 upload_bandwidth=Upload Bandwidth
 download_bandwidth=Download Bandwidth
-[AiDisk Wizard]
 AiDiskWelcome_title=Welcome to AiDisk wizard
 AiDiskWelcome_desp=AiDisk enables you to:
 AiDiskWelcome_desp1=Share files in the USB disk through the Internet.
@@ -617,9 +593,8 @@ linktoFTP_no_2=DDNS is not enable yet. You can enable it in WAN / DDNS when peop
 linktoFTP_no_3=DDNS is enable but register of domain name is fail. People still can't access FTP by domain name from WAN.
 AiDisk_wizard_text_box_title3=After configuring the settings in AiDisk Wizard, refer to the information below to access the disk:
 yoursharesetting=Your share folder setting is
-neednotDDNS=Skip ASUS DDNS setting.
+neednotDDNS=Disable DDNS.
 asusddns_inputhint=Key in the name
-[WPS]		
 WPS_PBCbutton_hint_success=Succeed to build connection.
 WLANConfig11b_display6_sectiondesc=WPS (Wi-Fi Protected Setup) provides easy and secure establishment of a wireless network. You can configure WPS here via the PIN code or the WPS buttton.
 WLANConfig11b_x_WPS_itemname=Enable WPS
@@ -651,7 +626,6 @@ bottom_Link=http://support.asus.com/download.aspx?SLanguage=en&m=ZVMODELVZ
 Help_init_word1=Help provides you with guidelines and information about using the router's functions.  Click the
 Help_init_word2=hyperlinked words with yellow and blue underline.
 Help_init_word3=to get help.
-[hook error]		
 ALERT_OF_ERROR_Input1=There is no input about PROCOTOL! 
 ALERT_OF_ERROR_Input2=The input about PROCOTOL is incorrect! 
 ALERT_OF_ERROR_Input3=There is no input about MODE!
@@ -692,8 +666,6 @@ ALERT_OF_ERROR_Action12=Failed to format the disk.
 ALERT_OF_ERROR_System1=System error: Cannot allocate the memory!
 ALERT_OF_ERROR_System2=System error: Cannot read out the disk's data!
 ALERT_OF_ERROR_System3=System error: The disk is busy!
-[QIS wizard]
-[QIS_detect.js]
 Web_Title=ASUS Wireless Router ZVMODELVZ
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]Web_Title=ASUS ZVMODELVZ Dual-Band Wireless-N Gigabit ADSL2/2+ Modem Router
 Web_Title2=ZVMODELVZ
@@ -703,17 +675,14 @@ QKSet_detect_desc2=Redetecting your connection status
 QKSet_detect_wanconnfault=Please check ethernet cable is connected properly to the WAN port.
 QKSet_detect_freshbtn=Detect again
 QKSet_detect_waitdesc=Start to detect your connection type...
-[QIS_finish.js]
 QIS_finish_Desc=ZVMODELVZ is set up with these Internet and wireless settings.
 QKSet_all_title=Quick Start
 QKSet_finishpre_rebootnow=Finish
-[QIS_internet_account.js]
 QKSet_account_webtitle=ISP Account Setting
 QKSet_ISP_head=ISP Information Setting
 QKSet_ISP_desc=Please refer to your ISP setting, and input the related information.
 PPPConnection_UserName_itemdesc=This field is only available when you set the WAN Connection Type as USB Modem, PPPoE, PPTP or L2TP.
 QKSet_account_nameblank=Account name cannot be blank.
-[QIS_internet_ip.js]
 Layer3Forwarding_x_DHCPClient_itemname=Get the WAN IP automatically
 Layer3Forwarding_x_UseStaticIP_itemname=Use the following IP address:
 qis_dns=Use the following DNS server addresses
@@ -736,13 +705,11 @@ IPConnection_x_DNSServer_blank=Please set up the DNS server on the client device
 IPConnection_warning_WANIPEQUALGatewayIP=You have set WAN IP as ZVMODELVZ's Gateway, and ZVMODELVZ maybe could not connect to Internet. Please set Gateway with correct value.
 IPConnection_x_WAN_LAN_conflict=WAN and LAN should have different IP addresses and subnet.
 IPConnection_x_illegal_mac=MAC address is not valid.
-[QIS_internet_isp.js]
 BOP_isp_host_desc=This field allows you to provide a host name for ZVMODELVZ. It is usually requested by your ISP.
 BOP_isp_host_item=Host Name(optional):
 PPPConnection_x_MacAddressForISP_itemdesc=MAC (Media Access Control) address is a unique identifier that identifies your computer or device in the network. ISPs monitor the MAC addresses of devices that connect to their services, and would disallow Internet connection for new MAC addresses. To fix this issue, you can do either of the following:<p>* Contact your ISP and request to update the MAC address associated with your ISP subscription.<p>* Clone or change the MAC address of the new device to match the MAC address of the original device.<p>
 BOP_isp_mac_item=MAC Address(optional)
 BOP_isp_MACclone=MAC Clone
-[QIS_internet_success.htm]
 QKSet_Internet_Setup_fail_reason1=DHCP connection failed.
 QKSet_Internet_Setup_fail_reason2=Invalid account or password, click the link to modify it.
 QKSet_Internet_Setup_fail_reason3=PPPoE connection failed, click the link to try again.
@@ -756,9 +723,7 @@ QKSet_finish_moveto5=Simply Wireless Security Setting
 QKSet_finish_moveto6=Look up and configure the encryption setup.
 QKSet_finish_moveto7=Advanced Setting page
 QKSet_finish_moveto8=Manual configuration and fine-tuning.
-[QIS_internet_success.js]		
 QKSet_finish_desc=Internet connection setting is finished.
-[QIS_internet_type.js]		
 QKSet_type_head=Internet WAN connection type
 QKSet_type_desc=Please Choose the WAN connection type provided by your ISP.
 BOP_ctype_title1=Automatic IP
@@ -779,7 +744,6 @@ WLANConfig11b_WEPDefaultKey_itemname=Key Index
 JS_passzero=Pre-shared key should be 8 to 63 characters or 64 hex digits. If you leave this field blank, system will assign [00000000] as your passphrase.
 JS_PSK64Hex=Pre-shared key should be 8 to 63 characters or 64 hex digits!
 JS_wepkey=Please enter the correct WEP key.
-[error_page.htm]		
 web_redirect_message=You failed to access to the web page that you want to view.
 web_redirect_fail_reason0=Reason for failed connection
 web_redirect_suggestion0=We suggest you
@@ -797,7 +761,6 @@ web_redirect_suggestion_final=If these diagnosis can not solve your problem, ple
 web_redirect_suggestion_etc=Go to Setting page of the ZVMODELVZ
 web_redirect_suggestion_etc_desc= and you can check and config your setting by yourself.
 web_redirect_suggestion_manually_start_wan=Turn on the WAN.
-[error_page.js]		
 web_redirect_reason1=The cable for Ethernet is not plugged in.
 web_redirect_reason2_1=Your PPPoE or VPN authentification failed.
 web_redirect_reason2_2=No response from the remote server.
@@ -806,7 +769,6 @@ web_redirect_reason3_2=We have detected that your WAN Connection Type is PPPoE. 
 web_redirect_reason4=The Internet connection failed. Your router's IP address is the same as that of the gateway IP address.
 web_redirect_reason5_1=You have probably stopped the WAN connection manually.
 web_redirect_reason5_2=You have set the wrong dynamic or static IP address for your ZVMODELVZ.
-[objcommon.js]		
 CTL_nonsupported=Nonsupported
 CTL_localdevice=Local Device
 CTL_unknown=Unknown Device
@@ -827,13 +789,11 @@ CTL_AdvSetting=Go to Advanced Setting
 CTL_Enabled=Enabled
 CTL_Disabled=Disabled
 CTL_Disconnect=Disconnected
-[popup.js]		
 Main_alert_proceeding_desc1=Proceeding
 Main_alert_proceeding_desc4=Please wait, 
 Main_alert_proceeding_desc3=Complete!
 Main_content_Login_Item7=Rebooting the router takes about 60 seconds. Are you sure you want to reboot the router now?
 [###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=Rebooting the router takes about 80 seconds. Are you sure you want to reboot the router now?
-[QIS-general.js]		
 JS_fieldblank=Fields cannot be blank.
 JS_validip=is not a valid IP address!
 JS_itemlimit1=This table only allow
@@ -846,11 +806,7 @@ JS_validSSID2=".
 JS_validrange=Please enter a value between
 JS_validrange_to=to
 JS_validport=is not a valid port number.
-JS_WanLanAlert=Selecting DROP will drop all WAN to LAN packets except for those matched in filter table. Please use it carefully.
-JS_LanWanAlert=Selecting DROP will drop all LAN to WAN packets except for those matched in filter table. Please use it carefully.
 JS_fixchannel=Please choose a fixed channel for Bridge.
-JS_AES2=If you would like to enable AES unique, Authentication should be set as Open System!
-JS_AES3=If you would like to enable AES unique, WEP should be enabled too!
 JS_DHCP1=The subnet mask is changed and the IP pool of ZVMODELVZ should be changed. Would you like to change it automatically?
 JS_DHCP3=The new IP Pool does not match the subnet mask. Would you like to allow ZVMODELVZ to change the IP pool automatically?
 BOP_isp_desc=Host Name provided by ISP:
@@ -1104,7 +1060,7 @@ LANHostConfig_x_DDNSWildcard_itemdesc=When enabled, the domain name with wildcar
 LANHostConfig_x_DDNSStatus_itemname=Update Manually:
 LANHostConfig_x_DDNSStatus_itemdesc=This button allows you to update DDNS database manually. It is available only when automatic DDNS update failed. You can get current status of DDNS update from the System Log.
 DeviceSecurity11a_display1_sectiondesc=Wireless MAC filter allows you to control packets from devices with specified MAC address in your Wireless LAN.
-WLANAuthentication11a_display1_sectiondesc=This section allows you to set up additional parameters for authorizing wireless clients through RADIUS server. It is required while you select "Authentication Method" in "Wireless - General" as "WPA-Enterprise/WPA2-Enterprise".
+WLANAuthentication11a_display1_sectiondesc=This section allows you to set up additional parameters for authorizing wireless clients through RADIUS server. It is required while you select "Authentication Method" in "Wireless - General" as "WPA-Enterprise/ WPA2-Enterprise/ Radius with 802.1x".
 WLANAuthentication11a_ExAuthDBIPAddr_itemname=Server IP Address
 WLANAuthentication11a_ExAuthDBIPAddr_itemdesc=The IP address of the RADIUS server for wireless authentication and dynamic WEP key derivation.
 WLANAuthentication11a_ExAuthDBPortNumber_itemname=Server Port:
@@ -1319,7 +1275,6 @@ HSDPAConfig_usbadaptor_itemdesc=Please select your usb adaptor.
 confirm_disableftp_dm=Disable Network Neighborhood Share will cause your Download Master can't be used.
 LANHostConfig_IPRouters_itemdesc=The LAN IP address of ZVMODELVZ. The default value is 192.168.1.1. In IP-based networks, data packets are sent to the network devices' specific IP addresses.<p>ASUS routers use the IP address dotted-decimal notation, which refers to the string of numbers that are written as four octets and separated by dots (such as 192.168.1.1).<p>There are three IP ranges that local are networks can use: 192.168.0.1 - 192.168.255.254, 172.16.0.1 - 172.31.255.254, 10.0.0.1 - 10.255.255.254.
 GO_HSDPA_SETTING=Go to USB Modem setting.
-[adsl start]
 pvccfg_JS_enbsvc=Enable WAN service on
 pvccfg_title=WAN Configuration
 pvccfg_atmcfg=ATM PVC Configuration
@@ -1415,7 +1370,6 @@ dns_server_no_set=Please set up the DNS server on the client device.
 dsl_wan_page_desc=Click the Edit icon to edit a PVC setting. Click the add (+) or delete (-) icon to add or delete a PVC setting.
 dsl_web_redirect_reason1=The telephone cable or cable for Ethernet is not plugged in.
 dsl_web_redirect_reason2_1=PPPoE, PPPoA or VPN authentication failed.
-[adsl end]
 step_use_aicloud=To use AiCloud :
 download_aicloud=Download ASUS AiCloud app to phone or pad from :
 connect_through_wifi=Connect your iOS or Android devices to ZVMODELVZ through WiFi. The AiCloud app will automatically guide you through the setup process.
@@ -1425,10 +1379,10 @@ aicloud_for_privateIP2=Use ports 8082 and 443 for AiCloud. You can change the po
 aicloud_for_privateIP3=For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding FAQ</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=To create a cloud disk, you need to install a USB storage device into this router, then turn Cloud Disk <b>ON</b>.
 aicloud_disk2=Use the router login account to log into the default cloud disk.
-aicloud_disk_case0=Access the cloud disk from <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net:443" target="_blank">https://www.asusnetwork.net:443</a>.
+aicloud_disk_case0=Access the cloud disk from <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net" target="_blank">https://www.asusnetwork.net</a>.
 aicloud_disk_case11=You can access the cloud disk via this URL :
-aicloud_disk_case12=To modify the ddns name, please click <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">here</a>.
-aicloud_disk_case21=Access the cloud disk from <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net:443" target="_blank">https://www.asusnetwork.net:443</a>.
+aicloud_disk_case12=To modify the ddns name, please click <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName" target="_blank">here</a>.
+aicloud_disk_case21=Access the cloud disk from <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net" target="_blank">https://www.asusnetwork.net</a>.
 aicloud_disk_case22=Register for an ASUS DDNS <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">here</a> to access the cloud disk online.
 smart_access1=Smart Access gets the settings of your Network Place such as user accounts, share folders, and others. This allows you to access your home network ( <a id="faq0" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Network Place/Samba</a> ) anytime, anywhere.
 smart_access2=The WOL (Wake-On-LAN) feature lets you wake up a computer from any device in the network.
@@ -1442,3 +1396,7 @@ aicloud_bandwidth2_2=5 Mbps or faster is recommended SD video.
 aicloud_bandwidth2_3=15 Mbps or faster is recommended for 720p video.
 aicloud_bandwidth2_4=30 Mbps or faster is recommended for 1080p HD video streaming.
 aicloud_bandwidth3=Internet upload speeds may vary depending on your ISP and other factors. If you are not sure what your Internet speed is, you can contact your ISP, or use an online bandwidth test from a computer connected to the ASUS Router.
+QIS_rescan=Rescan
+GuestNetwork_Radio_Status=Wi-Fi signal is turned off.
+use_DevDiscoveryUtil=Install and use the <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery Utility</a> in order to detect the wireless router's IP address.
+System_Change_TimeZone=Change the time zone

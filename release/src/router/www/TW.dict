@@ -1,8 +1,6 @@
-﻿[Language type]
 CHAR_set=UTF-8
 PASS_LANG=語言選項：
 LANG_select=選擇語系
-[IPv6]
 IPv6_wan_addr=外部網路 IPv6 位址
 IPv6_wan_Prefix_len=外部網路前綴長度
 IPv6_wan_gateway=外部網路 IPv6 閘道器
@@ -19,17 +17,18 @@ Prefix_lan_Length=內部網路前綴長度
 IPv6_Prefix_Length=Ipv6 前綴長度
 IPv6_DNS_Setting=IPv6 DNS 設定
 ipv6_6rd_dhcp_option=DHCP 選項
+ipv6_6rd_Prefix=IPv6 前綴
 ipv6_client_ip=客戶端 Ipv6 位址
 IPv6_static_IP=固定 IPv6
 tunnel_MTU=通道 MTU
 tunnel_TTL=通道 TTL
-[VPN server]
 vpn_Adv=VPN 詳細設定
 PPTP_desc=無論你身在何處，都可以透過VPN 伺服器來存取您家裡的網路內容
 PPTP_desc2=請依照下列步驟來使用 VPN 伺服器:<br>(1) 啟用 PPTP VPN 伺服器<br>(2) 為用戶端設定 IP Pool (最多可以設定 10 個用戶端)<br>(3) 為 VPN 用戶端設定帳號與密碼<br>(4) 開啟您個人電腦或是智慧型手機上的 VPN 連接應用程式<br>(5) 新增一個 PPTP VPN 連線，VPN 伺服器位址為
 PPTP_desc3=(6) 如果您的外部網路為動態 IP，<a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">請點選這裡來設定 DDNS</a>
 vpn_enable=啟用PPTP伺服器
 vpn_broadcast=支援區域廣播
+vpn_network_place=支援網路芳鄰(Samba)
 MPPE_Encryp=MPPE 加密
 Auto=自動
 No_Encryp=無加密
@@ -42,7 +41,6 @@ vpn_conflict_DHCPpool=* 與路由器的 DHCP 設定的 IP Pool 衝突:
 vpn_conflict_DHCPstatic=* 與路由器 DHCP 設定的固定 IP 位址衝突:
 vlaue_haigher_than=此設定值須高於
 vpn_max_clients=VPN 伺服器最多僅支援 10 個用戶端！
-[ParentalCtrl]
 Parental_Control=家長電腦控制程式
 ParentalCtrl_Desc=透過家長控制程式，您可以去設定使用者使用網路的時間限制，其使用步驟為:
 ParentalCtrl_Desc1=從「客戶端名稱」選擇一位您想控制其網路使用的使用者，您同時也可以在「客戶端 MAC 位址」欄位輸入其 MAC 位址
@@ -52,18 +50,15 @@ ParentalCtrl_Desc4=點選「確定」鍵來儲存這些設定
 ParentalCtrl_username=客戶端名稱
 ParentalCtrl_hwaddr=客戶端 MAC 位址
 ParentalCtrl_time=時間管理
-[AutoUpdate]
 check_proceeding=路由器正在檢查華碩伺服器以查看韌體更新。
 connect_failed=未偵測到網際網路連線。路由器無法連線至華碩伺服器檢查韌體更新。重新連線至網際網路後，返回此頁面，點選「檢查」檢查是否有韌體更新。
 exist_new=有新的韌體版本可用。您是否要更新韌體？
 is_latest=路由器目前韌體已為最新版本。
 unavailable_update=沒有可用更新
-[GreenIndicator]
 no_printer_detect=未偵測到印表機
 Eject_usb_disk=退出 USB 磁碟
 disconnect_internet=斷開網際網路連線
 go_GuestNetwork=前往訪客網路
-[GuestNetwork]
 Guest_Network=訪客網路
 GuestNetwork_desc=訪客網路為訪客提供網際網路連線，但限制訪客存取您的內部網路。
 Access_Time=存取時間
@@ -71,7 +66,6 @@ Limitless=無限制
 Access_Intranet=存取內部網路
 Guest_network_index=訪客網路索引
 Guest_Network_enable=是否開啟訪客網路
-[TrafficManager]
 upload_prio=上傳優先順序
 min_bound=最小保留頻寬
 max_bound=最大頻寬限制
@@ -109,12 +103,10 @@ qos_user_prio=使用者自訂優先級
 qos_user_rules=使用者自訂 QoS 規則
 source_ipmac=關於來源或目標 IP 位址，您可以：<p>（a）輸入一個具體的 IP 位址，如 \"192.168.122.1\"；<p>（b）以\"*\" 表示一個子網路或相同 IP pool 的所有 IP 位址，如 \"192.168.123.*\" 或 \"192.168.*.*\"；<p>（c）輸入所有IP 位址，如 \"*.*.*.*\"。<p>MAC 位址的格式為六組十六進制的數位組成，每組兩個，以冒號分開，依照傳送順序編寫。 (e.g. 12:34:56:aa:bc:ef )
 QoS_invalid_period=頻寬限制無效。
-[Network_PrintServer]
 Network_Printer_Server=網路印表機伺服器
 Network_Printer_desc=網路印表機伺服器支援兩種分享方式： （1）華碩 EZ 印表機分享（2）LPR 分享印表機。
 asus_ez_print_share=華碩 EZ 印表機分享（僅限 Windows 作業系統）
 LPR_print_share=使用 LPR 協定分享列印
-[New_201108]
 usb_unmount=USB 功能未開啟
 no_usb_found=未偵測到 USB 磁碟
 Menu_usb_application=USB 應用
@@ -125,7 +117,6 @@ jumbo_frame=啟動 Jumbo Frame
 ctf_disable=關閉 HW Accelerator
 Enable_WAN=啟動 WAN
 Enable_NAT=啟動 NAT
-[New_QIS]
 QIS_Previous_WLKey=您要繼續使用之前的無線網路安全設定嗎？
 QIS_recommand_encryption=強烈建議您首先設定加密類型。
 QIS_confirm_recommand_encryp=強烈建議您首先設定加密類型，是否繼續？
@@ -143,27 +134,35 @@ QIS_welcome_feature1=450+450同步雙頻無線網路。
 [###MODEL_DEP###][RT-N56U][RT-N53]QIS_welcome_feature1=同步雙頻 N600。（300 Mbps/ 2.4GHz + 300 Mbps/ 5GHz）
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature1=300Mbps 同步雙頻無線路由旗艦機，提供您頂級的無線傳輸效能。
 [###MODEL_DEP###][RT-N16]QIS_welcome_feature1=高效率的中央處理器展現出高水準的效能表現。
-[###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1][RT-N10U]QIS_welcome_feature1=單頻寬 N300。（300 Mbps/ 2.4GHz）
+[###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature1=單頻寬 N300。（300 Mbps/ 2.4GHz）
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature1=提供三種無線網路切換模式 ─ 無線路由器 / 無線分享器 / 中繼模式
+[###MODEL_DEP###][RT-N10U]QIS_welcome_feature1=單頻寬 N150。（150 Mbps/ 2.4GHz）
 QIS_welcome_feature2=USB 2.0 x 2，可支援多功能事務機伺服器、UPnP、SAMBA 以及 FTP server。
+[###MODEL_DEP###][RT-AC66U]QIS_welcome_feature2=ASUS AiCloud unlimitedly access, streaming, and sync files everywhere with any devices.
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature2=4 x 千兆乙太網路連接埠。
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature2=4 x 千兆乙太網路連接埠。 2 x USB 2.0 連接埠，快速共用檔案與印表機。
+[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature2=Twin USB ports enable multi-role usability.
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature2=4 x 10/100 乙太網路連接埠。
 [###MODEL_DEP###][RT-N15U]QIS_welcome_feature2=4 x 千兆乙太網路連接埠。 1 x USB 2.0 連接埠，快速共用檔案與印表機。
 [###MODEL_DEP###][RT-N12B1][RT-N12C1]QIS_welcome_feature2=4 x 10/100 乙太網路連接埠。 2 x 5DBi 天線，實現更大訊號覆蓋範圍。
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature2=提供 2根可拆式外接 9dBi 高增益天線及可調式無線輸出功率
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature2=4 x 10/100 乙太網連接埠。 1 x USB 2.0 連接埠，快速共用印表機。
 QIS_welcome_feature3=Turbo NAT 加速引擎，提供 Gigabit 等級的 Internet 傳輸速度。
+[###MODEL_DEP###][RT-AC66U]QIS_welcome_feature3=4 x 千兆乙太網路連接埠。 2 x USB 2.0 連接埠，快速共用檔案與印表機。
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature3=2 x USB 3.0 連接埠，快速共用檔案與印表機。
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature3=內建 Beam forming 技術可擴大訊號覆蓋範圍。
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature3=USB 2.0 x 2，可支援多功能事務機伺服器，UPnP，SAMBA 以及 FTP server。
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature3=多達 3 個 Guest SSID。
 [###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature3=多達 3 個 Guest SSID。
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature3=出色的高功率無線電波和天線傳輸，提供三倍以上的信號覆蓋率。
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature3=1 x 5DBi 天線，實現更大訊號覆蓋範圍。
 QIS_welcome_feature4=支援高達 300,000 連線數, 提供您最穩定的 P2P 下載環境。
-[###MODEL_DEP###][RT-N65U][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature4=圖形化使用者介面輕鬆設定並管理路由器。
+[###MODEL_DEP###][RT-AC66U][RT-N65U][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature4=圖形化使用者介面輕鬆設定並管理路由器。
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature4=硬體 NAT 支援 5X 更快速的 WAN 至 LAN 網路體驗。
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature4=支援高達300,000連線數，提供您最穩定的P2P下載環境。
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature4=支援使用者存取時間控制功能。
-[###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=多達 4 個 Guest SSID。
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature4=特別針對多樓層的透天厝提供強大的訊號覆蓋率。
+[###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=多達 3 個 Guest SSID。
 QIS_pass_title=設定路由器登入密碼
 QIS_pass_desc1=變更路由器密碼以阻止未授權的用戶端存取您的華碩無線路由器。
 QIS_pass_desc3=路由器密碼是您的華碩路由器的管理金鑰。當您登入路由器的網頁圖形使用介面時，您需要輸入使用者名稱與密碼。預設的路由器使用者名稱與密碼為：admin /admin。
@@ -207,10 +206,8 @@ qis_tutor_desc2=1 在通知區域，按一下網路圖示（<img src="/images/qi
 qis_tutor_desc3=2. 在網路清單中按一下您要連線的網路，然後按一下 連線。
 qis_tutor_desc4=1. 在通知區域按一下網路圖示，然後按一下 查看可用無線網路。
 qis_tutor_desc5=1. 在選單列中按一下Airport狀態圖示（ <img src="/images/qis/osx_network_icon.jpg"> ），然後選擇您要連線的無線名稱。
-[System log]
 System_Log=系統紀錄
-[New_0622]
-upnp_Desc=Set up the DLNA, iTUnes, FTP and Network Place (Samba) server.
+upnp_Desc=Set up the DLNA, iTunes, FTP and Network Place (Samba) server.
 Route_title=此頁顯示詳細路由狀態。
 PortForward_title=此頁顯示虛擬伺服器通訊埠轉發狀態。一些 P2P 程式會使用 UPnP 協定以開啟通訊埠，並且通訊埠名稱在此頁上顯示。
 WLLog_title=此頁顯示詳細無線狀態。
@@ -221,7 +218,7 @@ FTP_desc=設定 FTP 的帳號與權限。
 Samba_desc=設定網路芳鄰共享（Samba）服務的帳號與權限。
 LANHostConfig_x_DDNSHostNames_itemdesc=主機名稱不能為數字前綴與 \".\"（如 \"123abc\" 或 \"aaa.bbb\" ）
 LANHostConfig_x_DDNSEnable_sectiondesc2=目前無線路由器使用一個私人的 WAN IP 位址（192.168.x.x, 10.x.x.x, or 172.16.x.x）。<p>此路由器可能處於多層 NAT網路中，而 DDNS 服務不能在此環境下工作。請連絡您的網路管理人員處理此問題。
-LANHostConfig_x_DDNSEnable_sectiondesc3=主機名稱已登記成功。您可以使用 "[hostname].asuscomm.com" 從 WAN 中獲取主機網路服務。使用"[hostname].asuscomm.com" 遠端存取您的網路。<p>前往 進階設定 > 外部網路 虛擬伺服器或 DMZ，可做 WAN 用戶端遠端存取內部網路的相關設定。<p>若您想要遠端設定無線路由器，選擇 <a href="../Advanced_BasicFirewall_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">這裡</a>。
+LANHostConfig_x_DDNSEnable_sectiondesc3=主機名稱已登記成功。您可以使用 "[hostname].asuscomm.com" 從 WAN 中獲取主機網路服務。使用"[hostname].asuscomm.com" 遠端存取您的網路。<p>前往 進階設定 > 外部網路 虛擬伺服器或 DMZ，可做 WAN 用戶端遠端存取內部網路的相關設定。<p>若您想要遠端設定無線路由器，選擇 <a href="/Advanced_System_Content.asp?af=misc_http_x" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">這裡</a>。
 IPConnection_LocalIP_itemdesc=輸入 LAN 用戶端 IP 位址。
 IPConnection_LocalPort_itemdesc=若您想要接收的資料包轉移至此通訊埠，請不要填寫此欄。
 IPConnection_PortRange_itemdesc=通訊埠範圍接受多種格式，如通訊埠範圍 ( 300:350 )、個別通訊埠 （566,789）或混合（1015:1024,3021）。
@@ -239,14 +236,12 @@ Aidisk_authority_hint=警告：AiDisk 已設定完成。若您再次設定，之
 remove_usb_hint=若需移除 USB 硬碟，請點選螢幕右上角的 USB 圖示。
 UserQoSRule_desc_zero=請先開啟 QoS 後再設定規則。
 prio_packet_note=預設的 ACK、SYN 與 ICMP 封包可提高遊戲流暢性。
-[NAT Passthrough]
 NAT_PPTP_Passthrough=PPTP Passthrough
 NAT_L2TP_Passthrough=L2TP Passthrough
 NAT_IPSec_Passthrough=IPSec Passthrough
 NAT_RTSP_Passthrough=RTSP Passthrough
 NAT_passthrough_itemname=NAT Passthrough
 NAT_passthrough_desc=啟用 NAT Passthrough 功能，讓 Virtual Private Network (VPN) 服務所需要用到的協定允許通過。
-[opmode strings]
 wireless_router=無線路由器
 BasicConfig_EnableiTunesServer_itemname=啟動 iTunes Server
 OP_GW_item=無線路由器(預設)
@@ -255,7 +250,7 @@ OP_RE_item=中繼模式
 OP_RE_desc=在 Repeater mode(中繼模式)下，ZVMODELVZ 可以延伸您使用環境內其他基地台的訊號，以提供無線用戶更好的訊號品質。
 OP_AP_item=Access Point(無線存取點)
 OP_AP_desc=在 Access Point(無線存取點)模式中，ZVMODELVZ 透過乙太網路線連接另一台無線路由器以擴大無線訊號覆蓋面至其他網路用戶端。在此模式中，防火牆、IP 分享與 NAT 功能均被預設關閉。
-deviceDiscorvy=在基地台（AP）模式中，由 DHCP 指定的 IP 位址會發生變更。安裝並使用 <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery 程式</a> 來偵測無線路由器的 IP 位址。
+deviceDiscorvy=在基地台（AP）模式中，由 DHCP 指定的 IP 位址會發生變更。 安裝並使用 <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery 程式</a> 來偵測無線路由器的 IP 位址。
 IPConnection_VSList_ftpport=FTP 伺服器埠號
 wps_start_btn=起始
 USB_Application_account_alert=用戶賬號不能為'root'、'guest'、'anonymous'。請輸入有效的賬號名稱！
@@ -264,13 +259,11 @@ RouterConfig_GWMulticast_unknownUni_itemname=未知單播風暴控制（Mbps）�
 RouterConfig_GWMulticast_unknownMul_itemname=未知多播風暴控制（Mbps）：
 RouterConfig_GWMulticast_Multicast_itemname=多播風暴控制（Mbps）：
 RouterConfig_GWMulticast_Broadcast_itemname=廣播風暴控制（Mbps）：
-[keyword_filter]
 menu5_5_5=關鍵字過濾器
 FirewallConfig_KeywordFilterEnable_sectiondesc=關鍵字過濾器可以為您阻止客戶端瀏灠符合特定關鍵字的網頁。
 FirewallConfig_KeywordFilterEnable_sectiondesc2=關鍵字過濾功能限制：<ol><li>使用 HTTP 壓縮技術的壓縮網頁無法被過濾。<a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">點選這裡了解詳細資訊</a></li><li>Https 網頁無法被過濾。</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=開啟關鍵字過濾器
 FirewallConfig_KeywordList_groupitemname=關鍵字過濾器列表
-[New translated]
 JS_field_wanip_rule3=請輸入1~2592000(秒)之間的值。
 FirewallConfig_Port80_itemdesc=在關閉防火牆時設定 HTTP 伺服器，且設定外網(WAN 端)通訊埠為80，會與 ZVMODELVZ 的管理介面伺服器使用的通訊埠衝突.
 FirewallConfig_FTPPrompt_itemdesc=當使用 ZVMODELVZ 內建的 FTP 伺服器功能時，設定外網(WAN 端)通訊埠為20:21，會與 ZVMODELVZ 內建的 FTP 伺服器使用的通訊埠衝突.
@@ -284,12 +277,10 @@ WLANConfig11b_TxPower_itemname=調整天線功率
 WLANConfig11b_TxPower_itemdesc=調整天線功率，已獲得最佳的傳輸品質。
 WLANConfig11b_Wireless_Speed_itemname_3=使用40MHz頻寬來最大化無線網路速度。若您處在無線網路環境不穩定情況下，請選擇預設模式（20MHz）。
 hwnat_desc=NAT ( 網路位址轉換 )能夠替換網路封包中的位址資訊讓 Internet 和內部網路的用戶端能夠順利溝通。典型的用法就是使用外部網路將路由器連接至內部網路。在內部網路中，每一個網路裝置都有一個私有 IP（LAN IP），但只有一個外部 IP（WAN IP）。欲使網路裝置連接至網路，路由器將發送者的所有外送封包的私有 IP 位址替換為外部 IP 位址。路由器會自動維護一個表格用來存儲了所需資訊（ NAT table ），這樣從 Internet 進入的封包可被分配至正確的內部網路裝置。
-[error_page.htm]
 web_redirect_reason6=偵測到 IP 位址衝突。點選下一步獲取一個新的 IP 位址。
 web_redirect_case6_desc1=路由器更新的 IP 位址：
 web_redirect_case6_desc2=點選下一步後，請確認您為每個相關服務更新了 IP 位址設定，如虛擬伺服器或DMZ。
 error_page_lanip_changed_desc1=IP 位址被更新。若此步驟花費了超過兩分鐘的時間，請按照以下三個步驟手動更新 IP 位址：（1）拔掉網線； （2）等待約十秒鐘；（3）重新插上網線以獲取一個新的 IP 位址。
-[QIS]
 QIS_autoMAC_desc1=開始克隆電腦的 MAC 位址到路由器…
 QIS_autoMAC_desc2=請稍候…
 QIS_autoMAC_desc3=檢查 WAN IP 位址
@@ -313,7 +304,6 @@ QIS_internet_success_desc1=您的網路可能設定了代理伺服器。請與�
 QIS_internet_success_desc2=網路業者的網功能變數名稱稱伺服器可能出錯。請與您的網路業者或網路管理員確認，或進入進階設定頁面來設定公共 DNS。
 QIS_internet_success_desc3=請與您的網路業者或網路管理員確認。
 QIS_internet_success_desc4=請拔掉數據機的電源線。等待約兩分鐘後，在重新連接電源線。然後點選重新偵測。
-[Traffic Monitor]
 Date=日期
 Scale=標度
 Last30days=過去30天
@@ -326,13 +316,11 @@ Current=即時流量值
 Average=平均流量值
 Maximum=最大流量值
 Total=總流量值
-[RT-N66U new item]
 LAN_IP_changed_suggedtion1=內部網路位址已變更為
 LAN_IP_changed_suggedtion2=。若您無法連上此設定畫面，請更新您電腦的 IP 位址。
 WLANConfig11b_x_WPSband_itemname=Current Band
 WLANConfig11b_x_WPSband_itemdesc=選擇 WPS 所要支援的頻段。如欲切換頻段，請先停用 WPS 功能
 LANConfig_ChangedLANIP=建議您使用華碩公用程式的 Device Discovery 搜尋基地台的 IP 位址，以重新進入設定頁面。
-[RT-N1X new item]
 LANHostConfig_x_Password_itemdesc=密碼不能大於十六個字符。
 WLANConfig11n_nmode_limition_hint=[n Only]模式下，原 WEP 或 TKIP 加密設定將自動調整為 AES 加密，以取得正確的連線。
 WLANConfig11n_automode_limition_hint=Auto 模式下使用 WEP 或 TKIP 加密時，無線網路最多支援54Mbps的傳輸速率。
@@ -344,15 +332,14 @@ WLANConfig11n_PremblesType_itemname=Preamble 類型
 WLANConfig11n_PremblesType_itemdesc=Preamble 類型定義了 CRC (Cyclic Redundancy Check，一種檢查資料傳輸錯誤的技術)區塊的長度。我們建議您網路中所有無線裝置都設為同一種 Preamble 類型。設定為 short 可以改善傳輸速率，但必須確定您區域網路內的無線網卡皆支援此設定。</p>
 LANHostConfig_ManualDHCPEnable_itemdesc=為特定的用戶端分配固定 IP 位址。需要用戶的 MAC 位址。
 Layer3Forwarding_x_STB_itemdesc=選擇某個 LAN 埠與WAN埠作橋接。若您有額外的裝置需要連接 WAN 端，但您的網際網路服務商只提供一條 WAN 端線路時，您可指定某個 LAN 埠轉接來自 WAN 端的封包。例如：可將網路電視機上盒連接上這個指定的埠，直接取得服務商提供的 IP 與訊號。
-IP_format=在來源或目的 IP 位址方面，您可輸入一特定的IP位址，如「192.168.122.1」，或在子網路內的 IP 位址，如「192.168.123.*」、或「192.168.*.*」，或像是「*.*.*.*」這樣所有的 IP 位址。
 Port_format=在來源或目的通訊通訊埠的範圍方面，您可輸入一特定通訊埠，如「95」，或在一範圍內的通訊通訊埠，如「103:315」、「>100」或是「<65535」。
+IP_format=在來源或目的 IP 位址方面，您可輸入一特定的IP位址，如「192.168.122.1」，或在子網路內的 IP 位址，如「192.168.123.*」、或「192.168.*.*」，或像是「*.*.*.*」這樣所有的 IP 位址。
 ShareNode_FTPLANG_itemdesc=依據磁碟內檔名的編碼，選擇適合FTP伺服器的語系。
 FirewallConfig_DoSEnable_itemdesc=阻斷服務攻擊( DoS attack )可阻止合法的使用者使用網路服務。<p>開啟此項功能可保護路由器不受 DoS 危害，但這會增大路由器工作負載。
 ShareNode_Seeding_itemname=允許作種
 ShareNode_Seeding_itemdesc=啟用允許作種，ZVMODELVZ 會在下載完成後維持種子，提供他人下載。
 ShareNode_MaxUpload_itemname=最大上傳速率
 ShareNode_MaxUpload_itemdesc=請輸入介於0到999的數值，預設值是0，代表沒有上傳速率的限制。
-[New item]
 HSDPAConfig_hsdpa_enable_hint1=目前 3G/4G 設定處於 3G/4G Backup 模式，當 WAN port 不通的時候，會自動切換到 3G/4G 模式。
 HSDPAConfig_hsdpa_enable_hint2=若要更改連線類型，請先至<a href="/Advanced_Modem_others.asp"> USB Modem 設定</a>停用 USB 網卡
 HSDPAConfig_USBAdapter_itemname=USB 網路卡
@@ -367,10 +354,10 @@ Browser_action_not_support_addfavorite=很抱歉，您的瀏覽器不支援這�
 page_not_support_mode_hint=目前的運作模式不支援此頁面。
 APSurvey_action_ConnectingStatus0=Parent-AP 可能已關閉。請確認。
 APSurvey_action_ConnectingStatus3=重新開啟瀏覽器。在網址欄中輸入 "http://www.asusnetwork.net/" 檢視中繼器連線狀態。
-APSurvey_action_ConnectingStatus1=連線失敗，請重新輸入金鑰或按「取消」選擇其他基地台。
+APSurvey_action_ConnectingStatus1=連線失敗，密碼錯誤，請按「重新掃描」選擇其他基地台。
 APSurvey_action_ConnectingStatus24=無線網路連線成功
 APSurvey_action_ConnectingStatus35=WPA金鑰認證失敗，請重新輸入。
-APSurvey_action_renew_IP=ZVMODELVZ 已取得新的 IP：
+APSurvey_action_renew_success=IP 設定更新成功，即將為您導回設定頁面。
 APSurvey_action_searching_noresult=偵測不到任何基地台
 APSurvey_action_searching_AP=正在搜尋範圍內的無線網路...
 APSurvey_msg_connect_open_wlan=您正在連線到不安全的網路。\n在這個網路上傳遞的資訊沒有加密。
@@ -383,7 +370,6 @@ AP_fail_get_IPaddr=無法取得 IP 位址資訊
 AP_Remote_IP=基地台 IP 位址
 AP_survey=基地台搜尋
 statusTitle_AP=遠端基地台狀態
-[USB Application - HSDPA]
 HSDPAConfig_pin_code_itemdesc=請填入 SIM 卡的 PIN 碼，須為長度介於4到8之間的數字。若您不知道 SIM 卡 PIN 碼為何，請洽詢您的 ISP 業者。
 HSDPAConfig_private_apn_itemname=APN 服務名稱（選填）
 HSDPAConfig_private_apn_itemdesc=若您不知道 APN 服務名稱為何，請洽詢您的 ISP 業者。
@@ -393,12 +379,10 @@ HSDPAConfig_hsdpa_enable_itemname=啟用USB Modem
 HSDPAConfig_hsdpa_mode_itemname=USB Modem 模式
 HSDPAConfig_DNSServers_itemname=DNS 伺服器
 AiDisk_Wizard_failedreson1=AiDisk 精靈執行異常。請稍後再試一次。
-[state.js-Dr.Surf.]
 QKSet_ISP_desc3=自動取得 IP 連線失敗，您可由此設定以建立連線。
 QKSet_ISP_desc2=嘗試以固定 IP 連線失敗
 QIS_internet_vpn_confirm=若您的連線類型為 PPTP/L2TP，請按「確定」選擇「需要 VPN 伺服器」並繼續設定。\n若否，請選擇「取消」，並確認輸入資訊是否正確後套用設定。
 Full_Clients=用戶數
-[QIS_internet_vpn.htm]
 QIS_if_vpn_existed=是否需要 VPN 伺服器？
 QIS_internet_vpn_title=VPN 的內容
 QIS_internet_vpn_type=VPN 的類型：
@@ -419,14 +403,11 @@ Device_service_iTune=iTunes 分享:
 Device_service_Printer=列印服務:
 JS_storageright=設定名稱之後（如 aabbcc），在 Internet Explorer 的 URL 欄目 中輸入 //aabbcc 以使用網路芳鄰 標準輸入字符包括字母（A-Z, a-z）、字元（0-9）、空格、下劃線 (_) 與破折號 (-)。 最先或最後字符不能為空格。
 not_support_script=很抱歉，您的瀏覽器不支援Java Script。<p>請選擇支援JavaScript的瀏覽器或開啟JavaScript功能，以體驗ASUS ZVMODELVZ各種軟體功能。
-[Advanced_AiDisk_others.asp]
 Help_of_Workgroup=為機器在網芳中，所在的群組名稱，能接受的輸入字元包含英文字母(A~Z、a~z)、數字(0~9)、空格、破折號(_)及連字號(-)。第一個和最後一個字元不能為空格。使用非標準的裝置名稱會導致其他使用者無法透過網路搜尋您的電腦。
-[state.js-Dr.Surf.]
 DrSurf_refresh_page=更新頁面
 DrSurf_sweet_advise1=如果你已更改了 SSID 或無線網路安全性設定，提醒您調整無線網路卡設定以重新取得連線。
 DrSurf_sweet_advise2=連線已恢復。
 DrSurf_sweet_advise3=切換成無線網路基地台模式後，將取消 ZVMODELVZ 的 DHCP功能，如此可能導致您無法連上設定頁面。<p>建議您可使用華碩共用程式的 Device Discovery 搜尋基地台的網路位址，以重新進入設定頁面。</p>
-[AiDisk Wizard]
 File_Pop_content_alert_desc1=帳號名稱不能空白!
 File_Pop_content_alert_desc2=帳號名稱不能少於兩個字!
 File_Pop_content_alert_desc3=帳號名稱不能大於二十個字!
@@ -439,7 +420,6 @@ File_content_alert_desc6=資料夾名稱不能空白!
 File_content_alert_desc7=資料夾名稱只能包含英文字母、數字、破折號、底線，名稱中能有空白!
 File_content_alert_desc8=這個名稱已有資料夾取用。\n請輸入不同的名稱!
 File_content_alert_desc10=新資料夾名稱超過12字，有些作業系統可能無法相容!\n要繼續操作嗎?
-[AiDisk Advanced]
 enableCIFS=啟用網芳分享
 disableCIFS=關閉網芳分享
 enableFTP=啟用 FTP
@@ -472,7 +452,6 @@ NewFolderName=新資料夾名稱
 AddFolderAlert=新增資料夾的預設權限可讀寫。
 DelFolderAlert=在刪除資料夾前，請確認其中並無任何檔案或目錄。<br><br>確定要刪除這個資料夾：
 ModFolderAlert=重新命名後，權限依舊會保留，其中的子資料夾亦會存在。
-[LeftMenu]
 menu1=網路地圖
 menu2=媒體伺服器
 menu3=AiDisk
@@ -517,7 +496,6 @@ menu5_7_3=DHCP租約
 menu5_7_4=無線使用者
 menu5_7_5=通訊埠轉遞
 menu5_7_6=路由表
-[Network Map]
 block_client=點選這裡來阻止用戶端
 statusTitle_System=ASUS ZVMODELVZ
 statusTitle_Internet=網際網路狀態
@@ -539,6 +517,7 @@ MAC_Address=MAC 位址
 ConnectionStatus=網際網路狀態
 WAN_IP=外部網路 IP
 Connectiontype=連線類型
+LeaseExpires=Lease expires
 QIS=網路設定精靈
 QIS_title=網路設定精靈
 Connected=已連線
@@ -556,9 +535,9 @@ Priority_Level_3=低
 Modelname=型號
 Totalspace=總容量
 Availablespace=可用容量
-AiDiskWizard=AiDisk精靈
 UPnPMediaServer=媒體伺服器
 UPnPMediaServer_Help=ZVMODELVZ 支援 UPnP 標準，可與支援 UPnP 的裝置，如：PS3 遊戲機或其他數位影音播放器，分享您 USB 外接磁碟上的檔案。
+AiDiskWizard=AiDisk 精靈
 Safelyremovedisk_title=安全地移除磁碟
 Safelyremovedisk=可以放心移除磁碟
 btn_remove=移除
@@ -577,7 +556,6 @@ Minute=分
 Second=秒
 upload_bandwidth=上傳頻寬
 download_bandwidth=下載頻寬
-[AiDisk Wizard]
 AiDiskWelcome_title=歡迎使用 AiDisk 精靈
 AiDiskWelcome_desp=立刻實現這些分享需求：
 AiDiskWelcome_desp1=透過網際網路分享您 USB 磁碟內的檔案。
@@ -589,7 +567,7 @@ AiDisk_Step1_helptitle=快速建立帳號權限
 AiDisk_Step2_helptitle=更多關於 DDNS
 AiDisk_Step3_helptitle=更多專業的磁碟分享設定
 AiDisk_Step1_help=提供三種常用的分享方式，彈指之間為您建立分享的帳號。<p>選擇「不需要帳號密碼」，不需要帳號密碼即可由FTP存取您的USB磁碟。</p><p>選擇「需要帳號才能存取」，將額外建立Family這個帳號，僅提供下載的權限。</p><p>選擇「只有我可以存取」，我們為您建立一組Admin帳號，提供完整的存取權限與基本的密碼保護。</p><p>註:進行權限設定，將會清除您原始設定的帳號。</p>
-AiDisk_Step1_help2=註：帳號管理功能無法在NTFS格式的磁碟中使用。
+AiDisk_Step1_help2=註：帳號管理功能無法在 NTFS 格式的磁碟中使用。
 AiDisk_Step2_help=華碩 DDNS 服務讓您可以快速建立一組簡單易記的網址，即使您的主機採用動態位址，其他人也可以更方便的透過FTP存取您的外接USB磁碟。<p>倘若您需要其他服務商的DDNS設定，請至<a href='/Advanced_ASUSDDNS_Content.asp' target='_top'>進階DDNS</a>進行設定</p>
 AiDisk_Step3_help=<a href='../Advanced_AiDisk_samba.asp' target='_top'>以網芳分享磁碟</a>：更多專業的網路芳鄰分享設定。<br /><a href='../Advanced_AiDisk_ftp.asp' target='_top'>以FTP分享磁碟</a>：更多專業的FTP伺服器設定。
 Step2_method=我的FTP伺服器
@@ -613,11 +591,10 @@ AiDisk_linktoFTP_fromInternet=FTP 連結：
 linktoFTP_no_1=FTP 服務未開啟。若需存取 FTP，請至 <a href="../Advanced_AiDisk_ftp.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">這裡</a> 開啟。
 linktoFTP_no_2=DDNS 未開啟，若需由外部網路以網域名稱存取 FTP，請先開啟 DDNS。
 linktoFTP_no_3=DDNS 已開啟，但網域名稱未註冊成功，無法由外部網路以網域名稱存取 FTP。
-AiDisk_wizard_text_box_title3=您曾經設定過AiDisk精靈，現在可參考以下資訊來存取磁碟：
+AiDisk_wizard_text_box_title3=您曾經設定過 AiDisk 精靈，現在可參考以下資訊來存取磁碟：
 yoursharesetting=即將設定檔案分享方式為：
-neednotDDNS=跳過華碩 DDNS 服務設定。
+neednotDDNS=關閉 DDNS。
 asusddns_inputhint=請輸入名稱
-[WPS]
 WPS_PBCbutton_hint_success=連線成功
 WLANConfig11b_display6_sectiondesc=WPS (Wi-Fi Protected Setup) 可讓您輕鬆地設定一個安全的無線網路。
 WLANConfig11b_x_WPS_itemname=啟用 WPS
@@ -649,7 +626,6 @@ bottom_Link=http://support.asus.com/download.aspx?SLanguage=zh-tw&m=ZVMODELVZ
 Help_init_word1=在說明功能中，我們為一些艱澀或進階的功能提供導引與解釋，而這些詞彙會以
 Help_init_word2=黃色字藍色底虛線
 Help_init_word3=表示，以滑鼠點選後即可觀看。
-[hook error]
 ALERT_OF_ERROR_Input1=沒有提供協定項目值!
 ALERT_OF_ERROR_Input2=協定項目值輸入錯誤!
 ALERT_OF_ERROR_Input3=沒有提供模式項目值!
@@ -690,8 +666,6 @@ ALERT_OF_ERROR_Action12=格式化磁碟失敗!
 ALERT_OF_ERROR_System1=系統錯誤: 不能存取記憶體!
 ALERT_OF_ERROR_System2=系統錯誤: 無法讀取磁碟資料!
 ALERT_OF_ERROR_System3=系統錯誤: 磁碟忙碌中!
-[QIS wizard]
-[QIS_detect.js]
 Web_Title=ASUS Wireless Router ZVMODELVZ
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]Web_Title=ASUS ZVMODELVZ Dual-Band Wireless-N Gigabit ADSL2/2+ Modem Router
 Web_Title2=ZVMODELVZ
@@ -701,17 +675,14 @@ QKSet_detect_desc2=重新偵測網路連線狀態
 QKSet_detect_wanconnfault=連線有誤，可能是 WAN 埠的網路線未接上。請連接上並重試一次...
 QKSet_detect_freshbtn=重新偵測
 QKSet_detect_waitdesc=開始偵測網際網路連線類型...
-[QIS_finish.js]
 QIS_finish_Desc=ZVMODELVZ 提供這些網路無線設定。
 QKSet_all_title=快速設定
 QKSet_finishpre_rebootnow=完成
-[QIS_internet_account.js]
 QKSet_account_webtitle=ISP 帳號設定
 QKSet_ISP_head=ISP 資料設定
 QKSet_ISP_desc=請參考您的 ISP 設定，輸入以下資訊。
 PPPConnection_UserName_itemdesc=ISP 提供的用戶名稱。
 QKSet_account_nameblank=用戶名稱不能空白！
-[QIS_internet_ip.js]
 Layer3Forwarding_x_DHCPClient_itemname=自動取得遠端網路位址
 Layer3Forwarding_x_UseStaticIP_itemname=使用下列的 IP 位址連線：
 qis_dns=使用以下 DNS 伺服器位址
@@ -734,13 +705,11 @@ IPConnection_x_DNSServer_blank=請在用戶端裝置上設定 DNS 伺服器。
 IPConnection_warning_WANIPEQUALGatewayIP=你已將網際網路 IP 設置為閘道器 IP，ZVMODELVZ 也許因此無法正確的連接到網際網路，請重新設定正確的閘道器IP。
 IPConnection_x_WAN_LAN_conflict=WAN 與 LAN 須使用不同的 IP 位址與子網路遮罩。
 IPConnection_x_illegal_mac=MAC 位址無效。
-[QIS_internet_isp.js]
 BOP_isp_host_desc=本欄可讓您提供 ZVMODELVZ 所使用的主機名稱。通常是您 ISP 業者要求的名稱。
 BOP_isp_host_item=主機名稱(選填)：
 PPPConnection_x_MacAddressForISP_itemdesc=MAC (Media Access Control) 位址是特定的識別碼可用來識別網路中的電腦或裝置。部份ISP會監視與他們相連的裝置的 MAC 位址，並且不允許新的 MAC 位址的建立網路連線。爲了解決這個問題，您可以執行以下任一項目：<p>* 聯絡您的 ISP 並且要求把 MAC 位址更新為您這台無線路由器的 MAC 位址。<p>* 複製原始裝置的 MAC 位址，並用這個MAC 位址取代更改路由器的 MAC 位址。
 BOP_isp_mac_item=MAC 位址(選填)
 BOP_isp_MACclone=取得電腦 MAC 位址
-[QIS_internet_success.htm]
 QKSet_Internet_Setup_fail_reason1=DHCP 模式連線失敗
 QKSet_Internet_Setup_fail_reason2=PPPoE 帳號或密碼有誤，請重新輸入帳號密碼。
 QKSet_Internet_Setup_fail_reason3=PPPoE 模式連線失敗，按此連結可重新偵測連線。
@@ -754,9 +723,7 @@ QKSet_finish_moveto5=無線加密設定
 QKSet_finish_moveto6=進行無線網路加密設定，以確保您的無線網路安全。
 QKSet_finish_moveto7=到進階設定頁面
 QKSet_finish_moveto8=手動進行設定或微調。
-[QIS_internet_success.js]
 QKSet_finish_desc=完成上網設定
-[QIS_internet_type.js]
 QKSet_type_head=網際網路連線類型
 QKSet_type_desc=請選擇你的網際網路連線類型。
 BOP_ctype_title1=自動取得 IP
@@ -777,7 +744,6 @@ WLANConfig11b_WEPDefaultKey_itemname=金鑰索引
 JS_passzero=WPA 金鑰應為8~63個字元的字串或64個十六進位字元。如果您將本欄位保留空白，系統將會指定 00000000 作為您的通關密語。
 JS_PSK64Hex=WPA 金鑰應為8~63個字元的字串或64個十六進位字元。
 JS_wepkey=請輸入正確的 WEP 金鑰。
-[error_page.htm]
 web_redirect_message=您的網路連線出現問題，導致您無法前往您想要閱讀的網頁
 web_redirect_fail_reason0=連線失敗原因
 web_redirect_suggestion0=我們建議您
@@ -795,7 +761,6 @@ web_redirect_suggestion_final=如果上述診斷仍未能解決您的問題，�
 web_redirect_suggestion_etc=前往「ZVMODELVZ 的設定頁面」
 web_redirect_suggestion_etc_desc=，您能在這裡自行檢查和調整您的設定。
 web_redirect_suggestion_manually_start_wan=恢復遠端連線。
-[error_page.js]
 web_redirect_reason1=您尚未將網路線接上外部網路，或是網路線已脫落。
 web_redirect_reason2_1=您的 PPPoE 或是 VPN 的帳號、密碼不被接受。
 web_redirect_reason2_2=遠端伺服器無回應。
@@ -804,7 +769,6 @@ web_redirect_reason3_2=我們偵測到您的網路連線類型應該屬於 PPPoE
 web_redirect_reason4=您的 ZVMODELVZ 的位址和閘道器的位址相同，這導致您的網路封包無法正常發送。
 web_redirect_reason5_1=您可能已手動中斷遠端連線。
 web_redirect_reason5_2=您為 ZVMODELVZ 設定的動態或靜態 IP 資訊不正確。
-[objcommon.js]
 CTL_nonsupported=不支援
 CTL_localdevice=登入者
 CTL_unknown=未知名稱的裝置
@@ -825,13 +789,11 @@ CTL_AdvSetting=到進階設定
 CTL_Enabled=啟用
 CTL_Disabled=未啟用
 CTL_Disconnect=未連線
-[popup.js]
 Main_alert_proceeding_desc1=處理中
 Main_alert_proceeding_desc4=請稍候, 
 Main_alert_proceeding_desc3=完成
 Main_content_Login_Item7=重新啟動 ZVMODELVZ 可能會耗費您約60秒的時間，您確定要現在重新啟動嗎?
 [###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=重新啟動 ZVMODELVZ 可能會耗費您約80秒的時間，您確定要現在重新啟動嗎?
-[QIS-general.js]
 JS_fieldblank=欄位不能為空白
 JS_validip=不是有效的 IP 位址！
 JS_itemlimit1=本表僅允許
@@ -844,11 +806,7 @@ JS_validSSID2=」這個字元。
 JS_validrange=請輸入一數值介於
 JS_validrange_to=至
 JS_validport=不是有效的通訊埠編號。
-JS_WanLanAlert=選擇「丟棄」時，會將全部 WAN to LAN 封包當中除了與過濾表內相符以外的部份丟棄。請謹慎使用。
-JS_LanWanAlert=選擇「丟棄」時，會將全部 LAN to WAN 封包當中除了與過濾表內相符以外的部份丟棄。請謹慎使用。
 JS_fixchannel=請設定適合無線橋接的固定頻道。
-JS_AES2=如果您要啟用 AES unique 功能，驗證方式將會因此設成「系統開放」。
-JS_AES3=如果您要啟用 AES unique 功能，應該也要啟用 WEP。
 JS_DHCP1=當子網路遮罩修改過後，ZVMODELVZ 的 IP Pool 也會跟著做調整，您希望其自動調整嗎?
 JS_DHCP3=新的 IP Pool 與子網路遮罩不符合，您希望其自動調整嗎?
 BOP_isp_desc=您的 ISP 業者可能會需要以下資料以便確認您的帳號。如果沒有，就請按「下一步」省略。
@@ -952,14 +910,14 @@ FirewallConfig_LanWanICMP_itemdesc=本欄位定義了一組將被過濾的 LAN �
 FirewallConfig_LanWanSrcIP_itemname=來源 IP
 FirewallConfig_LanWanSrcPort_itemname=通訊埠範圍
 FirewallConfig_LanWanDstIP_itemname=目的 IP
+FirewallConfig_URLActiveTime_itemname=網址過濾程式啟用當日時間
 FirewallConfig_URLActiveTime_itemhint4=指定的時段不可重疊。
 FirewallConfig_URLActiveTime_itemhint=您所設定的開始時間晚於結束時間。
+FirewallConfig_UrlFilterEnable_itemname=啟用網址過濾程式
 FirewallConfig_URLActiveTime_itemdesc=指定網址過濾程式啟用當日的時間。請設定不同的開始與結束時間。
 FirewallConfig_UrlFilterEnable_sectiondesc=輸入您想要阻止的網址關鍵字。<p>如，在清單中輸入 "XXX"，URL 過濾器將會阻止 http://www.abcXXX.com、 http://www.XXXbbb.com 或其他。
-FirewallConfig_UrlFilterEnable_itemname=啟用網址過濾程式
 FirewallConfig_URLActiveDate_itemname=網址過濾程式啟用日期：
 FirewallConfig_URLActiveDate_itemdesc=指定每週當中網址過濾器開啟的日期。
-FirewallConfig_URLActiveTime_itemname=網址過濾程式啟用當日時間
 FirewallConfig_URLActiveTime_itemhint2=不正確的時間格式。
 RouterConfig_GWStaticEnable_sectiondesc=本項功能可讓您將路由規則加到 ZVMODELVZ 之中。這對於如果您是連接在 ZVMODELVZ 之後的數個路由器以便分享同一條網際網路連線上來說，是相當有用的。
 RouterConfig_GWDHCPEnable_itemname=使用 DHCP 路由
@@ -1102,7 +1060,7 @@ LANHostConfig_x_DDNSWildcard_itemdesc=本欄可決定含有萬用字元的網域
 LANHostConfig_x_DDNSStatus_itemname=手動更新：
 LANHostConfig_x_DDNSStatus_itemdesc=此鍵讓您可以手動方式更新 DDNS 資料庫。但僅在DDNS自動更新失敗時才能使用。您可以自「系統記錄」（System Log）中取得目前 DDNS 更新的狀態。
 DeviceSecurity11a_display1_sectiondesc=此功能能夠控制 ZVMODELVZ 無線區域網路中，特定網路卡實體位址（MAC Address）的存取。
-WLANAuthentication11a_display1_sectiondesc=本章讓您可設定有關透過 RADIUS 伺服器對無線客戶端授權所使用的其他參數。當您將「無線網路 – 一般設定」中的「授權方式」選為「WPA-Enterprise/WPA2-Enterprise」，便需進行此一設定。
+WLANAuthentication11a_display1_sectiondesc=本章讓您可設定有關透過 RADIUS 伺服器對無線客戶端授權所使用的其他參數。當您將「無線網路 – 一般設定」中的「授權方式」選為「WPA-Enterprise/ WPA2-Enterprise/ Radius with 802.1x」，便需進行此一設定。
 WLANAuthentication11a_ExAuthDBIPAddr_itemname=伺服器 IP 位址
 WLANAuthentication11a_ExAuthDBIPAddr_itemdesc=用以指定 RADIUS 伺服器的 IP 位址（以便使用無線驗證機制及動態 WEP 金鑰產生機制）。
 WLANAuthentication11a_ExAuthDBPortNumber_itemname=伺服器通訊埠
@@ -1173,6 +1131,7 @@ WLANConfig11b_x_RadioEnableTime_itemdesc=啟用無線上網功能的時間間隔
 WLANConfig11b_WirelessCtrl_buttonname=停用
 WLANConfig11b_WirelessCtrl_button1name=啟用
 PrinterStatus_x_PrinterModel_itemname=印表機型號：
+PrinterStatus_x_PrinterModel_itemdesc=連接至 ZVMODELVZ 的印表機型號。
 PrinterStatus_x_PrinterStatus_itemname=印表機狀態：
 PrinterStatus_x_PrinterStatus_itemdesc=目前印表機狀態
 PrinterStatus_x_PrinterUser_itemname=使用中用戶：
@@ -1316,7 +1275,6 @@ HSDPAConfig_usbadaptor_itemdesc=請選擇您使用的 USB 網卡。
 confirm_disableftp_dm=停用網路芳鄰功能，將會暫時無法使用下載大師。
 LANHostConfig_IPRouters_itemdesc=ZVMODELVZ 的 LAN IP 位址。預設值為 192.168.1.1。在 IP 為基礎的網路中，資料封包將被送至網路裝置的實體 IP 地址上。<p>華碩路由器使用帶點十進位數字符號IP位址，如 192.168.1.1<p>區域網路可使用三種IP範圍：192.168.0.1 - 192.168.255.254, 172.16.0.1 – 172.31.255.254, 10.0.0.1 – 10.255.255.254。
 GO_HSDPA_SETTING=前往 USB Modem 設定。
-[adsl start]
 pvccfg_JS_enbsvc=Enable WAN service on
 pvccfg_title=WAN Configuration
 pvccfg_atmcfg=ATM PVC Configuration
@@ -1412,7 +1370,6 @@ dns_server_no_set=請在用戶端裝置上設定 DNS 伺服器。
 dsl_wan_page_desc=點選編輯圖示來編輯 PVC 設定。點選新增（+）或刪除（-）圖示來新增或刪除 PVC 設定。 
 dsl_web_redirect_reason1=The telephone cable or cable for Ethernet is not plugged in.
 dsl_web_redirect_reason2_1=PPPoE, PPPoA or VPN authentication failed.
-[adsl end]
 step_use_aicloud=依據以下步驟使用 AiCloud：
 download_aicloud=先由以下兩處下載華碩 AiCloud 應用程式至手機或平板電腦：
 connect_through_wifi=將您的 iOS 或 Android 裝置透過 Wi-Fi 連線至 ZVMODELVZ。AiCloud 應用程式將自動引導您進行設定。
@@ -1420,13 +1377,12 @@ access_service=現在您可以存取您的 USB 儲存裝置與連接到 ZVMODELV
 aicloud_for_privateIP1=您可以設定 <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_VirtualServer_Content.asp" target="_blank">虛擬伺服器</a> 或 <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_Exposed_Content.asp" target="_blank">DMZ</a> 來遠端存取私人 IP 位址。
 aicloud_for_privateIP2=使用埠 8082 與 443 來存取 AiCloud。您可以在 <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_VirtualServer_Content.asp" target="_blank">這裡</a> 變更埠設定。
 aicloud_for_privateIP3=直接按此進行設定或是參考 <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">虛擬伺服器 FAQ</a> 、<a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a> 獲得更詳細的說明。
-欲了解更多詳細資訊，請參閱<a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">虛擬伺服器</a> 與 <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ</a> 的疑難排解。
 aicloud_disk1=要建立 Cloud Disk，您需要在路由器上連接 USB 儲存裝置，接著將 Cloud Disk 功能設為開啟 <b>ON</b>。
 aicloud_disk2=使用路由器的登入帳號來登入預設的 Cloud Disk。
-aicloud_disk_case0=由 <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net:443" target="_blank">https://www.asusnetwork.net:443</a> 存取 Cloud Disk。
+aicloud_disk_case0=由 <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net" target="_blank">https://www.asusnetwork.net</a> 存取 Cloud Disk。
 aicloud_disk_case11=您可以透過這個網址存取 Cloud Disk：
-aicloud_disk_case12=要修改 DDNS 名稱，請點選<a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">這裡</a>。
-aicloud_disk_case21=由 <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net:443" target="_blank">https://www.asusnetwork.net:443</a> 存取 Cloud Disk。
+aicloud_disk_case12=要修改 DDNS 名稱，請點選<a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName" target="_blank">這裡</a>。
+aicloud_disk_case21=由 <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net" target="_blank">https://www.asusnetwork.net</a> 存取 Cloud Disk。
 aicloud_disk_case22=在<a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">這裡</a>註冊華碩 DDNS 來線上存取 Cloud Disk。
 smart_access1=Smart Access 可取得您的網路芳鄰設定，譬如使用者帳戶、共用資料夾與其他資訊等。此功能幫助您隨時隨地存取您的家庭網路（<a id="faq0" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">網路芳鄰/Samba</a>）。
 smart_access2=WOL（Wake-On-LAN）功能允許您透過網路中的裝置來喚醒電腦。
@@ -1440,4 +1396,7 @@ aicloud_bandwidth2_2=5 Mbps 或更快速的上傳頻寬用於 SD 視訊。
 aicloud_bandwidth2_3=15 Mbps 或更快速的上傳頻寬用於 720p 視訊。
 aicloud_bandwidth2_4=30 Mbps 或更快速的上傳頻寬用於 1080p HD 視訊串流。
 aicloud_bandwidth3=網路上傳速率依據您的網路電信業者與其他因素而定。若要了解您的網絡速率，請連絡您的網路電信業者，或由連接到華碩路由器的電腦上進行線上頻寬測試。
-[untrans]
+QIS_rescan=重新掃描
+GuestNetwork_Radio_Status=已關閉無線訊號
+use_DevDiscoveryUtil=安裝並使用 <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery 程式</a> 來偵測無線路由器的 IP 位址。
+System_Change_TimeZone=更改時區

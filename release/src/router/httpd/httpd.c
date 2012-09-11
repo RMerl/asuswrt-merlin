@@ -69,6 +69,7 @@ typedef unsigned int __u32;   // 1225 ham
 
 #include <error.h>
 #include <sys/signal.h>
+#include <sys/wait.h>
 #include <shared.h>
 
 #define ETCPHYRD	14
@@ -161,6 +162,7 @@ const int int_1 = 1;
 void http_login(unsigned int ip, char *url);
 void http_login_timeout(unsigned int ip);
 void http_logout(unsigned int ip);
+int http_login_check(void);
 
 void sethost(char *host)
 {
@@ -196,7 +198,6 @@ static int
 initialize_listen_socket( usockaddr* usaP )
     {
     int listen_fd;
-    int i;
 
     memset( usaP, 0, sizeof(usockaddr) );
     usaP->sa.sa_family = AF_INET;
@@ -740,6 +741,10 @@ handle_request(void)
 				strcpy(url, file);
 			}
 		}
+	}
+	else { // Jerry5 fix AiCloud login issue. 20120815
+                        x_Setting = nvram_get_int("x_Setting");
+                        skip_auth = 0;
 	}
 			
 	for (handler = &mime_handlers[0]; handler->pattern; handler++) {
@@ -1481,9 +1486,6 @@ int main(int argc, char **argv)
 				if (!(conn_fp = fdopen(item->fd, "r+"))) {
 					perror("fdopen");
 					goto skip;
-				} else {
-					/* Will be closed by fclose */
-					item->fd = -1;
 				}
 
 				http_login_cache(&item->usa);
@@ -1491,18 +1493,23 @@ int main(int argc, char **argv)
 					handle_request();
 
 				fflush(conn_fp);
+#ifdef RTCONFIG_HTTPS
+				if (!do_ssl)
+#endif
+				shutdown(item->fd, 2), item->fd = -1;
 				fclose(conn_fp);
 
 			skip:
 				/* Skip the rest of */
-				if (--count == 0) {
+				if (--count == 0)
 					next = NULL;
-				}
 			}
 
 			/* Close timed out and/or still alive */
-			if (item->fd >= 0)
+			if (item->fd >= 0) {
+				shutdown(item->fd, 2);
 				close(item->fd);
+			}
 
 			free(item);
 		}

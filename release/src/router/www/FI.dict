@@ -1,8 +1,6 @@
-﻿[Language type]
 CHAR_set=UTF-8
 PASS_LANG=Kieli:
 LANG_select=Valitse kieli
-[IPv6]
 IPv6_wan_addr=WAN IPv6-osoite
 IPv6_wan_Prefix_len=WAN Etuliitteen pituus
 IPv6_wan_gateway=WAN IPv6 Yhdyskäytävä
@@ -19,17 +17,18 @@ Prefix_lan_Length=LAN Etuliitteen pituus
 IPv6_Prefix_Length=IPv6-etuliitteen pituus
 IPv6_DNS_Setting=IPv6 DNS-asetus
 ipv6_6rd_dhcp_option=DHCP-asetus
+ipv6_6rd_Prefix=IPv6-etuliite
 ipv6_client_ip=Asiakkaan IPv6-osoite
 IPv6_static_IP=Staattinen IPv6
 tunnel_MTU=Tunneli-MTU
 tunnel_TTL=Tunneli-TTL
-[VPN server]
 vpn_Adv=VPN-tiedot
 PPTP_desc=VPN-palvelin mahdollistaa kotiverkon käytön missä ja milloin tahansa.
 PPTP_desc2=VPN-palvelimen käyttö. Toimi näiden vaiheiden mukaisesti.<br>(1) Ota PPTP VPN -palvelin käyttöön<br>(2) Aseta asiakas-IP:n IP-ryhmä. (Enintään 10 asiakasta)<br>(3) Aseta VPN-asiakkaan käyttäjänimi ja salasana.<br>(4) Avaa VPN-yhteysohjelma tietokoneessa tai älypuhelimessa.<br>(5) Lisää uusi PPTP VPN -yhteys, jolloin VPN-palvelinosoite on
 PPTP_desc3=(6) Jos WAN IP -osoitteesi on dynaaminen, <a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">napsauta tätä asettaaksesi DDNS:n.</a>
 vpn_enable=Ota käyttöön PPTP-palvelin
 vpn_broadcast=Lähetystuki
+vpn_network_place=Network Place (Samba) Support
 MPPE_Encryp=MPPE-salaus
 Auto=autom
 No_Encryp=Ei salausta
@@ -42,7 +41,6 @@ vpn_conflict_DHCPpool=* Ristiriita reitittimen DHCP IP -ryhmän kanssa:
 vpn_conflict_DHCPstatic=* Ristiriita reitittimen staattisen DHCP IP -osoitteen kanssa:
 vlaue_haigher_than=Tämän arvon tulee olla suurempi kuin
 vpn_max_clients=VPN-palvelin sallii enintään 10 asiakasta!
-[ParentalCtrl]
 Parental_Control=lapsilukko
 ParentalCtrl_Desc=Lapsilukko mahdollistaa aikarajan asettamisen asiakkaan verkon käytölle. Lapsilukon käyttäminen:
 ParentalCtrl_Desc1=Valitse [Asiakkaan nimi] -sarakkeesta asiakas, jonka verkon käyttöä haluat säädellä. Voit myös näppäillä asiakkaan MAC-osoitteen [Asiakkaan MAC-osoite] sarakkeeseen.
@@ -52,18 +50,15 @@ ParentalCtrl_Desc4=Tallenna tehdyt asetukset napsauttamalla [OK] -painiketta.
 ParentalCtrl_username=Asiakkaan nimi
 ParentalCtrl_hwaddr=Asiakkaan MAC-osoite
 ParentalCtrl_time=Ajan hallinta
-[AutoUpdate]
 check_proceeding=Reititin tarkistaa, onko ASUS-palvelimella laiteohjelmistopäivityksiä.
 connect_failed=Internet-yhteyttä ei tunnisteta. Reititin ei voi muodostaa yhteyttä ASUS-palvelimeen laiteohjelmistopäivityksien tarkistamiseksi. Kun olet muodostanut uudelleen yhteyden internetiin, siirry takaisin tälle sivulle ja napsauta Tarkista -painiketta tarkistaaksesi uusimmat laiteohjelmistopäivitykset.
 exist_new=Uusi laiteohjelmistoversio on saatavana. Haluatko päivittää laiteohjelmiston?
 is_latest=Reitittimen nykyinen laiteohjelmisto on viimeisin versio.
 unavailable_update=Ei käytettävissä olevia päivityksiä
-[GreenIndicator]
 no_printer_detect=Tulostinta ei tunnistettu
 Eject_usb_disk=Poista USB-levy
 disconnect_internet=Katkaise internet-yhteys
 go_GuestNetwork=Siirry vierasverkkoon
-[GuestNetwork]
 Guest_Network=Vierasverkko
 GuestNetwork_desc=Vierasverkko tarjoaa internet-yhteyden vieraille, mutta rajoittaa intranetin käyttöä.
 Access_Time=Käyttöaika 
@@ -71,7 +66,6 @@ Limitless=Rajaton
 Access_Intranet=Käytä intranetiä
 Guest_network_index=Vierasverkkoindeksi
 Guest_Network_enable=Ota Vierasverkko
-[TrafficManager]
 upload_prio=Ensisijaisuus palvelimelle lataamisessa
 min_bound=Minimikaistanleveysraja
 max_bound=Maksimikaistanleveysraja
@@ -109,12 +103,10 @@ qos_user_prio=Käyttäjän määrittämä ensisijaisuus
 qos_user_rules=Käyttäjän määrittämät QoS-säännöt
 source_ipmac=Lähde-ja kohde-IP-osoitteeksi voit:<p>(a) antaa määrätyn IP-osoitteen, kuten \"192.168.122.1\";<p>(b) antaa IP-osoitteet jonkin aliverkon sisällä tai saman IP-ryhmän sisällä, kuten \"192.168.123.*\" tai \"192.168.*.*\";<p>tai (c) antaa kaikki IP-osoitteet muodossa \"*.*.*.*\"<p>MAC-osoitemuoto on kuusi kaksoispiseellä (:) erotetun kahden heksadesimaalinumeron ryhmää lähetysjärjestyksessä (esim. 12:34:56:aa:bc:ef )
 QoS_invalid_period=Kaistanleveysraja ei kelpaa.
-[Network_PrintServer]
 Network_Printer_Server=Verkkotulostinpalvelin
 Network_Printer_desc=Verkkotulostinpalvelin tukee kahta menetelmää: (1) ASUS EZ -tulostimen jakaminen (2) LPR tulostimen jakamiseen.
 asus_ez_print_share=ASUS EZ -tulostimen jakaminen (vain Windows -käyttöjärjestelmä)
 LPR_print_share=Käytä LPR-protokollaa tulostimen jakamiseen.
-[New_201108]
 usb_unmount=USB-toiminto on otettu pois käytöstä
 no_usb_found=USB-levyä ei tunnistettu
 Menu_usb_application=USB-sovellus
@@ -125,7 +117,6 @@ jumbo_frame=Otetaanko Jumbo Frame käyttöön
 ctf_disable=Ota HW Accelerator pois käytöstä
 Enable_WAN=Otetaanko WAN käyttöön
 Enable_NAT=Otetaanko NAT käyttöön
-[New_QIS]
 QIS_Previous_WLKey=Haluatko käyttää aiempia langattoman yhteyden suojausasetuksia?
 QIS_recommand_encryption=On vahvasti suositeltavaa asettaa ensin salaustyyppi.
 QIS_confirm_recommand_encryp=On vahvasti suositeltavaa asettaa ensin salaustyyppi. Haluatko jatkaa?
@@ -143,27 +134,35 @@ QIS_welcome_feature1=Samanaikainen 450+450-kaksoiskaistayhteys.
 [###MODEL_DEP###][RT-N56U][RT-N53]QIS_welcome_feature1=Samanaikainen kaksoiskaista N600. (300 Mbps /2.4GHz + 300 Mbps /5GHz)
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature1=Dual-kaistan lag-free viihde.
 [###MODEL_DEP###][RT-N16]QIS_welcome_feature1=Voimakas suoritin tarjoaa tehokkaan läpimenon.
-[###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1][RT-N10U]QIS_welcome_feature1=Yksikaistainen N300. (300 Mbps /2.4GHz)
+[###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature1=Yksikaistainen N300. (300 Mbps /2.4GHz)
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature1=Multiple 3-in-1 : Router / Access Point / Repeater wireless modes
+[###MODEL_DEP###][RT-N10U]QIS_welcome_feature1=Yksikaistainen N150. (150 Mbps /2.4GHz)
 QIS_welcome_feature2=Kaksois-USB-portti USB-tallennusta ja monitoimitulostusta varten.
+[###MODEL_DEP###][RT-AC66U]QIS_welcome_feature2=ASUS AiCloud unlimitedly access, streaming, and sync files everywhere with any devices.
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature2=4 x Gigabit Ethernet -portti.
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature2=4 x Gigabit Ethernet -portti. 2 x USB 2.0 -portti nopeaan tiedostojen ja tulostimen jakamiseen.
+[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature2=Twin USB ports enable multi-role usability.
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature2=4 x 10/100 Ethernet -portti.
 [###MODEL_DEP###][RT-N15U]QIS_welcome_feature2=4 x Gigabit Ethernet -portti. 1 x USB 2.0 -portti nopeaan tiedostojen ja tulostimen jakamiseen.
 [###MODEL_DEP###][RT-N12B1][RT-N12C1]QIS_welcome_feature2=4 x 10/100 Ethernet -portti. 2 x 5DBi-antenni paremman signaalipeiton saavuttamiseksi.
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature2=Two detachable external 9dbi high gain antennas with adjustable output power.
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature2=4 x 10/100 Ethernet -portti. 1 x USB 2.0 -portti tulostimen jakamiseen.
 QIS_welcome_feature3=Gigabitin internet-surffaus turbo-NAT-toiminnolla.
+[###MODEL_DEP###][RT-AC66U]QIS_welcome_feature3=4 x Gigabit Ethernet -portti. 2 x USB 2.0 -portti nopeaan tiedostojen ja tulostimen jakamiseen.
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature3=2 x USB 3.0 -portti nopeaan tiedostojen ja tulostimen jakamiseen.
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature3=Sisäinen keilanmuodostusteknologia laajempaa peittoa varten.
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature3=Tehokas Online Moniajoa jopa 300000 Data Sessions.
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature3=Enintään 3 x vieras-SSID.
 [###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature3=Enintään 3 x vieras-SSID.
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature3=Excellent wireless signal and antenna transmission for 300% wider signal coverage.
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature3=1 x 5DBi-antenni paremman signaalipeiton saavuttamiseksi.
 QIS_welcome_feature4=20-kertainen dataistunto P2P-latausten pitämiseksi vakaana.
-[###MODEL_DEP###][RT-N65U][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature4=Graafinen käyttöliittymä helppoon asetukseen ja hallintaan.
+[###MODEL_DEP###][RT-AC66U][RT-N65U][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature4=Graafinen käyttöliittymä helppoon asetukseen ja hallintaan.
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature4=Hardware NAT -toiminnolla 5 x nopeampi WAN - LAN -käyttökokemus.
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature4=Twin USB-portit mahdollistavat usean roolin käytettävyys.
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature4=Käyttäjän käyttöajanohjaus.
-[###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=Enintään 4 x vieras-SSID.
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature4=Optimized coverage throughout multi-level households.
+[###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=Enintään 3 x vieras-SSID.
 QIS_pass_title=Aseta reitittimen sisään kirjautumissalasana
 QIS_pass_desc1=Muuta reitittimen salasana estääksesi langattoman ASUS-reitittimesi valtuuttamaton käyttö.
 QIS_pass_desc3=Reitittimen salasana on ASUS-reitittimesi järjestelmänvalvojan avain. Kun kirjaudut sisään reitittimen verkkokäyttöliittymään, sinun on näppäiltävä käyttäjänimi ja salasana. Oletus-käyttäjänimi ja -salasana ovat "admin / admin".
@@ -207,10 +206,8 @@ qis_tutor_desc2=1. Napsauta ilmoitusalueella verkkokuvaketta ( <img src="/images
 qis_tutor_desc3=2. Napsauta verkkoluettelossa verkkoa, johon tahdot muodostaa yhteyden ja napsauta sitten "Yhdistä" -painiketta.
 qis_tutor_desc4=1. Napsauta ilmoitusalueella verkkokuvaketta ja napsauta sitten "View Available Wireless Networks" (Näytä käytettävissä olevat langattomat verkot).
 qis_tutor_desc5=1. Osoita valikkorivin Lentoasematila-kuvaketta ( <img src="/images/qis/osx_network_icon.jpg"> ) ja valitse langattoman verkon nimi, johon haluat muodostaa yhteyden.
-[System log]
 System_Log=Järjestelmäloki
-[New_0622]
-upnp_Desc=Set up the DLNA, iTUnes, FTP and Network Place (Samba) server.
+upnp_Desc=Set up the DLNA, iTunes, FTP and Network Place (Samba) server.
 Route_title=Tällä sivulla näytetään yksityiskohtaisesti reititystila.
 PortForward_title=Tällä sivulla näytetään portinsiirtotila. Jotkut P2P-ohjelmat käyttävät UpnP-protokollaa portin avaamiseen ja porttinumero näkyy tällä sivulla.
 WLLog_title=Tällä sivulla näytetään yksityiskohtaisesti langaton tila.
@@ -221,7 +218,7 @@ FTP_desc=Aseta FTP:n tili ja käyttöoikeudet.
 Samba_desc=Aseta verkkosijainti (Samba) -palvelun tili ja käyttöoikeudet. 
 LANHostConfig_x_DDNSHostNames_itemdesc=Isäntänimessä ei voi olla numeroetuliitettä tai pistettä \".\". (kuten \"123abc\" tai \"aaa.bbb\") 
 LANHostConfig_x_DDNSEnable_sectiondesc2=Langaton reititin käyttää parhaillaan yksityistä WAN IP -osoitetta (192.168.x.x, 10,x,x,x tai 172.16.x.x). Tämä reititin voi olla usea-NAT-ympäristössä ja DDNS-palvelu ei voi toimia tässä ympäristössä.
-LANHostConfig_x_DDNSEnable_sectiondesc3=Isäntänimen rekisteröinti onnistui. Voit käyttää isäntänimeä "[hostname].asuscomm.com" käyttääksesi kotiverkon palvelua WAN-verkosta. Käytä isäntänimeä "[hostname].asuscomm.com" käyttääksesi verkkoasi etänä.<p>Siirry kohtaan Advanced Setting (Lisäasetukset) > WAN määrittääksesi portinsiirron tai DMZ-asetukset salliaksesi toisten WAN-asiakkaiden käyttää verkkoasi etänä.<p>Jos haluat määrittää langattoman reitittimen etänä, siirry kohtaan <a href="../Advanced_BasicFirewall_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">täällä</a>.
+LANHostConfig_x_DDNSEnable_sectiondesc3=Isäntänimen rekisteröinti onnistui. Voit käyttää isäntänimeä "[hostname].asuscomm.com" käyttääksesi kotiverkon palvelua WAN-verkosta. Käytä isäntänimeä "[hostname].asuscomm.com" käyttääksesi verkkoasi etänä.<p>Siirry kohtaan Advanced Setting (Lisäasetukset) > WAN määrittääksesi portinsiirron tai DMZ-asetukset salliaksesi toisten WAN-asiakkaiden käyttää verkkoasi etänä.<p>Jos haluat määrittää langattoman reitittimen etänä, siirry kohtaan <a href="/Advanced_System_Content.asp?af=misc_http_x" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">täällä</a>.
 IPConnection_LocalIP_itemdesc=Näppäile LAN-asiakkaan IP-osoite.
 IPConnection_LocalPort_itemdesc=Jätä tämä kenttä tyhjäksi, jos et halua ohjata uudelleen saapuvia paketteja tähän porttiin.
 IPConnection_PortRange_itemdesc=Porttialue hyväksyy eri muotoja, kuten porttialue (300:350), yksittäisen portit (566,789) tai sekoitus (1015:1024,3021).
@@ -229,26 +226,22 @@ IPConnection_UPnP_itemdesc=UPnP (Universal Plug and Play) sallii useiden laittei
 LANHostConfig_ManualDHCPSTB_itemdesc=LAN-portti, johon IPTV-digisovitin liitetään.
 LANHostConfig_ManualDHCPMulticast_itemdesc=Sallii langattoman reitittimen monilähetyspakettien käsittelyn. Monilähetysreitittimen käyttöönotto ottaa käyttöön myös RTP- ja RTSP-toiminnon.
 LANHostConfig_ManualDHCPMacaddr_itemdesc=MAC-osoitemuoto on kuusi kaksoispiseellä (:) erotetun kahden heksadesimaalinumeron ryhmää lähetysjärjestyksessä (esim. 12:34:56:aa:bc:ef)
-WPS_weptkip_hint=HUOMAUTUS: WPS 2.0:n sääntöjen vuoksi WPS-toiminto on otettava pois käytöstä, jos reititin käyttää WEP- tai TKIP-salausta.
 WPS_add_client=Voit liittää helposti WPS-asiakkaan verkkoon seuraavilla kahdella tavalla:<ul><li>Menetelmä 1: Napsauta tämän käyttöliittymän WPS-painiketta (tai paina reitittimen fyysistä WPS-painiketta) ja paina sitten asiakaslaitteen WLAN-sovittimen WPS-painiketta noin kolme minuuttia.</li><li>Menetelmä 2: Käynnistä asiakkaan WPS-prosessi ja hae asiakkaan PIN-koodi. Anna asiakkaan PIN-koodi Asiakkaan PIN-koodikenttään ja napsauta Start (Käynnistä) -painiketta.<p>Tarkista langattoman asiakaslaitteen käyttöoppaasta tukeeko laite WPS-toimintoa. Jos langaton asiakaslaite ei tue WPS-toimintoa, sinun on määritettävä langaton asiakas manuaalisesti ja asetettava sille sama verkkonimi (SSID) ja suojausasetus kuin tällä reitittimellä.</li></ul>
+WPS_weptkip_hint=HUOMAUTUS: WPS 2.0:n sääntöjen vuoksi WPS-toiminto on otettava pois käytöstä, jos reititin käyttää WEP- tai TKIP-salausta.
 adv_wl_desc=Aseta langattomaan yhteyteen liittyvät tiedot alla.
 UserQoS_transferred_hint=Aseta Transferred (Siirretyt) -sarakkeessa verkkoliikenneraja (Kt) tietylle palvelulle luodaksesi määrätyt ensisijaisuudet tietylle portille määritellylle palvelulle. Jos esimerkiksi kaksi verkkoasiakasta, PC 1 ja PC 2 käyttävät molemmat internetiä (asetettu porttiin 80), mutta PC 1 ylittää verkkoliikennerajan joidenkin lataustehtävien vuoksi, PC 1:lle annetaan matalampi ensisijaisuus. Transferred (Siirretyt) -sarake viittaa ylä- ja alavirtaliikenteeseen (lähtevään ja saapuvaan verkkoliikenteeseen) yhdessä istunnossa. Jollet halua asettaa liikennerajaa, voit jättää kohdan tyhjäksi.
 UserQoS_desc=Avattavasta Käyttäjän määrittämät QoS-säännöt -luettelossa voi tehdä ensisijaiseksi verkkosovelluksia tai -laitteita viidelle tasolle. QoS käyttää seuraavia ensisijaisuustasoon perustuvia tapoja datapakettien lähettämisessä:<ul><li>Muuta yläverkko-verkkkopakettien järjestystä. Tämä viittaa järjestykseen, jossa paketit lähetetään internetiin.</li><li>Alhaisen ensisijaisuuden paketit jätetään huomioimatta korkean ensisijaisuuden pakettien lähetyksen varmistamiseksi. Korkeamman ensisijaisuuden ylävirtapaketit aiheuttavat korkeamman ensisijaisuuden alavirtapaketeille.</li><li>Jos korkean ensisijaisuuden sovelluksissa ei ole lähetettäviä paketteja, internet-yhteyden täysi siirtonopeus on käytettävissä matalan ensisijaisuuden paketeille.</li></ul>
 UserQoS_desc_zero=<ul><li>Ota QoS käyttöön ja aseta sitten siirto- ja latausnopeusrajat.</li></ul>
-remove_usb_hint=Irrottaaksesi kiintolevyn turvallisesti reitittimestä, napsauta näytön oikeassa yläkulmassa olevaa USB-kuvaketta.
 Aidisk_authority_hint=Varoitus: AiDisk on asetettu. Jos asetat AiDiskin uudelleen, aiempi tili/salasana ja käyttöoikeus nollataan. Lisätäksesi tilejä, valitse <a href="../Advanced_AiDisk_ftp.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">täällä</a> muokataksesi tiliprofiilia.
+remove_usb_hint=Irrottaaksesi kiintolevyn turvallisesti reitittimestä, napsauta näytön oikeassa yläkulmassa olevaa USB-kuvaketta.
 UserQoSRule_desc_zero=Ota QoS käyttöön ja aseta sitten käyttäjän määrittämät säännöt.
 prio_packet_note=Oletus ACK-, SYN- ja ICMP-paketteja käytetään parantamaan pelin tasaisuutta.
-[NAT Passthrough]
 NAT_PPTP_Passthrough=PPTP ohitus
 NAT_L2TP_Passthrough=L2TP ohitus
 NAT_IPSec_Passthrough=IPSec ohitus
 NAT_RTSP_Passthrough=RTSP ohitus
 NAT_passthrough_itemname=NAT-ohitus
 NAT_passthrough_desc=Ota käyttöön NAT-ohitus sallimaan Virtual Private Network (VPN) -liitännän kulkemaan reitittimen läpi verkkoasiakkaille.
-[iTunes]
-iTunesMediaServer=iTunes-mediapalvelin
-[opmode strings]
 wireless_router=Langaton reititin
 BasicConfig_EnableiTunesServer_itemname=Enable iTunes Server?
 OP_GW_item=Langaton reititin (Oletus)
@@ -266,13 +259,11 @@ RouterConfig_GWMulticast_unknownUni_itemname=Tuntematon yksittäislähetysmyrsky
 RouterConfig_GWMulticast_unknownMul_itemname=Tuntematon monilähetysmyrskyn hallinta (Mbps):
 RouterConfig_GWMulticast_Multicast_itemname=Monilähetysmyrskyn hallinta (Mbps):
 RouterConfig_GWMulticast_Broadcast_itemname=Lähetysmyrskyn hallinta (Mbps):
-[keyword_filter]
 menu5_5_5=Avainsanasuodatin
 FirewallConfig_KeywordFilterEnable_sectiondesc=Avainsanasuodattimella voi estää asiakkailta määritettyjä avainsanoja sisältävien web-sivujen käytön.
 FirewallConfig_KeywordFilterEnable_sectiondesc2=Suodatustoiminnon avainsanarajoitukset :<ol><li>HTTP-pakkausteknologiaa käyttäviä pakattuja web-sivuja ei voi suodattaa. <a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">Katso tästä lisätietoja</a></li><li>Https-web-sivuja ei voi suodattaa.</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=Ota avainsanasuodatin käyttöön
 FirewallConfig_KeywordList_groupitemname=Avainsanasuodatinluettelo
-[New translated]
 JS_field_wanip_rule3=Anna arvo välillä 1-2592000 (sekuntia).
 FirewallConfig_Port80_itemdesc=Kun verkkosi palomuuri on pois käytöstä ja asetat WAN-asetusta varten http-palvelimen porttialueeksi 80, http-palvelin/web-palvelin tulee olemaan ristiriidassa ZVMODELVZ-reitittimen web-käyttöliittymän kanssa.
 FirewallConfig_FTPPrompt_itemdesc=Kun asetat WAN-asetusta varten FTP-palvelimesi porttialueeksi 20:21, FTP-palvelin tulee olemaan ristiriidassa ZVMODELVZ-reitittimen alkuperäisen FTP-palvelimen kanssa.
@@ -286,12 +277,10 @@ WLANConfig11b_TxPower_itemname=Tx-tehon säätö
 WLANConfig11b_TxPower_itemdesc=Paranna lähetyksen laatua säätämällä antennitehoa. 
 WLANConfig11b_Wireless_Speed_itemname_3=Käyttää 40 MHz samanaikaista kaistanleveyttä langattoman läpimenon maksimoimiseksi. Jos langattoman tilan vakaudessa ilmenee ongelmia, valitse oletustila (20 MHz).
 hwnat_desc=NAT (Network Address Translation) on prosessi, jota käytetään reitittimessä korvaamaan verkkopaketin osoitetiedot uusilla osoitetiedoilla. Tyypillinen NAT-sovellus on reititin, joka liittää LAN-yhteyden WAN-verkkoon. LAN-verkossa jokaisella verkkolaitteella on oma IP (LAN IP) -osoitteensa, mutta on vain yksi julkinen IP (WAN IP). Verkkolaitteille verkonkäyttöoikeuden myöntämiseksi reititin korvaa lähettäjän yksityisen IP-osoittteen omalla julkisella IP-osoitteellaan kaikissa lähetettävissä datapaketeissa. Reititin tallentaa kaikki välttämättömät tiedot taulukkoon (NAT-taulukko) niin, että saapuvat datapaketit voidaan määrittää oikealle verkkolaitteelle.
-[error_page.htm]
 web_redirect_reason6=Havaittiin IP-ristiriita. Hae uusi IP-osoite napsauttamalla Next (Seuraava) -painiketta.
 web_redirect_case6_desc1=Reitittimen päivitetty IP-osoite:
 web_redirect_case6_desc2=Kun olet napsauttanut Seuraava-painiketta, varmista, että päivität kaikkien asiaankuuluvien palvelujen, kuten Portinsiirto tai DMZ, IP-osoiteasetukset.
 error_page_lanip_changed_desc1=IP-osoite uudistetaan. Jos tämä toimenpide kestää yli kaksi minuuttia, uudista IP manuaalisesti näiden kolmen vaiheen mukaisesti. (1) irrota verkkokaapeli; (2) odota noin kymmenen sekuntia; ja (3) liitä kaapeli takaisin saadaksesi uuden IP-osoitteen.
-[QIS]
 QIS_autoMAC_desc1=Aloitetaan tietokoneen MAC-osoitteen kloonaaminen reitittimeen…
 QIS_autoMAC_desc2=Odota...
 QIS_autoMAC_desc3=Vahvista WAN IP -osoite
@@ -315,7 +304,6 @@ QIS_internet_success_desc1=Verkossasi voi olla välityspalvelin. Tarkista asia i
 QIS_internet_success_desc2=Internet-palveluntarjoajan toimialuenimipalvelimessa (DNS) voi olla jokin virhe. Tarkista asia internet-palveluntarjoajaltasi tai verkon järjestelmänvalvojalta tai siirry Lisäasetukset-sivulle ja aseta julkinen DNS.
 QIS_internet_success_desc3=Tarkista asia internet-palveluntarjoajaltasi tai verkon järjestelmänvalvojalta.
 QIS_internet_success_desc4=Irrota modeemin virtajohto. Odota noin kaksi minuuttia ja liitä se takaisin. Valitse Havaitse yhteys.
-[Traffic Monitor]
 Date=Päivämäärä
 Scale=Skaalaa
 Last30days=Viimeiset 30 päivää
@@ -328,13 +316,11 @@ Current=Nykyinen
 Average=Keskimääräinen
 Maximum=Maksimi
 Total=Yhteensä
-[RT-N66U new item]
 LAN_IP_changed_suggedtion1=ZVMODELVZ:n LAN IP on
 LAN_IP_changed_suggedtion2=. Jos et voi palata asetussivulle myöhemmin, uudista tietokoneesi IP-konfiguraatio.
 WLANConfig11b_x_WPSband_itemname=Nykyinen taajuusalue
 WLANConfig11b_x_WPSband_itemdesc=Valitse käyttötaajuusalue (2.4 GHz tai 5 GHz) ennen kuin käytät WPS (Wi-Fi-suojattu asennus) -toimintoa.
 LANConfig_ChangedLANIP=Reitittimen IP-osoite on vaihdettu. Käytä Device Discovery -apuohjelmaa reitittimen uuden IP-osoitteen etsimiseen.
-[RT-N1X new item]
 LANHostConfig_x_Password_itemdesc=Salasana ei saa olla pitempi kuin 16 merkkiä.
 WLANConfig11n_nmode_limition_hint=ZVMODELVZ muuttaa WEP- tai TKIP-salauksen AES päällä [Vain n] -tilaksi asiakkaiden kunnollisen yhteyden varmistamiseksi.
 WLANConfig11n_automode_limition_hint=Auto (Automaattinen) -tilassa WEP- tai TKIP-salauksen kanssa ZVMODELVZ tukee maksimisiirtonopeutta 54 Mbps.
@@ -354,7 +340,6 @@ ShareNode_Seeding_itemname=Alustus
 ShareNode_Seeding_itemdesc=Antaa ottaa käyttöön tai pois käytöstä alustustoiminnon. ZVMODELVZ pysyy auki kunnes lataus on valmis.
 ShareNode_MaxUpload_itemname=Maksiminopeus palvelimeen lataamiseen
 ShareNode_MaxUpload_itemdesc=Anna arvo välillä 0-999. Oletusarvo on 0, mikä tarkoittaa, palvelimelle lataamisella ei ole ylärajaa.
-[New item]
 HSDPAConfig_hsdpa_enable_hint1=Nykyinen 3G/4G-asetus on asetettu 3G/4G-varmuuskopiotilaksi. Jos WAN-portin yhteys katkaistiin, verkkotila muuttuu automaattisesti 3G/4G-tilaksi
 HSDPAConfig_hsdpa_enable_hint2=Jos haluat muuttaa yhteystyyppiä, siirry kohtaan <a href="/Advanced_Modem_others.asp">USB Modem</a> ottaaksesi 3G/4G/3.5G-sovittimen pois käytöstä.
 HSDPAConfig_USBAdapter_itemname=USB -sovitin
@@ -369,7 +354,7 @@ Browser_action_not_support_addfavorite=Selaimesi ei tue tätä toimintoa.
 page_not_support_mode_hint=Tämä toiminto on otettu pois käytöstä.
 APSurvey_action_ConnectingStatus0=Päätukiasema voi olla pois päältä. Tarkista uudelleen.
 APSurvey_action_ConnectingStatus3=Käynnistä selain uudelleen. Näppäile URL-osoiteriville "http://www.asusnetwork.net/" käyttääksesi toistinyhteystilaa.
-APSurvey_action_ConnectingStatus1=Yhteyden muodostaminen epäonnistui. Anna suojausavain uudelleen tai napsauta [Cancel] (Peruuta) valitaksesi toisen verkon, johon muodostat yhteyden.
+APSurvey_action_ConnectingStatus1=Connection failed. Password is not correct. Please click [Rescan] to select another network to connect to.
 APSurvey_action_ConnectingStatus24=Langattoman yhteyden muodostaminen onnistui.
 APSurvey_action_ConnectingStatus35=WPA-avaimen todentaminen epäonnistui. Anna WPA-avain uudelleen.
 APSurvey_action_renew_success=IP-asetusten päivitys onnistui. Sinut siirretään ZVMODELVZ:n web-käyttöliittymään.
@@ -385,7 +370,6 @@ AP_fail_get_IPaddr=IP-tietojen hakeminen epäonnistui.
 AP_Remote_IP=Tukiaseman IP-osoite
 AP_survey=Tukiasematutkimus
 statusTitle_AP=Tukiaseman käyttötila
-[USB Application - HSDPA]
 HSDPAConfig_pin_code_itemdesc=Syötä SIM-korttisi PIN (Personal Identification Number) -koodi. Sen on oltava numero, jonka pituus on yli 4 ja alle 8 numeroa. Jollet tiedä PIN-koodiasi, ota yhteyttä internet-palveluntarjoajaan.
 HSDPAConfig_private_apn_itemname=APN-palvelu (valinnainen)
 HSDPAConfig_private_apn_itemdesc=Jollet tiedä APN-palvelun nimeä, ota yhteyttä internet-palveluntarjoajaan.
@@ -395,12 +379,10 @@ HSDPAConfig_hsdpa_enable_itemname=Otetaanko USB Modem käyttöön
 HSDPAConfig_hsdpa_mode_itemname=USB Modem-tila
 HSDPAConfig_DNSServers_itemname=DNS-nimipalvelin
 AiDisk_Wizard_failedreson1=Ohjattu Aidisk-asennus toimi epätavallisesti. Yritä myöhemmin uudelleen.
-[state.js-Dr.Surf.]
 QKSet_ISP_desc3=Automaattinen IP-yhteys epäonnistui. Voit tehdä tässä määrityksen manuaalisesti.
 QKSet_ISP_desc2=Staattinen IP-yhteys epäonnistui.
 QIS_internet_vpn_confirm=Jos yhteystyyppi on PPTP/L2TP, napsauta [OK]-painiketta valitaksesi [Connecting the VPN server] (Muodostetaan yhteyttä VPN-palvelimeen).\nJos ei, napsauta [Cancel] (Peruuta) ja tarkista tiedot ja käytä sen jälkeen asetuksia.
 Full_Clients=Asiakkaat
-[QIS_internet_vpn.htm]
 QIS_if_vpn_existed=Muodostetaanko yhteys VPN-palvelimeen?
 QIS_internet_vpn_title=VPN-kohde
 QIS_internet_vpn_type=VPN-tyyppi
@@ -421,14 +403,11 @@ Device_service_iTune=iTunes-palvelu:
 Device_service_Printer=Tulostinpalvelu:
 JS_storageright=Kun olet asettanut nimen (kuten aabbcc), näppäile //aabbcc Internet Explorerin URL-kenttään avataksesi nopeasti verkkosijaintipalvelun. Vakiosyöttömerkkejä ovat kirjaimet (A-Z, a-z), numerot (0-9), välilyönnit, alaviiva (_) ja yhdysviiva (-). Ensimmäinen ja viimeinen merkki eivät voi olla välilyöntejä.
 not_support_script=Selaimesi ei tue JavaScriptiä. Valitse selain, joka tukee JavaScriptiä tai ota se käyttöön voidaksesi käyttää ASUS ZVMODELVZ-monitoimireititintä.
-[Advanced_AiDisk_others.asp]
 Help_of_Workgroup=Se on ZVMODELVZ-reitittimen ryhmänimi verkkoympäristössä, ja vakiosyöttömerkkejä ovat kirjaimet (A-Z,a-z), numerot (0-9), välilyönnit, alaviiva (_) ja yhdysviiva (-). Ensimmäinen ja viimeinen merkki ei voi olla välilyönti. Muun kuin standardi-nimen käyttö estää muita käyttäjiä löytämästä tietokonettasi LAN-verkossa.
-[state.js-Dr.Surf.]
 DrSurf_refresh_page=Päivitä sivu
 DrSurf_sweet_advise1=Olet muuttanut SSID- tai suojausasetusta. Se johtaa langattoman verkon asiakkaiden yhteyden katkaisuun. Säädä asiakkaiden asetukset yhteyden muodostamiseksi uudelleen.
 DrSurf_sweet_advise2=Yhteys on muodostettu uudelleen.
 DrSurf_sweet_advise3=Et ehkä voi käyttää ZVMODELVZ-reitittimen asetussivua, koska se otti DHCP-toiminnon pois käytöstä tukiasematilaan kytkemisen jälkeen.<p>On suositeltavaa käyttää ASUS-apuohjelmaa / Device Discovery -apuohjelmaa ja etsiä tukiaseman IP-osoite asetussivun käyttämiseksi uudelleen.</p>
-[AiDisk Wizard]
 File_Pop_content_alert_desc1=Käyttäjänimi ei voi olla tyhjä.
 File_Pop_content_alert_desc2=Käyttäjänimen pituus ei voi olla alle kaksi merkkiä.
 File_Pop_content_alert_desc3=Käyttäjänimi ei saa olla pitempi kuin 20 merkkiä.
@@ -441,7 +420,6 @@ File_content_alert_desc6=Jakonimi ei voi olla tyhjä.
 File_content_alert_desc7=Jakonimi voi sisältää vain aakkosnumeerisia merkkejä/ajatusviivoja/alaviivoja/välilyöntejä.
 File_content_alert_desc8=Jakonimi on jo olemassa tässä asemassa. \nAnna eri nimi!
 File_content_alert_desc10=Yli 12 merkin pituisen jakonimen luominen voi tehdä sen näkymättömäksi Windows®-versiossa.\nHaluatko jatkaa?
-[AiDisk Advanced]
 enableCIFS=Ota Jako käyttöön
 disableCIFS=Ota Jako pois käytöstä
 enableFTP=Ota FTP käyttöön
@@ -474,7 +452,6 @@ NewFolderName=Uusi kansion nimi
 AddFolderAlert=Uuden kansion oletuskäyttöoikeudet ovat luku/kirjoitus.
 DelFolderAlert=Varmista ennen kansion poistamista, että se on tyhjä.<br><br>Haluatko varmasti poistaa kansion?
 ModFolderAlert=Uudelleennimeämisen jälkeen kansion ja sen alikansioiden käyttöoikeudet eivät muutu.
-[LeftMenu]
 menu1=Verkkokartta
 menu2=Mediapalvelin
 menu3=AiDisk
@@ -519,7 +496,6 @@ menu5_7_3=DHCP-luvat
 menu5_7_4=Langaton-loki
 menu5_7_5=Portinsiirto
 menu5_7_6=Reititystaulukko
-[Network Map]
 block_client=Napsauta tätä estääksesi asiakkaan
 statusTitle_System=ASUS ZVMODELVZ
 statusTitle_Internet=Internet-tila
@@ -541,14 +517,15 @@ MAC_Address=MAC-osoite
 ConnectionStatus=Yhteyden tila
 WAN_IP=WAN IP
 Connectiontype=Yhteystyyppi
+LeaseExpires=Lease expires
 QIS=Pika internet asetus
 QIS_title=Pika-internet-asetus
 Connected=Yhdistetty
 Disconnected=Yhteys katkaistu
 btn_go=SIIRRY
+MoreConfig=Lisää määrityksiä
 Printing_status=Tulostimen tila:
 Printing_button_item=Monopoly-tila:
-MoreConfig=Lisää määrityksiä
 ConnectedClient=Asiakasluettelo
 BlockedClient=Estetyt asiakkaat -luettelo
 Block=Estä
@@ -579,7 +556,6 @@ Minute=minuuttia
 Second=sekuntia
 upload_bandwidth=Lähetyskaistanleveys
 download_bandwidth=Latauskaistanleveys
-[AiDisk Wizard]
 AiDiskWelcome_title=Tervetuloa ohjattuun AiDisk-toimintoon
 AiDiskWelcome_desp=AiDisk-sovelluksella voit:
 AiDiskWelcome_desp1=Jakaa USB-levyn tiedostoja internetin välityksellä.
@@ -617,9 +593,8 @@ linktoFTP_no_2=DDNS ei ole vielä käytössä. Voit ottaa sen käyttöön WAN/DD
 linktoFTP_no_3=DDNS on käytössä, mutta toimialueen nimen rekisteröinti epäonnistui. Muut eivät vielä voi käyttää FTP:tä WAN-verkon toimialuenimen kautta.
 AiDisk_wizard_text_box_title3=Kun olet määrittänyt asetukset ohjatussa AiDisk-toiminnossa, katso alla olevat tiedot levyn käyttämiseksi:
 yoursharesetting=Jaetun kansiosi asetus on
-neednotDDNS=Ohita ASUS DDNS -asetus.
+neednotDDNS=Ota DDNS pois käytöstä.
 asusddns_inputhint=Näppäile nimi
-[WPS]
 WPS_PBCbutton_hint_success=Yhteyden muodostus onnistui.
 WLANConfig11b_display6_sectiondesc=WPS (Wi-Fi Protected Setup) tarjoaa helpon ja turvallisen tavan langattoman verkon muodostamiseen. Voit määrittää WPS:n tässä PIN-koodilla tai WPS-painikkeella.
 WLANConfig11b_x_WPS_itemname=Ota käyttöön WPS:
@@ -651,7 +626,6 @@ bottom_Link=http://support.asus.com/download.aspx?SLanguage=en&m=ZVMODELVZ
 Help_init_word1=Saat Ohjeista ohjeita ja tietoja reitittimen toimintojen käyttämisestä.  Napsauta
 Help_init_word2=hyperlinkitettyjä sanoja, jotka on alleviivattu keltaisella ja sinisellä.
 Help_init_word3=saadaksesi ohjeita.
-[hook error]
 ALERT_OF_ERROR_Input1=Syötettä kohteesta PROTOKOLLA ei ole! 
 ALERT_OF_ERROR_Input2=Syöte kohteesta PROTOKOLLA on väärä! 
 ALERT_OF_ERROR_Input3=Syötettä kohteesta TILA ei ole!
@@ -692,8 +666,6 @@ ALERT_OF_ERROR_Action12=Levyn alustus epäonnistui.
 ALERT_OF_ERROR_System1=Järjestelmävirhe: Muistia ei voi varata!
 ALERT_OF_ERROR_System2=Järjestelmävirhe: Levyn tietoja ei voi lukea!
 ALERT_OF_ERROR_System3=Järjestelmävirhe: Levy on varattu!
-[QIS wizard]
-[QIS_detect.js]
 Web_Title=ASUS Wireless Router ZVMODELVZ
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]Web_Title=ASUS ZVMODELVZ Dual-Band Wireless-N Gigabit ADSL2/2+ Modem Router
 Web_Title2=ZVMODELVZ
@@ -703,17 +675,14 @@ QKSet_detect_desc2=Yhteystilasi uudelleentunnistaminen
 QKSet_detect_wanconnfault=Tarkista, että Ethernet-kaapeli on liitetty oikein WAN-porttiin.
 QKSet_detect_freshbtn=Tunnista uudelleen
 QKSet_detect_waitdesc=Aloita yhteystyyppisi tunnistaminen...
-[QIS_finish.js]
 QIS_finish_Desc=ZVMODELVZ:n asetus on valmis näillä internet- ja langaton-asetuksilla.
 QKSet_all_title=Pika-aloitus
 QKSet_finishpre_rebootnow=Valmis
-[QIS_internet_account.js]
 QKSet_account_webtitle=ISP-tilin asetus
 QKSet_ISP_head=ISP-tietojen asetus
 QKSet_ISP_desc=Katso ISP-asetuksesi ja anna asiaankuuluvat tiedot.
 PPPConnection_UserName_itemdesc=Tämä kenttä on käytettävissä vain, kun asetat WAN-yhteystyypiksi USB Modem:n, PPPoE:n, PPTP:n tai L2TP:n.
 QKSet_account_nameblank=Tilinimi ei voi olla tyhjä.
-[QIS_internet_ip.js]
 Layer3Forwarding_x_DHCPClient_itemname=Haetaanko WAN IP automaattisesti
 Layer3Forwarding_x_UseStaticIP_itemname=Käytä seuraavaa IP-osoitetta:
 qis_dns=Käytä seuraavia DNS-palvelimen osoitteita
@@ -736,13 +705,11 @@ IPConnection_x_DNSServer_blank=Aseta asiakaslaitteelle DNS-palvelin.
 IPConnection_warning_WANIPEQUALGatewayIP=Olet asettanut WAN IP:n ZVMODELVZ-reitittimen yhdyskäytäväksi, eikä ZVMODELVZ ehkä pysty muodostamaan yhteyttä internetiin. Aseta yhdyskäytävälle oikea arvo.
 IPConnection_x_WAN_LAN_conflict=WAN- ja LAN-verkolla tulee olla eri IP-osoite ja aliverkko.
 IPConnection_x_illegal_mac=MAC-osoite ei kelpaa.
-[QIS_internet_isp.js]
 BOP_isp_host_desc=Tässä kentässä voi ZVMODELVZ-palvelimelle antaa isäntänimen. Yleensä internet-palveluntarjoaja kysyy sitä.
 BOP_isp_host_item=Host Name (Isäntänimi) (valinnainen):
 PPPConnection_x_MacAddressForISP_itemdesc=MAC (Media Access Control) -osoite on yksilöllinen tunniste, joka yksilöi verkossa olevan tietokoneen tai laitteen. Internetpalveluntarjoajat valvovat palveluihinsa yhteyden muodostavien laitteiden MAC-osoitteita ja estävät internet-yhteyden uusilta MAC-osoitteilta. Korjataksesi tämän ongelman, voit tehdä jomman kumman seuraavista:<p>* Ota yhteys internetpalveluntarjoajaasi ja pyydä päivittämään internetpalveluntarjoajan tilaukseesi liittyvä MAC-osoite.<p>* Kloonaa tai muuta uuden laitteen MAC-osoite vastaamaan alkuperäisen laitteen MAC-osoitetta.
 BOP_isp_mac_item=MAC Address (MAC-osoite) (valinnainen)
 BOP_isp_MACclone=MAC-klooni
-[QIS_internet_success.htm]
 QKSet_Internet_Setup_fail_reason1=DHCP-yhteys epäonnistui.
 QKSet_Internet_Setup_fail_reason2=Väärä tili tai salasana. Napsauta linkkiä muokataksesi sitä.
 QKSet_Internet_Setup_fail_reason3=PPPoE-yhteys epäonnistui. Napsauta linkkiä yrittääksesi uudelleen.
@@ -756,9 +723,7 @@ QKSet_finish_moveto5=Yksinkertainen langaton suojausasetus
 QKSet_finish_moveto6=Etsi ja määritä salausasetus.
 QKSet_finish_moveto7=Lisäasetukset-sivu
 QKSet_finish_moveto8=Manuaalinen määritys ja hienosäätö.
-[QIS_internet_success.js]
 QKSet_finish_desc=Internet-yhteysasetus on valmis.
-[QIS_internet_type.js]
 QKSet_type_head=Internet-WAN-yhteystyyppi
 QKSet_type_desc=Valitse internet-palveluntarjoajan toimittama WAN-yhteystyyppi.
 BOP_ctype_title1=Automaattinen IP
@@ -779,7 +744,6 @@ WLANConfig11b_WEPDefaultKey_itemname=Avainhakemisto
 JS_passzero=Esijaetun avaimen tulee olla 8-63 merkkiä 64 heksadesimaalinumeroa pitkä. Jos jätät tämän kentän tyhjäksi, järjestelmä määrittää salalauseeksi oletussalalauseen [00000000].
 JS_PSK64Hex=Esijaetun avaimen tulee olla 8-63 merkkiä 64 heksadesimaalinumeroa pitkä.
 JS_wepkey=Anna oikea WEP-avain.
-[error_page.htm]
 web_redirect_message=Et onnistunut avaamaan web-sivua, jota tahdoit katsoa.
 web_redirect_fail_reason0=Katkenneen yhteyden syy
 web_redirect_suggestion0=On suositeltavaa
@@ -797,7 +761,6 @@ web_redirect_suggestion_final=Jos tämä diagnoosi ei ratkaise ongelmaa,
 web_redirect_suggestion_etc=ZVMODELVZ-reitittimen asetussivulle
 web_redirect_suggestion_etc_desc= ja tarkista ja määritä asetus itse.
 web_redirect_suggestion_manually_start_wan=Uudista WAN.
-[error_page.js]
 web_redirect_reason1=Ethernet-kaapelia ei ole liitetty.
 web_redirect_reason2_1=PPPoE- tai VPN-todentaminen epäonnistui.
 web_redirect_reason2_2=Etäpalvelin ei vastaa.
@@ -806,7 +769,6 @@ web_redirect_reason3_2=WAN-yhteystyyppisi on havaittu olevan PPPoE. Mutta PPPoE-
 web_redirect_reason4=Internet-yhteys epäonnistui. Reitittimesi IP-osoite on sama kuin yhdyskäytävän IP-osoite.
 web_redirect_reason5_1=Olet luultavasti katkaissut WAN-yhteyden manuaalisesti.
 web_redirect_reason5_2=Olet asettanut ZVMODELVZ-reitittimelle väärän dynaamisen tai staattisen IP-osoitteen.
-[objcommon.js]
 CTL_nonsupported=Ei tuettu
 CTL_localdevice=Paikallinen laite
 CTL_unknown=Tuntematon laite
@@ -827,13 +789,11 @@ CTL_AdvSetting=Siirry kohtaan Lisäasetukset
 CTL_Enabled=Käytössä
 CTL_Disabled=Pois käytöstä
 CTL_Disconnect=Yhteys katkaistu
-[popup.js]
 Main_alert_proceeding_desc1=Jatketaan
 Main_alert_proceeding_desc4=Odota, 
 Main_alert_proceeding_desc3=Valmis!
 Main_content_Login_Item7=Reitittimen uudelleenkäynnistys kestää 60 sekuntia. Haluatko varmasti käynnistää reitittimen uudelleen?
 [###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=Reitittimen uudelleenkäynnistys kestää 80 sekuntia. Haluatko varmasti käynnistää reitittimen uudelleen?
-[QIS-general.js]
 JS_fieldblank=Kentät eivät voi olla tyhjiä.
 JS_validip=ei ole kelvollinen IP-osoite!
 JS_itemlimit1=Vain tämä taulukko sallii
@@ -846,11 +806,7 @@ JS_validSSID2=”
 JS_validrange=Anna arvo välillä
 JS_validrange_to=kohteeseen
 JS_validport=ei ole kelvollinen porttinumero.
-JS_WanLanAlert=DROP (Poista) poistaa kaikki WANista LANiin-paketit paitsi niitä, jotka vastaavat suodatintaulukkoa. Käytä sitä varovasti.
-JS_LanWanAlert=DROP (Poista) poistaa kaikki LANista WANiin-paketit paitsi niitä, jotka vastaavat suodatintaulukkoa. Käytä sitä varovasti.
 JS_fixchannel=Valitse sillalle kiinteä kanava.
-JS_AES2=Jos haluat ottaa käyttöön AES unique -salauksen, Todennus tulee asettaa tilaan Open System (Avoin järjestelmä)!
-JS_AES3=Jos haluat ottaa käyttöön AES unique -salauksen, myös WEP on otettava käyttöön!
 JS_DHCP1=Aliverkon peite on muutettu, joten ZVMODELVZ:n IP-ryhmä on muutettava. Haluatko muuttaa sen automaattisesti?
 JS_DHCP3=Uusi IP-ryhmä ei vastaa uutta aliverkon peitettä. Haluatko sallia ZVMODELVZ:n muuttaa IP-ryhmää automaattisesti?
 BOP_isp_desc=Internet-palveluntarjoajan toimittama isäntänimi:
@@ -1104,7 +1060,7 @@ LANHostConfig_x_DDNSWildcard_itemdesc=Kun yleismerkki on käytössä, toimialuen
 LANHostConfig_x_DDNSStatus_itemname=Update Manually (Päivitä manuaalisesti):
 LANHostConfig_x_DDNSStatus_itemdesc=Tämä painike antaa päivittää DDNS-tietokannan manuaalisesti. Se on käytettävissä vain, kun automaattinen DDNS-päivitys epäonnistuu. Voit hakea DDNS-päivityksen tämän hetkisen tilan järjestelmälokista.
 DeviceSecurity11a_display1_sectiondesc=Langaton MAC-suodatin mahdollistaa pakettien hallinnan laitteista, joilla on määritetty MAC-osoite langattomassa LAN-verkossasi.
-WLANAuthentication11a_display1_sectiondesc=Tässä osassa voit asettaa lisäparametreja langattomalle langattomien asiakkaiden hyväksymiseksi RADIUS-palvelimen kautta. Sitä vaaditaan, kun valitset "Wireless - General" (Langaton - Yleistä) -kohdassa "Authentication Method" (Autentikointimenetelmä) -asetukseksi "WPA-Enterprise/WPA2-Enterprise".
+WLANAuthentication11a_display1_sectiondesc=Tässä osassa voit asettaa lisäparametreja langattomalle langattomien asiakkaiden hyväksymiseksi RADIUS-palvelimen kautta. Sitä vaaditaan, kun valitset "Wireless - General" (Langaton - Yleistä) -kohdassa "Authentication Method" (Autentikointimenetelmä) -asetukseksi "WPA-Enterprise/ WPA2-Enterprise/ Radius with 802.1x".
 WLANAuthentication11a_ExAuthDBIPAddr_itemname=Server IP Address (Palvelimen IP-osoite)
 WLANAuthentication11a_ExAuthDBIPAddr_itemdesc=RADIUS-palvelimen IP-osoite langattomalle autentikoinnille ja dynaamiselle WEP-avaimen johtamiselle.
 WLANAuthentication11a_ExAuthDBPortNumber_itemname=Server Port (Palvelinportti):
@@ -1319,7 +1275,6 @@ HSDPAConfig_usbadaptor_itemdesc=Valitse USB -sovittimesi.
 confirm_disableftp_dm=Verkkoympäristön jakamisen ottaminen pois käytöstä aiheuttaa sen, että Latausisäntääsi ei voi käyttää.
 LANHostConfig_IPRouters_itemdesc=ZVMODELVZ:n LAN IP -osoite. Oletusarvo on 192.168.1.1. IP-pohjaisissa verkoissa tietopaketit lähetetään verkkolaitteiden erityisiin IP-osoitteisiin.<p>ASUS-reitittimet käyttävät IP-osoitteessa piste-desimaalimerkintätapaa, mikä viittaa numerojonoihin, jotka kirjoitetaan neljänä pistein erotettuna tavuna (esim. 192.168.1.1).<p>Paikallisverkkojen käytettävissä on kolme IP-aluetta: 192.168.0.1 - 192.168.255.254, 172.16.0.1 - 172.31.255.254, 10.0.0.1 - 10.255.255.254.
 GO_HSDPA_SETTING=Siirry USB Modem-asetukseen.
-[adsl start]
 pvccfg_JS_enbsvc=Ota WAN-palvelu käyttöön
 pvccfg_title=WAN-määritys
 pvccfg_atmcfg=ATM PVC -määritys
@@ -1415,7 +1370,6 @@ dns_server_no_set=Aseta asiakaslaitteelle DNS-palvelin.
 dsl_wan_page_desc=Click the Edit icon to edit a PVC setting. Napsauta lisää (+) - tai poista (-) -kuvaketta lisätäksesi tai poistaaksesi PVC-asetuksen.
 dsl_web_redirect_reason1=The telephone cable or cable for Ethernet is not plugged in.
 dsl_web_redirect_reason2_1=PPPoE, PPPoA or VPN authentication failed.
-[adsl end]
 step_use_aicloud=AiCloud-sovelluksen käyttö :
 download_aicloud=Lataa ASUS AiCloud -sovellus puhelimeen tai pad-laitteeseen osoitteesta :
 connect_through_wifi=Liitä iOS- tai Android-laitteet ZVMODELVZ-sovellukseen Wi-Fi:llä. AiCloud-sovellus opastaa sinut automaattisesti asetusprosessin läpi.
@@ -1425,10 +1379,10 @@ aicloud_for_privateIP2=Käytä AiCloud-sovellusta porteilla 8082 ja 443. Voit mu
 aicloud_for_privateIP3=Voit katsoa lisätietoja myös luvuista <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Portinsiirto FAQ</a> ja <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=Luodaksesi pilvilevyn, sinun on asennettava USB-tallennuslaite tähän reitittimeen ja kytkettävä sitten pilvilevy PÄÄLLE (<b>ON</b>).
 aicloud_disk2=Käytä reitittimen sisäänkirjautumistiliä oletuspilvilevyyn sisäänkirjautumiseen.
-aicloud_disk_case0=Käytä pilvilevyä osoitteesta <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net:443" target="_blank">https://www.asusnetwork.net:443</a>.
+aicloud_disk_case0=Käytä pilvilevyä osoitteesta <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net" target="_blank">https://www.asusnetwork.net</a>.
 aicloud_disk_case11=Voit käyttää pilvilevyä tästä URL-osoitteesta :
-aicloud_disk_case12=Voit muokata ddns-nimeä napsauttamalla <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">tätä</a>.
-aicloud_disk_case21=Käytä pilvilevyä osoitteesta <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net:443" target="_blank">https://www.asusnetwork.net:443</a>.
+aicloud_disk_case12=Voit muokata ddns-nimeä napsauttamalla <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName" target="_blank">tätä</a>.
+aicloud_disk_case21=Käytä pilvilevyä osoitteesta <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net" target="_blank">https://www.asusnetwork.net</a>.
 aicloud_disk_case22=Rekisteröi ASUS DDNS <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">tässä</a> käyttääksesi pilvilevyä verkossa.
 smart_access1=Älykäs käyttö hakee Verkkopaikka-asetuksesi, kuten käyttäjätilin, jaetun kansion jne. Tämä mahdollistaa kotiverkon (<a id="faq0" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Network Place/Samba</a>) käytön missä ja milloin tahansa.
 smart_access2=WOL (Wake-On-LAN) -ominaisuus sallii sinun herättää tietokone miltä tahansa verkon laitteella.
@@ -1442,4 +1396,7 @@ aicloud_bandwidth2_2=5 Mbps tai nopeampi on suositeltava SD-videolle.
 aicloud_bandwidth2_3=15 Mbps tai nopeampi on suositeltava 720p-videolle.
 aicloud_bandwidth2_4=30 Mbps tai nopeampi on suositeltava 1080p HD-videovirtauttamiselle.
 aicloud_bandwidth3=Internet-siirtonopeus voi vaihdella internet-palveluntarjoajan ja muiden tekijöiden mukaan. Jollet ole varma, mitä on internet-nopeutesi, voit ottaa yhteyttä internet-palveluntarjoajaasi tai käyttää online-kaistanleveystestiä ASUS-reitittimeen liitetystä tietokoneesta.
-[untrans]
+QIS_rescan=Rescan
+GuestNetwork_Radio_Status=Wi-Fi-signaali sammutetaan.
+use_DevDiscoveryUtil=Asenna ja käytä <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery-apuohjelmaa</a> langattoman reitittimen IP-osoitteen tunnistamiseen.
+System_Change_TimeZone=Muuta Aikavyöhyke

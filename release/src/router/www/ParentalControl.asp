@@ -785,7 +785,7 @@ function deleteRow_lantowan(r, client){
 						</div>
 					</td>
 					<td>&nbsp;&nbsp;</td>
-					<td>
+					<td style="font-style: italic;font-size: 14px;">
 						<span><#ParentalCtrl_Desc#></span>
 						<ol>	
 							<li><#ParentalCtrl_Desc1#></li>

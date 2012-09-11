@@ -1,0 +1,25 @@
+This is a reverse-engineered driver for mobile WiMAX (802.16e) devices
+based on GCT Semiconductor GDM7213 & GDM7205 chip.
+
+gctWiMAX is provided "as is" with no warranty. The exact terms
+under which you may use and (re)distribute this program are detailed
+in the GNU General Public License, in the file COPYING.
+
+See the file INSTALL for compilation and installation instructions.
+
+See the file RUN for a description how to use the driver.
+
+See the file NEWS for a description of major changes in this release.
+
+Support forum:	
+http://ualinux.com/index.php/forum/10/67-freshtel---sagem-fst-9520-seowon-swu-3220a
+
+Copyright (C) 2010, 2011 Yaroslav Levandovsky <leyarx@gmail.com>
+
+Code, fixes and ideas from:
+	-	fanboy
+	-	Gennady Knyazkin (GennadyX) <gennadyx@gmail.com>
+	-	Macpaul Lin	<macpaul@gmail.com>
+
+Verifiers:
+	-	Alexander Grohochinsky

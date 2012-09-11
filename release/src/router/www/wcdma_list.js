@@ -235,12 +235,12 @@ function gen_list(){
     passlist = new Array("internet", "", "", "", "", "", "internet", "", "000000", "IT", "3G_TURBO", "", "", "freshtel");
   }
 	else if(country == "TH"){
-		protolist = new Array("1", "1");
-		isplist = new Array("TOT", "TH GSM");
-		apnlist = new Array("internet", "internet");
-		daillist = new Array("", "*99#");
-		userlist = new Array("", "");
-		passlist = new Array("", "");
+		protolist = new Array("1", "1", "1");
+		isplist = new Array("AIS(TH GSM)", "DTAC", "Truemove H");
+		apnlist = new Array("internet", "www.dtac.co.th", "hinternet");
+		daillist = new Array("*99#", "*99#", "*99#");
+		userlist = new Array("", "", "true");
+		passlist = new Array("", "", "true");
 	}
   else if(country == "POL"){
 		protolist = new Array("1", "1", "1", "1", "1", "1", "1");

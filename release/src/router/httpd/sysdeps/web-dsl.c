@@ -133,52 +133,77 @@ int ej_dsl_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
 
 int wanlink_hook_dsl(int eid, webs_t wp, int argc, char_t **argv){
 // DSLTODO : dummy code
-	char type[16], ip[16], netmask[16], gateway[16], statusstr[16];
-	int status = 0, unit;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	int wan_state = -1, wan_sbstate = -1, wan_auxstate = -1;
-	char wan_proto[16];
+	int unit, status = 0;
+	char *statusstr[2] = { "Disconnected", "Connected" };
+	char *wan_proto, *type;
+	char *ip = "0.0.0.0";
+	char *netmask = "0.0.0.0";
+	char *gateway = "0.0.0.0";
+	unsigned int lease = 0, expires = 0;
+	char *xtype = "";
+	char *xip = "0.0.0.0";
+	char *xnetmask = "0.0.0.0";
+	char *xgateway = "0.0.0.0";
+	unsigned int xlease = 0, xexpires = 0;
 
 	status = 1;
-	strcpy(statusstr, "Connected");
 
-	memset(type, 0, 16);
-	strcpy(type, nvram_safe_get(nvram_safe_get("dsl_proto")));
-	
-	memset(ip, 0, 16);
-	memset(netmask, 0, 16);
-	memset(gateway, 0, 16);
-	if(status == 0){
-		strcpy(ip, "0.0.0.0");
-		strcpy(netmask, "0.0.0.0");
-		strcpy(gateway, "0.0.0.0");	
+	type = nvram_safe_get(nvram_safe_get("dsl_proto"));
+
+	if(status != 0){
+		ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
+		netmask = nvram_safe_get(strcat_r(prefix, "netmask", tmp));
+		gateway = nvram_safe_get(strcat_r(prefix, "gateway", tmp));
+		lease = nvram_get_int(strcat_r(prefix, "lease", tmp));
+		if (lease > 0)
+			expires = nvram_get_int(strcat_r(prefix, "expires", tmp)) - uptime();
 	}
-	else{
-		strcpy(ip, nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)));
-		strcpy(netmask, nvram_safe_get(strcat_r(prefix, "netmask", tmp)));
-		strcpy(gateway, nvram_safe_get(strcat_r(prefix, "gateway", tmp)));	
-	}
-	
+
 	websWrite(wp, "function wanlink_status() { return %d;}\n", status);
-	websWrite(wp, "function wanlink_statusstr() { return '%s';}\n", statusstr);
+	websWrite(wp, "function wanlink_statusstr() { return '%s';}\n", statusstr[status]);
 	websWrite(wp, "function wanlink_type() { return '%s';}\n", type);
 	websWrite(wp, "function wanlink_ipaddr() { return '%s';}\n", ip);
 	websWrite(wp, "function wanlink_netmask() { return '%s';}\n", netmask);
 	websWrite(wp, "function wanlink_gateway() { return '%s';}\n", gateway);
 	websWrite(wp, "function wanlink_dns() { return '%s';}\n", nvram_safe_get(strcat_r(prefix, "dns", tmp)));
-	websWrite(wp, "function wanlink_lease() { return %s;}\n", nvram_safe_get(strcat_r(prefix, "lease", tmp)));
+	websWrite(wp, "function wanlink_lease() { return %d;}\n", lease);
+	websWrite(wp, "function wanlink_expires() { return %d;}\n", expires);
 	websWrite(wp, "function is_private_subnet() { return '%d';}\n", is_private_subnet(nvram_safe_get(strcat_r(prefix, "ipaddr", tmp))));
-			
 
-	websWrite(wp, "function wanlink_status() { return %d;}\n", status);
-	websWrite(wp, "function wanlink_statusstr() { return '%s';}\n", statusstr);
-	websWrite(wp, "function wanlink_type() { return '%s';}\n", type);
-	websWrite(wp, "function wanlink_ipaddr() { return '%s';}\n", ip);
-	websWrite(wp, "function wanlink_netmask() { return '%s';}\n", netmask);
-	websWrite(wp, "function wanlink_gateway() { return '%s';}\n", gateway);
-	websWrite(wp, "function wanlink_dns() { return '%s';}\n", nvram_safe_get(strcat_r(prefix, "dns", tmp)));
-	websWrite(wp, "function wanlink_lease() { return %s;}\n", nvram_safe_get(strcat_r(prefix, "lease", tmp)));
-	websWrite(wp, "function is_private_subnet() { return '%d';}\n", is_private_subnet(nvram_safe_get(strcat_r(prefix, "ipaddr", tmp))));
+/* TODO: implement WANX */
+//	if (strcmp(wan_proto, "pppoe") == 0 ||
+//	    strcmp(wan_proto, "pptp") == 0 ||
+//	    strcmp(wan_proto, "l2tp") == 0) {
+//		int dhcpenable = nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp));
+//#if 1 /* TODO: tmporary change! remove after WEB UI support */
+//		if (strcmp(wan_proto, "pppoe") == 0 &&
+//		    dhcpenable && nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0"))
+//			dhcpenable = 2;
+//#endif /* TODO: tmporary change! remove after WEB UI support */
+//
+//		if (dhcpenable == 0)
+//			xtype = "static";
+//		else if (dhcpenable != 2 || strcmp(wan_proto, "pppoe") != 0)
+//			xtype = "dhcp";
+//		xip = nvram_safe_get(strcat_r(prefix, "xipaddr", tmp));
+//		xnetmask = nvram_safe_get(strcat_r(prefix, "xnetmask", tmp));
+//		xgateway = nvram_safe_get(strcat_r(prefix, "xgateway", tmp));
+//		xlease = nvram_get_int(strcat_r(prefix, "xlease", tmp));
+//		if (xlease > 0)
+//			xexpires = nvram_get_int(strcat_r(prefix, "xexpires", tmp)) - uptime();
+//	}
+
+	websWrite(wp, "function wanlink_xtype() { return '%s';}\n", xtype);
+	websWrite(wp, "function wanlink_xipaddr() { return '%s';}\n", xip);
+	websWrite(wp, "function wanlink_xnetmask() { return '%s';}\n", xnetmask);
+	websWrite(wp, "function wanlink_xgateway() { return '%s';}\n", xgateway);
+	websWrite(wp, "function wanlink_xdns() { return '%s';}\n", nvram_safe_get(strcat_r(prefix, "xdns", tmp)));
+	websWrite(wp, "function wanlink_xlease() { return %d;}\n", xlease);
+	websWrite(wp, "function wanlink_xexpires() { return %d;}\n", xexpires);
+
+	return 0;
 }
 
 void

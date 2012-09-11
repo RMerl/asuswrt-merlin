@@ -1,8 +1,6 @@
-﻿[Language type]
 CHAR_set=UTF-8
 PASS_LANG=Sprache:
 LANG_select=Sprache wahlen
-[IPv6]
 IPv6_wan_addr=WAN IPv6-Adresse
 IPv6_wan_Prefix_len=WAN Präfixlänge
 IPv6_wan_gateway=WAN IPv6 Gateway
@@ -19,17 +17,18 @@ Prefix_lan_Length=LAN Präfixlänge
 IPv6_Prefix_Length=IPv6-Präfixlänge
 IPv6_DNS_Setting=IPv6 DNS-Einstellungen
 ipv6_6rd_dhcp_option=DHCP-Option
+ipv6_6rd_Prefix=IPv6-Präfix
 ipv6_client_ip=Client-IPv6-Adresse
 IPv6_static_IP=Statische IPv6
 tunnel_MTU=Tunnel MTU
 tunnel_TTL=Tunnel TTL
-[VPN server]
 vpn_Adv=VPN-Details
 PPTP_desc=Der VPN-Server ermöglicht Ihnen den Zugriff auf Ihr Heimnetzwerk von überall und zu jeder Zeit.
 PPTP_desc2=Um den VPN-Server zu benutzen, folgen Sie bitte diesen Schritten.<br>(1) PPTP VPN-Server aktivieren<br>(2) IP-Bereich für Client-IP einstellen. (Maximal 10 Clients) <br>(3) benutzername und Kennwort für den VPN-Client einrichten.<br>(4) VPN-Verbindungsprogramm in Ihren Computer oder Smartphone öffnen.<br>(5) Eine neue PPTP VPN-Verbindung hinzufügen. Die VPN-Serveradresse lautet
 PPTP_desc3=(6) Falls Ihre WAN-Adresse dynamisch ist, <a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">klicken Sie bitte zur Einrichtung des DDNS hier.</a>
 vpn_enable=PPTP-Server aktivieren
 vpn_broadcast=Broadcast-Unterstützung
+vpn_network_place=Network Place (Samba) Support
 MPPE_Encryp=MPPE-Verschlüsselung
 Auto=automatisch
 No_Encryp=Keine Verschlüsselung
@@ -42,7 +41,6 @@ vpn_conflict_DHCPpool=* Konflikt mit dem Router DHCP IP-Pool:
 vpn_conflict_DHCPstatic=* Konflikt mit der Router DHCP Static IP-Adresse:
 vlaue_haigher_than=Dieser Wert sollte höher sein als
 vpn_max_clients=VPN-Server erlaubt maximal 10 Clients!
-[ParentalCtrl]
 Parental_Control=Kindersicherung
 ParentalCtrl_Desc=Die Kindersicherung ermöglicht Ihnen die Zeit einzustellen, in welcher für einen Client Netzwerkzugriff erlaubt ist. So benutzen Sie die Kindersicherung:
 ParentalCtrl_Desc1=Wählen Sie in der Spalte des [Client-Namen] den Client aus, für welchen Sie den Netzwerkzugriff steuern wollen. Sie können in der Spalte für die Clienet-MAC-Adresse auch die [MAC-Adresse des Clients] eingeben.
@@ -52,18 +50,15 @@ ParentalCtrl_Desc4=Klicken Sie auf [OK], um die vorgenommenen Einstellungen zu �
 ParentalCtrl_username=Client-Namen
 ParentalCtrl_hwaddr=MAC-Adresse des Clients
 ParentalCtrl_time=Zeitverwaltungs
-[AutoUpdate]
 check_proceeding=Der Router überprüft den ASUS-Server auf Firmware-Updates.
 connect_failed=Keine Internetverbindung gefunden. Der Router kann sich nicht mit dem ASUS-Server verbinden, um nach neuer Firmware zu suchen. Gehen Sie zurück zu dieser Seite, wenn sie die Internetverbindung hergestellt haben und klicken Sie auf Überprüfen, um nach der neusten Firmware-Version zu suchen.
 exist_new=Neue Firmware-Version verfügbar. Wollen Sie die Firmware aktualisieren?
 is_latest=Die Firmware des Routers ist die neuste Version.
 unavailable_update=Keine Aktualisierungen verfügbar
-[GreenIndicator]
 no_printer_detect=Kein Drucker erkannt
 Eject_usb_disk=USB-Datenträger auswerfen
 disconnect_internet=Internetverbindung trennen
 go_GuestNetwork=Zum Gästenetzwerk gehen
-[GuestNetwork]
 Guest_Network=Gästenetzwerk
 GuestNetwork_desc=Das Gästenetzwerk stellt für Gäste eine Internetverbindung zur Verfügung, beschränkt aber den Zugriff auf das Intranet.
 Access_Time=Zugriffszeit
@@ -71,7 +66,6 @@ Limitless=Unbegrenzt
 Access_Intranet=Auf Intranet zugreifen
 Guest_network_index=Gästenetzwerk index
 Guest_Network_enable=Gästenetzwerk aktivieren
-[TrafficManager]
 upload_prio=Upload-Priorität
 min_bound=Minimales Bandbreitenlimit
 max_bound=Maximales Bandbreitenlimit
@@ -109,12 +103,10 @@ qos_user_prio=Benutzerdefinierte Priorität
 qos_user_rules=Benutzerdefinierte QoS-Regeln
 source_ipmac=Bei Quell-oder Ziel-IP-Adressen können Sie:<p>(a) Eine bestimmte IP-Adresse eingeben, wie \"192.168.122.1\";<p>(b) Eine IP-Adresse innerhalb eines gleichen Subnetzes oder IP-Pools eingeben, wie \"192.168.123.*\" oder  \"192.168.*.*\";<p>(c) Alle IP-Adressen eingeben, wie \"*.*.*.*\"<p>Der MAC-Adressformat besteht aus sechs Gruppen von zwei hexadezimalen Ziffern, durch Doppelpunkte (:) getrennt, in Übertragungsabfolge (z.B. 12:34:56:aa:bc:ef)
 QoS_invalid_period=Bandbreitenbegrenzung ungültig.
-[Network_PrintServer]
 Network_Printer_Server=Netzwerkdrucker-Server
 Network_Printer_desc=Der Netzwerkdrucker-Server unterstützt zwei Methoden: (1) ASUS EZ-Druckerfreigabe (2) LPR zur Druckerfreigabe.
 asus_ez_print_share=ASUS EZ-Druckerfreigabe (nur für Windows)
 LPR_print_share=Verwenden Sie das LPR-Protokoll, um Drucker freizugeben.
-[New_201108]
 usb_unmount=USB-Funktion ist deaktiviert
 no_usb_found=Kein USB-Datenträger erkannt
 Menu_usb_application=USB-Anwendung
@@ -125,7 +117,6 @@ jumbo_frame=Jumbo Frame aktivieren
 ctf_disable=HW Accelerator deaktivieren
 Enable_WAN=WAN aktivieren
 Enable_NAT=NAT aktivieren
-[New_QIS]
 QIS_Previous_WLKey=Wollen Sie die vorherigen drahtlosen Sicherheitseinstellungen nutzen?
 QIS_recommand_encryption=Wir empfehlen Ihnen dringend, dass Sie die Verschlüsselungsart zuerst einstellen.
 QIS_confirm_recommand_encryp=Wir empfehlen Ihnen dringend, dass Sie die Verschlüsselungsart zuerst einstellen. Wollen Sie fortfahren?
@@ -143,27 +134,35 @@ QIS_welcome_feature1=Simultane 450+450 Dual-Band-Verbindung.
 [###MODEL_DEP###][RT-N56U][RT-N53]QIS_welcome_feature1=Simultanes Dual-Band N600. (300 Mbps/ 2.4GHz + 300 Mbps/ 5GHz)
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature1=Flexible Dualband-Technologie für die verzögerungsfreie Übertragung von Entertainment-Inhalten.
 [###MODEL_DEP###][RT-N16]QIS_welcome_feature1=Die leistungsstarke CPU stellt einen hohen Durchsatz zur Verfügung.
-[###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1][RT-N10U]QIS_welcome_feature1=Single-Band N300. (300 Mbps/ 2.4GHz)
+[###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature1=Single-Band N300. (300 Mbps/ 2.4GHz)
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature1=Multiple 3-in-1 : Router / Access Point / Repeater wireless modes
+[###MODEL_DEP###][RT-N10U]QIS_welcome_feature1=Single-Band N150. (150 Mbps/ 2.4GHz)
 QIS_welcome_feature2=Zwei USB-Anschlüsse für USB-Speicher und Multifunktionsdrucker.
+[###MODEL_DEP###][RT-AC66U]QIS_welcome_feature2=ASUS AiCloud unlimitedly access, streaming, and sync files everywhere with any devices.
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature2=4 x Gigabit Ethernet-Anschluss.
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature2=4 x Gigabit Ethernet-Anschluss. 2 x 2.0 USB-Anschluss für schnelle Daten-und Druckerfreigaben.
+[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature2=Twin USB ports enable multi-role usability.
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature2=4 x 10/100 Ethernet-Anschluss.
 [###MODEL_DEP###][RT-N15U]QIS_welcome_feature2=4 x Gigabit Ethernet-Anschluss. 1 x 2.0 USB-Anschluss für schnelle Daten-und Druckerfreigaben.
 [###MODEL_DEP###][RT-N12B1][RT-N12C1]QIS_welcome_feature2=4 x 10/100 Ethernet-Anschluss. 2 x 5DBi Antenne für eine bessere Signalreichweite.
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature2=Two detachable external 9dbi high gain antennas with adjustable output power.
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature2=4 x 10/100 Ethernet-Anschluss. 1 x 2.0 USB-Anschluss für schnelle Druckerfreigaben.
 QIS_welcome_feature3=Gigabit Internet-Surfen mit Turbo-NAT.
+[###MODEL_DEP###][RT-AC66U]QIS_welcome_feature3=4 x Gigabit Ethernet-Anschluss. 2 x 2.0 USB-Anschluss für schnelle Daten-und Druckerfreigaben.
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature3=2 x 3.0 USB-Anschluss für schnelle Daten- und Druckerfreigaben.
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature3=Strahlenbündlungstechnologie für eine größere Abdeckung.
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature3=Zwei USB-Anschlüsse für vielfältige Anschlussmöglichkeiten.
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature3=Bis zu 3 x Guest-SSID.
 [###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature3=Bis zu 3 x Guest-SSID.
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature3=Excellent wireless signal and antenna transmission for 300% wider signal coverage.
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature3=1 x 5DBi Antenne für eine bessere Signalreichweite.
 QIS_welcome_feature4=20X Datensätze bei P2P-Betrieb für stabile Verbindungen.
-[###MODEL_DEP###][RT-N65U][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature4=Graphische Benutzeroberfläche zum einfachen Einrichten und Verwalten.
+[###MODEL_DEP###][RT-AC66U][RT-N65U][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature4=Graphische Benutzeroberfläche zum einfachen Einrichten und Verwalten.
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature4=Hardware-NAT für ein 5x schnelleres WAN- und LAN-Erlebnis.
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature4=Testsieger in der Chip und der PCPraxis. Seit Monaten unangefochten Spitzenreiter in der Chip Online Bestenliste!
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature4=Benutzer-Zugriffszeitkontrolle.
-[###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=Bis zu 4 x Guest-SSID.
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature4=Optimized coverage throughout multi-level households.
+[###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=Bis zu 3 x Guest-SSID.
 QIS_pass_title=Kennwort-Setup für Router-Anmeldung
 QIS_pass_desc1=Ändern Sie das Router-Kennwort, um Fremdzugriff auf den drahtlosen ASUS-Router zu vermeiden.
 QIS_pass_desc3=Das Router-Kennwort gewährt Ihnen den administrativen Zugriff auf Ihren ASUS-Router. Wenn Sie sich bei der Web-Benutzeroberfläche anmelden, müssen Sie den Benutzernamen und das Kennwort eingeben. Standardbenutzername/-kennwort ist "admin / admin".
@@ -207,10 +206,8 @@ qis_tutor_desc2=1. Klicken Sie im Infobereich auf das Netzwerksymbol ( <img src=
 qis_tutor_desc3=2. Wählen Sie in der Netzwerkliste das gewünschte Netzwerk und klicken Sie auf "Verbinden".
 qis_tutor_desc4=1. Klicken Sie im Infobereich auf das Netzwerksymbol und dann auf "Verfügbare drahtlose Netzwerke anzeigen".
 qis_tutor_desc5=1. Klicken Sie in der Menüleiste auf das AirPort-Statussymbol und dann auf den gewünschten Netzwerknamen.
-[System log]
 System_Log=Systemprotokoll
-[New_0622]
-upnp_Desc=Set up the DLNA, iTUnes, FTP and Network Place (Samba) server.
+upnp_Desc=Set up the DLNA, iTunes, FTP and Network Place (Samba) server.
 Route_title=Diese Seite zeigt detaillierten Routing-Status an.
 PortForward_title=Diese Seite zeigt den Status von Port Forwarding an. Manche P2P-Anwendungen verwendet den UPnP-Protokoll, um einen Port zu öffnen, wobei die Port-Nummer auf dieser Seite angezeigt wird.
 WLLog_title=Diese Seite zeigt detaillierte Drahtloseinstellungen an.
@@ -221,7 +218,7 @@ FTP_desc=Einrichtung von Konto und Berechtigungen für den FTP-Dienst.
 Samba_desc=Einrichtung von Konto und Berechtigungen für den Netzwerkortdienst (samba).
 LANHostConfig_x_DDNSHostNames_itemdesc=Ungültiger Hostname! Hostname kann keine Nummernpräfix und Punkte (wie z.B. \"123abc\" oder \"aaa.bbb\") enthalten.
 LANHostConfig_x_DDNSEnable_sectiondesc2=Der drahtlose Router verwendet derzeitig eine private WAN IP-Adresse (192.168.x.x, 10,x,x,x, oder 172.16.x.x). Er befindet sich evtl. im Multi-NAT-Betrieb, wobei DDNS-Service in solcher Umgebung nicht unterstützt wird.
-LANHostConfig_x_DDNSEnable_sectiondesc3=Hostname wurde erfolgreich registriert. Verwenden Sie "[hostname].asuscomm.com", um im Heimnetzwerk von WAN auf diesen Service zuzugreifen. Verwenden Sie "[hostname].asuscomm.com" für den Fernzugriff auf Ihr Netzwerk.<p>Gehen Sie zu Advanced Setting (Erweiterte Einstellungen) > WAN, um Einstellungen für Port Forwarding oder DMZ zu konfigurieren, damit andere WAN-Clients auf Ihr Netzwerk zugreifen können. <p>Falls Sie den drahtlosen Router per Fernzugriff konfigurieren möchten, beziehen Sie <a href="../Advanced_BasicFirewall_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">hier</a>.
+LANHostConfig_x_DDNSEnable_sectiondesc3=Hostname wurde erfolgreich registriert. Verwenden Sie "[hostname].asuscomm.com", um im Heimnetzwerk von WAN auf diesen Service zuzugreifen. Verwenden Sie "[hostname].asuscomm.com" für den Fernzugriff auf Ihr Netzwerk.<p>Gehen Sie zu Advanced Setting (Erweiterte Einstellungen) > WAN, um Einstellungen für Port Forwarding oder DMZ zu konfigurieren, damit andere WAN-Clients auf Ihr Netzwerk zugreifen können. <p>Falls Sie den drahtlosen Router per Fernzugriff konfigurieren möchten, beziehen Sie <a href="/Advanced_System_Content.asp?af=misc_http_x" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">hier</a>.
 IPConnection_LocalIP_itemdesc=Geben Sie die IP-Adresse des LAN Client ein.
 IPConnection_LocalPort_itemdesc=Falls eingehende Datenpakete an diesen Port weitergeleitet werden sollen, belassen Sie dieses Feld leer.
 IPConnection_PortRange_itemdesc=Port-Bereich akzeptiert mehrere Formate wie Port-Bereich (300:350), individuelle Ports (566,789) oder kombiniert (1015:1024,3021).
@@ -239,14 +236,12 @@ Aidisk_authority_hint=Warnung: AiDisk wurde eingerichtet. Falls Sie AiDisk erneu
 remove_usb_hint=Um die Festplatte vom Router entfernen zu können, klicken Sie auf das USB-Symbol in der oberen rechten Ecke Ihres Bildschirms.
 UserQoSRule_desc_zero=Aktivieren Sie QoS und richten Sie die dann die benutzerdefinierten Regeln ein.
 prio_packet_note=Die Standard-ACK, -SYN, und -ICMP-Pakete werden verwendet, um die Flüssigkeit des Spiels zu verbessern.
-[NAT Passthrough]
 NAT_PPTP_Passthrough=PPTP Passthrough
 NAT_L2TP_Passthrough=L2TP Passthrough
 NAT_IPSec_Passthrough=IPSec Passthrough
 NAT_RTSP_Passthrough=RTSP Passthrough
 NAT_passthrough_itemname=NAT Passthrough
 NAT_passthrough_desc=Aktivieren Sie NAT Passthrough, damit eine Virtual Private Network (VPN)-Verbindung durch den Router an die Netzwerk-Clients weitergeleitet werden kann.
-[opmode strings]
 wireless_router=Wireless Router
 BasicConfig_EnableiTunesServer_itemname=iTunes Server aktivieren?
 OP_GW_item=Wireless Router (Default)
@@ -264,13 +259,11 @@ RouterConfig_GWMulticast_unknownUni_itemname=Unbekannte Unicast-Überflutungskon
 RouterConfig_GWMulticast_unknownMul_itemname=Unbekannte Multicast-Überflutungskontrolle (Mbps):
 RouterConfig_GWMulticast_Multicast_itemname=Multicast-Überflutungskontrolle (Mbps):
 RouterConfig_GWMulticast_Broadcast_itemname=Broadcast-Überflutungskontrolle (Mbps):
-[keyword_filter]
 menu5_5_5=Schlüsselwortfilter
 FirewallConfig_KeywordFilterEnable_sectiondesc=Mit Schlüsselwortfilter können Sie Clients daran hindern, auf Webseiten, welche die festgelegten Schlüsselwörter enthalten, zugreifen zu können.
 FirewallConfig_KeywordFilterEnable_sectiondesc2=Einschränkungen der Schlüsselwortfilterung :<ol><li>Webseiten, die HTTP-Komprimierungstechnologie nutzen, können nicht gefiltert werden. <a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">Weitere Details finden Sie hier</a></li><li>HTTPS-Webseiten können nicht gefiltert werden.</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=Schlüsselwortfilter aktivieren
 FirewallConfig_KeywordList_groupitemname=Schlüsselwort-Filterliste
-[New translated]
 JS_field_wanip_rule3=Bitte geben Sie einen Wert zwischen 1 und 2592000(Sekunden) ein.
 FirewallConfig_Port80_itemdesc=Wenn Ihre Netzwerk-Firewall deaktiviert ist und Sie bei der WAN-Einstellung den Wert 80 für den Port-Bereich des HTTP-Servers eingeben, wird Ihr HTTP-Server/Web-Server in Konflikt mit der Web-Benutzeroberfläche des ZVMODELVZ stehen.
 FirewallConfig_FTPPrompt_itemdesc=Wenn Sie bei der WAN-Einstellung den Wert 20:21 für den Port-Bereich des FTP-Servers eingeben, wird Ihr FTP-Server in Konflikt mit dem Standard FTP-Server des ZVMODELVZ stehen.
@@ -284,12 +277,10 @@ WLANConfig11b_TxPower_itemname=Tx-Energieeinstellungen
 WLANConfig11b_TxPower_itemdesc=Regelt das Signal-Energie-Verhältnis. 
 WLANConfig11b_Wireless_Speed_itemname_3=Verwendet 40MHz koexistente Bandbreite, um den Drahtlosdurchsatz zu maximieren. Falls Stabilitätsprobleme mit der Drahtlosverbindung auftreten, wählen Sie bitte den Standardmodus (20MHz).
 hwnat_desc=NAT (Netzwerkadressübersetzung, Network Address Translation) ist ein in Routern verwendeter Prozess, um Adressinfos eines Netzwerkpaketes mit neuen Adressinfos zu ersetzen. Typisches Anwendungsgebiet für NAT ist ein mit LAN verbundener Router mit einem WAN-Netzwerk. Bei LAN besitzt jedes Netzwerkgerät eine private IP (LAN IP), allerdings gibt es nur eine Internet IP (WAN IP). Um Netzwerkgeräten den Zugriff auf das Internet zu ermöglichen, ersetzt der Router bei allen ausgehenden Datenpaketen die private IP-Adresse des Senders mit einer öffentlichen IP-Adresse. Alle hierzu nötigen Informationen werden in der sog. NAT-Tabelle gespeichert, damit alle eingehenden Datenpakete an das korrekte Netzwerkgerät weitergeleitet werden können.
-[error_page.htm]
 web_redirect_reason6=IP-Konflikt festgestellt. Klicken Sie auf Weiter, um eine neue IP-Adresse zu beziehen.
 web_redirect_case6_desc1=Die IP-Adresse des Routers wird aktualisiert in:
 web_redirect_case6_desc2=Nach dem Klick auf Weiter vergewissern Sie sich bitte, dass Sie die IP-Einstellungen jedes Dienstes, z.B. virtueller Server oder DMZ aktualisieren.
 error_page_lanip_changed_desc1=Die IP-Adresse wird erneuert. Wenn der Vorgang länger als zwei Minuten dauert, folgen Sie bitte diesen drei Schritten, um die IP-Adresse manuell zu erneuern: (1) Ziehen Sie das Netzwerkkabel heraus; (2) Warten Sie ca. 10 Sekunden; (3) Stecken Sie das Netzwerkkabel wieder hinein, um eine neue IP-Adresse zu beziehen.
-[QIS]
 QIS_autoMAC_desc1=Beginn des Klonens der MAC-Adresse des Computer im Router.
 QIS_autoMAC_desc2=Bitte warten...
 QIS_autoMAC_desc3=WAN IP-Adresse verifizieren
@@ -313,7 +304,6 @@ QIS_internet_success_desc1=In Ihrem Netzwerk befindet sich voraussichtlich ein P
 QIS_internet_success_desc2=Am ISP DNS ist voraussichtlich ein Fehler aufgetreten. Bitte überprüfen Sie dies zusammen mit Ihrem ISP oder Netzwerkadministrator oder gehen Sie zur Seite mit den erweiterten Einstellungen, um den öffentlichen DNS einzustellen.
 QIS_internet_success_desc3=Bitte überprüfen Sie dies zusammen mit Ihrem ISP oder Netzwerkadministrator.
 QIS_internet_success_desc4=Trennen Sie bitte das Stromversorgungskabel vom Modem. Warten Sie ca. 2 Minuten und stecken Sie das Kabel dann erneut hinein. Klicken Sie auf Erneut erkennen.
-[Traffic Monitor]
 Date=Datum
 Scale=Skala
 Last30days=in den letzten 30 Tagen
@@ -326,13 +316,11 @@ Current=aktuelle
 Average=Durchschnittlich
 Maximum=maximale
 Total=gesamt
-[RT-N66U new item]
 LAN_IP_changed_suggedtion1=Die Standard-LAN-IP-Adresse ZVMODELVZ lautet
 LAN_IP_changed_suggedtion2=.Falls Sie die Einstellungsseite nicht wiederherstellen können, erneuern Sie bitte die IP-Konfiguration Ihres Computers.
 WLANConfig11b_x_WPSband_itemname=Current Band
 WLANConfig11b_x_WPSband_itemdesc=Wählen Sie ein Arbeitsband (2.4GHz oder 5GHz), bevor Sie die WPS (Wi-Fi Protected Setup) -Funktion verwenden.
 LANConfig_ChangedLANIP=Die IP-Adresse Ihres Routers wurde geändert. Bitte verwenden Sie das Hilfsprogramm Device Discovery, um nach der neuen IP-Adresse des Routers zu suchen.
-[RT-N1X new item]
 LANHostConfig_x_Password_itemdesc=Kennwort darf nicht langer als 16 Zeichen sein.
 WLANConfig11n_nmode_limition_hint=Der ZVMODELVZ wird die WEP- oder TKIP-Verschlüsselung in AES [n Only] ändern, um sicherzustellen, dass die Clients die richtige Verbindung zur Verfügung gestellt bekommen.
 WLANConfig11n_automode_limition_hint=Im Auto-Modus mit WEP- oder TKIP-Verschlüsselung unterstützt der ZVMODELVZ eine maximale Übertragungsrate von 54Mbps.
@@ -344,15 +332,14 @@ WLANConfig11n_PremblesType_itemname=Preamble Type
 WLANConfig11n_PremblesType_itemdesc=Die Einleitungsart definiert die Länge des CRC (Cyclic Redundancy Check) -Blocks, welcher eine Technik zum erkennen von Datenübertragungsfehlern zwischen Wireless-Geräte ist. Wir empfehlen Ihnen, dass Sie alle Ihre Wireless-Geräte so konfigurieren, die gleiche Einleitungsart zu verwenden. Benutzen Sie eine kurze Einleitung für Wireless-Geräte in Bereichen mit hohen Datenverkehr und lange Einleitungen für ältere Wireless-Geräte.
 LANHostConfig_ManualDHCPEnable_itemdesc=Weisen Sie einem bestimmten Client eine feste IP-Adresse zu. Die MAC-Adresse des Clients wird ebenfalls benötigt.
 Layer3Forwarding_x_STB_itemdesc=Wählen Sie einen LAN-Port, um mit dem WAN-Port gebrückt zu werden. Wenn Sie ein anderes Gerät haben, welches sich mit dem WAN-Port verbindet, Ihr ISP aber nur einen WAN-Link zur Verfügung stellt, können Sie einige LAN-Ports festlegen, die Pakete vom WAN-Port empfangen. Zum Beispiel können Sie Ihre IPTV Set-Top Box mit einen bestimmten Port verbinden und das Signal und die IP-Adresse direkt vom ISP beziehen.
-IP_format=Für eine Quell- oder Ziel-IP-Adresse können Sie: a) Eine bestimmte IP-Adresse, z.B. \"192.168.122.1\" eingeben; b) IP-Adressen innerhalb eines Subnetzes oder im gleichen IP-Pool, z.B. \"192.168.123.*\" oder  \"192.168.*.*\" eingeben; oder c) Alle IP-Adressen \"*.*.*.*\" eingeben.
 Port_format=Für den Quell- oder Ziel-Port-Bereich können Sie: a) Einen bestimmten Port, z.B. \"95\" eingeben; oder b) Einen Port-Bereich, z.B. \"103:315\", \">100\" eingeben, oder \"<65535\" eingeben.
+IP_format=Für eine Quell- oder Ziel-IP-Adresse können Sie: a) Eine bestimmte IP-Adresse, z.B. \"192.168.122.1\" eingeben; b) IP-Adressen innerhalb eines Subnetzes oder im gleichen IP-Pool, z.B. \"192.168.123.*\" oder  \"192.168.*.*\" eingeben; oder c) Alle IP-Adressen \"*.*.*.*\" eingeben.
 ShareNode_FTPLANG_itemdesc=Wählen Sie die richtigen Spracheinstellungen, die für Ihre Dateiverschlüsselung passend ist.
 FirewallConfig_DoSEnable_itemdesc=Eine DoS-Attacke (Denial-of-Service) ist ein vorsätzlicher Versuch, berechtigten Benutzern den Zugang zu Diensten oder Computerressourcen zu verwehren. <p>Das Aktivieren dieser Funktion schützt den Router vor DoS-Attacken, steigert aber die Auslastung des Routers.
 ShareNode_Seeding_itemname=Seeding
 ShareNode_Seeding_itemdesc=Hier können Sie die Seeding-Funktion aktivieren/deaktivieren. Der ZVMODELVZ bleibt solange offen, bis der Download-Vorgang abgeschlossen ist.
 ShareNode_MaxUpload_itemname=Maximale Upload-Rate
 ShareNode_MaxUpload_itemdesc=Geben Sie einen Wert zwischen 0 und 999 ein. Der Standardwert ist 0, welcher bedeutet, dass es keine Upload-Beschränkung gibt.
-[New item]
 HSDPAConfig_hsdpa_enable_hint1=Die derzeitigen 3G/4G-Einstellungen sind auf 3G/4G-Sicherungsmodus eingestellt. Wenn Sie die Verbindung zu einen anderen WAN-Anschluss wechseln, wird die Verbindung automatisch in den 3G/4G-Modus umgeschaltet.
 HSDPAConfig_hsdpa_enable_hint2=Wenn Sie die Verbindungsart ändern wollen, gehen Sie bitte zu <a href="/Advanced_Modem_others.asp">USB Modem</a>, um den USB-Adapter zu deaktivieren.
 HSDPAConfig_USBAdapter_itemname=USB-Adapter
@@ -367,7 +354,7 @@ Browser_action_not_support_addfavorite=Ihr Browser unterstützt diese Funktion n
 page_not_support_mode_hint=Diese Funktion ist deaktiviert.
 APSurvey_action_ConnectingStatus0=Der Parent-AP ist möglicherweise ausgeschaltet. Bitte überprüfen Sie ihn erneut.
 APSurvey_action_ConnectingStatus3=Starten Sie den Browser neu. Geben Sie "http://www.asusnetwork.net/" in der URL-Adressleiste ein um den Repeater-Verbindungsstatus abzurufen.
-APSurvey_action_ConnectingStatus1=Verbindung fehlgeschlagen. Geben Sie bitte den Sicherheitsschlüssel erneut ein oder klicken Sie auf [Abbrechen], um ein anderes Netzwerk für eine Verbindung auszuwählen.
+APSurvey_action_ConnectingStatus1=Connection failed. Password is not correct. Please click [Rescan] to select another network to connect to.
 APSurvey_action_ConnectingStatus24=Wireless-Verbindung erfolgreich hergestellt.
 APSurvey_action_ConnectingStatus35=Authentifizierung des WPA-Schlüssels fehlgeschlagen. Bitte geben Sie den WPA-Schlüssel erneut ein.
 APSurvey_action_renew_success=IP-Einstellungen erfolgreich aktualisiert. Sie werden zur Web-GUI des ZVMODELVZ weitergeleitet.
@@ -383,7 +370,6 @@ AP_fail_get_IPaddr=IP-Informationen konnten nicht bezogen werden.
 AP_Remote_IP=AP-IP-Adresse
 AP_survey=AP-Suche
 statusTitle_AP=Access-Point-Status
-[USB Application - HSDPA]
 HSDPAConfig_pin_code_itemdesc=Bitte geben Sie den PIN-Code Ihrer SIM-Karte ein. Dies ist eine Zahl mit 4 - 8 Stellen. Falls Sie den PIN-Code nicht kennen, wenden Sie sich bitte an Ihren Internetanbieter.
 HSDPAConfig_private_apn_itemname=APN-Service (optional)
 HSDPAConfig_private_apn_itemdesc=Falls Sie den APN-Servicenamen nicht kennen, wenden Sie sich bitte an Ihren Internetanbieter.
@@ -393,12 +379,10 @@ HSDPAConfig_hsdpa_enable_itemname=USB Modem aktivieren
 HSDPAConfig_hsdpa_mode_itemname=USB Modem-Modus
 HSDPAConfig_DNSServers_itemname=DNS-Server
 AiDisk_Wizard_failedreson1=Aidisk Assistent arbeitete außergewöhnlich. Bitte versuchen Sie es später noch einmal.
-[state.js-Dr.Surf.]
 QKSet_ISP_desc3=Automatische IP-Verbindung fehlgeschlagen. Sie können diese hier manuell konfigurieren.
 QKSet_ISP_desc2=Statische IP-Verbindung fehlgeschlagen.
 QIS_internet_vpn_confirm=Wenn Ihre Verbindungsart PPTP/L2TP ist, klicken Sie bitte auf [OK] zum [Connecting the VPN server].\nWenn nicht, klicken Sie bitte auf [Abbrechen] und überprüfen Sie die Informationen und übernehmen Sie dann die Einstellungen.
 Full_Clients=Clients
-[QIS_internet_vpn.htm]
 QIS_if_vpn_existed=Ist ein VPN-Server vorhanden?
 QIS_internet_vpn_title=VPN-Element
 QIS_internet_vpn_type=VPN-Typ
@@ -419,14 +403,11 @@ Device_service_iTune=iTunes-Service:
 Device_service_Printer=Druckerservice:
 JS_storageright=Nachdem Sie einen Namen eingerichtet haben (wie z.B. aabbcc), geben Sie //aabbcc in die Adressleiste von Internet Explorer ein, um schnell zum Netzwerkortdienst zu gelangen. Zulässige Eingabezeichen bestehen aus Buchstaben (A-Z, a-z), Ziffern (0-9), Leerzeichen, Unterstrichen und Bindestrichen. Erstes und letztes Zeichen kann keine Leerzeichen enthalten.
 not_support_script=Ihr Browser unterstützt kein JavaScript. Wahlen Sie einen Browser, der JavaScript unterstützt oder aktivieren Sie JavaScript zur Verwendung mit Ihrem ZVMODELVZ.
-[Advanced_AiDisk_others.asp]
 Help_of_Workgroup=Dies ist der Gruppenname des ZVMODELVZ in der Netzwerkumgebung, der aus Standardzeichen einschließlich Buchstaben (A-Z, a-z), Ziffern (0-9), Leerzeichen, Unterstrichen (_) und Bindestrichen (-) bestehen kann. Das erste und letzte Zeichen darf kein
-[state.js-Dr.Surf.]
 DrSurf_refresh_page=Seite aktualisieren
 DrSurf_sweet_advise1=Sie haben die SSID oder Sicherheitseinstellungen geändert. Dies fuhrt dazu, dass Drahtlos-Clients getrennt werden. Bitte passen Sie die Einstellungen der Clients entsprechend an und bauen Sie die Verbindung neu auf.
 DrSurf_sweet_advise2=Verbindung wurde neu aufgebaut.
 DrSurf_sweet_advise3=Sie können die Einstellungsseite des ZVMODELVZ eventuell nicht aufrufen, da die DHCP-Funktion nach dem Umschalten in den AP-Modus deaktiviert wurde.<p>Wir empfehlen Ihnen, das ASUS-Dienstprogramm/Geräteerkennung zur Suche nach der IP des AP zu verwenden
-[AiDisk Wizard]
 File_Pop_content_alert_desc1=Benutzername darf nicht leer sein.
 File_Pop_content_alert_desc2=Benutzername darf nicht kurzer als zwei Zeichen sein.
 File_Pop_content_alert_desc3=Benutzername darf nicht langer als 20 Zeichen sein.
@@ -439,7 +420,6 @@ File_content_alert_desc6=Freigabename darf nicht leer sein.
 File_content_alert_desc7=Der Freigabename darf nur aus alphanumerischen Zeichen, Bindestrichen, Unterstrichen und Leerzeichen bestehen.
 File_content_alert_desc8=Der Freigabename ist in diesem Volume bereits vorhanden.\nBitte geben Sie einen anderen Namen ein!
 File_content_alert_desc10=Beim Erstellen einer Freigabe mit mehr als 12 Zeichen wird diese eventuell unter WindowsR nicht angezeigt.\nMöchten Sie fortfahren?
-[AiDisk Advanced]
 enableCIFS=Freigabe aktivieren
 disableCIFS=Freigabe deaktivieren
 enableFTP=FTP aktivieren
@@ -472,7 +452,6 @@ NewFolderName=Neuer Ordnername
 AddFolderAlert=Neuen Ordnern werden per Vorgabe Schreib-/Leserechte zugewiesen.
 DelFolderAlert=Überzeugen Sie sich vor dem Löschen eines Ordners, dass dieser leer ist.<br><br>Möchten Sie den Ordner wirklich löschen?
 ModFolderAlert=Durch Umbenennen werden die Zugriffsrechte des Ordners und seiner Unterordner nicht beeinflusst.
-[LeftMenu]
 menu1=Netzwerkkarte
 menu2=Medienserver
 menu3=AiDisk
@@ -517,7 +496,6 @@ menu5_7_3=DHCP-Nutzungen
 menu5_7_4=Wireless-Protokoll
 menu5_7_5=Portweiterleitung
 menu5_7_6=Routingtabelle
-[Network Map]
 block_client=Hier klicken, um den Client zu blockieren
 statusTitle_System=ASUS ZVMODELVZ
 statusTitle_Internet=Internetstatus
@@ -539,6 +517,7 @@ MAC_Address=MAC-Adresse
 ConnectionStatus=Verbindungsstatus
 WAN_IP=WAN-IP
 Connectiontype=Verbindungstyp
+LeaseExpires=Lease expires
 QIS=Internet Schnelleinrichtung
 QIS_title=Internet-<br>Schnelleinrichtung
 Connected=Verbunden
@@ -556,9 +535,9 @@ Priority_Level_3=Niedrig
 Modelname=Modellname
 Totalspace=Gesamtplatz
 Availablespace=Verfügbarer Platz
-AiDiskWizard=AiDisk-Assistent
 UPnPMediaServer=Medienserver
 UPnPMediaServer_Help=Der ZVMODELVZ unterstützt UPnP-Standards. Sie können dies aktivieren und anderen UPnP-Geraten wie PS3 oder digitalen Medienplayern den Zugriff auf Multimediadateien des USB-Laufwerks erlauben.
+AiDiskWizard=AiDisk-Assistent
 Safelyremovedisk_title=Laufwerk sicher entfernen
 Safelyremovedisk=Laufwerk kann sicher entfernt werden
 btn_remove=Entfernen
@@ -577,7 +556,6 @@ Minute=Minuten
 Second=Sekunden
 upload_bandwidth=Upload-Bandbreite
 download_bandwidth=Download-Bandbreite
-[AiDisk Wizard]
 AiDiskWelcome_title=Willkommen beim AiDisk-Assistenten
 AiDiskWelcome_desp=AiDisk ermöglicht Ihnen:
 AiDiskWelcome_desp1=Freigabe von Dateien des USB-Laufwerkes über das Internet.
@@ -615,9 +593,8 @@ linktoFTP_no_2=DDNS ist noch nicht aktiviert. Wenn Sie den FTP-Zugriff über den
 linktoFTP_no_3=DDNS ist aktiviert, die Registrierung des Domänennamens ist jedoch fehlgeschlagen. Der FTP-Zugriff über den Domänennamen über WAN ist nach wie vor nicht möglich.
 AiDisk_wizard_text_box_title3=Nach der Konfiguration der Einstellungen im AiDisk-Assistenten greifen Sie bitte wie folgt auf das Laufwerk zu:
 yoursharesetting=Ihre Freigabeordnereinstellung ist
-neednotDDNS=ASUS DDNS-Einstellungen überspringen.
+neednotDDNS=DDNS deaktivieren.
 asusddns_inputhint=Namen eingeben
-[WPS]
 WPS_PBCbutton_hint_success=Verbindung erfolgreich aufgebaut.
 WLANConfig11b_display6_sectiondesc=WPS (Wi-Fi Protected Setup) ermöglicht eine sichere und einfache Netzwerkeinrichtung. Hier können Sie WPS über eine PIN-Nummer oder die WPS-Taste konfigurieren.
 WLANConfig11b_x_WPS_itemname=WPS aktivieren:
@@ -649,7 +626,6 @@ bottom_Link=http://support.asus.com/download.aspx?SLanguage=en&m=ZVMODELVZ
 Help_init_word1=In der Hilfe finden Sie Richtlinien und Informationen zur Nutzung der Router-Funktionen.  Klicken Sie auf die
 Help_init_word2=gelb und blau unterstrichenen verlinkten Wörter.
 Help_init_word3=zum Aufrufen der Hilfe.
-[hook error]
 ALERT_OF_ERROR_Input1=Es besteht keine Eingabe zu PROTOKOLL! 
 ALERT_OF_ERROR_Input2=Die Eingabe zu PROTOKOLL ist nicht korrekt! 
 ALERT_OF_ERROR_Input3=Es besteht keine Eingabe zu MODUS!
@@ -690,8 +666,6 @@ ALERT_OF_ERROR_Action12=Laufwerk konnte nicht formatiert werden.
 ALERT_OF_ERROR_System1=Systemfehler: Speicherzuweisung nicht möglich!
 ALERT_OF_ERROR_System2=Systemfehler: Laufwerkdaten konnten nicht ausgelesen werden!
 ALERT_OF_ERROR_System3=Systemfehler: Das Laufwerk ist belegt!
-[QIS wizard]
-[QIS_detect.js]
 Web_Title=ASUS Wireless Router ZVMODELVZ
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]Web_Title=ASUS ZVMODELVZ Dual-Band Wireless-N Gigabit ADSL2/2+ Modem Router
 Web_Title2=ZVMODELVZ
@@ -701,17 +675,14 @@ QKSet_detect_desc2=Neuerkennung Ihres Verbindungsstatus
 QKSet_detect_wanconnfault=Bitte überzeugen Sie sich davon, dass das Ethernet-Kabel richtig mit dem WAN-Port verbunden ist.
 QKSet_detect_freshbtn=Erneut erkennen
 QKSet_detect_waitdesc=Erkennung Ihres Verbindungstyps wird gestartet...
-[QIS_finish.js]
 QIS_finish_Desc=ZVMODELVZ wurde mit Ihren Internet- und Drahtloseinstellungen eingerichtet.
 QKSet_all_title=Schnellstart
 QKSet_finishpre_rebootnow=Abschließen
-[QIS_internet_account.js]
 QKSet_account_webtitle=Internetanbieter-Kontoeinstellung
 QKSet_ISP_head=Internetanbieter-Informationseinstellung
 QKSet_ISP_desc=Bitte geben Sie die durch Ihren Internetanbieter vorgegebenen Daten ein.
 PPPConnection_UserName_itemdesc=Dieses Feld steht nur dann zur Verfügung, wenn Sie den WAN-Verbindungstyp auf PPPoE, PPTP oder L2TP einstellen.
 QKSet_account_nameblank=Der Kontoname darf nicht leer sein.
-[QIS_internet_ip.js]
 Layer3Forwarding_x_DHCPClient_itemname=WAN-IP automatisch beziehen
 Layer3Forwarding_x_UseStaticIP_itemname=Folgende IP-Adresse verwenden:
 qis_dns=Folgende DNS-Server-Adressen verwenden
@@ -734,13 +705,11 @@ IPConnection_x_DNSServer_blank=Bitte richten Sie den DNS-Server am Client-Gerät
 IPConnection_warning_WANIPEQUALGatewayIP=Sie haben die WAN-IP als ZVMODELVZ-Gateway festgelegt; der ZVMODELVZ kann sich eventuell nicht mit dem Internet verbinden. Bitte stellen Sie den richtigen Gateway-Wert ein.
 IPConnection_x_WAN_LAN_conflict=WAN und LAN sollten unterschiedliche IP-Adressen und Subnetze aufweisen.
 IPConnection_x_illegal_mac=MAC-Adresse ungültig.
-[QIS_internet_isp.js]
 BOP_isp_host_desc=In diesem Feld können Sie dem ZVMODELVZ einen Hostnamen zuweisen. Dies wird gewöhnlich von Ihrem Internetanbieter gefordert.
 BOP_isp_host_item=Hostname:
 PPPConnection_x_MacAddressForISP_itemdesc=MAC (Media Access Control)-Adresse ist eine einmalige Kennung, die Ihren Computer oder Gerät im Netzwerk identifiziert. Manche Internetdienstanbieter überwachen MAC-Adressen von verbundenen Geräten und verweigern Internetverbindungen bei neuen MAC-Adressen. Um dieses Problem zu lösen, können Sie einen der folgenden Lösungsansätze folgen: <p>* Wenden Sie sich an Ihren Internetdienstanbieter (ISP), um die mit Ihrem Konto assoziierte MAC-Adresse zu ändern. <p>* Clonen oder ändern Sie die MAC-Adresse Ihres neuen Gerätes zur MAC-Adresse Ihres alten Gerätes.
 BOP_isp_mac_item=MAC-Adresse
 BOP_isp_MACclone=MAC-Clone
-[QIS_internet_success.htm]
 QKSet_Internet_Setup_fail_reason1=DHCP-Verbindung fehlgeschlagen.
 QKSet_Internet_Setup_fail_reason2=Ungültiges Konto oder Kennwort; zum Modifizieren auf den Link klicken.
 QKSet_Internet_Setup_fail_reason3=PPPoE-Verbindung fehlgeschlagen; zum Neuversuch auf den Link klicken.
@@ -754,9 +723,7 @@ QKSet_finish_moveto5=Einfache Wireless-Sicherheitseinstellungen
 QKSet_finish_moveto6=Verschlüsselung nachschlagen und konfigurieren.
 QKSet_finish_moveto7=Erweiterte Einstellungen-Seite
 QKSet_finish_moveto8=Manuelle Konfiguration und Feinabstimmung.
-[QIS_internet_success.js]
 QKSet_finish_desc=Internetverbindung ist abgeschlossen.
-[QIS_internet_type.js]
 QKSet_type_head=Internet-WAN-Verbindungstyp
 QKSet_type_desc=Bitte wählen Sie den von Ihrem Internetanbieter vorgegebenen WAN-Verbindungstyp.
 BOP_ctype_title1=Automatische IP
@@ -777,7 +744,6 @@ WLANConfig11b_WEPDefaultKey_itemname=Schlüsselindex:
 JS_passzero=Der gemeinsam genutzte Schlüssel sollte langer 8 und kurzer als 63 Zeichen oder 64 Hexadezimalzeichen sein. Wenn Sie dieses Feld nicht ausfüllen, weist das System [00000000] als Schlüssel zu.
 JS_PSK64Hex=Der gemeinsam genutzte Schlüssel sollte langer 8 und kurzer als 63 Zeichen oder 64 Hexadezimalzeichen sein.
 JS_wepkey=Bitte geben Sie den richtigen WEP-Schlüssel ein.
-[error_page.htm]
 web_redirect_message=Der Zugriff auf die gewünschten Webseite ist fehlgeschlagen.
 web_redirect_fail_reason0=Ursache für fehlgeschlagene Verbindung
 web_redirect_suggestion0=Wir empfehlen
@@ -795,7 +761,6 @@ web_redirect_suggestion_final=Falls sich das Problem nicht durch die Diagnose lo
 web_redirect_suggestion_etc=Rufen Sie die Einstellungsseite des ZVMODELVZ auf
 web_redirect_suggestion_etc_desc= und prüfen und konfigurieren Sie die Einstellungen selbst.
 web_redirect_suggestion_manually_start_wan=WAN erneuern.
-[error_page.js]
 web_redirect_reason1=Das Ethernet-Kabel ist nicht angeschlossen.
 web_redirect_reason2_1=PPPoE- oder VPN-Authentisierung fehlgeschlagen.
 web_redirect_reason2_2=Externer Server antwortet nicht.
@@ -804,7 +769,6 @@ web_redirect_reason3_2=Wir haben Ihren WAN-Verbindungstyp als PPPoE erkannt. All
 web_redirect_reason4=Internetverbindung fehlgeschlagen. Die IP-Adresse des Routers ist mit der IP-Adresse des Gateways identisch.
 web_redirect_reason5_1=Sie haben die WAN-Verbindung offensichtlich manuell gestoppt.
 web_redirect_reason5_2=Sie haben eine falsche dynamische oder statische IP-Adresse für Ihren ZVMODELVZ festgelegt.
-[objcommon.js]
 CTL_nonsupported=Nicht unterstützt
 CTL_localdevice=Lokales Gerät
 CTL_unknown=Unbekanntes Gerät
@@ -825,13 +789,11 @@ CTL_AdvSetting=Erweiterte Einstellungen aufrufen
 CTL_Enabled=Aktiviert
 CTL_Disabled=Deaktiviert
 CTL_Disconnect=Nicht verbunden
-[popup.js]
 Main_alert_proceeding_desc1=Fortfahren
 Main_alert_proceeding_desc4=Bitte warten, 
 Main_alert_proceeding_desc3=Abgeschlossen!
 Main_content_Login_Item7=Der Neustart des Routers braucht etwa 60 Sekunden. Mochten Sie den Router wirklich neu starten?
 [###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=Der Neustart des Routers braucht etwa 80 Sekunden. Mochten Sie den Router wirklich neu starten?
-[QIS-general.js]
 JS_fieldblank=Die Felder dürfen nicht leer bleiben.
 JS_validip=ist keine gültige IP-Adresse!
 JS_itemlimit1=Diese Tabelle lasst nur
@@ -844,11 +806,7 @@ JS_validSSID2=\".
 JS_validrange=Bitte Wert eingeben zwischen
 JS_validrange_to=bis
 JS_validport=ist keine gültige Portnummer.
-JS_WanLanAlert=Die Auswahl VERWERFEN verwirft sämtliche WAN-zu-LAN-Pakete mit Ausnahme der Treffer aus der Filtertabelle. Bitte setzen Sie diese Funktion mit Umsicht ein.
-JS_LanWanAlert=Die Auswahl VERWERFEN verwirft sämtliche LAN-zu-WAN-Pakete mit Ausnahme der Treffer aus der Filtertabelle. Bitte setzen Sie diese Funktion mit Umsicht ein.
 JS_fixchannel=Bitte wählen Sie einen festen Kanal für Brücke.
-JS_AES2=Wenn Sie eindeutiges AES aktivieren möchten, sollte die Authentisierung auf Offenes System eingestellt sein!
-JS_AES3=Wenn Sie eindeutiges AES aktivieren möchten, sollte auch WEP aktiviert sein!
 JS_DHCP1=Die Subnetzmaske wurde geändert und der IP-Bereich des ZVMODELVZ sollte ebenfalls geändert werden. Wollen Sie die Änderung automatisch vornehmen?
 JS_DHCP3=Der neue IP-Bereich stimmt nicht mit der Subnetzmaske überein. Wollen Sie den ZVMODELVZ erlauben den IP-Bereich automatisch zu ändern?
 BOP_isp_desc=Vom Internetanbieter zugewiesener Hostname:
@@ -952,14 +910,14 @@ FirewallConfig_LanWanICMP_itemdesc=Dieses Feld definiert eine Liste mit LAN-zu-W
 FirewallConfig_LanWanSrcIP_itemname=Quell-IP
 FirewallConfig_LanWanSrcPort_itemname=Portbereich
 FirewallConfig_LanWanDstIP_itemname=Ziel-IP
+FirewallConfig_URLActiveTime_itemname=Uhrzeit zum Aktivieren des URL-Filters
 FirewallConfig_URLActiveTime_itemhint4=Bestimmten Zeitintervall nicht überlappen können.
 FirewallConfig_URLActiveTime_itemhint=Die Startzeit liegt nach der Endzeit.
-FirewallConfig_UrlFilterEnable_sectiondesc=Geben Sie Stichwörter für Webseiten ein, die blockiert werden sollen. <p>Falls Sie z.B. "XXX" eingeben, wird der URL-Filter Seiten wie http://www.abcXXX.com, http://www.XXXbbb.com usw. blockieren.
 FirewallConfig_UrlFilterEnable_itemname=URL-Filter aktivieren
+FirewallConfig_URLActiveTime_itemdesc=Dieses Feld definiert die Uhrzeit, zu welcher der URL-Filter aktiviert wird.
+FirewallConfig_UrlFilterEnable_sectiondesc=Geben Sie Stichwörter für Webseiten ein, die blockiert werden sollen. <p>Falls Sie z.B. "XXX" eingeben, wird der URL-Filter Seiten wie http://www.abcXXX.com, http://www.XXXbbb.com usw. blockieren.
 FirewallConfig_URLActiveDate_itemname=Datum zum Aktivieren des URL-Filters:
 FirewallConfig_URLActiveDate_itemdesc=Dieses Feld definiert das Datum, zu dem der URL-Filter aktiviert wird.
-FirewallConfig_URLActiveTime_itemname=Uhrzeit zum Aktivieren des URL-Filters
-FirewallConfig_URLActiveTime_itemdesc=Dieses Feld definiert die Uhrzeit, zu welcher der URL-Filter aktiviert wird.
 FirewallConfig_URLActiveTime_itemhint2=Ungültiger Zeitraum.
 RouterConfig_GWStaticEnable_sectiondesc=Mit dieser Funktion können Sie dem ZVMODELVZ Routingregeln hinzufügen. Dies ist nützlich, wenn Sie verschiedene Router hinter dem ZVMODELVZ verbinden, welche dieselbe Internetverbindung verwenden.
 RouterConfig_GWDHCPEnable_itemname=DHCP-Routen verwenden
@@ -1102,7 +1060,7 @@ LANHostConfig_x_DDNSWildcard_itemdesc=Wenn aktiviert, werden Domänennamen mit P
 LANHostConfig_x_DDNSStatus_itemname=Manuelle Aktualisierung:
 LANHostConfig_x_DDNSStatus_itemdesc=Mit dieser Schaltfläche können Sie die DDNS-Datenbank manuell aktualisieren. Diese Option steht nur dann zur Verfügung, wenn die automatische DDNS-Aktualisierung fehlschlug. Den aktuellen Status der DDNS-Aktualisierung können Sie dem Systemprotokoll entne
 DeviceSecurity11a_display1_sectiondesc=Der Wireless-MAC-Filter ermöglicht die Steuerung von Paketen von Geraten mit spezifizierten MAC-Adressen in Ihrem WLAN.
-WLANAuthentication11a_display1_sectiondesc=Dieser Abschnitt ermöglicht die Einrichtung zusätzlicher Parameter zur Autorisierung von Wireless-Clients uber RADIUS-Server. Diese Angabe ist zwingend erforderlich, wenn Sie unter Wireless - Allgemein als Authentifikationsmethode entweder "WPA-Enterprise/WPA2-Enterprise"
+WLANAuthentication11a_display1_sectiondesc=Dieser Abschnitt ermöglicht die Einrichtung zusätzlicher Parameter zur Autorisierung von Wireless-Clients uber RADIUS-Server. Diese Angabe ist zwingend erforderlich, wenn Sie unter Wireless - Allgemein als Authentifikationsmethode entweder "WPA-Enterprise/ WPA2-Enterprise/ Radius with 802.1x"
 WLANAuthentication11a_ExAuthDBIPAddr_itemname=Server-IP-Adresse
 WLANAuthentication11a_ExAuthDBIPAddr_itemdesc=Die IP-Adresse des RADIUS-Servers für Wireless-Authentisierung und dynamische WEP-Schlüsselableitung.
 WLANAuthentication11a_ExAuthDBPortNumber_itemname=Serverport:
@@ -1314,10 +1272,9 @@ HSDPAConfig_dialnum_itemdesc=Bitte geben Sie die Einwahlnummer ein.
 HSDPAConfig_username_itemdesc=Bitte geben Sie den Benutzernamen ein.
 HSDPAConfig_password_itemdesc=Bitten geben Sie das Passwort ein.
 HSDPAConfig_usbadaptor_itemdesc=Bitte wählen Sie Ihren USB-Adapter.
-LANHostConfig_IPRouters_itemdesc=LAN IP-Adresse des ZVMODELVZ. Der Standardwert ist 192.168.1.1. In IP-Netzwerken werden Datenpakete an die festen IP-Adressen der Netzwerkgeräte gesendet. <p>ASUS verwendet für IP-Adressen die punktierte Dezimalschreibweise, wobei eine Nummer-String mit vier Oktetten, durch Punkte getrennt, verwendet wird (z.B. 192.168.1.1). <p>Lokale Netzwerke können drei IP-Bereiche verwenden: 192.168.0.1 - 192.168.255.254, 172.16.0.1 - 172.31.255.254 und 10.0.0.1 - 10.255.255.254.
 confirm_disableftp_dm=Das Deaktivieren der Freigabe für die Netzwerkumgebung wird den Download Master deaktivieren.
+LANHostConfig_IPRouters_itemdesc=LAN IP-Adresse des ZVMODELVZ. Der Standardwert ist 192.168.1.1. In IP-Netzwerken werden Datenpakete an die festen IP-Adressen der Netzwerkgeräte gesendet. <p>ASUS verwendet für IP-Adressen die punktierte Dezimalschreibweise, wobei eine Nummer-String mit vier Oktetten, durch Punkte getrennt, verwendet wird (z.B. 192.168.1.1). <p>Lokale Netzwerke können drei IP-Bereiche verwenden: 192.168.0.1 - 192.168.255.254, 172.16.0.1 - 172.31.255.254 und 10.0.0.1 - 10.255.255.254.
 GO_HSDPA_SETTING=USB Modem Einstellungen aufrufen
-[adsl start]
 pvccfg_JS_enbsvc=Enable WAN service on
 pvccfg_title=WAN Configuration
 pvccfg_atmcfg=ATM PVC Configuration
@@ -1413,7 +1370,6 @@ dns_server_no_set=Bitte richten Sie den DNS-Server am Client-Gerät ein.
 dsl_wan_page_desc=Click the Edit icon to edit a PVC setting. Klicken Sie zum Zufügen oder Löschen einer PVC-Einstellung auf die Zufügen- oder Löschen-Symbole (+ / -).
 dsl_web_redirect_reason1=The telephone cable or cable for Ethernet is not plugged in.
 dsl_web_redirect_reason2_1=PPPoE, PPPoA or VPN authentication failed.
-[adsl end]
 step_use_aicloud=So nutzen Sie AiCloud :
 download_aicloud=Laden Sie die ASUS AiCloud-App unter folgender Adresse auf ihr Telefon oder Pad herunter :
 connect_through_wifi=Verbinden Sie Ihr iOS- oder Android-Gerät per WLAN mit ZVMODELVZ. Die AiCloud-App führt Sie durch die Einrichtung.
@@ -1423,10 +1379,10 @@ aicloud_for_privateIP2=Für AiCloud nutzen Sie die Ports 8082 und 443. Die Porte
 aicloud_for_privateIP3=Weitere Details finden Sie in den Häufig gestellten Fragen zu <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port Forwarding FAQ</a> und <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=Zum Erstellen eines Cloud-Laufwerks müssen Sie ein USB-Speichergerät mit dem Router verbinden und das Cloud-Laufwerk anschließend einschalten <b>ON</b>.
 aicloud_disk2=Melden Sie sich mit dem Router-Zugangsdaten am Cloud-Standardlaufwerk an.
-aicloud_disk_case0=Rufen Sie das Cloud-Laufwerk über <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net:443" target="_blank">https://www.asusnetwork.net:443</a> auf.
+aicloud_disk_case0=Rufen Sie das Cloud-Laufwerk über <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net" target="_blank">https://www.asusnetwork.net</a> auf.
 aicloud_disk_case11=Sie können das Cloud-Laufwerk über diese URL aufrufen :
-aicloud_disk_case12=Zum Ändern des DDNS-Namens klicken Sie bitte <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">hier</a>.
-aicloud_disk_case21=Rufen Sie das Cloud-Laufwerk über <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net:443" target="_blank">https://www.asusnetwork.net:443</a> auf.
+aicloud_disk_case12=Zum Ändern des DDNS-Namens klicken Sie bitte <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName" target="_blank">hier</a>.
+aicloud_disk_case21=Rufen Sie das Cloud-Laufwerk über <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net" target="_blank">https://www.asusnetwork.net</a> auf.
 aicloud_disk_case22=Zum Online-Zugriff auf das Cloud-Laufwerk melden Sie sich <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">hier</a> bei ASUS DDNS an.
 smart_access1=Smart Access erhält die Einstellungen Ihres Netzwerkplatzes, z. B. Benutzerkonten, freigegebene Ordner und andere. Damit können Sie jederzeit und von jedem Ort aus auf Ihr Heimnetzwerk (<a id="faq0" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Network Place/Samba</a>) zugreifen.
 smart_access2=Über die WOL-Funktion (Wake-On-LAN, Aufwecken bei LAN-Aktivität) können Sie Ihren Computer mit beliebigen Geräten im Netzwerk aufwecken.
@@ -1440,4 +1396,7 @@ aicloud_bandwidth2_2=Zur SD-Videoübertragung empfehlen wir mindestens 5 Mb/s.
 aicloud_bandwidth2_3=Zur 720p-Videoübertragung werden mindestens 15 Mb/s empfohlen.
 aicloud_bandwidth2_4=Zum HD-Videostreaming empfehlen wir mindestens 30 Mb/s.
 aicloud_bandwidth3=Internet-Upload-Geschwindigkeiten variieren je nach Internetanbieter und anderen Faktoren. Falls Sie Ihre Internetgeschwindigkeit nicht genau kennen, können Sie bei Ihrem Internetanbieter nachfragen oder einen Online-Bandbreitentest mit einem an den ASUS-Router angeschlossenen Computer ausführen.
-[untrans]
+QIS_rescan=Rescan
+GuestNetwork_Radio_Status=Das WLAN-Signal wird abgeschaltet.
+use_DevDiscoveryUtil=Installieren und verwenden Sie das <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery Utility</a> (Gerätesuchprogramm), um die IP-Adresse des Routers zu ermitteln.
+System_Change_TimeZone=Ändern Zeitzone

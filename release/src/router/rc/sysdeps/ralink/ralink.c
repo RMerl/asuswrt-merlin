@@ -47,8 +47,8 @@
 
 
 typedef struct {
-        unsigned int link[5];
-        unsigned int speed[5];
+	unsigned int link[5];
+	unsigned int speed[5];
 } phyState;
 
 int g_wsc_configured = 0;
@@ -154,8 +154,8 @@ setMAC_5G(const char *mac)
 {
 	char ea[ETHER_ADDR_LEN];
 
-        if( mac==NULL || !isValidMacAddr(mac) )
-                return 0;
+	if (mac==NULL || !isValidMacAddr(mac))
+		return 0;
 	if (ether_atoe(mac, ea))
 	{
 		FWrite(ea, OFFSET_MAC_ADDR, 6);
@@ -170,8 +170,8 @@ setMAC_2G(const char *mac)
 {
 	char ea[ETHER_ADDR_LEN];
 
-        if( mac==NULL || !isValidMacAddr(mac) )
-                return 0;
+	if (mac==NULL || !isValidMacAddr(mac))
+		return 0;
 	if (ether_atoe(mac, ea))
 	{
 		FWrite(ea, OFFSET_MAC_ADDR_2G, 6);
@@ -224,8 +224,8 @@ setCountryCode_2G(const char *cc)
 {
 	char CC[3];
 
-        if( cc==NULL || !isValidCountryCode(cc) )
-                return 0;
+	if (cc==NULL || !isValidCountryCode(cc))
+		return 0;
 	/* Please refer to ISO3166 code list for other countries and can be found at
 	 * http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html#sz
 	 */
@@ -358,7 +358,7 @@ atoh(const char *a, unsigned char *e)
 	return i;
 }
 
-int
+char *
 htoa(const unsigned char *e, char *a, int len)
 {
 	char *c = a;
@@ -418,7 +418,7 @@ int getSN(void)
 {
 	char sn[SERIAL_NUMBER_LENGTH +1];
 
-	if(FRead(sn, OFFSET_SERIAL_NUMBER, SERIAL_NUMBER_LENGTH) < 0)
+	if (FRead(sn, OFFSET_SERIAL_NUMBER, SERIAL_NUMBER_LENGTH) < 0)
 		dbg("READ Serial Number: Out of scope\n");
 	else
 	{
@@ -430,10 +430,10 @@ int getSN(void)
 
 int setSN(const char *SN)
 {
-	if(SN==NULL || !isValidSN(SN))
+	if (SN==NULL || !isValidSN(SN))
 		return 0;
 
-	if(FWrite(SN, OFFSET_SERIAL_NUMBER, SERIAL_NUMBER_LENGTH) < 0)
+	if (FWrite(SN, OFFSET_SERIAL_NUMBER, SERIAL_NUMBER_LENGTH) < 0)
 		return 0;
 
 	getSN();
@@ -442,7 +442,7 @@ int setSN(const char *SN)
 #ifdef RTCONFIG_ODMPID
 int setMN(const char *MN)
 {	// TODO: Ralink sysdep
-	if(MN==NULL || !is_valid_hostname(MN))
+	if (MN==NULL || !is_valid_hostname(MN))
 		return 0;
 
 	return 1;
@@ -468,6 +468,7 @@ setPIN(const char *pin)
 	return 0;	
 }
 
+int
 getBootVer()
 {
 	unsigned char btv[5];
@@ -481,6 +482,7 @@ getBootVer()
 	return 0;
 }
 
+int
 getPIN()
 {
 	unsigned char PIN[9];
@@ -495,8 +497,8 @@ getPIN()
 int
 GetPhyStatus(void)
 {
-        int fd;
-        char buf[32];
+	int fd;
+	char buf[32];
 	char dev_path[32];
 
 #ifdef RTCONFIG_DSL
@@ -505,44 +507,44 @@ GetPhyStatus(void)
 	strcpy(dev_path, RTL8367M_DEV);
 #endif
 
-        fd = open(dev_path, O_RDONLY);
-        if (fd < 0) {
-                perror(dev_path);
-                return 0;
-        }
+	fd = open(dev_path, O_RDONLY);
+	if (fd < 0) {
+		perror(dev_path);
+		return 0;
+	}
 
-        phyState pS;
+	phyState pS;
 
-        pS.link[0] = pS.link[1] = pS.link[2] = pS.link[3] = pS.link[4] = 0;
-        pS.speed[0] = pS.speed[1] = pS.speed[2] = pS.speed[3] = pS.speed[4] = 0;
+	pS.link[0] = pS.link[1] = pS.link[2] = pS.link[3] = pS.link[4] = 0;
+	pS.speed[0] = pS.speed[1] = pS.speed[2] = pS.speed[3] = pS.speed[4] = 0;
 
-        if (ioctl(fd, 18, &pS) < 0)
-        {
+	if (ioctl(fd, 18, &pS) < 0)
+	{
 		sprintf(buf, "ioctl: %s", dev_path);
-                perror(buf);
-                close(fd);
-                return 0;
-        }
+		perror(buf);
+		close(fd);
+		return 0;
+	}
 
-        close(fd);
+	close(fd);
 
 #ifdef RTCONFIG_DSL
-        sprintf(buf, "W0=%C;L1=%C;L2=%C;L3=%C;L4=%C;",
-        	(pS.link[0] == 1) ? (pS.speed[0] == 2) ? 'G' : 'M': 'X',
-	        (pS.link[1] == 1) ? (pS.speed[1] == 2) ? 'G' : 'M': 'X',
-        	(pS.link[2] == 1) ? (pS.speed[2] == 2) ? 'G' : 'M': 'X',
-	        (pS.link[3] == 1) ? (pS.speed[3] == 2) ? 'G' : 'M': 'X',
-        	(pS.link[4] == 1) ? (pS.speed[4] == 2) ? 'G' : 'M': 'X');
+	sprintf(buf, "W0=%C;L1=%C;L2=%C;L3=%C;L4=%C;",
+		(pS.link[0] == 1) ? (pS.speed[0] == 2) ? 'G' : 'M': 'X',
+		(pS.link[1] == 1) ? (pS.speed[1] == 2) ? 'G' : 'M': 'X',
+		(pS.link[2] == 1) ? (pS.speed[2] == 2) ? 'G' : 'M': 'X',
+		(pS.link[3] == 1) ? (pS.speed[3] == 2) ? 'G' : 'M': 'X',
+		(pS.link[4] == 1) ? (pS.speed[4] == 2) ? 'G' : 'M': 'X');
 
 #else
-        sprintf(buf, "W0=%C;L1=%C;L2=%C;L3=%C;L4=%C;",
-                (pS.link[4] == 1) ? (pS.speed[4] == 2) ? 'G' : 'M': 'X',
-                (pS.link[3] == 1) ? (pS.speed[3] == 2) ? 'G' : 'M': 'X',
-                (pS.link[2] == 1) ? (pS.speed[2] == 2) ? 'G' : 'M': 'X',
-                (pS.link[1] == 1) ? (pS.speed[1] == 2) ? 'G' : 'M': 'X',
-                (pS.link[0] == 1) ? (pS.speed[0] == 2) ? 'G' : 'M': 'X');
+	sprintf(buf, "W0=%C;L1=%C;L2=%C;L3=%C;L4=%C;",
+		(pS.link[4] == 1) ? (pS.speed[4] == 2) ? 'G' : 'M': 'X',
+		(pS.link[3] == 1) ? (pS.speed[3] == 2) ? 'G' : 'M': 'X',
+		(pS.link[2] == 1) ? (pS.speed[2] == 2) ? 'G' : 'M': 'X',
+		(pS.link[1] == 1) ? (pS.speed[1] == 2) ? 'G' : 'M': 'X',
+		(pS.link[0] == 1) ? (pS.speed[0] == 2) ? 'G' : 'M': 'X');
 #endif
-        puts(buf);
+	puts(buf);
 	return 1;
 }
 
@@ -550,8 +552,8 @@ int
 setAllLedOn(void)
 {
 #ifdef RTCONFIG_DSL
-        LED_CONTROL(RA_LED_POWER, RA_LED_ON);
-        LED_CONTROL(RA_LED_WAN, RA_LED_ON);
+  LED_CONTROL(RA_LED_POWER, RA_LED_ON);
+  LED_CONTROL(RA_LED_WAN, RA_LED_ON);
 #else
 	LED_CONTROL(RA_LED_POWER, RA_LED_ON);
 	LED_CONTROL(RA_LED_WAN, RA_LED_ON);
@@ -562,20 +564,26 @@ setAllLedOn(void)
 	return 0;
 }
 
+int
 setAllLedOff(void)
 {
-        LED_CONTROL(RA_LED_POWER, RA_LED_OFF);
-        LED_CONTROL(RA_LED_WAN, RA_LED_OFF);
-        LED_CONTROL(RA_LED_LAN, RA_LED_OFF);
-        LED_CONTROL(RA_LED_USB, RA_LED_OFF);
-        return 0;
+#ifdef RTCONFIG_DSL
+	LED_CONTROL(RA_LED_POWER, RA_LED_OFF);
+	LED_CONTROL(RA_LED_WAN, RA_LED_OFF);
+#else
+	LED_CONTROL(RA_LED_POWER, RA_LED_OFF);
+	LED_CONTROL(RA_LED_WAN, RA_LED_OFF);
+	LED_CONTROL(RA_LED_LAN, RA_LED_OFF);
+	LED_CONTROL(RA_LED_USB, RA_LED_OFF);
+#endif
+	return 0;
 }
 
 int 
 ResetDefault(void)
 {
-        eval("mtd-erase","-d","nvram");
-        puts("1");
+	eval("mtd-erase","-d","nvram");
+	puts("1");
 	return 0;
 }
 
@@ -583,24 +591,24 @@ int
 set40M_Channel_2G(char *channel)
 {
 	char chl_buf[12];
-        if( channel==NULL || !isValidChannel(1, channel) )
-                return 0;
+	if (channel==NULL || !isValidChannel(1, channel))
+		return 0;
 	sprintf(chl_buf,"Channel=%s", channel);
 	eval("iwpriv", "rai0", "set", chl_buf);
 	eval("iwpriv", "rai0", "set", "HtBw=1");
-        puts("1");
-        return 1;
+	puts("1");
+	return 1;
 }
 
 int
 set40M_Channel_5G(char *channel)
 {
 	char chl_buf[12];
-        if( channel==NULL || !isValidChannel(0, channel) )
-                return 0;
-        sprintf(chl_buf,"Channel=%s", channel);
-        eval("iwpriv", "ra0", "set", chl_buf);
-        eval("iwpriv", "ra0", "set", "HtBw=1");
+	if (channel==NULL || !isValidChannel(0, channel))
+		return 0;
+	sprintf(chl_buf,"Channel=%s", channel);
+	eval("iwpriv", "ra0", "set", chl_buf);
+	eval("iwpriv", "ra0", "set", "HtBw=1");
 	puts("1");
 	return 1;
 }
@@ -618,15 +626,15 @@ int ralink_mssid_mac_validate(const char *macaddr)
 	else if (!strlen(macaddr))
 		return 1;
 
-        ether_atoe(macaddr, mac_binary);
-        sprintf(macbuf, "%02X%02X%02X%02X%02X%02X",
-                mac_binary[0],
-                mac_binary[1],
-                mac_binary[2],
-                mac_binary[3],
-                mac_binary[4],
-                mac_binary[5]);
-        macvalue = strtoll(macbuf, (char **) NULL, 16);
+	ether_atoe(macaddr, mac_binary);
+	sprintf(macbuf, "%02X%02X%02X%02X%02X%02X",
+		mac_binary[0],
+		mac_binary[1],
+		mac_binary[2],
+		mac_binary[3],
+		mac_binary[4],
+		mac_binary[5]);
+	macvalue = strtoll(macbuf, (char **) NULL, 16);
 	if (macvalue % 4)
 		return 0;
 	else
@@ -641,15 +649,12 @@ int gen_ralink_config(int band, int is_iNIC)
 	int ssid_num = 1;
 	char wmm_enable[8];
 	char wmm_noack[8];
-	char macbuf[36];
 	char list[2048];
 	int flag_8021x = 0;
 	int wsc_configure = 0;
 	int warning = 0;
-	int num;
 	int ChannelNumMax_2G = 11;
 	char tmp[128], prefix[] = "wlXXXXXXX_";
-//	char tmp2[128], prefix2[] = "wlXXXXXXX_";
 	char temp[128], prefix_mssid[] = "wlXXXXXXXXXX_mssid_";
 	char tmpstr[128];
 	int j;
@@ -999,8 +1004,8 @@ int gen_ralink_config(int band, int is_iNIC)
 			}
 			else if (nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp), "radius"))
 			{
-                        	ssid_num = 1;
-                        	break;
+				ssid_num = 1;
+				break;
 			}
 
 			if (i) ssid_num++;
@@ -1235,7 +1240,13 @@ int gen_ralink_config(int band, int is_iNIC)
 	fprintf(fp, "RxAntenna=\n");
 
 	//TxPreamble
-	fprintf(fp, "TxPreamble=%d\n", 0);
+	str = nvram_safe_get(strcat_r(prefix, "plcphdr", tmp));
+	if (str && strcmp(str, "long") == 0)
+		fprintf(fp, "TxPreamble=%d\n", 0);
+	else if (str && strcmp(str, "short") == 0)
+		fprintf(fp, "TxPreamble=%d\n", 1);
+	else
+		fprintf(fp, "TxPreamble=%d\n", 2);
 
 	//RTSThreshold  Default=2347
 	str = nvram_safe_get(strcat_r(prefix, "rts", tmp));
@@ -1613,10 +1624,10 @@ int gen_ralink_config(int band, int is_iNIC)
 				sprintf(tmpstr, "%s%s", tmpstr, "WPA1WPA2");
 				break;
 			}
-			else if((!strcmp(str, "radius")))
+			else if ((!strcmp(str, "radius")))
 			{
-                        	sprintf(tmpstr, "%s%s", tmpstr, "OPEN");
-                        	break;
+				sprintf(tmpstr, "%s%s", tmpstr, "OPEN");
+				break;
 			}
 			else
 			{
@@ -3295,9 +3306,8 @@ getChannel(int band)
 int
 getSiteSurvey(int band)
 {
-	int retval = 0, i = 0, apCount = 0;
+	int i = 0, apCount = 0;
 	char data[8192];
-	char ssid_str[256];
 	char header[128];
 	struct iwreq wrq;
 	SSA *ssap;
@@ -4215,7 +4225,6 @@ stop_wsc()
 
 int getWscStatus()
 {
-	int socket_id;
 	int data = 0;
 	struct iwreq wrq;
 	wrq.u.data.length = sizeof(data);
@@ -4255,13 +4264,13 @@ stainfo(int band)
 	wrq.u.data.pointer = (caddr_t) data;
 	wrq.u.data.flags = 0;
 
-	if(wl_ioctl(get_wifname(band), RTPRIV_IOCTL_GSTAINFO, &wrq) < 0)
+	if (wl_ioctl(get_wifname(band), RTPRIV_IOCTL_GSTAINFO, &wrq) < 0)
 	{
 		dbg("errors in getting STAINFO result\n");
 		return 0;
 	}
 
-	if(wrq.u.data.length > 0)
+	if (wrq.u.data.length > 0)
 	{
 		puts(wrq.u.data.pointer);
 	}
@@ -4280,13 +4289,13 @@ getstat(int band)
 	wrq.u.data.pointer = (caddr_t) data;
 	wrq.u.data.flags = 0;
 
-	if(wl_ioctl(get_wifname(band), RTPRIV_IOCTL_GSTAT, &wrq) < 0)
+	if (wl_ioctl(get_wifname(band), RTPRIV_IOCTL_GSTAT, &wrq) < 0)
 	{
 		dbg("errors in getting STAT result\n");
 		return 0;
 	}
 
-	if(wrq.u.data.length > 0)
+	if (wrq.u.data.length > 0)
 	{
 		puts(wrq.u.data.pointer);
 	}
@@ -4305,63 +4314,13 @@ getrssi(int band)
 	wrq.u.data.pointer = (caddr_t) data;
 	wrq.u.data.flags = 0;
 
-	if(wl_ioctl(get_wifname(band), RTPRIV_IOCTL_GRSSI, &wrq) < 0)
+	if (wl_ioctl(get_wifname(band), RTPRIV_IOCTL_GRSSI, &wrq) < 0)
 	{
 		dbg("errors in getting RSSI result\n");
 		return 0;
 	}
 
-	if(wrq.u.data.length > 0)
-	{
-		puts(wrq.u.data.pointer);
-	}
-
-	return 0;
-}
-
-int
-getrssi_2g()
-{
-        char data[32];
-        struct iwreq wrq;
-
-        memset(data, 0x00, 32);
-        wrq.u.data.length = 32;
-        wrq.u.data.pointer = (caddr_t) data;
-        wrq.u.data.flags = 0;
-
-        if(wl_ioctl("rai0", RTPRIV_IOCTL_GRSSI, &wrq) < 0)
-        {
-                dbg("errors in getting RSSI result\n");
-                return 0;
-        }
-
-        if(wrq.u.data.length > 0)
-        {
-                puts(wrq.u.data.pointer);
-        }
-
-        return 0;
-}
-
-int
-gettxbfcal(int band)
-{
-	char data[32];
-	struct iwreq wrq;
-
-	memset(data, 0x00, 32);
-	wrq.u.data.length = 32;
-	wrq.u.data.pointer = (caddr_t) data;
-	wrq.u.data.flags = 0;
-
-	if(wl_ioctl(get_wifname(band), RTPRIV_IOCTL_GTXBFCALP, &wrq) < 0)
-	{
-		dbg("errors in getting TxBfCal result\n");
-		return 0;
-	}
-
-	if(wrq.u.data.length > 0)
+	if (wrq.u.data.length > 0)
 	{
 		puts(wrq.u.data.pointer);
 	}
@@ -4544,7 +4503,6 @@ wsc_user_commit()
 int
 wl_WscConfigured(int unit)
 {
-	int i;
 	WSC_CONFIGURED_VALUE result;
 	struct iwreq wrq;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
@@ -4664,7 +4622,6 @@ void
 ate_commit_bootlog(char *err_code)
 {
 	unsigned char fail_buffer[ OFFSET_SERIAL_NUMBER - OFFSET_FAIL_RET ];
-	struct FAIL_LOG *fail_log;
 
 	nvram_set("Ate_power_on_off_enable", err_code);
 	nvram_commit();
@@ -4680,5 +4637,6 @@ ate_commit_bootlog(char *err_code)
 int Get_channel_list(int unit)
 {
 	puts("ATE_ERROR"); //Need to implement
+	return 0;
 }
 #endif

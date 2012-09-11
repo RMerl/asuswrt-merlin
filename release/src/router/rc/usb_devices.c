@@ -180,10 +180,10 @@ int write_3g_conf(FILE *fp, int dno, int aut, char *vid, char *pid){
 			fprintf(fp, "MessageContent=\"55534243123456780000000000000011062000000100000000000000000000\"\n");
 			break;
 		case SN_Huawei_E173:
-			fprintf(fp, "TargetVendor=   0x12d1\n");
-			fprintf(fp, "TargetProduct=  0x14a8\n");
 			fprintf(fp, "DefaultVendor=  0x12d1\n");
 			fprintf(fp, "DefaultProduct= 0x14b5\n");
+			fprintf(fp, "TargetVendor=   0x12d1\n");
+			fprintf(fp, "TargetProduct=  0x14a8\n");
 			fprintf(fp, "MessageContent=\"55534243123456780000000000000011062000000100000000000000000000\"\n");
 			break;
 		case SN_Huawei_E630:
@@ -634,27 +634,27 @@ int write_3g_conf(FILE *fp, int dno, int aut, char *vid, char *pid){
 			fprintf(fp, "MessageContent=\"55534243123456780000000000000601000000000000000000000000000000\"\n");
 			break;
 		case SN_Huawei_K3771:
-			fprintf(fp, "TargetVendor=   0x12d1\n");
-			fprintf(fp, "TargetProduct=  0x14c4\n");
-			fprintf(fp, "DefaultVendor=  0x12d1\n");
-			fprintf(fp, "DefaultProduct= 0x14ca\n");
+			fprintf(fp, "DefaultVendor=   0x12d1\n");
+			fprintf(fp, "DefaultProduct=  0x14c4\n");
+			fprintf(fp, "TargetVendor=  0x12d1\n");
+			fprintf(fp, "TargetProduct= 0x14ca\n");
 			fprintf(fp, "MessageContent=\"55534243123456780000000000000011062000000100000000000000000000\"\n");
 			break;
 		case SN_Huawei_K3770:
-			if(nvram_match("test_k3770", "1")){
-				fprintf(fp, "TargetVendor=   0x12d1\n");
-				fprintf(fp, "TargetProduct=  0x14d1\n");
-				fprintf(fp, "DefaultVendor=  0x12d1\n");
-				fprintf(fp, "DefaultProduct= 0x14c9\n");
-				fprintf(fp, "MessageContent=\"55534243123456780000000000000011062000000100000000000000000000\"\n");
-			}
-			else{
-				fprintf(fp, "TargetVendor=   0x12d1\n");
-				fprintf(fp, "TargetProduct=  0x14d1\n");
-				fprintf(fp, "DefaultVendor=  0x12d1\n");
-				fprintf(fp, "DefaultProduct= 0x1c05\n");
+			if(nvram_match("test_k3770", "1")){ // ACM mode
+				fprintf(fp, "DefaultVendor=   0x12d1\n");
+				fprintf(fp, "DefaultProduct=  0x14d1\n");
+				fprintf(fp, "TargetVendor=  0x12d1\n");
+				fprintf(fp, "TargetProduct= 0x1c05\n");
 				fprintf(fp, "CheckSuccess=   20\n");
 				fprintf(fp, "MessageContent=\"55534243123456780000000000000011060000000000000000000000000000\"\n");
+			}
+			else{
+				fprintf(fp, "DefaultVendor=   0x12d1\n");
+				fprintf(fp, "DefaultProduct=  0x14d1\n");
+				fprintf(fp, "TargetVendor=  0x12d1\n");
+				fprintf(fp, "TargetProduct= 0x14c9\n");
+				fprintf(fp, "MessageContent=\"55534243123456780000000000000011062000000100000000000000000000\"\n");
 			}
 			break;
 		case SN_Mobile_Action:
@@ -3591,12 +3591,11 @@ int asus_usb_interface(const char *device_name, const char *action){
 			sleep(1);
 		}
 	}
-	else
-#endif
-	if(!strcmp(vid, "04e8") && !strcmp(pid, "6761")){ // Samsung U200
+	else if(!strcmp(vid, "04e8") && !strcmp(pid, "6761")){ // Samsung U200
 		usb_dbg("(%s): Runing WiMAX...\n", device_name);
 		system("madwimax &");
 	}
+#endif
 	else if(isSerialInterface(device_name)){
 		usb_dbg("(%s): Runing USB serial with (0x%s/0x%s)...\n", device_name, vid, pid);
 		sleep(1);

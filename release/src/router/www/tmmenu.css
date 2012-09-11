@@ -30,7 +30,6 @@ input[type='checkbox'][disabled] {
 }
 input[type='text'],
 input[type='password'] {
-	padding: 0;
 	margin: 1px;
 }
 input[type='checkbox'] {

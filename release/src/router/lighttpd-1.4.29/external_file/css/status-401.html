@@ -2,6 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Cache-control" content="no-cache">
 <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1, user-scalable=no" />
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -142,6 +143,7 @@ function generateCaptcha(){
 				$(captcha_pattern).appendTo("#captcha_pattern");
 				
 				$(".captcha").css("display","block");
+				
 				$("#main").css("height",420);
 			}
 		}
@@ -179,7 +181,14 @@ function doOK(e) {
 	client.initialize();
 	
 	client.PROPFIND('/', auth, function(error, statusstring, content){
-		window.location.reload();
+		if(error==401){
+			$('input#password').attr("value","");
+		}
+		else{
+			setTimeout(function(){
+				window.location.reload(true);
+			}, 100);
+		}
 	});
 };
 
@@ -251,17 +260,17 @@ function onKeyHandler(e){
 					            <td><input id="password" name="password" type="password" size="20" style="font-size:20px;width:220px;height:36px" onkeydown="return onKeyHandler(event)"></td>
 					          </tr>
 					           <tr style="height:10px"></tr>
-					          <tr class="captcha">
+					          <tr class="captcha" style="display:none">
 											<td><font color="white" size="4"><label id="captcha">Random no. :</label></font></td>
 										</tr>
-										<tr class="captcha" height="5px"></tr>
-										<tr class="captcha">
+										<tr class="captcha" height="5px" style="display:none"></tr>
+										<tr class="captcha" style="display:none">
 					          	<td>
 					          		<input id="captcha" name="captcha" type="text" size="20" autocapitalize="off" maxlength="4" style="font-size:20px;width:220px;height:36px" onkeydown="return onKeyHandler(event)">
 					          	</td>
 					          </tr>
-					          <tr class="captcha" height="5px"></tr>
-					          <tr class="captcha">
+					          <tr class="captcha" height="5px" style="display:none"></tr>
+					          <tr class="captcha" style="display:none">
 					          	<td><div id="captcha_pattern" class="unselectable" name="captcha_pattern" style="width:220px;height:40px;float:left" onclick="generateCaptcha()"></div></td>
 					          </tr>
 					          <tr style="height:10px"></tr>

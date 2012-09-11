@@ -265,7 +265,7 @@ function BuildTree(){
 '<tr><td></td>\n';
 			
 			TempObject += 
-	'<td colspan=2><div id="e'+ItemBarCode+'" class="FdTemp"></div></td>\n';
+	'<td colspan=2><div id="e'+ItemBarCode+'" ></div></td>\n';
 		}
 		else{
 			TempObject += 		/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/
@@ -281,7 +281,7 @@ function BuildTree(){
 '<tr><td></td>\n';
 			
 			TempObject += 
-	'<td><div id="e'+ItemBarCode+'" class="FdTemp"></div></td>\n';
+	'<td><div id="e'+ItemBarCode+'" ></div></td>\n';
 		}
 		
 		TempObject += 

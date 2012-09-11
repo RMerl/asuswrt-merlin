@@ -26,6 +26,7 @@ endif
 
 ifeq ($(RTAC66U), y)
 CFLAGS += -DRTAC66U
+#CFLAGS += -DACS_ONCE
 endif
 
 #CFLAGS += -DRC_BUILDTIME=$(shell date -d "now" +"%s")
@@ -104,6 +105,12 @@ ifeq ($(RTCONFIG_IPV6),y)
 OBJS += ipv6aide.o
 endif
 
+ifeq ($(RTCONFIG_BCMWL6),y)
+ifeq ($(RTCONFIG_PROXYSTA),y)
+OBJS += psta_monitor.o
+endif
+endif
+
 ifeq ($(RTCONFIG_SHP),y)
 export CFLAGS += -DMEDIA_REVIEW
 endif
@@ -144,6 +151,11 @@ install: all
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wpsfix
 ifeq ($(RTCONFIG_FANCTRL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc phy_tempsense
+endif
+ifeq ($(RTCONFIG_BCMWL6),y)
+ifeq ($(RTCONFIG_PROXYSTA),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc psta_monitor
+endif
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc usbled
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ntp
@@ -193,6 +205,9 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_app_script 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc restart_wireless
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ATE
+ifeq ($(RTCONFIG_DSL),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc gen_ralink_config
+endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_telnetd 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_pptpd
 
@@ -207,8 +222,8 @@ ifeq ($(RTCONFIG_PARENTALCTRL),y)
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wlcscan
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wlcconnect
-ifeq ($(RTCONFIG_BCMWL6),y)
-	@cd $(INSTALLDIR)/sbin && ln -sf rc acsd_restart_wl
+ifeq ($(RTAC66U), y)
+#	@cd $(INSTALLDIR)/sbin && ln -sf rc acsd_restart_wl
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc setup_dnsmq
 	@cd $(INSTALLDIR)/sbin && ln -sf rc add_multi_routes

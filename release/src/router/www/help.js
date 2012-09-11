@@ -26,7 +26,8 @@ helptitle[0] = [["", ""],
 				["<#WLANConfig11b_WEPKey_itemname#>", "wl_key1"],
 				["<#WLANConfig11b_WEPKey_itemname#>", "wl_key2"],
 				["<#WLANConfig11b_WEPKey_itemname#>", "wl_key3"],
-				["<#WLANConfig11b_WEPKey_itemname#>", "wl_key4"]];
+				["<#WLANConfig11b_WEPKey_itemname#>", "wl_key4"],
+				["", ""]];
 helptitle[1] = [["", ""],
 				["<#WLANConfig11b_x_APMode_itemname#>", "wl_mode_x"],
 				["<#WLANConfig11b_Channel_itemname#>", "wl_channel"],
@@ -243,7 +244,8 @@ helpcontent[0] = new Array("",
 							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
 							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
 							 '<div><#qis_wireless_help1#></div><br/><img src="/images/qis/select_wireless.jpg">',
-							 '<div><#qis_wireless_help2#></div><br/><img width="350px" src="/images/qis/security_key.png">'
+							 '<div><#qis_wireless_help2#></div><br/><img width="350px" src="/images/qis/security_key.png">',
+							 "<#WLANConfig11n_automode_limition_hint#>"
 							 );
 helpcontent[1] = new Array("",
 						   "<#WLANConfig11b_x_APMode_itemdesc#>",
@@ -611,6 +613,10 @@ function overHint(itemNum){
 	// usb storage
 	if(itemNum == 2){
 		var dmStatus = "Not installed";
+		if(nodm_support != -1){
+			var dmStatus = "Not support.";
+		}
+
 		var apps_dev = '<% nvram_get("apps_dev"); %>';
 
 		if(foreign_disk_total_mounted_number()[0] == null){
@@ -641,8 +647,12 @@ function overHint(itemNum){
 					}
 				}
 			}
-			else if(getCookie_help("dm_install") == "no")
+			else if(getCookie_help("dm_install") == "no"){
 				dmStatus = "Not installed";		
+				if(nodm_support != -1){
+					dmStatus = "Not support.";
+				}
+			}
 			else if(getCookie_help("dm_enable") == "no" && getCookie_help("dm_install") == "yes")
 				dmStatus = "Disabled";
 			statusmenu += "<span>"+ dmStatus +"</span>";
@@ -791,7 +801,7 @@ registerCommands('donothing,inarray,caparray,sticky,background,noclose,caption,l
 // Settings you want everywhere are set here. All of this can also be
 // changed on your html page or through an overLIB call.
 ////////
-if (typeof ol_fgcolor=='undefined') var ol_fgcolor="#FFFFFF";
+if (typeof ol_fgcolor=='undefined') var ol_fgcolor="#EEEEEE";
 if (typeof ol_bgcolor=='undefined') var ol_bgcolor="#CCC";
 if (typeof ol_textcolor=='undefined') var ol_textcolor="#000000";
 if (typeof ol_capcolor=='undefined') var ol_capcolor="#777";

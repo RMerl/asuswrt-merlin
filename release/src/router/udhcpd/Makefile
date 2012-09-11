@@ -9,7 +9,7 @@ INSTALLDIR = $(ROOTDIR)/romfs
 
 # Uncomment this to get a shared binary. Call as udhcpd for the server,
 # and udhcpc for the client
-COMBINED_BINARY=1
+# COMBINED_BINARY=1
 
 # Uncomment this for extra output and to compile with debugging symbols
 # DEBUG=1
@@ -35,29 +35,29 @@ INSTALL = install
 
 VER := 0.9.8-asus
 
-
 OBJS_SHARED = options.o socket.o packet.o pidfile.o uptime.o
 DHCPD_OBJS = dhcpd.o arpping.o files.o leases.o serverpacket.o
 DHCPC_OBJS = dhcpc.o clientpacket.o script.o
+
+# Comment this to disable compilation
+# BOOT_PROGRAMS = udhcpc
+DAEMONS = udhcpd
+COMMANDS = dumpleases
 
 ifdef COMBINED_BINARY
 EXEC1 = udhcpd
 OBJS1 = $(DHCPD_OBJS) $(DHCPC_OBJS) $(OBJS_SHARED) frontend.o
 CFLAGS += -DCOMBINED_BINARY
 else
-EXEC1 = udhcpd
+EXEC1 = $(DAEMONS)
 OBJS1 = $(DHCPD_OBJS) $(OBJS_SHARED)
 
-EXEC2 = udhcpc
+EXEC2 = $(BOOT_PROGRAMS)
 OBJS2 = $(DHCPC_OBJS) $(OBJS_SHARED)
 endif
 
-EXEC3 = dumpleases
+EXEC3 = $(COMMANDS)
 OBJS3 = dumpleases.o
-
-BOOT_PROGRAMS = udhcpc
-DAEMONS = udhcpd
-COMMANDS = dumpleases
 
 ifdef SYSLOG
 CFLAGS += -DSYSLOG
@@ -114,14 +114,30 @@ endif
 	#$(INSTALL) udhcpc.8 udhcpd.8 $(USRSHAREDIR)/man/man8
 
 	$(INSTALL) -d $(INSTALLDIR)/usr/sbin
+ifdef COMBINED_BINARY
 	$(INSTALL) udhcpd $(INSTALLDIR)/usr/sbin
 	cd $(INSTALLDIR)/usr/sbin && ln -sf udhcpd udhcpc
+else
+ifneq ($(EXEC1),)
+	$(INSTALL) $(EXEC1) $(INSTALLDIR)/usr/sbin
+endif
+ifneq ($(EXEC2),)
+	$(INSTALL) $(EXEC2) $(INSTALLDIR)/usr/sbin
+endif
+endif
 
 romfs: all
-	$(STRIP) udhcpd
-	$(ROMFSINST) /usr/sbin/udhcpd 
+ifdef COMBINED_BINARY
+	$(ROMFSINST) /usr/sbin/udhcpd
 	cd $(INSTALLDIR)/usr/sbin && ln -sf udhcpd udhcpc
+else
+ifneq ($(EXEC1),)
+	$(ROMFSINST) /usr/sbin/$(EXEC1)
+endif
+ifneq ($(EXEC2),)
+	$(ROMFSINST) /usr/sbin/$(EXEC2)
+endif
+endif
 
 clean:
 	-rm -f udhcpd udhcpc dumpleases *.o core
-

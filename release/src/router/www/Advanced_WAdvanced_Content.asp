@@ -20,7 +20,8 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-var flag = 0;;
+var flag = 0;
+var based_modelid = '<% nvram_get("productid"); %>';
 
 <% login_state_hook(); %>
 <% wl_get_parameter(); %>
@@ -76,46 +77,31 @@ function initial(){
 
 	if(power_support < 0)
 		inputHideCtrl(document.form.wl_TxPower, 0);
+	else{
+		if(document.form.wl_unit.value == 1)
+			$("TxPowerHint_5G").style.display = "";
+	}
+	
+	control_TimeField();
 }
 
 function applyRule(){
 	if(power_support != -1){
 		/*
 		var wlcountry = '<% nvram_get("wl0_country_code"); %>';
-		if(wlcountry == 'US' || wlcountry == 'CN' || wlcountry == 'TW'){
-			if(document.form.wl_unit.value == 0)
-				var maxPower = 501;
-			else
-				var maxPower = 251;
-		}
-		else
-			var maxPower = 101;
-
-		if(parseInt(document.form.wl_TxPower.value) > maxPower){
-			alert('<#JS_validrange#> 1 <#JS_validrange_to#> ' + maxPower + '.');
-			document.form.wl_TxPower.focus();
-			return false;
-		}
-	
-		if(parseInt(document.form.wl_TxPower.value) > 80 && flag < 0){
-			document.form.wl_TxPower.focus();
-			flag++;
-			return false;
-		}
-		*/
-		var wlcountry = '<% nvram_get("wl0_country_code"); %>';
 		if(wlcountry == 'EU'){
 			var maxPower = 100;
-			if(parseInt(document.form.wl_TxPower.value) > maxPower && flag < 2){
+			if(parseInt(document.form.wl_TxPower.value) > maxPower && flag < 0){
 				$("TxPowerHint").style.display = "";
 				document.form.wl_TxPower.focus();
 				flag++;
 				return false;
 			}
 		}
+		*/
 		
-		/* Model Dep */
-		if(productid == "RT-N66U" || productid == "RT-N66R"){
+		// MODELDEP
+		if(based_modelid == "RT-AC66U" || based_modelid == "RT-N66U" || based_modelid == "RT-N12HP"){
 			if(parseInt(document.form.wl_TxPower.value) > parseInt(document.form.wl_TxPower_orig.value))
 			  FormActions("start_apply.htm", "apply", "set_wltxpower;reboot", "<% get_default_reboot_time(); %>");
 		}
@@ -156,7 +142,16 @@ function validForm(){
 				document.form.wl_radio_date_x_Sun.focus();
 				$('blank_warn').style.display = "";
 				return false;
-	}	
+	}
+		
+	if(power_support != -1){
+  		if(!validate_range(document.form.wl_TxPower, 1, 999)){
+					document.form.wl_TxPower.focus();
+					document.form.wl_TxPower.select();
+					return false;
+  		}
+  }		
+	
 					   
 	updateDateTime(document.form.current_page.value);	
 	return true;
@@ -187,6 +182,20 @@ function loadDateTime(){
 	document.form.wl_radio_time2_x_startmin.value = getTimeRange(document.form.wl_radio_time2_x.value, 1);
 	document.form.wl_radio_time2_x_endhour.value = getTimeRange(document.form.wl_radio_time2_x.value, 2);
 	document.form.wl_radio_time2_x_endmin.value = getTimeRange(document.form.wl_radio_time2_x.value, 3);
+}
+function control_TimeField(){		//control time of week & weekend field when wireless radio is down , Jieming added 2012/08/22
+	if(!document.form.wl_radio[0].checked){
+		$('enable_date_week_tr').style.display="none";
+		$('enable_time_week_tr').style.display="none";
+		$('enable_date_weekend_tr').style.display="none";
+		$('enable_time_weekend_tr').style.display="none";
+	}
+	else{
+		$('enable_date_week_tr').style.display="";
+		$('enable_time_week_tr').style.display="";
+		$('enable_date_weekend_tr').style.display="";
+		$('enable_time_weekend_tr').style.display="";	
+	}
 }
 </script>
 </head>
@@ -220,7 +229,6 @@ function loadDateTime(){
 <input type="hidden" name="wl_radio_time_x" value="<% nvram_get("wl_radio_time_x"); %>">
 <input type="hidden" name="wl_radio_time2_x" value="<% nvram_get("wl_radio_time2_x"); %>">
 <input type="hidden" name="wl_subunit" value="-1">
-<input type="hidden" name="wl_plcphdr" value="<% nvram_get("wl_plcphdr"); %>">
 <input type="hidden" name="wl_amsdu" value="<% nvram_get("wl_amsdu"); %>">
 <input type="hidden" name="wl_TxPower_orig" value="<% nvram_get("wl_TxPower"); %>" disabled>
 
@@ -261,11 +269,11 @@ function loadDateTime(){
 							</select>			
 						</td>
 				  </tr>
-					<tr id=wl_rf_enable>
+					<tr id="wl_rf_enable">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 1);"><#WLANConfig11b_x_RadioEnable_itemname#></a></th>
 			  			<td>
-			  				<input type="radio" value="1" name="wl_radio" class="input" onClick="return change_common_radio(this, 'WLANConfig11b', 'wl_radio', '1')" <% nvram_match("wl_radio", "1", "checked"); %>><#checkbox_Yes#>
-			    			<input type="radio" value="0" name="wl_radio" class="input" onClick="return change_common_radio(this, 'WLANConfig11b', 'wl_radio', '0')" <% nvram_match("wl_radio", "0", "checked"); %>><#checkbox_No#>
+			  				<input type="radio" value="1" name="wl_radio" class="input" onClick="control_TimeField();return change_common_radio(this, 'WLANConfig11b', 'wl_radio', '1');" <% nvram_match("wl_radio", "1", "checked"); %>><#checkbox_Yes#>
+			    			<input type="radio" value="0" name="wl_radio" class="input" onClick="control_TimeField();return change_common_radio(this, 'WLANConfig11b', 'wl_radio', '0')" <% nvram_match("wl_radio", "0", "checked"); %>><#checkbox_No#>
 			  			</td>
 					</tr>
 
@@ -297,7 +305,7 @@ function loadDateTime(){
 							<span id="blank_warn" style="display:none;"><#JS_Shareblanktest#></span>	
 			  			</td>
 					</tr>
-					<tr id="enable_time2_tr">
+					<tr id="enable_time_weekend_tr">
 			  			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(3, 3);"><#WLANConfig11b_x_RadioEnableTime_itemname#></a></th>
 			  			<td>
 			  				<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_starthour" onKeyPress="return is_number(this,event)" onblur="validate_timerange(this, 0);"> :
@@ -368,6 +376,16 @@ function loadDateTime(){
 						</td>
 					</tr>
 					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,20);"><#WLANConfig11n_PremblesType_itemname#></a></th>
+						<td>
+						<select name="wl_plcphdr" class="input_option" onchange="return change_common(this, 'WLANConfig11b', 'wl_plcphdr')">
+							<option value="long" <% nvram_match("wl_plcphdr", "long", "selected"); %>>Long</option>
+							<option value="short" <% nvram_match("wl_plcphdr", "short", "selected"); %>>Short</option>
+							<option value="auto" <% nvram_match("wl_plcphdr", "auto", "selected"); %>><#Auto#></option>
+						</select>
+						</td>
+					</tr>
+					<tr>
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 9);"><#WLANConfig11b_x_Frag_itemname#></a></th>
 			  			<td>
 			  				<input type="text" maxlength="4" name="wl_frag" id="wl_frag" class="input_6_table" value="<% nvram_get("wl_frag"); %>" onKeyPress="return is_number(this,event)" onChange="page_changed()">
@@ -409,6 +427,7 @@ function loadDateTime(){
 							</select>
 						</td>
 					</tr>
+
 			<!--Greenfield by Lock Add in 2008.10.01 -->
 					<!-- RaLink Only tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 19);"><#WLANConfig11b_x_HT_OpMode_itemname#></a></th>
@@ -443,7 +462,7 @@ function loadDateTime(){
 					</tr>
 
 					<tr id="enable_wl_multicast_forward" style="display:none;">
-						<th>Enable Wireless Multicast Forwarding</th>
+						<th>Wireless Multicast Forwarding</th>
 						<td>
                   				<select name="wl_wmf_bss_enable" class="input_option">
                     					<option value="0" <% nvram_match("wl_wmf_bss_enable", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -477,8 +496,18 @@ function loadDateTime(){
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 17);"><#WLANConfig11b_TxPower_itemname#></a></th>
 						<td>
-		  				<input type="text" maxlength="3" name="wl_TxPower" class="input_3_table" value="<% nvram_get("wl_TxPower"); %>"> mW
-							<br><span id="TxPowerHint" style="display:none;">ETSI: max. 100mW for Europe, South America and APAC.</span>
+		  				<input type="text" maxlength="3" name="wl_TxPower" class="input_3_table" value="<% nvram_get("wl_TxPower"); %>" onKeyPress="return is_number(this, event);"> mW
+							<br>
+							<span id="TxPowerHint" style="display:none;">ETSI: max. 100mW for Europe, South America and APAC.</span>
+							<span id="TxPowerHint_5G" style="display:none;">
+								FCC  channel  34~48 max: 50mW for North America.
+								<br />
+								FCC  channel 149~165 max: 1000mW for North America.
+								<br />
+								ETSI max: 200mW for Europe, South America and APAC.
+								<br />
+								The real Tx power is automatically adjusted due to regional regulatory.
+							</span>
 						</td>
 					</tr>
 

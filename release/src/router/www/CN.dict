@@ -1,8 +1,6 @@
-﻿[Language type]
 CHAR_set=UTF-8
 PASS_LANG=语言选项：
 LANG_select=选择语系
-[IPv6]
 IPv6_wan_addr=外部网络 IPv6 地址
 IPv6_wan_Prefix_len=外部网络前缀长度
 IPv6_wan_gateway=外部网络 IPv6 网关
@@ -19,17 +17,18 @@ Prefix_lan_Length=内部网络前缀长度
 IPv6_Prefix_Length=IPv6 前缀长度
 IPv6_DNS_Setting=IPv6 DNS 设置
 ipv6_6rd_dhcp_option=DHCP 选项
+ipv6_6rd_Prefix=IPv6 前缀
 ipv6_client_ip=用户端 IPv6 地址
 IPv6_static_IP=固定IPv6
 tunnel_MTU=通道 MTU
 tunnel_TTL=通道 TTL
-[VPN server]
 vpn_Adv=VPN 详细设置
 PPTP_desc=无论您在何处，都可以通过 VPN 服务器来访问您家里的网络内容
 PPTP_desc2=请按照以下步骤来使用 VPN 服务器：<br>(1) 开启 PPTP VPN 服务器<br>(2) 为客户端设置 IP Pool（最多可设置 10 个客户端）<br>(3) 为 VPN 客户端设置帐号与密码<br>(4) 开启您个人电脑或智能手机上的 VPN 连接应用程序<br>(5) 添加一个 PPTP VPN 连接，VPN 服务器地址为
 PPTP_desc3=(6) 如果您的外部网络为动态 IP，<a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">请点击这里来设置 DDNS</a>
 vpn_enable=启用 PPTP 服务器
 vpn_broadcast=支持区域广播
+vpn_network_place=Network Place (Samba) Support
 MPPE_Encryp=MPPE 加密
 Auto=自动
 No_Encryp=无加密
@@ -42,7 +41,6 @@ vpn_conflict_DHCPpool=* 与路由器的 DHCP 设置的 IP 地址池冲突:
 vpn_conflict_DHCPstatic=* 与路由器 DHCP 设置的静态 IP 地址冲突:
 vlaue_haigher_than=此设置值须高于
 vpn_max_clients=VPN 服务器最多仅支持 10 个客户端！
-[ParentalCtrl]
 Parental_Control=家长电脑控制程序
 ParentalCtrl_Desc=通过家长控制程序，您可以设置用户使用网络的时间限制，其使用步骤为：
 ParentalCtrl_Desc1=从「客户端名称」栏位选择一位您想控制其网络使用的用户。您也可以在「客户端 MAC 地址」栏位输入客户端的 MAC 地址。
@@ -52,18 +50,15 @@ ParentalCtrl_Desc4=点击「确认」保存这些设置。
 ParentalCtrl_username=客户端名称
 ParentalCtrl_hwaddr=客户端 MAC 地址
 ParentalCtrl_time=时间管理
-[AutoUpdate]
 check_proceeding=路由器横在检查华硕服务器以查看固件更新。
 connect_failed=未检测到网络连接。路由器无法连接至华硕服务器查看固件更新。重新连接至网络后，返回此页面，点击「检查」查看是否有固件更新。
 exist_new=有新的固件版本可用。您是否要更新固件？
 is_latest=路由器目前固件已为最新版本。
 unavailable_update=没有可用更新
-[GreenIndicator]
 no_printer_detect=未检测到打印机
 Eject_usb_disk=退出 USB 磁盘
 disconnect_internet=断开互联网连接
 go_GuestNetwork=前往访客网络
-[GuestNetwork]
 Guest_Network=访客网络
 GuestNetwork_desc=访客网络为访客提供互联网连接，但限制访客访问您的内部网络。
 Access_Time=访问时间
@@ -71,7 +66,6 @@ Limitless=无限制
 Access_Intranet=访问内部网络
 Guest_network_index=访客网络索引
 Guest_Network_enable=是否开启访客网络
-[TrafficManager]
 upload_prio=上传优先顺序
 min_bound=最小保留带宽
 max_bound=最大带宽限制
@@ -103,18 +97,16 @@ tm_recp_wireless=来自无线网络的传入封包
 tm_trans_int=传出的互联网封包
 tm_trans_wired=来自有线网络的传出封包
 tm_trans_wireless=来自无线网络的传出封包
-ezqosDesw=QoS 服务质量保证网络速度性能。初始规定将网页浏览设置为最优先级，并不会受到 P2P 应用程序的影响（点对点应用程序如 BitTorrent）。欲开启QoS功能，点选 开启 QoS，并填写上传与下载带宽栏。请从您的ISP获取带宽信息。若您想要优先个别网络应用程序与网络设备，请从用户定义 QoS 规定中选择您想要的优先权。
+ezqosDesw=QoS 服务质量保证网络速度性能。初始规定将网页浏览设置为最优先级，并不会受到 P2P 应用程序的影响（点对点应用程序如 BitTorrent）。欲开启QoS功能，点选 开启 QoS，并填写上传与下载带宽栏。请从您的ISP获取带宽信息。若您想要优先个别网络应用程序与网络设备，请从用户定义 QoS 规定中选择您想要的优先级。
 qos_automatic_mode=自动模式
 qos_user_prio=用户自定义优先级
 qos_user_rules=用户自定义 QoS 规则
 source_ipmac=关于资源或目标 IP 地址，您可以：<p>（a）输入一个具体的IP地址，如 \"192.168.122.1\"；<p>（b）输入带有一个子网或相同IP pool的IP 地址，如 \"192.168.123.*\" 或 \"192.168.*.*\"；<p>（c）输入所有IP 地址，如 \"*.*.*.*\"。<p>MAC 地址的格式为六组十六进制的数字组成，每组两个，以冒号分开，依照传送顺序编写。 (e.g. 12:34:56:aa:bc:ef)
 QoS_invalid_period=带宽限制无效。
-[Network_PrintServer]
 Network_Printer_Server=网络打印机服务器
 Network_Printer_desc=网络打印机服务器支持两种共享方式：（1）华硕 EZ 打印机共享（2）LPR 共享打印机。
 asus_ez_print_share=华硕 EZ 打印机共享（仅限 Windows 操作系统）
 LPR_print_share=使用 LPR 协议共享打印。
-[New_201108]
 usb_unmount=USB 功能未开启
 no_usb_found=未检测到 USB 磁盘
 Menu_usb_application=USB 应用
@@ -125,7 +117,6 @@ jumbo_frame=启动 Jumbo Frame
 ctf_disable=关闭 HW Accelerator
 Enable_WAN=启动 WAN
 Enable_NAT=启动 NAT
-[New_QIS]
 QIS_Previous_WLKey=您要继续使用之前的无线网络安全设置吗？
 QIS_recommand_encryption=强烈建议您首先设置加密类型。
 QIS_confirm_recommand_encryp=强烈建议您首先设置加密类型，是否继续？
@@ -143,27 +134,35 @@ QIS_welcome_feature1=450+450 同步双带宽无线网络。
 [###MODEL_DEP###][RT-N56U][RT-N53]QIS_welcome_feature1=同步双带宽 N600。（300 Mbps/ 2.4GHz + 300 Mbps/ 5GHz）
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature1=弹性的双频功能提供您流畅的无线体验。
 [###MODEL_DEP###][RT-N16]QIS_welcome_feature1=高效率的中央处理器展现高标准的性能表现。
-[###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1][RT-N10U]QIS_welcome_feature1=单带宽 N300。（300 Mbps/ 2.4GHz）
+[###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature1=单带宽 N300。（300 Mbps/ 2.4GHz）
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature1=提供三种无线网路切换模式 ─ 无线路由器 / 无线分享器 / 中继模式
+[###MODEL_DEP###][RT-N10U]QIS_welcome_feature1=单带宽 N150。（150 Mbps/ 2.4GHz）
 QIS_welcome_feature2=USB 2.0 x 2，可支持多功能打印机、UPnP、SAMBA 以及 FTP Server。
+[###MODEL_DEP###][RT-AC66U]QIS_welcome_feature2=ASUS AiCloud unlimitedly access, streaming, and sync files everywhere with any devices.
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature2=4 x 千兆以太网接口。
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature2=4 x 千兆以太网接口。 2 x USB 2.0 接口，快速共享文件与打印设备。
+[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature2=Twin USB ports enable multi-role usability.
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature2=4 x 10/100 以太网接口。
 [###MODEL_DEP###][RT-N15U]QIS_welcome_feature2=4 x 千兆以太网接口。 1 x USB 2.0 接口，快速共享文件与打印设备。
 [###MODEL_DEP###][RT-N12B1][RT-N12C1]QIS_welcome_feature2=4 x 10/100 以太网接口。 2 x 5DBi 天线，实现更大信号覆盖范围。
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature2=提供 2根可拆式外接 9dBi 高增益天线及可调式无线输出功率。
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature2=4 x 10/100 以太网接口。 1 x USB 2.0 接口，快速共享打印设备。
 QIS_welcome_feature3=Turbo NAT 加速引擎，提供千兆等级的网络传输速度。
+[###MODEL_DEP###][RT-AC66U]QIS_welcome_feature3=4 x 千兆以太网接口。 2 x USB 2.0 接口，快速共享文件与打印设备。
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature3=2 x USB 3.0 接口，快速共享文件与打印设备。
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature3=内置 Beam forming 技术可扩大信号覆盖范围。
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature3=支持高达300,000 sessions会话数，提供您最稳定的P2P下载环境。
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature3=多达 3 个 Guest SSID。
 [###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature3=多达 3 个 Guest SSID。
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature3=优化的高功率无线电波和天线传输，提供三倍以上的信号覆盖率。
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature3=1 x 5DBi 天线，实现更大信号覆盖范围。
 QIS_welcome_feature4=支持高达 300,000 连接数，提供您最稳定的 P2P 下载环境。
-[###MODEL_DEP###][RT-N65U][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature4=图形化用户界面轻松设置并管理路由器。
+[###MODEL_DEP###][RT-AC66U][RT-N65U][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature4=图形化用户界面轻松设置并管理路由器。
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature4=硬件 NAT 支持 5X 更快速的 WAN 至 LAN 网络体验。
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature4=支持双USB 接口，可连接硬盘与多功能打印机等设备。
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature4=支持用户访问时间控制功能。
-[###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=多达 4 个 Guest SSID。
+[###MODEL_DEP###][RT-N12HP]QIS_welcome_feature4=特别针对多楼层的独栋豪宅提供强大的讯号覆盖率。
+[###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=多达 3 个 Guest SSID。
 QIS_pass_title=设置路由器登录密码
 QIS_pass_desc1=变更路由器密码以阻止未授权的客户端访问您的华硕无线路由器。
 QIS_pass_desc3=路由器密码是您的华硕路由器的管理密钥。当您登录路由器的网页图形用户界面时，您需要输入用户名与密码。默认的路由器用户名和密码为：admin / admin。
@@ -207,10 +206,8 @@ qis_tutor_desc2=1. 在通知區域，按一下網路圖示（<img src="/images/q
 qis_tutor_desc3=2. 在网络列表中点击您要连接的网络，然后点击「连接」。
 qis_tutor_desc4=1. 在通知区域点击网络图标，然后点击「查看可用无线网络」。
 qis_tutor_desc5=1. 在菜单栏中点击 Airport 状态图标（<img src="/images/qis/osx_network_icon.jpg">），然后选择您要连接的无线名称。
-[System log]
 System_Log=系统记录
-[New_0622]
-upnp_Desc=Set up the DLNA, iTUnes, FTP and Network Place (Samba) server.
+upnp_Desc=Set up the DLNA, iTunes, FTP and Network Place (Samba) server.
 Route_title=此页显示具体路由状态。
 PortForward_title=此页显示端口转发状态。一些 P2P 程序使用 UPnP 协议以开启端口，并且端口名称在此页上显示。
 WLLog_title=此页显示具体无线状态。
@@ -221,9 +218,9 @@ FTP_desc=设定 FTP 的账号与许可。
 Samba_desc=设定网络（Samba）服务的账号与许可。
 LANHostConfig_x_DDNSHostNames_itemdesc=The host name cannot accept number prefix and \".\" (such as \"123abc\" or \"aaa.bbb\").
 LANHostConfig_x_DDNSEnable_sectiondesc2=目前无线路由器使用一个私人的 WAN IP 地址（192.168.x.x, 10,x,x,x, or 172.16.x.x）。此路由器可能处于多个 NAT 中并且 DDNS 服务不能在此环境下工作。
-LANHostConfig_x_DDNSEnable_sectiondesc3=主机名已登记成功。您可以使用 "[hostname].asuscomm.com" 从 WAN 中获取主机网络服务。使用"[hostname].asuscomm.com" 远程获取您的网络。<p>选择 进阶设定 > 外部网络 设定端口转发或 DMZ，允许其他 WAN 客户端远程获取您的网络。<p>若您想要远程设置无线路由器，选择 <a href="../Advanced_BasicFirewall_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">这里</a>。
+LANHostConfig_x_DDNSEnable_sectiondesc3=主机名已登记成功。您可以使用 "[hostname].asuscomm.com" 从 WAN 中获取主机网络服务。使用"[hostname].asuscomm.com" 远程获取您的网络。<p>选择 进阶设定 > 外部网络 设定端口转发或 DMZ，允许其他 WAN 客户端远程获取您的网络。<p>若您想要远程设置无线路由器，选择 <a href="/Advanced_System_Content.asp?af=misc_http_x" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">这里</a>。
 IPConnection_LocalIP_itemdesc=输入 LAN 客户端 IP 地址。
-IPConnection_LocalPort_itemdesc=若您想要接收的数据报转移至此端口，请不要填写此栏。
+IPConnection_LocalPort_itemdesc=若您想要接收的数据包转移至此端口，请不要填写此栏。
 IPConnection_PortRange_itemdesc=端口范围接受多种格式，如 端口范围 ( 300:350 )、单个端口（566,789）或混合（1015:1024,3021）。
 IPConnection_UPnP_itemdesc=UPnP (Universal Plug and Play) 允许数个设备（路由器、电视机、立体声系统、游戏机、手机）透过基于 IP 的网络所控制，无论该网络是否带有网关的中心控制。
 LANHostConfig_ManualDHCPSTB_itemdesc=IPTV 机顶盒连接的 LAN 端口
@@ -232,30 +229,28 @@ LANHostConfig_ManualDHCPMacaddr_itemdesc=MAC 地址的格式为六组十六进�
 WPS_add_client=您可以透过以下任一方法简便连接一个WPS客户端：<ul><li>方法1：点击接口上的 WPS 按钮。（或按下路由器后面板的WPS按钮），然后按下客户端无线网络卡上的WPS持续3秒左右。</li><li>方法2：开始客户端WPS进程并获取客户端PIN码。在客户端PIN码栏中输入客户端PIN码并点击「开始」。请查看您的无线客户端的使用手册以确认其是否支持WPS功能。若您的无线客户端不支持WPS功能，您需要进行手动设定并设置与路由器相同的网络名称（SSID）以及安全设置。</li></ul>
 WPS_weptkip_hint=根据WPS2.0规定，当路由器在使用WEP或TKIP时WPS功能必须关闭。
 adv_wl_desc=设置以下无线相关信息。
-UserQoS_transferred_hint=在「已传送」栏目中，向一个特定的服务设定网络交通限制（以KB为单位），为特定接口所分配的服务产生特定优先权。例如，两个客户端，PC1与PC2，同时进入网络（设在80端口），但是由于一些下载任务，PC1超越了网络交通限制，PC1将会授予较低优先权。已传送栏目是指上行与下行交通（发出的与接收的网络交通）。若您不想设置交通限制，您可以选择不填。
-UserQoS_desc=在使用者定义 QoS 规定下拉列表中，您可以将网络应用程序或装置优先至五个等级。依据优先权，QoS使用以下方法传输数据包：<ul><li>更换上行网络数据报的顺序，可参照数据报传输至网络的顺序。</li><li>优先级低的数据报会被忽视以确保高优先级的传输。优先级较高的上行数据报将会产生优先级较高的下行数据报。</li><li>若优先级高的应用程序中无数据报传输，则低优先级的数据报将获得全部的网络传输率。</li></ul>
+UserQoS_transferred_hint=在「已传送」栏目中，向一个特定的服务设定网络交通限制（以KB为单位），为特定接口所分配的服务产生特定优先级。例如，两个客户端，PC1与PC2，同时进入网络（设在80端口），但是由于一些下载任务，PC1超越了网络交通限制，PC1将会授予较低优先级。已传送栏目是指上行与下行交通（发出的与接收的网络交通）。若您不想设置交通限制，您可以选择不填。
+UserQoS_desc=在使用者定义 QoS 规定下拉列表中，您可以将网络应用程序或装置优先至五个等级。依据优先级，QoS使用以下方法传输数据包：<ul><li>更换上行网络数据包的顺序，可参照数据包传输至网络的顺序。</li><li>优先级低的数据包会被忽视以确保高优先级的传输。优先级较高的上行数据包将会产生优先级较高的下行数据包。</li><li>若优先级高的应用程序中无数据包传输，则低优先级的数据包将获得全部的网络传输率。</li></ul>
 UserQoS_desc_zero=<ul><li>请先开启的 QoS 后再设定上传与下载速率限制。</li></ul>
 Aidisk_authority_hint=警告：AiDisk 已设置。若您再次设置，之前的账号/密码与存取 权限都将重置。 欲添加更多账号，选择 <a href="../Advanced_AiDisk_ftp.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">这里</a> 以编辑帐户信息。 
 remove_usb_hint=欲从路由器中安全移除硬盘，点击屏幕右上角的 USB 图标。
 UserQoSRule_desc_zero=请先开启的 QoS 后再设定规则。
 prio_packet_note=默认的 ACK、SYN 与 ICMP 封包可提高游戏流畅性。
-[NAT Passthrough]
 NAT_PPTP_Passthrough=PPTP Passthrough
 NAT_L2TP_Passthrough=L2TP Passthrough
 NAT_IPSec_Passthrough=IPSec Passthrough
 NAT_RTSP_Passthrough=RTSP Passthrough
 NAT_passthrough_itemname=NAT Passthrough
 NAT_passthrough_desc=启用 NAT Passthrough 功能，让 Virtual Private Network (VPN) 服务所需要用到的协定允许通过。
-[opmode strings]
 wireless_router=无线路由器
 BasicConfig_EnableiTunesServer_itemname=启动 iTunes Server？
 OP_GW_item=无线路由器 (默认)
 OP_GW_desc=在无线路由器模式中，ZVMODELVZ 透过 PPPoE、DHCP、PPTP、L2TP 或静态 IP 连接至网络，并且将无线网络分享至 LAN 客户端或设备。<p>在此模式中，NAT、防火墙与 DHCP 服务器被预设为开启。支持 UPnP 与动态 DNS 适用于 SOHO 与家庭使用者。<p>若您是第一次使用或您目前没有使用任何有线/无线路由器时，选择此模式。
 OP_RE_item=中继模式
-OP_RE_desc=在Repeater mode (中继模式)下，ZVMODELVZ 可以延伸您使用环境内其他基地台的讯号，以提供无线用户更好的讯号品质。
+OP_RE_desc=在Repeater mode (中继模式)下，ZVMODELVZ 可以延伸您使用环境内其他基地台的信号，以提供无线用户更好的信号品质。
 OP_AP_item=Access Point(无线存取点)
 OP_AP_desc=在Access Point(无线存取点)模式中，ZVMODELVZ 通过以太网络线连接无线路由器以扩大无线信号覆盖面至其他网络客户。在此模式中，防火墙、IP 分享与 NAT 功能均被默认关闭。
-deviceDiscorvy=在访问点（AP）模式中，由 DHCP 指派的 IP 地址将会更改。安装并使用 <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery 程序</a> 来侦测无线路由器的 IP 地址。
+deviceDiscorvy=在访问点（AP）模式中，由 DHCP 指派的 IP 地址将会更改。 安装并使用 <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery 程序</a> 来侦测无线路由器的 IP 地址。
 IPConnection_VSList_ftpport=FTP 伺服器埠号
 wps_start_btn=起始
 USB_Application_account_alert=用户账号不能为'root','guest','anonymous' 请输入有效的账号名称！
@@ -264,13 +259,11 @@ RouterConfig_GWMulticast_unknownUni_itemname=未知单播风暴控制（Mbps）�
 RouterConfig_GWMulticast_unknownMul_itemname=未知多播风暴控制（Mbps）：
 RouterConfig_GWMulticast_Multicast_itemname=多播风暴控制（Mbps）：
 RouterConfig_GWMulticast_Broadcast_itemname=广播风暴控制（Mbps）：
-[keyword_filter]
 menu5_5_5=关键词过滤器
 FirewallConfig_KeywordFilterEnable_sectiondesc=关键词过滤器允许您阻止客户端访问含有特定关键词的网页。
 FirewallConfig_KeywordFilterEnable_sectiondesc2=关键字过滤功能限制：<ol><li>使用 HTTP 压缩技术的压缩网页无法被过滤。<a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">点击这里了解详细信息</a></li><li>Https 网页无法被过滤。</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=开启关键词过滤器
 FirewallConfig_KeywordList_groupitemname=关键词过滤器列表
-[New translated]
 JS_field_wanip_rule3=请输入1~2592000(秒)之间的值。
 FirewallConfig_Port80_itemdesc=在关闭防火墙设置 HTTP 服务器，且设置外网（WAN 端口）端口为80，会与 ZVMODELVZ 的管理界面服务器使用的端口冲突。
 FirewallConfig_FTPPrompt_itemdesc=当使用 ZVMODELVZ 内置的 FTP 服务器功能时，设置外网（WAN 端口）端口为20：21，会与 ZVMODELVZ 内置的 FTP 服务器使用的接口冲突。
@@ -282,15 +275,12 @@ RouterConfig_IPTV_itemname=UDP 代理（Udpxy）
 RHELP_desc9=使用此功能在几个计算机上同时开启IPTV应用程序（例如 VLC）。此功能可将多重播送 UDP 数据流转变成单一播送数据流。进入您想要为 IPTV 程序分配的端口（如 4000），然后使用这个格式进入播放列表中的地址，观看IPTV ： http://[Router IP]:[Udpxy port]/[protocol]/[channel IP address]:[channel  port] （如http://192.168.1.1:4000/udp/239.255.1.1:5000 或 http://192.168.1.1:4000/rtp/239.255.1.2:5000)。输入 0 关闭此功能。
 WLANConfig11b_TxPower_itemname=调整天线功率
 WLANConfig11b_TxPower_itemdesc=调整天线功率，已获得最佳的传输品质。 
-[translated]
 WLANConfig11b_Wireless_Speed_itemname_3=用40MHz共存的带宽以最大化无线产量。若您在无线稳定的情况下操作，请选择默认模式（20MHz）。
-hwnat_desc=NAT ( 网络地址转换 )是使用在路由器中的一项进程以将网络封包的地址信息替换为新的。典型的用法就是使用外部网络将路由器连接至内部网络。在内部网络中，每一个网络装置都有一个私人的 IP（LAN IP），但只有一个公用 IP（WAN IP）。欲使网络设备连接至网络，路由器将发送者的私人 IP 地址替换为其在所有输出的数据报中所有的公共 IP 地址。路由器在一个表格中存储了一切所需信息（ NAT 表格），这样进入的数据报可被分配至正确的网络设备。
-[error_page.htm]
+hwnat_desc=NAT ( 网络地址转换 )是使用在路由器中的一项进程以将网络封包的地址信息替换为新的。典型的用法就是使用外部网络将路由器连接至内部网络。在内部网络中，每一个网络装置都有一个私人的 IP（LAN IP），但只有一个公用 IP（WAN IP）。欲使网络设备连接至网络，路由器将发送者的私人 IP 地址替换为其在所有输出的数据包中所有的公共 IP 地址。路由器在一个表格中存储了一切所需信息（ NAT 表格），这样进入的数据包可被分配至正确的网络设备。
 web_redirect_reason6=侦测到 IP 地址冲突。点击下一步获取一个新的 IP 地址。
 web_redirect_case6_desc1=路由器更新的 IP 地址：
 web_redirect_case6_desc2=点击下一步后，请确认您为每个相关服务更新了 IP 地址设置，如虚拟服务器或DMZ。
 error_page_lanip_changed_desc1=IP 地址被更新。若此步骤花费了超过两分钟的时间，请按照以下三个步骤手动更新 IP 地址：（1）拔掉网线； （2）等待约十秒钟；（3）重新插上网线以获取一个新的 IP 地址。
-[QIS]
 QIS_autoMAC_desc1=开始克隆电脑的 MAC 地址到路由器…
 QIS_autoMAC_desc2=请稍候…
 QIS_autoMAC_desc3=检查 WAN IP 地址
@@ -314,7 +304,6 @@ QIS_internet_success_desc1=您的网络可能设置了代理服务器。请与�
 QIS_internet_success_desc2=网络服务提供商的域名服务器可能出错。请与您的网络服务提供商或网络管理员确认，或进入高级设置页面来设置公共 DNS。
 QIS_internet_success_desc3=请与您的网络服务提供商或网络管理员确认。
 QIS_internet_success_desc4=请拔掉调制解调器的电源线。等待约两分钟后，在重新连接电源线。点击 重新侦测。
-[Traffic Monitor]
 Date=日期
 Scale=标度
 Last30days=过去30天
@@ -327,13 +316,11 @@ Current=即时流量值
 Average=平均流量值
 Maximum=最大流量值
 Total=总流量值
-[RT-N66U new item]
 LAN_IP_changed_suggedtion1=内部网路位址已变更为 
 LAN_IP_changed_suggedtion2=。若您无法连上此设定画面，请更新您电脑的IP位址。 
-WLANConfig11b_x_WPSband_itemname=Current Band 
+WLANConfig11b_x_WPSband_itemname=Current Band
 WLANConfig11b_x_WPSband_itemdesc=您可选择 WPS 所要支援的频段。如欲切换频段，请先停用 WPS 功能。
 LANConfig_ChangedLANIP=建议您可使用华硕共用程式的Device Discovery 搜寻基地台的网路位址，以重新进入设定页面。 
-[RT-N1X new item]
 LANHostConfig_x_Password_itemdesc=密码不能大于十六个字符。
 WLANConfig11n_nmode_limition_hint=[n Only]模式下，原WEP或TKIP加密设定将自动调整为AES加密，以取得正确的联机。
 WLANConfig11n_automode_limition_hint=Auto模式下使用WEP或TKIP加密时，无线网络最多支持54Mbps的传输速率。
@@ -344,16 +331,15 @@ op_already_configured=已经设定为此模式。
 WLANConfig11n_PremblesType_itemname=Preamble类型
 WLANConfig11n_PremblesType_itemdesc=Preamble类型定义了CRC (Cyclic Redundancy Check，一种检查数据传输错误的技术)区块的长度。我们建议您网络中所有无线装置都设为同一种Preamble类型。设定为short可以改善传输速率，但必须确定您局域网络内的无线网卡皆支持此设定。</p>
 LANHostConfig_ManualDHCPEnable_itemdesc=为特定的客户端分配固定 IP 地址。需要用户的 MAC 地址。
-Layer3Forwarding_x_STB_itemdesc=选择某个LAN埠与WAN埠作桥接。若您有额外的装置需要连接WAN端，但您的因特网服务商只提供一条WAN端线路时，您可指定某个LAN埠转接来自WAN端的封包。例如：可将网络电视机上盒连接上这个指定的埠，直接取得服务商提供的IP与讯号。
-IP_format=在来源或目的IP地址方面，您可输入一特定的IP地址，如「192.168.122.1」，或在子网络内的IP地址，如「192.168.123.*」、或「192.168.*.*」，或像是「*.*.*.*」这样所有的IP地址。
+Layer3Forwarding_x_STB_itemdesc=选择某个LAN埠与WAN埠作桥接。若您有额外的装置需要连接WAN端，但您的因特网服务商只提供一条WAN端线路时，您可指定某个LAN埠转接来自WAN端的封包。例如：可将网络电视机上盒连接上这个指定的埠，直接取得服务商提供的IP与信号。
 Port_format=在来源或目的通讯通讯端口的范围方面，您可输入一特定通讯端口，如「95」，或在一范围内的通讯通讯端口，如「103:315」、「>100」或是「<65535」。
+IP_format=在来源或目的IP地址方面，您可输入一特定的IP地址，如「192.168.122.1」，或在子网络内的IP地址，如「192.168.123.*」、或「192.168.*.*」，或像是「*.*.*.*」这样所有的IP地址。
 ShareNode_FTPLANG_itemdesc=依据磁盘内文件名的编码，选择适合FTP服务器的语系。
 FirewallConfig_DoSEnable_itemdesc=一个'拒绝服务'的袭击显然想要试图拒绝合法的用户使用服务或计算机资源。<p>开启此项功能可保护路由器不受 DoS 危害，但这回增大路由器工作负载。
 ShareNode_Seeding_itemname=允许作种
 ShareNode_Seeding_itemdesc=启用允许作种，ZVMODELVZ 会在下载完成后维持种子，提供他人下载。
 ShareNode_MaxUpload_itemname=最大上传速率
 ShareNode_MaxUpload_itemdesc=请输入介于0到999的数值，默认值是0，代表没有上传速率的限制。
-[New item]
 HSDPAConfig_hsdpa_enable_hint1=当前 3G/4G 设置处于 3G/4G Backup 模式，当 WAN 接口不通时，会自动切换到 3G/4G 模式。
 HSDPAConfig_hsdpa_enable_hint2=若要更改联机类型，请先至<a href="/Advanced_Modem_others.asp">USB Modem设定</a>停用USB网卡
 HSDPAConfig_USBAdapter_itemname=USB 网络卡
@@ -368,7 +354,7 @@ Browser_action_not_support_addfavorite=很抱歉，您的浏览器不支持这�
 page_not_support_mode_hint=目前的运作模式不支持此页面。
 APSurvey_action_ConnectingStatus0=Parent-AP 可能已关闭。请确认。
 APSurvey_action_ConnectingStatus3=重新打开浏览器。在网址栏中输入 "http://www.asusnetwork.net/" 查看中继器连接状态。
-APSurvey_action_ConnectingStatus1=联机失败，请重新输入金钥或按 [取消] 选择其它基地台。
+APSurvey_action_ConnectingStatus1=联机失败，密码错误，请按 [重新扫描] 选择其它基地台。
 APSurvey_action_ConnectingStatus24=无线网络联机成功
 APSurvey_action_ConnectingStatus35=WPA金钥认证失败，请重新输入。
 APSurvey_action_renew_success=IP设定更新成功，即将为您导回设定页面。
@@ -379,12 +365,11 @@ APSurvey_msg_waiting_to_connect=请稍后，ZVMODELVZ 正在联机到
 APSurvey_main_title=选择一组基地台后，按下「建立联机」。
 Network_key=网络金钥
 Security=安全性设定
-Radio=讯号
+Radio=信号
 AP_fail_get_IPaddr=无法取得IP地址信息
 AP_Remote_IP=基地台IP地址
 AP_survey=基地台搜寻
 statusTitle_AP=远程基地台状态
-[USB Application - HSDPA]
 HSDPAConfig_pin_code_itemdesc=请填入SIM卡的PIN码，须为长度介于4到8之间的数字。若您不知道SIM卡PIN码为何，请洽询您的ISP业者。
 HSDPAConfig_private_apn_itemname=APN 服务名称(选填)
 HSDPAConfig_private_apn_itemdesc=若您不知道 APN 服务名称为何，请洽询您的 ISP 业者。
@@ -394,12 +379,10 @@ HSDPAConfig_hsdpa_enable_itemname=启用 USB Modem
 HSDPAConfig_hsdpa_mode_itemname=USB Modem 模式
 HSDPAConfig_DNSServers_itemname=DNS 服务器
 AiDisk_Wizard_failedreson1=AiDisk 精灵执行异常。请稍后再试一次。
-[state.js-Dr.Surf.]
 QKSet_ISP_desc3=自动取得IP连线失败，您可由此设定以建立连线。
 QKSet_ISP_desc2=尝试以固定IP联机失败
 QIS_internet_vpn_confirm=若您的联机类型为 PPTP/L2TP，请按「确定」选择需要 VPN 服务器并继续设定。\n若您为固定IP联机，请选择「取消」，并确认输入信息是否正确后套用设定。
 Full_Clients=用户数
-[QIS_internet_vpn.htm]
 QIS_if_vpn_existed=是否需要 VPN 服务器？
 QIS_internet_vpn_title=VPN 的属性
 QIS_internet_vpn_type=VPN 的类型：
@@ -420,14 +403,11 @@ Device_service_iTune=iTunes 共享:
 Device_service_Printer=打印服务:
 JS_storageright=设定名称之后（如 aabbcc），在 Internet Explorer 的 URL 栏目中输入 //aabbcc 以快速获取网络服务。标准输入字符包括字母（A-Z, a-z）、字符（0-9）、空格、下划线 (_) 与破折号 (-)。最先或最后字符不能为空格。
 not_support_script=很抱歉，您的浏览器不支持Java Script。<p>请选择支持JavaScript的浏览器或开启JavaScript功能，以体验ASUS ZVMODELVZ 各种软件功能。
-[Advanced_AiDisk_others.asp]		
 Help_of_Workgroup=为机器在网上邻居中，所在的群组名称，能接受的输入字符包含英文字母(A~Z、a~z)、数字(0~9)、空格、破折号(_)及连字号(-)。第一个和最后一个字符不能为空格。使用非标准的设备名称会导致其它用户无法通过网络搜索您的计算机。
-[state.js-Dr.Surf.]		
 DrSurf_refresh_page=刷新页面
 DrSurf_sweet_advise1=如果你已更改了SSID或无线网络安全性设置，提醒您调整无线网卡设置以重新取得联机。
 DrSurf_sweet_advise2=联机已恢复。
 DrSurf_sweet_advise3=切换成无线网络访问点模式后，将取消 ZVMODELVZ 的DHCP功能，如此可能导致您无法连上设置页面。<p>建议您可使用华硕共享程序的 Device Discovery 搜索访问点的网络地址，以重新进入设置页面。</p>
-[AiDisk Wizard]
 File_Pop_content_alert_desc1=账号名称不能空白!
 File_Pop_content_alert_desc2=账号名称不能少于两个字!
 File_Pop_content_alert_desc3=账号名称不能大于二十个字!
@@ -440,7 +420,6 @@ File_content_alert_desc6=文件夹名称不能空白!
 File_content_alert_desc7=文件夹名称只能包含英文字母、数字、破折号、底线，名称中能有空白!
 File_content_alert_desc8=这个名称已有文件夹取用。\n请输入不同的名称!
 File_content_alert_desc10=新文件夹名称超过12字，有些操作系统可能无法兼容!\n要继续操作吗?
-[AiDisk Advanced]		
 enableCIFS=启用网上邻居共享
 disableCIFS=关闭网上邻居共享
 enableFTP=启用FTP
@@ -473,7 +452,6 @@ NewFolderName=新文件夹名称
 AddFolderAlert=新增文件夹的默认权限可擦写。
 DelFolderAlert=在删除文件夹前，请确认其中并无任何文件或目录。<br><br>确定要删除这个文件夹：
 ModFolderAlert=重新命名后，权限依旧会保留，其中的子文件夹亦会存在。
-[LeftMenu]
 menu1=网络地图
 menu2=媒体服务器
 menu3=AiDisk
@@ -518,7 +496,6 @@ menu5_7_3=DHCP租约
 menu5_7_4=无线用户
 menu5_7_5=通信端口转发
 menu5_7_6=路由表
-[Network Map]
 block_client=点击这里来阻止客户端
 statusTitle_System=ASUS ZVMODELVZ
 statusTitle_Internet=互联网状态
@@ -540,6 +517,7 @@ MAC_Address=MAC地址
 ConnectionStatus=互联网状态
 WAN_IP=外部网络IP
 Connectiontype=联机类型
+LeaseExpires=Lease expires
 QIS=网络设置向导
 QIS_title=网络设置向导
 Connected=已联机
@@ -557,9 +535,9 @@ Priority_Level_3=低
 Modelname=型号
 Totalspace=总容量
 Availablespace=可用容量
-AiDiskWizard=AiDisk向导
 UPnPMediaServer=媒体服务器
 UPnPMediaServer_Help=ZVMODELVZ 支持UPnP标准，可与支持UPnP的设备，如：PS3游戏机或其它数字影音播放器，共享您USB外接硬盘上的文件。
+AiDiskWizard=AiDisk向导
 Safelyremovedisk_title=安全地删除硬盘
 Safelyremovedisk=可以放心删除硬盘
 btn_remove=删除
@@ -578,7 +556,6 @@ Minute=分
 Second=秒
 upload_bandwidth=上传带宽
 download_bandwidth=下载带宽
-[AiDisk Wizard]		
 AiDiskWelcome_title=欢迎使用AiDisk向导
 AiDiskWelcome_desp=立刻实现这些共享需求：
 AiDiskWelcome_desp1=通过互联网共享您USB硬盘内的文件。
@@ -616,9 +593,8 @@ linktoFTP_no_2=DDNS未开启，若需由外部网络以网域名称访问FTP，�
 linktoFTP_no_3=DDNS已开启，但网域名称未注册成功，无法由外部网络以网域名称访问FTP。
 AiDisk_wizard_text_box_title3=您曾经设置过AiDisk向导，现在可参考以下信息来访问硬盘：
 yoursharesetting=即将设置文件共享方式为：
-neednotDDNS=跳过华硕DDNS服务设置。
+neednotDDNS=关闭 DDNS。
 asusddns_inputhint=请输入名称
-[WPS]		
 WPS_PBCbutton_hint_success=联机成功
 WLANConfig11b_display6_sectiondesc=WPS (Wi-Fi Protected Setup) 可让您轻松地设置一个安全的无线网络。
 WLANConfig11b_x_WPS_itemname=启用WPS
@@ -650,7 +626,6 @@ bottom_Link=http://support.asus.com/download.aspx?SLanguage=zh-cn&m=ZVMODELVZ
 Help_init_word1=在说明功能中，我们为一些复杂或高级的功能提供导引与解释，而这些词汇会以
 Help_init_word2=黄色字蓝色底虚线
 Help_init_word3=表示，以鼠标点选后即可查看。
-[hook error]		
 ALERT_OF_ERROR_Input1=没有提供协议项目值!
 ALERT_OF_ERROR_Input2=协议项目值输入错误!
 ALERT_OF_ERROR_Input3=没有提供模式项目值!
@@ -691,8 +666,6 @@ ALERT_OF_ERROR_Action12=格式化硬盘失败!
 ALERT_OF_ERROR_System1=系统错误: 不能访问内存!
 ALERT_OF_ERROR_System2=系统错误: 无法读取硬盘数据!
 ALERT_OF_ERROR_System3=系统错误: 硬盘忙碌中!
-[QIS wizard]		
-[QIS_detect.js]		
 Web_Title=ASUS Wireless Router ZVMODELVZ
 [###MODEL_DEP###][DSL-N55U][DSL-N55U-B]Web_Title=ASUS ZVMODELVZ Dual-Band Wireless-N Gigabit ADSL2/2+ Modem Router
 Web_Title2=ZVMODELVZ
@@ -702,17 +675,14 @@ QKSet_detect_desc2=重新侦测网络联机状态
 QKSet_detect_wanconnfault=联机有误，可能是WAN端口的网线未接上。请连接上并重试一次...
 QKSet_detect_freshbtn=重新侦测
 QKSet_detect_waitdesc=开始侦测互联网联机类型...
-[QIS_finish.js]
-QIS_finish_Desc=ZVMODELVZ 提供这些网络无线设置。		
+QIS_finish_Desc=ZVMODELVZ 提供这些网络无线设置。
 QKSet_all_title=快速设置
 QKSet_finishpre_rebootnow=完成
-[QIS_internet_account.js]		
 QKSet_account_webtitle=ISP账号设置
 QKSet_ISP_head=ISP数据设置
 QKSet_ISP_desc=请参考您的ISP设置，输入以下信息。
 PPPConnection_UserName_itemdesc=您的ISP所提供的用户名称，适用于PPP系列的联机类型(如：PPPoE、PPTP或L2TP)。
 QKSet_account_nameblank=用户名称不能空白！
-[QIS_internet_ip.js]
 Layer3Forwarding_x_DHCPClient_itemname=自动取得远程网络地址
 Layer3Forwarding_x_UseStaticIP_itemname=使用下列的IP地址连接：
 qis_dns=使用以下 DNS 服务器地址
@@ -735,13 +705,11 @@ IPConnection_x_DNSServer_blank=请在客户端设备上设置 DNS 服务器。
 IPConnection_warning_WANIPEQUALGatewayIP=你已将互联网IP设置为网关IP，ZVMODELVZ 也许因此无法正确的连接到互联网，请重新设置正确的网关IP。
 IPConnection_x_WAN_LAN_conflict=WAN 与 LAN 须使用不同的 IP 地址与子网掩码。
 IPConnection_x_illegal_mac=MAC 地址无效。
-[QIS_internet_isp.js]		
 BOP_isp_host_desc=本栏可让您提供 ZVMODELVZ 所使用的主机名称。通常是您ISP运营商要求的名称。
 BOP_isp_host_item=主机名称(选填)：
 PPPConnection_x_MacAddressForISP_itemdesc=MAC (Media Access Control) 地址是特定的标识符可识别网络中您的计算机或设备。ISP 监视与他们服务相连的设备的 MAC 地址，并且不允许新的 MAC 地址的网络联机。为了弥补这一缺憾，您可以执行以下任一项目：<p>* 联络您的 ISP 并且要求更新与您的 ISP 署名相关的 MAC 地址。<p>* 克隆或更改新装置的 MAC 地址以匹配原始设备的 MAC 地址。
 BOP_isp_mac_item=MAC地址(选填)
 BOP_isp_MACclone=取得计算机MAC地址
-[QIS_internet_success.htm]		
 QKSet_Internet_Setup_fail_reason1=DHCP模式联机失败
 QKSet_Internet_Setup_fail_reason2=PPPoE账号或密码有误，请重新输入账号密码。
 QKSet_Internet_Setup_fail_reason3=PPPoE模式联机失败，按此链接可重新侦测联机。
@@ -755,9 +723,7 @@ QKSet_finish_moveto5=无线加密设置
 QKSet_finish_moveto6=进行无线网络加密设置，以确保您的无线网络安全。
 QKSet_finish_moveto7=到高级设置页面
 QKSet_finish_moveto8=手动进行设置或微调。
-[QIS_internet_success.js]		
 QKSet_finish_desc=完成上网设置
-[QIS_internet_type.js]		
 QKSet_type_head=互联网联机类型
 QKSet_type_desc=请选择你的互联网联机类型。
 BOP_ctype_title1=自动获取IP
@@ -778,7 +744,6 @@ WLANConfig11b_WEPDefaultKey_itemname=密钥索引
 JS_passzero=WPA密钥应为8~63个字符的字符串或64个十六进制字符。如果您将本字段保留空白，系统将会指定00000000作为您的通关密语。
 JS_PSK64Hex=WPA密钥应为8~63个字符的字符串或64个十六进制字符。
 JS_wepkey=请输入正确的WEP密钥。
-[error_page.htm]		
 web_redirect_message=您的网络联机出现问题，导致您无法前往您想要阅读的网页
 web_redirect_fail_reason0=联机失败原因
 web_redirect_suggestion0=我们建议您
@@ -796,7 +761,6 @@ web_redirect_suggestion_final=如果上述诊断仍未能解决您的问题，�
 web_redirect_suggestion_etc=前往「ZVMODELVZ 的设置页面」
 web_redirect_suggestion_etc_desc=，您能在这里自行检查和调整您的设置。
 web_redirect_suggestion_manually_start_wan=恢复远程联机。
-[error_page.js]		
 web_redirect_reason1=您尚未将网线接上外部网络，或是网线已脱落。
 web_redirect_reason2_1=您的 PPPoE 或是 VPN的账号、密码不被接受。
 web_redirect_reason2_2=远程服务器无响应。
@@ -805,7 +769,6 @@ web_redirect_reason3_2=我们侦测到您的网络联机类型应该属于 PPPoE
 web_redirect_reason4=您的 ZVMODELVZ 的地址和网关的地址相同，这导致您的网络封包无法正常发送。
 web_redirect_reason5_1=您可能已手动中断远程联机。
 web_redirect_reason5_2=您为 ZVMODELVZ 设置的动态或静态IP信息不正确。
-[objcommon.js]		
 CTL_nonsupported=不支持
 CTL_localdevice=登录者
 CTL_unknown=未知名称的设备
@@ -826,13 +789,11 @@ CTL_AdvSetting=到高级设置
 CTL_Enabled=启用
 CTL_Disabled=未启用
 CTL_Disconnect=未联机
-[popup.js]		
 Main_alert_proceeding_desc1=处理中
 Main_alert_proceeding_desc4=请稍候, 
 Main_alert_proceeding_desc3=完成
 Main_content_Login_Item7=重新启动 ZVMODELVZ 可能会耗费您约60秒的时间，您确定要现在重新启动吗?
 [###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=重新启动 ZVMODELVZ 可能会耗费您约80秒的时间，您确定要现在重新启动吗?
-[QIS-general.js]		
 JS_fieldblank=栏位不能为空白
 JS_validip=不是有效的IP地址！
 JS_itemlimit1=本表仅允许
@@ -845,11 +806,7 @@ JS_validSSID2=」这个字符。
 JS_validrange=请输入一数值介于
 JS_validrange_to=至
 JS_validport=不是有效的通信端口编号。
-JS_WanLanAlert=选择「丢弃」时，会将全部WAN to LAN封包当中除了与过滤表内相符以外的部分丢弃。请谨慎使用。
-JS_LanWanAlert=选择「丢弃」时，会将全部LAN to WAN封包当中除了与过滤表内相符以外的部分丢弃。请谨慎使用。
 JS_fixchannel=请设置适合无线桥接的固定频道。
-JS_AES2=如果您要启用AES unique功能，验证方式将会因此设成「系统开放」。
-JS_AES3=如果您要启用AES unique功能，应该也要启用WEP。
 JS_DHCP1=当子网掩码修改后，ZVMODELVZ 的 IP Pool 也会跟着做调整，您希望其自动调整吗？
 JS_DHCP3=新的 IP Pool 与子网掩码不符，您希望其自动调整吗？
 BOP_isp_desc=您的ISP运营商可能会需要以下数据以便确认您的账号。如果没有，就请按「下一步」省略。
@@ -920,7 +877,7 @@ PPPConnection_Password_itemdesc=网络服务供货商（ISP）提供的密码。
 PPPConnection_IdleDisconnectTime_itemname=以秒计算的闲置断线时间
 PPPConnection_IdleDisconnectTime_itemdesc=设置在一特定时间间隔之后终止您和ISP间的联机。数值0表示允许无限延长间置时间。
 PPPConnection_x_PPPoEMTU_itemname=最大传输单位（MTU）
-PPPConnection_x_PPPoEMTU_itemdesc=PPPoE 数据报的最大传送单位。默认值为 1492。仅当您的 ISP 需要时更变此设置值。
+PPPConnection_x_PPPoEMTU_itemdesc=PPPoE 数据包的最大传送单位。默认值为 1492。仅当您的 ISP 需要时更变此设置值。
 PPPConnection_x_PPPoEMRU_itemname=最大接收单位（MRU）
 PPPConnection_x_PPPoEMRU_itemdesc=封包的最大接收单位（MRU - Maximum Receive Unit），建议维持原设置。
 PPPConnection_x_PPPoERelay_itemname=启用PPPoE Relay
@@ -953,14 +910,14 @@ FirewallConfig_LanWanICMP_itemdesc=本字段定义了一组将被过滤的 LAN �
 FirewallConfig_LanWanSrcIP_itemname=来源IP
 FirewallConfig_LanWanSrcPort_itemname=通信端口范围
 FirewallConfig_LanWanDstIP_itemname=目的IP
+FirewallConfig_URLActiveTime_itemname=网址过滤程序启用当日时间
 FirewallConfig_URLActiveTime_itemhint4=指定的时段不可重叠。
 FirewallConfig_URLActiveTime_itemhint=您所设置的开始时间晚于结束时间。 
-FirewallConfig_URLActiveTime_itemdesc=指定网址过滤程序启用当日的时间。请设置不同的开始与结束时间。
 FirewallConfig_UrlFilterEnable_itemname=启用网址过滤程序
+FirewallConfig_URLActiveTime_itemdesc=指定网址过滤程序启用当日的时间。请设置不同的开始与结束时间。
 FirewallConfig_UrlFilterEnable_sectiondesc=输入您想要阻止的网址的关键词。如，在清单中输入 "XXX"，URL 过滤器将会阻止http://www.abcXXX.com、 http://www.XXXbbb.com 或其他。
 FirewallConfig_URLActiveDate_itemname=网址过滤程序启用日期：
 FirewallConfig_URLActiveDate_itemdesc=指定每周当中网址过滤器开启的日期。
-FirewallConfig_URLActiveTime_itemname=网址过滤程序启用当日时间
 FirewallConfig_URLActiveTime_itemhint2=不正确的时间格式。
 RouterConfig_GWStaticEnable_sectiondesc=本项功能可让您将路由规则加到 ZVMODELVZ 之中。这对于如果您是连接在 ZVMODELVZ 之后的数个路由器以便共享同一条互联网联机上来说，是相当有用的。
 RouterConfig_GWDHCPEnable_itemname=使用 DHCP 路由
@@ -975,7 +932,6 @@ LANHostConfig_display6_sectiondesc=设置ZVMODELVZ IPv6 互联网。
 LANHostConfig_displayIPTV_sectiondesc=设置ZVMODELVZ IPTV。
 LANHostConfig_display1_sectiondesc2=内部网络IP已被 VPN 服务器占用，请选择其他内部网络IP。
 LANHostConfig_x_LAN_DHCP_itemname=自动取得内网IP地址？
-LANHostConfig_IPRouters_itemdesc=ZVMODELVZ 在内部网路的 IP 地址。设置值为 192.168.1.1。在 IP 为基础的网络中数据报将被送至网络装置的具体IP地址上。<p>华硕路由器使用IP地址带点十进制数符号，指的是四个八位位组并以点分隔的字符串（如 192.168.1.1）。<p>局域网络可使用三个IP范围：192.168.0.1 - 192.168.255.254, 172.16.0.1 - 172.31.255.254, 10.0.0.1 - 10.255.255.254。
 LANHostConfig_SubnetMask_itemdesc=ZVMODELVZ 的 LAN 子屏蔽掩码。默认值为 255.255.255.0。
 LANHostConfig_x_Gateway_itemdesc=此为无线网络桥接器所使用的默认网关的IP地址
 LANHostConfig_DHCPServerConfigurable_sectiondesc=DHCP 动态主机设定协议是为使用在 IP 地址的自动设置所制定的协议。DHCP 服务器会分配给每一个客户端一个 IP 地址并通知 DNS 服务器 IP 与 预设网关 IP 客户端。
@@ -1104,7 +1060,7 @@ LANHostConfig_x_DDNSWildcard_itemdesc=本栏可决定含有通配符的网域名
 LANHostConfig_x_DDNSStatus_itemname=手动更新：
 LANHostConfig_x_DDNSStatus_itemdesc=此键让您可以手动方式更新DDNS数据库。但仅在DDNS自动更新失败时才能使用。您可以自「系统记录」（System Log）中取得目前DDNS更新的状态。
 DeviceSecurity11a_display1_sectiondesc=此功能能够控制 ZVMODELVZ 无线局域网中，特定网卡物理地址（MAC Address）的访问。
-WLANAuthentication11a_display1_sectiondesc=本章让您可设置有关通过 RADIUS 服务器对无线客户端授权所使用的其它参数。当您将「无线网络 - 一般设置」中的「授权方式」选为「WPA-Enterprise/WPA2-Enterprise」，便需进行此一设置。
+WLANAuthentication11a_display1_sectiondesc=本章让您可设置有关通过 RADIUS 服务器对无线客户端授权所使用的其它参数。当您将「无线网络 - 一般设置」中的「授权方式」选为「WPA-Enterprise/ WPA2-Enterprise/ Radius with 802.1x」，便需进行此一设置。
 WLANAuthentication11a_ExAuthDBIPAddr_itemname=服务器 IP 地址
 WLANAuthentication11a_ExAuthDBIPAddr_itemdesc=用以指定 RADIUS 服务器的 IP 地址（以便使用无线验证机制及动态 WEP 密钥产生机制）。
 WLANAuthentication11a_ExAuthDBPortNumber_itemname=服务器通信端口
@@ -1317,8 +1273,8 @@ HSDPAConfig_username_itemdesc=请输入您的帐号。
 HSDPAConfig_password_itemdesc=请输入您的密码。
 HSDPAConfig_usbadaptor_itemdesc=请选择您要使用的USB网卡。
 confirm_disableftp_dm=停用网路芳邻功能，将会暂时无法使用下载大师。
+LANHostConfig_IPRouters_itemdesc=ZVMODELVZ 在内部网路的 IP 地址。设置值为 192.168.1.1。在 IP 为基础的网络中数据包将被送至网络装置的具体IP地址上。<p>华硕路由器使用IP地址带点十进制数符号，指的是四个八位位组并以点分隔的字符串（如 192.168.1.1）。<p>局域网络可使用三个IP范围：192.168.0.1 - 192.168.255.254, 172.16.0.1 - 172.31.255.254, 10.0.0.1 - 10.255.255.254。
 GO_HSDPA_SETTING=到USB Modem设置
-[adsl start]
 pvccfg_JS_enbsvc=Enable WAN service on
 pvccfg_title=WAN Configuration
 pvccfg_atmcfg=ATM PVC Configuration
@@ -1414,7 +1370,6 @@ dns_server_no_set=请在客户端设备上设置 DNS 服务器。
 dsl_wan_page_desc=点击编辑图标来编辑 PVC 设置。点击添加（+）或删除（-）图标来添加或删除 PVC 设置。
 dsl_web_redirect_reason1=The telephone cable or cable for Ethernet is not plugged in.
 dsl_web_redirect_reason2_1=PPPoE, PPPoA or VPN authentication failed.
-[adsl end]
 step_use_aicloud=依据以下步骤使用 AiCloud：
 download_aicloud=先由以下两处下载华硕 AiCloud 应用程序至手机或平板电脑：
 connect_through_wifi=将您的 iOS 或 Android 装置通过 Wi-Fi 连接至 ZVMODELVZ。AiCloud 应用程序将自动引导您进行设置。
@@ -1424,10 +1379,10 @@ aicloud_for_privateIP2=使用端口 8082 与 443 来访问 AiCloud。您可以�
 aicloud_for_privateIP3=欲了解更多详细信息，请参阅 <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">端口转发</a> 与 <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ</a> 的疑难解答。
 aicloud_disk1=要创建 Cloud Disk，您需要在路由器上连接 USB 存储设备，然后将 Cloud Disk 功能设为开启 <b>ON</b>。
 aicloud_disk2=使用路由器的登入帐号来登录默认的 Cloud Disk。
-aicloud_disk_case0=由<a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net:443" target="_blank">https://www.asusnetwork.net:443</a> 访问 Cloud Disk。
+aicloud_disk_case0=由<a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net" target="_blank">https://www.asusnetwork.net</a> 访问 Cloud Disk。
 aicloud_disk_case11=您可以通过这个网址访问 Cloud Disk：
-aicloud_disk_case12=要修改 DDNS 名称，请点击<a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">这里</a>。
-aicloud_disk_case21=由<a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net:443" target="_blank">https://www.asusnetwork.net:443</a> 访问 Cloud Disk。
+aicloud_disk_case12=要修改 DDNS 名称，请点击<a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName" target="_blank">这里</a>。
+aicloud_disk_case21=由<a style="font-weight: bolder;text-decoration: underline;" href="https://www.asusnetwork.net" target="_blank">https://www.asusnetwork.net</a> 访问 Cloud Disk。
 aicloud_disk_case22=在<a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">这里</a>注册华硕 DDNS 来在线访问 Cloud Disk。
 smart_access1=Smart Access 可取得您的网上邻居设置，如用户账户、共享文件夹与其他设置等。此功能帮助您随时随地访问您的家庭网络（<a id="faq0" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">网上邻居/Samba</a>）。
 smart_access2=WOL（Wake-On-LAN）功能允许您通过网络中的设备来唤醒计算机。
@@ -1441,4 +1396,7 @@ aicloud_bandwidth2_2=5 Mbps 或更快速的上传带宽用于 SD 视频。
 aicloud_bandwidth2_3=15 Mbps 或更快速的上传带宽用于 720p 视频。
 aicloud_bandwidth2_4=30 Mbps 或更快速的上传带宽用于 1080p HD 视频串流。
 aicloud_bandwidth3=网络上传速度按照您的网络服务供应商与其他因素而定。若要了解您的网络速度，请联系您的网络服务供应商，或由连接到华硕路由器的电脑上进行在线带宽测试。
-[untrans]
+QIS_rescan=重新扫描
+GuestNetwork_Radio_Status=已关闭无线信号
+use_DevDiscoveryUtil=安装并使用 <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery 程序</a> 来侦测无线路由器的 IP 地址。
+System_Change_TimeZone=更换时区

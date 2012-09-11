@@ -20,6 +20,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
+//usage:#define udhcpd_trivial_usage
+//usage:       "[-fS]" IF_FEATURE_UDHCP_PORT(" [-P N]") " [CONFFILE]"
+//usage:#define udhcpd_full_usage "\n\n"
+//usage:       "DHCP server\n"
+//usage:     "\n	-f	Run in foreground"
+//usage:     "\n	-S	Log to syslog too"
+//usage:	IF_FEATURE_UDHCP_PORT(
+//usage:     "\n	-P N	Use port N (default 67)"
+//usage:	)
+
 #include <syslog.h>
 #include "common.h"
 #include "dhcpc.h"
@@ -132,7 +143,11 @@ static uint32_t select_lease_time(struct dhcp_packet *packet)
 }
 
 /* We got a DHCP DISCOVER. Send an OFFER. */
-static void send_offer(struct dhcp_packet *oldpacket, uint32_t static_lease_nip, struct dyn_lease *lease)
+/* NOINLINE: limit stack usage in caller */
+static NOINLINE void send_offer(struct dhcp_packet *oldpacket,
+		uint32_t static_lease_nip,
+		struct dyn_lease *lease,
+		uint8_t *requested_ip_opt)
 {
 	struct dhcp_packet packet;
 	uint32_t lease_time_sec;
@@ -146,7 +161,6 @@ static void send_offer(struct dhcp_packet *oldpacket, uint32_t static_lease_nip,
 	if (!static_lease_nip) {
 		/* We have no static lease for client's chaddr */
 		uint32_t req_nip;
-		uint8_t *req_ip_opt;
 		const char *p_host_name;
 
 		if (lease) {
@@ -157,9 +171,9 @@ static void send_offer(struct dhcp_packet *oldpacket, uint32_t static_lease_nip,
 			packet.yiaddr = lease->lease_nip;
 		}
 		/* Or: if client has requested an IP */
-		else if ((req_ip_opt = udhcp_get_option(oldpacket, DHCP_REQUESTED_IP)) != NULL
+		else if (requested_ip_opt != NULL
 		 /* (read IP) */
-		 && (move_from_unaligned32(req_nip, req_ip_opt), 1)
+		 && (move_from_unaligned32(req_nip, requested_ip_opt), 1)
 		 /* and the IP is in the lease range */
 		 && ntohl(req_nip) >= server_config.start_ip
 		 && ntohl(req_nip) <= server_config.end_ip
@@ -202,7 +216,8 @@ static void send_offer(struct dhcp_packet *oldpacket, uint32_t static_lease_nip,
 	send_packet(&packet, /*force_bcast:*/ 0);
 }
 
-static void send_NAK(struct dhcp_packet *oldpacket)
+/* NOINLINE: limit stack usage in caller */
+static NOINLINE void send_NAK(struct dhcp_packet *oldpacket)
 {
 	struct dhcp_packet packet;
 
@@ -212,7 +227,8 @@ static void send_NAK(struct dhcp_packet *oldpacket)
 	send_packet(&packet, /*force_bcast:*/ 1);
 }
 
-static void send_ACK(struct dhcp_packet *oldpacket, uint32_t yiaddr)
+/* NOINLINE: limit stack usage in caller */
+static NOINLINE void send_ACK(struct dhcp_packet *oldpacket, uint32_t yiaddr)
 {
 	struct dhcp_packet packet;
 	uint32_t lease_time_sec;
@@ -243,7 +259,8 @@ static void send_ACK(struct dhcp_packet *oldpacket, uint32_t yiaddr)
 	}
 }
 
-static void send_inform(struct dhcp_packet *oldpacket)
+/* NOINLINE: limit stack usage in caller */
+static NOINLINE void send_inform(struct dhcp_packet *oldpacket)
 {
 	struct dhcp_packet packet;
 
@@ -279,16 +296,12 @@ struct dyn_lease *g_leases;
 int udhcpd_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 {
-	fd_set rfds;
 	int server_socket = -1, retval, max_sock;
-	struct dhcp_packet packet;
 	uint8_t *state;
-	uint32_t static_lease_nip;
 	unsigned timeout_end;
 	unsigned num_ips;
 	unsigned opt;
 	struct option_set *option;
-	struct dyn_lease *lease, fake_lease;
 	IF_FEATURE_UDHCP_PORT(char *str_P;)
 
 #if ENABLE_FEATURE_UDHCP_PORT
@@ -301,9 +314,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 #endif
 	opt = getopt32(argv, "fSv"
 		IF_FEATURE_UDHCP_PORT("P:", &str_P)
-#if defined CONFIG_UDHCP_DEBUG && CONFIG_UDHCP_DEBUG >= 1
-		, &dhcp_verbose
-#endif
+		IF_UDHCP_VERBOSE(, &dhcp_verbose)
 		);
 	if (!(opt & 1)) { /* no -f */
 		bb_daemonize_or_rexec(0, argv);
@@ -369,11 +380,15 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 
 	timeout_end = monotonic_sec() + server_config.auto_time;
 	while (1) { /* loop until universe collapses */
+		fd_set rfds;
+		struct dhcp_packet packet;
 		int bytes;
 		struct timeval tv;
 		uint8_t *server_id_opt;
-		uint8_t *requested_opt;
+		uint8_t *requested_ip_opt;
 		uint32_t requested_nip = requested_nip; /* for compiler */
+		uint32_t static_lease_nip;
+		struct dyn_lease *lease, fake_lease;
 
 		if (server_socket < 0) {
 			server_socket = udhcp_listen_socket(/*INADDR_ANY,*/ SERVER_PORT,
@@ -410,7 +425,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		case SIGTERM:
 			bb_info_msg("Received SIGTERM");
 			goto ret0;
-		case 0:	/* no signal: read a packet */
+		case 0: /* no signal: read a packet */
 			break;
 		default: /* signal or error (probably EINTR): back to select */
 			continue;
@@ -440,6 +455,18 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			continue;
 		}
 
+		/* Get SERVER_ID if present */
+		server_id_opt = udhcp_get_option(&packet, DHCP_SERVER_ID);
+		if (server_id_opt) {
+			uint32_t server_id_network_order;
+			move_from_unaligned32(server_id_network_order, server_id_opt);
+			if (server_id_network_order != server_config.server_nip) {
+				/* client talks to somebody else */
+				log1("server ID doesn't match, ignoring");
+				continue;
+			}
+		}
+
 		/* Look for a static/dynamic lease */
 		static_lease_nip = get_static_nip_by_mac(server_config.static_leases, &packet.chaddr);
 		if (static_lease_nip) {
@@ -452,20 +479,10 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			lease = find_lease_by_mac(packet.chaddr);
 		}
 
-		/* Get REQUESTED_IP and SERVER_ID if present */
-		server_id_opt = udhcp_get_option(&packet, DHCP_SERVER_ID);
-		if (server_id_opt) {
-			uint32_t server_id_net;
-			move_from_unaligned32(server_id_net, server_id_opt);
-			if (server_id_net != server_config.server_nip) {
-				/* client talks to somebody else */
-				log1("server ID doesn't match, ignoring");
-				continue;
-			}
-		}
-		requested_opt = udhcp_get_option(&packet, DHCP_REQUESTED_IP);
-		if (requested_opt) {
-			move_from_unaligned32(requested_nip, requested_opt);
+		/* Get REQUESTED_IP if present */
+		requested_ip_opt = udhcp_get_option(&packet, DHCP_REQUESTED_IP);
+		if (requested_ip_opt) {
+			move_from_unaligned32(requested_nip, requested_ip_opt);
 		}
 
 		switch (state[0]) {
@@ -473,7 +490,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		case DHCPDISCOVER:
 			log1("Received DISCOVER");
 
-			send_offer(&packet, static_lease_nip, lease);
+			send_offer(&packet, static_lease_nip, lease, requested_ip_opt);
 			break;
 
 		case DHCPREQUEST:
@@ -564,7 +581,7 @@ o DHCPREQUEST generated during REBINDING state:
    A DHCP server MAY extend a client's lease only if it has local
    administrative authority to do so.
 */
-			if (!requested_opt) {
+			if (!requested_ip_opt) {
 				requested_nip = packet.ciaddr;
 				if (requested_nip == 0) {
 					log1("no requested IP and no ciaddr, ignoring");
@@ -577,11 +594,15 @@ o DHCPREQUEST generated during REBINDING state:
 				send_ACK(&packet, lease->lease_nip);
 				break;
 			}
-			if (server_id_opt) {
-				/* client was talking specifically to us.
-				 * "No, we don't have this IP for you". */
+			/* No lease for this MAC, or lease IP != requested IP */
+
+			if (server_id_opt    /* client is in SELECTING state */
+			 || requested_ip_opt /* client is in INIT-REBOOT state */
+			) {
+				/* "No, we don't have this IP for you" */
 				send_NAK(&packet);
-			}
+			} /* else: client is in RENEWING or REBINDING, do not answer */
+
 			break;
 
 		case DHCPDECLINE:
@@ -600,7 +621,7 @@ o DHCPREQUEST generated during REBINDING state:
 			 */
 			log1("Received DECLINE");
 			if (server_id_opt
-			 && requested_opt
+			 && requested_ip_opt
 			 && lease  /* chaddr matches this lease */
 			 && requested_nip == lease->lease_nip
 			) {

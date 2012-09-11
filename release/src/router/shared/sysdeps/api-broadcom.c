@@ -159,7 +159,8 @@ uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 	} else
 	/* 5325E/535x */
 	/* TODO: same as above, according SDK only 5325 */
-	if (model == MODEL_RTN12 || model == MODEL_RTN10U || model == MODEL_RTN10D || model == MODEL_RTN53) {
+	if (model == MODEL_RTN12 || model == MODEL_RTN10U || model == MODEL_RTN10D || model == MODEL_RTN53 
+		|| model == MODEL_RTN12B1 || model == MODEL_RTN12C1 || model == MODEL_RTN12D1 || model == MODEL_RTN12HP) {
 		reg = 0x1e;
 		mask= 0x0608;
 		off = 0x0008;
@@ -248,12 +249,12 @@ int check_imagefile(char *fname)
 
 int get_radio(int unit, int subunit)
 {
-	uint32 n;
+	int n = 0;
 
 	//_dprintf("get radio %x %x %s\n", unit, subunit, nvram_safe_get(wl_nvname("ifname", unit, subunit)));
 
 	return (wl_ioctl(nvram_safe_get(wl_nvname("ifname", unit, subunit)), WLC_GET_RADIO, &n, sizeof(n)) == 0) &&
-		((n & WL_RADIO_SW_DISABLE)  == 0);
+		!(n & (WL_RADIO_SW_DISABLE | WL_RADIO_HW_DISABLE));
 }
 
 void set_radio(int on, int unit, int subunit)

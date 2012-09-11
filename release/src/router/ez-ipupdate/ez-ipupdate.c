@@ -2089,7 +2089,6 @@ int NOIP_update_entry(void)
     snprintf(buf, BUFFER_SIZE, "&%s=%s", "offline", "yes");
     output(buf);
   }
-
   snprintf(buf, BUFFER_SIZE, "&%s=%s", "wildcard", wildcard ? "yes" : "no");
   output(buf);
 

@@ -4,22 +4,12 @@
  *
  * Rewrite by Russ Dill <Russ.Dill@asu.edu> July 2001
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #include <netinet/ether.h>
 
 #include "common.h"
 #include "dhcpd.h"
-
-#if BB_LITTLE_ENDIAN
-static inline uint64_t hton64(uint64_t v)
-{
-        return (((uint64_t)htonl(v)) << 32) | htonl(v >> 32);
-}
-#else
-#define hton64(v) (v)
-#endif
-#define ntoh64(v) hton64(v)
 
 /* on these functions, make sure your datatype matches */
 static int FAST_FUNC read_str(const char *line, void *arg)
@@ -90,9 +80,9 @@ static const struct config_keyword keywords[] = {
 	/* keywords with no defaults must be last! */
 	{"option"       , udhcp_str2optset, &server_config.options      , ""},
 	{"opt"          , udhcp_str2optset, &server_config.options      , ""},
-	{"notify_file"  , read_str        , &server_config.notify_file  , ""},
-	{"sname"        , read_str        , &server_config.sname        , ""},
-	{"boot_file"    , read_str        , &server_config.boot_file    , ""},
+	{"notify_file"  , read_str        , &server_config.notify_file  , NULL},
+	{"sname"        , read_str        , &server_config.sname        , NULL},
+	{"boot_file"    , read_str        , &server_config.boot_file    , NULL},
 	{"static_lease" , read_staticlease, &server_config.static_leases, ""},
 };
 enum { KWS_WITH_DEFAULTS = ARRAY_SIZE(keywords) - 6 };
@@ -140,7 +130,7 @@ void FAST_FUNC write_leases(void)
 
 	curr = written_at = time(NULL);
 
-	written_at = hton64(written_at);
+	written_at = SWAP_BE64(written_at);
 	full_write(fd, &written_at, sizeof(written_at));
 
 	for (i = 0; i < server_config.max_leases; i++) {
@@ -190,7 +180,7 @@ void FAST_FUNC read_leases(const char *file)
 
 	if (full_read(fd, &written_at, sizeof(written_at)) != sizeof(written_at))
 		goto ret;
-	written_at = ntoh64(written_at);
+	written_at = SWAP_BE64(written_at);
 
 	time_passed = time(NULL) - written_at;
 	/* Strange written_at, or lease file from old version of udhcpd

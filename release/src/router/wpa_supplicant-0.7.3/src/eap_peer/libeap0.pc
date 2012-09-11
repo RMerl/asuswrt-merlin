@@ -1,0 +1,10 @@
+prefix=/usr
+exec_prefix=/usr
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/eap_peer
+
+Name: libeap0
+Description: EAP Peer Library API
+Version: 0.7.2
+Libs: -L${libdir} -leap
+Cflags: -I${includedir}

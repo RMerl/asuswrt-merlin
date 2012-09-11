@@ -1110,8 +1110,12 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 				else
 					snprintf(dstips, sizeof(dstips), "--to %s", dstip);
 
-				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
+				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0){
 					fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT %s\n", c, dstips);
+
+					if(!strcmp(c, "21") && nvram_get_int("vts_ftpport") != 0 && nvram_get_int("vts_ftpport") != 21)
+						fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT --to-destination %s:21\n", nvram_safe_get("vts_ftpport"), nvram_safe_get("lan_ipaddr"));
+				}
 				if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
 					fprintf(fp, "-A VSERVER -p udp -m udp --dport %s -j DNAT %s\n", c, dstips);
 				// Handle raw protocol in port field, no val1:val2 allowed
@@ -1405,8 +1409,19 @@ void redirect_setting()
 	FILE *nat_fp, *redirect_fp;
 	char tmp_buf[1024];
 	char http_rule[256], dns_rule[256];
-	char *lan_ipaddr_t = nvram_safe_get("lan_ipaddr");
-	char *lan_netmask_t = nvram_safe_get("lan_netmask");
+	char *lan_ipaddr_t, *lan_netmask_t;
+
+#ifdef RTCONFIG_WIRELESSREPEATER
+	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER){
+		lan_ipaddr_t = nvram_default_get("lan_ipaddr");
+		lan_netmask_t = nvram_default_get("lan_netmask");
+	}
+	else
+#endif
+	{
+		lan_ipaddr_t = nvram_safe_get("lan_ipaddr");
+		lan_netmask_t = nvram_safe_get("lan_netmask");
+	}
 
 	if ((redirect_fp = fopen("/tmp/redirect_rules", "w+")) == NULL) {
 		fprintf(stderr, "*** Can't make the file of the redirect rules! ***\n");
@@ -1998,11 +2013,12 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -p tcp -m tcp -d %s --dport %s -j %s\n", lan_ip, nvram_safe_get("https_lanport"), logaccept);
 #endif		
 		}
-		
+
 		if (!nvram_match("enable_ftp", "0"))
-		{	
-			//fprintf(fp, "-A INPUT -p tcp -m tcp -d %s --dport %s -j %s\n", wan_ip, nvram_safe_get("usb_ftpport_x"), logaccept);
-			fprintf(fp, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);	// oleg patch
+		{
+			fprintf(fp, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);
+			if(nvram_match("vts_enable_x", "1") && nvram_get_int("vts_ftpport") != 0 && nvram_get_int("vts_ftpport") != 21)
+				fprintf(fp, "-A INPUT -p tcp -m tcp --dport %s -j %s\n", nvram_safe_get("vts_ftpport"), logaccept);
 		}
 
 #ifdef RTCONFIG_WEBDAV
@@ -2021,9 +2037,17 @@ TRACE_PT("writing Parental Control\n");
 
 		if (!nvram_match("misc_ping_x", "0"))
 		{
-			//fprintf(fp, "-A INPUT -p icmp -d %s -j %s\n", wan_ip, logaccept);
-			fprintf(fp, "-A INPUT -p icmp -j %s\n", logaccept);	// oleg patch
+			fprintf(fp, "-A INPUT -p icmp -j %s\n", logaccept);
 		}
+#ifdef RTCONFIG_IPV6
+		else if (get_ipv6_service() == IPV6_6IN4)
+		{
+			/* accept ICMP requests from the remote tunnel endpoint */
+			ip = nvram_safe_get("ipv6_tun_v4end");
+			if (*ip && strcmp(ip, "0.0.0.0") != 0)
+				fprintf(fp, "-A INPUT -p icmp -s %s -j %s\n", ip, logaccept);
+		}
+#endif
 
 		if (!nvram_match("misc_lpr_x", "0"))
 		{
@@ -2043,32 +2067,22 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -p 47 -j %s\n",logaccept);
 		}
 
+#ifdef RTCONFIG_IPV6
+		switch (get_ipv6_service()) {
+		case IPV6_6IN4:
+		case IPV6_6TO4:
+		case IPV6_6RD:
+			fprintf(fp, "-A INPUT -p 41 -j %s\n", "ACCEPT");
+			break;
+		}
+#endif
+
 		// Open ssh to WAN
 		if ((nvram_match("sshd_wan", "1")) && (nvram_get_int("sshd_port")))
 			fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, nvram_get_int("sshd_port"), logaccept);
 
 		fprintf(fp, "-A INPUT -j %s\n", logdrop);
 	}
-
-#ifdef RTCONFIG_IPV6
-	switch (get_ipv6_service()) {
-	case IPV6_6IN4:
-		ip = nvram_safe_get("ipv6_tun_v4end");
-		goto case_IPv6_Tunnel;
-	case IPV6_6TO4:
-		ip = nvram_safe_get("ipv6_relay");
-		goto case_IPv6_Tunnel;
-	case IPV6_6RD:
-		ip = nvram_safe_get("ipv6_6rd_router");
-		// Fall through
-	case_IPv6_Tunnel:
-		// Accept ICMP requests from the remote tunnel endpoint
-		if (*ip && strcmp(ip, "0.0.0.0") != 0)
-			fprintf(fp, "-A INPUT -p icmp -s %s -j %s\n", ip, "ACCEPT");
-		fprintf(fp, "-A INPUT -p 41 -j %s\n", "ACCEPT");
-		break;
-	}
-#endif
 
 /* apps_dm DHT patch */
 	if (nvram_match("apps_dl_share", "1"))
@@ -2899,9 +2913,17 @@ TRACE_PT("writing Parental Control\n");
 
 		if (!nvram_match("misc_ping_x", "0"))
 		{
-			//fprintf(fp, "-A INPUT -p icmp -d %s -j %s\n", wan_ip, logaccept);
-			fprintf(fp, "-A INPUT -p icmp -j %s\n", logaccept);	// oleg patch
+			fprintf(fp, "-A INPUT -p icmp -j %s\n", logaccept);
 		}
+#ifdef RTCONFIG_IPV6
+		else if (get_ipv6_service() == IPV6_6IN4)
+		{
+			/* accept ICMP requests from the remote tunnel endpoint */
+			ip = nvram_safe_get("ipv6_tun_v4end");
+			if (*ip && strcmp(ip, "0.0.0.0") != 0)
+				fprintf(fp, "-A INPUT -p icmp -s %s -j %s\n", ip, logaccept);
+		}
+#endif
 
 		if (!nvram_match("misc_lpr_x", "0"))
 		{
@@ -2930,28 +2952,18 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -p 47 -j %s\n",logaccept);
 		}
 
+#ifdef RTCONFIG_IPV6
+		switch (get_ipv6_service()) {
+		case IPV6_6IN4:
+		case IPV6_6TO4:
+		case IPV6_6RD:
+			fprintf(fp, "-A INPUT -p 41 -j %s\n", "ACCEPT");
+			break;
+		}
+#endif
+
 		fprintf(fp, "-A INPUT -j %s\n", logdrop);
 	}
-
-#ifdef RTCONFIG_IPV6
-	switch (get_ipv6_service()) {
-	case IPV6_6IN4:
-		ip = nvram_safe_get("ipv6_tun_v4end");
-		goto case_IPv6_Tunnel;
-	case IPV6_6TO4:
-		ip = nvram_safe_get("ipv6_relay");
-		goto case_IPv6_Tunnel;
-	case IPV6_6RD:
-		ip = nvram_safe_get("ipv6_6rd_router");
-		// Fall through
-	case_IPv6_Tunnel:
-		// Accept ICMP requests from the remote tunnel endpoint
-		if (*ip && strcmp(ip, "0.0.0.0") != 0)
-			fprintf(fp, "-A INPUT -p icmp -s %s -j %s\n", ip, "ACCEPT");
-		fprintf(fp, "-A INPUT -p 41 -j %s\n", "ACCEPT");
-		break;
-	}
-#endif
 
 /* apps_dm DHT patch */
 	if (nvram_match("apps_dl_share", "1"))

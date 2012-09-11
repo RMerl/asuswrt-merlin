@@ -852,7 +852,6 @@ Cdbg(DBE, "network_register_fdevents..[%d]: fd=[%d]\n", i, srv_socket->fd);
 }
 
 int network_write_chunkqueue(server *srv, connection *con, chunkqueue *cq) {
-Cdbg(DBE, "enter");	
 	int ret = -1;
 	off_t written = 0;
 #ifdef TCP_CORK
@@ -886,14 +885,12 @@ Cdbg(DBE, "enter");
 #ifdef USE_OPENSSL
 		ret = srv->network_ssl_backend_write(srv, con, con->ssl, cq);
 #endif
-	} else {
-		Cdbg(DBE,"network_backend_write");
+	} else {		
 		ret = srv->network_backend_write(srv, con, con->fd, cq);
 	}
 
 	if (ret >= 0) {
-	   Cdbg(DBE,"call network write chunkqueue");
-		chunkqueue_remove_finished_chunks(cq);
+	   	chunkqueue_remove_finished_chunks(cq);
 		ret = chunkqueue_is_empty(cq) ? 0 : 1;
 	}
 

@@ -27,12 +27,18 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 var webdav_acc_lock = '<% nvram_get("webdav_acc_lock"); %>';
+var enable_webdav_lock = '<% nvram_get("enable_webdav_lock"); %>';
 
 function initial(){
 	show_menu();
 	if(webdav_acc_lock == 1){
 		$("accIcon").src = "/images/cloudsync/account_block_icon.png";
 		$("unlockBtn").style.display = "";
+	}
+
+	if(enable_webdav_lock == 0){
+		inputCtrl(document.form.webdav_lock_times, 0);
+		inputCtrl(document.form.webdav_lock_interval, 0);
 	}
 }
 
@@ -105,10 +111,10 @@ function unlockAcc(){
 									<div class="formfonttitle">AiCloud - Settings</div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
-								  <div class="formfontdesc">
+								  <div class="formfontdesc" style="font-style: italic;font-size: 14px;">
 										Password protection mechanism
 										The password protection mechanism allows AiCloud to prevent account from Brute-Force Attack.
-										You can deﬁne how many times that an account can retry logging AiCloud in a speciﬁc time period. 
+										You can define allowable account/password login retry attempts.
 										For example, 3 times / 2mins refers to user could only 3 chances to try the account and password in 2 minutes, once exceed,  the AiCloud account will be locked, and administrator need to enter this page to unlock it.
 									</div>
 
@@ -125,9 +131,13 @@ function unlockAcc(){
 														$j('#radio_enable_webdav_lock').iphoneSwitch('<% nvram_get("enable_webdav_lock"); %>',
 															function() {
 																document.form.enable_webdav_lock.value = 1;
+																inputCtrl(document.form.webdav_lock_times, 1);
+																inputCtrl(document.form.webdav_lock_interval, 1);
 															},
 															function() {
 																document.form.enable_webdav_lock.value = 0;
+																inputCtrl(document.form.webdav_lock_times, 0);
+																inputCtrl(document.form.webdav_lock_interval, 0);
 															},
 															{
 																switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
@@ -138,7 +148,11 @@ function unlockAcc(){
 
 													<input type="text" name="webdav_lock_times" class="input_3_table" maxlength="2" onblur="validate_number_range(this, 1, 10);" value="<% nvram_get("webdav_lock_times"); %>"> times in 
 													<input type="text" name="webdav_lock_interval" class="input_3_table" maxlength="2" onblur="validate_number_range(this, 1, 60);" value="<% nvram_get("webdav_lock_interval"); %>"> minutes the AiCloud account will be locked.
-													<input style="margin-left:10px;" class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
+							            <br/>
+							            <br/>
+													<div class="apply_gen" style="background-color:#444F53;">
+														<input style="margin-left:10px;" class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
+							            </div>
 												</div>
 											</td>
 									  </tr>

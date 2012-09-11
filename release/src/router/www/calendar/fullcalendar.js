@@ -5284,6 +5284,12 @@ function HorizontalPositionCache(getElement) {
 function SaveTmpData(_data){
 	var _date = new Date();
 	var d = _date.getDate() - _date.getDay(); // the date of this sunday
+	var calEnd;
+	var calStart;
+
+	calStart = _date.getTime() - _date.getDay()*86400000 - _date.getTime()%86400000 + _date.getTimezoneOffset()*60000;
+	calEnd = _date.getTime() + (7-_date.getDay())*86400000 - _date.getTime()%86400000 + _date.getTimezoneOffset()*60000;
+	
 	var MULTIFILTER_MACFILTER_DAYTIME_row_title = "";
 	var MULTIFILTER_MACFILTER_DAYTIME_row_time = "";
 	MULTIFILTER_MACFILTER_DAYTIME_row[_client] = "";
@@ -5296,35 +5302,34 @@ function SaveTmpData(_data){
 			continue;
 		else{
 			if(i != 0)
-				MULTIFILTER_MACFILTER_DAYTIME_row_title += "<"
+				MULTIFILTER_MACFILTER_DAYTIME_row_title += "<"		
 			MULTIFILTER_MACFILTER_DAYTIME_row_title += _data[i].event.title;
 			MULTIFILTER_MACFILTER_DAYTIME_row_title += "<"
-		
-			if(_data[i].event.start.getDay() > _data[i].event.end.getDay()){
-				if(_data[i].event.end.getTime() > _date.getTime()){
-					MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.start.getDay();
-					MULTIFILTER_MACFILTER_DAYTIME_row_time += "6";
-					MULTIFILTER_MACFILTER_DAYTIME_row_time += convHour(_data[i].event.start.getHours());			
-					MULTIFILTER_MACFILTER_DAYTIME_row_time += "24";
-				}
-				else{
-					MULTIFILTER_MACFILTER_DAYTIME_row_time += "0";
-					MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.end.getDay();
-					MULTIFILTER_MACFILTER_DAYTIME_row_time += "00";
-					MULTIFILTER_MACFILTER_DAYTIME_row_time += convHour(_data[i].event.end.getHours());			
-				}	
+
+			if(_data[i].event.start.getTime() < calStart){
+				MULTIFILTER_MACFILTER_DAYTIME_row_time += "0";
+				MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.end.getDay();
+				MULTIFILTER_MACFILTER_DAYTIME_row_time += "00";
+				MULTIFILTER_MACFILTER_DAYTIME_row_time += convHour(_data[i].event.end.getHours());			
+			}
+			else if(_data[i].event.end.getTime() >= calEnd){			
+				MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.start.getDay();
+				MULTIFILTER_MACFILTER_DAYTIME_row_time += "6";
+				MULTIFILTER_MACFILTER_DAYTIME_row_time += convHour(_data[i].event.start.getHours());			
+				MULTIFILTER_MACFILTER_DAYTIME_row_time += "24";
 			}
 			else{
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.start.getDay();
 
-				if(convHour(_data[i].event.end.getHours()) == "00")
+				if(convHour(_data[i].event.end.getHours()) == "00"){					
 					MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.end.getDay()-1;
+				}	
 				else
 					MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.end.getDay();
 
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += convHour(_data[i].event.start.getHours());
 				if(convHour(_data[i].event.end.getHours()) == "00")
-					MULTIFILTER_MACFILTER_DAYTIME_row_time += "24";
+					MULTIFILTER_MACFILTER_DAYTIME_row_time += "24";	
 				else
 					MULTIFILTER_MACFILTER_DAYTIME_row_time += convHour(_data[i].event.end.getHours());
 			}

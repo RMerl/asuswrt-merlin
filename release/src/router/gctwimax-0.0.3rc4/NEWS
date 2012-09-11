@@ -1,0 +1,22 @@
+Version 0.0.3rc4[2011.12.15]
+	-	Fixed inaccuracies in selection EAP-TYPE
+	-	Fixed some bugs in authentication process
+Version 0.0.3rc3[2011.11.19]
+	-	Corrected inaccuracies in selection EAP-TYPE
+	-	Added more options to config file
+Version 0.0.3rc1[2011.11.03]
+	-	Added config file support
+	-	Added functions to get all configurations from modem memory
+	-	Fixed some bugs
+Version 0.0.2	[2011.04.13]
+	-	Added EAP-TLS, EAP-TTLS/MD5, EAP-TTLS/CHAP 
+Version 0.0.2a	[2011.04.04]
+	-	Fixed bug "Segmentation fault"	(thanks Gennady X)
+	-	Added support GDM7205 chip		(thanks fanboy)
+	-	Added support of certification files from modem memory
+	-	Added DBus support 				(thanks Gennady X)
+	-	Fixed bug with wrong characters in --nspid
+Version 0.0.1d
+	-	Fixed problem with "Network not found." when signal is good
+	-	Add output of RSSI-2 and CINR-2
+	-	Fixed a lot of Bugs 

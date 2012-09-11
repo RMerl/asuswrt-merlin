@@ -710,6 +710,7 @@ function unload_body(){
 <input type="hidden" name="action_mode" value="">
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">
+<input type="hidden" name="current_page" value="Advanced_AiDisk_samba.asp">
 </form>
 
 <table width="983" border="0" align="center" cellpadding="0" cellspacing="0" class="content">
@@ -810,7 +811,7 @@ function unload_body(){
 			  </table>
 			  
 			  <!-- the tree of folders -->
-			  <div id="e0" class="FdTemp" style="font-size:10pt; margin-top:2px;"></div>
+			  <div id="e0" style="font-size:10pt; margin-top:2px;"></div>
 			  
 			  <div style="text-align:center; margin:10px auto; border-top:1px dotted #CCC; width:95%; padding:2px;">
 			    <input name="changePermissionBtn" id="changePermissionBtn" type="button" value="<#CTL_apply#>" class="button_gen_dis" disabled="disabled">

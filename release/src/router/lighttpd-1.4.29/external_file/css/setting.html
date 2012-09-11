@@ -11,6 +11,7 @@ html{
 body{
 	display: block;
 	overflow: hidden;
+	background: #e8e8e8;
 }
 
 tr.odd {
@@ -95,12 +96,14 @@ $("document").ready(function() {
 	$('li#rescan a').text(m.getString('title_rescan'));
 	$('li#sharelink a').text(m.getString('title_sharelink'));
 	$('button#ok').text(m.getString('btn_ok'));
-	$('button#cancel').text(m.getString('btn_cancel'));
+	$('button#cancel').text(m.getString('btn_close'));
 	$('#btn_rescan').text(m.getString('btn_rescan'));
 	$('span#desc_rescan').text(m.getString('title_desc_rescan'));
 	
-	refreshShareLinkList();
+	$('span#desc_version').text(m.getString('title_version'));
+	$('span#version').text(g_storage.get('router_version'));
 	
+	refreshShareLinkList();
 });
 
 function refreshShareLinkList(){
@@ -112,7 +115,7 @@ function refreshShareLinkList(){
 			
 			$("#tab2").empty();
 			
-			var table_html = "<table id='sharelink' width='100%' border='0'>";
+			var table_html = "<table id='sharelink' width='100%' border='0' style='table-layout:fixed'>";
 			table_html += "<thead><tr>";
       table_html += "<th scope='col' class='filename' style='width:20%'>" + m.getString('table_filename') + "</th>";
       table_html += "<th scope='col' class='createtime' style='width:25%'>" + m.getString('table_createtime') + "</th>";
@@ -137,10 +140,16 @@ function refreshShareLinkList(){
 				table_html += "<tr nid='" + i + "' class='even'>";
     		table_html += "<td fid='filename' align='center'><a href='" + url + "'>" + filename + "</a></td>";
        	table_html += "<td fid='createtime' align='center'>" + createtime + "</td>";
-       	table_html += "<td fid='expiretime' align='center'>" + expiretime + "</td>";
-       	table_html += "<td fid='lefttime' align='center'>" + hour + " hours " + minute + " mins" + "</td>";
+       	if(expiretime==0){
+       		table_html += "<td fid='expiretime' align='center'>" + m.getString('title_unlimited') + "</td>";
+       		table_html += "<td fid='lefttime' align='center'>" + m.getString('title_unlimited') + "</td>";
+      	}
+      	else{
+       		table_html += "<td fid='expiretime' align='center'>" + expiretime + "</td>";
+       		table_html += "<td fid='lefttime' align='center'>" + hour + " hours " + minute + " mins" + "</td>";
+      	}
        	table_html += "<td fid='remove' align='center'><a>";
-        table_html += "<div class='dellink' title='remove' link='" + $(this).attr("url") + "'></div>";
+        table_html += "<div class='dellink' title='remove' link='" + $(this).attr("url") + "' style='cursor:pointer'></div>";
         table_html += "</a></td>";
        	
       	table_html += "</tr>";
@@ -210,6 +219,7 @@ function getUrlVars(){
 				<ul class="tabs">
 					<li id='rescan'><a href="#tab1">重新搜尋</a></li>
 					<li id='sharelink'><a href="#tab2">分享清單</a></li>
+					<li id='version'><a href="#tab3">版本</a></li>
 				</ul>
 				<div class="tab_container">
 					<div id="tab1" class="tab_content">
@@ -217,6 +227,10 @@ function getUrlVars(){
 						<button id="btn_rescan">開始重新搜尋</button>
 				  </div>
 				  <div id="tab2" class="tab_content" style="padding:0">			    	
+					</div>
+					<div id="tab3" class="tab_content">
+						<span id="desc_version"></span>
+						<span id="version"></span>
 					</div>
 				</div>
 			</div>
@@ -226,7 +240,7 @@ function getUrlVars(){
   <tr>
   	<td>
   	<div class="table_block_footer" style="text-align:right">
-    	<button id="ok" class='btnStyle' onClick="doOK();" disabled="true">OK</button>
+    	<!--<button id="ok" class='btnStyle' onClick="doOK();" disabled="true">OK</button>-->
       <button id="cancel" class="btnStyle" onClick="doCancel();">Close</button>
     </div>
     </td>

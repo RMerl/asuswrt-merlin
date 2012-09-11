@@ -1,0 +1,39 @@
+gctWiMAX: INSTALL
+
+Requirements
+------------
+
+ * Linux kernel with TUN/TAP support
+ * libusb-1.0-dev
+ * libssl-dev
+ * dbus
+ * libdbus-1-dev
+ * zlib
+ * libeap.so (http://hostap.epitest.fi/) WPA Supplicant 0.7.x
+ 
+Compiling
+---------
+
+To build libeap.so:
+	http://www.linuxwimax.org/Download?action=AttachFile&do=get&target=wpa-1.5-README.txt
+ 
+	$ tar xf wpa_supplicant-0.7.X.tar.gz
+	$ cd wpa_supplicant-0.7.X
+	$ patch -p1 < PATH/wpa_supplicant-0.7.2-generate-libeap-peer.patch 
+(http://www.linuxwimax.org/Download?action=AttachFile&do=get&target=wpa_supplicant-0.7.2-generate-libeap-peer.patch)	
+	$ make -C src/eap_peer
+	# As root
+	$ make -C src/eap_peer install
+	$ ldconfig
+
+To compile the software run:
+	$ tar xf gctwimax-0.0.3rc4.tar.gz
+	$ cd gctwimax-0.0.3rc4
+	# To compile without DBUS support
+		$ make
+	# To compile with DBUS support
+		$ make CFLAGS=-DWITH_DBUS	
+	# As root
+	$ make install
+
+

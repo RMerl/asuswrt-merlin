@@ -113,7 +113,7 @@ function setScenerion(mode){
 				pstaDesc += "To setup the Media bridge mode, you need two <#Web_Title2#> routers, one configured as the Media station and the other as a router.";
 				pstaDesc += "Setup the first <#Web_Title2#> as router then configure the second <#Web_Title2#> as 802.11ac Media bridge  and you can simply connect  PCs, Smart TV, game console, DVR, media player to Media bridge via Ethernet cable.";
 				pstaDesc += "Upgrade your home entertainment device with low interference Gigabit Wi-Fi and avoid the separate Wi-Fi adapters for multiple devices at the same time.";
-				pstaDesc += "<br/><span style=\"color:#FC0\">Install and use the <a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery Utility</a> in order to detect the <#Web_Title2#>'s IP address.</span>";
+				pstaDesc += "<br/><span style=\"color:#FC0\"><#use_DevDiscoveryUtil#></span>";
 
 		document.form.sw_mode.value = 2;
 		$j("#Senario").css("height", "300px");

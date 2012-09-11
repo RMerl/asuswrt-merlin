@@ -391,7 +391,7 @@ function cleandef(){
 						<input type="text" maxlength="63" class="input_25_table" name="ddns_hostname_x" id="ddns_hostname_x" value="<% nvram_get("ddns_hostname_x"); %>" onKeyPress="return is_string(this, event)">
 					</div>
 					<div id="asusddnsname_input" style="display:none;">
-						<input type="text" maxlength="20" class="input_20_table" name="DDNSName" id="DDNSName" class="inputtext" onKeyPress="return is_string(this, event)" OnClick="cleandef();">.asuscomm.com
+						<input type="text" maxlength="32" class="input_32_table" name="DDNSName" id="DDNSName" class="inputtext" onKeyPress="return is_string(this, event)" OnClick="cleandef();">.asuscomm.com
 						<div id="alert_block" style="color:#FFCC00; margin-left:5px; font-size:11px;display:none;">
 								<span id="alert_str"></span>
 						</div>						
