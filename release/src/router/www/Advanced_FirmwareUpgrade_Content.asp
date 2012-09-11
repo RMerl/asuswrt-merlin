@@ -299,11 +299,13 @@ function detect_httpd(){
 			<tr>
 				<th><#FW_item2#></th>
 				<td><input type="text" name="firmver_table" class="input_15_table" value="<% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>" readonly="1"><!--/td-->
+<!--
 						<input type="button" id="update" name="update" class="button_gen" onclick="detect_update();" value="<#liveupdate#>" />
 						<div id="check_states">
 								<span id="update_states"></span>
 								<img id="update_scan" style="display:none;" src="images/InternetScan.gif" />
 						</div>
+-->
 				</td>
 			</tr>
 			<tr>
