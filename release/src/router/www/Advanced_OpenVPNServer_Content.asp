@@ -321,8 +321,8 @@ function applyRule(){
 		}
 	}
 
-	if (tmp_value != document.form.vpn_server_x_dns.value) {
-		document.form.action_script += ";restart_dnsmasq";
+	if (tmp_value != document.form.vpn_server_dns.value) {
+		document.form.action_script.value += ";restart_dnsmasq";
 		document.form.vpn_server_dns.value = tmp_value;
 	}
 	document.form.submit();
