@@ -850,7 +850,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 				</td>
         	</tr>
                 <tr>
-                <th>Additional DHCP options</th>
+                <th>Manual clientid (for some ISPs)</th>
                 <td><input type="text" name="wan_dhcpc_options" class="input_32_table" maxlength="128" value="<% nvram_get("wan_dhcpc_options"); %>" onkeypress="return is_string(this, event)"></td>
                 </tr>
 		</table>

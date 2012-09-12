@@ -338,9 +338,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 {
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char pid[sizeof("/var/run/udhcpcXXXXXXXXXX.pid")];
-#ifdef RTCONFIG_DSL
-	char clientid[sizeof("61:") + (32+32+1)*2];
-#endif
+	char clientid[sizeof("61:00") + (32+32+1)*2];
 	char *value;
 	char *dhcp_argv[] = { "udhcpc",
 		"-i", wan_ifname,
@@ -358,6 +356,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 #ifdef RTCONFIG_DSL
 		NULL, NULL,	/* -x 61:wan_clientid */
 #endif
+		NULL, NULL,	/* -x 61:wan_clientid (non-DSL) */
 		NULL};
 	int index = 7;		/* first NULL */
 	int dr_enable;
@@ -403,6 +402,15 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 	}
 #endif
 
+	value = nvram_safe_get(strcat_r(prefix,"dhcpc_options",tmp));
+	if (*value) {
+		char *ptr = clientid;
+		ptr += sprintf(ptr, "61:00");
+		while (*value && (ptr - clientid) < sizeof(clientid) - 2)
+			ptr += sprintf(ptr, "%02x", *value++);
+		dhcp_argv[index++] = "-x";
+		dhcp_argv[index++] = clientid;
+	}
 	return _eval(dhcp_argv, NULL, 0, ppid);
 }
 
