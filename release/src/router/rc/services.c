@@ -365,6 +365,10 @@ void start_dnsmasq()
 		write_static_leases("/etc/ethers");
 	}
 
+	/* Listen to PPTPD clients */
+	if (nvram_match("pptpd_enable","1"))
+		fprintf(fp,"listen-address=%s,127.0.0.1\n",lan_ipaddr);
+
 #ifdef RTCONFIG_OPENVPN
 	write_vpn_dnsmasq_config(fp);
 #endif
