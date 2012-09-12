@@ -358,6 +358,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 #ifdef RTCONFIG_DSL
 		NULL, NULL,	/* -x 61:wan_clientid */
 #endif
+		NULL, NULL,	/* - dhcp_options */
 		NULL};
 	int index = 7;		/* first NULL */
 	int dr_enable;
@@ -402,6 +403,12 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 		dhcp_argv[index++] = clientid;
 	}
 #endif
+
+	value = nvram_safe_get(strcat_r(prefix,"dhcpc_options",tmp));
+	if (*value) {
+		dhcp_argv[index++] = "-c";
+		dhcp_argv[index++] = value;
+	}
 
 	return _eval(dhcp_argv, NULL, 0, ppid);
 }
