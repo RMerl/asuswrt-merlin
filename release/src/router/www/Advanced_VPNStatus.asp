@@ -80,10 +80,10 @@ function parsePPTPClients() {
 
 	var lines = text.split('\n');
 
-	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="' + routeTableHeaders.length + '">Connected Clients</td></tr></thead><tr>';
+	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="4">Connected Clients</td></tr></thead><tr>';
 	code += '<th>Username</th><th>Interface</th><th>Remote IP</th><th>Client IP</th>';
 
-	for (i = 0; text != '' && i < lines.length; ++i)
+	for (i = 0; i < lines.length; ++i)
 	{
 		var done = false;
 
