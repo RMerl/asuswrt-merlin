@@ -16,31 +16,31 @@
 // stub for wlconf, etc.
 struct nvram_tuple router_defaults[] = {
 	// NVRAM for init_syspara: system paraamters getting from MFG/NVRAM Area
- 	//{ "boardflags", "" }, 
+ 	//{ "boardflags", "" },
 	//{ "productid", "" },
 	//{ "firmver", "" },
 	//{ "hardware_version", "" }, // bootloader and hardware version
-	//{ "et0macaddr", "" }, 
-	//{ "wl0macaddr", "" }, 
+	//{ "et0macaddr", "" },
+	//{ "wl0macaddr", "" },
 	//{ "wl1macaddr", "" },
 
 	// NVRAM for restore_defaults: system wide parameters
 	{ "nvramver", RTCONFIG_NVRAM_VER},
 	{ "restore_defaults",	"0"	},	// Set to 0 to not restore defaults on boot
-	{ "sw_mode", "1" 		}, 	// big switch for different mode 
-	{ "asus_mfg", "0"		}, 	// for MFG 
+	{ "sw_mode", "1" 		}, 	// big switch for different mode
+	{ "asus_mfg", "0"		}, 	// for MFG
 	{ "preferred_lang", "EN"	},
-	// NVRAM from init_nvram: system wide parameters accodring to model and mode 
+	// NVRAM from init_nvram: system wide parameters accodring to model and mode
 	//{ "wan_ifnames", "" },
 	//{ "lan_ifnames", "" },
 	//{ "lan1_ifnames", "" },
 	//{ "vlan_enable", "" },
 	//{ "vlan0ports",  "" },
 	//{ "vlan1ports",  "" },
-	//{ "vlan2ports",  "" }, 
+	//{ "vlan2ports",  "" },
 	/* Guest H/W parameters */
 
-	// NVRAM for switch	
+	// NVRAM for switch
 	{ "switch_stb_x", "0"}, 		// oleg patch
 	{ "switch_wantag", "none"},		//for IPTV/VoIP case
 	{ "switch_wan0tagid", "" },		//Wan Port
@@ -291,7 +291,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "emf_rtport_entry", ""},		/* IGMP frames forwarding ports */
 #endif /* __CONFIG_EMF__ */
 
-	// ASUS used only?	
+	// ASUS used only?
 	{ "wl_nmode_x", 		"0"	},	/* 0/1/2, auto/nonly,bgmixed*/
 #ifdef RTCONFIG_BCMWL6
 	{ "wl_bw", 			"0"	},	/* 0/1/2/3 auto/20/40/80MHz */
@@ -382,7 +382,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "emf_rtport_entry",		""		},	// IGMP frames forwarding ports
 	{ "emf_enable",			"0"		},	// Enable EMF by default
 #endif
-// WPS 
+// WPS
 //	#if defined (W7_LOGO) || defined (WIFI_LOGO)
 	{ "wps_enable", "1"},
 //	#else
@@ -482,7 +482,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "pktc_disable", 		"0"		},
 #endif
 
-	// NVRAM for start_lan: 
+	// NVRAM for start_lan:
 // LAN H/W parameters
 	{ "lan_hwnames",		""		},	// LAN driver names (e.g. et0)
 	{ "lan_hwaddr",			""		},	// LAN interface MAC address
@@ -675,9 +675,9 @@ struct nvram_tuple router_defaults[] = {
 #endif
 
 // the following variables suppose can be removed
-	{ "dslx_nat", "1" },	
-	{ "dslx_upnp_enable", "1" },	
-	{ "dslx_link_enable", "1" },	
+	{ "dslx_nat", "1" },
+	{ "dslx_upnp_enable", "1" },
+	{ "dslx_link_enable", "1" },
 	{ "dslx_DHCPClient", "1" },
 	{ "dslx_dhcp_clientid", "" },	//Required by some ISP using RFC 1483 MER.
 	{ "dslx_ipaddr", "0.0.0.0"},	/* IP address */
@@ -685,29 +685,29 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_gateway", "0.0.0.0"},	/* gateway */
 	{ "dslx_dnsenable", "1"},
 	{ "dslx_dns1", ""},
-	{ "dslx_dns2", ""},	
-// now use switch_stb_x	
+	{ "dslx_dns2", ""},
+// now use switch_stb_x
 	{ "dslx_pppoe_username", ""},
 	{ "dslx_pppoe_passwd", ""},
 	// this one is no longer to use
 	//{ "dslx_pppoe_dial_on_demand", ""},
 	{ "dslx_pppoe_idletime", "0"},
 	{ "dslx_pppoe_mtu", "1492"},
-	// this one is no longer to use	
+	// this one is no longer to use
 //	{ "dslx_pppoe_mru", ""},
 	{ "dslx_pppoe_service", ""},
 	{ "dslx_pppoe_ac", ""},
-	{ "dslx_pppoe_options", ""},	
+	{ "dslx_pppoe_options", ""},
 	{ "dslx_hwaddr", ""},
-//	
-	{ "dsl_unit", "0"}, 
+//
+	{ "dsl_unit", "0"},
 //
 	{ "dsl_enable", ""},
 	{ "dsl_vpi", ""},
 	{ "dsl_vci", ""},
 	{ "dsl_encap", ""},
 	{ "dsl_proto", ""},
-	
+
 	/* Paul modify 2012/8/6, set default Service Category to UBR without PCR, with PCR, SCR and MBS set to 0. */
 	{ "dsl_svc_cat", "0"},
 	{ "dsl_pcr", "0"},
@@ -733,7 +733,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl1_svc_cat", ""},
 	{ "dsl1_pcr", ""},
 	{ "dsl1_scr", ""},
-	{ "dsl1_mbs", ""},	
+	{ "dsl1_mbs", ""},
 //
 	{ "dsl2_enable", "0"},
 	{ "dsl2_vpi", ""},
@@ -743,7 +743,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl2_svc_cat", ""},
 	{ "dsl2_pcr", ""},
 	{ "dsl2_scr", ""},
-	{ "dsl2_mbs", ""},	
+	{ "dsl2_mbs", ""},
 //
 	{ "dsl3_enable", "0"},
 	{ "dsl3_vpi", ""},
@@ -793,11 +793,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl7_svc_cat", ""},
 	{ "dsl7_pcr", ""},
 	{ "dsl7_scr", ""},
-	{ "dsl7_mbs", ""},	
+	{ "dsl7_mbs", ""},
 // number of PVC , program generated
 	{ "dslx_config_num", "0"},
 // for debug , program generated
-	{ "dslx_debug", "0"},	
+	{ "dslx_debug", "0"},
 #endif
 
 	// NVRAM for start_firewall/start_qos
@@ -885,8 +885,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "misc_httpsport_x", "8443" },
 #endif
 	{ "misc_ping_x", "0" },
-	{ "misc_lpr_x", "0" },	
-	
+	{ "misc_lpr_x", "0" },
+
 	// UrlList
 	{ "url_enable_x", "0"},
 	{ "url_date_x", "1111111"},
@@ -1198,189 +1198,189 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_OPENVPN
 	// openvpn
-        { "vpn_debug",            "0"             },
-        { "vpn_server_unit",      "1"             },
-        { "vpn_server_eas",       ""              },
-        { "vpn_server_dns",       ""              },
-        { "vpn_server_poll",     "0"             },
-        { "vpn_server_if",       "tun"           },
-        { "vpn_server_proto",    "udp"           },
-        { "vpn_server_port",     "1194"          },
-        { "vpn_server_firewall", "auto"          },
-        { "vpn_server_crypt",    "tls"           },
-        { "vpn_server_comp",     "adaptive"      },
-        { "vpn_server_cipher",   "default"       },
-        { "vpn_server_dhcp",     "1"             },
-        { "vpn_server_r1",       "192.168.1.50"  },
-        { "vpn_server_r2",       "192.168.1.55"  },
-        { "vpn_server_sn",       "10.8.0.0"      },
-        { "vpn_server_nm",       "255.255.255.0" },
-        { "vpn_server_local",    "10.8.0.1"      },
-        { "vpn_server_remote",   "10.8.0.2"      },
-        { "vpn_server_reneg",    "-1"            },
-        { "vpn_server_hmac",     "-1"            },
-        { "vpn_server_plan",     "1"             },
-        { "vpn_server_ccd",      "0"             },
-        { "vpn_server_c2c",      "0"             },
-        { "vpn_server_ccd_excl", "0"             },
-        { "vpn_server_ccd_val",  ""              },
-        { "vpn_server_pdns",     "0"             },
-        { "vpn_server_rgw",      "0"             },
-        { "vpn_server_custom",   ""              },
-        { "vpn_server1_poll",     "0"             },
-        { "vpn_server1_if",       "tun"           },
-        { "vpn_server1_proto",    "udp"           },
-        { "vpn_server1_port",     "1194"          },
-        { "vpn_server1_firewall", "auto"          },
-        { "vpn_server1_crypt",    "tls"           },
-        { "vpn_server1_comp",     "adaptive"      },
-        { "vpn_server1_cipher",   "default"       },
-        { "vpn_server1_dhcp",     "1"             },
-        { "vpn_server1_r1",       "192.168.1.50"  },
-        { "vpn_server1_r2",       "192.168.1.55"  },
-        { "vpn_server1_sn",       "10.8.0.0"      },
-        { "vpn_server1_nm",       "255.255.255.0" },
-        { "vpn_server1_local",    "10.8.0.1"      },
-        { "vpn_server1_remote",   "10.8.0.2"      },
-        { "vpn_server1_reneg",    "-1"            },
-        { "vpn_server1_hmac",     "-1"            },
-        { "vpn_server1_plan",     "1"             },
-        { "vpn_server1_ccd",      "0"             },
-        { "vpn_server1_c2c",      "0"             },
-        { "vpn_server1_ccd_excl", "0"             },
-        { "vpn_server1_ccd_val",  ""              },
-        { "vpn_server1_pdns",     "0"             },
-        { "vpn_server1_rgw",      "0"             },
-        { "vpn_server1_custom",   ""              },
-        { "vpn_crt_server1_static",   ""          },
-        { "vpn_crt_server1_ca",       ""          },
-        { "vpn_crt_server1_crt",      ""          },
-        { "vpn_crt_server1_key",      ""          },
-        { "vpn_crt_server1_dh",       ""          },
-        { "vpn_server2_poll",     "0"             },
-        { "vpn_server2_if",       "tun"           },
-        { "vpn_server2_proto",    "udp"           },
-        { "vpn_server2_port",     "1194"          },
-        { "vpn_server2_firewall", "auto"          },
-        { "vpn_server2_crypt",    "tls"           },
-        { "vpn_server2_comp",     "adaptive"      },
-        { "vpn_server2_cipher",   "default"       },
-        { "vpn_server2_dhcp",     "1"             },
-        { "vpn_server2_r1",       "192.168.1.50"  },
-        { "vpn_server2_r2",       "192.168.1.55"  },
-        { "vpn_server2_sn",       "10.8.0.0"      },
-        { "vpn_server2_nm",       "255.255.255.0" },
-        { "vpn_server2_local",    "10.8.0.1"      },
-        { "vpn_server2_remote",   "10.8.0.2"      },
-        { "vpn_server2_reneg",    "-1"            },
-        { "vpn_server2_hmac",     "-1"            },
-        { "vpn_server2_plan",     "1"             },
-        { "vpn_server2_ccd",      "0"             },
-        { "vpn_server2_c2c",      "0"             },
-        { "vpn_server2_ccd_excl", "0"             },
-        { "vpn_server2_ccd_val",  ""              },
-        { "vpn_server2_pdns",     "0"             },
-        { "vpn_server2_rgw",      "0"             },
-        { "vpn_server2_custom",   ""              },
-        { "vpn_crt_server2_static",   ""              },
-        { "vpn_crt_server2_ca",       ""          },
-        { "vpn_crt_server2_crt",      ""          },
-        { "vpn_crt_server2_key",      ""          },
-        { "vpn_crt_server2_dh",       ""          },
-	{ "vpn_client_unit",	"1"		},
-        { "vpn_client_eas",       ""              },
-        { "vpn_client1_poll",     "0"             },
-        { "vpn_client1_if",       "tun"           },
-        { "vpn_client1_bridge",   "1"             },
-        { "vpn_client1_nat",      "1"             },
-        { "vpn_client1_proto",    "udp"           },
-        { "vpn_client1_addr",     ""              },
-        { "vpn_client1_port",     "1194"          },
-        { "vpn_client1_retry",    "30"            },
-        { "vpn_client1_rg",       "0"             },
-        { "vpn_client1_firewall", "auto"          },
-        { "vpn_client1_crypt",    "tls"           },
-        { "vpn_client1_comp",     "adaptive"      },
-        { "vpn_client1_cipher",   "default"       },
-        { "vpn_client1_local",    "10.8.0.2"      },
-        { "vpn_client1_remote",   "10.8.0.1"      },
-        { "vpn_client1_nm",       "255.255.255.0" },
-        { "vpn_client1_reneg",    "-1"            },
-        { "vpn_client1_hmac",     "-1"            },
-        { "vpn_client1_adns",     "0"             },
-        { "vpn_client1_rgw",      "0"             },
-        { "vpn_client1_gw",       ""              },
-        { "vpn_client1_custom",   ""              },
-	{ "vpn_client1_tlsremote", "0"		},
-        { "vpn_crt_client1_static",   ""          },
-        { "vpn_crt_client1_ca",       ""          },
-        { "vpn_crt_client1_crt",      ""          },
-        { "vpn_crt_client1_key",      ""          },
-        { "vpn_client1_userauth", "0"             },
-        { "vpn_client1_username", ""              },
-        { "vpn_client1_password", ""              },
-        { "vpn_client2_poll",     "0"             },
-        { "vpn_client2_if",       "tun"           },
-        { "vpn_client2_bridge",   "1"             },
-        { "vpn_client2_nat",      "1"             },
-        { "vpn_client2_proto",    "udp"           },
-        { "vpn_client2_addr",     ""              },
-        { "vpn_client2_port",     "1194"          },
-        { "vpn_client2_retry",    "30"            },
-        { "vpn_client2_rg",       "0"             },
-        { "vpn_client2_firewall", "auto"          },
-        { "vpn_client2_crypt",    "tls"           },
-        { "vpn_client2_comp",     "adaptive"      },
-        { "vpn_client2_cipher",   "default"       },
-        { "vpn_client2_local",    "10.8.0.2"      },
-        { "vpn_client2_remote",   "10.8.0.1"      },
-        { "vpn_client2_nm",       "255.255.255.0" },
-        { "vpn_client2_reneg",    "-1"            },
-        { "vpn_client2_hmac",     "-1"            },
-        { "vpn_client2_adns",     "0"             },
-        { "vpn_client2_rgw",      "0"             },
-        { "vpn_client2_gw",       ""              },
-        { "vpn_client2_custom",   ""              },
-        { "vpn_client2_tlsremote", "0"          },
-        { "vpn_crt_client2_static",   ""          },
-        { "vpn_crt_client2_ca",       ""          },
-        { "vpn_crt_client2_crt",      ""          },
-        { "vpn_crt_client2_key",      ""          },
-        { "vpn_client2_userauth", "0"             },
-        { "vpn_client2_username", ""              },
-        { "vpn_client2_password", ""              },
-        { "vpn_client_poll",     "0"              },
-        { "vpn_client_if",       "tun"            },
-        { "vpn_client_bridge",   "1"              },
-        { "vpn_client_nat",      "1"              },
-        { "vpn_client_proto",    "udp"            },
-        { "vpn_client_addr",     ""               },
-        { "vpn_client_port",     "1194"           },
-        { "vpn_client_retry",    "30"             },
-        { "vpn_client_rg",       "0"              },
-        { "vpn_client_firewall", "auto"           },
-        { "vpn_client_crypt",    "tls"            },
-        { "vpn_client_comp",     "adaptive"       },
-        { "vpn_client_cipher",   "default"        },
-        { "vpn_client_local",    "10.8.0.2"       },
-        { "vpn_client_remote",   "10.8.0.1"       },
-        { "vpn_client_nm",       "255.255.255.0"  },
-        { "vpn_client_reneg",    "-1"             },
-        { "vpn_client_hmac",     "-1"             },
-        { "vpn_client_adns",     "0"              },
-        { "vpn_client_rgw",      "0"              },
-        { "vpn_client_gw",       ""               },
-        { "vpn_client_tlsremote", "0"          },
-        { "vpn_client_custom",   ""               },
-        { "vpn_client_userauth", "0"              },
-        { "vpn_client_username", ""               },
-        { "vpn_client_password", ""               },
+	{ "vpn_debug",				"0"				},
+	{ "vpn_server_unit",		"1"				},
+	{ "vpn_server_eas",			""				},
+	{ "vpn_server_dns",			""				},
+	{ "vpn_server_poll",		"0"				},
+	{ "vpn_server_if",			"tun"			},
+	{ "vpn_server_proto",		"udp"			},
+	{ "vpn_server_port",		"1194"			},
+	{ "vpn_server_firewall",	"auto"			},
+	{ "vpn_server_crypt",		"tls"			},
+	{ "vpn_server_comp",		"adaptive"		},
+	{ "vpn_server_cipher",		"default"		},
+	{ "vpn_server_dhcp",		"1"				},
+	{ "vpn_server_r1",			"192.168.1.50"	},
+	{ "vpn_server_r2",			"192.168.1.55"	},
+	{ "vpn_server_sn",			"10.8.0.0"		},
+	{ "vpn_server_nm",			"255.255.255.0"	},
+	{ "vpn_server_local",		"10.8.0.1"		},
+	{ "vpn_server_remote",		"10.8.0.2"		},
+	{ "vpn_server_reneg",		"-1"			},
+	{ "vpn_server_hmac",		"-1"			},
+	{ "vpn_server_plan",		"1"				},
+	{ "vpn_server_ccd",			"0"				},
+	{ "vpn_server_c2c",			"0"				},
+	{ "vpn_server_ccd_excl",	"0"				},
+	{ "vpn_server_ccd_val",		""				},
+	{ "vpn_server_pdns",		"0"				},
+	{ "vpn_server_rgw",			"0"				},
+	{ "vpn_server_custom",		""				},
+	{ "vpn_server1_poll",		"0"				},
+	{ "vpn_server1_if",			"tun"			},
+	{ "vpn_server1_proto",		"udp"			},
+	{ "vpn_server1_port",		"1194"			},
+	{ "vpn_server1_firewall",	"auto"			},
+	{ "vpn_server1_crypt",		"tls"			},
+	{ "vpn_server1_comp",		"adaptive"		},
+	{ "vpn_server1_cipher",		"default"		},
+	{ "vpn_server1_dhcp",		"1"				},
+	{ "vpn_server1_r1",			"192.168.1.50"	},
+	{ "vpn_server1_r2",			"192.168.1.55"	},
+	{ "vpn_server1_sn",			"10.8.0.0"		},
+	{ "vpn_server1_nm",			"255.255.255.0"	},
+	{ "vpn_server1_local",		"10.8.0.1"		},
+	{ "vpn_server1_remote",		"10.8.0.2"		},
+	{ "vpn_server1_reneg",		"-1"			},
+	{ "vpn_server1_hmac",		"-1"			},
+	{ "vpn_server1_plan",		"1"				},
+	{ "vpn_server1_ccd",		"0"				},
+	{ "vpn_server1_c2c",		"0"				},
+	{ "vpn_server1_ccd_excl",	"0"				},
+	{ "vpn_server1_ccd_val",	""				},
+	{ "vpn_server1_pdns",		"0"				},
+	{ "vpn_server1_rgw",		"0"				},
+	{ "vpn_server1_custom",		""				},
+	{ "vpn_crt_server1_static",	""				},
+	{ "vpn_crt_server1_ca",		""				},
+	{ "vpn_crt_server1_crt",	""				},
+	{ "vpn_crt_server1_key",	""				},
+	{ "vpn_crt_server1_dh",		""				},
+	{ "vpn_server2_poll",		"0"				},
+	{ "vpn_server2_if",			"tun"			},
+	{ "vpn_server2_proto",		"udp"			},
+	{ "vpn_server2_port",		"1194"			},
+	{ "vpn_server2_firewall",	"auto"			},
+	{ "vpn_server2_crypt",		"tls"			},
+	{ "vpn_server2_comp",		"adaptive"		},
+	{ "vpn_server2_cipher",		"default"		},
+	{ "vpn_server2_dhcp",		"1"				},
+	{ "vpn_server2_r1",			"192.168.1.50"	},
+	{ "vpn_server2_r2",			"192.168.1.55"	},
+	{ "vpn_server2_sn",			"10.8.0.0"		},
+	{ "vpn_server2_nm",			"255.255.255.0"	},
+	{ "vpn_server2_local",		"10.8.0.1"		},
+	{ "vpn_server2_remote",		"10.8.0.2"		},
+	{ "vpn_server2_reneg",		"-1"			},
+	{ "vpn_server2_hmac",		"-1"			},
+	{ "vpn_server2_plan",		"1"				},
+	{ "vpn_server2_ccd",		"0"				},
+	{ "vpn_server2_c2c",		"0"				},
+	{ "vpn_server2_ccd_excl",	"0"				},
+	{ "vpn_server2_ccd_val",	""				},
+	{ "vpn_server2_pdns",		"0"				},
+	{ "vpn_server2_rgw",		"0"				},
+	{ "vpn_server2_custom",		""				},
+	{ "vpn_crt_server2_static",	""				},
+	{ "vpn_crt_server2_ca",		""				},
+	{ "vpn_crt_server2_crt",	""				},
+	{ "vpn_crt_server2_key",	""				},
+	{ "vpn_crt_server2_dh",		""				},
+	{ "vpn_client_unit",		"1"				},
+	{ "vpn_client_eas",			""				},
+	{ "vpn_client1_poll",		"0"				},
+	{ "vpn_client1_if",			"tun"			},
+	{ "vpn_client1_bridge",		"1"				},
+	{ "vpn_client1_nat",		"1"				},
+	{ "vpn_client1_proto",		"udp"			},
+	{ "vpn_client1_addr",		""				},
+	{ "vpn_client1_port",		"1194"			},
+	{ "vpn_client1_retry",		"30"			},
+	{ "vpn_client1_rg",			"0"				},
+	{ "vpn_client1_firewall",	"auto"			},
+	{ "vpn_client1_crypt",		"tls"			},
+	{ "vpn_client1_comp",		"adaptive"		},
+	{ "vpn_client1_cipher",		"default"		},
+	{ "vpn_client1_local",		"10.8.0.2"		},
+	{ "vpn_client1_remote",		"10.8.0.1"		},
+	{ "vpn_client1_nm",			"255.255.255.0"	},
+	{ "vpn_client1_reneg",		"-1"			},
+	{ "vpn_client1_hmac",		"-1"			},
+	{ "vpn_client1_adns",		"0"				},
+	{ "vpn_client1_rgw",		"0"				},
+	{ "vpn_client1_gw",			""				},
+	{ "vpn_client1_custom",		""				},
+	{ "vpn_client1_tlsremote",	"0"				},
+	{ "vpn_crt_client1_static",	""				},
+	{ "vpn_crt_client1_ca",		""				},
+	{ "vpn_crt_client1_crt",	""				},
+	{ "vpn_crt_client1_key",	""				},
+	{ "vpn_client1_userauth",	"0"				},
+	{ "vpn_client1_username",	""				},
+	{ "vpn_client1_password",	""				},
+	{ "vpn_client2_poll",		"0"				},
+	{ "vpn_client2_if",			"tun"			},
+	{ "vpn_client2_bridge",		"1"				},
+	{ "vpn_client2_nat",		"1"				},
+	{ "vpn_client2_proto",		"udp"			},
+	{ "vpn_client2_addr",		""				},
+	{ "vpn_client2_port",		"1194"			},
+	{ "vpn_client2_retry",		"30"			},
+	{ "vpn_client2_rg",			"0"				},
+	{ "vpn_client2_firewall",	"auto"			},
+	{ "vpn_client2_crypt",		"tls"			},
+	{ "vpn_client2_comp",		"adaptive"		},
+	{ "vpn_client2_cipher",		"default"		},
+	{ "vpn_client2_local",		"10.8.0.2"		},
+	{ "vpn_client2_remote",		"10.8.0.1"		},
+	{ "vpn_client2_nm",			"255.255.255.0"	},
+	{ "vpn_client2_reneg",		"-1"			},
+	{ "vpn_client2_hmac",		"-1"			},
+	{ "vpn_client2_adns",		"0"				},
+	{ "vpn_client2_rgw",		"0"				},
+	{ "vpn_client2_gw",			""				},
+	{ "vpn_client2_custom",		""				},
+	{ "vpn_client2_tlsremote",	"0"				},
+	{ "vpn_crt_client2_static",	""				},
+	{ "vpn_crt_client2_ca",		""				},
+	{ "vpn_crt_client2_crt",	""				},
+	{ "vpn_crt_client2_key",	""				},
+	{ "vpn_client2_userauth",	"0"				},
+	{ "vpn_client2_username",	""				},
+	{ "vpn_client2_password",	""				},
+	{ "vpn_client_poll",		"0"				},
+	{ "vpn_client_if",			"tun"			},
+	{ "vpn_client_bridge",		"1"				},
+	{ "vpn_client_nat",			"1"				},
+	{ "vpn_client_proto",		"udp"			},
+	{ "vpn_client_addr",		""				},
+	{ "vpn_client_port",		"1194"			},
+	{ "vpn_client_retry",		"30"			},
+	{ "vpn_client_rg",			"0"				},
+	{ "vpn_client_firewall",	"auto"			},
+	{ "vpn_client_crypt",		"tls"			},
+	{ "vpn_client_comp",		"adaptive"		},
+	{ "vpn_client_cipher",		"default"		},
+	{ "vpn_client_local",		"10.8.0.2"		},
+	{ "vpn_client_remote",		"10.8.0.1"		},
+	{ "vpn_client_nm",			"255.255.255.0"	},
+	{ "vpn_client_reneg",		"-1"			},
+	{ "vpn_client_hmac",		"-1"			},
+	{ "vpn_client_adns",		"0"				},
+	{ "vpn_client_rgw",			"0"				},
+	{ "vpn_client_gw",			""				},
+	{ "vpn_client_tlsremote",	"0"				},
+	{ "vpn_client_custom",		""				},
+	{ "vpn_client_userauth",	"0"				},
+	{ "vpn_client_username",	""				},
+	{ "vpn_client_password",	""				},
 #endif
 
 #ifdef RTCONFIG_IPV6
 	// IPv6 parameters
 	{ "ipv6_service",	"disabled"	},	// disabled/staic6/dhcp6/6to4/6in4/6rd/other
-	{ "ipv6_ifdev",		"ppp"		},	
+	{ "ipv6_ifdev",		"ppp"		},
 	{ "ipv6_prefix",	""		},	// The global-scope IPv6 prefix to route/advertise
 	{ "ipv6_prefix_length",	"64"		},	// The bit length of the prefix. Used by dhcp6c. For radvd, /64 is always assumed.
 	{ "ipv6_rtr_addr",	""		},	// defaults to $ipv6_prefix::1
@@ -1394,7 +1394,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_relay",		"192.88.99.1"	},	// IPv6 Anycast Address
 	{ "ipv6_tun_v4end",	"0.0.0.0"	},	// Foreign IPv4 endpoint of SIT tunnel
 	{ "ipv6_tun_addr",	""		},	// IPv6 address to assign to local tunnel endpoint
-	{ "ipv6_tun_addrlen",	"64"		},	// CIDR prefix length for tunnel's IPv6 address	
+	{ "ipv6_tun_addrlen",	"64"		},	// CIDR prefix length for tunnel's IPv6 address
 	{ "ipv6_tun_mtu",	"0"		},	// Tunnel MTU, 0 for default
 	{ "ipv6_tun_ttl",	"255"		},	// Tunnel TTL
 	{ "ipv6_6rd_dhcp",	"1"		},
@@ -1414,7 +1414,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_debug",		"0"		},
 #endif
 
-	{ "web_redirect", 	"1"		},      // Only NOLINK is redirected in default, it is overwrited in init_nvram			
+	{ "web_redirect", 	"1"		},      // Only NOLINK is redirected in default, it is overwrited in init_nvram
 
 #ifdef RTCONFIG_FANCTRL
 	{ "fanctrl_dutycycle",		"0"},
@@ -1447,8 +1447,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "dev_fail_reboot",		"3"},
 	// Wireless parameters
 
-        { "webui_resolve_conn", "0"},
-        { "wol_list", ""},  // WOL user-entered list
+	{ "webui_resolve_conn", "0"},
+	{ "wol_list", ""},  // WOL user-entered list
 
 	{ NULL, NULL    }
 };
@@ -1607,30 +1607,30 @@ struct nvram_tuple router_state_defaults[] = {
 #ifdef RTCONFIG_SWMODE_SWITCH
 	{ "swmode_switch", "0"},
 #endif
-	
+
 #ifdef RTCONFIG_DSL
 // name starting with 'dsl' are reserved for dsl unit
 // for temp variable please use dsltmp_xxx
 	{ "dsltmp_autodet_state", ""},
-	{ "dsltmp_autodet_vpi", "0"},	
+	{ "dsltmp_autodet_vpi", "0"},
 	{ "dsltmp_autodet_vci", "35"},
-	{ "dsltmp_autodet_encap", "0"},			
-// manually config	
-	{ "dsltmp_cfg_prctl", "0"},		
-	{ "dsltmp_cfg_vpi", "0"},	
-	{ "dsltmp_cfg_vci", "35"},		
-	{ "dsltmp_cfg_encap", "0"},			
+	{ "dsltmp_autodet_encap", "0"},
+// manually config
+	{ "dsltmp_cfg_prctl", "0"},
+	{ "dsltmp_cfg_vpi", "0"},
+	{ "dsltmp_cfg_vci", "35"},
+	{ "dsltmp_cfg_encap", "0"},
 	{ "dsltmp_cfg_iptv_idx", ""},
-	{ "dsltmp_cfg_iptv_num_pvc", "0"},	
+	{ "dsltmp_cfg_iptv_num_pvc", "0"},
 	{ "dsltmp_cfg_ispname", ""},
 	{ "dsltmp_cfg_country", ""},
-// tmp variable for QIS , it will write to dsl0_xxx after finish page	
+// tmp variable for QIS , it will write to dsl0_xxx after finish page
 	{ "dsltmp_qis_vpi", ""},
 	{ "dsltmp_qis_vci", ""},
 	{ "dsltmp_qis_proto", ""},
 	{ "dsltmp_qis_encap", ""},
 	{ "dsltmp_qis_pppoe_username", ""},
-	{ "dsltmp_qis_pppoe_passwd", ""},			
+	{ "dsltmp_qis_pppoe_passwd", ""},
 	{ "dsltmp_qis_pppoe_dial_on_demand", ""},
 	{ "dsltmp_qis_pppoe_idletime", ""},
 	{ "dsltmp_qis_pppoe_mtu", ""},
@@ -1640,31 +1640,31 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "dsltmp_qis_DHCPClient", ""},
 	{ "dsltmp_qis_ipaddr", ""},
 	{ "dsltmp_qis_netmask", ""},
-	{ "dsltmp_qis_gateway", ""},	
+	{ "dsltmp_qis_gateway", ""},
 	{ "dsltmp_qis_dnsenable", ""},
 	{ "dsltmp_qis_dns1", ""},
-	{ "dsltmp_qis_dns2", ""},	
+	{ "dsltmp_qis_dns2", ""},
 	{ "dsltmp_qis_svc_cat", ""},
-	{ "dsltmp_qis_pcr", ""},	
-	{ "dsltmp_qis_scr", ""},		
-	{ "dsltmp_qis_mbs", ""},			
-	{ "dsltmp_qis_pppoe_relay", ""},			
-	{ "dsltmp_qis_hwaddr", ""},				
-	{ "dsltmp_qis_admin_passwd", ""},					
+	{ "dsltmp_qis_pcr", ""},
+	{ "dsltmp_qis_scr", ""},
+	{ "dsltmp_qis_mbs", ""},
+	{ "dsltmp_qis_pppoe_relay", ""},
+	{ "dsltmp_qis_hwaddr", ""},
+	{ "dsltmp_qis_admin_passwd", ""},
 	{ "dsltmp_qis_admin_passwd_set", "0"},
-	{ "dsltmp_qis_dsl_pvc_set", "0"},	
+	{ "dsltmp_qis_dsl_pvc_set", "0"},
 // for DSL driver and tool
-	{ "dsltmp_tc_resp_to_d", ""},			
+	{ "dsltmp_tc_resp_to_d", ""},
 	{ "dsltmp_adslatequit", "0"},
-	{ "dsltmp_tcbootup", "0"},	
-	{ "dsltmp_adslsyncsts", ""},	
-	{ "dsltmp_adslsyncsts_detail", ""},	
+	{ "dsltmp_tcbootup", "0"},
+	{ "dsltmp_adslsyncsts", ""},
+	{ "dsltmp_adslsyncsts_detail", ""},
 // for web ui identify , 1=old ui, 2=asuswrt
-	{ "dsltmp_web_ui_ver", "2"},	
+	{ "dsltmp_web_ui_ver", "2"},
 #endif
 	{ "ddns_return_code", ""},
 	{ "ddns_return_code_chk", ""},
-	{ "reboot_time", "70"},	
+	{ "reboot_time", "70"},
 	{ NULL, NULL }
 };
 
@@ -1799,7 +1799,7 @@ fix_name(const char *name, char *fixed_name)
 }
 
 
-/* 
+/*
  * Find nvram param name; return pointer which should be treated as const
  * return NULL if not found.
  *
