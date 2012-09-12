@@ -97,8 +97,8 @@ function initial()
 	}
 
 	// Set these based on a compound field
-	setRadioValue(document.form.vpn_server_x_eas, ((document.form.vpn_server_eas.value.indexOf(''+(vpn_unit)) >= 0) ? "1" : "0"));
-	setRadioValue(document.form.vpn_server_x_dns, ((document.form.vpn_server_dns.value.indexOf(''+(vpn_unit)) >= 0) ? "1" : "0"));
+	setRadioValue(document.form.vpn_server_x_eas, ((document.form.vpn_serverx_eas.value.indexOf(''+(vpn_unit)) >= 0) ? "1" : "0"));
+	setRadioValue(document.form.vpn_server_x_dns, ((document.form.vpn_serverx_dns.value.indexOf(''+(vpn_unit)) >= 0) ? "1" : "0"));
 
 	update_visibility();
 }
@@ -303,11 +303,11 @@ function applyRule(){
 			if (getRadioValue(document.form.vpn_server_x_eas) == 1)
 				tmp_value += ""+i+",";
 		} else {
-			if (document.form.vpn_server_eas.value.indexOf(''+(i)) >= 0)
+			if (document.form.vpn_serverx_eas.value.indexOf(''+(i)) >= 0)
 				tmp_value += ""+i+","
 		}
 	}
-	document.form.vpn_server_eas.value = tmp_value;
+	document.form.vpn_serverx_eas.value = tmp_value;
 
 	tmp_value = "";
 
@@ -316,14 +316,14 @@ function applyRule(){
 			if (getRadioValue(document.form.vpn_server_x_dns) == 1)
 				tmp_value += ""+i+",";
 		} else {
-			if (document.form.vpn_server_dns.value.indexOf(''+(i)) >= 0)
+			if (document.form.vpn_serverx_dns.value.indexOf(''+(i)) >= 0)
 				tmp_value += ""+i+","
 		}
 	}
 
-	if (tmp_value != document.form.vpn_server_dns.value) {
+	if (tmp_value != document.form.vpn_serverx_dns.value) {
 		document.form.action_script.value += ";restart_dnsmasq";
-		document.form.vpn_server_dns.value = tmp_value;
+		document.form.vpn_serverx_dns.value = tmp_value;
 	}
 	document.form.submit();
 
@@ -358,8 +358,8 @@ function change_vpn_unit(val){
 <input type="hidden" name="SystemCmd" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="vpn_server_eas" value="<% nvram_get("vpn_server_eas"); %>">
-<input type="hidden" name="vpn_server_dns" value="<% nvram_get("vpn_server_dns"); %>">
+<input type="hidden" name="vpn_serverx_eas" value="<% nvram_get("vpn_serverx_eas"); %>">
+<input type="hidden" name="vpn_serverx_dns" value="<% nvram_get("vpn_serverx_dns"); %>">
 <input type="hidden" name="vpn_server_ccd_val" value="<% nvram_get("vpn_server_ccd_val"); %>">
 
 

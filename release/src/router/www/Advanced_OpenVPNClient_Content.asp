@@ -94,7 +94,7 @@ function initial()
 	}
 
 	// Set these based on a compound field
-	setRadioValue(document.form.vpn_client_x_eas, ((document.form.vpn_client_eas.value.indexOf(''+(vpn_unit)) >= 0) ? "1" : "0"));
+	setRadioValue(document.form.vpn_client_x_eas, ((document.form.vpn_clientx_eas.value.indexOf(''+(vpn_unit)) >= 0) ? "1" : "0"));
 
 	update_visibility();
 }
@@ -178,11 +178,11 @@ function applyRule(){
 			if (getRadioValue(document.form.vpn_client_x_eas) == 1)
 				tmp_value += ""+i+",";
 		} else {
-			if (document.form.vpn_client_eas.value.indexOf(''+(i)) >= 0)
+			if (document.form.vpn_clientx_eas.value.indexOf(''+(i)) >= 0)
 				tmp_value += ""+i+","
 		}
 	}
-	document.form.vpn_client_eas.value = tmp_value;
+	document.form.vpn_clientx_eas.value = tmp_value;
 
 	document.form.submit();
 
@@ -216,7 +216,7 @@ function change_vpn_unit(val){
 <input type="hidden" name="SystemCmd" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="vpn_client_eas" value="<% nvram_get("vpn_client_eas"); %>">
+<input type="hidden" name="vpn_clientx_eas" value="<% nvram_get("vpn_clientx_eas"); %>">
 
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
