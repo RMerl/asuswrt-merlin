@@ -13,7 +13,7 @@ libid3tag.list
 libtool
 msvc++/Makefile
 config.h.in~
-compact.c
+compat.c
 autom4te.cache
 frametype.c
 
