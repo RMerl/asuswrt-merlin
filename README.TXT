@@ -1,7 +1,7 @@
 
 The GPL source is created for ASUS wireless router related products. Please visit the ASUS support site (http://support.asus.com) to get the latest GPL tarball.It has a lot in common with many wireless router open source projects, including Oleg/Tomato/DD-WRT/OpenWRT. Thanks the developers of those projects for making the source code available.
 
-Set Up Environment (Tested in Fedora 8/9 and Ubuntu 10.04 LTS amd64)
+Set Up Environment (Tested in Fedora 8/9 and Ubuntu 10.04/12.04 LTS amd64)
 
     1. prepare environment
 	
@@ -14,7 +14,7 @@ Set Up Environment (Tested in Fedora 8/9 and Ubuntu 10.04 LTS amd64)
 	g++-multilib
 	gawk
 	gcc-multilib
-	gconf
+	gconf (or gconf-editor)
 	gitk
 	lib32z1-dev
 	libncurses5
@@ -24,7 +24,9 @@ Set Up Environment (Tested in Fedora 8/9 and Ubuntu 10.04 LTS amd64)
 	m4
 	pkg-config
 	zlib1g-dev
-   
+	gperf
+	lib32z1-dev
+
    2. prepare source to, ex, $HOME/asuswrt
 	cd $HOME
 	tar xvfz [tar file]
@@ -32,7 +34,6 @@ Set Up Environment (Tested in Fedora 8/9 and Ubuntu 10.04 LTS amd64)
    3. setup development system
 	ln -s $HOME/asuswrt/tools/brcm /opt/brcm
         export PATH=$PATH:/opt/brcm/hndtools-mipsel-linux/bin:/opt/brcm/hndtools-mipsel-uclibc/bin
-	mkdir -p /root/asuswrt/release/src-rt/wl/sysdeps/default/linux
 	mkdir -p /media/ASUSWRT/
 	ln -s ~/asuswrt /media/ASUSWRT/asuswrt
 
