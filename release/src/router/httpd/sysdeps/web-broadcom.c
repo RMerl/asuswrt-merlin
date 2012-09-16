@@ -912,16 +912,28 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		}
 #endif
 
+		// Get additional info
+		strcpy(buf, "sta_info");
+		memcpy(buf + strlen(buf) + 1, (unsigned char *)&auth->ea[i], ETHER_ADDR_LEN);
+
+		if (!wl_ioctl(name, WLC_GET_VAR, buf, sizeof(buf))) {
+			sta_info_t *sta = (sta_info_t *)buf;
+
+			sprintf(tmp," %4d Mbps", sta->rx_rate / 1000);
+			ret += websWrite(wp,tmp);
+		}
+
+
 		for (j = 0; j < assoc->count; j ++) {
 			if (!bcmp((void *)&auth->ea[i], (void *)&assoc->ea[j], ETHER_ADDR_LEN)) {
-				ret += websWrite(wp, " associated");
+				ret += websWrite(wp, " assoc");
 				break;
 			}
 		}
 
 		for (j = 0; j < authorized->count; j ++) {
 			if (!bcmp((void *)&auth->ea[i], (void *)&authorized->ea[j], ETHER_ADDR_LEN)) {
-				ret += websWrite(wp, " authorized");
+				ret += websWrite(wp, " auth");
 				break;
 			}
 		}
@@ -990,16 +1002,28 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 				}
 #endif
 
+				// Get additional info: Rate
+				strcpy(buf, "sta_info");
+				memcpy(buf + strlen(buf) + 1, (unsigned char *)&auth->ea[i], ETHER_ADDR_LEN);
+
+				if (!wl_ioctl(name, WLC_GET_VAR, buf, sizeof(buf))) {
+					sta_info_t *sta = (sta_info_t *)buf;
+
+					sprintf(tmp," %4d Mbps", sta->rx_rate / 1000);
+					ret += websWrite(wp,tmp);
+				}
+
+
 				for (jj = 0; jj < assoc->count; jj++) {
 					if (!bcmp((void *)&auth->ea[ii], (void *)&assoc->ea[jj], ETHER_ADDR_LEN)) {
-						ret += websWrite(wp, " associated");
+						ret += websWrite(wp, " assoc");
 						break;
 					}
 				}
 
 				for (jj = 0; jj < authorized->count; jj++) {
 					if (!bcmp((void *)&auth->ea[ii], (void *)&authorized->ea[jj], ETHER_ADDR_LEN)) {
-						ret += websWrite(wp, " authorized");
+						ret += websWrite(wp, " auth");
 						break;
 					}
 				}
