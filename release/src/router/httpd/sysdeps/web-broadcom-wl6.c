@@ -1293,11 +1293,11 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	ret += websWrite(wp, "\n");
 	ret += websWrite(wp, "Stations List                           \n");
 #ifdef RTCONFIG_DNSMASQ
-	ret += websWrite(wp, "-----------------------------------------------------------------------\n");
+	ret += websWrite(wp, "---------------------------------------------------------------------------------\n");
 #else
-	ret += websWrite(wp, "-------------------------------------------------------\n");
+	ret += websWrite(wp, "-----------------------------------------------------------------\n");
 #endif
-//                            00:00:00:00:00:00 111.222.333.444 hostnamexxxxxxx assoc auth
+//                            00:00:00:00:00:00 111.222.333.444 hostnamexxxxxxx xxxx Mbps  -xx dBm  assoc auth
 
 	/* build authenticated/associated/authorized sta list */
 	for (i = 0; i < auth->count; i ++) {
@@ -1335,15 +1335,27 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		}
 #endif
 
-		// Get additional info: rate
+		// Get additional info: rate, rssi
 		strcpy(buf, "sta_info");
 		memcpy(buf + strlen(buf) + 1, (unsigned char *)&auth->ea[i], ETHER_ADDR_LEN);
 
 		if (!wl_ioctl(name, WLC_GET_VAR, buf, sizeof(buf))) {
 			sta_info_t *sta = (sta_info_t *)buf;
 
-			sprintf(tmp," %4d Mbps", sta->rx_rate / 1000);
+			sprintf(tmp," %4d Mbps ", sta->rx_rate / 1000);
 			ret += websWrite(wp,tmp);
+		}
+
+		sprintf(tmp,"wl -i %s rssi %s >/tmp/output.txt", name, ether_etoa((void *)&auth->ea[i], ea));
+		system(tmp);
+
+		char *buffer = read_whole_file("/tmp/output.txt");
+		if (buffer) {
+			buffer[strlen(buffer)-1] = NULL; // Trim trailing CR
+			sprintf(tmp," %-3s dBm ", buffer);
+			free(buffer);
+			unlink("/tmp/output.txt");
+			ret += websWrite(wp, tmp);
 		}
 
 
@@ -1426,15 +1438,27 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 #endif
 
 
-				// Get additional info: rate
+				// Get additional info: rate, rssi
 				strcpy(buf, "sta_info");
 				memcpy(buf + strlen(buf) + 1, (unsigned char *)&auth->ea[i], ETHER_ADDR_LEN);
 
 				if (!wl_ioctl(name, WLC_GET_VAR, buf, sizeof(buf))) {
 					sta_info_t *sta = (sta_info_t *)buf;
 
-					sprintf(tmp," %4d Mbps", sta->rx_rate / 1000);
+					sprintf(tmp," %4d Mbps ", sta->rx_rate / 1000);
 					ret += websWrite(wp,tmp);
+				}
+
+				sprintf(tmp,"wl -i %s rssi %s >/tmp/output.txt", name, ether_etoa((void *)&auth->ea[i], ea));
+				system(tmp);
+
+				char *buffer = read_whole_file("/tmp/output.txt");
+				if (buffer) {
+					buffer[strlen(buffer)-1] = NULL; // Trim trailing CR
+					sprintf(tmp," %-3s dBm ", buffer);
+					free(buffer);
+					unlink("/tmp/output.txt");
+					ret += websWrite(wp, tmp);
 				}
 
 

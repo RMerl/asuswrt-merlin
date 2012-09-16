@@ -60,7 +60,7 @@ Here is a list of features that Asuswrt-merlin brings over the original firmware
   load balancing supported) (EXPERIMENTAL)
 - Disk spindown after user-configurable inactivity timeout
 - System info summary page
-- Wireless client IP and hostname on the Wireless Log page
+- Wireless client IP, hostname, rate and rssi on the Wireless Log page
 - OpenVPN client and server, based on code originally written by
   Keith Moyer for Tomato and reused with his 
   permission. (RT-N66U, RT-AC66U)
@@ -295,6 +295,7 @@ History
             * Fixes to AC66U Wifi + QoS
             * AiCloud
             * Interference mode once again enabled
+  - NEW: Display last received rate and rssi for each clients on Wireless Log page.
   - FIXED: dnsmasq not listening to DNS requests from OpenVPN clients
            if you had just enabled the option on the webui.
   - FIXED: PPTP clients not always showing on VPN Status page.
