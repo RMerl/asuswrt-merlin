@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.220.17 (xx-Sept-2012)
+Asuswrt-Merlin - build 3.0.0.4.220.17 (16-Sept-2012)
 ====================================================
 
 
@@ -273,12 +273,8 @@ Fortunately, there is a lot of available documentation and
 Howto guides out there.  I tried to stick to the same option 
 descriptions as used by Tomato, so about any guide written 
 for Tomato can easily be used to guide you on 
-Asuswrt-Merlin.  One such guide I recommend is this one:
-
-http://www.howtogeek.com/60774/connect-to-your-home-network-from-anywhere-with-openvpn-and-tomato/
-
-Also look at the Wiki on Github, I have posted some 
-information there.
+Asuswrt-Merlin.  For pointers, check the Wiki on the Asuswrt-Merlin 
+Github repository.
 
 
 
@@ -293,19 +289,26 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.220.17:
+3.0.0.4.220.17 Beta:
    - NEW: Rebased on 3.0.0.4.220, which includes:
             * Fixes to IPv6 6rd
             * Fixes to AC66U Wifi + QoS
-            * AiCloud launch
+            * AiCloud
             * Interference mode once again enabled
+  - FIXED: dnsmasq not listening to DNS requests from OpenVPN clients
+           if you had just enabled the option on the webui.
+  - FIXED: PPTP clients not always showing on VPN Status page.
+  - CHANGED: Disabled DualWAN as it's currently broken in 220.
+  - CHANGED: Disabled Beceem Wimax support in RT-AC66U as it bricks
+             the router.
+  - CHANGED: Removed firmware update checker to avoid accidental
+             revert to original FW.
 
 
 3.0.0.3.178.16 Beta:
    - NEW: (RT-N66U, RT-AC66U) Implemented OpenVPN, based on code written by
           Keith Moyer (from the Tomato project).
    - NEW: Added crontab command
-   - NEW: Enabled AiCloud, now that it's been launched by Asus
    - FIXED: (RT-AC66U) Would crash when accessing a LAN device through either 
             VPN or the NAT Loopback (GRO is now disabled for that device)
    - FIXED: dnsmasq was listening to all interfaces by default, allowing 
