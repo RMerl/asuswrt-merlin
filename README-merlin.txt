@@ -12,7 +12,7 @@ original Tomato features, and added others.
 Asuswrt-merlin is a customized version, which I am developping.
 The goal is to do some bugfixes and minor enhancements to Asus's firmware, 
 without targeting at full-blown advanced featuresets such as provided by 
-excellent projects such as Tomato or DD-WRT.  Some of the features 
+excellent projects like Tomato or DD-WRT.  Some of the features 
 that had been disabled by Asus have also been re-enabled.
 This aims to be a more restrained alternative for those who prefer to stay 
 closer to the original firmware, with limited risks of seeing new 
@@ -36,7 +36,7 @@ Features
 --------
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
-- Based on the source code of release 3.0.0.3.178
+- Based on the source code of release 3.0.0.4.220
 - Various bugfixes (like the crash on VPN/NAT Loopback access of LAN devices)
 - WakeOnLan web interface (with user-entered preset targets)
 - Persistent JFFS partition
@@ -145,10 +145,9 @@ having to remember their MAC addresses.
 
 * SSHD *
 SSH support (through Dropbear) was re-enabled.  Password-based login will use 
-the "admin" username (like telnet), and the same password as used to log on  
-the web interface.  You can also optionally insert a RSA public key there 
-for keypair-based authentication.  There is also an option to make 
-ssh access available over WAN.
+the same username and password as telnet/web access.  You can also optionally 
+insert a RSA public key there for keypair-based authentication.  There 
+is also an option to make ssh access available over WAN.
 
 
 * HTTPS management *
@@ -289,7 +288,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.220.17 Beta:
+3.0.0.4.220.17:
    - NEW: Rebased on 3.0.0.4.220, which includes:
             * Fixes to IPv6 6rd
             * Fixes to AC66U Wifi + QoS
