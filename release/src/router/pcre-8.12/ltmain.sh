@@ -984,9 +984,6 @@ func_enable_tag ()
 # release of libtool.
 func_check_version_match ()
 {
-# no version check
-  return
-
   if test "$package_revision" != "$macro_revision"; then
     if test "$VERSION" != "$macro_version"; then
       if test -z "$macro_version"; then
