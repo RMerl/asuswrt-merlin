@@ -43,6 +43,7 @@
 #include <linux/types.h>
 #include <shared.h>
 #include <wlscan.h>
+#include <sysinfo.h>
 
 #define EZC_FLAGS_READ		0x0001
 #define EZC_FLAGS_WRITE		0x0002
@@ -923,15 +924,11 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			ret += websWrite(wp,tmp);
 		}
 
-		sprintf(tmp,"wl -i %s rssi %s >/tmp/output.txt", name, ether_etoa((void *)&auth->ea[i], ea));
-		system(tmp);
+		char *buffer = wl_get_rssi(name, ether_etoa((void *)&auth->ea[i], ea),0);
 
-		char *buffer = read_whole_file("/tmp/output.txt");
 		if (buffer) {
-			buffer[strlen(buffer)-1] = NULL; // Trim trailing CR
 			sprintf(tmp," %-3s dBm ", buffer);
 			free(buffer);
-			unlink("/tmp/output.txt");
 			ret += websWrite(wp, tmp);
 		}
 
@@ -1025,15 +1022,11 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					ret += websWrite(wp,tmp);
 				}
 
-				sprintf(tmp,"wl -i %s rssi %s >/tmp/output.txt", name, ether_etoa((void *)&auth->ea[i], ea));
-				system(tmp);
+				char *buffer = wl_get_rssi(name, ether_etoa((void *)&auth->ea[i], ea),0);
 
-				char *buffer = read_whole_file("/tmp/output.txt");
 				if (buffer) {
-					buffer[strlen(buffer)-1] = NULL; // Trim trailing CR
 					sprintf(tmp," %-3s dBm ", buffer);
 					free(buffer);
-					unlink("/tmp/output.txt");
 					ret += websWrite(wp, tmp);
 				}
 
