@@ -859,7 +859,7 @@ ntfs-3g-install: ntfs-3g
 
 linux-ntfs-2.0.0/stamp-h1:
 	cd linux-ntfs-2.0.0 && \
-	$(CONFIGURE) --host=mips-linux
+	$(CONFIGURE) --host=mips-linux --disable-ntfsmount
 	touch linux-ntfs-2.0.0/stamp-h1
 
 linux-ntfs-2.0.0: linux-ntfs-2.0.0/stamp-h1
