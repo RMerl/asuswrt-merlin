@@ -1288,7 +1288,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_crt_server2_key",	""		},
 	{ "vpn_crt_server2_dh",		""		},
 	{ "vpn_client_unit",		"1"		},
-	{ "vpn_client_eas",		""		},
+	{ "vpn_clientx_eas",		""		},
 	{ "vpn_client1_poll",		"0"		},
 	{ "vpn_client1_if",		"tun"		},
 	{ "vpn_client1_bridge",		"1"		},

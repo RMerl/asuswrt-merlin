@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.220.17 (16-Sept-2012)
+Asuswrt-Merlin - build 3.0.0.4.220.18 (xx-Sept-2012)
 ====================================================
 
 
@@ -288,6 +288,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.220.18:
+   - FIXED: OpenVPN 'Start with WAN' and 'Respond to DNS' settings were 
+            not properly saved.
+
+
 3.0.0.4.220.17:
    - NEW: Rebased on 3.0.0.4.220, which includes:
             * Fixes to IPv6 6rd

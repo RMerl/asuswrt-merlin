@@ -1451,7 +1451,7 @@ int validate_instance(webs_t wp, char *name)
 // This seems to create default values for each unit.
 // Is it really necessary?  lan_ does not seem to use it.
 #ifdef RTCONFIG_OPENVPN
-       else if(strncmp(name, "vpn_server", 10)==0) {
+       else if(strncmp(name, "vpn_server_", 11)==0) {
                 for(i=1;i<3;i++) {
                         sprintf(prefix, "vpn_server%d_", i);
                         value = websGetVar(wp, strcat_r(prefix, name+11, tmp), NULL);
@@ -1461,7 +1461,7 @@ int validate_instance(webs_t wp, char *name)
                         }
                 }
         }
-       else if(strncmp(name, "vpn_client", 10)==0) {
+       else if(strncmp(name, "vpn_client_", 11)==0) {
                 for(i=1;i<3;i++) {
                         sprintf(prefix, "vpn_client%d_", i);
                         value = websGetVar(wp, strcat_r(prefix, name+11, tmp), NULL);
@@ -1591,7 +1591,7 @@ static int validate_apply(webs_t wp) {
 			}
 #endif
 #ifdef RTCONFIG_OPENVPN
-                        else if(!strncmp(name, "vpn_server", 10) && unit!=-1) {
+                        else if(!strncmp(name, "vpn_server_", 11) && unit!=-1) {
                                 snprintf(prefix, sizeof(prefix), "vpn_server%d_", unit);
                                 (void)strcat_r(prefix, name+11, tmp);
 
@@ -1601,7 +1601,7 @@ static int validate_apply(webs_t wp) {
                                         _dprintf("set %s=%s\n", tmp, value);
                                 }
                         }
-                        else if(!strncmp(name, "vpn_client", 10) && unit!=-1) {
+                        else if(!strncmp(name, "vpn_client_", 11) && unit!=-1) {
                                 snprintf(prefix, sizeof(prefix), "vpn_client%d_", unit);
                                 (void)strcat_r(prefix, name+11, tmp);
 
