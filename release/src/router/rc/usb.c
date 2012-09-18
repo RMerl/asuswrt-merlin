@@ -978,6 +978,8 @@ _dprintf("%s: max_ports=%d.\n", __FUNCTION__, max_ports);
 		if (nvram_get_int("usb_automount"))
 			run_nvscript("script_usbmount", mountpoint, 3);
 
+		run_custom_script_blocking("post-mount", mountpoint);
+
 #if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)
 		char word[PATH_MAX], *next_word;
 		char *cloud_setting;
@@ -1069,7 +1071,6 @@ _dprintf("cloudsync: finished.\n");
 			start_cloudsync();
 		}
 #endif
-		run_custom_script_blocking("post-mount", mountpoint);
 	}
 	return (ret == MOUNT_VAL_RONLY || ret == MOUNT_VAL_RW);
 }
