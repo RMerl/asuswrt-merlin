@@ -681,7 +681,6 @@ SED
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
-am__nodep
 AMDEPBACKSLASH
 AMDEP_FALSE
 AMDEP_TRUE
@@ -697,8 +696,6 @@ CFLAGS
 CC
 AM_BACKSLASH
 AM_DEFAULT_VERBOSITY
-AM_DEFAULT_V
-AM_V
 am__untar
 am__tar
 AMTAR
@@ -3218,9 +3215,9 @@ MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 
 # We need awk for the "check" target.  The system "awk" is bad on
 # some platforms.
-# Always define AMTAR for backward compatibility.  Yes, it's still used
-# in the wild :-(  We should find a proper way to deprecate it ...
-AMTAR='$${TAR-tar}'
+# Always define AMTAR for backward compatibility.
+
+AMTAR=${AMTAR-"${am_missing_run}tar"}
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking how to create a ustar tar archive" >&5
@@ -3320,33 +3317,6 @@ yes) AM_DEFAULT_VERBOSITY=0;;
 no)  AM_DEFAULT_VERBOSITY=1;;
 *)   AM_DEFAULT_VERBOSITY=1;;
 esac
-am_make=${MAKE-make}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $am_make supports nested variables" >&5
-$as_echo_n "checking whether $am_make supports nested variables... " >&6; }
-if ${am_cv_make_support_nested_variables+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if $as_echo 'TRUE=$(BAR$(V))
-BAR0=false
-BAR1=true
-V=1
-am__doit:
-	@$(TRUE)
-.PHONY: am__doit' | $am_make -f - >/dev/null 2>&1; then
-  am_cv_make_support_nested_variables=yes
-else
-  am_cv_make_support_nested_variables=no
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_make_support_nested_variables" >&5
-$as_echo "$am_cv_make_support_nested_variables" >&6; }
-if test $am_cv_make_support_nested_variables = yes; then
-    AM_V='$(V)'
-  AM_DEFAULT_V='$(AM_DEFAULT_VERBOSITY)'
-else
-  AM_V=$AM_DEFAULT_VERBOSITY
-  AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY
-fi
 AM_BACKSLASH='\'
 
 
@@ -4191,7 +4161,6 @@ fi
 if test "x$enable_dependency_tracking" != xno; then
   am_depcomp="$ac_aux_dir/depcomp"
   AMDEPBACKSLASH='\'
-  am__nodep='_no'
 fi
  if test "x$enable_dependency_tracking" != xno; then
   AMDEP_TRUE=
@@ -4216,7 +4185,6 @@ else
   # instance it was reported that on HP-UX the gcc test will end up
   # making a dummy file named `D' -- because `-MD' means `put the output
   # in D'.
-  rm -rf conftest.dir
   mkdir conftest.dir
   # Copy depcomp to subdir because otherwise we won't find it if we're
   # using a relative directory.
@@ -4276,7 +4244,7 @@ else
 	break
       fi
       ;;
-    msvc7 | msvc7msys | msvisualcpp | msvcmsys)
+    msvisualcpp | msvcmsys)
       # This compiler won't grok `-c -o', but also, the minuso test has
       # not run yet.  These depmodes are late enough in the game, and
       # so weak that their functioning should not be impacted.
@@ -5423,7 +5391,6 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
-
 
 
 if test "$ac_cv_prog_cc_stdc" != no; then
@@ -13119,7 +13086,6 @@ if test "$WITH_LIBEV" != "no"; then
 
 
 
-
 if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
 	if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
@@ -13248,7 +13214,6 @@ if test -n "$LIBEV_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LIBEV_CFLAGS=`$PKG_CONFIG --cflags "libev" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -13265,7 +13230,6 @@ if test -n "$LIBEV_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LIBEV_LIBS=`$PKG_CONFIG --libs "libev" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -13285,9 +13249,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LIBEV_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libev" 2>&1`
+	        LIBEV_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libev" 2>&1`
         else
-	        LIBEV_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libev" 2>&1`
+	        LIBEV_PKG_ERRORS=`$PKG_CONFIG --print-errors "libev" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LIBEV_PKG_ERRORS" >&5
@@ -13487,7 +13451,6 @@ if test -n "$LIBSMBCLIENT_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LIBSMBCLIENT_CFLAGS=`$PKG_CONFIG --cflags "libsmbclient" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -13504,7 +13467,6 @@ if test -n "$LIBSMBCLIENT_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LIBSMBCLIENT_LIBS=`$PKG_CONFIG --libs "libsmbclient" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -13524,9 +13486,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LIBSMBCLIENT_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libsmbclient" 2>&1`
+	        LIBSMBCLIENT_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libsmbclient" 2>&1`
         else
-	        LIBSMBCLIENT_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libsmbclient" 2>&1`
+	        LIBSMBCLIENT_PKG_ERRORS=`$PKG_CONFIG --print-errors "libsmbclient" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LIBSMBCLIENT_PKG_ERRORS" >&5
@@ -14788,7 +14750,6 @@ if test -n "$FAM_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_FAM_CFLAGS=`$PKG_CONFIG --cflags "gamin >= 0.1.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -14805,7 +14766,6 @@ if test -n "$FAM_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_FAM_LIBS=`$PKG_CONFIG --libs "gamin >= 0.1.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -14825,9 +14785,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        FAM_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gamin >= 0.1.0" 2>&1`
+	        FAM_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gamin >= 0.1.0" 2>&1`
         else
-	        FAM_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gamin >= 0.1.0" 2>&1`
+	        FAM_PKG_ERRORS=`$PKG_CONFIG --print-errors "gamin >= 0.1.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$FAM_PKG_ERRORS" >&5
@@ -14921,7 +14881,6 @@ if test -n "$XML_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_XML_CFLAGS=`$PKG_CONFIG --cflags "libxml-2.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -14938,7 +14897,6 @@ if test -n "$XML_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_XML_LIBS=`$PKG_CONFIG --libs "libxml-2.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -14958,9 +14916,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        XML_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libxml-2.0" 2>&1`
+	        XML_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libxml-2.0" 2>&1`
         else
-	        XML_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libxml-2.0" 2>&1`
+	        XML_PKG_ERRORS=`$PKG_CONFIG --print-errors "libxml-2.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$XML_PKG_ERRORS" >&5
@@ -15019,7 +14977,6 @@ if test -n "$SQLITE_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_SQLITE_CFLAGS=`$PKG_CONFIG --cflags "sqlite3" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15036,7 +14993,6 @@ if test -n "$SQLITE_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_SQLITE_LIBS=`$PKG_CONFIG --libs "sqlite3" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15056,9 +15012,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        SQLITE_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "sqlite3" 2>&1`
+	        SQLITE_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "sqlite3" 2>&1`
         else
-	        SQLITE_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "sqlite3" 2>&1`
+	        SQLITE_PKG_ERRORS=`$PKG_CONFIG --print-errors "sqlite3" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$SQLITE_PKG_ERRORS" >&5
@@ -15212,7 +15168,6 @@ if test -n "$XML_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_XML_CFLAGS=`$PKG_CONFIG --cflags "libxml-2.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15229,7 +15184,6 @@ if test -n "$XML_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_XML_LIBS=`$PKG_CONFIG --libs "libxml-2.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15249,9 +15203,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        XML_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libxml-2.0" 2>&1`
+	        XML_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libxml-2.0" 2>&1`
         else
-	        XML_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libxml-2.0" 2>&1`
+	        XML_PKG_ERRORS=`$PKG_CONFIG --print-errors "libxml-2.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$XML_PKG_ERRORS" >&5
@@ -15310,7 +15264,6 @@ if test -n "$SQLITE_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_SQLITE_CFLAGS=`$PKG_CONFIG --cflags "sqlite3" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15327,7 +15280,6 @@ if test -n "$SQLITE_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_SQLITE_LIBS=`$PKG_CONFIG --libs "sqlite3" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15347,9 +15299,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        SQLITE_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "sqlite3" 2>&1`
+	        SQLITE_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "sqlite3" 2>&1`
         else
-	        SQLITE_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "sqlite3" 2>&1`
+	        SQLITE_PKG_ERRORS=`$PKG_CONFIG --print-errors "sqlite3" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$SQLITE_PKG_ERRORS" >&5
@@ -15662,7 +15614,6 @@ if test -n "$LUA_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "$WITH_LUA >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15679,7 +15630,6 @@ if test -n "$LUA_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "$WITH_LUA >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15699,9 +15649,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$WITH_LUA >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "$WITH_LUA >= 5.1" 2>&1`
         else
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$WITH_LUA >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors "$WITH_LUA >= 5.1" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LUA_PKG_ERRORS" >&5
@@ -15722,7 +15672,6 @@ if test -n "$LUA_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "lua5.1 >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15739,7 +15688,6 @@ if test -n "$LUA_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "lua5.1 >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15759,9 +15707,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "lua5.1 >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "lua5.1 >= 5.1" 2>&1`
         else
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "lua5.1 >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors "lua5.1 >= 5.1" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LUA_PKG_ERRORS" >&5
@@ -15782,7 +15730,6 @@ if test -n "$LUA_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "lua-5.1 >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15799,7 +15746,6 @@ if test -n "$LUA_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "lua-5.1 >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15819,9 +15765,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "lua-5.1 >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "lua-5.1 >= 5.1" 2>&1`
         else
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "lua-5.1 >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors "lua-5.1 >= 5.1" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LUA_PKG_ERRORS" >&5
@@ -15885,7 +15831,6 @@ if test -n "$LUA_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "lua-5.1 >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15902,7 +15847,6 @@ if test -n "$LUA_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "lua-5.1 >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15922,9 +15866,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "lua-5.1 >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "lua-5.1 >= 5.1" 2>&1`
         else
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "lua-5.1 >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors "lua-5.1 >= 5.1" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LUA_PKG_ERRORS" >&5
@@ -16003,7 +15947,6 @@ if test -n "$LUA_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "lua5.1 >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -16020,7 +15963,6 @@ if test -n "$LUA_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "lua5.1 >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -16040,9 +15982,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "lua5.1 >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "lua5.1 >= 5.1" 2>&1`
         else
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "lua5.1 >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors "lua5.1 >= 5.1" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LUA_PKG_ERRORS" >&5
@@ -16063,7 +16005,6 @@ if test -n "$LUA_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "lua-5.1 >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -16080,7 +16021,6 @@ if test -n "$LUA_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "lua-5.1 >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -16100,9 +16040,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "lua-5.1 >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "lua-5.1 >= 5.1" 2>&1`
         else
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "lua-5.1 >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors "lua-5.1 >= 5.1" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LUA_PKG_ERRORS" >&5
@@ -16166,7 +16106,6 @@ if test -n "$LUA_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "lua-5.1 >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -16183,7 +16122,6 @@ if test -n "$LUA_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "lua-5.1 >= 5.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -16203,9 +16141,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "lua-5.1 >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "lua-5.1 >= 5.1" 2>&1`
         else
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "lua-5.1 >= 5.1" 2>&1`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --print-errors "lua-5.1 >= 5.1" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LUA_PKG_ERRORS" >&5
