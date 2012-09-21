@@ -11,3 +11,4 @@ libdaemon/.libs/
 libtool
 pkgconfig/libdaemon-uninstalled.pc
 pkgconfig/libdaemon.pc
+autom4te.cache
