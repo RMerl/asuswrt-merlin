@@ -384,6 +384,12 @@ function change_vpn_unit(val){
                 <div>&nbsp;</div>
                 <div class="formfonttitle">OpenVPN Server Settings</div>
                 <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+		<div class="formfontdesc">
+			<p>Before starting the service make sure you properly configure it, including
+			   the required <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="Advanced_OpenVPN_Keys.asp">keys</a>,<br> otherwise you will be unable to turn it on.
+			<p><br>In case of problem, see the <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="Main_LogStatus_Content.asp">System Log</a> for any error message related to openvpn.
+			<p><br>Visit the OpenVPN <a style="font-weight: bolder; text-decoration:underline;" class="hyperlink" href="http://openvpn.net/index.php/open-source/downloads.html" target="_blank">Download</a> page to get the Windows client.
+		</div>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
@@ -426,7 +432,7 @@ function change_vpn_unit(val){
 								);
 							</script>
 							<span>Warning: any unsaved change will be lost.</span>
-					    </td>
+						</td>
 					</tr>
 
 					<tr>
