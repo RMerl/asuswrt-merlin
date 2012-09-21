@@ -291,6 +291,9 @@ History
 3.0.0.4.220.18:
    - FIXED: OpenVPN 'Start with WAN' and 'Respond to DNS' settings were 
             not properly saved.
+   - FIXED: First time a client's rssi is polled it would return 0.
+   - FIXED: post-mount user script wasn't executed (regression in 220.17)
+   - CHANGED: Added some info to the OpenVPN server and client pages.
 
 
 3.0.0.4.220.17:
