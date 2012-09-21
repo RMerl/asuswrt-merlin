@@ -231,7 +231,7 @@ void start_vpnclient(int clientNum)
 			fprintf(fp, "route-gateway %s\n", nvram_safe_get(&buffer[0]));
 		fprintf(fp, "redirect-gateway def1\n");
 	}
-	if ( (nvi = nvram_get_int("vpn_loglevel") >= 0 )
+	if ( (nvi = nvram_get_int("vpn_loglevel")) >= 0 )
                 fprintf(fp, "verb %d\n", nvi);
         else
                 fprintf(fp, "verb 3\n");
@@ -676,7 +676,7 @@ void start_vpnserver(int serverNum)
 	if ( (nvl = atol(nvram_safe_get(&buffer[0]))) >= 0 )
 		fprintf(fp, "reneg-sec %ld\n", nvl);
 	fprintf(fp, "keepalive 15 60\n");
-	if ( (nvi = nvram_get_int("vpn_loglevel") >= 0 )
+	if ( (nvi = nvram_get_int("vpn_loglevel")) >= 0 )
                 fprintf(fp, "verb %d\n", nvi);
         else
                 fprintf(fp, "verb 3\n");
