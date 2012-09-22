@@ -1606,6 +1606,10 @@ int init_nvram(void)
 #endif
 #endif
 
+#ifdef RTCONFIG_OPENVPN
+	add_rc_support("openvpn");
+#endif
+
 #ifdef RTCONFIG_HTTPS
 	add_rc_support("HTTPS");
 #endif
