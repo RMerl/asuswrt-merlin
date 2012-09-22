@@ -227,7 +227,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			char *buffer = read_whole_file("/tmp/output.txt");
 
 			if (buffer) {
-				if (tmp = strstr(buffer, "\n"))
+				if ((tmp = strstr(buffer, "\n")))
 					strncpy(result, tmp+1, sizeof result);
 				else
 					strncpy(result, buffer, sizeof result);
@@ -368,7 +368,7 @@ char *wl_get_rssi(char *name, char *ea, int attempt)
 
 	char *buffer = read_whole_file("/tmp/rssitmp");
 	if (buffer) {
-		buffer[strlen(buffer)-1] = NULL;                // Trim trailing CR
+		buffer[strlen(buffer)-1] = '\0';                // Trim trailing CR
 		unlink("/tmp/rssitmp");
 
 		if ((!strcmp(buffer, "0")) && (attempt < 3)) {  // First attempt usually returns "0";
