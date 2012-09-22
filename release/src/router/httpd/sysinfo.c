@@ -244,27 +244,29 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				sprintf(result, "%d", pidof(service));
 
 		} else if(strncmp(type,"vpnstatus",9) == 0 ) {
-			int num = 0;
+			int num = 0, pid;
 			char service[10], buf[256];
 
 			sscanf(type,"vpnstatus.%9[^.].%d", service, &num);
 
-			if ( strlen(service) && (num > 0) )
+			if ((strlen(service)) && (num > 0) )
 			{
 				// Trigger OpenVPN to update the status file
 				snprintf(buf, sizeof(buf), "vpn%s%d", service, num);
-				killall(buf, SIGUSR2);
+				if ((pid = pidof(buf)) > 0) {
+					kill(pid, SIGUSR2);
 
-				// Give it a chance to update the file
-				sleep(1);
+					// Give it a chance to update the file
+					sleep(1);
 
-				// Read the status file and repeat it verbatim to the caller
-				sprintf(buf,"/etc/openvpn/%s%d/status", service, num);
-				char *buffer = read_whole_file(buf);
-				if (buffer)
-				{
-					strncpy(result, buffer, sizeof(result));
-					free(buffer);
+					// Read the status file and repeat it verbatim to the caller
+					sprintf(buf,"/etc/openvpn/%s%d/status", service, num);
+					char *buffer = read_whole_file(buf);
+					if (buffer)
+					{
+						strncpy(result, buffer, sizeof(result));
+						free(buffer);
+					}
 				}
 			}
 
