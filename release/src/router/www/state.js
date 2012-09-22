@@ -395,7 +395,14 @@ function remove_url(){
 			menuL2_link[6] = "";
 		}
 	}	
-	
+
+	if(openvpnd_support == -1){
+		remove_menu_item(5,"Advanced_OpenVPNServer_Content.asp");
+		remove_menu_item(5,"Advanced_OpenVPNClient_Content.asp");
+		remove_menu_item(5,"Advanced_OpenVPN_Keys.asp");
+		remove_menu_item(5,"Advanced_VPNStatus.asp");
+	}
+
 	if(SwitchCtrl_support == -1){
 		remove_menu_item(1, "Advanced_SwitchCtrl_Content.asp");		
 	}
