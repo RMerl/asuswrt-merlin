@@ -13,7 +13,7 @@
 
 void add_rc_support(char *feature)
 {
-	char features[128];
+	char features[256];
 
 	strcpy(features, nvram_safe_get("rc_support"));
 
