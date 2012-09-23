@@ -56,8 +56,8 @@ Here is a list of features that Asuswrt-merlin brings over the original firmware
 - User-defined options for WAN DHCP queries (required by some ISPs)
 - Name field on the DHCP reservation list
 - Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
-- Dual WAN support (both failover and 
-  load balancing supported) (EXPERIMENTAL)
+- Dual WAN support (both failover and load 
+  balancing supported) (EXPERIMENTAL) (RT-N66U, RT-AC66U)
 - Disk spindown after user-configurable inactivity timeout
 - System info summary page
 - Wireless client IP, hostname, rate and rssi on the Wireless Log page
