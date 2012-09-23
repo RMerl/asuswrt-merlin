@@ -287,6 +287,8 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.220.18:
+   - NEW: Added OpenVPN logging verbosity setting (vpn_loglevel, must be
+          manually set to a value between 0 and 15, with 3 being the default).
    - FIXED: Buffer overrun in init code that would crash the router when 
             too many features were enabled at compile time.
    - FIXED: Re-enabled DualWAN (RT-N66U, RT-AC66U)
