@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.220.18 (xx-Sept-2012)
+Asuswrt-Merlin - build 3.0.0.4.220.18 (22-Sept-2012)
 ====================================================
 
 
@@ -56,7 +56,7 @@ Here is a list of features that Asuswrt-merlin brings over the original firmware
 - User-defined options for WAN DHCP queries (required by some ISPs)
 - Name field on the DHCP reservation list
 - Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
-- *** Disabled - currently broken *** Dual WAN support (both failover and 
+- Dual WAN support (both failover and 
   load balancing supported) (EXPERIMENTAL)
 - Disk spindown after user-configurable inactivity timeout
 - System info summary page
@@ -228,8 +228,6 @@ mount \\\\192.168.1.100\\ShareName /cifs1 -t cifs -o "username=User,password=Pas
 
 
 * Dual WAN (EXPERIMENTAL) *
-(***Disabled as of 3.0.0.4.220.17, since it's currently broken***)
-
 Asuswrt originally supports using a USB 3G/4G modem to use as a 
 failover Internet connection.  Dual WAN is the next step, also 
 developped by Asus but left disabled so far in their official 
@@ -289,11 +287,16 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.220.18:
+   - FIXED: Buffer overrun in init code that would crash the router when 
+            too many features were enabled at compile time.
+   - FIXED: Re-enabled DualWAN (RT-N66U, RT-AC66U)
+   - FIXED: Re-enabled Beceem (Wimax) support in RT-AC66U.
    - FIXED: OpenVPN 'Start with WAN' and 'Respond to DNS' settings were 
             not properly saved.
    - FIXED: First time a client's rssi is polled it would return 0.
    - FIXED: post-mount user script wasn't executed (regression in 220.17)
    - CHANGED: Added some info to the OpenVPN server and client pages.
+   - CHANGED: Improved load time of the VPN Status page.
 
 
 3.0.0.4.220.17:
