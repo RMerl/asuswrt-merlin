@@ -1264,7 +1264,6 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 	char buf[sizeof(sta_info_t)];
 
-
 	if (!auth || !assoc || !authorized)
 		goto exit;
 
@@ -1343,7 +1342,10 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		if (!wl_ioctl(name, WLC_GET_VAR, buf, sizeof(buf))) {
 			sta_info_t *sta = (sta_info_t *)buf;
 
-			sprintf(tmp," %4d Mbps ", sta->rx_rate / 1000);
+			if (sta->rx_rate = -1)          // Driver sometime returns -1
+				sprintf(tmp," ?? Mbps ");
+			else
+				sprintf(tmp," %4d Mbps ", sta->rx_rate / 1000);
 			ret += websWrite(wp,tmp);
 		}
 
@@ -1442,7 +1444,10 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 				if (!wl_ioctl(name, WLC_GET_VAR, buf, sizeof(buf))) {
 					sta_info_t *sta = (sta_info_t *)buf;
 
-					sprintf(tmp," %4d Mbps ", sta->rx_rate / 1000);
+					if (sta->rx_rate = -1)          // Driver sometime returns -1
+						sprintf(tmp," ?? Mbps ");
+					else
+						sprintf(tmp," %4d Mbps ", sta->rx_rate / 1000);
 					ret += websWrite(wp,tmp);
 				}
 
