@@ -1189,9 +1189,9 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int max_sta_count, maclist_size;
 	int i, j, val = 0, ret = 0;
 	int ii, jj;
-	char *arplist, *arpentry, *arplistptr;
+	char *arplist = NULL, *arplistptr;
 #ifdef RTCONFIG_DNSMASQ
-	char *leaselist, *leaselistptr;
+	char *leaselist = NULL, *leaselistptr;
 	char hostnameentry[16], hostname[16];
 #endif
 	char ip[40], ipentry[40], macentry[18];
@@ -1347,7 +1347,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			ret += websWrite(wp,tmp);
 		}
 
-		char *buffer = wl_get_rssi(name, ether_etoa((void *)&auth->ea[i], ea),0);
+		char *buffer = wl_get_rssi(name, ether_etoa((void *)&auth->ea[i], ea));
 
 		if (buffer) {
 			sprintf(tmp," %-3s dBm ", buffer);
@@ -1446,7 +1446,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					ret += websWrite(wp,tmp);
 				}
 
-				char *buffer = wl_get_rssi(name, ether_etoa((void *)&auth->ea[i], ea),0);
+				char *buffer = wl_get_rssi(name, ether_etoa((void *)&auth->ea[i], ea));
 
 				if (buffer) {
 					sprintf(tmp," %-3s dBm ", buffer);

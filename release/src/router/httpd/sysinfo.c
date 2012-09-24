@@ -359,7 +359,7 @@ exit:
 	return count;
 }
 
-char *wl_get_rssi(char *name, char *ea, int attempt)
+char *wl_get_rssi(char *name, char *ea)
 {
 	char tmp[128];
 
@@ -371,18 +371,11 @@ char *wl_get_rssi(char *name, char *ea, int attempt)
 		buffer[strlen(buffer)-1] = '\0';                // Trim trailing CR
 		unlink("/tmp/rssitmp");
 
-		if ((!strcmp(buffer, "0")) && (attempt < 3)) {  // First attempt usually returns "0";
-			free(buffer);
-			sleep(1);
-			buffer = wl_get_rssi(name, ea, attempt++);
-			if (buffer) {
-				return buffer;
-			} else {
-				return NULL;
-			}
-		}
+		if (!strcmp(buffer, "0"))
+			strcpy(buffer,"?");
+
 		return buffer;
 	}
-	return buffer;
+	return NULL;
 }
 
