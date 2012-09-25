@@ -922,17 +922,24 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		if (!wl_ioctl(name, WLC_GET_VAR, buf, sizeof(buf))) {
 			sta_info_t *sta = (sta_info_t *)buf;
 
-			if (sta->rx_rate = -1) 		// Driver sometime returns -1
-				sprintf(tmp," ?? Mbps ");
+			if ((int)sta->rx_rate > 0)
+				sprintf(rxrate,"%d", sta->rx_rate / 1000);
 			else
-				sprintf(tmp," %4d Mbps ", sta->rx_rate / 1000);
+				strcpy(rxrate,"??");
+
+			if ((int)sta->tx_rate > 0)
+				sprintf(txrate,"%d", sta->tx_rate / 1000);
+			else
+				sprintf(rxrate,"??");
+
+			sprintf(tmp," %4s/%-4s Mbps ", rxrate, txrate);
 			ret += websWrite(wp,tmp);
 		}
 
 		char *buffer = wl_get_rssi(name, ether_etoa((void *)&auth->ea[i], ea));
 
 		if (buffer) {
-			sprintf(tmp," %-3s dBm ", buffer);
+			sprintf(tmp," %3s dBm ", buffer);
 			free(buffer);
 			ret += websWrite(wp, tmp);
 		}
@@ -1023,17 +1030,23 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 				if (!wl_ioctl(name, WLC_GET_VAR, buf, sizeof(buf))) {
 					sta_info_t *sta = (sta_info_t *)buf;
 
-					if (sta->rx_rate = -1)          // Driver sometime returns -1
-						sprintf(tmp," ?? Mbps ");
+					if ((int)sta->rx_rate > 0)
+						sprintf(rxrate,"%d", sta->rx_rate / 1000);
 					else
-						sprintf(tmp," %4d Mbps ", sta->rx_rate / 1000);
+						strcpy(rxrate,"??");
+
+					if ((int)sta->tx_rate > 0)
+						sprintf(txrate,"%d", sta->tx_rate / 1000);
+					else
+						sprintf(rxrate,"??");
+
+					sprintf(tmp," %4s/%-4s Mbps ", rxrate, txrate);
 					ret += websWrite(wp,tmp);
 				}
-
 				char *buffer = wl_get_rssi(name, ether_etoa((void *)&auth->ea[i], ea));
 
 				if (buffer) {
-					sprintf(tmp," %-3s dBm ", buffer);
+					sprintf(tmp," %3s dBm ", buffer);
 					free(buffer);
 					ret += websWrite(wp, tmp);
 				}
