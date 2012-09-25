@@ -358,24 +358,3 @@ exit:
 	free(clientlist);
 	return count;
 }
-
-char *wl_get_rssi(char *name, char *ea)
-{
-	char tmp[128];
-
-	sprintf(tmp,"wl -i %s rssi %s >/tmp/rssitmp", name, ea);
-	system(tmp);
-
-	char *buffer = read_whole_file("/tmp/rssitmp");
-	if (buffer) {
-		buffer[strlen(buffer)-1] = '\0';                // Trim trailing CR
-		unlink("/tmp/rssitmp");
-
-		if (!strcmp(buffer, "0"))
-			strcpy(buffer,"?");
-
-		return buffer;
-	}
-	return NULL;
-}
-

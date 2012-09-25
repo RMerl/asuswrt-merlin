@@ -1197,6 +1197,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	char ip[40], ipentry[40], macentry[18];
 	int found = 0;
 	char rxrate[5], txrate[5];
+	scb_val_t rssi;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 #ifdef RTCONFIG_WIRELESSREPEATER
@@ -1292,13 +1293,14 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 #endif
 
 	ret += websWrite(wp, "\n");
-	ret += websWrite(wp, "Stations List                           \n");
 #ifdef RTCONFIG_DNSMASQ
+	ret += websWrite(wp, "Stations List                                        Rx/Tx  speed  rssi\n");
 	ret += websWrite(wp, "--------------------------------------------------------------------------------------\n");
 #else
+	ret += websWrite(wp, "Stations List                      Rx/Tx  speed   rssi\n");
 	ret += websWrite(wp, "----------------------------------------------------------------------\n");
 #endif
-//                            00:00:00:00:00:00 111.222.333.444 hostnamexxxxxxx xxxx/xxxx Mbps  -xx dBm  assoc auth
+//                            00:00:00:00:00:00 111.222.333.444 hostnamexxxxxxx  xxxx/xxxx Mbps  -xx dBm  assoc auth
 
 	/* build authenticated/associated/authorized sta list */
 	for (i = 0; i < auth->count; i ++) {
@@ -1337,6 +1339,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 #endif
 
 		// Get additional info: rate, rssi
+		memset(buf, 0, sizeof(buf));
 		strcpy(buf, "sta_info");
 		memcpy(buf + strlen(buf) + 1, (unsigned char *)&auth->ea[i], ETHER_ADDR_LEN);
 
@@ -1357,13 +1360,15 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			ret += websWrite(wp,tmp);
 		}
 
-		char *buffer = wl_get_rssi(name, ether_etoa((void *)&auth->ea[i], ea));
+		rssi.ea = auth->ea[i];
+		rssi.val = 0;
 
-		if (buffer) {
-			sprintf(tmp," %3s dBm ", buffer);
-			free(buffer);
-			ret += websWrite(wp, tmp);
-		}
+		if ((wl_ioctl(name, WLC_GET_RSSI, &rssi, sizeof(rssi)) != 0) || (rssi.val <= 0))
+			strcpy(tmp,"  ?? dBm ");
+		else
+			sprintf(tmp," %3d dBm ", rssi.val);
+
+		ret += websWrite(wp, tmp);
 
 
 		for (j = 0; j < assoc->count; j ++) {
@@ -1418,7 +1423,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					arplistptr = arplist;
 
 					while ((found == 0) && (arplistptr < arplist+strlen(arplist)-2) && (sscanf(arplistptr,"%s %*s %*s %s",ipentry,macentry))) {
-						if (strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0)
+						if (strcmp(macentry, ether_etoa((void *)&auth->ea[ii], ea)) == 0)
 							found = 1;
 						else
 							arplistptr = strstr(arplistptr,"\n")+1;
@@ -1446,6 +1451,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 
 				// Get additional info: rate, rssi
+				memset(buf, 0, sizeof(buf));
 				strcpy(buf, "sta_info");
 				memcpy(buf + strlen(buf) + 1, (unsigned char *)&auth->ea[i], ETHER_ADDR_LEN);
 
@@ -1466,14 +1472,15 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					ret += websWrite(wp,tmp);
 				}
 
-				char *buffer = wl_get_rssi(name, ether_etoa((void *)&auth->ea[i], ea));
+				rssi.ea = auth->ea[ii];
+				rssi.val = 0;
 
-				if (buffer) {
-					sprintf(tmp," %3s dBm ", buffer);
-					free(buffer);
-					ret += websWrite(wp, tmp);
-				}
+				if ((wl_ioctl(name, WLC_GET_RSSI, &rssi, sizeof(rssi)) != 0) || (rssi.val <= 0))
+					strcpy(tmp,"  ?? dBm ");
+				else
+					sprintf(tmp," %3d dBm ", rssi.val);
 
+				ret += websWrite(wp, tmp);
 
 				for (jj = 0; jj < assoc->count; jj++) {
 					if (!bcmp((void *)&auth->ea[ii], (void *)&assoc->ea[jj], ETHER_ADDR_LEN)) {
