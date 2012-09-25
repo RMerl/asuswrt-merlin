@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.220.18 (22-Sept-2012)
-====================================================
+Asuswrt-Merlin - build 3.0.0.4.220.18b (24-Sept-2012)
+=====================================================
 
 
 About
@@ -286,6 +286,15 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.220.18b:
+   - NEW: Report both rx and tx rates on wifi connections
+   - FIXED: Handle cases where the wireless driver returns a speed of -1
+   - FIXED: Removed rssi retrieval retries, as it would make the first access to
+            the wireless page take forever if you had multiple connected clients.
+            You will have to manually refresh the page the first time you access it
+            if the RSSI is reported as "??".
+
+
 3.0.0.4.220.18:
    - NEW: Added OpenVPN logging verbosity setting (vpn_loglevel, must be
           manually set to a value between 0 and 15, with 3 being the default).
