@@ -2911,6 +2911,10 @@ TRACE_PT("writing Parental Control\n");
 		}
 #endif
 
+// Open ssh to WAN
+                if ((nvram_match("sshd_wan", "1")) && (nvram_get_int("sshd_port")))
+                        fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d -j %s\n", nvram_get_int("sshd_port"), logaccept);
+
 		if (!nvram_match("misc_ping_x", "0"))
 		{
 			fprintf(fp, "-A INPUT -p icmp -j %s\n", logaccept);
