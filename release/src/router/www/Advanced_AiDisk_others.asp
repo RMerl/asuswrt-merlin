@@ -215,6 +215,14 @@ function done_validating(action){
                                                 <input type="text" name="st_samba_workgroup" class="input_32_table" maxlength="32" value="<% nvram_get("st_samba_workgroup"); %>">
                                         </td>
                                 </tr>
+
+				<tr>
+					<th>Simpler share naming<br><i>(without the disk name)</i></th>
+					<td>
+						<input type="radio" name="smbd_simpler_naming" class="input" value="1" <% nvram_match_x("", "smbd_simpler_naming", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="smbd_simpler_naming" class="input" value="0" <% nvram_match_x("", "smbd_simpler_naming", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
                                 
                                 <tr>
                                         <th>

@@ -977,6 +977,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "smbd_user", "nas"},
 	{ "smbd_wgroup", "WORKGROUP"},
 	{ "smbd_wins", "1"},
+	{ "smbd_simpler_naming", "0"},
 
 	{ "log_ipaddr", ""},
 	{ "log_port", "514"},

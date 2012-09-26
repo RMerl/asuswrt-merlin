@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.220.18b (24-Sept-2012)
-=====================================================
+Asuswrt-Merlin - build 3.0.0.4.220.19 (xx-Sept-2012)
+====================================================
 
 
 About
@@ -286,6 +286,14 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.220.19:
+   - NEW: Option to enable simpler share names.  When enabled, the folder
+          Share will be shared as "Share" instead of "Share (on sda1)".
+          The option can be found on the Misc tab, under USB Application.
+   - FIXED: Enabling SSH access from WAN didn't work if DualWAN
+            was set to load-balancing.
+
+
 3.0.0.4.220.18b:
    - NEW: Report both rx and tx rates on wifi connections
    - FIXED: Handle cases where the wireless driver returns a speed of -1

@@ -276,7 +276,11 @@ int main(int argc, char *argv[]) {
 							samba_right = DEFAULT_SAMBA_RIGHT;
 						
 						if(samba_right > 0){
-							fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
+							if (!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) {
+								fprintf(fp, "[%s]\n", folder_list[n]);
+							} else {
+								fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
+							}
 							fprintf(fp, "comment = %s's %s in %s\n", mount_folder, folder_list[n], follow_disk->tag);
 							fprintf(fp, "path = %s/%s\n", follow_partition->mount_point, folder_list[n]);
 							if(samba_right == 3)
@@ -323,7 +327,11 @@ int main(int argc, char *argv[]) {
 						fprintf(fp, "path = %s\n", follow_partition->mount_point);
 					}
 					else{
-						fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
+						if (!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) {
+							fprintf(fp, "[%s]\n", folder_list[n]);
+						} else {
+							fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
+						}
 						fprintf(fp, "comment = %s's %s in %s\n", mount_folder, folder_list[n], follow_disk->tag);
 						fprintf(fp, "path = %s/%s\n", follow_partition->mount_point, folder_list[n]);
 					}
@@ -434,7 +442,11 @@ int main(int argc, char *argv[]) {
 				for (n = 0; n < sh_num; ++n) {
 					int i, first;
 					
-					fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
+					if (!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) {
+						fprintf(fp, "[%s]\n", folder_list[n]);
+					} else {
+						fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
+					}
 					fprintf(fp, "comment = %s's %s in %s\n", mount_folder, folder_list[n], follow_disk->tag);
 					fprintf(fp, "path = %s/%s\n", follow_partition->mount_point, folder_list[n]);
 					
