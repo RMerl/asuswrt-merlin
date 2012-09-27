@@ -370,7 +370,7 @@ function remove_url(){
 		menuL1_link[4]="";
 	}
 
-	if(ParentalCtrl_support == -1)
+	if((ParentalCtrl_support == -1) || (ParentalCtrl2_support == -1))
 		remove_menu_item(6, "Advanced_MACFilter_Content.asp");
 
 	if(IPv6_support == -1){
