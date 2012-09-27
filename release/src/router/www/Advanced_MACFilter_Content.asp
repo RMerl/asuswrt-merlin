@@ -43,11 +43,17 @@ function showmacfilter_rulelist(){
 		code +='<tr><td style="color:#FFCC00;"><#IPConnection_VSList_Norule#></td>';
 	else{
 		for(var i = 1; i < macfilter_rulelist_row.length; i++){
-		code +='<tr id="row'+i+'">';
-		code +='<td width="80%">'+ macfilter_rulelist_row[i] +'</td>';		//MAC
-		code +='<td width="20%">';		
-		code +="<input class=\"remove_btn\" type=\"button\" onclick=\"deleteRow(this);\" value=\"\"/></td>";
+			code +='<tr id="row'+i+'">';
+
+			var macfilter_rulelist_col = macfilter_rulelist_row[i].split('&#62');
+			for(var j = 0; j < macfilter_rulelist_col.length; j++){
+				code +='<td width="40%">'+ macfilter_rulelist_col[j] +'</td>';
+			}
+			if (j != 2) code +='<td width="40%"></td>';
+			code +='<td width="20%">';		
+			code +="<input class=\"remove_btn\" type=\"button\" onclick=\"deleteRow(this);\" value=\"\"/></td>";
 		}
+
 	}
   	code +='</tr></table>';
 	
@@ -62,6 +68,8 @@ function deleteRow(r){
 	for(i=0; i<$('macfilter_rulelist_table').rows.length; i++){
 		macfilter_rulelist_value += "&#60";
 		macfilter_rulelist_value += $('macfilter_rulelist_table').rows[i].cells[0].innerHTML;
+		macfilter_rulelist_value += "&#62";
+                macfilter_rulelist_value += $('macfilter_rulelist_table').rows[i].cells[1].innerHTML;
 	}
 	
 	macfilter_rulelist_array = macfilter_rulelist_value;
@@ -69,9 +77,9 @@ function deleteRow(r){
 		showmacfilter_rulelist();
 }
 
-function addRow(obj, upper){
+function addRow(obj, obj2, upper){
 		var rule_num = $('macfilter_rulelist_table').rows.length;//rule lists 
-		var item_num = $('macfilter_rulelist_table').rows[0].cells.length; //2 column
+		var item_num = $('macfilter_rulelist_table').rows[0].cells.length; //3 column
 		
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
@@ -92,7 +100,7 @@ function addRow(obj, upper){
 		
 		//Viz check same rule
 		for(i=0; i<rule_num; i++){
-			for(j=0; j<item_num-1; j++){		//only 1 value column
+			for(j=0; j<item_num-2; j++){		//only 1 value column
 				//alert(obj.value+","+$('macfilter_rulelist_table').rows[i].cells[j].innerHTML);
 				if(obj.value.toLowerCase() == $('macfilter_rulelist_table').rows[i].cells[j].innerHTML.toLowerCase()){
 					alert("<#JS_duplicate#>");
@@ -103,7 +111,10 @@ function addRow(obj, upper){
 		
 		macfilter_rulelist_array += "&#60";
 		macfilter_rulelist_array += obj.value;
+		macfilter_rulelist_array += "&#62";
+		macfilter_rulelist_array += obj2.value;
 		obj.value = "";
+		obj2.value = "";
 		showmacfilter_rulelist();
 		
 }
@@ -251,18 +262,22 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 					  </thead>
 
         	<tr>
-          		<th width="80%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);">
+          		<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);">
           			<#MAC_Address#></a>
               		<input type="hidden" name="macfilter_num_x_0" value="<% nvram_get("macfilter_num_x"); %>" readonly="1"/>
 		  	</th>
+			<th width="40%">Name</th>
 			<th width="20%">Add / Delete</th>
         	</tr>
         	<tr>
-          		<td width="80%">
+          		<td width="40%">
           			<input type="text" maxlength="17" class="input_macaddr_table" name="macfilter_list_x_0"  onKeyPress="return is_hwaddr(this,event)">
 		  	</td>          			
+			<td width="40%">
+				<input type="text" class="input_15_table" maxlenght="15" name="macfilter_name_x_0">
+			</td>
 		  	<td width="20%">
-		  		<input class="add_btn" type="button" onclick="addRow(document.form.macfilter_list_x_0, 32);" value="">
+		  		<input class="add_btn" type="button" onclick="addRow(document.form.macfilter_list_x_0, macfilter_name_x_0, 32);" value="">
 		  	</td>
         	</tr>
         </table>
