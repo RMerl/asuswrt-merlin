@@ -523,8 +523,23 @@ int main(int argc, char *argv[]) {
 	}
 	
 confpage:
-	if(fp != NULL)
+	if(fp != NULL) {
+
+		if (check_if_file_exist("/jffs/configs/smb.append")) {
+			char *addendum = read_whole_file("/jffs/configs/smb.append");
+			if (addendum) {
+				fwrite(addendum, 1, strlen(addendum), fp);
+				free(addendum);
+			}
+
+        	}
 		fclose(fp);
+
+		if (check_if_file_exist("/jffs/configs/smb")) {
+			eval("cp","/jffs/configs/smb",SAMBA_CONF,NULL);
+		}
+	}
+
 	free_disk_data(&disks_info);
 	return 0;
 }
