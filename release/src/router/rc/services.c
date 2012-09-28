@@ -236,7 +236,9 @@ void start_dnsmasq()
 			}
 		}
 #endif
+		append_custom_config("hosts", fp);
 		fclose(fp);
+		use_custom_config("hosts", "/etc/hosts");
 	} else
 		perror("/etc/hosts");
 
