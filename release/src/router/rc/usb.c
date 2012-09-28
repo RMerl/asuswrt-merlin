@@ -1783,8 +1783,12 @@ void start_dms(void)
 				serial
 				);
 
+			use_custom_config("minidlna", f);
+
 			fclose(f);
 		}
+
+		append_custom_config("minidlna","/etc/"MEDIA_SERVER_APP".conf");
 
 		/* start media server if it's not already running */
 		if (pidof(MEDIA_SERVER_APP) <= 0) {
