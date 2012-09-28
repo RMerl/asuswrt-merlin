@@ -373,20 +373,11 @@ void start_dnsmasq()
 	write_vpn_dnsmasq_config(fp);
 #endif
 
-	if (check_if_file_exist("/jffs/configs/dnsmasq.append")) {  
-		char *addendum = read_whole_file("/jffs/configs/dnsmasq.append");
-		if (addendum) {
-			fwrite(addendum, 1, strlen(addendum), fp);
-			free(addendum);
-		}
-
-        }
+	append_custom_config("dnsmasq",fp);
 
 	fclose(fp);
 
-	if (check_if_file_exist("/jffs/configs/dnsmasq")) {
-		eval("cp","/jffs/configs/dnsmasq","/etc/dnsmasq.conf",NULL);
-	}
+	use_custom_config("dnsmasq","/etc/dnsmasq.conf");
 
 	eval("touch", "/tmp/resolv.conf");
 	chmod("/tmp/resolv.conf", 0666);
