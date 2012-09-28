@@ -66,7 +66,12 @@ function show_wl_maclist_x(){
 	else{
 		for(var i = 1; i < wl_maclist_x_row.length; i++){
 			code +='<tr id="row'+i+'">';
-			code +='<td width="80%">'+ wl_maclist_x_row[i] +'</td>';	
+
+			var wl_maclist_x_col = wl_maclist_x_row[i].split('&#62');
+			for(var j = 0; j < wl_maclist_x_col.length; j++){
+				code +='<td width="40%">'+ wl_maclist_x_col[j] +'</td>';
+			}
+			if (j != 2) code +='<td width="40%"></td>';
 			code +='<td width="20%"><input type="button" class=\"remove_btn\" onclick=\"deleteRow(this);\" value=\"\"/></td></tr>';		
 		}
 	}	
@@ -84,6 +89,8 @@ function deleteRow(r){
 	for(i=0; i<$('wl_maclist_x_table').rows.length; i++){
 		wl_maclist_x_value += "&#60";
 		wl_maclist_x_value += $('wl_maclist_x_table').rows[i].cells[0].innerHTML;
+		wl_maclist_x_value += "&#62";
+                wl_maclist_x_value += $('wl_maclist_x_table').rows[i].cells[1].innerHTML;
 	}
 	
 	wl_maclist_x_array = wl_maclist_x_value;
@@ -91,7 +98,7 @@ function deleteRow(r){
 		show_wl_maclist_x();
 }
 
-function addRow(obj, upper){
+function addRow(obj, obj2, upper){
 	var rule_num = $('wl_maclist_x_table').rows.length;
 	var item_num = $('wl_maclist_x_table').rows[0].cells.length;
 
@@ -113,7 +120,7 @@ function addRow(obj, upper){
 		
 		//Viz check same rule
 		for(i=0; i<rule_num; i++){
-			for(j=0; j<item_num-1; j++){	
+			for(j=0; j<item_num-2; j++){	
 				if(obj.value.toLowerCase() == $('wl_maclist_x_table').rows[i].cells[j].innerHTML.toLowerCase()){
 					alert("<#JS_duplicate#>");
 					return false;
@@ -121,9 +128,12 @@ function addRow(obj, upper){
 			}		
 		}		
 				
-		wl_maclist_x_array += "&#60"
+		wl_maclist_x_array += "&#60";
 		wl_maclist_x_array += obj.value;
-		obj.value = ""
+		wl_maclist_x_array += "&#62";
+		wl_maclist_x_array += obj2.value;
+		obj.value = "";
+		obj2.value = "";
 		show_wl_maclist_x();
 }
 
@@ -279,22 +289,26 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 			<table id="MainTable2" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
 			  <thead>
 			  <tr>
-				<td colspan="2"><#FirewallConfig_MFList_groupitemname#></td>
+				<td colspan="3"><#FirewallConfig_MFList_groupitemname#></td>
 			  </tr>
 			  </thead>
 
           		<tr>
-	          		<th width="80%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);">
+	          		<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);">
 						<#FirewallConfig_MFList_groupitemname#>
 					</th> 
+					<th width="40%">Name</th>
 					<th width="20%">Add / Delete</th>
           		</tr>
           		<tr>
-            		<td width="80%">
+            		<td width="40%">
               			<input type="text" maxlength="17" class="input_macaddr_table" name="wl_maclist_x_0" onKeyPress="return is_hwaddr(this,event)">
               		</td>
+			<td width="40%">
+				<input type="text" class="input_15_table" maxlenght="15" name="wl_macname_x_0">
+			</td>
               		<td width="20%">	
-              			<input type="button" class="add_btn" onClick="addRow(document.form.wl_maclist_x_0, 32);" value="">
+              			<input type="button" class="add_btn" onClick="addRow(document.form.wl_maclist_x_0, document.form.wl_macname_x_0, 32);" value="">
               		</td>
           		</tr>      		
         		</table>
