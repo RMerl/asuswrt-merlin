@@ -793,7 +793,11 @@ void start_radvd(void)
 
 		fprintf(f,
 			"};\n");	// close "interface" section
+
+		append_custom_config("radvd", f);
 		fclose(f);
+
+		use_custom_config("radvd", "/etc/radvd.conf");
 
 		chmod("/etc/radvd.conf", 0400);
 
