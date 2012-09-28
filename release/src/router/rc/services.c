@@ -645,7 +645,10 @@ void start_dhcp6s(void)
 	if (p && *p)
 		fprintf(fp, "option domain-name-servers %s;\n", p);
 
+	append_custom_config("dhcp6s", fp);
 	fclose(fp);
+
+	use_custom_config("dhcp6s", "/etc/dhcp6s.conf");
 
 	if (nvram_get_int("ipv6_debug"))
 		dhcp6s_argv[index++] = "-D";
