@@ -1471,7 +1471,10 @@ void write_ftpd_conf()
 		fprintf(fp, "xferlog_file=/var/log/vsftpd.log\n");
 	}
 
+	append_custom_config("vsftpd", fp);
 	fclose(fp);
+
+	use_custom_config("vsftpd", "/etc/vsftpd.conf");
 }
 
 /*
