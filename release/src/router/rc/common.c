@@ -1438,3 +1438,30 @@ void run_custom_script_blocking(char *name, char *args)
 
 }
 
+
+void use_custom_config(char *config, char *target)
+{
+        char filename[256];
+        sprintf(filename,"/jffs/configs/%s", config);
+
+	if (check_if_file_exist(config)) {
+		eval("cp", config, target, NULL);
+	}
+}
+
+
+void append_custom_config(char *config, FILE *fp)
+{
+	char filename[256];
+	char *addendum;
+
+	sprintf(filename,"/jffs/configs/%s.append", config);
+
+	if (check_if_file_exist(filename)) {
+		addendum = read_whole_file(filename);
+		if (addendum) {
+			fwrite(addendum, 1, strlen(addendum), fp);
+			free(addendum);
+		}
+        }
+}
