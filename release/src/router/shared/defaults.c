@@ -1321,6 +1321,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client1_userauth",	"0"		},
 	{ "vpn_client1_username",	""		},
 	{ "vpn_client1_password",	""		},
+	{ "vpn_client1_useronly",	"0"		},
 	{ "vpn_client2_poll",		"0"		},
 	{ "vpn_client2_if",		"tun"		},
 	{ "vpn_client2_bridge",		"1"		},
@@ -1344,6 +1345,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client2_gw",		""		},
 	{ "vpn_client2_custom",		""		},
 	{ "vpn_client2_tlsremote",	"0"		},
+	{ "vpn_client2_useronly",	"0"		},
 	{ "vpn_crt_client2_static",	""		},
 	{ "vpn_crt_client2_ca",		""		},
 	{ "vpn_crt_client2_crt",	""		},
@@ -1377,6 +1379,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client_userauth",	"0"		},
 	{ "vpn_client_username",	""		},
 	{ "vpn_client_password",	""		},
+	{ "vpn_client_useronly",	"0"		},
 #endif
 
 #ifdef RTCONFIG_IPV6
