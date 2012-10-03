@@ -265,6 +265,7 @@ static const applets_t applets[] = {
 #ifdef RTCONFIG_USB
 	{ "ejusb",                   ejusb_main                   },
 #endif
+	{ "service",			service_main		},
 	{NULL, NULL}
 };
 

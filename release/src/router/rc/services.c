@@ -4005,3 +4005,12 @@ stop_acsd(void)
 	return ret;
 }
 #endif
+
+int service_main(int argc, char *argv[])
+{
+	if (argc != 2) usage_exit(argv[0], "<action_service>");
+	notify_rc(argv[1]);
+	printf("\nDone.\n");
+	return 0;
+}
+

@@ -363,6 +363,7 @@ extern void stop_ipv6(void);
 #ifdef CONFIG_BCMWL5
 extern void set_acs_ifnames();
 #endif
+extern int service_main(int argc, char *argv[]);
 
 #ifdef BTN_SETUP
 enum BTNSETUP_STATE
