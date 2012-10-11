@@ -274,7 +274,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
           			<input type="text" maxlength="17" class="input_macaddr_table" name="macfilter_list_x_0"  onKeyPress="return is_hwaddr(this,event)">
 		  	</td>          			
 			<td width="40%">
-				<input type="text" class="input_15_table" maxlenght="15" name="macfilter_name_x_0">
+				<input type="text" class="input_15_table" maxlenght="15" onKeypress="return is_alphanum(this,event);" name="macfilter_name_x_0">
 			</td>
 		  	<td width="20%">
 		  		<input class="add_btn" type="button" onclick="addRow(document.form.macfilter_list_x_0, macfilter_name_x_0, 32);" value="">

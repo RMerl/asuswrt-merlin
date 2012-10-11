@@ -658,7 +658,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
             				<input type="text" class="input_15_table" maxlength="15" name="dhcp_staticip_x_0" onkeypress="return is_ipaddr(this,event)">
             			</td>
             			<td width="27%">
-					<input type="text" class="input_15_table" maxlenght="15" name="dhcp_staticname_x_0">
+					<input type="text" class="input_15_table" maxlenght="15" onkeypress="return is_alphanum(this,event);" name="dhcp_staticname_x_0">
 				</td>
 				<td width="19%">
 										<div> 

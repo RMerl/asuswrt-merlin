@@ -404,7 +404,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
                 		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="Select the device name of WOL target" onmouseover="over_var=1;" onmouseout="over_var=0;">
                 			</td>
 				<td width="45%" colspan="2">
-					<input type="text" class="input_15_table" maxlenght="15" name="wol_name_x_0">
+					<input type="text" class="input_15_table" maxlenght="15" onkeypress="return is_alphanum(this,event);" name="wol_name_x_0">
 				</td>
             			<td width="20%">
 										<div>
