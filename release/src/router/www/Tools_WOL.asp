@@ -400,7 +400,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 							<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 
             			<td width="35%">
-                		<input type="text" class="input_20_table" maxlength="20" name="wol_mac_x_0" style="margin-left:-12px;width:220px;" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
+                		<input type="text" class="input_macaddr_table" maxlength="17" name="wol_mac_x_0" style="margin-left:-12px;width:220px;" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
                 		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="Select the device name of WOL target" onmouseover="over_var=1;" onmouseout="over_var=0;">
                 			</td>
 				<td width="45%" colspan="2">
