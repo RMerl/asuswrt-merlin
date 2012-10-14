@@ -251,8 +251,10 @@ void rfc1305print(char *data, struct ntptime *arrival)
 			exit(1);
 		}
 
+#ifdef RTCONFIG_IPV6
 		if (get_ipv6_service() != IPV6_DISABLED)
 			notify_rc("restart_radvd");
+#endif
 
 #if 0
 		if (debug) {
