@@ -2720,6 +2720,7 @@ _dprintf("^^^^ dproxy:: ej_lan_leases ^^^^\n");
 }
 #endif
 
+#ifdef RTCONFIG_IPV6
 static void INET6_displayroutes(webs_t wp)
 {
 	char addr6[128], *naddr6;
@@ -2809,6 +2810,7 @@ static void INET6_displayroutes(webs_t wp)
 
 	return ret;
 }
+#endif
 
 int
 ej_route_table(int eid, webs_t wp, int argc, char_t **argv)
@@ -2896,6 +2898,7 @@ ej_route_table(int eid, webs_t wp, int argc, char_t **argv)
 	}
 	fclose(fp);
 
+#ifdef RTCONFIG_IPV6
 	if ((fp = fopen("/proc/net/if_inet6", "r")) == (FILE*)0)
 		return ret;
 
@@ -2918,6 +2921,7 @@ ej_route_table(int eid, webs_t wp, int argc, char_t **argv)
 
 	if (found)
 		INET6_displayroutes(wp);
+#endif
 
 	return ret;
 }
