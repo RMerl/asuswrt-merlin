@@ -42,3 +42,5 @@ busybox.links
 docs/busybox.net/
 include/NUM_APPLETS.h
 include/usage.h
+include/usage_compressed.h.*
+
