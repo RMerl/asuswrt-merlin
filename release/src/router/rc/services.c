@@ -375,11 +375,11 @@ void start_dnsmasq()
 	write_vpn_dnsmasq_config(fp);
 #endif
 
-	append_custom_config("dnsmasq",fp);
+	append_custom_config("dnsmasq.conf",fp);
 
 	fclose(fp);
 
-	use_custom_config("dnsmasq","/etc/dnsmasq.conf");
+	use_custom_config("dnsmasq.conf","/etc/dnsmasq.conf");
 
 	eval("touch", "/tmp/resolv.conf");
 	chmod("/tmp/resolv.conf", 0666);
@@ -647,10 +647,10 @@ void start_dhcp6s(void)
 	if (p && *p)
 		fprintf(fp, "option domain-name-servers %s;\n", p);
 
-	append_custom_config("dhcp6s", fp);
+	append_custom_config("dhcp6s.conf", fp);
 	fclose(fp);
 
-	use_custom_config("dhcp6s", "/etc/dhcp6s.conf");
+	use_custom_config("dhcp6s.conf", "/etc/dhcp6s.conf");
 
 	if (nvram_get_int("ipv6_debug"))
 		dhcp6s_argv[index++] = "-D";
@@ -799,10 +799,10 @@ void start_radvd(void)
 		fprintf(f,
 			"};\n");	// close "interface" section
 
-		append_custom_config("radvd", f);
+		append_custom_config("radvd.conf", f);
 		fclose(f);
 
-		use_custom_config("radvd", "/etc/radvd.conf");
+		use_custom_config("radvd.conf", "/etc/radvd.conf");
 
 		chmod("/etc/radvd.conf", 0400);
 

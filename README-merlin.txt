@@ -281,10 +281,10 @@ created by the firmware, or even completely replace them with
 custom config files you have created.  Those config override 
 files must be stored in /jffs/configs/.  To have a config 
 file appended to the one created by the firmware, simply 
-add ".append" at the end of the file listed below.  For 
-example, /jffs/configs/dnsmasq.append will be added at the 
+add ".add" at the end of the file listed below.  For 
+example, /jffs/configs/dnsmasq.conf.add will be added at the 
 end of the dnsmasq configuration file that is created by 
-the firmware, while /jffs/configs/dnsmasq would completely 
+the firmware, while /jffs/configs/dnsmasq.conf would completely 
 replace it.
 
 Note that replacing a config file with your own implies that you 
@@ -297,13 +297,13 @@ your custom config.
 
 The list of available config overrides:
 
-* dnsmasq
-* vsftpd
-* pptpd
-* dhcp6s
+* dnsmasq.conf
+* vsftpd.conf
+* pptpd.conf
+* dhcp6s.conf
 * hosts (for /etc/hosts)
-* smb
-* minidlna
+* smb.conf
+* minidlna.conf
 * profile (shell profile, only profile.append suypported)
 
 

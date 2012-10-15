@@ -1455,7 +1455,7 @@ void append_custom_config(char *config, FILE *fp)
 	char filename[256];
 	char *addendum;
 
-	sprintf(filename,"/jffs/configs/%s.append", config);
+	sprintf(filename,"/jffs/configs/%s.add", config);
 
 	if (check_if_file_exist(filename)) {
 		addendum = read_whole_file(filename);

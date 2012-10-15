@@ -251,10 +251,10 @@ void start_pptpd(void)
 	fprintf(fp, "localip %s\n"
 		"remoteip %s\n", nvram_safe_get("lan_ipaddr"),
 		nvram_safe_get("pptpd_clients"));
-	append_custom_config("pptpd", fp);
+	append_custom_config("pptpd.conf", fp);
 	fclose(fp);
 
-	use_custom_config("pptpd", "/tmp/pptpd/pptpd.conf");
+	use_custom_config("pptpd.conf", "/tmp/pptpd/pptpd.conf");
 
 	// Create ip-up and ip-down scripts that are unique to pptpd to avoid
 	// interference with pppoe and pptp

@@ -1471,10 +1471,10 @@ void write_ftpd_conf()
 		fprintf(fp, "xferlog_file=/var/log/vsftpd.log\n");
 	}
 
-	append_custom_config("vsftpd", fp);
+	append_custom_config("vsftpd.conf", fp);
 	fclose(fp);
 
-	use_custom_config("vsftpd", "/etc/vsftpd.conf");
+	use_custom_config("vsftpd.conf", "/etc/vsftpd.conf");
 }
 
 /*
@@ -1786,12 +1786,12 @@ void start_dms(void)
 				serial
 				);
 
-			use_custom_config("minidlna", f);
+			use_custom_config(MEDIA_SERVER_APP".conf", f);
 
 			fclose(f);
 		}
 
-		append_custom_config("minidlna","/etc/"MEDIA_SERVER_APP".conf");
+		append_custom_config(MEDIA_SERVER_APP".conf","/etc/"MEDIA_SERVER_APP".conf");
 
 		/* start media server if it's not already running */
 		if (pidof(MEDIA_SERVER_APP) <= 0) {
