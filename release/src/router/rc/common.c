@@ -1444,8 +1444,8 @@ void use_custom_config(char *config, char *target)
         char filename[256];
         sprintf(filename,"/jffs/configs/%s", config);
 
-	if (check_if_file_exist(config)) {
-		eval("cp", config, target, NULL);
+	if (check_if_file_exist(filename)) {
+		eval("cp", filename, target, NULL);
 	}
 }
 
