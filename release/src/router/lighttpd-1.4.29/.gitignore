@@ -46,4 +46,4 @@ src/lighttpd-arpping
 src/lighttpd-monitor
 src/proc_open
 src/versionstamp.h
-Makefile.in
+*/Makefile.in
