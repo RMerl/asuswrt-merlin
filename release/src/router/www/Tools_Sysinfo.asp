@@ -97,19 +97,19 @@ function showbootTime(){
 						</tr>
 					</thead>
 					<tr>
-						<th>Model:</th>
+						<th>Model</th>
 				        	<td><% nvram_get("productid"); %></td>
 					</tr>
 					<tr>
-						<th>Firmware Build:</th>
+						<th>Firmware Build</th>
 						<td><% nvram_get("buildinfo"); %></td>
 					</tr>
 					<tr>
-						<th>Driver version:</th>
+						<th>Driver version</th>
 						<td><% sysinfo("driver_version"); %></td>
 					</tr>
 					<tr>
-						<th>Features:</th>
+						<th>Features</th>
 						<td><% nvram_get("rc_support"); %></td>
 					</tr>
 					<tr>
@@ -119,7 +119,7 @@ function showbootTime(){
 
 					<tr>
 						<th>Radios temperature</th>
-						<td><b>2.4 GHz:</b><span> <% sysinfo("temperature.2"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span><% sysinfo("temperature.5"); %></span></td>
+						<td><b>2.4 GHz</b><span> <% sysinfo("temperature.2"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz</b> <span><% sysinfo("temperature.5"); %></span></td>
 					</tr>
 				</table>
 
