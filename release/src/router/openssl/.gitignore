@@ -63,3 +63,6 @@ openssl.pc
 ssl/lib
 stamp-h1
 apps/progs.h
+crypto/*/*.S
+crypto/*/*.s
+

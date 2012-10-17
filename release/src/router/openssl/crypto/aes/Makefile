@@ -60,8 +60,11 @@ aes-sparcv9.s: asm/aes-sparcv9.pl
 aes-ppc.s:	asm/aes-ppc.pl
 	$(PERL) asm/aes-ppc.pl $(PERLASM_SCHEME) $@
 
+aes-mips.S:	asm/aes-mips.pl
+	$(PERL) asm/aes-mips.pl $(PERLASM_SCHEME) $@
+
 # GNU make "catch all"
-aes-%.s:	asm/aes-%.pl;	$(PERL) $< $(CFLAGS) > $@
+aes-%.S:	asm/aes-%.pl;	$(PERL) $< $(PERLASM_SCHEME) > $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

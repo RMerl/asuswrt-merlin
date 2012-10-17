@@ -67,6 +67,11 @@ co-586.s:	asm/co-586.pl ../perlasm/x86asm.pl
 x86-mont.s:	asm/x86-mont.pl ../perlasm/x86asm.pl
 	$(PERL) asm/x86-mont.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
+bn-mips.s:	asm/mips.pl
+	$(PERL) asm/mips.pl $(PERLASM_SCHEME) $@
+mips-mont.s:	asm/mips-mont.pl
+	$(PERL)	asm/mips-mont.pl $(PERLASM_SCHEME) $@
+
 sparcv8.o:	asm/sparcv8.S
 	$(CC) $(CFLAGS) -c asm/sparcv8.S
 bn-sparcv9.o:	asm/sparcv8plus.S
@@ -108,7 +113,7 @@ alpha-mont.s:	asm/alpha-mont.pl
 	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
 
 # GNU make "catch all"
-%-mont.s:	asm/%-mont.pl;	$(PERL) $< $(CFLAGS) > $@
+%-mont.s:	asm/%-mont.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
