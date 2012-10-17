@@ -104,6 +104,10 @@ function showbootTime(){
 						<th>Firmware Build</th>
 						<td><% nvram_get("buildinfo"); %></td>
 					</tr>
+                                        <tr>
+                                                <th>Bootloader (CFE)</th>
+                                                <td><% nvram_get("bl_version"); %></td>
+                                        </tr>
 					<tr>
 						<th>Driver version</th>
 						<td><% sysinfo("driver_version"); %></td>
