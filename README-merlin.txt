@@ -329,6 +329,8 @@ History
    - NEW: Added Name field to the Wireless ACL page.
    - NEW: Added service applet to rc.  For example, "service restart_samba" will 
           restart the Samba service.  For advanced usage/debugging only.
+   - NEW: Backported OpenSSL ASM optimization from 1.0.1, for significant performance
+          improvements in things like OpenVPN.
    - FIXED: Enabling SSH access from WAN didn't work if DualWAN
             was set to load-balancing.
    - FIXED: Removed MAC Filter page, as it doesn't work (not compatible
@@ -337,6 +339,7 @@ History
    - FIXED: Limit valid characters in a DHCP/WOL description to prevent 
             breaking the webui by using invalid ones such as quotes.
    - CHANGED: Less strict rules when validating user-entered MAC hwaddr.
+
 
 
 3.0.0.4.220.18b:
