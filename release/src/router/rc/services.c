@@ -189,6 +189,10 @@ void start_dnsmasq()
 
 	TRACE_PT("begin\n");
 
+#ifdef RTCONFIG_OPENVPN
+	dns_to_resolv();
+#endif
+
 	if (getpid() != 1) {
 		notify_rc("start_dnsmasq");
 		return;
@@ -442,7 +446,7 @@ int write_ipv6_dns_servers(FILE *f, const char *prefix, char *dns, const char *s
 }
 #endif
 
-#if 0
+
 void dns_to_resolv(void)
 {
 	FILE *f;
@@ -470,7 +474,7 @@ void dns_to_resolv(void)
 	}
 	umask(m);
 }
-#endif
+
 
 // -----------------------------------------------------------------------------
 #ifdef RTCONFIG_IPV6
