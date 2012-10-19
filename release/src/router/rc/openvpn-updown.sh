@@ -19,7 +19,7 @@ then
 	done
 fi
 
-if [ -f $conffile -o -f $resolvfile -o -n "$fileexists" ]; then service dnsmasq restart; fi
+if [ -f $conffile -o -f $resolvfile -o -n "$fileexists" ]; then service restart_dnsmasq; fi
 rmdir $filedir
 rmdir /etc/openvpn
 
