@@ -235,7 +235,20 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				free(buffer);
 				unlink("/tmp/output.txt");
 			}
+		} else if(strcmp(type,"cfe_version") == 0 ) {
+			system("cat /dev/mtd0ro | grep bl_version >/tmp/output.txt");
+			char *buffer = read_whole_file("/tmp/output.txt");
 
+			if (buffer) {
+				tmp = strstr(buffer, "bl_version=");
+
+				if (tmp)
+					sscanf(tmp, "bl_version=%s", result);
+
+				free(buffer);
+
+				unlink("/tmp/output.txt");
+			}
 		} else if(strncmp(type,"pid",3) ==0 ) {
 			char service[32];
 			sscanf(type, "pid.%31s", service);
