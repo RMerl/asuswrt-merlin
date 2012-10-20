@@ -114,7 +114,7 @@ function valid_form(){
               <input type="radio" name="ctf_disable_force" value="0" <% nvram_match("ctf_disable_force", "0", "checked"); %>><#checkbox_No#>
           </td>
       </tr>     
-
+<!--
 	    <tr>
 	      <th>Disable GRO(Generic Receive Offload)</th>
 	          <td>
@@ -122,6 +122,7 @@ function valid_form(){
 	              <input type="radio" name="gro_disable_force" value="0" <% nvram_match("gro_disable_force", "0", "checked"); %>><#checkbox_No#>
 	          </td>
 	      </tr>       
+-->
 			</table>	
 
 		<div class="apply_gen">
