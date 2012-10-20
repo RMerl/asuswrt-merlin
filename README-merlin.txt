@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.220.19 (xx-Oct-2012)
+Asuswrt-Merlin - build 3.0.0.4.246.19 (xx-Oct-2012)
 ===================================================
 
 About
@@ -35,7 +35,7 @@ Features
 --------
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
-- Based on the source code of release 3.0.0.4.220
+- Based on the source code of release 3.0.0.4.246
 - Various bugfixes (like the crash on VPN/NAT Loopback access of LAN devices)
 - WakeOnLan web interface (with user-entered preset targets)
 - Persistent JFFS partition
@@ -45,7 +45,6 @@ Here is a list of features that Asuswrt-merlin brings over the original firmware
 - Crond
 - Clicking on the MAC address of an unidentified client will do a lookup in
   the OUI database (ported from DD-WRT).
-- Optionally turn the WPS button into a radio enable/disable switch
 - Optionally save traffic stats to disk (USB or JFFS partition)
 - Display monthly traffic reports
 - Display active/tracked network connections
@@ -159,10 +158,7 @@ or both.  You can also change the https port to a different one
 
 
 * WPS button mode - toggle radio *
-You can configure the router so pressing the WPS button will 
-toggle the radio on/off instead of starting WPS mode.
-The option to enable this feature can be found on the 
-Administration page, on the System tab.
+That feature is now built in the original Asus firmware.
 
 
 
@@ -320,6 +316,7 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.220.19:
+   - NEW: Rebased on 3.0.0.4.246.
    - NEW: Option to enable simpler share names.  When enabled, the folder
           Share will be shared as "Share" instead of "Share (on sda1)".
           The option can be found on the Misc tab, under USB Application.
@@ -331,6 +328,7 @@ History
           restart the Samba service.  For advanced usage/debugging only.
    - NEW: Backported OpenSSL ASM optimization from 1.0.1, for significant performance
           improvements in things like OpenVPN.
+   - NEW: Report the current CFE/Bootloader version on the Sysinfo page.
    - FIXED: Enabling SSH access from WAN didn't work if DualWAN
             was set to load-balancing.
    - FIXED: Removed MAC Filter page, as it doesn't work (not compatible
@@ -338,6 +336,8 @@ History
    - FIXED: OpenVPN Client "Username Auth only" option was broken.
    - FIXED: Limit valid characters in a DHCP/WOL description to prevent 
             breaking the webui by using invalid ones such as quotes.
+   - FIXED: OpenVPN Client wasn't properly applying DNS settings that
+            the server was pushing to us.
    - CHANGED: Less strict rules when validating user-entered MAC hwaddr.
 
 
