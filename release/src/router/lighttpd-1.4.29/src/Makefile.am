@@ -59,6 +59,13 @@ mod_ssi_exprparser.c: $(srcdir)/mod_ssi_exprparser.y $(srcdir)/lempar.c lemon$(E
 parsers: configparser.c mod_ssi_exprparser.c
 endif
 
+#20120613 Jerry add
+copy-prebuild:
+	if test -d '../prebuild' ; then \
+		cp ../prebuild/mod_smbdav.so .libs/mod_smbdav.so; \
+		cp ../prebuild/mod_aidisk_access.so .libs/mod_aidisk_access.so; \
+	fi
+
 BUILT_SOURCES = parsers versionstamp 
 MAINTAINERCLEANFILES = configparser.c configparser.h mod_ssi_exprparser.c mod_ssi_exprparser.h
 CLEANFILES = versionstamp.h versionstamp.h.tmp
