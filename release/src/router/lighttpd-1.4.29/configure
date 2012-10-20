@@ -20,12 +20,12 @@
 DUALCASE=1; export DUALCASE # for MKS sh
 
 #20120613 Jerry add
-#if test -f "src/mod_smbdav.c"; then                                                                                
-#    cp src/Makefile.am.org src/Makefile.am;                                                                   
-#else                                                                                                       
-#	cp src/Makefile.am.gpl src/Makefile.am;                                                                   
-#	echo "Prepare lighttpd's prebuild file!";	
-#fi     
+if test -f "src/mod_smbdav.c"; then                                                                                
+    cp src/Makefile.am.org src/Makefile.am;                                                                   
+else                                                                                                       
+	cp src/Makefile.am.gpl src/Makefile.am;                                                                   
+	echo "Prepare lighttpd's prebuild file!";	
+fi     
 
 if test -n "${ZSH_VERSION+set}" && (emulate sh) >/dev/null 2>&1; then :
   emulate sh
