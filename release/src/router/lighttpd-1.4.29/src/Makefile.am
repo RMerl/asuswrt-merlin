@@ -64,6 +64,7 @@ copy-prebuild:
 	if test -d '../prebuild' ; then \
 		cp ../prebuild/mod_smbdav.so .libs/mod_smbdav.so; \
 		cp ../prebuild/mod_aidisk_access.so .libs/mod_aidisk_access.so; \
+		cp ../prebuild/mod_sharelink.so.l .libs/mod_sharelink.so; \
 	fi
 
 BUILT_SOURCES = parsers versionstamp 
