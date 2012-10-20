@@ -34,7 +34,6 @@
 #include<signal.h>
 #include<bcmnvram.h>
 #include<shutils.h>
-#include<wlioctl.h>
 #include<sys/time.h>
 #include<sys/ioctl.h>
 #include <sys/sysinfo.h>
@@ -285,6 +284,7 @@ void init_switch_mode()
 		nvram_set("wl1_bss_enabled", "1");
 #endif
 #endif
+		nvram_set("ure_disable", "1");
 	}
 	else if (nvram_match("sw_mode_ex", "4"))		// Router mode
 	{
@@ -298,6 +298,7 @@ void init_switch_mode()
 		nvram_set("wl1_bss_enabled", "1");
 #endif
 #endif
+		nvram_set("ure_disable", "1");
 	}
 #ifdef RTCONFIG_WIRELESSREPEATER
 	else if (nvram_match("sw_mode_ex", "2"))		// Repeater mode
@@ -343,6 +344,7 @@ void init_switch_mode()
 		nvram_set("wan_nat_x", "0");
 		nvram_set("wan_route_x", "IP_Bridged");
 		nvram_set("wl_mode_ex", "ap");
+		nvram_set("ure_disable", "1");
 	}
 	else
 	{
@@ -358,6 +360,7 @@ void init_switch_mode()
 		nvram_set("wl1_bss_enabled", "1");
 #endif
 #endif
+		nvram_set("ure_disable", "1");
 	}
 }
 
@@ -951,7 +954,7 @@ void setup_conntrack(void)
 void setup_pt_conntrack()
 {
 	if (!nvram_match("fw_pt_rtsp", "0")) {
-		ct_modprobe("rtsp");
+		ct_modprobe("rtsp", "ports=554,8554");
 	}
 	else {
 		ct_modprobe_r("rtsp");

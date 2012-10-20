@@ -1,0 +1,301 @@
+@charset "utf-8";
+body {
+margin:0;
+padding:0;
+font-family:"Segoe UI",Arial;
+font-weight:lighter;
+background-color:#E6E6E6;
+}
+
+.sicon, .bicon, .button, .ocButton, .ticon, #logo, #treeBanner, #help_image {
+background:transparent url("style-metro2.png") no-repeat top left;
+}
+
+.bicon {
+width:80px;
+height:60px;
+}
+
+.sicon {
+width:40px;
+height:40px;
+}
+
+.unselectable {
+-moz-user-select: -moz-none;
+-khtml-user-select: none;
+-webkit-user-select: none;
+-o-user-select: none;
+user-select: none;
+}
+
+#clear {
+clear::both;
+}
+/*-- Scroll Bar --------------------------------------*/
+::-webkit-scrollbar {
+width: 10px;
+height: 16px;
+}
+
+::-webkit-scrollbar-button {
+width: 0;
+height: 0;
+display: none;
+}
+
+::-webkit-scrollbar-corner {
+background-color: transparent;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+background-color: transparent;
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+background-color: rgba(129, 165, 194, 0.5);
+-webkit-box-shadow: inset 1px 1px 0 rgba(255,255,255,0.10),inset 0 -1px 0 rgba(255,255,255,0.07)
+}
+::-webkit-scrollbar-thumb:window-inactive {
+background: rgba(129, 165, 194, 0.4); 
+}
+
+#header_region {
+margin:0;
+padding:0;
+width:100%;
+height:64px;
+overflow: hidden;
+background-color:#23262D;
+}
+
+#header_region #logo{
+background-position: -30px 0;
+width:300px;
+height:55px;
+margin-top:9px;
+margin-left:30px;
+float:left;
+}
+
+#bottom_region {
+/*float: left;*/
+position:fixed;
+width: 100%;
+height:30px;
+bottom:0px;
+background-color:#23262D;
+}
+
+#bottom_region span{
+float: right;
+padding-top:3px;
+padding-right:10px;
+font-size:14px;
+color:#6B7A72;
+}
+/*--------------------------------------*/
+#fileview {
+padding:20px 30px 30px 30px;
+}
+
+#fileview p {
+font-family:"Segoe UI",Arial;
+font-weight:lighter;
+font-size:10pt;
+line-height:20px;
+margin-top:0;
+}
+
+#fileview .picDiv {
+width:80px;
+height:60px;
+margin-right:auto;
+margin-left:auto;
+}
+
+#fileview .parentDiv {
+background-position: 0 -175px;
+cursor:pointer;
+}
+
+#fileview .folderDiv {
+background-position: -80px -175px;
+cursor:pointer;
+}
+#fileview .folderDiv.select {
+background-position: -80px -235px;
+}
+
+#fileview .selectDiv {
+background-position: -240px -55px;
+cursor:pointer;
+position: relative;
+left: 25px;
+top: 10px;
+display:none;
+}
+
+#fileview .selectHintDiv {
+background-position: -280px -55px;
+position: relative;
+left: 25px;
+top: 10px;
+display:none;
+}
+
+#fileview .fileDiv {
+background-position: -160px -175px;
+cursor:pointer;
+}
+#fileview .fileDiv.select {
+background-position: -160px -235px;
+}
+
+#fileview .fileDiv span{
+color:#555C62;
+font-size:85%;
+position: relative;
+top: 15px;
+text-align:center;
+}
+
+#fileview .imgfileDiv {
+background-position: -240px -175px;
+cursor:pointer;
+}
+#fileview .imgfileDiv.select {
+background-position: -240px -235px;
+}
+
+#fileview .audiofileDiv {
+background-position: -400px -175px;
+cursor:pointer;
+}
+#fileview .audiofileDiv.select {
+background-position: -400px -235px;
+}
+
+#fileview .videofileDiv {
+background-position: -320px -175px;
+cursor:pointer;
+}
+#fileview .videofileDiv.select {
+background-position: -320px -235px;
+}
+
+#fileview .docfileDiv {
+background-position: -560px -175px;
+cursor:pointer;
+}
+#fileview .docfileDiv.select {
+background-position: -560px -235px;
+}
+
+#fileview .pptfileDiv {
+background-position: -480px -175px;
+cursor:pointer;
+}
+#fileview .pptfileDiv.select {
+background-position: -480px -235px;
+}
+
+#fileview .xlsfileDiv {
+background-position: -640px -175px;
+cursor:pointer;
+}
+#fileview .xlsfileDiv.select {
+background-position: -640px -235px;
+}
+
+#fileview .pdffileDiv {
+background-position: -720px -175px;
+cursor:pointer;
+}
+#fileview .pdffileDiv.select {
+background-position: -720px -235px;
+}
+
+.reg .ssettingDiv.sicon {
+background-position: -256px -5px;
+width:20px;
+height:20px;
+float:right;
+padding:0px;
+cursor:pointer;
+}
+
+#fileview .albumDiv {
+float:left;
+width:130px;
+height:150px;
+text-align:center;
+margin:10px;
+border-width:1px; 
+border-color:#BBBBBB; 
+border-style:solid;
+}
+
+#fileview .albumDiv:hover {
+background-color:#8A898A;
+}
+
+#fileview .albuminfo {
+width:120px;
+height:20px;
+}
+
+.albuminfo a#list_item {
+font-family:"Segoe UI",Arial;
+font-weight:lighter;
+font-size:11pt;
+color:#2D3134;
+text-align:center;
+overflow:hidden;
+display:block;
+text-decoration:none;
+width:100%;
+height:100%;
+white-space: nowrap;
+}
+
+.thumb-table-parent {
+width:100%;
+height:100%;
+}
+
+/*--------------------------------------*/
+
+div#toolbar{
+width:100%;
+height:30px;
+text-align: right;
+}
+
+input, button {
+font-family: "Arial","Tahoma";
+border: 0px;
+vertical-align: middle;
+margin: 0px;
+line-height: 12px;
+font-size: 12px;
+}
+
+.btnDownload {
+width: 110px;
+height: 20px;
+border: solid 2px gainsboro;
+color: #000;
+cursor:pointer;
+}
+
+.btnDownloadAll {
+width: 300px;
+height: 30px;
+border: solid 1px gainsboro;
+color: #fff;
+background-color:#272727;
+cursor:pointer;
+}

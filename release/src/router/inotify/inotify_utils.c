@@ -11,6 +11,7 @@
 #include <sys/inotify.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <string.h>
 //#include "data.h"
 #include "event_queue.h"
 #include "inotify_utils.h"
@@ -42,11 +43,11 @@ int is_add_folder;
 
 struct my_inotify_event
 {
-  int wd;		/* Watch descriptor.  */
-  uint32_t mask;	/* Watch mask.  */
-  uint32_t cookie;	/* Cookie to synchronize two events.  */
-  uint32_t len;		/* Length (including NULs) of name.  */
-  char name[512] ;	/* Name.  */
+    int wd;		/* Watch descriptor.  */
+    uint32_t mask;	/* Watch mask.  */
+    uint32_t cookie;	/* Cookie to synchronize two events.  */
+    uint32_t len;		/* Length (including NULs) of name.  */
+    char name[512] ;	/* Name.  */
 };
 
 
@@ -106,31 +107,31 @@ int read_inotify(struct my_inotify_event *temp_event,const char *filename)
    to access it */
 int open_inotify_fd ()
 {
-  int fd;
+    int fd;
 
-  watched_items = 0;
-  fd = inotify_init ();
+    watched_items = 0;
+    fd = inotify_init ();
 
-  if (fd < 0)
+    if (fd < 0)
     {
-      perror ("inotify_init () = ");
+        perror ("inotify_init () = ");
     }
-  return fd;
+    return fd;
 }
 
 
 /* Close the open file descriptor that was opened with inotify_init() */
 int close_inotify_fd (int fd)
 {
-  int r;
+    int r;
 
-  if ((r = close (fd)) < 0)
+    if ((r = close (fd)) < 0)
     {
-      perror ("close (fd) = ");
+        perror ("close (fd) = ");
     }
 
-  watched_items = 0;
-  return r;
+    watched_items = 0;
+    return r;
 }
 
 int send_action(int type,char *content)
@@ -159,7 +160,7 @@ int send_action(int type,char *content)
     }
 
     //if(type == ASUSWEBSTORAGE)
-         //port = ASUSWEBSTORAGE_PORT;
+    //port = ASUSWEBSTORAGE_PORT;
     /*
     switch (type)
     {
@@ -251,142 +252,163 @@ int get_category(char *path)
     return -1;
 }
 
+int test_if_download_temp_file(char *filename)
+{
+    char file_suffix[9];
+    char *temp_suffix = ".asus.td";
+    memset(file_suffix,0,sizeof(file_suffix));
+    char *p = filename;
+
+    if(strstr(filename,temp_suffix))
+    {
+        strcpy(file_suffix,p+(strlen(filename)-strlen(temp_suffix)));
+
+        //printf(" %s file_suffix is %s\n",filename,file_suffix);
+
+        if(!strcmp(file_suffix,temp_suffix))
+            return 1;
+    }
+
+    return 0;
+
+}
+
 /* This method does the work of determining what happened,
    then allows us to act appropriately
 */
 void handle_event (queue_entry_t event)
 {
-	//printf("********handle_event********\n");
-  /* If the event was associated with a filename, we will store it here */
-  char *cur_event_filename = NULL;
-  char *cur_event_file_or_dir = NULL;
-  /* This is the watch descriptor the event occurred on */
-  int cur_event_wd = event->inot_ev.wd;
-  int cur_event_cookie = event->inot_ev.cookie;
-  unsigned long flags;
+    //printf("********handle_event********\n");
+    /* If the event was associated with a filename, we will store it here */
+    char *cur_event_filename = NULL;
+    char *cur_event_file_or_dir = NULL;
+    /* This is the watch descriptor the event occurred on */
+    int cur_event_wd = event->inot_ev.wd;
+    int cur_event_cookie = event->inot_ev.cookie;
+    unsigned long flags;
 
-  //add by gauss
-  struct my_inotify_event temp_event;
-  int len;
-  char fullname[512];
-  //ItemID itemID;
-  int isfolder;
-  //Createfolder createfolder;
-  char info[512];
-  int type;
-  //char type[64];
-  char path[512];
-  char old_path[512];
-  int category = -1;
+    //add by gauss
+    struct my_inotify_event temp_event;
+    int len;
+    char fullname[512];
+    //ItemID itemID;
+    int isfolder;
+    //Createfolder createfolder;
+    char info[512];
+    int type;
+    //char type[64];
+    char path[512];
+    char old_path[512];
+    int category = -1;
 
-  memset(&temp_event,0,sizeof(struct my_inotify_event));
-  memset(fullname,0,sizeof(fullname));
-  memset(info,0,sizeof(info));
-  //memset(type,0,sizeof(type));
-  memset(path,0,sizeof(path));
-  memset(old_path,0,sizeof(path));
+    memset(&temp_event,0,sizeof(struct my_inotify_event));
+    memset(fullname,0,sizeof(fullname));
+    memset(info,0,sizeof(info));
+    //memset(type,0,sizeof(type));
+    memset(path,0,sizeof(path));
+    memset(old_path,0,sizeof(path));
 
-  sprintf(path,"%s",allfolderlist.folderlist[cur_event_wd-1].name);
+    sprintf(path,"%s",allfolderlist.folderlist[cur_event_wd-1].name);
 
-  //category = allfolderlist.folderlist[cur_event_wd-1].type;
+    //category = allfolderlist.folderlist[cur_event_wd-1].type;
 
-  category = get_category(path);
+    category = get_category(path);
 
-  if(category == -1)
-  {
-      printf("inotify can't find path type\n");
-      return ;
-  }
-
-  switch (category)
-  {
-  case 0:
-      type = ASUSWEBSTORAGE;
-      break;
-  case 1:
-      type = BOOKSNET;
-      break;
-  case 2:
-      type = WEBDAV;
-      break;
-  case 3:
-      type = SKYDRIVER;
-      break;
-  default:
-      break;
-  }
-
-  //if(strstr(path,ASUSWEBSTORAGE_SYNCFOLDER))
-        //type = ASUSWEBSTORAGE;
-        //strcpy(type,"asuswebstorage");
-  //memset(info)
-  //memset(&itemID,0,sizeof(ItemID));
-  //memset(&createfolder,0,sizeof(Createfolder));
-
-  if (event->inot_ev.len)
+    if(category == -1)
     {
-      cur_event_filename = event->inot_ev.name;
+        printf("inotify can't find path type\n");
+        return ;
     }
-  if ( event->inot_ev.mask & IN_ISDIR )
-    {
-      cur_event_file_or_dir = "Dir";
-    }
-  else 
-    {
-      cur_event_file_or_dir = "File";
-    }
-  flags = event->inot_ev.mask & 
-    ~(IN_ALL_EVENTS | IN_UNMOUNT | IN_Q_OVERFLOW | IN_IGNORED );
 
-  /* Perform event dependent handler routines */
-  /* The mask is the magic that tells us what file operation occurred */
-  switch (event->inot_ev.mask & 
-	  (IN_ALL_EVENTS | IN_UNMOUNT | IN_Q_OVERFLOW | IN_IGNORED))
+    switch (category)
     {
-      /* File was accessed */
+    case 0:
+        type = ASUSWEBSTORAGE;
+        break;
+    case 1:
+        type = BOOKSNET;
+        break;
+    case 2:
+        type = WEBDAV;
+        break;
+    case 3:
+        type = SKYDRIVER;
+        break;
+    default:
+        break;
+    }
+
+    //if(strstr(path,ASUSWEBSTORAGE_SYNCFOLDER))
+    //type = ASUSWEBSTORAGE;
+    //strcpy(type,"asuswebstorage");
+    //memset(info)
+    //memset(&itemID,0,sizeof(ItemID));
+    //memset(&createfolder,0,sizeof(Createfolder));
+
+    if (event->inot_ev.len)
+    {
+        cur_event_filename = event->inot_ev.name;
+    }
+    if ( event->inot_ev.mask & IN_ISDIR )
+    {
+        cur_event_file_or_dir = "Dir";
+    }
+    else
+    {
+        cur_event_file_or_dir = "File";
+    }
+    flags = event->inot_ev.mask &
+            ~(IN_ALL_EVENTS | IN_UNMOUNT | IN_Q_OVERFLOW | IN_IGNORED );
+
+    /* Perform event dependent handler routines */
+    /* The mask is the magic that tells us what file operation occurred */
+    switch (event->inot_ev.mask &
+            (IN_ALL_EVENTS | IN_UNMOUNT | IN_Q_OVERFLOW | IN_IGNORED))
+    {
+        /* File was accessed */
     case IN_ACCESS:
 
 #ifdef DEBUG
-      printf ("ACCESS: %s \"%s\" on WD #%i\n",
-              cur_event_file_or_dir, cur_event_filename, cur_event_wd);
+        printf ("ACCESS: %s \"%s\" on WD #%i\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd);
 #endif
-      break;
+        break;
 
-      /* File was modified */
+        /* File was modified */
     case IN_MODIFY:
 #ifdef DEBUG
-      printf ("MODIFY: %s \"%s\" on WD #%i\n",
-              cur_event_file_or_dir, cur_event_filename, cur_event_wd);
+        printf ("MODIFY: %s \"%s\" on WD #%i\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd);
 #endif
-      if( strstr(cur_event_filename,".goutputstream") ||
-          strstr(cur_event_filename,"~gvf"))
-      {
-        if(is_modify != 1)
+        if( strstr(cur_event_filename,".goutputstream") ||
+            strstr(cur_event_filename,"~gvf"))
+        {
+            if(is_modify != 1)
                 is_modify = 1;
-       }
-      break;
+        }
+        break;
 
-      /* File changed attributes */
+        /* File changed attributes */
     case IN_ATTRIB:
 #ifdef DEBUG
-      printf ("ATTRIB: %s \"%s\" on WD #%i\n",
-              cur_event_file_or_dir, cur_event_filename, cur_event_wd);
+        printf ("ATTRIB: %s \"%s\" on WD #%i\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd);
 #endif
 
-      break;
+        break;
 
-      /* File open for writing was closed */
+        /* File open for writing was closed */
     case IN_CLOSE_WRITE:
 #ifdef DEBUG
-      printf ("CLOSE_WRITE: %s \"%s\" on WD #%i\n",
-              cur_event_file_or_dir, cur_event_filename, cur_event_wd);
+        printf ("CLOSE_WRITE: %s \"%s\" on WD #%i\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd);
 #endif
 
 
 #if 0
-      if( is_modify == 1 )
-      {
-          /*
+        if( is_modify == 1 )
+        {
+            /*
           if(is_create_file_ex == 1)
           {
               printf("###### %s has replace #######\n",temp_event.name);
@@ -395,186 +417,209 @@ void handle_event (queue_entry_t event)
           else
           {
           */
-              printf("###### %s has modify #######\n",temp_event.name);
+            printf("###### %s has modify #######\n",temp_event.name);
 
-              sprintf(info,"modify@%s@%s",path,cur_event_filename);
-              send_action(type,info);
+            sprintf(info,"modify@%s@%s",path,cur_event_filename);
+            send_action(type,info);
 
-          ///}
+            ///}
 
-          is_modify = 0 ;
+            is_modify = 0 ;
 
-      }
+        }
 #endif
-      if( is_create_file == 1 )
-      {
-          printf("###### %s create file has copy ending #######\n",temp_event.name);
+        if( is_create_file == 1 )
+        {
+            printf("###### %s create file has copy ending #######\n",temp_event.name);
 
-          //sprintf(fullname,"%s/%s",allfolderlist.folderlist[cur_event_wd-1].name,cur_event_filename);
-          sprintf(info,"createfile@%s@%s",path,cur_event_filename);
-          send_action(type,info);
+            if(!test_if_download_temp_file(cur_event_filename))
+            {
+                //if(strrstr())
+                //sprintf(fullname,"%s/%s",allfolderlist.folderlist[cur_event_wd-1].name,cur_event_filename);
+                sprintf(info,"createfile@%s@%s",path,cur_event_filename);
+                send_action(type,info);
+            }
+            //else
+               // printf("ignore download temp file create socket\n");
 
-          is_create_file = 0;
+            is_create_file = 0;
+        }
 
-      }
 
+        break;
 
-      break;
-
-      /* File open read-only was closed */
+        /* File open read-only was closed */
     case IN_CLOSE_NOWRITE:
 #ifdef DEBUG
-      printf ("CLOSE_NOWRITE: %s \"%s\" on WD #%i\n",
-              cur_event_file_or_dir, cur_event_filename, cur_event_wd);
+        printf ("CLOSE_NOWRITE: %s \"%s\" on WD #%i\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd);
 #endif
-      break;
+        break;
 
-      /* File was opened */
+        /* File was opened */
     case IN_OPEN:
 #ifdef DEBUG
-      printf ("OPEN: %s \"%s\" on WD #%i\n",
-              cur_event_file_or_dir, cur_event_filename, cur_event_wd);
+        printf ("OPEN: %s \"%s\" on WD #%i\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd);
 #endif
 
-      //printf("$$$$ before read $$$$\n");
-      //printf("read len is %d \n",len);
+        //printf("$$$$ before read $$$$\n");
+        //printf("read len is %d \n",len);
 
-      //isfolder = ( temp_event.mask & IN_ISDIR ) ? 1 : 0;
+        //isfolder = ( temp_event.mask & IN_ISDIR ) ? 1 : 0;
 
-      if(have_from_file == 1)
-           {
-                len = read_inotify(&temp_event,moved_from_file);
+        if(have_from_file == 1)
+        {
+            len = read_inotify(&temp_event,moved_from_file);
 
-                printf("read len is %d \n",len);
+            printf("read len is %d \n",len);
 
-                if( len > 0 && (NULL == strstr(temp_event.name,".goutputstream") &&
-                                NULL == strstr(temp_event.name,"~gvf")))
+            if( len > 0 && (NULL == strstr(temp_event.name,".goutputstream") &&
+                            NULL == strstr(temp_event.name,"~gvf")))
+            {
+
+                sprintf(fullname,"%s",allfolderlist.folderlist[temp_event.wd-1].name);
+                printf("###### %s has put to recycle #######\n",fullname);
+
+                if(!test_if_download_temp_file(fullname))
                 {
-
-                     sprintf(fullname,"%s",allfolderlist.folderlist[temp_event.wd-1].name);
-                     printf("###### %s has put to recycle #######\n",fullname);
-
-                     sprintf(info,"remove@%s@%s",fullname,temp_event.name);
-                     send_action(type,info);
-
-                     remove(moved_from_file);
-                     have_from_file = 0;
+                    sprintf(info,"remove@%s@%s",fullname,temp_event.name);
+                    send_action(type,info);
                 }
-            }
-      break;
 
-      /* File was moved from X */
+                remove(moved_from_file);
+                have_from_file = 0;
+            }
+        }
+        break;
+
+        /* File was moved from X */
     case IN_MOVED_FROM:
 #ifdef DEBUG
-      printf ("MOVED_FROM: %s \"%s\" on WD #%i. Cookie=%d\n",
-             cur_event_file_or_dir, cur_event_filename, cur_event_wd,
-              cur_event_cookie);
+        printf ("MOVED_FROM: %s \"%s\" on WD #%i. Cookie=%d\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd,
+                cur_event_cookie);
 #endif
 
-      /*add by gauss case MOVED_FROM write to file*/
+        /*add by gauss case MOVED_FROM write to file*/
 
-      if( NULL == strstr(cur_event_filename,".goutputstream") &&
-          NULL == strstr(cur_event_filename,"~gvf") ) //reject modify and replace
-      {
-          write_inotify(event,moved_from_file);
-          have_from_file = 1;
-      }
+        if( NULL == strstr(cur_event_filename,".goutputstream") &&
+            NULL == strstr(cur_event_filename,"~gvf"))
+            //!test_if_download_temp_file(cur_event_filename)) //reject modify and replace
+        {
+            write_inotify(event,moved_from_file);
+            have_from_file = 1;
+        }
 
-      //printf("write inotify ok\n");
-      break;
+        //printf("write inotify ok\n");
+        break;
 
-      /* File was moved to X */
+        /* File was moved to X */
     case IN_MOVED_TO:
 #ifdef DEBUG
-      printf ("MOVED_TO: %s \"%s\" on WD #%i. Cookie=%d\n",
-              cur_event_file_or_dir, cur_event_filename, cur_event_wd,
-              cur_event_cookie);;
+        printf ("MOVED_TO: %s \"%s\" on WD #%i. Cookie=%d\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd,
+                cur_event_cookie);;
 #endif
 
-      //
+        //
 
-      if( is_modify == 1 )
-      {
-          printf("###### %s has modify #######\n",cur_event_filename);
+        if( is_modify == 1 )
+        {
+            printf("###### %s has modify #######\n",cur_event_filename);
 
-          sprintf(info,"modify@%s@%s",path,cur_event_filename);
-          send_action(type,info);
-          is_modify = 0 ;
+            if(!test_if_download_temp_file(cur_event_filename))
+            {
+                sprintf(info,"modify@%s@%s",path,cur_event_filename);
+                send_action(type,info);
+            }
 
-      }
-      else
-      {
-          len = read_inotify(&temp_event,moved_from_file);
+            is_modify = 0 ;
+        }
+        else
+        {
+            len = read_inotify(&temp_event,moved_from_file);
 
-          //isfolder = ( temp_event.mask & IN_ISDIR ) ? 1 : 0;
+            //isfolder = ( temp_event.mask & IN_ISDIR ) ? 1 : 0;
 
-          if(len > 0  )
-          {    if( NULL == strstr(temp_event.name,".goutputstream") &&
-                   NULL == strstr(temp_event.name,"~gvf") )
-              {
-                  if(temp_event.cookie == event->inot_ev.cookie)
-                  {
-                      /* rename  modify replace*/
-                      if(temp_event.wd == event->inot_ev.wd)
-                      {
-                          printf("#########from %s RENAME to %s ##########\n",temp_event.name,cur_event_filename);
-                          sprintf(info,"rename@%s@%s@%s",path,temp_event.name,cur_event_filename);
+            if(len > 0  )
+            {    if( NULL == strstr(temp_event.name,".goutputstream") &&
+                     NULL == strstr(temp_event.name,"~gvf") )
+                {
+                    if(temp_event.cookie == event->inot_ev.cookie)
+                    {
+                        /* rename  modify replace*/
+                        if(temp_event.wd == event->inot_ev.wd)
+                        {
+                            printf("#########from %s RENAME to %s ##########\n",temp_event.name,cur_event_filename);
+                            if(!test_if_download_temp_file(temp_event.name))
+                            {
+                                sprintf(info,"rename@%s@%s@%s",path,temp_event.name,cur_event_filename);
 
-                          remove("../inotify");
-                          send_action(type,info);
+                                remove("../inotify");
+                                send_action(type,info);
 
-                          keep_running = 0;
-                          need_restart_inotify = 1;
-                      }
-                      else
-                      {
-                          printf("#########move %s to %s ##########\n",temp_event.name,path);
-                          sprintf(old_path,"%s",allfolderlist.folderlist[temp_event.wd-1].name);
-                          sprintf(info,"move@%s@%s@%s",path,old_path,temp_event.name);
-                          send_action(type,info);
-                      }
+                                keep_running = 0;
+                                need_restart_inotify = 1;
+                            }
+                            //else
+                                //printf("ignore rename download temp file socket\n");
+                        }
+                        else
+                        {
+                            printf("#########move %s to %s ##########\n",temp_event.name,path);
+                            if(!test_if_download_temp_file(temp_event.name))
+                            {
+                                sprintf(old_path,"%s",allfolderlist.folderlist[temp_event.wd-1].name);
+                                sprintf(info,"move@%s@%s@%s",path,old_path,temp_event.name);
+                                send_action(type,info);
 
-                  }
-                  remove(moved_from_file);
-                  have_from_file = 0;
-              }
-          }
-          else
-          {   //if( NULL == strstr(cur_event_filename,".goutputstream") )
-              if(have_from_file_ex != 1)
-                  printf("#########drag %s to %s ##########\n",cur_event_filename,path);
+                                keep_running = 0;
+                                need_restart_inotify = 1;
+                            }
+                        }
 
-              sprintf(fullname,"%s/%s",path,cur_event_filename);
+                    }
+                    remove(moved_from_file);
+                    have_from_file = 0;
+                }
+            }
+            else
+            {   //if( NULL == strstr(cur_event_filename,".goutputstream") )
+                if(have_from_file_ex != 1)
+                    printf("#########drag %s to %s ##########\n",cur_event_filename,path);
 
-              isfolder = test_if_dir(fullname);
+                sprintf(fullname,"%s/%s",path,cur_event_filename);
 
-              if(isfolder)
-              {
-                  sprintf(info,"dragfolder@%s@%s",path,cur_event_filename);
-                  send_action(type,info);
+                isfolder = test_if_dir(fullname);
 
-                  keep_running = 0;
-                  need_restart_inotify = 1;
-              }
-              else
-              {
-                  sprintf(info,"dragfile@%s@%s",path,cur_event_filename);
-                  send_action(type,info);
-              }
-          }
-      }
+                if(isfolder)
+                {
+                    sprintf(info,"dragfolder@%s@%s",path,cur_event_filename);
+                    send_action(type,info);
 
-     break;
+                    keep_running = 0;
+                    need_restart_inotify = 1;
+                }
+                else
+                {
+                    sprintf(info,"dragfile@%s@%s",path,cur_event_filename);
+                    send_action(type,info);
+                }
+            }
+        }
 
-      /* Subdir or file was deleted */
+        break;
+
+        /* Subdir or file was deleted */
     case IN_DELETE:
 #ifdef DEBUG
-      printf ("DELETE: %s \"%s\" on WD #%i\n",
-              cur_event_file_or_dir, cur_event_filename, cur_event_wd);
+        printf ("DELETE: %s \"%s\" on WD #%i\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd);
 
 #endif
 
-      /*
+        /*
       if( is_modify == 1 )
       {
           printf("###### %s has modify #######\n",cur_event_filename);
@@ -586,219 +631,226 @@ void handle_event (queue_entry_t event)
       }
       else
       */
-      if(is_modify != 1)
-      {
-          printf("#########delete %s  ##########\n",cur_event_filename);
+        if(is_modify != 1)
+        {
+            printf("#########delete %s  ##########\n",cur_event_filename);
 
-          sprintf(info,"delete@%s@%s",path,cur_event_filename);
+            if(!test_if_download_temp_file(cur_event_filename))
+            {
+                sprintf(info,"delete@%s@%s",path,cur_event_filename);
+                send_action(type,info);
+            }
 
-          send_action(type,info);
+        }
 
-      }
+        break;
 
-      break;
-
-      /* Subdir or file was created */
+        /* Subdir or file was created */
     case IN_CREATE:
 #ifdef DEBUG
-      printf ("CREATE: %s \"%s\" on WD #%i\n",
-              cur_event_file_or_dir, cur_event_filename, cur_event_wd);
+        printf ("CREATE: %s \"%s\" on WD #%i\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd);
 #endif
 
 
-      //printf("listen dir is %s\n",allfolderlist.folderlist[cur_event_wd-1].name);
+        //printf("listen dir is %s\n",allfolderlist.folderlist[cur_event_wd-1].name);
 
-      if( NULL == strstr(cur_event_filename,".goutputstream") &&
-          NULL == strstr(cur_event_filename,"~gvf") ) //reject modify and replace
-      {
-          printf("#########create %s ##########\n",cur_event_filename);
+        if( NULL == strstr(cur_event_filename,".goutputstream") &&
+            NULL == strstr(cur_event_filename,"~gvf") ) //reject modify and replace
+        {
+            printf("#########create %s ##########\n",cur_event_filename);
 
-          //getID(cur_event_wd,1,"",&itemID);
+            //getID(cur_event_wd,1,"",&itemID);
 
-          if( !strcmp(cur_event_file_or_dir,"Dir"))
-          {
-        	  printf("***********it is folder*************\n");
-              sprintf(fullname,"%s/%s",path,cur_event_filename);
-              sprintf(info,"createfolder@%s@%s",path,cur_event_filename);
-              send_action(type,info);
+            if( !strcmp(cur_event_file_or_dir,"Dir"))
+            {
+                printf("***********it is folder*************\n");
+                sprintf(fullname,"%s/%s",path,cur_event_filename);
+                sprintf(info,"createfolder@%s@%s",path,cur_event_filename);
+                send_action(type,info);
 
-              keep_running = 0;
-              need_restart_inotify = 1;
-          }
-          else
-          {
-                  //printf("*********it is file*********\n");
-        	  sprintf(fullname,"%s/%s",path,cur_event_filename);
-        	  sprintf(info,"copyfile@%s@%s",path,cur_event_filename);
-        	  send_action(type,info);
-              is_create_file = 1;
-          }
-      }
-      else
-      {
-          is_create_file_ex = 1;
-      }
-      break;
+                keep_running = 0;
+                need_restart_inotify = 1;
+            }
+            else
+            {
+                if(!test_if_download_temp_file(cur_event_filename))
+                {
+                    sprintf(fullname,"%s/%s",path,cur_event_filename);
+                    sprintf(info,"copyfile@%s@%s",path,cur_event_filename);
+                    send_action(type,info);
+                    is_create_file = 1;
+                }
+                //else
+                    //printf("ignore download temp file copy socket\n");
 
-      /* Watched entry was deleted */
+            }
+        }
+        else
+        {
+            is_create_file_ex = 1;
+        }
+        break;
+
+        /* Watched entry was deleted */
     case IN_DELETE_SELF:
 #ifdef DEBUG
-      printf ("DELETE_SELF: %s \"%s\" on WD #%i\n",
-              cur_event_file_or_dir, cur_event_filename, cur_event_wd);
+        printf ("DELETE_SELF: %s \"%s\" on WD #%i\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd);
 #endif
-      break;
+        break;
 
-      /* Watched entry was moved */
+        /* Watched entry was moved */
     case IN_MOVE_SELF:
 #ifdef DEBUG
-      printf ("MOVE_SELF: %s \"%s\" on WD #%i\n",
-              cur_event_file_or_dir, cur_event_filename, cur_event_wd);
+        printf ("MOVE_SELF: %s \"%s\" on WD #%i\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd);
 #endif
-      break;
+        break;
 
-      /* Backing FS was unmounted */
+        /* Backing FS was unmounted */
     case IN_UNMOUNT:
 #ifdef DEBUG
-      printf ("UNMOUNT: %s \"%s\" on WD #%i\n",
-              cur_event_file_or_dir, cur_event_filename, cur_event_wd);
+        printf ("UNMOUNT: %s \"%s\" on WD #%i\n",
+                cur_event_file_or_dir, cur_event_filename, cur_event_wd);
 #endif
-      break;
+        break;
 
-      /* Too many FS events were received without reading them
+        /* Too many FS events were received without reading them
          some event notifications were potentially lost.  */
     case IN_Q_OVERFLOW:
 #ifdef DEBUG
-      printf ("Warning: AN OVERFLOW EVENT OCCURRED: \n");
+        printf ("Warning: AN OVERFLOW EVENT OCCURRED: \n");
 #endif
-      break;
+        break;
 
-      /* Watch was removed explicitly by inotify_rm_watch or automatically
+        /* Watch was removed explicitly by inotify_rm_watch or automatically
          because file was deleted, or file system was unmounted.  */
     case IN_IGNORED:
-      watched_items--;
-      printf ("IGNORED: WD #%d\n", cur_event_wd);
-      printf("Watching = %d items\n",watched_items); 
-      break;
+        watched_items--;
+        printf ("IGNORED: WD #%d\n", cur_event_wd);
+        printf("Watching = %d items\n",watched_items);
+        break;
 
-      /* Some unknown message received */
+        /* Some unknown message received */
     default:
 #ifdef DEBUG
-      printf ("UNKNOWN EVENT \"%X\" OCCURRED for file \"%s\" on WD #%i\n",
-              event->inot_ev.mask, cur_event_filename, cur_event_wd);
+        printf ("UNKNOWN EVENT \"%X\" OCCURRED for file \"%s\" on WD #%i\n",
+                event->inot_ev.mask, cur_event_filename, cur_event_wd);
 #endif
-      break;
+        break;
     }
-  /* If any flags were set other than IN_ISDIR, report the flags */
-  if (flags & (~IN_ISDIR))
+    /* If any flags were set other than IN_ISDIR, report the flags */
+    if (flags & (~IN_ISDIR))
     {
-      flags = event->inot_ev.mask;
-      printf ("Flags=%lX\n", flags);
+        flags = event->inot_ev.mask;
+        printf ("Flags=%lX\n", flags);
     }
 }
 
 void handle_events (queue_t q)
 {
-  queue_entry_t event;
-  while (!queue_empty (q))
+    queue_entry_t event;
+    while (!queue_empty (q))
     {
-      event = queue_dequeue (q);
-      handle_event (event);
-      free (event);
+        event = queue_dequeue (q);
+        handle_event (event);
+        free (event);
     }
 }
 
 int read_events (queue_t q, int fd)
 {
-  char buffer[16384];
-  size_t buffer_i;
-  struct inotify_event *pevent;
-  queue_entry_t event;
-  ssize_t r;
-  size_t event_size, q_event_size;
-  int count = 0;
+    char buffer[16384];
+    size_t buffer_i;
+    struct inotify_event *pevent;
+    queue_entry_t event;
+    ssize_t r;
+    size_t event_size, q_event_size;
+    int count = 0;
 
-  r = read (fd, buffer, 16384);
-  if (r <= 0)
-    return r;
-  buffer_i = 0;
-  while (buffer_i < r)
+    r = read (fd, buffer, 16384);
+    if (r <= 0)
+        return r;
+    buffer_i = 0;
+    while (buffer_i < r)
     {
-      /* Parse events and queue them. */
-      pevent = (struct inotify_event *) &buffer[buffer_i];
-      event_size =  offsetof (struct inotify_event, name) + pevent->len;
-      q_event_size = offsetof (struct queue_entry, inot_ev.name) + pevent->len;
-      event = malloc (q_event_size);
-      memmove (&(event->inot_ev), pevent, event_size);
-      queue_enqueue (event, q);
-      buffer_i += event_size;
-      count++;
+        /* Parse events and queue them. */
+        pevent = (struct inotify_event *) &buffer[buffer_i];
+        event_size =  offsetof (struct inotify_event, name) + pevent->len;
+        q_event_size = offsetof (struct queue_entry, inot_ev.name) + pevent->len;
+        event = malloc (q_event_size);
+        memmove (&(event->inot_ev), pevent, event_size);
+        queue_enqueue (event, q);
+        buffer_i += event_size;
+        count++;
     }
-  //printf ("\n%d events queued\n", count);
-  return count;
+    //printf ("\n%d events queued\n", count);
+    return count;
 }
 
 int event_check (int fd)
 {
-  fd_set rfds;
-  FD_ZERO (&rfds);
-  FD_SET (fd, &rfds);
-  /* Wait until an event happens or we get interrupted 
+    fd_set rfds;
+    FD_ZERO (&rfds);
+    FD_SET (fd, &rfds);
+    /* Wait until an event happens or we get interrupted
      by a signal that we catch */
-  return select (FD_SETSIZE, &rfds, NULL, NULL, NULL);
+    return select (FD_SETSIZE, &rfds, NULL, NULL, NULL);
 }
 
 int process_inotify_events (queue_t q, int fd)
 {
-  while (keep_running && (watched_items > 0))
+    while (keep_running && (watched_items > 0))
     {
-      if (event_check (fd) > 0)
+        if (event_check (fd) > 0)
 	{
-	  int r;
-	  r = read_events (q, fd);
-	  if (r < 0)
+            int r;
+            r = read_events (q, fd);
+            if (r < 0)
 	    {
-	      break;
+                break;
 	    }
-	  else
+            else
 	    {
-	      handle_events (q);
+                handle_events (q);
 	    }
 	}
     }
-  return 0;
+    return 0;
 }
 
 int watch_dir (int fd, const char *dirname, unsigned long mask)
 {
-  int wd;
-  wd = inotify_add_watch (fd, dirname, mask);
-  if (wd < 0)
+    int wd;
+    wd = inotify_add_watch (fd, dirname, mask);
+    if (wd < 0)
     {
-      printf ("Cannot add watch for \"%s\" with event mask %lX", dirname,
-	      mask);
-      fflush (stdout);
-      perror (" ");
+        printf ("Cannot add watch for \"%s\" with event mask %lX", dirname,
+                mask);
+        fflush (stdout);
+        perror (" ");
     }
-  else
+    else
     {
-      watched_items++;
-      printf ("Watching %s WD=%d\n", dirname, wd);
-      printf ("Watching = %d items\n", watched_items); 
+        watched_items++;
+        printf ("Watching %s WD=%d\n", dirname, wd);
+        printf ("Watching = %d items\n", watched_items);
     }
-  return wd;
+    return wd;
 }
 
 int ignore_wd (int fd, int wd)
 {
-  int r;
-  r = inotify_rm_watch (fd, wd);
-  if (r < 0)
+    int r;
+    r = inotify_rm_watch (fd, wd);
+    if (r < 0)
     {
-      perror ("inotify_rm_watch(fd, wd) = ");
+        perror ("inotify_rm_watch(fd, wd) = ");
     }
-  else 
+    else
     {
-      watched_items--;
+        watched_items--;
     }
-  return r;
+    return r;
 }

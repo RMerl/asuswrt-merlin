@@ -282,8 +282,8 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 			//#define BUFF_SIZE 2*1024
 
 			//- 128K
-			//#define BUFF_SIZE 131072
-			#define BUFF_SIZE (1460*4)
+			#define BUFF_SIZE 131072
+			//#define BUFF_SIZE (1460*4)
 			
 			char buff[BUFF_SIZE]={0};
 			offset = c->file.start + c->offset;

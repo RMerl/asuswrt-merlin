@@ -4,11 +4,16 @@
 # as the long options legal on the command line. See
 # "/usr/sbin/dnsmasq --help" or "man 8 dnsmasq" for details.
 
+# Listen on this specific port instead of the standard DNS port
+# (53). Setting this to zero completely disables DNS function,
+# leaving only DHCP and/or TFTP.
+#port=5353
+
 # The following two options make you a better netizen, since they
 # tell dnsmasq to filter out queries which the public DNS cannot
 # answer, and which load the servers (especially the root servers)
-# uneccessarily. If you have a dial-on-demand link they also stop
-# these requests from bringing up the link uneccessarily.
+# unnecessarily. If you have a dial-on-demand link they also stop
+# these requests from bringing up the link unnecessarily.
 
 # Never forward plain names (without a dot or domain part)
 #domain-needed
@@ -48,7 +53,7 @@
 # non-public domains.
 #server=/localnet/192.168.0.1
 
-# Example of routing PTR queries to nameservers: this will send all 
+# Example of routing PTR queries to nameservers: this will send all
 # address->name queries for 192.168.3/24 to nameserver 10.1.2.3
 #server=/3.168.192.in-addr.arpa/10.1.2.3
 
@@ -57,14 +62,14 @@
 #local=/localnet/
 
 # Add domains which you want to force to an IP address here.
-# The example below send any host in doubleclick.net to a local
-# webserver.
-#address=/doubleclick.net/127.0.0.1
+# The example below send any host in double-click.net to a local
+# web-server.
+#address=/double-click.net/127.0.0.1
 
 # --address (and --server) work with IPv6 addresses too.
 #address=/www.thekelleys.org.uk/fe80::20d:60ff:fe36:f83
 
-# You can control how dnsmasq talks to a server: this forces 
+# You can control how dnsmasq talks to a server: this forces
 # queries to 10.1.2.3 to be routed via eth1
 # server=10.1.2.3@eth1
 
@@ -90,7 +95,7 @@
 #listen-address=
 # If you want dnsmasq to provide only DNS service on an interface,
 # configure it as shown above, and then use the following line to
-# disable DHCP on it.
+# disable DHCP and TFTP on it.
 #no-dhcp-interface=
 
 # On systems which support it, dnsmasq binds the wildcard address,
@@ -145,7 +150,7 @@
 # some DHCP options may be set only for this network.
 #dhcp-range=set:red,192.168.0.50,192.168.0.150
 
-# Use this DHCP range only when the tag "green" is set. 
+# Use this DHCP range only when the tag "green" is set.
 #dhcp-range=tag:green,192.168.0.50,192.168.0.150,12h
 
 # Specify a subnet which can't be used for dynamic address allocation,
@@ -153,17 +158,56 @@
 # dhcp-host declarations will be ignored unless there is a dhcp-range
 # of some type for the subnet in question.
 # In this case the netmask is implied (it comes from the network
-# configuration on the machine running dnsmasq) it is possible to give 
-# an explict netmask instead.
+# configuration on the machine running dnsmasq) it is possible to give
+# an explicit netmask instead.
 #dhcp-range=192.168.0.0,static
- 
+
+# Enable DHCPv6. Note that the prefix-length does not need to be specified
+# and defaults to 64 if missing/
+#dhcp-range=1234::2, 1234::500, 64, 12h
+
+# Do Router Advertisements, BUT NOT DHCP for this subnet.
+#dhcp-range=1234::, ra-only 
+
+# Do Router Advertisements, BUT NOT DHCP for this subnet, also try and
+# add names to the DNS for the IPv6 address of SLAAC-configured dual-stack 
+# hosts. Use the DHCPv4 lease to derive the name, network segment and 
+# MAC address and assume that the host will also have an
+# IPv6 address calculated using the SLAAC alogrithm.
+#dhcp-range=1234::, ra-names
+
+# Do Router Advertisements, BUT NOT DHCP for this subnet.
+# Set the lifetime to 46 hours. (Note: minimum lifetime is 2 hours.)
+#dhcp-range=1234::, ra-only, 48h
+
+# Do DHCP and Router Advertisements for this subnet. Set the A bit in the RA
+# so that clients can use SLAAC addresses as well as DHCP ones.
+#dhcp-range=1234::2, 1234::500, slaac
+
+# Do Router Advertisements and stateless DHCP for this subnet. Clients will
+# not get addresses from DHCP, but they will get other configuration information.
+# They will use SLAAC for addresses.
+#dhcp-range=1234::, ra-stateless
+
+# Do stateless DHCP, SLAAC, and generate DNS names for SLAAC addresses
+# from DHCPv4 leases.
+#dhcp-range=1234::, ra-stateless, ra-names
+
+# Do router advertisements for all subnets where we're doing DHCPv6
+# Unless overriden by ra-stateless, ra-names, et al, the router 
+# advertisements will have the M and O bits set, so that the clients
+# get addresses and configuration from DHCPv6, and the A bit reset, so the 
+# clients don't use SLAAC addresses.
+#enable-ra
+
 # Supply parameters for specified hosts using DHCP. There are lots
 # of valid alternatives, so we will give examples of each. Note that
 # IP addresses DO NOT have to be in the range given above, they just
 # need to be on the same network. The order of the parameters in these
-# do not matter, it's permissble to give name,adddress and MAC in any order
+# do not matter, it's permissible to give name, address and MAC in any
+# order.
 
-# Always allocate the host with ethernet address 11:22:33:44:55:66
+# Always allocate the host with Ethernet address 11:22:33:44:55:66
 # The IP address 192.168.0.60
 #dhcp-host=11:22:33:44:55:66,192.168.0.60
 
@@ -171,13 +215,13 @@
 # 11:22:33:44:55:66 to be "fred"
 #dhcp-host=11:22:33:44:55:66,fred
 
-# Always give the host with ethernet address 11:22:33:44:55:66
+# Always give the host with Ethernet address 11:22:33:44:55:66
 # the name fred and IP address 192.168.0.60 and lease time 45 minutes
 #dhcp-host=11:22:33:44:55:66,fred,192.168.0.60,45m
 
-# Give a host with ethernet address 11:22:33:44:55:66 or
+# Give a host with Ethernet address 11:22:33:44:55:66 or
 # 12:34:56:78:90:12 the IP address 192.168.0.60. Dnsmasq will assume
-# that these two ethernet interfaces will never be in use at the same
+# that these two Ethernet interfaces will never be in use at the same
 # time, and give the IP address to the second, even if it is already
 # in use by the first. Useful for laptops with wired and wireless
 # addresses.
@@ -200,27 +244,33 @@
 # it asks for a DHCP lease.
 #dhcp-host=judge
 
-# Never offer DHCP service to a machine whose ethernet
+# Never offer DHCP service to a machine whose Ethernet
 # address is 11:22:33:44:55:66
 #dhcp-host=11:22:33:44:55:66,ignore
 
-# Ignore any client-id presented by the machine with ethernet
+# Ignore any client-id presented by the machine with Ethernet
 # address 11:22:33:44:55:66. This is useful to prevent a machine
 # being treated differently when running under different OS's or
 # between PXE boot and OS boot.
 #dhcp-host=11:22:33:44:55:66,id:*
 
 # Send extra options which are tagged as "red" to
-# the machine with ethernet address 11:22:33:44:55:66
+# the machine with Ethernet address 11:22:33:44:55:66
 #dhcp-host=11:22:33:44:55:66,set:red
 
 # Send extra options which are tagged as "red" to
-# any machine with ethernet address starting 11:22:33:
+# any machine with Ethernet address starting 11:22:33:
 #dhcp-host=11:22:33:*:*:*,set:red
 
-# Ignore any clients which are specified in dhcp-host lines
-# or /etc/ethers. Equivalent to ISC "deny unkown-clients".
-# This relies on the special "known" tag which is set when 
+# Give a fixed IPv6 address and name to client with 
+# DUID 00:01:00:01:16:d2:83:fc:92:d4:19:e2:d8:b2
+# Note the MAC addresses CANNOT be used to identify DHCPv6 clients.
+# Note also the they [] around the IPv6 address are obilgatory.
+#dhcp-host=id:00:01:00:01:16:d2:83:fc:92:d4:19:e2:d8:b2, fred, [1234::5] 
+
+# Ignore any clients which are not specified in dhcp-host lines
+# or /etc/ethers. Equivalent to ISC "deny unknown-clients".
+# This relies on the special "known" tag which is set when
 # a host is matched.
 #dhcp-ignore=tag:!known
 
@@ -244,11 +294,11 @@
 
 # Send options to hosts which ask for a DHCP lease.
 # See RFC 2132 for details of available options.
-# Common options can be given to dnsmasq by name: 
+# Common options can be given to dnsmasq by name:
 # run "dnsmasq --help dhcp" to get a list.
 # Note that all the common settings, such as netmask and
 # broadcast address, DNS server and default route, are given
-# sane defaults by dnsmasq. You very likely will not need 
+# sane defaults by dnsmasq. You very likely will not need
 # any dhcp-options. If you use Windows clients and Samba, there
 # are some options which are recommended, they are detailed at the
 # end of this section.
@@ -262,12 +312,22 @@
 
 # Override the default route supplied by dnsmasq and send no default
 # route at all. Note that this only works for the options sent by
-# default (1, 3, 6, 12, 28) the same line will send a zero-length option 
+# default (1, 3, 6, 12, 28) the same line will send a zero-length option
 # for all other option numbers.
 #dhcp-option=3
 
 # Set the NTP time server addresses to 192.168.0.4 and 10.10.0.5
 #dhcp-option=option:ntp-server,192.168.0.4,10.10.0.5
+
+# Send DHCPv6 option. Note [] around IPv6 addresses.
+#dhcp-option=option6:dns-server,[1234::77],[1234::88]
+
+# Send DHCPv6 option for namservers as the machine running 
+# dnsmasq and another.
+#dhcp-option=option6:dns-server,[::],[1234::88]
+
+# Ask client to poll for option changes every six hours. (RFC4242)
+#dhcp-option=option6:information-refresh-time,6h
 
 # Set the NTP time server address to be the same machine as
 # is running dnsmasq
@@ -296,12 +356,15 @@
 # http://www.samba.org/samba/ftp/docs/textdocs/DHCP-Server-Configuration.txt
 # adapted for a typical dnsmasq installation where the host running
 # dnsmasq is also the host running samba.
-# you may want to uncomment some or all of them if you use 
+# you may want to uncomment some or all of them if you use
 # Windows clients and Samba.
 #dhcp-option=19,0           # option ip-forwarding off
 #dhcp-option=44,0.0.0.0     # set netbios-over-TCP/IP nameserver(s) aka WINS server(s)
 #dhcp-option=45,0.0.0.0     # netbios datagram distribution server
 #dhcp-option=46,8           # netbios node type
+
+# Send an empty WPAD option. This may be REQUIRED to get windows 7 to behave.
+#dhcp-option=252,"\n"
 
 # Send RFC-3397 DNS domain search DHCP option. WARNING: Your DHCP client
 # probably doesn't support this......
@@ -310,10 +373,10 @@
 # Send RFC-3442 classless static routes (note the netmask encoding)
 #dhcp-option=121,192.168.1.0/24,1.2.3.4,10.0.0.0/8,5.6.7.8
 
-# Send vendor-class specific options encapsulated in DHCP option 43. 
+# Send vendor-class specific options encapsulated in DHCP option 43.
 # The meaning of the options is defined by the vendor-class so
 # options are sent only when the client supplied vendor class
-# matches the class given here. (A substring match is OK, so "MSFT" 
+# matches the class given here. (A substring match is OK, so "MSFT"
 # matches "MSFT" and "MSFT 5.0"). This example sets the
 # mtftp address to 0.0.0.0 for PXEClients.
 #dhcp-option=vendor:PXEClient,1,0.0.0.0
@@ -330,7 +393,7 @@
 
 # Send options to PXELinux. Note that we need to send the options even
 # though they don't appear in the parameter request list, so we need
-# to use dhcp-option-force here. 
+# to use dhcp-option-force here.
 # See http://syslinux.zytor.com/pxe.php#special for details.
 # Magic number - needed before anything else is recognised
 #dhcp-option-force=208,f1:00:74:7e
@@ -341,11 +404,14 @@
 # Reboot time. (Note 'i' to send 32-bit value)
 #dhcp-option-force=211,30i
 
-# Set the boot filename for netboot/PXE. You will only need 
+# Set the boot filename for netboot/PXE. You will only need
 # this is you want to boot machines over the network and you will need
 # a TFTP server; either dnsmasq's built in TFTP server or an
 # external one. (See below for how to enable the TFTP server.)
 #dhcp-boot=pxelinux.0
+
+# The same as above, but use custom tftp-server instead machine running dnsmasq
+#dhcp-boot=pxelinux,server.name,192.168.1.100
 
 # Boot for Etherboot gPXE. The idea is to send two different
 # filenames, the first loads gPXE, and the second tells gPXE what to
@@ -353,12 +419,12 @@
 #dhcp-match=set:gpxe,175 # gPXE sends a 175 option.
 #dhcp-boot=tag:!gpxe,undionly.kpxe
 #dhcp-boot=mybootimage
- 
+
 # Encapsulated options for Etherboot gPXE. All the options are
 # encapsulated within option 175
 #dhcp-option=encap:175, 1, 5b         # priority code
-#dhcp-option=encap:175, 176, 1b       # no-proxydhcp 
-#dhcp-option=encap:175, 177, string   # bus-id 
+#dhcp-option=encap:175, 176, 1b       # no-proxydhcp
+#dhcp-option=encap:175, 177, string   # bus-id
 #dhcp-option=encap:175, 189, 1b       # BIOS drive code
 #dhcp-option=encap:175, 190, user     # iSCSI username
 #dhcp-option=encap:175, 191, pass     # iSCSI password
@@ -368,7 +434,7 @@
 #dhcp-match=peecees, option:client-arch, 0 #x86-32
 #dhcp-match=itanics, option:client-arch, 2 #IA64
 #dhcp-match=hammers, option:client-arch, 6 #x86-64
-#dhcp-match=mactels, option:client-arch, 7 #EFI x86-64 
+#dhcp-match=mactels, option:client-arch, 7 #EFI x86-64
 
 # Do real PXE, rather than just booting a single file, this is an
 # alternative to dhcp-boot.
@@ -380,11 +446,11 @@
 #pxe-service=x86PC, "Boot from local disk"
 
 # Loads <tftp-root>/pxelinux.0 from dnsmasq TFTP server.
-#pxe-service=x86PC, "Install Linux", pxelinux 
+#pxe-service=x86PC, "Install Linux", pxelinux
 
 # Loads <tftp-root>/pxelinux.0 from TFTP server at 1.2.3.4.
 # Beware this fails on old PXE ROMS.
-#pxe-service=x86PC, "Install Linux", pxelinux, 1.2.3.4 
+#pxe-service=x86PC, "Install Linux", pxelinux, 1.2.3.4
 
 # Use bootserver on network, found my multicast or broadcast.
 #pxe-service=x86PC, "Install windows from RIS server", 1
@@ -395,20 +461,20 @@
 # If you have multicast-FTP available,
 # information for that can be passed in a similar way using options 1
 # to 5. See page 19 of
-# http://download.intel.com/design/archives/wfm/downloads/pxespec.pdf  
+# http://download.intel.com/design/archives/wfm/downloads/pxespec.pdf
 
-  
+
 # Enable dnsmasq's built-in TFTP server
 #enable-tftp
 
-# Set the root directory for files availble via FTP.
+# Set the root directory for files available via FTP.
 #tftp-root=/var/ftpd
 
 # Make the TFTP server more secure: with this set, only files owned by
 # the user dnsmasq is running as will be send over the net.
 #tftp-secure
 
-# This option stops dnsmasq from negotiating a larger blocksize for TFTP 
+# This option stops dnsmasq from negotiating a larger blocksize for TFTP
 # transfers. It will slow things down, but may rescue some broken TFTP
 # clients.
 #tftp-no-blocksize
@@ -420,6 +486,14 @@
 # address of the server are given after the filename.
 # Can fail with old PXE ROMS. Overridden by --pxe-service.
 #dhcp-boot=/var/ftpd/pxelinux.0,boothost,192.168.0.3
+
+# If there are multiple external tftp servers having a same name
+# (using /etc/hosts) then that name can be specified as the
+# tftp_servername (the third option to dhcp-boot) and in that
+# case dnsmasq resolves this name and returns the resultant IP
+# addresses in round robin fasion. This facility can be used to
+# load balance the tftp load among a set of servers.
+#dhcp-boot=/var/ftpd/pxelinux.0,boothost,tftp_server_name
 
 # Set the limit on DHCP leases, the default is 150
 #dhcp-lease-max=150
@@ -433,16 +507,16 @@
 # and take over the lease for any client which broadcasts on the network,
 # whether it has a record of the lease or not. This avoids long timeouts
 # when a machine wakes up on a new network. DO NOT enable this if there's
-# the slighest chance that you might end up accidentally configuring a DHCP
+# the slightest chance that you might end up accidentally configuring a DHCP
 # server for your campus/company accidentally. The ISC server uses
 # the same option, and this URL provides more information:
-# http://www.isc.org/index.pl?/sw/dhcp/authoritative.php
+# http://www.isc.org/files/auth.html
 #dhcp-authoritative
 
 # Run an executable when a DHCP lease is created or destroyed.
-# The arguments sent to the script are "add" or "del", 
+# The arguments sent to the script are "add" or "del",
 # then the MAC address, the IP address and finally the hostname
-# if there is one. 
+# if there is one.
 #dhcp-script=/bin/echo
 
 # Set the cachesize here.
@@ -451,7 +525,7 @@
 # If you want to disable negative caching, uncomment this.
 #no-negcache
 
-# Normally responses which come form /etc/hosts and the DHCP lease
+# Normally responses which come from /etc/hosts and the DHCP lease
 # file have Time-To-Live set as zero, which conventionally means
 # do not cache further. If you are happy to trade lower load on the
 # server for potentially stale date, you can set a time-to-live (in

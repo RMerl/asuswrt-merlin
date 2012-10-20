@@ -1,0 +1,38 @@
+####	set path variable #####
+cur_dir=`pwd`									### current directory
+router_dir=$cur_dir/..
+mipsel_path=/opt/brcm/hndtools-mipsel-uclibc	### mipsel tool-chain path
+uclib=$mipsel_path/lib							### mipsel lib path 
+uclib_inc=$mipsel_path/include					### mipsel include path
+sqlite_dir=$cur_dir/../sqlite
+sqlite_inc=$sqlite_dir
+sqlite_lib=$sqlite_dir/.libs
+user=`echo $HOME`								### /home/XXXXX
+echo $cur_dir
+
+####	Set compiler variable ####
+export CC=mipsel-uclibc-gcc
+export CXX=mipsel-uclibc-g++
+export LD=mipsel-uclibc-ld
+export STRIP=mipsel-uclibc-strip
+export CFLAGS="-I$cur_dir/../pcre-8.12 -I$uclib_inc -I$cur_dir/../sqlite"
+export LIBS="-L$uclib"
+export LDFLAGS="-L$uclib -ldl -L$cur_dir/../pcre-8.12/.libs -lpcre -L$cur_dir/../libxml2/.libs -lxml2"
+export XML_CFLAGS="-I$cur_dir/../libxml2/include"
+export XML_LIBS="-L$cur_dir/../libxml2/.libs -lxml2"
+export SQLITE_CFLAGS="-I$cur_dir/../sqlite"
+export SQLITE_LIBS="-L$cur_dir/../sqlite/.libs -lsqlite3"
+export PCRE_LIB="-L$cur_dir/../pcre-8.12/.libs -lpcre"
+export PCRECONFIG="$cur_dir/../pcre-8.12/pcre-config"
+./configure --prefix=$cur_dir/_inst \
+--with-pcre \
+--with-smbdav-props \
+--with-openssl \
+--with-smbdav-locks=yes \
+--with-libsmbclient=$cur_dir/../samba-3.5.8/source3 \
+--host=mips-unknown-linux-gnu \
+--target=mips-unknown-linux-gnu \
+--without-zlib \
+--without-bzip2 \
+--enable-shared \
+--disable-static

@@ -773,9 +773,8 @@ int timematch_conv2(char *mstr, char *nv_date, char *nv_time, char *nv_time2)
 				sprintf(mstr, "%s>%s", mstr, buf); // add ">"
 		}
 		
-		//cprintf("%s: mstr=%s\n", __FUNCTION__, mstr); //tmp test
+		//cprintf("%s: mstr=%s, len=%d\n", __FUNCTION__, mstr, strlen(mstr)); //tmp test
 	}
-	free(buf);
 	
 	return ret;
 	
@@ -1821,7 +1820,7 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	char timef[32], timef2[32], *filterstr;
 #endif
 //2008.09 magic}
-	char *wanx_if;
+	char *wanx_if, *wanx_ip;
 #ifdef RTCONFIG_DUALWAN
 	int unit = get_wan_unit(wan_if);
 #endif
@@ -2145,8 +2144,9 @@ TRACE_PT("writing Parental Control\n");
 #endif
 
 	wanx_if = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+	wanx_ip = nvram_safe_get(strcat_r(prefix, "xipaddr", tmp));
 
-	if(strcmp(wanx_if, wan_if)
+	if(strcmp(wanx_if, wan_if) && inet_addr_(wanx_ip)
 #ifdef RTCONFIG_DUALWAN
 			&& (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN
 					|| get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_DSL	
@@ -2696,7 +2696,7 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 #endif
 //2008.09 magic}
 	char *wan_if, *wan_ip;
-	char *wanx_if;
+	char *wanx_if, *wanx_ip;
 	int unit;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 #ifdef RTCONFIG_IPV6
@@ -3038,6 +3038,7 @@ TRACE_PT("writing Parental Control\n");
 
 		wan_if = get_wan_ifname(unit);
 		wanx_if = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+		wanx_ip = nvram_safe_get(strcat_r(prefix, "xipaddr", tmp));
 
 // ~ oleg patch
 		/* Filter out invalid WAN->WAN connections */
@@ -3046,10 +3047,11 @@ TRACE_PT("writing Parental Control\n");
 		if (ipv6_enabled() && *wan6face)
 		fprintf(fp_ipv6, "-A FORWARD -o %s ! -i %s -j %s\n", wan6face, lan_if, logdrop);
 #endif
-		if((get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN
+		if(strcmp(wanx_if, wan_if) && inet_addr_(wanx_ip)
+				&& (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN
 						|| get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_DSL
 						|| get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN)
-				&& strcmp(wanx_if, wan_if))
+				)
 			fprintf(fp, "-A FORWARD -o %s ! -i %s -j %s\n", wanx_if, lan_if, logdrop);
 	}
 
@@ -3741,9 +3743,8 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
 
-#if 0	// New NAT loopback code already marked it, so no longer needed
 		/* mark VTS loopback connections */
-		if (nvram_match("vts_enable_x", "1")) {
+		if (nvram_match("vts_enable_x", "1")||!nvram_match("dmz_ip", "")) {
 			char lan_class[32];
 
 			ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
@@ -3751,7 +3752,6 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 			     "-o", lan_if, "-s", lan_class, "-d", lan_class,
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
-#endif
 	}
 #endif
 }
@@ -3796,6 +3796,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 		     "-d", wan_ip, "-j", "MARK", "--set-mark", "0xd001");
 	}
 */
+
 #ifdef CONFIG_BCMWL5
 	/* mark connect to bypass CTF */		
 	if(nvram_match("ctf_disable", "0")) {
@@ -3806,6 +3807,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 			     "-m", "state", "--state NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
 
+#if 0	// New NAT loopback code already marked it, so no longer needed
 		/* mark VTS loopback connections */
 		if (nvram_match("vts_enable_x", "1")) {
 			char lan_class[32];
@@ -3815,6 +3817,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 			     "-o", lan_if, "-s", lan_class, "-d", lan_class,
 			     "-m", "state", "--state NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
+#endif
 	}
 #endif
 }
@@ -3838,14 +3841,6 @@ int start_firewall(int wanunit, int lanunit)
 	if (!is_routing_enabled())
 		return -1;
 
-#ifdef RTCONFIG_EMF
-	/* Force IGMPv2 due EMF limitations */
-	if (nvram_get_int("emf_enable")) {
-		f_write_string("/proc/sys/net/ipv4/conf/default/force_igmp_version", "2", 0, 0);
-		f_write_string("/proc/sys/net/ipv4/conf/all/force_igmp_version", "2", 0, 0);
-	}
-#endif
-
 	snprintf(prefix, sizeof(prefix), "wan%d_", wanunit);
 
 	//(void)wan_ifname(wanunit, wan_if);
@@ -3854,7 +3849,11 @@ int start_firewall(int wanunit, int lanunit)
 
 	strcpy(wan_ip, nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)));
 	strcpy(wanx_if, nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
+#ifdef RTCONFIG_DSL /* Paul add 2012/9/21 for DSL model, rp_filter should be disabled for br1. */
+	mcast_ifname = "br1";
+#else
 	mcast_ifname = wanx_if;
+#endif
 	strcpy(wanx_ip, nvram_safe_get(strcat_r(prefix, "xipaddr", tmp)));
 
 #ifdef RTCONFIG_IPV6
@@ -3865,11 +3864,19 @@ int start_firewall(int wanunit, int lanunit)
 	strcpy(lan_if, nvram_safe_get("lan_ifname"));
 	strcpy(lan_ip, nvram_safe_get("lan_ipaddr"));
 
-	/* mcast needs rp filter to be turned off only for non default iface */
-	if (!(nvram_match("mr_enable_x", "1") || nvram_invmatch("udpxy_enable_x", "0")) ||
+#ifdef RTCONFIG_EMF
+	/* No limitations now, allow IPMPv3 for LAN at least */
+//	/* Force IGMPv2 due EMF limitations */
+//	if (nvram_get_int("emf_enable")) {
+//		f_write_string("/proc/sys/net/ipv4/conf/default/force_igmp_version", "2", 0, 0);
+//		f_write_string("/proc/sys/net/ipv4/conf/all/force_igmp_version", "2", 0, 0);
+//	}
+#endif
+
+	/* Mcast needs rp filter to be turned off only for non default iface */
+	if (!(nvram_get_int("mr_enable_x") || nvram_get_int("udpxy_enable_x")) ||
 	    strcmp(wan_if, mcast_ifname) == 0)
 		mcast_ifname = NULL;
-	// ~ oleg patch
 
 	/* Block obviously spoofed IP addresses */
 	if (!(dir = opendir("/proc/sys/net/ipv4/conf")))
@@ -3881,8 +3888,6 @@ int start_firewall(int wanunit, int lanunit)
 			if (!(fp = fopen(name, "r+"))) {
 				perror(name);
 				break;
-			//}
-			//fputc('1', fp);
 			}
 			fputc(mcast_ifname && strncmp(file->d_name, 	// oleg patch
 				mcast_ifname, NAME_MAX) == 0 ? '0' : '1', fp);

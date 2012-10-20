@@ -190,6 +190,7 @@ check_trx(char *trx_name)
 	}
 
 	/* Verify checksum */
+//xprintf("check_trx:: %s: checksum: %d ? %d\n", trx_name, ltoh32(trx.crc32), crc);
 	if (ltoh32(trx.crc32) != crc) {
 		ret = CFE_ERR_BOOTPROGCHKSUM;
 		goto done;
@@ -485,6 +486,11 @@ ui_cmd_go(ui_cmdline_t *cmd, int argc, char *argv[])
 	char *os_name = "flash0.os";
 #endif	/* CFG_NFLASH */
 
+#ifdef DUAL_TRX
+	char *trx2_name = "nflash2.trx";
+	int trx1_ret, trx2_ret;
+#endif
+
 	val = nvram_get("os_ram_addr");
 	if (val)
 		osaddr = bcm_strtoul(val, NULL, 16);
@@ -530,8 +536,26 @@ ui_cmd_go(ui_cmdline_t *cmd, int argc, char *argv[])
         }
         else {
                 xprintf("boot the image...\n");	// tmp test
+#ifdef DUAL_TRX
+		trx1_ret = check_trx(trx_name);
+		trx2_ret = check_trx(trx2_name);
+		xprintf("Check 2 trx result: %d, %d\n", trx1_ret, trx2_ret);
 
-                if (check_trx(trx_name)) {
+		if( trx1_ret == 0 && trx2_ret != 0 ) {
+			//copy trx1 -> trx2
+			ret = ui_docommand("flash -size=33554432 nflash1.trx nflash2.trx -cfe");
+		}
+		else if( trx1_ret != 0 && trx2_ret == 0 ) {
+			//copy trx2 -> trx1
+			ret = ui_docommand("flash -size=33554432 nflash2.trx nflash1.trx -cfe");
+			//check trx1 again
+			trx1_ret = check_trx(trx_name);
+			xprintf("Check trx1 result= %d\n", trx1_ret);
+		}
+		if(trx1_ret) { //trx1 failed
+#else
+		if (check_trx(trx_name)) {
+#endif
                         xprintf("Hello!! Enter Rescue Mode: (Check error)\n\n");
                         /* Wait forever for an image */
                         while ((ret = ui_docommand("flash -noheader : nflash1.trx")) == CFE_ERR_TIMEOUT) {

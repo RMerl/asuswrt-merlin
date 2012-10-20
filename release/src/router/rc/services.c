@@ -339,10 +339,10 @@ void start_dnsmasq()
 		if (*nv)
 			fprintf(fp, "dhcp-option=lan,15,%s\n", nv);
 
-		/* Gateway */
+		/* Gateway, if not set, force use lan ipaddr to avoid repeater issue */
 		nv = nvram_safe_get("dhcp_gateway_x");
-		if (*nv && inet_addr(nv))
-			fprintf(fp, "dhcp-option=lan,3,%s\n", nv);
+		nv = (*nv && inet_addr(nv)) ? nv : lan_ipaddr;
+		fprintf(fp, "dhcp-option=lan,3,%s\n", nv);
 
 		/* DNS server and additional router address */
 		nv = nvram_safe_get("dhcp_dns1_x");
@@ -373,17 +373,13 @@ void start_dnsmasq()
 
 	/* Listen to PPTPD clients */
 	if (nvram_match("pptpd_enable","1"))
-		fprintf(fp,"listen-address=%s,127.0.0.1\n",lan_ipaddr);
+	fprintf(fp,"listen-address=%s,127.0.0.1\n",lan_ipaddr);
 
 #ifdef RTCONFIG_OPENVPN
 	write_vpn_dnsmasq_config(fp);
 #endif
 
-	append_custom_config("dnsmasq.conf",fp);
-
 	fclose(fp);
-
-	use_custom_config("dnsmasq.conf","/etc/dnsmasq.conf");
 
 	eval("touch", "/tmp/resolv.conf");
 	chmod("/tmp/resolv.conf", 0666);
@@ -917,7 +913,12 @@ int no_need_to_start_wps()
 					nvram_match(strcat_r(prefix, "crypto", tmp), "tkip")) ||*/
 				strstr(nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)), "wpa") ||
                                 nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius") ||
-				!get_radio(i, -1))
+#if 0
+				!get_radio(i, -1)
+#else
+				nvram_match(strcat_r(prefix, "radio", tmp), "0")
+#endif
+			)
 				return 1;
 		}
 
@@ -956,8 +957,6 @@ wl_wpsPincheck(char *pin_string)
 	return -1;
 }
 
-extern int no_check_wps_button;
-
 int 
 start_wps_pbc(int unit)
 {
@@ -984,8 +983,6 @@ start_wps_pbc(int unit)
 #endif
 	}
 
-	no_check_wps_button = 0;
-
 	nvram_set_int("wps_band", unit);
 	nvram_set("wps_sta_pin", "00000000");
 
@@ -1005,6 +1002,24 @@ start_wps_pin(int unit)
 }
 
 int
+start_wpsaide()
+{
+	char *wpsaide_argv[] = {"wpsaide", NULL};
+	pid_t pid;
+
+	return _eval(wpsaide_argv, NULL, 0, &pid);
+}
+
+int
+stop_wpsaide()
+{
+	if (pids("wpsaide"))
+		killall("wpsaide", SIGTERM);
+
+	return 0;
+}
+
+int
 start_wps(void)
 {
 #ifdef RTCONFIG_WPS
@@ -1012,13 +1027,8 @@ start_wps(void)
 	char *wps_argv[] = {"/bin/wps_monitor", NULL};
 	pid_t pid;
 #endif
-	nvram_set("wps_status", "0");
-	nvram_set("wps_method", "1");
-	nvram_set("wps_config_command", "0");
-	nvram_set("wps_proc_mac", "");
-
-	nvram_set("wps_sta_devname", "");
-	nvram_set("wps_sta_mac", "");
+	if (no_need_to_start_wps())
+		nvram_set("wps_enable", "0");
 
 	if (nvram_match("wps_restart", "1")) {
 		nvram_set("wps_restart", "0");
@@ -1028,7 +1038,7 @@ start_wps(void)
 		nvram_set("wps_proc_status", "0");
 	}
 
-	nvram_set("wps_sta_pin", "00000000");	nvram_set("wps_currentband", "");
+	nvram_set("wps_sta_pin", "00000000");
 	if (nvram_match("w_Setting", "1"))
 		nvram_set("lan_wps_oob", "disabled");
 	else
@@ -1039,14 +1049,10 @@ start_wps(void)
 	killall_tk("wps_enr");
 	unlink("/tmp/wps_monitor.pid");
 #endif
-	if (!no_need_to_start_wps() && nvram_match("wps_enable", "1"))
+	if (nvram_match("wps_enable", "1"))
 	{
-#if 0
 #ifdef CONFIG_BCMWL5
 		nvram_set("wl_wps_mode", "enabled");
-		nvram_set("wl0_wps_mode", "enabled");
-		nvram_set("wl1_wps_mode", "enabled");
-#endif
 #endif
 #ifdef CONFIG_BCMWL5
 		_eval(wps_argv, NULL, 0, &pid);
@@ -1060,18 +1066,10 @@ start_wps(void)
 		}
 #endif
 	}
-#if 0
 #ifdef CONFIG_BCMWL5
 	else
-	{
 		nvram_set("wl_wps_mode", "disabled");
-		nvram_set("wl0_wps_mode", "disabled");
-		nvram_set("wl1_wps_mode", "disabled");
-	}
 #endif
-#endif
-
-//	_eval(wps_argv, NULL, 0, &pid);
 #else
 	/* if we don't support WPS, make sure we unset any remaining wl_wps_mode */
 	nvram_unset("wl_wps_mode");
@@ -2007,7 +2005,6 @@ stop_misc_no_watchdog(void)
 int
 chpass(char *user, char *pass)
 {
-	char cmdbuf[128];
 //	FILE *fp;
 
 	if (!user)
@@ -2028,9 +2025,7 @@ chpass(char *user, char *pass)
 		fclose(fp);
 	}
 */
-	memset(cmdbuf, 0x0, 128);
-	sprintf(cmdbuf, "chpasswd.sh %s %s", user, pass);
-	system(cmdbuf);
+	eval("chpasswd.sh", user, pass);
 	return 0;
 }
 
@@ -2438,6 +2433,7 @@ start_services(void)
 	start_8021x();
 #endif
 	start_wps();
+	start_wpsaide();
 #ifdef RTCONFIG_BCMWL6
 	start_acsd();
 #endif
@@ -2483,6 +2479,7 @@ start_services(void)
 #ifdef RTCONFIG_USB
 //	_dprintf("restart_nas_services(%d): test 8.\n", getpid());
 	restart_nas_services(0, 1);
+	start_diskmon();
 #endif
 	//start_dnsmasq();
 
@@ -2517,6 +2514,7 @@ stop_services(void)
 #ifdef RTCONFIG_USB
 //_dprintf("restart_nas_services(%d): test 9.\n", getpid());
 	restart_nas_services(1, 0);
+	stop_diskmon();
 #endif
 	stop_upnp();
 	stop_lltd();
@@ -2734,6 +2732,7 @@ void handle_notifications(void) {
 	char *nvp, *b, *nvptr;
 	int action = 0;
 	int count;
+	int i;
 
 	// handle command one by one only
 	// handle at most 7 parameters only
@@ -2778,12 +2777,18 @@ again:
 
 	TRACE_PT("running: %d %s\n", action, script);
 
-	if (strcmp(script, "reboot") == 0) {
+	if (strcmp(script, "reboot") == 0 || strcmp(script,"rebootandrestore")==0) {
 		stop_wan();
 #ifdef RTCONFIG_USB
 		stop_usb();
 		stop_usbled();
 #endif
+
+		if(strcmp(script,"rebootandrestore")==0) {
+			for(i=1;i<count;i++) {
+				if(cmd[i]) restore_defaults_module(cmd[i]);
+			}
+		}
 		sleep(3);
 		/* FIXME: Signal SIGHUP will only restarts WAN services
 		 * without actual reboot? */
@@ -2850,11 +2855,19 @@ again:
 			if(f_exists("/tmp/linux.trx")) { // starting to upgrade
 				stop_wan();
 				eval("mtd-write", "-i", "/tmp/linux.trx", "-d", "linux");
+#ifdef RTCONFIG_DUAL_TRX
+				_dprintf(" Write FW to the 2nd partition.\n");
+				eval("mtd-write", "-i", "/tmp/linux.trx", "-d", "linux2");
+#endif
 				kill(1, SIGTERM);
 			}
 			else if (strlen(upgrade_file) && f_exists(upgrade_file)) {
 				stop_wan();
 				eval("mtd-write", "-i", upgrade_file, "-d", "linux");
+#ifdef RTCONFIG_DUAL_TRX
+				_dprintf(" Write FW to the 2nd partition.\n");
+                                eval("mtd-write", "-i", upgrade_file, "-d", "linux2");
+#endif   
 				kill(1, SIGTERM);
 			}
 			else {
@@ -3093,6 +3106,12 @@ again:
 	}
 	else if (strcmp(script, "wireless") == 0) {
 		if(action&RC_SERVICE_STOP) {
+#ifdef RTCONFIG_WIRELESSREPEATER
+			stop_wlcconnect();
+
+			kill_pidfile_s("/var/run/wanduck.pid", SIGUSR1);
+#endif
+
 #ifdef RTCONFIG_USB_PRINTER
 			stop_u2ec();
 #endif
@@ -3106,6 +3125,10 @@ again:
 			restart_wireless();
 		}
 		if(action&RC_SERVICE_START) {
+#ifdef RTCONFIG_WIRELESSREPEATER
+			start_wlcconnect();
+#endif
+
 			start_networkmap();
 #ifdef RTCONFIG_USB_PRINTER
 			start_u2ec();
@@ -3317,13 +3340,11 @@ again:
 		if(action&RC_SERVICE_START) start_mt_daapd();
 	}
 #endif
-#ifdef RTCONFIG_USB_TODO
-	else if (strcmp(script, "diskcheck")==0)
+	else if (strcmp(script, "diskmon")==0)
 	{
-		if(action&RC_SERVICE_STOP) stop_diskcheck();
-		if(action&RC_SERVICE_START) start_diskcheck();
+		if(action&RC_SERVICE_STOP) stop_diskmon();
+		if(action&RC_SERVICE_START) start_diskmon();
 	}
-#endif
 	else if(!strncmp(script, "apps_", 5)) 
 	{
 		if(action&RC_SERVICE_START) {
@@ -3576,8 +3597,22 @@ again:
 	}
 	else if (strcmp(script, "wps_method")==0)
 	{
-		if(action&RC_SERVICE_STOP) {kill_pidfile_s("/var/run/watchdog.pid", SIGUSR2);stop_wps_method();}
-		if(action&RC_SERVICE_START) {kill_pidfile_s("/var/run/watchdog.pid", SIGUSR1);start_wps_method();}
+		if(action&RC_SERVICE_STOP) {
+			stop_wps_method();
+			if(!nvram_match("wps_ign_btn", "1"))
+				kill_pidfile_s("/var/run/watchdog.pid", SIGUSR2);
+		}
+		if(action&RC_SERVICE_START) {
+#ifdef CONFIG_BCMWL5
+			stop_wps_method();
+#endif
+			start_wps_method();
+			if(!nvram_match("wps_ign_btn", "1"))
+				kill_pidfile_s("/var/run/watchdog.pid", SIGUSR1);
+			else
+				kill_pidfile_s("/var/run/watchdog.pid", SIGTSTP);
+			nvram_unset("wps_ign_btn");
+		}
 	}
 	else if (strcmp(script, "reset_wps")==0)
 	{
@@ -3641,7 +3676,7 @@ again:
 			stop_lan_wlc();
 			stop_lan_port();
 			stop_lan_wlport();
-			for(i=0;i<12;i++) {
+			for(i=0;i<8;i++) {
 				sleep(1);
 				_dprintf("sleep\n");
 			}

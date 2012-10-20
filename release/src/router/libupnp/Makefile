@@ -17,7 +17,7 @@ SRCPATH = $(UPNPLIB)/upnp
 INCLUDES += -I$(UPNPLIB)/include -I$(SRCBASE)/include -I$(SRCBASE)/include/bcmcrypto -I$(SRCBASE)/router/shared
 CFLAGS += ${INCLUDES}
 
-CFLAGS += -Wall -Wunused -g -s -Werror
+CFLAGS += -Wall -Wunused -g -s -Werror -fPIC
 
 
 LDFLAGS = -L$(TOP)/libbcmcrypto -lbcmcrypto

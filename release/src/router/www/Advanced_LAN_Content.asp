@@ -37,7 +37,6 @@ var pptpd_clients_subnet = pptpd_clients.split(".")[0]
 
 
 function initial(){
-	final_flag = 1;	// for the function in general.js
 	show_menu();
 	
 	if(sw_mode == "1"){
@@ -202,9 +201,13 @@ function validForm(){
   // No matter it changes or not, it will submit the form
   //Viz modify 2011.10 for DHCP pool issue {
 	if(sw_mode == "1"){
-				var pool_change = changed_DHCP_IP_pool();
-	if(!pool_change)
-				return false;
+		var pool_change = changed_DHCP_IP_pool();
+		if(!pool_change)
+			return false;
+		else{
+			document.form.lan_ipaddr_rt.value = document.form.lan_ipaddr.value;
+			document.form.lan_netmask_rt.value = document.form.lan_netmask.value;			
+		}
 	}				
 	//}Viz modify 2011.10 for DHCP pool issue 
 
@@ -368,6 +371,8 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 <input type="hidden" name="wan_proto" value="<% nvram_get("wan_proto"); %>">
 <input type="hidden" name="lan_proto" value="<% nvram_get("lan_proto"); %>">
 <input type="hidden" name="lan_dnsenable_x" value="<% nvram_get("lan_dnsenable_x"); %>">
+<input type="hidden" name="lan_ipaddr_rt" value="<% nvram_get("lan_ipaddr_rt"); %>">
+<input type="hidden" name="lan_netmask_rt" value="<% nvram_get("lan_netmask_rt"); %>">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>

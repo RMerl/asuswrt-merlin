@@ -117,9 +117,9 @@ function submitenter(myfield,e)
 		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 <br/>
 
-<table style="margin-top:-20px;margin-left:20px;" width="98%" border=0 align="center" cellpadding="5" cellspacing="0">
+<table style="margin-top:-40px;margin-left:20px;" width="98%" border=0 align="center" cellpadding="5" cellspacing="0">
 	<tr>
-		<td width="50%">
+		<td width="55%" colspan="2">
 			<div id="productDesc" style="font-style:italic;">
 				<ul>
 					<p style="font-size:20px;font-weight:bolder;margin-bottom:15px;"><#statusTitle_System#></p>
@@ -131,9 +131,7 @@ function submitenter(myfield,e)
 			</div>
 		</td>
 
-		<td width="5%"></td>
-
-		<td width="45%">
+		<td width="45%" height="394">
 			<img id="producticon" src="/images/Model_producticon.png">
 			<div id="wan_unplug" style="display:none">
 				<br>
@@ -151,17 +149,18 @@ function submitenter(myfield,e)
 
 	<tr>
 		<td colspan="3">
-			<p class="QISGeneralFont" style="margin-top:50px;*margin-top:0px;margin-left:40px;"><#QIS_welcome_desc1#></p>
+			<p class="QISGeneralFont" style="margin-left:40px;"><#QIS_welcome_desc1#></p>
 		</td>
 	</tr>
 
 	<tr>
-		<td colspan="3">
-			<div class="apply_gen" id="applyBtn" style="margin-top:10px;*margin-top:0px;">
-				<input class="button_gen" id="btn_next_step" type="button" value="<#CTL_next#>" onclick="update_wan_info();">
-				<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
-				<input id="ManualBtn" class="button_gen_long" type="button" value="<#Manual_Setting_btn#>" style="display:none;" onclick="submitForm(0)">
-			</div>
+		<td colspan="2" align="right">
+			<input class="button_gen" id="btn_next_step" type="button" value="<#CTL_next#>" onclick="update_wan_info();">
+			<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
+		</td>
+		<td>			
+				<input id="ManualBtn" class="button_gen_long" type="button" value="<#Manual_Setting_btn#>" style="display:none;white-space:normal;" onclick="submitForm(0)">
+		</td>			
 		</td>
 	</tr>	
 </table>

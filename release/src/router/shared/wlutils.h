@@ -15,6 +15,9 @@
 #ifndef _wlutils_h_
 #define _wlutils_h_
 
+#include <shared.h>
+
+#ifndef RTCONFIG_RALINK
 #include <typedefs.h>
 #include <wlioctl.h>
 
@@ -116,4 +119,5 @@ extern int wl_bssiovar_set(char *ifname, char *iovar, int bssidx, void *param, i
 extern int wl_bssiovar_setint(char *ifname, char *iovar, int bssidx, int val);
 #endif
 
+#endif /* CONFIG_BCMWL5 */
 #endif /* _wlutils_h_ */

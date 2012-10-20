@@ -74,6 +74,7 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "server.modules+=(\"mod_alias\")\n");
 	fprintf(fp, "server.modules+=(\"mod_userdir\")\n");
 	fprintf(fp, "server.modules+=(\"mod_aidisk_access\")\n");
+	fprintf(fp, "server.modules+=(\"mod_sharelink\")\n");
 	fprintf(fp, "server.modules+=(\"mod_create_captcha_image\")\n");
 	fprintf(fp, "server.modules+=(\"mod_webdav\")\n");
 	fprintf(fp, "server.modules+=(\"mod_smbdav\")\n");

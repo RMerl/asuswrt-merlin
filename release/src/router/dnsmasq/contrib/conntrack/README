@@ -1,0 +1,54 @@
+Linux iptables includes that ability to mark individual network packets
+with a "firewall mark".  Additionally there is a component called
+"conntrack" which tries to string sequences of related packets together
+into a "connection" (it even relates sequences of UDP and ICMP packets).
+ There is a related mark for a connection called a "connection mark".
+Marks can be copied freely between the firewall and connection marks
+
+Using these two features it become possible to tag all related traffic
+in arbitrary ways, eg authenticated users, traffic from a particular IP,
+port, etc. Unfortunately any kind of "proxy" breaks this relationship
+because network packets go in one side of the proxy and a completely new
+connection comes out of the other side.  However, sometimes, we want to
+maintain that relationship through the proxy and continue the connection
+mark on packets upstream of our proxy
+
+DNSMasq includes such a feature enabled by the --conntrack
+option. This allows, for example, using iptables to mark traffic from
+a particular IP, and that mark to be persisted to requests made *by*
+DNSMasq. Such a feature could be useful for bandwidth accounting,
+captive portals and the like. Note a similar feature has been 
+implemented in Squid 2.2
+
+
+As an example consider the following iptables rules:
+
+
+1) iptables -t mangle -A PREROUTING -j CONNMARK --restore-mark
+2) iptables -t mangle -A PREROUTING -m mark --mark 0 -s 192.168.111.137
+-j MARK --set-mark 137
+3) iptables -t mangle -A PREROUTING -j CONNMARK --save-mark
+
+4) iptables -t mangle -A OUTPUT -m mark ! --mark 0 -j CONNMARK --save-mark
+
+1-3) are all applied to the PREROUTING table and affect all packets
+entering the firewall.
+
+1) copies any existing connection mark into the firewall mark. 2) Checks
+the packet not already marked and if not applies an arbitrary mark based
+on IP address. 3) Saves the firewall mark back to the connection mark
+(which will persist it across related packets)
+
+4) is applied to the OUTPUT table, which is where we first see packets
+generated locally. DNSMasq will have already copied the firewall mark
+from the request, across to the new packet, and so all that remains is
+for iptables to copy it to the connection mark so it's persisted across
+packets.
+
+Note: iptables can be quite confusing to the beginner. The following
+diagram is extremely helpful in understanding the flows
+	http://linux-ip.net/nf/nfk-traversal.png
+Additionally the following URL contains a useful "starting guide" on
+linux connection tracking/marking
+	http://home.regit.org/netfilter-en/netfilter-connmark/
+

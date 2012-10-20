@@ -15,6 +15,7 @@ SERVER_LIST_FILES="Packages.gz Packages.zip"
 SERVER_LIST_FILE=
 TEMP_LIST_FILE=/tmp/Packages.gz
 LIST_DIR=$APPS_PATH/lib/ipkg/lists
+apps_local_space=`nvram get apps_local_space`
 
 if [ ! -f "$CONF_FILE" ]; then
 	echo "No conf file of ipkg!"
@@ -34,6 +35,7 @@ fi
 
 
 nvram set apps_state_update=1 # UPDATING
+SQ_TEST=`nvram get apps_sq`
 i=0
 while [ $i -lt $row_num ]; do
 	i=$(($i+1))
@@ -41,7 +43,13 @@ while [ $i -lt $row_num ]; do
 	server_name=`sed -n $i'p' $TEMP_FILE |awk '{print $2}'`
 
 	if [ "$list_name" == "optware.asus" ]; then
-		server_name=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
+		if [ "$SQ_TEST" == "1" ]; then
+			#cp -f $apps_local_space/$list_name $LIST_DIR/$list_name
+			#continue
+			server_name=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ
+		else
+			server_name=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
+		fi
 	fi
 
 	SERVER_LIST_FILE=

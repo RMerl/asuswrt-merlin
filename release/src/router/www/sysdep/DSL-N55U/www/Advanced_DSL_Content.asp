@@ -32,6 +32,7 @@ if(dualWAN_support != -1){
 	wan_type_name = wan_type_name.toUpperCase();
 	switch(wan_type_name){
 		case "WAN":
+			break;
 		case "LAN":
 			location.href = "Advanced_WAN_Content.asp";
 			break;
@@ -460,6 +461,10 @@ function applyRule(){
 		inputCtrl(document.form.dsl_scr, 1);
 		inputCtrl(document.form.dsl_mbs, 1);
 
+		if (document.form.dsl_proto.value == "bridge") {
+			document.form.action_script.value = "reboot";		
+			document.form.action_wait.value = "<% get_default_reboot_time(); %>";				
+		}
 		document.form.submit();
 	}
 }

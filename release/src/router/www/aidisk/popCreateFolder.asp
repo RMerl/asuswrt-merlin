@@ -42,14 +42,16 @@ function submit(){
 					
 				document.createFolderForm.submit();
 				parent.hidePop("apply");
-				setTimeout(" ",2000);							
+				setTimeout(" ",5000);							
 				if(parent.document.form.current_page.value == "mediaserver.asp" || parent.document.form.current_page.value == "cloud_sync.asp"){
 					if(parent.document.aidiskForm.test_flag.value == 1){
 						parent.FromObject = parent.document.aidiskForm.layer_order.value.substring(0,3);
+						setTimeout(" ",3000);
 						parent.get_layer_items(parent.document.aidiskForm.layer_order.value.substring(0,3));
 					}	
 					else{
 						parent.FromObject = parent.document.aidiskForm.layer_order.value;
+						setTimeout(" ",3000);
 						parent.get_layer_items(parent.document.aidiskForm.layer_order.value);						
 					}
 				}	

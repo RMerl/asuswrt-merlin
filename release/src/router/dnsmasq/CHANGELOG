@@ -1,17 +1,569 @@
+version 2.64
+            Handle DHCP FQDN options with all flag bits zero and
+            --dhcp-client-update set. Thanks to Bernd Krumbroeck for
+            spotting the problem.
+
+	    Finesse the check for /etc/hosts names which conflict with
+	    DHCP names. Previously a name/address pair in /etc/hosts
+	    which didn't match the name/address of a DHCP lease would
+	    generate a warning. Now that only happesn if there is not
+	    also a match. This allows multiple addresses for a name in 
+	    /etc/hosts with one of them assigned via DHCP.
+
+	    Fix broken vendor-option processing for BOOTP. Thanks to
+	    Hans-Joachim Baader for the bug report.
+
+	    Don't report spurious netlink errors, regression in
+	    2.63. Thanks to Vladislav Grishenko for the patch.
+
+	    Flag DHCP or DHCPv6 in starup logging. Thanks to 
+	    Vladislav Grishenko for the patch.
+
+	    Add SetServersEX method in DBus interface. Thanks to Dan
+	    Williams for the patch.
+
+	    Fix build with later Lua libraries. Thansk to Cristian
+	    Rodriguez for the patch.
+
+	    
+version 2.63
+            Do duplicate dhcp-host address check in --test mode.
+
+	    Check that tftp-root directories are accessible before
+	    start-up. Thanks to Daniel Veillard for the initial patch.
+
+	    Allow more than one --tfp-root flag. The per-interface
+	    stuff is pointless without that.
+
+	    Add --bind-dynamic. A hybrid mode between the default and
+	    --bind-interfaces which copes with dynamically created
+	    interfaces. 
+	    
+	    A couple of fixes to the build system for Android. Thanks
+	    to Metin Kaya for the patches.
+
+	    Remove the interface:<interface> argument in --dhcp-range, and
+	    the interface argument to --enable-tftp. These were a
+	    still-born attempt to allow automatic isolated
+	    configuration by libvirt, but have never (to my knowledge)
+	    been used, had very strange semantics, and have been
+	    superceded by other mechanisms. 
+
+	    Fixed bug logging filenames when duplicate dhcp-host
+	    addresses are found. Thanks to John Hanks for the patch.
+
+	    Fix regression in 2.61 which broke caching of CNAME
+	    chains. Thanks to Atul Gupta for the bug report.
+
+	    Allow the target of a --cname flag to be another --cname.
+
+            Teach DHCPv6 about the RFC 4242 information-refresh-time
+	    option, and add parsing if the minutes, hours and days
+	    format for options. Thanks to Francois-Xavier Le Bail for
+	    the suggestion.
+
+	    Allow "w" (for week) as multiplier in lease times, as well
+	    as seconds, minutes, hours and days.  Álvaro Gámez Machado 
+	    spotted the ommission.
+ 
+	    Update French translation. Thanks to Gildas Le Nadan.
+
+	    Allow a DBus service name to be given with --enable-dbus
+	    which overrides the default,
+	    uk.org.thekelleys.dnsmasq. Thanks to Mathieu
+	    Trudel-Lapierre for the patch. 
+
+	    Set the "prefix on-link" bit in Router
+	    Advertisements. Thanks to Gui Iribarren for the patch.
+
+
+version 2.62
+            Update German translation. Thanks to Conrad Kostecki.
+
+	    Cope with router-solict packets wich don't have a valid 
+	    source address. Thanks to Vladislav Grishenko for the patch.
+
+	    Fixed bug which caused missing periodic router
+	    advertisements with some configurations. Thanks to
+	    Vladislav Grishenko for the patch.
+
+	    Fixed bug which broke DHCPv6/RA with prefix lengths 
+	    which are not divisible by 8. Thanks to Andre Coetzee 
+	    for spotting this.
+
+	    Fix non-response to router-solicitations when
+	    router-advertisement configured, but DHCPv6 not
+	    configured. Thanks to Marien Zwart for the patch.
+
+	    Add --dns-rr, to allow arbitrary DNS resource records.
+
+	    Fixed bug which broke RA scheduling when an interface had
+	    two addresses in the same network. Thanks to Jim Bos for
+	    his help nailing this.
+
+version 2.61
+	    Re-write interface discovery code on *BSD to use
+	    getifaddrs. This is more portable, more straightforward,
+	    and allows us to find the prefix length for IPv6
+	    addresses.
+
+	    Add ra-names, ra-stateless and slaac keywords for DHCPv6.
+	    Dnsmasq can now synthesise AAAA records for dual-stack 
+            hosts which get IPv6 addresses via SLAAC. It is also now 
+	    possible to use SLAAC and stateless DHCPv6, and to 
+	    tell clients to use SLAAC addresses as well as DHCP ones.
+	    Thanks to Dave Taht for help with this.
+
+	    Add --dhcp-duid to allow DUID-EN uids to be used.
+
+	    Explicity send DHCPv6 replies to the correct port, instead
+	    of relying on clients to send requests with the correct
+	    source address, since at least one client in the wild gets
+	    this wrong. Thanks to Conrad Kostecki for help tracking
+	    this down.
+
+	    Send a preference value of 255 in DHCPv6 replies when 
+	    --dhcp-authoritative is in effect. This tells clients not
+	    to wait around for other DHCP servers.
+
+	    Better logging of DHCPv6 options.
+
+	    Add --host-record. Thanks to Rob Zwissler for the
+	    suggestion.
+
+	    Invoke the DHCP script with action "tftp" when a TFTP file
+	    transfer completes. The size of the file, address to which
+	    it was sent and complete pathname are supplied. Note that
+	    version 2.60 introduced some script incompatibilties
+	    associated with DHCPv6, and this is a further change. To
+	    be safe, scripts should ignore unknown actions, and if
+	    not IPv6-aware, should exit if the environment
+	    variable DNSMASQ_IAID is set. The use-case for this is
+	    to track netboot/install.  Suggestion from Shantanu
+	    Gadgil.
+
+	    Update contrib/port-forward/dnsmasq-portforward to reflect
+	    the above.
+
+	    Set the environment variable DNSMASQ_LOG_DHCP when running
+	    the script id --log-dhcp is in effect, so that script can
+	    taylor their logging verbosity. Suggestion from Malte
+	    Forkel.
+	    
+	    Arrange that addresses specified with --listen-address
+	    work even if there is no interface carrying the
+	    address. This is chiefly useful for IPv4 loopback
+	    addresses, where any address in 127.0.0.0/8 is a valid
+	    loopback address, but normally only 127.0.0.1 appears on
+	    the lo interface. Thanks to Mathieu Trudel-Lapierre for
+	    the idea and initial patch. 
+
+	    Fix crash, introduced in 2.60, when a DHCPINFORM is
+	    received from a network which has no valid dhcp-range.
+	    Thanks to Stephane Glondu for the bug report.
+
+	    Add a new DHCP lease time keyword, "deprecated" for
+	    --dhcp-range. This is only valid for IPv6, and sets the
+	    preffered lease time for both DHCP and RA to zero. The
+	    effect is that clients can continue to use the address 
+	    for existing connections, but new connections will use
+            other addresses, if they exist. This makes hitless
+	    renumbering at least possible.
+
+	    Fix bug in address6_available() which caused DHCPv6 lease
+	    aquisition to fail if more than one dhcp-range in use.
+
+	    Provide RDNSS and DNSSL data in router advertisements,
+	    using the settings provided for DHCP options
+	    option6:domain-search and option6:dns-server.
+
+	    Tweak logo/favicon.ico to add some transparency. Thanks to
+	    SamLT for work on this.
+	    
+	    Don't cache data from non-recursive nameservers, since it
+	    may erroneously look like a valid CNAME to a non-exitant
+	    name. Thanks to Ben Winslow for finding this.
+
+	    Call SO_BINDTODEVICE on the DHCP socket(s) when doing DHCP
+	    on exactly one interface and --bind-interfaces is set. This 
+	    makes the OpenStack use-case of one dnsmasq per virtual
+	    interface work. This is only available on Linux; it's not
+	    supported on other platforms. Thanks to Vishvananda Ishaya
+	    and the OpenStack team for the suggestion.
+
+	    Updated French translation. Thanks to Gildas Le Nadan.
+
+	    Give correct from-cache answers to explict CNAME queries.
+	    Thanks to Rob Zwissler for spotting this.
+	    
+	    Add --tftp-lowercase option. Thanks to Oliver Rath for the
+	    patch. 
+
+	    Ensure that the DBus DhcpLeaseUpdated events are generated
+	    when a lease goes through INIT_REBOOT state, even if the
+	    dhcp-script is not in use. Thanks to Antoaneta-Ecaterina
+	    Ene for the patch.
+
+	    Fix failure of TFTP over IPv4 on OpenBSD platform. Thanks
+	    to Brad Smith for spotting this.
+	    
+
+version 2.60
+            Fix compilation problem in Mac OS X Lion. Thanks to Olaf
+            Flebbe for the patch.
+
+	    Fix DHCP when using --listen-address with an IP address
+	    which is not the primary address of an interface.
+
+	    Add --dhcp-client-update option.
+
+	    Add Lua integration. Dnsmasq can now execute a DHCP
+	    lease-change script written in Lua. This needs to be
+	    enabled at compile time by setting HAVE_LUASCRIPT in 
+	    src/config.h or running "make COPTS=-DHAVE_LUASCRIPT"
+	    Thanks to Jan-Piet Mens for the idea and proof-of-concept 
+	    implementation.
+	    
+	    Tidied src/config.h to distinguish between
+	    platform-dependent compile-time options which are selected
+	    automatically, and builder-selectable compile time
+	    options. Document the latter better, and describe how to
+	    set them from the make command line.
+
+	    Tidied up IPPROTO_IP/SOL_IP (and IPv6 equivalent)
+	    confusion. IPPROTO_IP works everywhere now.
+	    
+	    Set TOS on DHCP sockets, this improves things on busy
+	    wireless networks. Thanks to Dave Taht for the patch.
+
+	    Determine VERSION automatically based on git magic:
+	    release tags or hash values.
+
+	    Improve start-up speed when reading large hosts files 
+	    containing many distinct addresses.
+
+	    Fix problem if dnsmasq is started without the stdin,
+	    stdout and stderr file descriptors open. This can manifest
+	    itself as 100% CPU use. Thanks to Chris Moore for finding
+	    this.
+
+	    Fix shell-scripting bug in bld/pkg-wrapper. Thanks to 
+	    Mark Mitchell for the patch.
+
+	    Allow the TFP server or boot server in --pxe-service, to
+	    be a domain name instead of an IP address. This allows for
+	    round-robin	to multiple servers, in the same way as
+	    --dhcp-boot. A good suggestion from Cristiano Cumer.
+
+	    Support BUILDDIR variable in the Makefile. Allows builds 
+	    for multiple archs from the same source tree with eg.
+	    make BUILDDIR=linux             (relative to dnsmasq tree)
+	    make BUILDDIR=/tmp/openbsd      (absolute path)
+	    If BUILDDIR is not set, compilation happens in the src
+	    directory, as before. Suggestion from Mark Mitchell.
+
+	    Support DHCPv6. Support is there for the sort of things
+	    the existing v4 server does, including tags, options, 
+	    static addresses and relay support. Missing is prefix 
+	    delegation, which is probably not required in the dnsmasq
+	    niche, and an easy way to accept prefix delegations from
+	    an upstream DHCPv6 server, which is. Future plans include
+	    support for DHCPv6 router option and MAC address option
+	    (to make selecting clients by MAC address work like IPv4).
+	    These will be added as the standards mature.
+	    This code has been tested, but this is the first release,
+	    so don't bet the farm on it just yet. Many thanks to all 
+	    testers who have got it this far.
+
+	    Support IPv6 router advertisements. This is a
+	    simple-minded implementation, aimed at providing the
+	    vestigial RA needed to go alongside IPv6. Is picks up
+	    configuration from the DHCPv6 conf, and should just need
+	    enabling with --enable-ra.   
+
+	    Fix long-standing wrinkle with --localise-queries that
+	    could result in wrong answers when DNS packets arrive
+	    via an interface other than the expected one. Thanks to 
+	    Lorenzo Milesi and John Hanks for spotting this one.
+ 
+            Update French translation. Thanks to Gildas Le Nadan.
+
+	    Update Polish translation. Thanks to Jan Psota.
+
+
+version 2.59
+            Fix regression in 2.58 which caused failure to start up
+            with some combinations of dnsmasq config and IPv6 kernel
+            network config. Thanks to Brielle Bruns for the bug
+            report.
+
+            Improve dnsmasq's behaviour when network interfaces are
+            still doing duplicate address detection (DAD). Previously,
+            dnsmasq would wait up to 20 seconds at start-up for the
+            DAD state to terminate. This is broken for bridge
+            interfaces on recent Linux kernels, which don't start DAD
+            until the bridge comes up, and so can take arbitrary
+            time. The new behaviour lets dnsmasq poll for an arbitrary
+            time whilst providing service on other interfaces. Thanks
+            to Stephen Hemminger for pointing out the problem.
+
+
+version 2.58
+	    Provide a definition of the SA_SIZE macro where it's 
+	    missing. Fixes build failure on openBSD.
+
+	    Don't include a zero terminator at the end of messages
+	    sent to /dev/log when /dev/log is a datagram socket.
+	    Thanks to Didier Rabound for spotting the problem.
+
+	    Add --dhcp-sequential-ip flag, to force allocation of IP
+	    addresses in ascending order. Note that the default
+	    pseudo-random mode is in general better but some
+	    server-deployment applications need this.
+
+	    Fix problem where a server-id of 0.0.0.0 is sent to a
+	    client when a dhcp-relay is in use if a client renews a
+	    lease after dnsmasq restart and before any clients on the
+	    subnet get a new lease. Thanks to Mike Ruiz for assistance
+	    in chasing this one down. 
+
+	    Don't return NXDOMAIN to an AAAA query if we have CNAME
+	    which points to an A record only: NODATA is the correct
+	    reply in this case. Thanks to Tom Fernandes for spotting
+	    the problem.
+
+	    Relax the need to supply a netmask in --dhcp-range for
+	    networks which use a DHCP relay. Whilst this is still
+	    desireable, in the absence of a netmask dnsmasq will use
+	    a default based on the class (A, B, or C) of the address. 
+	    This should at least remove a cause of mysterious failure 
+	    for people using RFC1918 addresses and relays.
+
+	    Add support for Linux conntrack connection marking. If 
+	    enabled with --conntrack, the connection mark for incoming
+	    DNS queries will be copied  to the outgoing connections
+	    used to answer those queries. This allows clever firewall
+	    and accounting stuff. Only available if dnsmasq is
+	    compiled with HAVE_CONNTRACK and adds a dependency on 
+	    libnetfilter-conntrack. Thanks to Ed Wildgoose for the
+	    initial idea, testing and sponsorship of this function.
+
+	    Provide a sane error message when someone attempts to 
+	    match a tag in --dhcp-host.
+
+	    Tweak the behaviour of --domain-needed, to avoid problems
+	    with recursive nameservers downstream of dnsmasq. The new
+	    behaviour only stops A and AAAA queries, and returns
+	    NODATA rather than NXDOMAIN replies. 
+
+	    Efficiency fix for very large DHCP configurations, thanks
+	    to James Gartrell and Mike Ruiz for help with this. 
+
+	    Allow the TFTP-server address in --dhcp-boot to be a
+	    domain-name which is looked up in /etc/hosts. This can 
+	    give multiple IP addresses which are used round-robin,
+	    thus doing TFTP server load-balancing. Thanks to Sushil
+	    Agrawal for the patch.
+
+	    When two tagged dhcp-options for a particular option
+	    number are both valid, use the one which is valid without
+	    a tag from the dhcp-range. Allows overriding of the value
+	    of a DHCP option for a particular host as well as
+	    per-network values.  So 
+	    --dhcp-range=set:interface1,......
+	    --dhcp-host=set:myhost,.....  
+	    --dhcp-option=tag:interface1,option:nis-domain,"domain1" 
+	    --dhcp-option=tag:myhost,option:nis-domain,"domain2" 
+	    will set the NIS-domain to domain1 for hosts in the range, but
+       	    override that to domain2 for a particular host.
+
+	    Fix bug which resulted in truncated files and timeouts for
+	    some TFTP transfers. The bug only occurs with netascii
+	    transfers and needs an unfortunate relationship between
+	    file size, blocksize and the number of newlines in the
+	    last block before it manifests itself. Many thanks to 
+	    Alkis Georgopoulos for spotting the problem and providing
+	    a comprehensive test-case. 
+
+	    Fix regression in TFTP server on *BSD platforms introduced
+	    in version 2.56, due to confusion with sockaddr
+	    length. Many thanks to Loïc Pefferkorn for finding this.
+
+	    Support scope-ids in IPv6 addresses of nameservers from
+	    /etc/resolv.conf and in --server options. Eg
+	    nameserver fe80::202:a412:4512:7bbf%eth0 or
+	    server=fe80::202:a412:4512:7bbf%eth0. Thanks to 
+	    Michael Stapelberg for the suggestion.
+
+	    Update Polish translation, thanks to Jan Psota.
+
+	    Update French translation. Thanks to Gildas Le Nadan.
+
+
+version 2.57
+	    Add patches to allow build under Android.
+
+	    Provide our own header for the DNS protocol, rather than
+	    relying on arpa/nameser.h. This has proved more or less
+	    defective over the years and the final straw is that it's
+	    effectively empty on Android.
+
+	    Fix regression in 2.56 which caused hex constants in
+	    configuration to be rejected if they contain the '*'
+	    wildcard.
+
+	    Correct wrong casts of arguments to ctype.h functions,
+	    isdigit(), isxdigit() etc. Thanks to Matthias Andree for
+	    spotting this.
+
+	    Allow build with IDN support independently from i18n. 
+            IDN support continues to be included automatically 
+	    when i18n is included. 
+            'make COPTS=-DHAVE_IDN' is the magic incantation. 
+
+	    Modify check on extraneous command line junk (added in
+	    2.56) so that it doesn't complain about extra _empty_ 
+	    arguments. Otherwise this breaks libvirt.
+
+
+version 2.56
+            Add a patch to allow dnsmasq to get interface names right in a
+            Solaris zone. Thanks to Dj Padzensky for this.
+
+	    Improve data-type parsing heuristics so that
+	    --dhcp-option=option:domain-search,. 
+	    treats the value as a string and not an IP address.
+	    Thanks to Clemens Fischer for spotting that.
+
+	    Add IPv6 support to the TFTP server. Many thanks to Jan 
+	    'RedBully' Seiffert for the patches.
+	    
+	    Log DNS queries at level LOG_INFO, rather then
+	    LOG_DEBUG. This makes things consistent with DHCP
+	    logging. Thanks to Adam Pribyl for spotting the problem.
+
+            Ensure that dnsmasq terminates cleanly when using
+            --syslog-async even if it cannot make a connection to the
+            syslogd.
+
+	    Add --add-mac option. This is to support currently 
+	    experimental DNS filtering facilities. Thanks to Benjamin
+	    Petrin for the orignal patch. 
+
+	    Fix bug which meant that tags were ignored in dhcp-range
+	    configuration specifying PXE-proxy service. Thanks to
+	    Cristiano Cumer for spotting this.
+
+	    Raise an error if there is extra junk, not part of an
+ 	    option, on the command line.
+
+	    Flag a couple of log messages in cache.c as coming from
+	    the DHCP subsystem. Thanks to Olaf Westrik for the patch.
+
+	    Omit timestamps from logs when a) logging to stderr and 
+	    b) --keep-in-forground is set. The logging facility on the
+	    other end of stderr can be assumned to supply them. Thanks
+	    to John Hallam for the patch.
+
+	    Don't complain about strings longer than 255 characters in
+	    --txt-record, just split the long strings into 255
+	    character chunks instead.
+
+	    Fix crash on double-free. This bug can only happen when
+	    dhcp-script is in use and then only in rare circumstances
+	    triggered by high DHCP transaction rate and a slow
+	    script. Thanks to Ferenc Wagner for finding the problem.
+
+	    Only log that a file has been sent by TFTP after the
+	    transfer has completed succesfully. 
+
+	    A good suggestion from Ferenc Wagner: extend
+	    the --domain option to allow this sort of thing:
+            --domain=thekelleys.org.uk,192.168.0.0/24,local
+	    which automatically creates
+	    --local=/thekelleys.org.uk/
+	    --local=/0.168.192.in-addr.arpa/ 
+
+	    Tighten up syntax checking of hex contants in the config
+	    file.  Thanks to Fred Damen for spotting this.
+
+	    Add dnsmasq logo/icon, contributed by Justin Swift. Many
+	    thanks for that.
+
+	    Never cache DNS replies which have the 'cd' bit set, or
+	    which result from queries forwarded with the 'cd' bit
+	    set. The 'cd' bit instructs a DNSSEC validating server
+	    upstream to ignore signature failures and return replies
+	    anyway. Without this change it's possible to pollute the
+	    dnsmasq cache with bad data by making a query with the
+	    'cd' bit set and subsequent queries would return this data
+	    without its being marked as suspect. Thanks to Anders
+	    Kaseorg for pointing out this problem.
+
+	    Add --proxy-dnssec flag, for compliance with RFC
+	    4035. Dnsmasq will now clear the 'ad' bit in answers returned
+	    from upstream validating nameservers unless this option is
+	    set.
+
+	    Allow a filename of "-" for --conf-file to read
+	    stdin. Suggestion from Timothy Redaelli.
+
+	    Rotate the order of SRV records in replies, to provide
+	    round-robin load balancing when all the priorities are
+	    equal. Thanks to Peter McKinney for the suggestion.	
+
+	    Edit
+	    contrib/MacOSX-launchd/uk.org.thekelleys.dnsmasq.plist 
+	    so that it doesn't log all queries to a file by
+	    default. Thanks again to Peter McKinney.    
+
+	    By default, setting an IPv4 address for a domain but not
+	    an IPv6 address causes dnsmasq to return
+	    an NODATA reply for IPv6 (or vice-versa). So
+	    --address=/google.com/1.2.3.4 stops IPv6 queries for
+	    *google.com from being forwarded. Make it possible to
+	    override this behaviour by defining the sematics if the
+	    same domain appears in  both --server and --address.
+	    In that case, the --address has priority for the address
+	    family in which is appears, but the --server has priority
+	    of the address family which doesn't appear in --adddress  
+	    So:
+	    --address=/google.com/1.2.3.4
+	    --server=/google.com/#
+	    will return 1.2.3.4 for IPv4 queries for *.google.com but
+	    forward IPv6 queries to the normal upstream nameserver.
+	    Similarly when setting an IPv6 address
+	    only this will allow forwarding of IPv4 queries. Thanks to
+	    William for pointing out the need for this.
+
+	    Allow more than one --dhcp-optsfile and --dhcp-hostsfile
+	    and make them understand directories as arguments in the
+	    same way as --addn-hosts. Suggestion from John Hanks. 
+
+	    Ignore rebinding requests for leases we don't know
+	    about. Rebind is broadcast, so we might get to overhear a
+	    request meant for another DHCP server. NAKing this is
+	    wrong. Thanks to Brad D'Hondt for assistance with this.
+
+            Fix cosmetic bug which produced strange output when
+            dumping cache statistics with some configurations. Thanks
+            to Fedor Kozhevnikov for spotting this.
+
+
 version 2.55
-           Fix crash when /etc/ethers is in use. Thanks to 
-	   Gianluigi Tiesi for finding this.
+            Fix crash when /etc/ethers is in use. Thanks to 
+	    Gianluigi Tiesi for finding this.
 
-	   Fix crash in netlink_multicast(). Thanks to Arno Wald for
-	   finding this one.
+	    Fix crash in netlink_multicast(). Thanks to Arno Wald for
+	    finding this one.
 
-	   Allow the empty domain "." in dhcp domain-search (119)
-	   options. 
+	    Allow the empty domain "." in dhcp domain-search (119)
+	    options. 
 
 
 version 2.54
-           There is no version 2.54 to avoid confusion with 2.53,
-           which incorrectly identifies itself as 2.54.
+            There is no version 2.54 to avoid confusion with 2.53,
+            which incorrectly identifies itself as 2.54.
 
 
 version 2.53

@@ -14,6 +14,8 @@
 #include "shutils.h"
 #include <shared.h>
 #include <sys/mman.h>
+#include <sys/ioctl.h>
+#include <iwlib.h>
 #ifndef O_BINARY
 #define O_BINARY 	0
 #endif
@@ -191,19 +193,38 @@ int check_imagefile(char *fname)
 	else return 1;
 }
 
+int wl_ioctl(const char *ifname, int cmd, struct iwreq *pwrq)
+{
+	int ret = 0;
+ 	int s;
+
+	/* open socket to kernel */
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		perror("socket");
+		return errno;
+	}
+
+	/* do it */
+	strncpy(pwrq->ifr_name, ifname, IFNAMSIZ);
+	if ((ret = ioctl(s, cmd, pwrq)) < 0)
+		perror(pwrq->ifr_name);
+
+	/* cleanup */
+	close(s);
+	return ret;
+}
+
 unsigned int get_radio_status(char *ifname)
 {
-	int socket_id;
 	struct iwreq wrq;
 	unsigned int data = 0;
-	socket_id = socket(AF_INET, SOCK_DGRAM, 0);
-	strcpy(wrq.ifr_name, ifname);
+
 	wrq.u.data.length = sizeof(data);
 	wrq.u.data.pointer = (caddr_t) &data;
 	wrq.u.data.flags = 0;
-	if(ioctl(socket_id, RTPRIV_IOCTL_RADIO_STATUS, &wrq) == -1)
+	if (wl_ioctl(ifname, RTPRIV_IOCTL_RADIO_STATUS, &wrq) < 0)
 		printf("ioctl error\n");
-	close(socket_id);
+
 	return data;
 }
 
@@ -225,6 +246,7 @@ int get_radio(int unit, int subunit)
 
 void set_radio(int on, int unit, int subunit)
 {
+	char tmpstr[32];
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 
 	if (subunit > 0)
@@ -232,7 +254,7 @@ void set_radio(int on, int unit, int subunit)
 	else
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
-	if (nvram_match(strcat_r(prefix, "radio", tmp), "0")) return;
+	//if (nvram_match(strcat_r(prefix, "radio", tmp), "0")) return;
 
 	// TODO: replace hardcoded 
 	// TODO: handle subunit

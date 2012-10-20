@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
@@ -10,7 +11,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
@@ -20,6 +20,7 @@
 #include "lp.h"
 
 #include <rtconfig.h>
+#include <shutils.h>
 
 #define SRV_PORT 9999
 #define PRINT(fmt, args...) fprintf(stderr, fmt, ## args)
@@ -65,13 +66,20 @@ void sig_do_nothing(int sig)
 void load_sysparam(void)
 {
 	char macstr[32];
-//	char macdigit[3];
-
+#ifdef RTCONFIG_WIRELESSREPEATER
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
+	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER)
+	{
+		sprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
+		strncpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)), sizeof(ssid_g));
+	}
+	else
+#endif
 	strncpy(ssid_g, nvram_safe_get("wl0_ssid"), sizeof(ssid_g));
 	strncpy(netmask_g, nvram_safe_get("lan_netmask"), sizeof(netmask_g));
 	strncpy(productid_g, get_productid(), sizeof(productid_g));
 
-	strncpy(firmver_g, nvram_safe_get("firmver"), sizeof(firmver_g));
+	snprintf(firmver_g, sizeof(firmver_g), "%s.%s", nvram_safe_get("firmver"), nvram_safe_get("buildno"));
 
 	strcpy(macstr, nvram_safe_get("et0macaddr"));
 //	printf("mac: %d\n", strlen(macstr));

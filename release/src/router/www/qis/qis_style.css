@@ -224,7 +224,7 @@ legend {
 	line-height:150%;
 }
 .mode_desc{
-	font-family:Georgia, Arial, sans-serif;
+	font-family:Segoe UI, Arial, sans-serif;
 	font-size:8pt;
 	color:#333;
 	font-family:Verdana, Arial, Helvetica, sans-serif;
@@ -321,10 +321,10 @@ legend {
 }
 
 .QISGeneralFont{
-	font-family:Georgia, Arial, sans-serif;
+	font-family:Segoe UI, Arial, sans-serif;
 	margin-left:70px;
-	*margin-left:50px;
-	margin-right:30px;
+	*margin-left:90px;
+	margin-right:20px;
 	color:white;
 	LINE-HEIGHT:18px;
 }
@@ -356,6 +356,6 @@ legend {
 
 .QIS_survey td{
 	color:#7EA2AE;
-	height:30px;
+	/*height:20px;*/
 	border: 1px solid #334044;
 }

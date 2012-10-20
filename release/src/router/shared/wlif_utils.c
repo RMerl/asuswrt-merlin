@@ -403,6 +403,50 @@ fail:
 	return FALSE;
 }
 
+bool
+set_wds_wsec(int unit, int which, unsigned char *mac, char *role,
+             char *crypto, char *auth, ...)
+{
+	char name[] = "wlXXXXXXX_wdsXXXXXXX", value[10000];
+
+	snprintf(name, sizeof(name), "wl%d_wds%d", unit, which);
+	snprintf(value, sizeof(value), "%s,%s,%s,%s",
+	         mac, role, crypto, auth);
+
+	if (!strcmp(auth, "psk")) {
+		int offset;
+		char *str1, *str2;
+		va_list va;
+
+		va_start(va, auth);
+		offset = strlen(value);
+		str1 = va_arg(va, char *);
+		str2 = va_arg(va, char *);
+
+		snprintf(&value[offset], sizeof(value) - offset, ",%s,%s", str1, str2);
+		va_end(va);
+
+		if (nvram_set(name, value))
+			return FALSE;
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+bool
+del_wds_wsec(int unit, int which)
+{
+	char name[] = "wlXXXXXXX_wdsXXXXXXX";
+
+	snprintf(name, sizeof(name), "wl%d_wds%d", unit, which);
+
+	nvram_unset(name);
+
+	return TRUE;
+}
+
 /* Get wireless security setting by interface name */
 int
 get_wsec(wsec_info_t *info, char *mac, char *osifname)

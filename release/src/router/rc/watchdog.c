@@ -38,7 +38,6 @@
 #include <ralink.h>
 #endif
 
-#include <wlioctl.h>
 #include <syslog.h>
 #include <bcmnvram.h>
 #include <fcntl.h>
@@ -63,6 +62,7 @@
 #define SETUP_TIMEOUT		60 		/* seconds */
 #define SETUP_TIMEOUT_COUNT	SETUP_TIMEOUT * 10 /* 60 times a second */
 #endif // BTN_SETUP
+#define WPS_TIMEOUT_COUNT	121 * 20
 
 #if 0
 static int cpu_timer = 0;
@@ -87,7 +87,6 @@ int btn_count_setup = 0;
 int btn_count_timeout = 0;
 int wsc_timeout = 0;
 int btn_count_setup_second = 0;
-int no_check_wps_button = 0;
 int btn_pressed_toggle_radio = 0;
 #endif
 
@@ -164,7 +163,7 @@ void btn_check(void)
 				if (btn_pressed == 2)
 				{
 #ifdef RTCONFIG_DSL
-					system("adslate sysdefault"); /* Paul add 2012/8/7 */
+					eval("adslate", "sysdefault");
 #endif
 				/* 0123456789 */
 				/* 0011100111 */
@@ -281,9 +280,11 @@ void btn_check(void)
 	if (btn_pressed != 0) return;
 
 	// Added WPS button radio toggle option
-	if (button_pressed(BTN_WPS) && nvram_match("btn_ez_radiotoggle", "1")){
+	if (button_pressed(BTN_WPS) && nvram_match("btn_ez_radiotoggle", "1") 
+		&& (nvram_get_int("sw_mode") != SW_MODE_REPEATER)) // repeater mode not support HW radio
+	{
 		if (btn_pressed_toggle_radio == 0){
-			eval("radio","toggle");
+			eval("radio","switch");
 			btn_pressed_toggle_radio = 1;
 			return;
 		}
@@ -294,8 +295,8 @@ void btn_check(void)
 
 	if (btn_pressed_setup < BTNSETUP_START)
 	{
-		if (!no_need_to_start_wps() &&
-			!no_check_wps_button && button_pressed(BTN_WPS))
+		if (!no_need_to_start_wps() && nvram_match("btn_ez_radiotoggle", "0") &&
+			!nvram_match("wps_ign_btn", "1") && button_pressed(BTN_WPS))
 		{
 			TRACE_PT("button WPS pressed\n");
 
@@ -319,17 +320,13 @@ void btn_check(void)
 						btn_pressed_setup = BTNSETUP_START;
 						btn_count_setup = 0;
 						btn_count_setup_second = 0;
-						no_check_wps_button = 1;
-#if 0
-						start_wps_pbc(nvram_get_int("wps_band"));
-#else
+						nvram_set("wps_ign_btn", "1");
 #if 0
 						start_wps_pbc(0);	// always 2.4G
 #else
-						kill_pidfile_s("/var/run/usbled.pid", SIGTSTP);
+						kill_pidfile_s("/var/run/wpsaide.pid", SIGTSTP);
 #endif
-#endif
-						wsc_timeout = 120*20;
+						wsc_timeout = WPS_TIMEOUT_COUNT;
 					}
 				}
 			} // end BTN_EZ MFG test
@@ -344,48 +341,43 @@ void btn_check(void)
 	}
 	else 
 	{
-		if (!no_need_to_start_wps() &&
-			!no_check_wps_button && button_pressed(BTN_WPS))
-		{
-			/* Whenever it is pushed steady, again... */
-			if (++btn_count_setup_second > SETUP_WAIT_COUNT)
+		if (!nvram_match("wps_ign_btn", "1")) {
+			if (!no_need_to_start_wps() && button_pressed(BTN_WPS))
 			{
-				btn_pressed_setup = BTNSETUP_START;
-				btn_count_setup_second = 0;
+				/* Whenever it is pushed steady, again... */
+				if (++btn_count_setup_second > SETUP_WAIT_COUNT)
+				{
+					btn_pressed_setup = BTNSETUP_START;
+					btn_count_setup_second = 0;
+					nvram_set("wps_ign_btn", "1");
 #if 0
-				start_wps_pbc(nvram_get_int("wps_band"));
+					start_wps_pbc(0);	// always 2.4G
 #else
-#if 0
-				start_wps_pbc(0);	// always 2.4G
-#else
-				kill_pidfile_s("/var/run/usbled.pid", SIGTSTP);
+					kill_pidfile_s("/var/run/wpsaide.pid", SIGTSTP);
 #endif
-#endif
-				wsc_timeout = 120*20;
+					wsc_timeout = WPS_TIMEOUT_COUNT;
+				}
 			}
-		}
 
-		if (is_wps_stopped() || --wsc_timeout == 0)
-		{
-			wsc_timeout = 0;
+			if (is_wps_stopped() || --wsc_timeout == 0)
+			{
+				wsc_timeout = 0;
 
-			btn_pressed_setup = BTNSETUP_NONE;
-			btn_count_setup = 0;
-			btn_count_setup_second = 0;
-			no_check_wps_button = 0;
+				btn_pressed_setup = BTNSETUP_NONE;
+				btn_count_setup = 0;
+				btn_count_setup_second = 0;
 
-			led_control_normal();
+				led_control_normal();
 
-			alarmtimer(NORMAL_PERIOD, 0);
+				alarmtimer(NORMAL_PERIOD, 0);
 #if (!defined(W7_LOGO) && !defined(WIFI_LOGO))
 #ifdef RTCONFIG_RALINK
-			stop_wps_method(0);
-			stop_wps_method(1);
+				stop_wps_method();
 #else
-			stop_wps_method(nvram_get_int("wps_band"));
 #endif
 #endif
-			return;
+				return;
+			}
 		}
 
 		++btn_count_setup;
@@ -561,6 +553,7 @@ void timecheck(void)
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
+		//dbG("[watchdog] timecheck unit=%s radio=%s\n", prefix, nvram_safe_get(strcat_r(prefix, "radio", tmp))); // radio toggle test
 		if (nvram_match(strcat_r(prefix, "radio", tmp), "0")){
 			item++;
 			unit++;
@@ -668,13 +661,12 @@ static void catch_sig(int sig)
 		btn_pressed_setup = BTNSETUP_START;
 		btn_count_setup = 0;
 		btn_count_setup_second = 0;
-		no_check_wps_button = 0;
-		wsc_timeout = 120*20;
+		wsc_timeout = WPS_TIMEOUT_COUNT;
 		alarmtimer(0, RUSHURGENT_PERIOD);
 	}
 	else if (sig == SIGUSR2)
 	{
-		if (no_check_wps_button) return;
+		if (nvram_match("wps_ign_btn", "1")) return;
 
 		dbG("[watchdog] Handle WPS LED for WPS Stop\n");
 
@@ -686,10 +678,39 @@ static void catch_sig(int sig)
 
 		led_control_normal();
 	}
+	else if (sig == SIGTSTP)
+	{
+		dbG("[watchdog] Reset WPS timeout count\n");
+
+		wsc_timeout = WPS_TIMEOUT_COUNT;
+	}
 #ifdef RTCONFIG_RALINK
 	else if (sig == SIGTTIN)
 	{
 		wsc_user_commit();
+	}
+	else if (sig == SIGHUP)
+	{
+		int model = get_model();
+		switch (model) {
+		case MODEL_RTN56U:
+#ifdef RTCONFIG_DSL
+		case MODEL_DSLN55U:
+#endif
+			doSystem("iwpriv %s set RadioOn=0", WIF_2G);
+			int unit = 0;
+			char prefix[]="wlXXXXXX_", tmp[100];
+			snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+			if (nvram_match(strcat_r(prefix, "radio", tmp), "1")) {
+				char *svcDate = nvram_safe_get(strcat_r(prefix, "radio_date_x", tmp));
+				char *svcTime = nvram_safe_get(strcat_r(prefix, "radio_time_x", tmp));
+				char *svcTime2 = nvram_safe_get(strcat_r(prefix, "radio_time2_x", tmp));
+				int activeNow = timecheck_item(svcDate, svcTime, svcTime2);
+				if (activeNow)
+					doSystem("iwpriv %s set RadioOn=1", WIF_2G);
+			}
+			break;
+		}
 	}
 #endif
 }
@@ -935,13 +956,26 @@ watchdog_main(int argc, char *argv[])
 	signal(SIGUSR2, catch_sig);
 	signal(SIGTSTP, catch_sig);
 	signal(SIGALRM, watchdog);
+#ifdef RTCONFIG_RALINK
 	signal(SIGTTIN, catch_sig);
+	int model = get_model();
+	switch (model) {
+	case MODEL_RTN56U:
+#ifdef RTCONFIG_DSL
+	case MODEL_DSLN55U:
+#endif
+	signal(SIGHUP, catch_sig);
+	break;
+	}
+#endif
 
 #ifdef RTCONFIG_DSL //Paul add 2012/6/27
 	nvram_set("btn_rst", "0");
 	nvram_set("btn_ez", "0");
 	nvram_set("btn_wifi_sw", "0");
 #endif
+
+	nvram_unset("wps_ign_btn");
 
 	if (!pids("ots"))
 		start_ots();

@@ -19,6 +19,7 @@ body{
 var this_url;
 var m = new lang();
 var g_storage = new myStorage();
+var is_private_ip = 0;
 
 $("document").ready(function() {
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
@@ -32,6 +33,7 @@ $("document").ready(function() {
 	$('span#desc').text(m.getString('msg_sharelink'));
 	
 	this_url = getUrlVars()["v"];
+	is_private_ip = getUrlVars()["b"];
 	
 	while( this_url.indexOf('%3Cbr%3E') != -1 )
 		this_url = this_url.replace('%3Cbr%3E','\n');
@@ -45,7 +47,7 @@ $("document").ready(function() {
 	content += 	this_url;
 	content += m.getString('msg_sharelink_desc2');
 	
-	if(isPrivateIP()){
+	if(is_private_ip==1){
 		content += m.getString('msg_sharelink_desc3');
 	}
 	//$("#sharelink").html(content);

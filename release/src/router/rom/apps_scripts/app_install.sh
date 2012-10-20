@@ -59,6 +59,14 @@ _install_package(){
 			fi
 
 			installed_ipk_path=`ls $apps_local_space/downloadmaster*`
+		elif [ "$1" == "asuslighttpd" ] && [ -z "$apps_from_internet" ]; then
+			app_base_library.sh $APPS_DEV
+			if [ "$?" != "0" ]; then
+				# apps_state_error was already set by app_base_library.sh.
+				return 1
+			fi
+
+			installed_ipk_path=`ls $apps_local_space/asuslighttpd*`
 		else
 			# Geting the app's file name...
 			server_names=`grep -n '^src.*' $CONF_FILE |sort -r |awk '{print $3}'`
@@ -104,7 +112,13 @@ _install_package(){
 			return 1
 		fi
 
-		if [ "$1" != "downloadmaster" ] || [ -n "$apps_from_internet" ]; then
+		if [ "$1" == "downloadmaster" ] && [ -z "$apps_from_internet" ]; then
+			# do nothing
+			return 0
+		elif [ "$1" == "asuslighttpd" ] && [ -z "$apps_from_internet" ]; then
+			# do nothing
+			return 0
+		else
 			rm -f $installed_ipk_path
 		fi
 	fi
@@ -205,6 +219,18 @@ elif [ "$1" == "downloadmaster" ] && [ -z "$apps_from_internet" ]; then
 else
 	app_update.sh
 fi
+
+#if [ "$1" == "downloadmaster" ] || [ "$1" == "mediaserver" ]; then
+#	DM_version1=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $1}'`
+#	DM_version2=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $4}'`
+#	MS_version=`app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $4}'`
+#
+#	if [ "$1" == "downloadmaster" ] && [ "$DM_version1" -gt "2" ] && [ "$DM_version2" -gt "59" ]; then
+#		_install_package asuslighttpd $APPS_INSTALL_PATH
+#	elif [ "$1" == "mediaserver" ] && [ "$MS_version" -gt "15" ]; then
+#		_install_package asuslighttpd $APPS_INSTALL_PATH
+#	fi
+#fi
 
 _install_package $1 $APPS_INSTALL_PATH
 if [ "$?" != "0" ]; then

@@ -52,7 +52,7 @@
 #define WEBDAV_FILE_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define WEBDAV_DIR_MODE  S_IRWXU | S_IRWXG | S_IRWXO
 
-#define DBG_ENABLE_MOD_SMBDAV 1
+#define DBG_ENABLE_MOD_SMBDAV 0
 #define DBE	DBG_ENABLE_MOD_SMBDAV
 
 /* plugin config for all request/connections */
@@ -962,7 +962,19 @@ static int webdav_get_live_property(server *srv, connection *con, plugin_data *p
 			buffer_append_string(b, "usbdisk");
 			buffer_append_string_len(b, CONST_STR_LEN("</D:gettype>"));
 			found = 1;
-		}
+		}/*else if (0 == strcmp(prop_name, "getname")) {
+			//- 20120920 Jerry add			
+			buffer_append_string_len(b,CONST_STR_LEN("<D:getname>"));
+			buffer_append_string_len(b,CONST_STR_LEN("sda"));
+			buffer_append_string_len(b, CONST_STR_LEN("</D:getname>"));
+			found = 1;
+		}else if (0 == strcmp(prop_name, "getpath")) {
+			//- 20120920 Jerry add
+			buffer_append_string_len(b,CONST_STR_LEN("<D:getpath>"));
+			buffer_append_string_buffer(b,dst->rel_path);
+			buffer_append_string_len(b, CONST_STR_LEN("</D:getpath>"));
+			found = 1;
+		}*/
 	}
 
 	return found ? 0 : -1;
@@ -1033,6 +1045,8 @@ webdav_property live_properties[] = {
 	{ "DAV:", "getuniqueid" },
 	{ "DAV:", "gettype" },
 	{ "DAV:", "getattr" },
+	{ "DAV:", "getname" },
+	{ "DAV:", "getpath" },
 
 	{ NULL, NULL }
 };
@@ -1509,6 +1523,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		
 		buffer_append_string_len(b,CONST_STR_LEN("<D:multistatus xmlns:D=\"DAV:\" xmlns:ns0=\"urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/\" "));
 
+	#if 1
 		//- Key
 		buffer_append_string_len(b, CONST_STR_LEN(" key=\""));
 		char mac[20]="\0";
@@ -1526,10 +1541,13 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		buffer_append_string(b, base64_auth);
 		free(base64_auth);
 
+		buffer_append_string_len(b, CONST_STR_LEN("\""));
+	#endif
+		
 		char usbdisk_path[50] = "/usbdisk";
 
 	#if EMBEDDED_EANBLE
-		buffer_append_string_len(b, CONST_STR_LEN("\" readonly=\""));	
+		buffer_append_string_len(b, CONST_STR_LEN(" readonly=\""));	
 	
 		strcpy(usbdisk_path, "/");
 		strcat(usbdisk_path, nvram_get_productid());
@@ -1569,7 +1587,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		buffer_append_string_len(b, CONST_STR_LEN("\" computername=\""));
 		buffer_append_string(b, nvram_get_computer_name());
 	#else
-		buffer_append_string_len(b, CONST_STR_LEN("\" readonly=\"0"));
+		buffer_append_string_len(b, CONST_STR_LEN(" readonly=\"0"));
 	
 		//- Query Type
 		buffer_append_string_len(b, CONST_STR_LEN("\" qtype=\""));	
@@ -1633,7 +1651,8 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			buffer_append_string_len(b,CONST_STR_LEN("</D:response>\n"));
 
 			break;
-		case 1:			
+		case 1:		
+			
 			if (NULL != (dir = opendir(con->physical.path->ptr))) {
 				struct dirent *de;
 				physical d;
@@ -1698,7 +1717,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 					
 					buffer_append_string_encoded(b, CONST_BUF_LEN(d.rel_path), ENCODING_REL_URI);
 					buffer_append_string_len(b,CONST_STR_LEN("</D:href>\n"));
-
+					//Cdbg(1, "b=%s", d.rel_path->ptr);
 					if (!buffer_is_empty(prop_200)) {
 						buffer_append_string_len(b,CONST_STR_LEN("<D:propstat>\n"));
 						buffer_append_string_len(b,CONST_STR_LEN("<D:prop>\n"));
@@ -1903,7 +1922,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		 *
 		 *
 		 * Example: Content-Range: bytes 100-1037/1038 */
-
+		
 		if (NULL != (ds_range = (data_string *)array_get_element(con->request.headers, "Content-Range"))) {
 			const char *num = ds_range->value->ptr;
 			off_t offset;
@@ -1935,46 +1954,65 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 
 				return HANDLER_FINISHED;
 			}
+			
+			//- JerryLin modify if offset is zero, we create a new file.
+			if(offset==0){
+				if (-1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_TRUNC, WEBDAV_FILE_MODE))) {
+					if (errno == ENOENT &&
+					    -1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, WEBDAV_FILE_MODE))) {
+						/* we can't open the file */
+						con->http_status = 403;
 
-			if (-1 == (fd = open(con->physical.path->ptr, O_WRONLY, WEBDAV_FILE_MODE))) {
-				switch (errno) {
-				case ENOENT:
-					con->http_status = 404; /* not found */
-					break;
-				default:
-					con->http_status = 403; /* not found */
-					break;
-				}
-
-				if (errno == ENOENT){
-					if (-1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_CREAT, WEBDAV_FILE_MODE))) {
-						if(fd <0 ){														
-							/* we can't open the file */
-							con->http_status = 403;
-							Cdbg(DBE,"we can't open the file 403");
-							return HANDLER_FINISHED;
-						}
-					} else {
-					con->http_status = 201; /* created */
+						return HANDLER_FINISHED;
+					} 
+					else {
+						con->http_status = 201; /* created */
 					}
+				} 
+				else {
+					con->http_status = 200; /* modified */
 				}
-				//return HANDLER_FINISHED;
 			}
+			else{
+				if (-1 == (fd = open(con->physical.path->ptr, O_WRONLY, WEBDAV_FILE_MODE))) {
+					switch (errno) {
+					case ENOENT:
+						con->http_status = 404; /* not found */
+						break;
+					default:
+						con->http_status = 403; /* not found */
+						break;
+					}
 
+					if (errno == ENOENT){
+						if (-1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_CREAT, WEBDAV_FILE_MODE))) {
+							if(fd <0 ){														
+								/* we can't open the file */
+								con->http_status = 403;
+								Cdbg(DBE,"we can't open the file 403");
+								return HANDLER_FINISHED;
+							}
+						} 
+						else {
+							con->http_status = 201; /* created */
+						}
+					}
+					//return HANDLER_FINISHED;
+				}
+			}
+			
 			if (-1 == lseek(fd, offset, SEEK_SET)) {
 				con->http_status = 501; /* not implemented */
-
 				close(fd);
-
 				return HANDLER_FINISHED;
 			}
+			
 			con->http_status = 200; /* modified */
-		} else {
+		} 
+		else {
 			/* take what we have in the request-body and write it to a file */
 
 			/* if the file doesn't exist, create it */
-
-		   Cdbg(1,"NO Content Range");
 			if (-1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_TRUNC, WEBDAV_FILE_MODE))) {
 				if (errno == ENOENT &&
 				    -1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, WEBDAV_FILE_MODE))) {
@@ -1982,10 +2020,12 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 					con->http_status = 403;
 
 					return HANDLER_FINISHED;
-				} else {
+				} 
+				else {
 					con->http_status = 201; /* created */
 				}
-			} else {
+			} 
+			else {
 				con->http_status = 200; /* modified */
 			}
 		}
@@ -2168,14 +2208,11 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 
 		/* don't add a second / */
 		if (p->physical.rel_path->ptr[0] == '/') {
-			//buffer_append_string_len(p->physical.path, p->physical.rel_path->ptr + 1, p->physical.rel_path->used - 2);
-
-			char* tmp = p->physical.rel_path->ptr + 1;
-			int len = p->physical.rel_path->used - 2;
-			buffer_append_string_encoded(p->physical.path, tmp, len, ENCODING_REL_URI);
+			buffer_append_string_len(p->physical.path, p->physical.rel_path->ptr + 1, p->physical.rel_path->used - 2);
 		} else {
 			buffer_append_string_buffer(p->physical.path, p->physical.rel_path);
 		}
+		Cdbg(DBE, "p->physical.path=%s", p->physical.path->ptr);
 		
 		/* let's see if the source is a directory
 		 * if yes, we fail with 501 */		
@@ -2192,9 +2229,19 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		} else if (S_ISDIR(st.st_mode)) {
 			int r;
 			
-			/* src is a directory */			
+			/* src is a directory */				
 			if (-1 == stat(p->physical.path->ptr, &st)) {				
-				if (-1 == mkdir(p->physical.path->ptr, WEBDAV_DIR_MODE)) {
+				if(in_the_same_folder(con->physical.path, p->physical.path)) {
+					if( rename(con->physical.path->ptr, p->physical.path->ptr) ) {
+						con->http_status = 403;
+					} else {
+						con->http_status = 201; //Created
+						log_sys_write(srv, "sbsbss", "Move", con->physical.rel_path, "to", p->physical.rel_path ,"from ip", con->dst_addr_buf->ptr);						
+					}
+					
+					con->file_finished = 1;
+					return HANDLER_FINISHED;
+				} else if (-1 == mkdir(p->physical.path->ptr, WEBDAV_DIR_MODE)) {
 					con->http_status = 403;
 					return HANDLER_FINISHED;
 				}
@@ -2211,6 +2258,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 					}
 				}
 			}
+			Cdbg(DBE, "copy the content of src to dest");
 			/* copy the content of src to dest */
 			if (0 != (r = webdav_copy_dir(srv, con, p, &(con->physical), &(p->physical), overwrite))) {
 				con->http_status = r;
@@ -2220,7 +2268,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 				b = buffer_init();
 				webdav_delete_dir(srv, con, p, &(con->physical), b); /* content */
 				buffer_free(b);
-
+				Cdbg(DBE, "Move %s to %s from ip", con->url.rel_path->ptr, p->physical.rel_path->ptr);
 				rmdir(con->physical.path->ptr);
 
 				log_sys_write(srv, "sbsbss", "Move", con->url.rel_path, "to", p->physical.rel_path ,"from ip", con->dst_addr_buf->ptr);
@@ -3148,7 +3196,7 @@ propmatch_cleanup:
 		con->file_finished = 1;
 		return HANDLER_FINISHED;
 	}
-
+	
 	case HTTP_METHOD_GETROUTERINFO:{
 		Cdbg(DBE, "do HTTP_METHOD_GETROUTERINFO....................");
 		
@@ -3237,9 +3285,9 @@ propmatch_cleanup:
 		Cdbg(DBE, "do HTTP_METHOD_RESCANSMBPC");
 		
 		FILE *fp;
-	    	char buf[256];
-	    	pid_t pid = 0;
-	    	int n;
+	    char buf[256];
+	    pid_t pid = 0;
+	    int n;
 
 		if ((fp = fopen("/tmp/lighttpd/lighttpd-arpping.pid", "r")) != NULL) {
 			if (fgets(buf, sizeof(buf), fp) != NULL)

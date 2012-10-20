@@ -535,6 +535,23 @@ global.davlib = new function() {
 			request.send('');
 		};
 		
+		this.DavClient.prototype.GETLATESTVER = function(path,handler,context,locktoken){			
+			var request = this._getRequest('GETLATESTVER',path,handler,context);
+			if(locktoken){
+				request.setRequestHeader('If','<'+locktoken+'>');
+			};
+			request.send('');
+		};
+		
+		this.DavClient.prototype.GETDISKSPACE = function(path,diskname,handler,context,locktoken){			
+			var request = this._getRequest('GETDISKSPACE',path,handler,context);
+			request.setRequestHeader("DISKNAME",diskname);
+			if(locktoken){
+				request.setRequestHeader('If','<'+locktoken+'>');
+			};
+			request.send('');
+		};
+		
     // XXX not sure about the order of the args here
     this.DavClient.prototype.PROPPATCH = function(path, handler, context, 
                                                   setprops, delprops,

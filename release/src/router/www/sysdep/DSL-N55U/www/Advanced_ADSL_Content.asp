@@ -193,6 +193,47 @@ function valid_form(){
 -->
 <!--###HTML_PREP_END###-->
 </table>
+		<br>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+		<thead>
+		<tr>
+		<td colspan="7">Stability Adjustment</td>
+		</tr>
+		</thead>
+		<tr>
+		<td>
+			<select id="" class="input_option" name="dslx_snrm_offset">
+				<option value="0" <% nvram_match("dslx_snrm_offset", "0", "selected"); %>>Disabled</option>
+				<option value="2560" <% nvram_match("dslx_snrm_offset", "2560", "selected"); %>>5 dB</option>
+				<option value="2048" <% nvram_match("dslx_snrm_offset", "2048", "selected"); %>>4 dB</option>
+				<option value="1536" <% nvram_match("dslx_snrm_offset", "1536", "selected"); %>>3 dB</option>
+				<option value="1024" <% nvram_match("dslx_snrm_offset", "1024", "selected"); %>>2 dB</option>
+				<option value="512" <% nvram_match("dslx_snrm_offset", "512", "selected"); %>>1 dB</option>
+				<option value="-512" <% nvram_match("dslx_snrm_offset", "-512", "selected"); %>>-1 dB</option>
+				<option value="-1024" <% nvram_match("dslx_snrm_offset", "-1024", "selected"); %>>-2 dB</option>
+				<option value="-1536" <% nvram_match("dslx_snrm_offset", "-1536", "selected"); %>>-3 dB</option>
+				<option value="-2048" <% nvram_match("dslx_snrm_offset", "-2048", "selected"); %>>-4 dB</option>
+				<option value="-2560" <% nvram_match("dslx_snrm_offset", "-2560", "selected"); %>>-5 dB</option>
+			</select>
+		</td>
+		</tr>
+</table> 
+		<br>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+		<thead>
+		<tr>
+		<td colspan="7">SRA(Seamless Rate Adaptation)</td>
+		</tr>
+		</thead>
+		<tr>
+		<td>
+			<select id="" class="input_option" name="dslx_sra">
+				<option value="0" <% nvram_match("dslx_sra", "0", "selected"); %>>Disabled</option>
+				<option value="1" <% nvram_match("dslx_sra", "1", "selected"); %>>Enabled</option>
+			</select>
+		</td>
+		</tr>
+</table>
 		<div class="apply_gen">
 			<input class="button_gen" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>
 		</div>

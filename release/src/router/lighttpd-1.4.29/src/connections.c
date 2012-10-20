@@ -38,7 +38,7 @@
 
 #include "sys-socket.h"
 
-#define DBG_ENABLE_CONNECTIONS 0
+#define DBG_ENABLE_CONNECTIONS 1
 #define DBE DBG_ENABLE_CONNECTIONS
 
 typedef struct {
@@ -452,6 +452,8 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 		case HTTP_METHOD_GETROUTERINFO:
 		case HTTP_METHOD_GSLL:
 		case HTTP_METHOD_REMOVESL:
+		case HTTP_METHOD_GETLATESTVER:
+		case HTTP_METHOD_GETDISKSPACE:
 		   	//Cdbg(DBE,"http method= %s break;",connection_get_state(con->request.http_method));
 			break;
 		case HTTP_METHOD_OPTIONS:
@@ -651,7 +653,7 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 }
 
 static int connection_handle_write(server *srv, connection *con) {
-Cdbg(DBE, "enter %s", con->url.path->ptr);	
+//Cdbg(DBE, "enter %s", con->url.path->ptr);	
 	switch(network_write_chunkqueue(srv, con, con->write_queue)) {
 	case 0:
 		if (con->file_finished) {
@@ -845,7 +847,8 @@ static int parser_share_file(server *srv, connection *con){
 		
 		buffer* filename = buffer_init();
 		buffer_copy_string_len(filename, con->request.uri->ptr+y+1, con->request.uri->used-y);
-
+		Cdbg(DBE, "filename=%s", filename->ptr );
+		
 		buffer* sharepath = buffer_init();
 		buffer_copy_string_len(sharepath, con->request.uri->ptr+1, y-1);
 
@@ -866,29 +869,37 @@ static int parser_share_file(server *srv, connection *con){
 								
 				buffer_copy_string( con->share_link_basic_auth, "Basic " );
 				buffer_append_string_buffer( con->share_link_basic_auth, c->auth );
-				
-				//Cdbg(DBE, "realpath=%s", c->realpath->ptr);
+
+				buffer_copy_string_buffer( con->share_link_shortpath, c->shortpath );
+				buffer_copy_string_buffer( con->share_link_filename, c->filename );
+		
+				Cdbg(DBE, "realpath=%s, con->request.uri=%s", c->realpath->ptr, con->request.uri->ptr);
 				//Cdbg(DBE, "auth=%s", con->share_link_basic_auth->ptr);
 				
 				break;
 			}
 		}
 
-		buffer_free(sharepath);
-		buffer_free(filename);
-		
-		if(c==NULL||bExpired==1)
+		if(c==NULL||bExpired==1){
+			buffer_free(sharepath);
+			buffer_free(filename);
 			return -1;
+		}
 		
 		buffer_reset(con->request.uri);		
 		buffer_copy_string_buffer(con->request.uri, c->realpath);
 		buffer_append_string(con->request.uri, "/");
-		buffer_append_string_buffer(con->request.uri, c->filename);
-		
-		Cdbg(DBE, "end parser_share_file, con->request.uri=%s", con->request.uri->ptr);
+		//buffer_append_string_buffer(con->request.uri, c->filename);
+		buffer_append_string_buffer(con->request.uri, filename);
 
-		log_sys_write(srv, "sbss", "Download file", c->filename, "from ip", con->dst_addr_buf->ptr);
+		buffer_free(sharepath);
+		buffer_free(filename);
 		
+		Cdbg(DBE, "end parser_share_file, con->request.uri=%s, con->mode=%d, con->share_link_basic_auth=%s", 
+				con->request.uri->ptr, con->mode, con->share_link_basic_auth->ptr);
+		
+		log_sys_write(srv, "sbss", "Download file", c->filename, "from ip", con->dst_addr_buf->ptr);
+		  
 		return 1;
 	}
 		
@@ -1235,7 +1246,6 @@ static int do_connection_auth(server *srv, connection *con)
 	buffer_copy_string_buffer(con->physical_auth_url, con->conf.document_root);
 	buffer_append_string(con->physical_auth_url, con->request.uri->ptr+1);
 	
-	
 	int result = connection_smb_info_init(srv, con, p);	
 	if( result == 0 ){
 		return HANDLER_FINISHED;
@@ -1306,6 +1316,8 @@ connection *connection_init(server *srv) {
 	CLEAN(url.rel_path);
 	CLEAN(url.etag);
 	CLEAN(share_link_basic_auth);
+	CLEAN(share_link_shortpath);
+	CLEAN(share_link_filename);
 	CLEAN(physical_auth_url);
 	CLEAN(url_options);
 	CLEAN(aidisk_username);
@@ -1386,6 +1398,8 @@ void connections_free(server *srv) {
 		CLEAN(url.rel_path);
 		CLEAN(url.etag);
 		CLEAN(share_link_basic_auth);
+		CLEAN(share_link_shortpath);
+		CLEAN(share_link_filename);
 		CLEAN(physical_auth_url);
 		CLEAN(url_options);
 		CLEAN(aidisk_username);
@@ -1472,6 +1486,8 @@ int connection_reset(server *srv, connection *con) {
 	CLEAN(url.rel_path);
 	CLEAN(url.etag);
 	CLEAN(share_link_basic_auth);
+	CLEAN(share_link_shortpath);
+	CLEAN(share_link_filename);
 	CLEAN(physical_auth_url);
 	CLEAN(url_options);
 	CLEAN(aidisk_username);
@@ -2023,7 +2039,7 @@ static handler_t connection_handle_fdevent(server *srv, void *context, int reven
 			con->close_timeout_ts = srv->cur_ts - (HTTP_LINGER_TIMEOUT+1);
 		}
 	}
-//Cdbg(DBE, "leave..");
+
 	return HANDLER_FINISHED;
 }
 
@@ -2186,7 +2202,18 @@ int connection_state_machine(server *srv, connection *con) {
 				connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
 				break;
 			}
-			
+
+//#if EMBEDDED_EANBLE
+#if 0
+			Cdbg(1, "asdsadsa %s, %d", con->uri.scheme->ptr, con->conf.is_ssl);
+			if(con->conf.is_ssl==0){
+				con->file_finished = 1;
+				con->http_status = 404;
+				connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
+				break;
+			}
+#endif
+
 			//- If url is encrypted share link, then use basic auth
 			int result = parser_share_file(srv, con);
 			if(result==-1){
@@ -2194,6 +2221,77 @@ int connection_state_machine(server *srv, connection *con) {
 				connection_set_state(srv, con, CON_STATE_ERROR);
 				break;
 			}
+			////////////////////////////////////////////////////////////////////////////////////////
+
+			data_string *ds_userAgent = (data_string *)array_get_element(con->request.headers, "user-Agent");
+			char* aa = get_filename_ext(con->request.uri->ptr);
+			int len = strlen(aa)+1;			
+			char* file_ext = (char*)malloc(len);
+			memset(file_ext,'\0', len);
+			strcpy(file_ext, aa);
+			for (int i = 0; file_ext[i]; i++)
+ 				file_ext[i] = tolower(file_ext[i]);
+			
+			if( con->share_link_basic_auth->used &&
+				ds_userAgent && 
+				con->conf.is_ssl &&
+				( strncmp(file_ext, "mp3", 3) == 0 ||
+				  strncmp(file_ext, "mp4", 3) == 0 ||
+				  strncmp(file_ext, "m4v", 3) == 0 ) &&
+		        ( //strstr( ds_userAgent->value->ptr, "Chrome" ) ||
+		          strstr( ds_userAgent->value->ptr, "iPhone" ) || 
+		          strstr( ds_userAgent->value->ptr, "iPad"   ) || 
+		          strstr( ds_userAgent->value->ptr, "iPod"   ) ) ){
+		   		
+				buffer *out;
+				response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/html; charset=UTF-8"));
+				
+				out = chunkqueue_get_append_buffer(con->write_queue);
+
+			#if EMBEDDED_EANBLE
+				char* webdav_http_port = nvram_get_webdav_http_port();
+			#else
+				char* webdav_http_port = "8082";
+			#endif
+
+				buffer_append_string_len(out, CONST_STR_LEN("<div id=\"http_port\" content=\""));				
+				buffer_append_string(out, webdav_http_port);
+				buffer_append_string_len(out, CONST_STR_LEN("\"></div>\n"));
+
+				stat_cache_entry *sce = NULL;
+				
+				buffer* html_file = buffer_init();
+
+				if( strncmp(file_ext, "mp3", 3) == 0 )
+					buffer_copy_string(html_file, "/usr/css/iaudio.html");
+				else if( strncmp(file_ext, "mp4", 3) == 0 ||
+					     strncmp(file_ext, "m4v", 3) == 0 )
+					buffer_copy_string(html_file, "/usr/css/ivideo.html");
+				
+				con->mode = DIRECT;
+				if (HANDLER_ERROR != stat_cache_get_entry(srv, con, html_file, &sce)) {
+					http_chunk_append_file(srv, con, html_file, 0, sce->st.st_size);
+					response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_BUF_LEN(sce->content_type));
+					con->file_finished = 1;
+					con->http_status = 200;					
+				}
+				else{
+					con->file_finished = 1;
+					con->http_status = 404;
+				}
+
+				Cdbg(DBE, "ds_userAgent->value=%s, file_ext=%s, html_file=%s", ds_userAgent->value->ptr, file_ext, html_file->ptr);
+
+				free(file_ext);
+				buffer_free(html_file);
+				
+				connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
+				
+				break;
+			}
+
+			free(file_ext);
+			////////////////////////////////////////////////////////////////////////////////////////
 			
 			get_connection_auth_type(srv, con);
 			
@@ -2204,7 +2302,7 @@ int connection_state_machine(server *srv, connection *con) {
 				break;
 			}
 			/////////////////////////////////////////////////////////////////////
-			
+
 			if (res) {
 				/* we have to read some data from the POST request */
 				connection_set_state(srv, con, CON_STATE_READ_POST);

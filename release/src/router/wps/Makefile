@@ -58,7 +58,7 @@ export CXXFLAGS += -Wall -D_REENTRANT -D_TUDEBUGTRACE -D__linux__ -DWPS_MODE_AP
 export CFLAGS += -Wall -Wnested-externs  -D_REENTRANT -D_TUDEBUGTRACE -D__linux__
 else
 export CXXFLAGS += -Os -Wall -D_REENTRANT -D__linux__ -DWPS_MODE_AP
-export CFLAGS += -Wall -Wnested-externs -D_REENTRANT -D__linux__
+export CFLAGS += -Os -Wall -Wnested-externs -D_REENTRANT -D__linux__
 endif
 ifeq ($(UPNP_WFA_DEVICE),1)
   export CXXFLAGS += -DUPNP_WFA_DEVICE

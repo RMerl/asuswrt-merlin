@@ -1,9 +1,17 @@
 <HTML>
 <HEAD>
 <TITLE> Dnsmasq - a DNS forwarder for NAT firewalls.</TITLE>
+<link rel="icon"
+      href="http://www.thekelleys.org.uk/dnsmasq/images/favicon.ico">
 </HEAD>
 <BODY BGCOLOR="WHITE"> 
-<H1 ALIGN=center>Dnsmasq</H1> 
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td align="left" valign="middle"><img border="0" src="http://www.thekelleys.org.uk/dnsmasq/images/icon.png" /></td>
+<td align="middle" valign="middle"><h1>Dnsmasq</h1></td>
+<td align="right" valign="middle"><img border="0" src="http://www.thekelleys.org.uk/dnsmasq/images/icon.png" /></td></tr>
+</table>
+
 Dnsmasq is a lightweight, easy to configure DNS forwarder and DHCP
  server. It is designed to provide DNS and, optionally, DHCP, to a 
  small network. It can serve the names of local machines which are 
@@ -19,7 +27,7 @@ connection but would be a good choice for any smallish network (up to
 1000 clients is known to work) where low
 resource use and ease of configuration are important. 
 <P>
-Supported platforms include Linux (with glibc and uclibc), *BSD,
+Supported platforms include Linux (with glibc and uclibc), Android, *BSD,
 Solaris and Mac OS X.
 Dnsmasq is included in at least the following Linux distributions:
 Gentoo, Debian, Slackware, Suse, Fedora,
@@ -80,24 +88,19 @@ for any or all local machines.
 </LI>
 </DIR>
 
-<H2>Download.</H2>
+<H2>Get code.</H2>
 
-<A HREF="http://www.thekelleys.org.uk/dnsmasq/"> Download</A> dnsmasq here. 
+<A HREF="http://www.thekelleys.org.uk/dnsmasq/">Download</A> dnsmasq here. 
 The tarball includes this documentation, source, and manpage.
 There is also a <A HREF="CHANGELOG"> CHANGELOG</A> and a <A HREF="FAQ">FAQ</A>.
-Dnsmasq is part of the Debian distribution, it can be downloaded from 
-<A HREF="http://ftp.debian.org/debian/pool/main/d/dnsmasq/"> here</A> or installed using <TT>apt</TT>.
 
-<H2>Links.</H2>
-Damien Raude-Morvan has an article in French at <A HREF="http://www.drazzib.com/docs-dnsmasq.html">http://www.drazzib.com/docs-dnsmasq.html</A>
-There is a good article about dnsmasq at <A
-HREF="http://www.enterprisenetworkingplanet.com/netos/article.php/3377351">http://www.enterprisenetworkingplanet.com/netos/article.php/3377351</A>
-and another at <A
-HREF="http://www.linux.com/articles/149040">http://www.linux.com/articles/149040</A>
-and Ilya Evseev has an article in Russian about dnsmasq to be found at
-<A HREF="http://ilya-evseev.narod.ru/articles/dnsmasq">
-http://ilya-evseev.narod.ru/articles/dnsmasq</A>. Ismael Ull has an
-article about dnsmasq in Spanish at <A HREF="http://www.mey-online.com.ar/blog/index.php/archives/guia-rapida-de-dnsmasq">http://www.mey-online.com.ar/blog/index.php/archives/guia-rapida-de-dnsmasq</A>
+Dnsmasq has a git repository which contains the complete release
+history of version 2 and development history from 2.60. You can 
+<A HREF="http://thekelleys.org.uk/gitweb/?p=dnsmasq.git;a=summary">browse</A>
+the repo, or get a copy using git protocol with the command
+
+<PRE><TT>git clone git://thekelleys.org.uk/dnsmasq.git </TT></PRE>
+
 <H2>License.</H2>
 Dnsmasq is distributed under the GPL. See the file COPYING in the distribution 
 for details.

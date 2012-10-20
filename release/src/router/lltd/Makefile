@@ -17,6 +17,7 @@ else
 	install icon.ico $(INSTALLDIR)/usr/sbin
 	install icon.large.ico $(INSTALLDIR)/usr/sbin
 endif
+	$(STRIP) $(INSTALLDIR)/usr/sbin/lld2d
 	install lld2d.conf $(INSTALLDIR)/usr/sbin
 
 clean:

@@ -336,7 +336,7 @@ function addRow_Group(upper){
 						
 						if(overlib_str[i]){
 							if(document.form.vts_port_x_0.value == overlib_str[i]){
-									alert('<#JS_duplicate#>');
+									alert("<#JS_duplicate#>");
 									document.form.vts_port_x_0.value =="";
 									document.form.vts_port_x_0.focus();
 									document.form.vts_port_x_0.select();							
@@ -344,7 +344,7 @@ function addRow_Group(upper){
 							}
 						}else{
 							if(document.form.vts_port_x_0.value == $('vts_rulelist_table').rows[i].cells[1].innerHTML){
-									alert('<#JS_duplicate#>');
+									alert("<#JS_duplicate#>");
 									document.form.vts_port_x_0.value =="";
 									document.form.vts_port_x_0.focus();
 									document.form.vts_port_x_0.select();							

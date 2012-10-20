@@ -721,6 +721,10 @@ config NVRAM_64K
         bool "Support nvram 64K"
         default n
 
+config DUAL_TRX
+        bool "Support dual trx"
+        default n
+
 endmenu
 
 config RWSEM_GENERIC_SPINLOCK

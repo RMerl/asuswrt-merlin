@@ -50,6 +50,10 @@ char* nvram_get_webdav_lock_times();
 
 char* nvram_get_webdav_last_login_info();
 int nvram_set_webdav_last_login_info(const char* last_login_info);
+char* nvram_get_latest_version();
+int nvram_get_webs_state_error();
+
+
 
 
 

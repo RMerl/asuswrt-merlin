@@ -184,7 +184,7 @@ int nvram_commit(void)
 
 	if (wait_action_idle(10)) {
 		if (nvram_fd < 0) {
-			if ((r = nvram_init(NULL)) != 0) return r;
+			if ((r = nvram_init(NULL)) != 0) goto finish;
 		}
 		set_action(ACT_NVRAM_COMMIT);
 //		nvram_unset("dirty");
@@ -207,6 +207,9 @@ int nvram_commit(void)
 		if(fp!=NULL)
                         fprintf(fp,"commit: system busy\n");
 	}
+
+finish:
+	if(fp!=NULL) fclose(fp);
 
 	return r;
 }

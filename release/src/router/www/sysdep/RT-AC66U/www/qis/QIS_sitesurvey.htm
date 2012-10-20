@@ -25,6 +25,7 @@ function QKInternet_load_body(){
 		document.form._wlc_band[parseInt(parent.getBand)].selected = true;
 
 	document.form._wlc_ssid.focus();
+	control_showpass_field(document.form._wlc_auth_mode_x.value);
 }
 
 function key_event(evt){
@@ -192,7 +193,9 @@ function changeAuthMode(_val){
 		document.getElementById("__wlc_crypto_tr").style.display = "";
 		document.getElementById("sta_key_index_tr").style.display = "none";
 		changeCrypto(document.getElementById("__wlc_crypto").value);
-	}	
+	}
+	
+	control_showpass_field();
 }
 
 function changeCrypto(_val){
@@ -208,6 +211,7 @@ function changeCrypto(_val){
 	}
 
 	document.form._wlc_crypto.value = _val;
+	control_showpass_field();
 }
 
 function setAuthMethod(){
@@ -323,6 +327,44 @@ function setParentAP(){
 	document.getElementById("btnPre").style.display = "none";
 	document.getElementById("btnNext").style.display = "";
 	document.getElementById("btnSubmit").style.display = "none";
+}
+/* password item show or not */
+function pass_checked(obj){
+	if(document.form.show_pass_1.checked || document.form.show_pass_2.checked)
+		replace_pass_type(obj, "text");
+	else
+		replace_pass_type(obj, "password");
+}
+
+/* change password type depend on browser for fix IE issue*/
+function replace_pass_type(obj, _Type){
+	if(navigator.userAgent.indexOf("MSIE") != -1){ // fix IE issue
+		var input2 = document.createElement('<input class="input_32_table" autocapitalization="off">');  // create input element
+		with (input2){ 
+			id = obj.id; 
+			value = obj.value; 
+			type = _Type; // change input type
+			name = obj.name;
+		} 
+		obj.parentNode.replaceChild(input2,obj);
+	}
+	else{	
+		obj.type= _Type;
+	}
+}
+function control_showpass_field(){
+	if( document.form._wlc_auth_mode_x.value == "open" && document.form.__wlc_crypto.value == "None")
+		document.getElementById('show_password_tr').style.display ="none";		
+	else
+		document.getElementById('show_password_tr').style.display ="";	
+}
+function check_wlc_band(){
+	if(document.form.wlc_band.value == 1)
+		 pass_checked(document.form.wl0_wpa_psk);
+	else
+		 pass_checked(document.form.wl1_wpa_psk);
+	
+	document.form.show_pass_1.checked =false;	
 }
 </script>
 </head>
@@ -450,10 +492,15 @@ function setParentAP(){
 	  	<tr id="thekey_tr">
 			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 7);"><#Network_key#></a></th>
 			<td>
-				<input type="text" id="thekey" name="thekey" class="input_32_table">
+				<input type="password" id="thekey" name="thekey" class="input_32_table">
 			</td>
 	  	</tr>
-		  
+		<tr id ="show_password_tr">
+			<th></th>
+			<td>
+				<input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.thekey);"><#QIS_show_pass#>
+			</td>
+		</tr> 
 		</table>
 </div>
 
@@ -477,6 +524,12 @@ function setParentAP(){
 					<input id="wl1_wpa_psk" name="wl1_wpa_psk" type="password" autocapitalization="off" value="" style="height:25px;" class="input_32_table" maxlength="65">
 				</td>
 	  	</tr>
+		<tr >
+			<th></th>
+			<td>
+				<input type="checkbox" name="show_pass_2" onclick="check_wlc_band();"><#QIS_show_pass#>
+			</td>
+		</tr> 
 		</table>
 </div>
 

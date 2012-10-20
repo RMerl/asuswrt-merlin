@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2010 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,6 +15,10 @@
 */
 
 #include "dnsmasq.h"
+
+#ifdef __ANDROID__
+#  include <android/log.h>
+#endif
 
 /* Implement logging to /dev/log asynchronously. If syslogd is 
    making DNS lookups through dnsmasq, and dnsmasq blocks awaiting
@@ -55,12 +59,12 @@ int log_start(struct passwd *ent_pw, int errfd)
 {
   int ret = 0;
 
-  echo_stderr = !!(daemon->options & OPT_DEBUG);
+  echo_stderr = option_bool(OPT_DEBUG);
 
   if (daemon->log_fac != -1)
     log_fac = daemon->log_fac;
 #ifdef LOG_LOCAL0
-  else if (daemon->options & OPT_DEBUG)
+  else if (option_bool(OPT_DEBUG))
     log_fac = LOG_LOCAL0;
 #endif
 
@@ -80,7 +84,7 @@ int log_start(struct passwd *ent_pw, int errfd)
 
   if (!log_reopen(daemon->log_file))
     {
-      send_event(errfd, EVENT_LOG_ERR, errno);
+      send_event(errfd, EVENT_LOG_ERR, errno, daemon->log_file ? daemon->log_file : "");
       _exit(0);
     }
 
@@ -117,7 +121,7 @@ int log_reopen(char *log_file)
 	log_fd = open(log_file, O_WRONLY|O_CREAT|O_APPEND, S_IRUSR|S_IWUSR|S_IRGRP);      
       else
 	{
-#ifdef HAVE_SOLARIS_NETWORK
+#if defined(HAVE_SOLARIS_NETWORK) || defined(__ANDROID__)
 	  /* Solaris logging is "different", /dev/log is not unix-domain socket.
 	     Just leave log_fd == -1 and use the vsyslog call for everything.... */
 #   define _PATH_LOG ""  /* dummy */
@@ -150,6 +154,19 @@ static void log_write(void)
    
   while (entries)
     {
+      /* The data in the payoad is written with a terminating zero character 
+	 and the length reflects this. For a stream connection we need to 
+	 send the zero as a record terminator, but this isn't done for a 
+	 datagram connection, so treat the length as one less than reality 
+	 to elide the zero. If we're logging to a file, turn the zero into 
+	 a newline, and leave the length alone. */
+      int len_adjust = 0;
+
+      if (log_to_file)
+	entries->payload[entries->offset + entries->length - 1] = '\n';
+      else if (connection_type == SOCK_DGRAM)
+	len_adjust = 1;
+
       /* Avoid duplicates over a fork() */
       if (entries->pid != getpid())
 	{
@@ -159,11 +176,11 @@ static void log_write(void)
 
       connection_good = 1;
 
-      if ((rc = write(log_fd, entries->payload + entries->offset, entries->length)) != -1)
+      if ((rc = write(log_fd, entries->payload + entries->offset, entries->length - len_adjust)) != -1)
 	{
 	  entries->length -= rc;
 	  entries->offset += rc;
-	  if (entries->length == 0)
+	  if (entries->length == len_adjust)
 	    {
 	      free_entry();
 	      if (entries_lost != 0)
@@ -179,7 +196,7 @@ static void log_write(void)
       if (errno == EINTR)
 	continue;
 
-      if (errno == EAGAIN)
+      if (errno == EAGAIN || errno == EWOULDBLOCK)
 	return; /* syslogd busy, go again when select() or poll() says so */
       
       if (errno == ENOBUFS)
@@ -227,7 +244,8 @@ static void log_write(void)
 		  errno == ECONNREFUSED ||
 		  errno == EISCONN || 
 		  errno == EINTR ||
-		  errno == EAGAIN)
+		  errno == EAGAIN || 
+		  errno == EWOULDBLOCK)
 		{
 		  /* try again on next syslog() call */
 		  connection_good = 0;
@@ -289,8 +307,28 @@ void my_syslog(int priority, const char *format, ...)
 
   if (log_fd == -1)
     {
-      /* fall-back to syslog if we die during startup or fail during running. */
+#ifdef __ANDROID__
+      /* do android-specific logging. 
+	 log_fd is always -1 on Android except when logging to a file. */
+      int alog_lvl;
+      
+      if (priority <= LOG_ERR)
+	alog_lvl = ANDROID_LOG_ERROR;
+      else if (priority == LOG_WARNING)
+	alog_lvl = ANDROID_LOG_WARN;
+      else if (priority <= LOG_INFO)
+	alog_lvl = ANDROID_LOG_INFO;
+      else
+	alog_lvl = ANDROID_LOG_DEBUG;
+
+      va_start(ap, format);
+      __android_log_vprint(alog_lvl, "dnsmasq", format, ap);
+      va_end(ap);
+#else
+      /* fall-back to syslog if we die during startup or 
+	 fail during running (always on Solaris). */
       static int isopen = 0;
+
       if (!isopen)
 	{
 	  openlog("dnsmasq", LOG_PID, log_fac);
@@ -299,6 +337,8 @@ void my_syslog(int priority, const char *format, ...)
       va_start(ap, format);  
       vsyslog(priority, format, ap);
       va_end(ap);
+#endif
+
       return;
     }
   
@@ -327,7 +367,11 @@ void my_syslog(int priority, const char *format, ...)
       if (!log_to_file)
 	p += sprintf(p, "<%d>", priority | log_fac);
 
-      p += sprintf(p, "%.15s dnsmasq%s[%d]: ", ctime(&time_now) + 4, func, (int)pid);
+      /* Omit timestamp for default daemontools situation */
+      if (!log_stderr || !option_bool(OPT_NO_FORK)) 
+	p += sprintf(p, "%.15s ", ctime(&time_now) + 4);
+      
+      p += sprintf(p, "dnsmasq%s[%d]: ", func, (int)pid);
         
       len = p - entry->payload;
       va_start(ap, format);  
@@ -336,10 +380,6 @@ void my_syslog(int priority, const char *format, ...)
       entry->length = len > MAX_MESSAGE ? MAX_MESSAGE : len;
       entry->offset = 0;
       entry->pid = pid;
-
-      /* replace terminator with \n */
-      if (log_to_file)
-	entry->payload[entry->length - 1] = '\n';
     }
   
   /* almost always, logging won't block, so try and write this now,
@@ -398,12 +438,13 @@ void check_log_writer(fd_set *set)
 
 void flush_log(void)
 {
-  /* write until queue empty */
+  /* write until queue empty, but don't loop forever if there's
+   no connection to the syslog in existance */
   while (log_fd != -1)
     {
       struct timespec waiter;
       log_write();
-      if (!entries)
+      if (!entries || !connection_good)
 	{
 	  close(log_fd);	
 	  break;

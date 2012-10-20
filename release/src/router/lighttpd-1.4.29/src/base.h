@@ -587,6 +587,9 @@ typedef struct {
 	int conditional_is_valid[COMP_LAST_ELEMENT]; 
 #ifdef HAVE_LIBSMBCLIENT
 	buffer* share_link_basic_auth;
+	buffer* share_link_shortpath;
+	buffer* share_link_filename;
+	int 	is_share_link;
 	buffer* physical_auth_url;
 	physical url; //- start with smb://	 or http://
 	buffer* url_options;

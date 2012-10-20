@@ -93,7 +93,7 @@ function valid_form(){
   <table width="760px" border="0" cellpadding="5" cellspacing="0" class="FormTitle" id="FormTitle">
 	<tbody>
 	<tr>
-		  <td bgcolor="#4D595D" valign="top"  >
+		  <td bgcolor="#4D595D" valign="top">
 		  <div>&nbsp;</div>
 		  <div class="formfonttitle"><#menu5_2#> - Switch Control</div>
       <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
@@ -113,7 +113,15 @@ function valid_form(){
               <input type="radio" name="ctf_disable_force" value="1" <% nvram_match("ctf_disable_force", "1", "checked"); %>><#checkbox_Yes#>
               <input type="radio" name="ctf_disable_force" value="0" <% nvram_match("ctf_disable_force", "0", "checked"); %>><#checkbox_No#>
           </td>
-      </tr>      
+      </tr>     
+
+	    <tr>
+	      <th>Disable GRO(Generic Receive Offload)</th>
+	          <td>
+	              <input type="radio" name="gro_disable_force" value="1" <% nvram_match("gro_disable_force", "1", "checked"); %>><#checkbox_Yes#>
+	              <input type="radio" name="gro_disable_force" value="0" <% nvram_match("gro_disable_force", "0", "checked"); %>><#checkbox_No#>
+	          </td>
+	      </tr>       
 			</table>	
 
 		<div class="apply_gen">

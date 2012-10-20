@@ -117,6 +117,9 @@ static char *nflash_check_id(uint8 *id)
 	case NFL_VENDOR_SAMSUNG:
 		name = "Samsung";
 		break;
+	case NFL_VENDOR_ZENTEL:
+		name = "Zentel";
+		break;
 	default:
 #if 0		/* J++ */
 		printf("No NAND flash type found\n");

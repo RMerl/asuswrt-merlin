@@ -43,10 +43,10 @@ function initial(){
 	show_menu();
 
 	if(band5g_support == -1){	//single band
-		$("wps_band").style.display = "none";
+		$("wps_band_tr").style.display = "none";
 		
 	}else{										//Dual band
-		$("wps_band").style.display = "";
+		$("wps_band_tr").style.display = "";
 		if(document.form.wps_band.value == 1){
 			$("wps_band_word").innerHTML = "5GHz";
 		}
@@ -245,7 +245,7 @@ function show_wsc_status(wps_infos){
 		$("wps_state_tr").style.display = "none";
 		$("devicePIN_tr").style.display = "none";
 		$("wpsmethod_tr").style.display = "none";
-		$("wps_band").style.display = "none";
+		$("wps_band_tr").style.display = "none";
 
 		return;
 	}
@@ -419,7 +419,7 @@ function changemethod(wpsmethod){
 		  	  </td>
 			</tr>
 			
-			<tr id="wps_band">
+			<tr id="wps_band_tr">
 				<th width="30%"><a class="hintstyle" href="javascript:void(0);" onclick="openHint(13,5);"><#Current_band#></th>
 				
 				<td>

@@ -199,7 +199,7 @@ function getDiskName(all_disk_order){
 	var disk_name;
 	
 	if(all_disk_order < foreign_disks().length)
-		disk_name = foreign_disks()[all_disk_order];
+		disk_name = decodeURIComponent(foreign_disks()[all_disk_order]);
 	else
 		disk_name = blank_disks()[all_disk_order-foreign_disks().length];
 	
@@ -221,7 +221,7 @@ function getDiskModelName(all_disk_order){
 	var disk_model_name;
 	
 	if(all_disk_order < foreign_disks().length)
-		disk_model_name = foreign_disk_model_info()[all_disk_order];
+		disk_model_name = decodeURIComponent(foreign_disk_model_info()[all_disk_order]);
 	else
 		disk_model_name = blank_disk_model_info()[all_disk_order-foreign_disk_model_info().length];
 		

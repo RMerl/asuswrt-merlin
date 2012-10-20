@@ -60,6 +60,7 @@ endif
 COMPRESSED_CFE := 1
 RESCUE_MODE := 1	# disable for tmp
 RTN66U := 1
+DUAL_TRX :=1
 
 # read sdram params from nvram in internal builds                               
 CFG_SDRAM_PARAM_FROM_EMBEDDED_NVRAM := 1
@@ -90,20 +91,20 @@ endif
 ifeq ($(strip $(CFG_ATE)),1)
 CFLAGS += -DBCM_ATE
 endif
-
 ifeq ($(strip $(RESCUE_MODE)),1)
 CFLAGS += -DRESCUE_MODE
 endif
-
 ifeq ($(strip $(COMPRESSED_CFE)),1)
 CFLAGS += -DCOMPRESSED_CFE
 endif
-
 ifeq ($(strip $(RTN66U)),1)
 CFLAGS += -DRTN66U
 endif
+ifeq ($(strip $(DUAL_TRX)),1)
+CFLAGS += -DDUAL_TRX
+endif
 
-ifeq ($(strip $(CFG_DUAL_IMAGE)),1)
+ifeq ($(strip $(CFE_DUAL_IMAGE)),1)
 CFLAGS +=-DDUAL_IMAGE
 endif
 ifeq ($(strip $(CFG_FAILSAFE_UPGRADE)),1)

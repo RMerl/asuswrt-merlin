@@ -113,7 +113,7 @@ function GWStatic_validate_duplicate_noalert(o, v, l, off){
 function GWStatic_validate_duplicate(o, v, l, off){
 	for(var i = 0; i < o.length; i++){
 		if(entry_cmp(o[i][off].toLowerCase(), v.toLowerCase(), l) == 0){
-			alert('<#JS_duplicate#>');
+			alert("<#JS_duplicate#>");
 			return true;
 		}
 	}
@@ -197,7 +197,7 @@ function addRow_Group(upper){
 			for(i=0; i<rule_num; i++){
 					if(document.form.sr_ipaddr_x_0.value == $('sr_rulelist_table').rows[i].cells[0].innerHTML 
 						&& document.form.sr_gateway_x_0.value == $('sr_rulelist_table').rows[i].cells[2].innerHTML){
-						alert("<#JS_duplicate#>");						
+						alert("<#JS_duplicate#>");
 						document.form.sr_gateway_x_0.value="";
 						document.form.sr_ipaddr_x_0.focus();
 						document.form.sr_ipaddr_x_0.select();

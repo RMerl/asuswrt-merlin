@@ -25,7 +25,7 @@
 #define SYS_USB "/sys/class/usb"
 #define SYS_SG "/sys/class/scsi_generic"
 #define USB_DEVICE_PATH "/sys/bus/usb/devices"
-#define SYS_RNDIS_PATH "/sys/bus/usb/drivers/rndis_host"
+#define SYS_RNDIS_PATH "/sys/module/rndis_host/drivers/usb:rndis_host"
 
 #include <rtstate.h>
 
@@ -47,6 +47,7 @@ enum {
 };
 
 extern int get_device_type_by_device(const char *device_name);
+extern char *get_device_type_by_node(const char *usb_node, char *buf, const int buf_size);
 extern char *get_usb_node_by_string(const char *target_string, char *ret, const int ret_size);
 extern char *get_usb_node_by_device(const char *device_name, char *buf, const int buf_size);
 extern char *get_usb_port_by_string(const char *target_string, char *buf, const int buf_size);
@@ -72,10 +73,12 @@ extern int hadWWANModule();
 extern int hadOptionModule();
 extern int hadSerialModule();
 extern int hadACMModule();
+extern int hadRNDISModule();
 extern int isSerialNode(const char *device_name);
 extern int isACMNode(const char *device_name);
 extern int isSerialInterface(const char *interface_name);
 extern int isACMInterface(const char *interface_name);
+extern int isRNDISInterface(const char *interface_name);
 #ifdef RTCONFIG_USB_BECEEM
 extern int hadBeceemModule();
 extern int isBeceemNode(const char *device_name);

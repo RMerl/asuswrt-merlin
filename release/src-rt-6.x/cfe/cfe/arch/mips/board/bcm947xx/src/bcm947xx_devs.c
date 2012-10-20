@@ -547,9 +547,18 @@ flash_nflash_init(void)
 
 	cfe_add_device(drv, 0, 0, &fprobe);
 
+	j=0;
+        fprobe.flash_parts[j].fp_size = 0x4000000;
+        fprobe.flash_parts[j++].fp_name = "prefix";
+        fprobe.flash_parts[j].fp_size = NFL_BOOT_OS_SIZE;
+        fprobe.flash_parts[j++].fp_name = "trx";
+	fprobe.flash_nparts = j;
+        cfe_add_device(drv, 0, 0, &fprobe);
+
 #if defined(FAILSAFE_UPGRADE) || defined(DUAL_IMAGE)
 	if (need_commit) nvram_commit();
 #endif
+
 }
 #endif /* CFG_NFLASH */
 
@@ -652,7 +661,6 @@ flash_init(void)
 		/* Because sometimes we want to program the entire device */
 		fprobe.flash_nparts = 0;
 		cfe_add_device(drv, 0, 0, &fprobe);
-
 #if defined(FAILSAFE_UPGRADE) || defined(DUAL_IMAGE)
 		max_image_size = calculate_max_image_size("nflash0",NFL_BOOT_SIZE,0,&need_commit);
 #endif

@@ -238,7 +238,7 @@ helpcontent[0] = new Array("",
 						   "<#WLANConfig11b_ChannelBW_itemdesc#><br/><#WLANConfig11b_Wireless_Speed_itemname_3#>",
 						   "<#WLANConfig11b_EChannel_itemdesc#>",
 							 "",
-							 "<#WLANConfig11b_TxPower_itemdesc#>(<#JS_validrange#> 0 <#JS_validrange_to#> 100)",
+							 "Increase Tx Power to enhance the quality of transmission or decrease Tx Power to reduce power consumption.",
 							 "WEP-64bits: <#WLANConfig11b_WEPKey_itemtype1#><br/>WEP-128bits: <#WLANConfig11b_WEPKey_itemtype2#>",
 							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
 							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
@@ -275,7 +275,8 @@ helpcontent[3] = new Array("",
 						   "<#WLANConfig11b_x_APSD_itemdesc#>",
 						   "<#WLANConfig11b_x_DLS_itemdesc#>",
 						   "[n Only]: <#WLANConfig11b_x_HT_OpMode_itemdesc#>",
-						   "<#WLANConfig11n_PremblesType_itemdesc#>"	//20
+						   "<#WLANConfig11n_PremblesType_itemdesc#>",	
+						   "Enabling this option will improve router performance in an environment where there is more interference, but it might reduce connection stability under some circumstances." //21
 						   //"<#WLANConfig11b_x_Xpress_itemdesc#>");
 						   );
 helpcontent[4] = new Array("",
@@ -636,11 +637,11 @@ function overHint(itemNum){
 					for(var i = 0; i < partitions_array.length; i++){
 						if(apps_dev == partitions_array[i]){
 							if(i > foreign_disk_total_mounted_number()[0]){
-								dmStatus = "" + foreign_disks()[1] + "";
+								dmStatus = "" + decodeURIComponent(foreign_disks()[1]) + "";
 								DMDiskNum = foreign_disk_interface_names()[0];
 							}
 							else{
-								dmStatus = "" + foreign_disks()[0] + "";
+								dmStatus = "" + decodeURIComponent(foreign_disks()[0]) + "";
 								DMDiskNum = foreign_disk_interface_names()[1];
 							}
 						}
@@ -729,7 +730,7 @@ function openHint(hint_array_id, hint_show_id, flag){
 
 				var usb_path_curr = eval("usb_path"+_foreign_disk_interface_name);
 				if(foreign_disk_total_mounted_number()[i] != "0" && foreign_disk_total_mounted_number()[i] != "" && usb_path_curr != "usb=")
-					statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk("+parseInt(foreign_disk_interface_names()[i])+");' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#Eject_usb_disk#> <span style='font-weight:normal'>"+ foreign_disks()[i] +"</span></div>";
+					statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk("+parseInt(foreign_disk_interface_names()[i])+");' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#Eject_usb_disk#> <span style='font-weight:normal'>"+ decodeURIComponent(foreign_disks()[i]) +"</span></div>";
 				else 
 					continue;
 			}

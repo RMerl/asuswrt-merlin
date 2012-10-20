@@ -11,27 +11,22 @@
 <title><#Web_Title#> - <#menu5_3_2#></title>
 <link rel="stylesheet" type="text/css" href="/index_style.css"> 
 <link rel="stylesheet" type="text/css" href="/form_style.css">
-
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/detect.js"></script>
-
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-
 <% login_state_hook(); %>
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-
 var qos_orates = '<% nvram_get("qos_orates"); %>';
 var qos_irates = '<% nvram_get("qos_irates"); %>';
 
 function initial(){
 	show_menu();
-
 	init_changeScale("qos_obw");
 	init_changeScale("qos_ibw");
 	//load_QoS_rule();		
@@ -58,12 +53,7 @@ function changeScale(_obj_String){
 	gen_options();
 }
 
-function get_obj_id(id){
-	return document.getElementById(id);
-}
-
 function applyRule(){
-
 	if(save_options() != false){
 		if($("qos_obw_scale").value == "Mb/s"){
 			//document.form.qos_obw.value = Math.round(document.form.qos_obw.value*1024);
@@ -102,9 +92,7 @@ function save_options(){
 	for(var j=0; j<5; j++){
 		var upload_bw_max = eval("document.form.upload_bw_max_"+j);
 		var upload_bw_min = eval("document.form.upload_bw_min_"+j);
-
 		var download_bw_max = eval("document.form.download_bw_max_"+j);
-
 		if(parseInt(upload_bw_max.value) < parseInt(upload_bw_min.value)){
 			alert("<#QoS_invalid_period#>");
 			upload_bw_max.focus();
@@ -161,7 +149,7 @@ function validForm(){
 }
 
 function conv_to_transf(){
-	if(document.form.qos_min_transferred_x_0.value =="" &&document.form.qos_max_transferred_x_0.value =="")
+	if(document.form.qos_min_transferred_x_0.value == "" && document.form.qos_max_transferred_x_0.value =="")
 		document.form.qos_transferred_x_0.value = "";
 	else
 		document.form.qos_transferred_x_0.value = document.form.qos_min_transferred_x_0.value + "~" + document.form.qos_max_transferred_x_0.value;

@@ -38,6 +38,7 @@ function gen_country_list(){
 	countrylist.push(["UK", "UK"]);
 	countrylist.push(["Ukraine", "UA"]);
 	countrylist.push(["USA", "US"]);
+	countrylist.push(["Vietnam", "VN"]);
 	countrylist.push(["Manual", ""]);
 
 	var got_country = 0;
@@ -354,6 +355,14 @@ function gen_list(){
 		userlist = new Array("", "", "");
 		passlist = new Array("", "", "");
   }
+	else if(country == "VN"){
+		protolist = new Array("1", "1", "1");
+                isplist = new Array("Mobifone(Fast Connect)", "Vinaphone(ezCom)", "Viettel(D-Com 3G)");
+                apnlist = new Array("m-wap", "m3-card", "e-connect");
+                daillist = new Array("*99#", "*99#", "*99#");
+                userlist = new Array("mms", "mms", "");
+                passlist = new Array("mms", "mms", "");
+	}
 	else{
 		isplist = new Array("");
 		apnlist = new Array("");

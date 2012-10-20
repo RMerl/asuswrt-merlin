@@ -26,6 +26,9 @@
 #include "decode.h"
 #include "urb64.h"
 
+#define dbg(fmt, args...) fprintf(stderr, fmt, ## args)
+#define dbG(fmt, args...) dbg("" fmt , __FUNCTION__ , ## args)
+
 char *MajorFunctionString (PIRP_SAVE irp);
 char *MinorFunctionString (PIRP_SAVE pirp);
 
@@ -41,36 +44,29 @@ unsigned char packets[MAX_PACKET_SIZE];
 int plen;
 char pstr[MAX_BUFFER_SIZE];
 char pstr_ascii[MAX_BUFFER_SIZE];
-char pktname[1024];
-
+//char pktname[1024];
 
 #define IS_IP 	(packets[U2EC_L2_TYPE]==U2EC_L2_TYPE_IP)
 #define IS_TCP 	(packets[U2EC_L3_TYPE]==U2EC_L3_TYPE_TCP)
-#define IS_U2EC_IRP_CLIENT	(packets[U2EC_L3_DST_PORT]==0x0d&&(packets[U2EC_L3_DST_PORT+1]==0xa2||packets[U2EC_L3_DST_PORT+1]==0x42)) 
-#define IS_U2EC_IRP_SERVER	(packets[U2EC_L3_SRC_PORT]==0x0d&&(packets[U2EC_L3_SRC_PORT+1]==0xa2||packets[U2EC_L3_SRC_PORT+1]==0x42))
-//#define IS_U2EC_IRP_CLIENT	(packets[U2EC_L3_SRC_PORT]==0x04 && packets[U2EC_L3_DST_PORT]==0x0d)		// 3920
-//#define IS_U2EC_IRP_SERVER	(packets[U2EC_L3_SRC_PORT]==0x0d && packets[U2EC_L3_DST_PORT]==0x04)		// 3920
-//#define IS_U2EC_IRP_CLIENT	(packets[U2EC_L3_SRC_PORT+1]==0x84 && packets[U2EC_L3_DST_PORT+1]==0xa2)	// C90
-//#define IS_U2EC_IRP_SERVER	(packets[U2EC_L3_SRC_PORT+1]==0xa2 && packets[U2EC_L3_DST_PORT+1]==0x84)	// C90
-//#define IS_U2EC_IRP_CLIENT	(packets[U2EC_L3_SRC_PORT]==0x04 && packets[U2EC_L3_DST_PORT]==0x0d)		// C90P
-//#define IS_U2EC_IRP_SERVER	(packets[U2EC_L3_SRC_PORT]==0x0d && packets[U2EC_L3_DST_PORT]==0x04)		// C90P
-//#define IS_U2EC_IRP_CLIENT	(packets[U2EC_L3_SRC_PORT]==0x0a && packets[U2EC_L3_DST_PORT]==0x0d)		// C90P2
-//#define IS_U2EC_IRP_SERVER	(packets[U2EC_L3_SRC_PORT]==0x0d && packets[U2EC_L3_DST_PORT]==0x0a)		// C90P2
-//#define IS_U2EC_IRP_CLIENT	(packets[U2EC_L3_SRC_PORT]==0x08 && packets[U2EC_L3_DST_PORT]==0x0d)		// C90C
-//#define IS_U2EC_IRP_SERVER	(packets[U2EC_L3_SRC_PORT]==0x0d && packets[U2EC_L3_DST_PORT]==0x08)		// C90C
-//#define IS_U2EC_IRP_CLIENT	(packets[U2EC_L3_SRC_PORT]==0x04 && packets[U2EC_L3_DST_PORT]==0x0d)		// 5470
-//#define IS_U2EC_IRP_SERVER	(packets[U2EC_L3_SRC_PORT]==0x0d && packets[U2EC_L3_DST_PORT]==0x04)		// 5470
-//#define IS_U2EC_IRP_CLIENT	(packets[U2EC_L3_SRC_PORT]==0x04 && packets[U2EC_L3_DST_PORT]==0x0d)		// 5610
-//#define IS_U2EC_IRP_SERVER	(packets[U2EC_L3_SRC_PORT]==0x0d && packets[U2EC_L3_DST_PORT]==0x04)		// 5610
+//#define IS_U2EC_IRP_CLIENT	(packets[U2EC_L3_DST_PORT]==0x0d&&(packets[U2EC_L3_DST_PORT+1]==0xa2||packets[U2EC_L3_DST_PORT+1]==0x42)) 
+//#define IS_U2EC_IRP_SERVER	(packets[U2EC_L3_SRC_PORT]==0x0d&&(packets[U2EC_L3_SRC_PORT+1]==0xa2||packets[U2EC_L3_SRC_PORT+1]==0x42))
+#define IS_U2EC_IRP_CLIENT	(packets[U2EC_L3_SRC_PORT]==0xcc && packets[U2EC_L3_DST_PORT]==0x0d)
+#define IS_U2EC_IRP_SERVER	(packets[U2EC_L3_SRC_PORT]==0x0d && packets[U2EC_L3_DST_PORT]==0xcc)
 #define IS_U2EC_IRP		(IS_U2EC_IRP_CLIENT||IS_U2EC_IRP_SERVER)
 #define IS_U2EC_IRP_CONTENT	(plen >= 158)
+
+static unsigned int irp_g = 0;
 
 void decodeBuf(char *sp, char *buf, int len)
 {
 	int i;
 
 	printf("%sBuffer[%x]:", sp, len);
+#if 0
 	for (i=0;i<len;i++)
+#else
+	for(i=0;i<len&&i<1460;i++)
+#endif
 	{
 		if (i%8==0) printf("\n%s%02x", sp, (unsigned char)buf[i]);
 		else printf(" %02x", (unsigned char)buf[i]);
@@ -524,6 +520,12 @@ void decodeURB(PURB purb, char *sp)
 		printf("%sUrbSelectConfiguration.ConfigurationHandle: %x\n", sp, (int)purb->UrbSelectConfiguration.ConfigurationHandle);
 #endif
 
+		if (!purb->UrbSelectConfiguration.ConfigurationDescriptor)
+		{
+			printf("NULL UrbSelectConfiguration.ConfigurationDescriptor\n");
+			break;
+		}
+
 		urb_ptr = (unsigned char*)&purb->UrbSelectConfiguration.ConfigurationDescriptor;
 		ptr = (unsigned char *)&purb->UrbSelectConfiguration.Interface.Length;
 		for (i=0; (ptr-urb_ptr+sizeof(purb->UrbHeader)) < purb->UrbHeader.Length;i++) {
@@ -673,24 +675,24 @@ void inline print_irp(PIRP_SAVE pirp_save, int flag)
 		PDEBUG("\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 	else
 		PDEBUG("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-	PDEBUG("usb_connection received IRP: irp number: %d\n", pirp_save->Irp);
+	PDEBUG("usb_connection received IRP: irp number: %x\n", pirp_save->Irp);
 	PDEBUG("\tIRP_SAVE:\n");
-	PDEBUG("\t  Size:	\t%d\n",	pirp_save->Size);
-	PDEBUG("\t  NeedSize:	%d\n",		pirp_save->NeedSize);
-	PDEBUG("\t  Device:	%lld\n",	pirp_save->Device);
-	PDEBUG("\t  res1:	\t%d\n",	pirp_save->Res1);
-	PDEBUG("\t  irp number:	%d\n",		pirp_save->Irp);
-	PDEBUG("\t  Status:	%d\n",		pirp_save->Status);
-	PDEBUG("\t  Information:\t%lld\n",	pirp_save->Information);
-	PDEBUG("\t  BufferSize:	%d\n",		pirp_save->BufferSize);
-	PDEBUG("\t  Reserv:	%d\n",		pirp_save->Reserv);
-	PDEBUG("\t  empty: 	%lld\n",	pirp_save->StackLocation.empty);
+	PDEBUG("\t  Size:	\t%x\n",	pirp_save->Size);
+	PDEBUG("\t  NeedSize:	%x\n",		pirp_save->NeedSize);
+	PDEBUG("\t  Device:	%llx\n",	pirp_save->Device);
+	PDEBUG("\t  res1:	\t%x\n",	pirp_save->Res1);
+	PDEBUG("\t  irp number:	%x\n",		pirp_save->Irp);
+	PDEBUG("\t  Status:	%x\n",		pirp_save->Status);
+	PDEBUG("\t  Information:\t%llx\n",	pirp_save->Information);
+	PDEBUG("\t  BufferSize:	%x\n",		pirp_save->BufferSize);
+	PDEBUG("\t  Reserv:	%x\n",		pirp_save->Reserv);
+	PDEBUG("\t  empty: 	%llx\n",	pirp_save->StackLocation.empty);
 	PDEBUG("\t  major function:  %x\n",	pirp_save->StackLocation.MajorFunction);
 	PDEBUG("\t  minor function:  %x\n",	pirp_save->StackLocation.MinorFunction);
-	PDEBUG("\t  Argument1:	%lld\n",	pirp_save->StackLocation.Parameters.Others.Argument1);
-	PDEBUG("\t  Argument2:	%lld\n",	pirp_save->StackLocation.Parameters.Others.Argument2);
-	PDEBUG("\t  Argument3:	%lld\n",	pirp_save->StackLocation.Parameters.Others.Argument3);
-	PDEBUG("\t  Argument4:	%lld\n",	pirp_save->StackLocation.Parameters.Others.Argument4);
+	PDEBUG("\t  Argument1:	%llx\n",	pirp_save->StackLocation.Parameters.Others.Argument1);
+	PDEBUG("\t  Argument2:	%llx\n",	pirp_save->StackLocation.Parameters.Others.Argument2);
+	PDEBUG("\t  Argument3:	%llx\n",	pirp_save->StackLocation.Parameters.Others.Argument3);
+	PDEBUG("\t  Argument4:	%llx\n",	pirp_save->StackLocation.Parameters.Others.Argument4);
 	PDEBUG("\n");
 
 	if (pirp_save->BufferSize) {
@@ -717,13 +719,40 @@ void inline print_irp(PIRP_SAVE pirp_save, int flag)
 	}
 }
 
-void decodeIRP(char *sp)
+int decodeIRP(char *sp, char *sp2)
 {
 	PIRP_SAVE pirp;
 	PURB purb;
 	int i, j;
 
 	pirp = (PIRP_SAVE)&packets[U2EC_L4_IRP_SAVE];
+
+	if (!pirp->Size && !pirp->NeedSize)
+	{
+		return -1;
+	}
+
+	if (pirp->Size > MAX_PACKET_SIZE || pirp->NeedSize > MAX_PACKET_SIZE)
+	{
+		return -1;
+	}
+
+	if (!pirp->Irp && (!pirp->Size || !pirp->NeedSize))
+	{
+		return -1;
+	}
+
+	if (!pirp->Irp && (pirp->Size < pirp->NeedSize))
+	{
+		return -1;
+	}
+
+	if (pirp->Irp > irp_g + 15)
+	{
+		return -1;
+	}
+
+	printf("%s", sp2);
 
 	printf("%sSize	:%x\n", sp, pirp->Size);
 	printf("%sNeedSize:%x\n", sp, pirp->NeedSize);
@@ -746,6 +775,8 @@ void decodeIRP(char *sp)
 
 	printf("\n%sBuffSize:%x\n", sp, pirp->BufferSize);
 	printf("%sReserv	:%x\n", sp, pirp->Reserv);
+
+	irp_g = pirp->Irp;
 
 	if (pirp->BufferSize)
 	{
@@ -775,24 +806,36 @@ void decodeIRP(char *sp)
 			printf("\n%s    %s\n", sp, pstr_ascii);
 		}
 	}
+
+	return 0;
 }
 
 
 void decodeU2EC()
 {
+	dbG("");
+
 	if (IS_IP&&IS_TCP&&IS_U2EC_IRP&&IS_U2EC_IRP_CONTENT)
 	{
 		if (IS_U2EC_IRP_CLIENT)
 		{
+#if 0
 			printf("\n\n--------------->\n");
 			printf("\t%s\n", pktname);
 			decodeIRP("");
+#else
+			decodeIRP("", "\n\n--------------->\n");
+#endif
 		}
 		else if (IS_U2EC_IRP_SERVER)
 		{
+#if 0
 			printf("\n\n\t\t<---------------\n");
 			printf("\t\t%s\n", pktname);
 			decodeIRP("\t\t\t");
+#else
+			decodeIRP("\t\t\t", "\n\n\t\t<---------------\n");
+#endif
 		}
 	}	
 }
@@ -810,7 +853,7 @@ int getpacket(FILE *fp, unsigned char *packets, int *size)
 		}
 		else if (strstr(buffer, "pkt")) // start to capture
 		{
-			strcpy(pktname, buffer);
+//			strcpy(pktname, buffer);
 			*size = 0;
 		}
 		else

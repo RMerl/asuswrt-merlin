@@ -840,7 +840,64 @@ int SetAdslType(int EnumAdslTypeValue, int FromAteCmd)
     return 0;
 }
 
+/* Paul add start 2012/9/24, for SNR Margin tweaking. */
+int SetSNRMOffset(int EnumSNRMOffsetValue, int FromAteCmd)
+{
+		if(EnumSNRMOffsetValue == 0) //Disabled
+			return 0;
+	
+    declare_resp_handling_vars(pRespBuf, pRespLen, RespPktNum, tok, pRespStr);
+    char InputCmd[10];
+    char UserCmd[64];
+		InputCmd[0] = '\0';
+		UserCmd[0] = '\0';
+    
+    sprintf(InputCmd, "%d", EnumSNRMOffsetValue);
+    strcpy(UserCmd, SET_SNRM_Offset_ADSL);
+    strcat(UserCmd, InputCmd);
+    strcat(UserCmd, "\x0d\x0a");
+    
+    SendCmdAndWaitResp(pRespBuf, MAX_RESP_BUF_SIZE, pRespLen, MAX_RESP_BUF_NUM, &RespPktNum, m_AdslMacAddr,
+        MAC_RTS_CONSOLE_CMD, (PUCHAR)UserCmd, strlen(UserCmd), 0);
 
+		UserCmd[0] = '\0';
+    strcpy(UserCmd, SET_SNRM_Offset_ADSL2);
+    strcat(UserCmd, InputCmd);
+    strcat(UserCmd, " ");
+    strcat(UserCmd, InputCmd);
+    strcat(UserCmd, "\x0d\x0a");
+
+    SendCmdAndWaitResp(pRespBuf, MAX_RESP_BUF_SIZE, pRespLen, MAX_RESP_BUF_NUM, &RespPktNum, m_AdslMacAddr,
+        MAC_RTS_CONSOLE_CMD, (PUCHAR)UserCmd, strlen(UserCmd), 0);
+
+    return 0;
+}
+
+/* Paul add start 2012/10/15, for setting SRA. */
+int SetSRA(int EnumSRAValue, int FromAteCmd)
+{
+    declare_resp_handling_vars(pRespBuf, pRespLen, RespPktNum, tok, pRespStr);
+    char InputCmd[10];
+    char UserCmd[64];
+		InputCmd[0] = '\0';
+		UserCmd[0] = '\0';
+    
+    //SET :0/1/2/3:OlrOff/OlrOn/SRAOFF/SRAON
+		if(EnumSRAValue == 1)
+			EnumSRAValue = 3;
+		else
+			EnumSRAValue = 2;
+
+    sprintf(InputCmd, "%d", EnumSRAValue);
+    strcpy(UserCmd, SET_SRA_ADSL2);
+    strcat(UserCmd, InputCmd);
+    strcat(UserCmd, "\x0d\x0a");
+    
+    SendCmdAndWaitResp(pRespBuf, MAX_RESP_BUF_SIZE, pRespLen, MAX_RESP_BUF_NUM, &RespPktNum, m_AdslMacAddr,
+        MAC_RTS_CONSOLE_CMD, (PUCHAR)UserCmd, strlen(UserCmd), 0);
+
+    return 0;
+}
 
 typedef struct {
     char FwVer[80];

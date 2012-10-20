@@ -76,10 +76,10 @@ if [ ! -f "$APPS_INSTALL_PATH/bin/ipkg" ] || [ ! -f "$APPS_INSTALL_PATH/lib/libu
 		sync
 
 		# TODO: just for test.
-		ASUS_SERVER=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
+		dl_path=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
 
-		echo "wget -c $wget_options $ASUS_SERVER/asus_base_apps.tgz"
-		wget -c $wget_options $ASUS_SERVER/asus_base_apps.tgz
+		echo "wget -c $wget_options $dl_path/asus_base_apps.tgz"
+		wget -c $wget_options $dl_path/asus_base_apps.tgz
 		if [ "$?" != "0" ]; then
 			rm -f asus_base_apps.tgz
 			sync

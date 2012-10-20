@@ -13,15 +13,23 @@
 
 void add_rc_support(char *feature)
 {
-	char features[256];
+	char *rcsupport = nvram_safe_get("rc_support");
+	char *features;
 
-	strcpy(features, nvram_safe_get("rc_support"));
+	if (!(feature && *feature))
+		return;
 
-	if(strlen(features)==0) nvram_set("rc_support", feature);
-	else {
-		sprintf(features, "%s %s", features, feature);
+	if (*rcsupport) {
+		features = malloc(strlen(rcsupport) + strlen(feature) + 2);
+		if (features == NULL) {
+			_dprintf("add_rc_support fail\n");
+			return;
+		}
+		sprintf(features, "%s %s", rcsupport, feature);
 		nvram_set("rc_support", features);
-	}
+		free(features);
+	} else
+		nvram_set("rc_support", feature);
 }
 
 int get_wan_state(int unit)

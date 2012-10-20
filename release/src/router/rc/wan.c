@@ -60,6 +60,10 @@
 #include <disk_io_tools.h>
 #endif
 
+#ifdef RTCONFIG_RALINK
+#include <ralink.h>
+#endif
+
 #define	MAX_MAC_NUM	16
 static int mac_num;
 static char mac_clone[MAX_MAC_NUM][18];
@@ -525,15 +529,59 @@ del_routes(char *prefix, char *var, char *ifname)
 	return 0;
 }
 
+#ifdef RTCONFIG_IPV6
+void
+stop_ecmh()
+{
+	if (pids("ecmh"))
+	{
+		killall_tk("ecmh");
+		sleep(1);
+	}
+}
+
+void
+start_ecmh(char *wan_ifname)
+{
+	int service = get_ipv6_service();
+
+	stop_ecmh();
+
+	if (!wan_ifname || (strlen(wan_ifname) <= 0))
+		return;
+
+	if (!nvram_match("mr_enable_x", "1"))
+		return;
+
+	switch (service) {
+	case IPV6_NATIVE:
+	case IPV6_NATIVE_DHCP:
+	case IPV6_MANUAL:
+		eval("/bin/ecmh", "-u", "admin", "-i", wan_ifname);
+		break;
+	}
+}
+#endif
+
+void
+stop_igmpproxy()
+{
+        if (pids("udpxy")) killall_tk("udpxy");
+        if (pids("igmpproxy")) killall_tk("igmpproxy");
+}
+
 void	// oleg patch , add
 start_igmpproxy(char *wan_ifname)
 {
-	static char *igmpproxy_conf = "/tmp/igmpproxy.conf";
 	FILE *fp;
+	static char *igmpproxy_conf = "/tmp/igmpproxy.conf";
 	char *altnet = nvram_safe_get("mr_altnet_x");
 
-	if (pids("udpxy")) killall_tk("udpxy");
-	if (pids("igmpproxy")) killall_tk("igmpproxy");
+#ifdef RTCONFIG_DSL /* Paul add 2012/9/21 for DSL model, start on interface br1. */
+	wan_ifname = "br1";
+#endif
+
+	stop_igmpproxy();
 
 	if (nvram_get_int("udpxy_enable_x")) {
 		_dprintf("start udpxy [%s]\n", wan_ifname);
@@ -1119,10 +1167,8 @@ TRACE_PT("kill 3g's pppd.\n");
 
 			// run as dhcp proto.
 			nvram_set(strcat_r(prefix, "proto", tmp), "dhcp");
-#ifndef RTCONFIG_DUALWAN
 			nvram_set(strcat_r(prefix, "dhcpenable_x", tmp), "1");
 			nvram_set(strcat_r(prefix, "dnsenable_x", tmp), "1");
-#endif
 
 			if(!strncmp(wan_ifname, "usb", 3)){ // RNDIS interface.
 				if(!nvram_match("stop_conn_3g", "1")){
@@ -2143,10 +2189,13 @@ void wan6_up(const char *wan_ifname)
 
 	if (get_ipv6_service() != IPV6_NATIVE_DHCP)
 		start_radvd();
+
+	start_ecmh(wan_ifname);
 }
 
 void wan6_down(const char *wan_ifname)
 {
+	stop_ecmh();
 	stop_radvd();
 	stop_ipv6_tunnel();
 	stop_dhcp6c();
@@ -2333,13 +2382,11 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 
 	if(wan_unit != wan_primary_ifunit())
 		return;
-
 	/* start multicast router when not VPN */
 	if (strcmp(wan_proto, "dhcp") == 0 ||
-	    strcmp(wan_proto, "static") == 0)
-	{
+	    strcmp(wan_proto, "static") == 0 ||
+	    strcmp(wan_proto, "pppoe") == 0)
 		start_igmpproxy(wan_ifname);
-	}
 
 	//add_iQosRules(wan_ifname);
 	start_iQos();
@@ -2422,6 +2469,8 @@ _dprintf("%s(%s): unset xdns=%s.\n", __FUNCTION__, wan_ifname, nvram_safe_get("w
 	if(nvram_match("wans_mode", "lb"))
 		add_multi_routes();
 #endif
+
+	stop_igmpproxy();
 }
 
 int

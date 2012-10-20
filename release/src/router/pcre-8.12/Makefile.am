@@ -222,17 +222,17 @@ libpcrecpp_la_LIBADD = libpcre.la
 TESTS += pcrecpp_unittest
 noinst_PROGRAMS += pcrecpp_unittest
 pcrecpp_unittest_SOURCES = pcrecpp_unittest.cc
-pcrecpp_unittest_LDADD = libpcrecpp.la libpcre.la
+pcrecpp_unittest_LDADD = libpcrecpp.la
 
 TESTS += pcre_scanner_unittest
 noinst_PROGRAMS += pcre_scanner_unittest
 pcre_scanner_unittest_SOURCES = pcre_scanner_unittest.cc
-pcre_scanner_unittest_LDADD = libpcrecpp.la libpcre.la
+pcre_scanner_unittest_LDADD = libpcrecpp.la
 
 TESTS += pcre_stringpiece_unittest
 noinst_PROGRAMS += pcre_stringpiece_unittest
 pcre_stringpiece_unittest_SOURCES = pcre_stringpiece_unittest.cc
-pcre_stringpiece_unittest_LDADD = libpcrecpp.la libpcre.la
+pcre_stringpiece_unittest_LDADD = libpcrecpp.la
 
 endif # WITH_PCRE_CPP
 
@@ -246,13 +246,13 @@ dist_noinst_SCRIPTS += RunTest
 EXTRA_DIST += RunTest.bat
 bin_PROGRAMS += pcretest
 pcretest_SOURCES = pcretest.c
-pcretest_LDADD = libpcreposix.la libpcre.la $(LIBREADLINE)
+pcretest_LDADD = libpcreposix.la $(LIBREADLINE)
 
 TESTS += RunGrepTest
 dist_noinst_SCRIPTS += RunGrepTest
 bin_PROGRAMS += pcregrep
 pcregrep_SOURCES = pcregrep.c
-pcregrep_LDADD = libpcreposix.la libpcre.la $(LIBZ) $(LIBBZ2)
+pcregrep_LDADD = libpcreposix.la $(LIBZ) $(LIBBZ2)
 
 EXTRA_DIST += \
   testdata/grepinput \

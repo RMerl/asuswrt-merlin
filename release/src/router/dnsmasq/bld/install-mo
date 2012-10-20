@@ -3,7 +3,7 @@
 for f in *.mo; do
   $2 -m 755 -d $1/${f%.mo}/LC_MESSAGES
   $2 -m 644 $f $1/${f%.mo}/LC_MESSAGES/dnsmasq.mo
-  echo installing $1/${f%.mo}/LC_MESSAGES/dnsmasq.mo
+  echo installing ${f%.mo}/LC_MESSAGES/dnsmasq.mo
 done
 
 

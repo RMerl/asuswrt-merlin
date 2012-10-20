@@ -43,6 +43,7 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
 var webs_state_update = '<% nvram_get("webs_state_update"); %>';
+var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
 var webs_state_error = '<% nvram_get("webs_state_error"); %>';
 var webs_state_info = '<% nvram_get("webs_state_info"); %>';
 
@@ -85,7 +86,9 @@ function detect_firmware(){
 	      					if(Latest_firm.length > 0 && Latest_buildno.length > 0){	//match model FW
       								current_firm = parseInt(exist_firmver.replace(/[.]/gi,""));
       								current_buildno = <% nvram_get("buildno"); %>;
-      								if(current_firm < Latest_firm){
+      								if((current_buildno < Latest_buildno) || 
+      									 (current_buildno == Latest_buildno && current_firm < Latest_firm))
+      								{
       										$('update_scan').style.display="none";
       										if(confirm("<#exist_new#>")){
       												document.start_update.action_mode.value="apply";
@@ -94,16 +97,7 @@ function detect_firmware(){
 															document.start_update.submit();
 															return;
       										}
-      								}else if(current_firm == Latest_firm && current_buildno < Latest_buildno){
-      										$('update_scan').style.display="none";
-      										if(confirm("<#exist_new#>")){
-      												document.start_update.action_mode.value="apply";
-      												document.start_update.action_script.value="start_webs_upgrade";
-      												document.start_update.action_wait.value="300";
-															document.start_update.submit();
-															return;
-      										}
-
+      										
       								}else{
       										var flag = getCookie("after_check");
       										if(flag==1){
@@ -189,7 +183,7 @@ function detect_httpd(){
     						$('loading_block1').style.display = "none";
     						$('loading_block2').style.display = "none";
     						$('loading_block3').style.display = "";
-    						$('loading_block3').innerHTML = "<div style='margin-left:15px;font-size:12pt;'><#Firm_reboot_manually#></div>";
+    						$('loading_block3').innerHTML = "<div><#Firm_reboot_manually#></div>";
     				}
     		},
 
@@ -216,7 +210,7 @@ function detect_httpd(){
 			<div id="proceeding_img"></div>
 		</div>
 		<div id="loading_block2" style="margin:5px auto; width:85%;"><#FIRM_ok_desc#></div>
-		<div id="loading_block3" style="width:100%;font-size:14pt;"></div>
+		<div id="loading_block3" style="margin:5px auto;width:85%; font-size:12pt;"></div>
 		</td>
 	</tr>
 </table>

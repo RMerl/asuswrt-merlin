@@ -16,3 +16,5 @@ DA=Dansk
 SV=Svensk
 BR=Brazil
 JP=日本語
+IT=Italiano
+UK=Ukrainian

@@ -51,10 +51,18 @@ static int is_activesync(struct usb_interface_descriptor *desc)
 		&& desc->bInterfaceProtocol == 1;
 }
 
+static int is_wireless_rndis(struct usb_interface_descriptor *desc)
+{
+	return desc->bInterfaceClass == USB_CLASS_WIRELESS_CONTROLLER
+		&& desc->bInterfaceSubClass == 1
+		&& desc->bInterfaceProtocol == 3;
+}
+
 #else
 
 #define is_rndis(desc)		0
 #define is_activesync(desc)	0
+#define is_wireless_rndis(desc)	0
 
 #endif
 
@@ -91,27 +99,12 @@ int usbnet_generic_cdc_bind(struct usbnet *dev, struct usb_interface *intf)
 				"CDC descriptors on config\n");
 	}
 
-	/* Maybe CDC descriptors are after the endpoint?  This bug has
-	 * been seen on some 2Wire Inc RNDIS-ish products.
-	 */
-	if (len == 0) {
-		struct usb_host_endpoint	*hep;
-
-		hep = intf->cur_altsetting->endpoint;
-		if (hep) {
-			buf = hep->extra;
-			len = hep->extralen;
-		}
-		if (len)
-			dev_dbg(&intf->dev,
-				"CDC descriptors on endpoint\n");
-	}
-
 	/* this assumes that if there's a non-RNDIS vendor variant
 	 * of cdc-acm, it'll fail RNDIS requests cleanly.
 	 */
-	rndis = is_rndis(&intf->cur_altsetting->desc)
-		|| is_activesync(&intf->cur_altsetting->desc);
+	rndis = (is_rndis(&intf->cur_altsetting->desc)
+		|| is_activesync(&intf->cur_altsetting->desc)
+		|| is_wireless_rndis(&intf->cur_altsetting->desc));
 
 	memset(info, 0, sizeof *info);
 	info->control = intf;
@@ -144,14 +137,14 @@ int usbnet_generic_cdc_bind(struct usbnet *dev, struct usb_interface *intf)
 			 * modem interface from an RNDIS non-modem.
 			 */
 			if (rndis) {
-				struct usb_cdc_acm_descriptor *acm;
+				struct usb_cdc_acm_descriptor *d;
 
-				acm = (void *) buf;
-				if (acm->bmCapabilities) {
+				d = (void *) buf;
+				if (d->bmCapabilities) {
 					dev_dbg(&intf->dev,
 						"ACM capabilities %02x, "
 						"not really RNDIS?\n",
-						acm->bmCapabilities);
+						d->bmCapabilities);
 					goto bad_desc;
 				}
 			}
@@ -231,12 +224,12 @@ next_desc:
 	/* Microsoft ActiveSync based RNDIS devices lack the CDC descriptors,
 	 * so we'll hard-wire the interfaces and not check for descriptors.
 	 */
-	if (is_activesync(&intf->cur_altsetting->desc) && !info->u) {
+	if (rndis && !info->u) {
 		info->control = usb_ifnum_to_if(dev->udev, 0);
 		info->data = usb_ifnum_to_if(dev->udev, 1);
 		if (!info->control || !info->data) {
 			dev_dbg(&intf->dev,
-				"activesync: master #0/%p slave #1/%p\n",
+				"rndis: master #0/%p slave #1/%p\n",
 				info->control,
 				info->data);
 			goto bad_desc;

@@ -23,7 +23,7 @@ options. It includes a secure, read-only,
 TFTP server to allow net/PXE boot of DHCP hosts and also supports BOOTP.
 .PP
 Dnsmasq 
-supports IPv6 for DNS, but not DHCP.
+supports IPv6 for all functions and a minimal router-advertisement daemon.
 .SH OPTIONS
 Note that in general missing parameters are allowed and switch off
 functions, for instance "--pid-file" disables writing a PID file. On
@@ -51,7 +51,7 @@ apply to domain names in cnames, PTR records, TXT records etc.
 .B \-T, --local-ttl=<time>
 When replying with information from /etc/hosts or the DHCP leases
 file dnsmasq by default sets the time-to-live field to zero, meaning
-that the requestor should not itself cache the information. This is
+that the requester should not itself cache the information. This is
 the correct thing to do in almost all situations. This option allows a
 time-to-live (in seconds) to be given for these replies. This will
 reduce the load on the server at the expense of clients using stale
@@ -204,6 +204,17 @@ running another nameserver (or another instance of dnsmasq) on the
 same machine. Setting this option also enables multiple instances of
 dnsmasq which provide DHCP service to run in the same machine.
 .TP
+.B --bind-dynamic
+Enable a network mode which is a hybrid between 
+.B --bind-interfaces
+and the default. Dnsmasq binds the address of individual interfaces,
+allowing multiple dnsmasq instances, but if new interfaces or
+addresses appear, it automatically listens on those (subject to any
+access-control configuration). This makes dynamically created
+interfaces work in the same way as the default. Implementing this
+option requires non-standard networking APIs and it is only available
+under Linux. On other platforms it falls-back to --bind-interfaces mode.
+.TP
 .B \-y, --localise-queries
 Return answers to DNS queries from /etc/hosts which depend on the interface over which the query was
 received. If a name in /etc/hosts has more than one address associated with
@@ -249,8 +260,8 @@ requested name has underscores, to catch LDAP requests.
 .B \-r, --resolv-file=<file>
 Read the IP addresses of the upstream nameservers from <file>, instead of
 /etc/resolv.conf. For the format of this file see
-.BR resolv.conf (5) 
-the only lines relevant to dnsmasq are nameserver ones. Dnsmasq can
+.BR resolv.conf (5). 
+The only lines relevant to dnsmasq are nameserver ones. Dnsmasq can
 be told to poll more than one resolv.conf file, the first file name  specified
 overrides the default, subsequent ones add to the list. This is only
 allowed when polling; the file with the currently latest modification
@@ -260,11 +271,13 @@ time is the one used.
 Don't read /etc/resolv.conf. Get upstream servers only from the command
 line or the dnsmasq configuration file.
 .TP
-.B \-1, --enable-dbus
+.B \-1, --enable-dbus[=<service-name>]
 Allow dnsmasq configuration to be updated via DBus method calls. The
 configuration which can be changed is upstream DNS servers (and
 corresponding domains) and cache clear. Requires that dnsmasq has
-been built with DBus support.
+been built with DBus support. If the service name is given, dnsmasq
+provides service at that name, rather than the default which is 
+.B uk.org.thekelleys.dnsmasq
 .TP 
 .B \-o, --strict-order
 By default, dnsmasq will send queries to any of the upstream servers
@@ -276,7 +289,7 @@ server strictly in the order they appear in /etc/resolv.conf
 By default, when dnsmasq has more than one upstream server available,
 it will send queries to just one server. Setting this flag forces
 dnsmasq to send all queries to all available servers. The reply from
-the server which answers first will be returned to the original requestor.
+the server which answers first will be returned to the original requester.
 .TP
 .B --stop-dns-rebind
 Reject (and log) addresses from upstream nameservers which are in the
@@ -303,7 +316,7 @@ This is useful when new nameservers may have different
 data than that held in cache.
 .TP
 .B \-D, --domain-needed
-Tells dnsmasq to never forward queries for plain names, without dots
+Tells dnsmasq to never forward A or AAAA queries for plain names, without dots
 or domain parts, to upstream nameservers. If the name is not known
 from /etc/hosts or DHCP then a "not found" answer is returned.
 .TP
@@ -349,6 +362,9 @@ servers.
 is a synonym for
 .B server
 to make configuration files clearer in this case.
+
+IPv6 addresses may include a %interface scope-id, eg
+fe80::202:a412:4512:7bbf%eth0.
 
 The optional string after the @ character tells
 dnsmasq how to set the source of the queries to this
@@ -413,9 +429,29 @@ zone files: the port, weight and priority numbers are in a different
 order. More than one SRV record for a given service/domain is allowed,
 all that match are returned.
 .TP
+.B --host-record=<name>[,<name>....][<IPv4-address>],[<IPv6-address>]
+Add A, AAAA and PTR records to the DNS. This adds one or more names to
+the DNS with associated IPv4 (A) and IPv6 (AAAA) records. A name may
+appear in more than one 
+.B host-record
+and therefore be assigned more than one address. Only the first
+address creates a PTR record linking the address to the name. This is
+the same rule as is used reading hosts-files. 
+.B host-record
+options are considered to be read before host-files, so a name
+appearing there inhibits PTR-record creation if it appears in
+hosts-file also. Unlike hosts-files, names are not expanded, even when
+.B expand-hosts
+is in effect. Short and long names may appear in the same 
+.B host-record,
+eg. 
+.B --host-record=laptop,laptop.thekelleys.org,192.168.0.1,1234::100
+.TP
 .B \-Y, --txt-record=<name>[[,<text>],<text>]
 Return a TXT DNS record. The value of TXT record is a set of strings,
-so  any number may be included, split by commas.
+so  any number may be included, delimited by commas; use quotes to put
+commas into a string. Note that the maximum length of a single string
+is 255 characters, longer strings are split into 255 character chunks.
 .TP
 .B --ptr-record=<name>[,<target>]
 Return a PTR DNS record.
@@ -427,9 +463,17 @@ Return an NAPTR DNS record, as specified in RFC3403.
 Return a CNAME record which indicates that <cname> is really
 <target>. There are significant limitations on the target; it must be a
 DNS name which is known to dnsmasq from /etc/hosts (or additional
-hosts files) or from DHCP. If the target does not satisfy this
+hosts files), from DHCP or from another 
+.B --cname.
+If the target does not satisfy this
 criteria, the whole cname is ignored. The cname must be unique, but it
 is permissable to have more than one cname pointing to the same target.
+.TP
+.B --dns-rr=<name>,<RR-number>,[<hex data>]
+Return an arbitrary DNS Resource Record. The number is the type of the
+record (which is always in the C_IN class). The value of the record is
+given by the hex data, which may be of the form 01:23:45 or 01 23 45 or
+012345 or any mixture of these.
 .TP
 .B --interface-name=<name>,<interface>
 Return a DNS record associating the name with the primary address on
@@ -441,6 +485,15 @@ matching PTR record is also created, mapping the interface address to
 the name. More than one name may be associated with an interface
 address by repeating the flag; in that case the first instance is used
 for the reverse address-to-name mapping.
+.TP
+.B --add-mac
+Add the MAC address of the requestor to DNS queries which are
+forwarded upstream. This may be used to DNS filtering by the upstream
+server. The MAC address can only be added if the requestor is on the same
+subnet as the dnsmasq server. Note that the mechanism used to achieve this (an EDNS0 option)
+is not yet standardised, so this should be considered
+experimental. Also note that exposing MAC addresses in this way may
+have security and privacy implications. 
 .TP
 .B \-c, --cache-size=<cachesize>
 Set the size of dnsmasq's cache. The default is 150 names. Setting the cache size to zero disables caching.
@@ -456,7 +509,34 @@ Set the maximum number of concurrent DNS queries. The default value is
 where this needs to be increased is when using web-server log file
 resolvers, which can generate large numbers of concurrent queries.
 .TP
-.B \-F, --dhcp-range=[interface:<interface>,][tag:<tag>[,tag:<tag>],][set:<tag],]<start-addr>,<end-addr>[,<netmask>[,<broadcast>]][,<lease time>]
+.B --proxy-dnssec
+A resolver on a client machine can do DNSSEC validation in two ways: it
+can perform the cryptograhic operations on the reply it receives, or
+it can rely on the upstream recursive nameserver to do the validation
+and set a bit in the reply if it succeeds. Dnsmasq is not a DNSSEC
+validator, so it cannot perform the validation role of the recursive nameserver,
+but it can pass through the validation results from its own upstream
+nameservers. This option enables this behaviour. You should only do
+this if you trust all the configured upstream nameservers 
+.I and the network between you and them.
+If you use the first DNSSEC mode, validating resolvers in clients,
+this option is not required. Dnsmasq always returns all the data
+needed for a client to do validation itself. 
+.TP
+.B --conntrack
+Read the Linux connection track mark associated with incoming DNS
+queries and set the same mark value on upstream traffic used to answer
+those queries. This allows traffic generated by dnsmasq to be
+associated with the queries which cause it, useful for bandwidth
+accounting and firewalling. Dnsmasq must have conntrack support
+compiled in and the kernel must have conntrack support
+included and configured. This option cannot be combined with
+--query-port. 
+.TP
+.B \-F, --dhcp-range=[tag:<tag>[,tag:<tag>],][set:<tag],]<start-addr>[,<end-addr>][,<mode>][,<netmask>[,<broadcast>]][,<lease time>]
+.TP
+.B \-F, --dhcp-range=[tag:<tag>[,tag:<tag>],][set:<tag],]<start-IPv6addr>[,<end-IPv6addr>][,<mode>][,<prefix-len>][,<lease time>]
+
 Enable the DHCP server. Addresses will be given out from the range
 <start-addr> to <end-addr> and from statically defined addresses given
 in 
@@ -465,29 +545,45 @@ options. If the lease time is given, then leases
 will be given for that length of time. The lease time is in seconds,
 or minutes (eg 45m) or hours (eg 1h) or "infinite". If not given,
 the default lease time is one hour. The
-minimum lease time is two minutes. This
-option may be repeated, with different addresses, to enable DHCP
+minimum lease time is two minutes. For IPv6 ranges, the lease time
+maybe "deprecated"; this sets the preferred lifetime sent in a DHCP
+lease or router advertisement to zero, which causes clients to use
+other addresses, if available, for new connections as a prelude to renumbering.
+
+This option may be repeated, with different addresses, to enable DHCP
 service to more than one network. For directly connected networks (ie,
 networks on which the machine running dnsmasq has an interface) the
-netmask is optional. It is, however, required for networks which
-receive DHCP service via a relay agent. The broadcast address is
+netmask is optional: dnsmasq will determine it from the interface
+configuration. For networks which receive DHCP service via a relay
+agent, dnsmasq cannot determine the netmask itself, so it should be
+specified, otherwise dnsmasq will have to guess, based on the class (A, B or
+C) of the network address. The broadcast address is
 always optional. It is always
 allowed to have more than one dhcp-range in a single subnet. 
+
+For IPv6, the parameters are slightly different: instead of netmask
+and broadcast address, there is an optional prefix length. If not
+given, this defaults to 64. Unlike the IPv4 case, the prefix length is not
+automatically derived from the interface configuration. The mimimum
+size of the prefix length is 64.
 
 The optional 
 .B set:<tag> 
 sets an alphanumeric label which marks this network so that
 dhcp options may be specified on a per-network basis. 
 When it is prefixed with 'tag:' instead, then its meaning changes from setting
-a tag to matching it. Only one tag may be set, but more than one tag may be matched.
-The end address may be replaced by the keyword 
+a tag to matching it. Only one tag may be set, but more than one tag
+may be matched.
+
+The optional <mode> keyword may be 
 .B static
 which tells dnsmasq to enable DHCP for the network specified, but not
 to dynamically allocate IP addresses: only hosts which have static
 addresses given via 
 .B dhcp-host
-or from /etc/ethers will be served. The end address may be replaced by
-the keyword
+or from /etc/ethers will be served. 
+
+For IPv4, the <mode> may be 
 .B proxy
 in which case dnsmasq will provide proxy-DHCP on the specified
 subnet. (See 
@@ -496,15 +592,49 @@ and
 .B pxe-service
 for details.)
 
-The interface:<interface name> section is not normally used. See the
-NOTES section for details of this.
+For IPv6, the mode may be some combination of
+.B ra-only, slaac, ra-names, ra-stateless.
+
+.B ra-only
+tells dnsmasq to offer Router Advertisement only on this subnet,
+and not DHCP. 
+
+.B slaac
+tells dnsmasq to offer Router Advertisement on this subnet and to set
+the A bit in the router advertisement, so that the client will use
+SLAAC addresses. When used with a DHCP range or static DHCP address
+this results in the client having both a DHCP-assigned and a SLAAC
+address.
+
+.B ra-stateless
+sends router advertisements with the O and A bits set, and provides a
+stateless DHCP service. The client will use a SLAAC address, and use
+DHCP for other configuration information.
+
+.B ra-names
+enables a mode
+which gives DNS names to dual-stack hosts which do SLAAC for
+IPv6. Dnsmasq uses the host's IPv4 lease to derive the name, network
+segment and MAC address and assumes that the host will also have an
+IPv6 address calculated using the SLAAC algorithm, on the same network
+segment. The address is pinged, and if a reply is received, an AAAA
+record is added to the DNS for this IPv6
+address. Note that this is only happens for directly-connected
+networks, (not one doing DHCP via a relay) and it will not work 
+if a host is using privacy extensions. 
+.B ra-names
+can be combined  with 
+.B ra-stateless
+and
+.B slaac.
+
 .TP
 .B \-G, --dhcp-host=[<hwaddr>][,id:<client_id>|*][,set:<tag>][,<ipaddr>][,<hostname>][,<lease_time>][,ignore]
 Specify per host parameters for the DHCP server. This allows a machine
 with a particular hardware address to be always allocated the same
 hostname, IP address and lease time. A hostname specified like this
 overrides any supplied by the DHCP client on the machine. It is also
-allowable to ommit the hardware address and include the hostname, in
+allowable to omit the hardware address and include the hostname, in
 which case the IP address and lease times will apply to any machine
 claiming that name. For example 
 .B --dhcp-host=00:20:e0:3b:13:af,wap,infinite 
@@ -528,6 +658,12 @@ hardware addresses to identify hosts by prefixing with 'id:'. Thus:
 refers to the host with client identifier 01:02:03:04. It is also
 allowed to specify the client ID as text, like this:
 .B --dhcp-host=id:clientidastext,..... 
+
+A single
+.B dhcp-host 
+may contain an IPv4 address or an IPv6 address, or both. IPv6 addresses must be bracketed by square brackets thus:
+.B --dhcp-host=laptop,[1234::56]
+Note that in IPv6 DHCP, the hardware address is not normally available, so a client must be identified by client-id (called client DUID in IPv6-land) or hostname.
 
 The special option id:* means "ignore any client-id 
 and use MAC addresses only." This is useful when a client presents a client-id sometimes 
@@ -576,7 +712,7 @@ will only match a
 Token-Ring hardware address, since the ARP-address type for token ring
 is 6. 
 
-As a special case, it is possible to include more than one
+As a special case, in DHCPv4, it is possible to include more than one
 hardware address. eg:
 .B --dhcp-host=11:22:33:44:55:66,12:34:56:78:90:12,192.168.0.2
 This allows an IP address to be associated with
@@ -588,15 +724,17 @@ time and there is no way for dnsmasq to enforce this. It is, for instance,
 useful to allocate a stable IP address to a laptop which
 has both wired and wireless interfaces.
 .TP
-.B --dhcp-hostsfile=<file>
-Read DHCP host information from the specified file. The file contains 
+.B --dhcp-hostsfile=<path>
+Read DHCP host information from the specified file. If a directory
+is given, then read all the files contained in that directory. The file contains 
 information about one host per line. The format of a line is the same
 as text to the right of '=' in --dhcp-host. The advantage of storing DHCP host information
 in this file is that it can be changed without re-starting dnsmasq:
 the file will be re-read when dnsmasq receives SIGHUP.
 .TP
-.B --dhcp-optsfile=<file>
-Read DHCP option information from the specified file. The advantage of 
+.B --dhcp-optsfile=<path>
+Read DHCP option information from the specified file.  If a directory
+is given, then read all the files contained in that directory. The advantage of 
 using this option is the same as for --dhcp-hostsfile: the
 dhcp-optsfile will be re-read when dnsmasq receives SIGHUP. Note that
 it is possible to encode the information in a
@@ -612,14 +750,14 @@ hostname or dotted-quad IP address. When read by dnsmasq these lines
 have exactly the same effect as
 .B --dhcp-host
 options containing the same information. /etc/ethers is re-read when 
-dnsmasq receives SIGHUP.
+dnsmasq receives SIGHUP. IPv6 addresses are NOT read from /etc/ethers.
 .TP
-.B \-O, --dhcp-option=[tag:<tag>,[tag:<tag>,]][encap:<opt>,][vi-encap:<enterprise>,][vendor:[<vendor-class>],][<opt>|option:<opt-name>],[<value>[,<value>]]
+.B \-O, --dhcp-option=[tag:<tag>,[tag:<tag>,]][encap:<opt>,][vi-encap:<enterprise>,][vendor:[<vendor-class>],][<opt>|option:<opt-name>|option6:<opt>|option6:<opt-name>],[<value>[,<value>]]
 Specify different or extra options to DHCP clients. By default,
 dnsmasq sends some standard options to DHCP clients, the netmask and
 broadcast address are set to the same as the host running dnsmasq, and
 the DNS server and default route are set to the address of the machine
-running dnsmasq. If the domain name option has been set, that is sent.
+running dnsmasq. (Equivalent rules apply for IPv6.) If the domain name option has been set, that is sent.
 This configuration allows these defaults to be overridden,
 or other options specified. The option, to be sent may be given as a
 decimal number or as "option:<option-name>" The option numbers are
@@ -634,7 +772,7 @@ and to set the time-server address to 192.168.0.4, do
 .B --dhcp-option = 42,192.168.0.4 
 or 
 .B --dhcp-option = option:ntp-server, 192.168.0.4
-The special address 0.0.0.0 is taken to mean "the address of the
+The special address 0.0.0.0 (or [::] for DHCPv6) is taken to mean "the address of the
 machine running dnsmasq". Data types allowed are comma separated
 dotted-quad IP addresses, a decimal number, colon-separated hex digits
 and a text string. If the optional tags are given then
@@ -645,6 +783,14 @@ conform with RFC 3397. Text or dotted-quad IP addresses as arguments
 to option 120 are handled as per RFC 3361. Dotted-quad IP addresses 
 which are followed by a slash and then a netmask size are encoded as
 described in RFC 3442.
+
+IPv6 options are specified using the 
+.B option6:
+keyword, followed by the option number or option name. The IPv6 option
+name space is disjoint from the IPv4 option name space. IPv6 addresses
+in options must be bracketed with square brackets, eg. 
+.B --dhcp-option=option6:ntp-server,[1234::56]
+ 
 
 Be careful: no checking is done that the correct type of data for the
 option number is sent, it is quite possible to
@@ -661,7 +807,7 @@ literal string, use quotes. For instance when using option 66 to send
 a literal IP address as TFTP server name, it is necessary to do
 .B --dhcp-option=66,"1.2.3.4"
 
-Encapsulated Vendor-class options may also be specified using
+Encapsulated Vendor-class options may also be specified (IPv4 only) using
 --dhcp-option: for instance 
 .B --dhcp-option=vendor:PXEClient,1,0.0.0.0 
 sends the encapsulated vendor
@@ -673,9 +819,9 @@ for selecting encapsulated options in preference to any sent by the
 client. It is
 possible to omit the vendorclass completely;
 .B --dhcp-option=vendor:,1,0.0.0.0
-in which case the encapsulated option is always sent.
+in which case the encapsulated option is always sent. 
 
-Options may be encapsulated within other options: for instance
+Options may be encapsulated (IPv4 only) within other options: for instance
 .B --dhcp-option=encap:175, 190, "iscsi-client0"
 will send option 175, within which is the option 190. If multiple
 options are given which are encapsulated with the same option number
@@ -686,8 +832,9 @@ The final variant on encapsulated options is "Vendor-Identifying
 Vendor Options" as specified by RFC3925. These are denoted like this: 
 .B --dhcp-option=vi-encap:2, 10, "text"
 The number in the vi-encap: section is the IANA enterprise number
-used to identify this option.
-
+used to identify this option. This form of encapsulation is supported
+in IPv6.
+ 
 The address 0.0.0.0 is not treated specially in
 encapsulated options.
 .TP
@@ -699,14 +846,14 @@ not ask for it in the parameter request list. This is sometimes
 needed, for example when sending options to PXELinux.
 .TP
 .B --dhcp-no-override
-Disable re-use of the DHCP servername and filename fields as extra
+(IPv4 only) Disable re-use of the DHCP servername and filename fields as extra
 option space. If it can, dnsmasq moves the boot server and filename
 information (from dhcp-boot) out of their dedicated fields into
 DHCP options. This make extra space available in the DHCP packet for
 options but can, rarely, confuse old or broken clients. This flag
 forces "simple and safe" behaviour to avoid problems in such a case.
 .TP
-.B \-U, --dhcp-vendorclass=set:<tag>,<vendor-class>
+.B \-U, --dhcp-vendorclass=set:<tag>,[enterprise:<IANA-enterprise number>,]<vendor-class>
 Map from a vendor-class string to a tag. Most DHCP clients provide a 
 "vendor class" which represents, in some sense, the type of host. This option 
 maps vendor classes to tags, so that DHCP options may be selectively delivered
@@ -716,7 +863,13 @@ will allow options to be set only for HP printers like so:
 .B --dhcp-option=tag:printers,3,192.168.4.4 
 The vendor-class string is
 substring matched against the vendor-class supplied by the client, to
-allow fuzzy matching. The set: prefix is optional but allowed for consistency.
+allow fuzzy matching. The set: prefix is optional but allowed for
+consistency. 
+
+Note that in IPv6 only, vendorclasses are namespaced with an 
+IANA-allocated enterprise number. This is given with enterprise:
+keyword and specifies that only vendorclasses matching the specified
+number should be searched.
 .TP
 .B \-j, --dhcp-userclass=set:<tag>,<user-class>
 Map from a user-class string to a tag (with substring
@@ -728,7 +881,7 @@ this to set a different printer server for hosts in the class
 "accounts" than for hosts in the class "engineering".
 .TP
 .B \-4, --dhcp-mac=set:<tag>,<MAC address>
-Map from a MAC address to a tag. The MAC address may include
+(IPv4 only) Map from a MAC address to a tag. The MAC address may include
 wildcards. For example
 .B --dhcp-mac=set:3com,01:34:23:*:*:*
 will set the tag "3com" for any host whose MAC address matches the pattern.
@@ -738,13 +891,16 @@ Map from RFC3046 relay agent options to tags. This data may
 be provided by DHCP relay agents. The circuit-id or remote-id is
 normally given as colon-separated hex, but is also allowed to be a
 simple string. If an exact match is achieved between the circuit or
-agent ID and one provided by a relay agent, the tag is set.
+agent ID and one provided by a relay agent, the tag is set. 
+
+.B dhcp-remoteid
+(but not dhcp-circuitid) is supported in IPv6. 
 .TP
 .B --dhcp-subscrid=set:<tag>,<subscriber-id>
-Map from RFC3993 subscriber-id relay agent options to tags.
+(IPv4 and IPv6) Map from RFC3993 subscriber-id relay agent options to tags.
 .TP
 .B --dhcp-proxy[=<ip addr>]......
-A normal DHCP relay agent is only used to forward the initial parts of
+(IPv4 only) A normal DHCP relay agent is only used to forward the initial parts of
 a DHCP interaction to the DHCP server. Once a client is configured, it
 communicates directly with the server. This is undesirable if the
 relay agent is addding extra information to the DHCP packets, such as
@@ -804,7 +960,7 @@ dhcp-host configuration in dnsmasq and the contents of /etc/hosts and
 /etc/ethers.
 .TP
 .B --dhcp-generate-names=tag:<tag>[,tag:<tag>]
-Generate a name for DHCP clients which do not otherwise have one,
+(IPv4 only) Generate a name for DHCP clients which do not otherwise have one,
 using the MAC address expressed in hex, seperated by dashes. Note that
 if a host provides a name, it will be used by preference to this,
 unless 
@@ -812,14 +968,14 @@ unless
 is set.
 .TP
 .B --dhcp-broadcast[=tag:<tag>[,tag:<tag>]]
-When all the given tags appear in the tag set, always use broadcast to
+(IPv4 only) When all the given tags appear in the tag set, always use broadcast to
 communicate with the host when it is unconfigured. It is permissible
 to supply no tags, in which case this is unconditional. Most DHCP clients which
 need broadcast replies set a flag in their requests so that this
 happens automatically, some old BOOTP clients do not.
 .TP
-.B \-M, --dhcp-boot=[tag:<tag>,]<filename>,[<servername>[,<server address>]]
-Set BOOTP options to be returned by the DHCP server. Server name and
+.B \-M, --dhcp-boot=[tag:<tag>,]<filename>,[<servername>[,<server address>|<tftp_servername>]]
+(IPv4 only) Set BOOTP options to be returned by the DHCP server. Server name and
 address are optional: if not provided, the name is left empty, and the
 address set to the address of the machine running dnsmasq. If dnsmasq
 is providing a TFTP service (see 
@@ -827,8 +983,25 @@ is providing a TFTP service (see
 ) then only the filename is required here to enable network booting.
 If the optional tag(s) are given,
 they must match for this configuration to be sent. 
+Instead of an IP address, the TFTP server address can be given as a domain
+name which is looked up in /etc/hosts. This name can be associated in
+/etc/hosts with multiple IP addresses, which are used round-robin.
+This facility can be used to load balance the tftp load among a set of servers.
 .TP
-.B --pxe-service=[tag:<tag>,]<CSA>,<menu text>[,<basename>|<bootservicetype>][,<server address>]
+.B --dhcp-sequential-ip
+Dnsmasq is designed to choose IP addresses for DHCP clients using a
+hash of the client's MAC address. This normally allows a client's
+address to remain stable long-term, even if the client  sometimes allows its DHCP
+lease to expire. In this default mode IP addresses are distributed
+pseudo-randomly over the entire available address range. There are
+sometimes circumstances (typically server deployment) where it is more
+convenient to have IP
+addresses allocated sequentially, starting from the lowest available
+address, and setting this flag enables this mode. Note that in the
+sequential mode, clients which allow a lease to expire are much more
+likely to move IP address; for this reason it should not be generally used.
+.TP
+.B --pxe-service=[tag:<tag>,]<CSA>,<menu text>[,<basename>|<bootservicetype>][,<server address>|<server_name>]
 Most uses of PXE boot-ROMS simply allow the PXE
 system to obtain an IP address and then download the file specified by
 .B dhcp-boot
@@ -844,17 +1017,19 @@ parameter after the menu text may be a file name, in which case dnsmasq acts as 
 boot server and directs the PXE client to download the file by TFTP,
 either from itself (
 .B enable-tftp 
-must be set for this to work) or another TFTP server if the final IP
-address is given.
+must be set for this to work) or another TFTP server if the final server
+address/name is given.
 Note that the "layer"
 suffix (normally ".0") is supplied by PXE, and should not be added to
 the basename. If an integer boot service type, rather than a basename
 is given, then the PXE client will search for a
 suitable boot service for that type on the network. This search may be done
-by broadcast, or direct to a server if its IP address is provided.  
+by broadcast, or direct to a server if its IP address/name is provided.  
 If no boot service type or filename is provided (or a boot service type of 0 is specified)
 then the menu entry will abort the net boot procedure and
-continue booting from local media.
+continue booting from local media. The server address can be given as a domain
+name which is looked up in /etc/hosts. This name can be associated in
+/etc/hosts with multiple IP addresses, which are used round-robin.
 .TP
 .B --pxe-prompt=[tag:<tag>,]<prompt>[,<timeout>]
 Setting this provides a prompt to be displayed after PXE boot. If the
@@ -887,7 +1062,7 @@ create thousands of leases and use lots of memory in the dnsmasq
 process.
 .TP
 .B \-K, --dhcp-authoritative
-Should be set when dnsmasq is definitely the only DHCP server on a network.
+(IPv4 only) Should be set when dnsmasq is definitely the only DHCP server on a network.
 It changes the behaviour from strict RFC compliance so that DHCP requests on
 unknown leases from unknown hosts are not ignored. This allows new hosts
 to get a lease without a tedious timeout under all circumstances. It also 
@@ -895,7 +1070,7 @@ allows dnsmasq to rebuild its lease database without each client needing to
 reacquire a lease, if the database is lost.
 .TP
 .B --dhcp-alternate-port[=<server port>[,<client port>]]
-Change the ports used for DHCP from the default. If this option is
+(IPv4 only) Change the ports used for DHCP from the default. If this option is
 given alone, without arguments, it changes the ports used for DHCP
 from 67 and 68 to 1067 and 1068. If a single argument is given, that
 port number is used for the server and the port number plus one used
@@ -903,7 +1078,7 @@ for the client. Finally, two port numbers allows arbitrary
 specification of both server and client ports for DHCP.
 .TP
 .B \-3, --bootp-dynamic[=<network-id>[,<network-id>]]
-Enable dynamic allocation of IP addresses to BOOTP clients. Use this
+(IPv4 only) Enable dynamic allocation of IP addresses to BOOTP clients. Use this
 with care, since each address allocated to a BOOTP client is leased
 forever, and therefore becomes permanently unavailable for re-use by
 other hosts. if this is given without tags, then it unconditionally
@@ -911,7 +1086,7 @@ enables dynamic allocation. With tags, only when the tags are all
 set. It may be repeated with different tag sets. 
 .TP
 .B \-5, --no-ping
-By default, the DHCP server will attempt to ensure that an address in
+(IPv4 only) By default, the DHCP server will attempt to ensure that an address in
 not in use before allocating it to a host. It does this by sending an
 ICMP echo request (aka "ping") to the address in question. If it gets
 a reply, then the address must already be in use, and another is
@@ -924,13 +1099,24 @@ the tags used to determine them.
 .B \-l, --dhcp-leasefile=<path>
 Use the specified file to store DHCP lease information.
 .TP 
+.B --dhcp-duid=<enterprise-id>,<uid>
+(IPv6 only) Specify the server persistent UID which the DHCPv6 server
+will use. This option is not normally required as dnsmasq creates a
+DUID automatically when it is first needed. When given, this option
+provides dnsmasq the data required to create a DUID-EN type DUID. Note
+that once set, the DUID is stored in the lease database, so to change between DUID-EN and
+automatically created DUIDs or vice-versa, the lease database must be
+re-intialised. The enterprise-id is assigned by IANA, and the uid is a
+string of hex octets unique to a particular device.
+.TP
 .B \-6 --dhcp-script=<path>
-Whenever a new DHCP lease is created, or an old one destroyed, the
+Whenever a new DHCP lease is created, or an old one destroyed, or a
+TFTP file transfer completes, the
 executable specified by this option is run.  <path>
 must be an absolute pathname, no PATH search occurs. 
 The arguments to the process
 are "add", "old" or "del", the MAC
-address of the host, the IP address, and the hostname,
+address of the host (or DUID for IPv6) , the IP address, and the hostname,
 if known. "add" means a lease has been created, "del" means it has
 been destroyed, "old" is a notification of an existing lease when
 dnsmasq starts or a change to MAC address or hostname of an existing
@@ -941,20 +1127,17 @@ token ring. The process is run as root (assuming that dnsmasq was originally run
 root) even if dnsmasq is configured to change UID to an unprivileged user.
 
 The environment is inherited from the invoker of dnsmasq, with some or
-all of the following variables added.
+all of the following variables added
 
-DNSMASQ_CLIENT_ID if the host provided a client-id.
+For both IPv4 and IPv6:
 
 DNSMASQ_DOMAIN if the fully-qualified domain name of the host is
-known, this is set to the  domain part.
+known, this is set to the  domain part. (Note that the hostname passed
+to the script as an argument is never fully-qualified.)
 
-If the client provides vendor-class, hostname or user-class, 
-these are provided in DNSMASQ_VENDOR_CLASS
-DNSMASQ_SUPPLIED_HOSTNAME and 
-DNSMASQ_USER_CLASS0..DNSMASQ_USER_CLASSn variables, but only for
-"add" actions or "old" actions when a host resumes an existing lease,
-since these data are not held in dnsmasq's lease
-database.
+If the client provides a hostname, DNSMASQ_SUPPLIED_HOSTNAME
+
+If the client provides user-classes, DNSMASQ_USER_CLASS0..DNSMASQ_USER_CLASSn 
 
 If dnsmasq was compiled with HAVE_BROKEN_RTC, then
 the length of the lease (in seconds) is stored in
@@ -978,6 +1161,38 @@ is known.
 DNSMASQ_TAGS contains all the tags set during the
 DHCP transaction, separated by spaces.
 
+DNSMASQ_LOG_DHCP is set if
+.B --log-dhcp
+is in effect.
+
+For IPv4 only:
+
+DNSMASQ_CLIENT_ID if the host provided a client-id.
+
+If the client provides vendor-class, DNSMASQ_VENDOR_CLASS.
+
+For IPv6 only:
+
+If the client provides vendor-class, DNSMASQ_VENDOR_CLASS_ID,
+containing the IANA enterprise id for the class, and
+DNSMASQ_VENDOR_CLASS0..DNSMASQ_VENDOR_CLASSn for the data.
+
+DNSMASQ_SERVER_DUID containing the DUID of the server: this is the same for
+every call to the script.
+
+DNSMASQ_IAID containing the IAID for the lease. If the lease is a
+temporary allocation, this is prefixed to 'T'.
+
+
+
+Note that the supplied hostname, vendorclass and userclass data is
+only  supplied for
+"add" actions or "old" actions when a host resumes an existing lease,
+since these data are not held in dnsmasq's lease
+database.
+
+
+
 All file descriptors are
 closed except stdin, stdout and stderr which are open to /dev/null
 (except in debug mode).
@@ -996,9 +1211,66 @@ all existing leases as they are read from the lease file. Expired
 leases will be called with "del" and others with "old". When dnsmasq
 receives a HUP signal, the script will be invoked for existing leases
 with an "old " event.
+
+
+There are two further actions which may appear as the first argument
+to the script, "init" and "tftp". More may be added in the future, so
+scripts should be written to ignore unknown actions. "init" is
+described below in 
+.B --leasefile-ro
+The "tftp" action is invoked when a TFTP file transfer completes: the
+arguments are the file size in bytes, the address to which the file
+was sent, and the complete pathname of the file.
+ 
+.TP
+.B --dhcp-luascript=<path>
+Specify a script written in Lua, to be run when leases are created,
+destroyed or changed. To use this option, dnsmasq must be compiled
+with the correct support. The Lua interpreter is intialised once, when
+dnsmasq starts, so that global variables persist between lease
+events. The Lua code must define a
+.B lease
+function, and may provide
+.B init
+and
+.B shutdown
+functions, which are called, without arguments when dnsmasq starts up
+and terminates. It may also provide a 
+.B tftp
+function.
+
+The 
+.B lease
+function receives the information detailed in 
+.B --dhcp-script. 
+It gets two arguments, firstly the action, which is a string
+containing, "add", "old" or "del", and secondly a table of tag value
+pairs. The tags mostly correspond to the environment variables
+detailed above, for instance the tag "domain" holds the same data as
+the environment variable DNSMASQ_DOMAIN. There are a few extra tags
+which hold the data supplied as arguments to
+.B --dhcp-script. 
+These are 
+.B mac_address, ip_address
+and 
+.B hostname
+for IPv4, and 
+.B client_duid, ip_address
+and 
+.B hostname
+for IPv6.
+
+The  
+.B tftp
+function is called in the same way as the lease function, and the
+table holds the tags 
+.B destination_address,
+.B file_name
+and 
+.B file_size.
 .TP
 .B --dhcp-scriptuser
-Specify the user as which to run the lease-change script. This defaults to root, but can be changed to another user using this flag. 
+Specify the user as which to run the lease-change script or Lua script. This defaults to root, but can be changed to another user using this flag. 
 .TP 
 .B \-9, --leasefile-ro
 Completely suppress use of the lease database file. The file will not
@@ -1020,7 +1292,7 @@ as if they had arrived at <interface>. This option is necessary when
 using "old style" bridging on BSD platforms, since
 packets arrive at tap interfaces which don't have an IP address.
 .TP
-.B \-s, --domain=<domain>[,<address range>]
+.B \-s, --domain=<domain>[,<address range>[,local]]
 Specifies DNS domains for the DHCP server. Domains may be be given 
 unconditionally (without the IP range) or for limited IP ranges. This has two effects;
 firstly it causes the DHCP server to return the domain to any hosts
@@ -1039,11 +1311,22 @@ and have a machine whose DHCP hostname is "laptop". The IP address for that mach
 .B dnsmasq
 both as "laptop" and "laptop.thekelleys.org.uk". If the domain is
 given as "#" then the domain is read from the first "search" directive
-in /etc/resolv.conf (or equivalent). The address range can be of the form
+in /etc/resolv.conf (or equivalent).
+
+The address range can be of the form
 <ip address>,<ip address> or <ip address>/<netmask> or just a single
 <ip address>. See 
 .B --dhcp-fqdn
 which can change the behaviour of dnsmasq with domains.
+
+If the address range is given as ip-address/network-size, then a
+additional flag "local" may be supplied which has the effect of adding
+--local declarations for forward and reverse DNS queries. Eg.
+.B --domain=thekelleys.org.uk,192.168.0.0/24,local
+is identical to
+.B --domain=thekelleys.org.uk,192.168.0.0/24
+--local=/thekelleys.org.uk/ --local=/0.168.192.in-addr.arpa/
+The network size must be 8, 16 or 24 for this to be legal.
 .TP
 .B --dhcp-fqdn
 In the default mode, dnsmasq inserts the unqualified names of
@@ -1062,12 +1345,37 @@ without an address specified when
 .B --dhcp-fqdn 
 is set.
 .TP
-.B --enable-tftp[=<interface>]
+.B --dhcp-client-update
+Normally, when giving a DHCP lease, dnsmasq sets flags in the FQDN
+option to tell the client not to attempt a DDNS update with its name
+and IP address. This is because the name-IP pair is automatically
+added into dnsmasq's DNS view. This flag suppresses that behaviour,
+this is useful, for instance, to allow Windows clients to update
+Active Directory servers. See RFC 4702 for details. 
+.TP
+.B --enable-ra
+Enable dnsmasq's IPv6 Router Advertisement feature. DHCPv6 doesn't
+handle complete network configuration in the same way as DHCPv4. Router
+discovery and (possibly) prefix discovery for autonomous address
+creation are handled by a different protocol. When DHCP is in use,
+only a subset of this is needed, and dnsmasq can handle it, using
+existing DHCP configuration to provide most data. When RA is enabled,
+dnsmasq will advertise a prefix for each dhcp-range, with default
+router and recursive DNS server as the relevant link-local address on 
+the machine running dnsmasq. By default, he "managed address" bits are set, and
+the "use SLAAC" bit is reset. This can be changed for individual
+subnets with the mode keywords described in
+.B --dhcp-range.
+RFC6106 DNS parameters are included in the advertisements. By default,
+the relevant link-local address of the machine running dnsmasq is sent
+as recursive DNS server. If provided, the DHCPv6 options dns-server and
+domain-search are used for RDNSS and DNSSL.
+.TP
+.B --enable-tftp
 Enable the TFTP server function. This is deliberately limited to that
 needed to net-boot a client. Only reading is allowed; the tsize and
 blksize extensions are supported (tsize is only supported in octet
-mode). See NOTES section for use of the interface argument.
-
+mode). 
 .TP
 .B --tftp-root=<directory>[,<interface>]
 Look for files to transfer using TFTP relative to the given
@@ -1094,6 +1402,12 @@ has no effect, but only files which have the world-readable bit set
 are accessible. It is not recommended to run dnsmasq as root with TFTP
 enabled, and certainly not without specifying --tftp-root. Doing so
 can expose any world-readable file on the server to any host on the net. 
+.TP
+.B --tftp-lowercase
+Convert filenames in TFTP requests to all lowercase. This is useful
+for requests from Windows machines, which have case-insensitive
+filesystems and tend to play fast-and-loose with case in filenames.
+Note that dnsmasq's tftp server always converts "\\" to "/" in filenames.
 .TP
 .B --tftp-max=<connections>
 Set the maximum number of concurrent TFTP connections allowed. This
@@ -1123,7 +1437,8 @@ of concurrent TFTP connections is limited by the size of the port range.
 .TP  
 .B \-C, --conf-file=<file>
 Specify a different configuration file. The conf-file option is also allowed in
-configuration files, to include multiple configuration files.
+configuration files, to include multiple configuration files. A
+filename of "-" causes dnsmasq to read configuration from stdin.
 .TP
 .B \-7, --conf-dir=<directory>[,<file-extension>......]
 Read all the files in the given directory as configuration
@@ -1284,6 +1599,17 @@ so --dhcp=option=tag:!purple,3,1.2.3.4 sends the option when the
 tag purple is not in the set of valid tags. (If using this in a
 command line rather than a configuration file, be sure to escape !,
 which is a shell metacharacter)
+
+When selecting dhcp-options, a tag from dhcp-range is second class
+relative to other tags, to make it easy to override options for
+individual hosts, so 
+.B dhcp-range=set:interface1,......
+.B dhcp-host=set:myhost,.....
+.B dhcp-option=tag:interface1,option:nis-domain,"domain1"
+.B dhcp-option=tag:myhost,option:nis-domain,"domain2"
+will set the NIS-domain to domain1 for hosts in the range, but
+override that to domain2 for a particular host.
+
 .PP
 Note that for 
 .B dhcp-range 
@@ -1312,52 +1638,6 @@ static address mappings.) The filename
 parameter in a BOOTP request is used as a tag,
 as is the tag "bootp", allowing some control over the options returned to
 different classes of hosts.
-
-.B dhcp-range
-may have an interface name supplied as
-"interface:<interface-name>". The semantics if this are as follows:
-For DHCP, if any other dhcp-range exists _without_ an interface name,
-then the interface name is ignored and and dnsmasq behaves as if the
-interface parts did not exist, otherwise DHCP is only provided to 
-interfaces mentioned in dhcp-range
-declarations. For DNS, if there are no
-.B --interface
-or 
-.B --listen-address
-flags, behaviour is unchanged by the interface part. If either of
-these flags are present, the interfaces mentioned in
-dhcp-ranges are added to the set which get DNS service.
-
-Similarly, 
-.B enable-tftp
-may take an interface name, which enables TFTP only for a particular
-interface, ignoring 
-.B --interface 
-or
-.B --listen-address
-flags. In addition 
-.B --tftp-secure
-and
-.B --tftp-unique-root
-and
-.B --tftp-no-blocksize
-are ignored for requests from such interfaces. (A 
-.B --tftp-root
-directive giving a root path and an interface should be 
-provided too.)
-
-These rules may seem odd at first sight, but  they
-allow a single line  of the form "dhcp-range=interface:virt0,192.168.0.4,192.168.0.200"
-to be added to dnsmasq configuration which then supplies
-DHCP and DNS services to that interface, without affecting
-what services are supplied to other interfaces and irrespective of 
-the existance or lack of "interface=<interface>" 
-lines elsewhere in the dnsmasq configuration.
-"enable-tftp=virt0" and "tftp-root=<root>,virt0" do the same job for TFTP.
- The idea is
-that such a line can be added automatically by libvirt
-or equivalent systems, without disturbing any manual
-configuration.
 
 .SH EXIT CODES
 .PP
@@ -1445,6 +1725,9 @@ assume that it is the system default.
 .IR /usr/local/etc/dnsmasq.conf
 
 .IR /etc/resolv.conf
+.IR /var/run/dnsmasq/resolv.conf
+.IR /etc/ppp/resolv.conf
+.IR /etc/dhcpc/resolv.conf
 
 .IR /etc/hosts
 

@@ -43,6 +43,8 @@ start_wps_method(void)
 	}
 
 	start_wsc();
+
+	return 0;
 }
 
 int 
@@ -56,6 +58,8 @@ stop_wps_method(void)
 //	doSystem("iwpriv %s set WscConfMode=%d", get_wpsifname(), 0);	// WPS disabled
 	doSystem("iwpriv %s set WscStatus=%d", get_wpsifname(), 0);	// Not Used
 //	doSystem("iwpriv %s set WscConfMode=%d", get_non_wpsifname(), 7);	// trigger Windows OS to give a popup about WPS PBC AP
+
+	return 0;
 }
 
 extern int g_isEnrollee;

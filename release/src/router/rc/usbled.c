@@ -76,12 +76,12 @@ static void no_blink(int sig)
 	status_usb = -1;
 	usb_busy = 0;
 }
-
+#if 0
 static void wps_pbc(int sig)
 {
 	start_wps_pbc(0);
 }
-
+#endif
 static void blink(int sig)
 {
 //	dbG("\n\n\nreceive SIGUSR1 to usbled\n\n\n");
@@ -162,15 +162,18 @@ usbled_main(int argc, char *argv[])
 	sigaddset(&sigs_to_catch, SIGTERM);
 	sigaddset(&sigs_to_catch, SIGUSR1);
 	sigaddset(&sigs_to_catch, SIGUSR2);
+#if 0
 	sigaddset(&sigs_to_catch, SIGTSTP);
+#endif
 	sigprocmask(SIG_UNBLOCK, &sigs_to_catch, NULL);
 
 	signal(SIGALRM, usbled);
 	signal(SIGTERM, usbled_exit);
 	signal(SIGUSR1, blink);
 	signal(SIGUSR2, no_blink);
+#if 0
 	signal(SIGTSTP, wps_pbc);
-
+#endif
 	alarmtimer(USBLED_NORMAL_PERIOD, 0);
 
 	/* Most of time it goes to sleep */

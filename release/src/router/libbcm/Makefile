@@ -17,7 +17,7 @@ include $(TOP)/.config
 
 CFLAGS	+= -I. -I$(SRCBASE)/include -I$(SRCBASE)/router/shared -Wall
 #CFLAGS	+= -g -DDEBUG
-CFLAGS	+= -s -O2
+CFLAGS	+= -s -O2 -fPIC
 LDFLAGS += -L.
 
 OBJS := bcmgpio.o

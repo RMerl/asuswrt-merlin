@@ -872,7 +872,7 @@ void bcmvlan_models(int model, char *vlan)
 {
 	if(model==MODEL_RTN16||model==MODEL_RTN15U||model==MODEL_RTN66U||model==MODEL_RTAC66U)
 		strcpy(vlan, "vlan1");
-	else if(model==MODEL_RTN53||model==MODEL_RTN12||model==MODEL_RTN12B1||model==MODEL_RTN12C1||model==MODEL_RTN12D1||model==MODEL_RTN12HP||model==MODEL_RTN10U||model==MODEL_RTN10D) 
+	else if(model==MODEL_RTN53||model==MODEL_RTN12||model==MODEL_RTN12B1||model==MODEL_RTN12C1||model==MODEL_RTN12D1||model==MODEL_RTN12HP||model==MODEL_RTN10U||model==MODEL_RTN10D1)
 		strcpy(vlan, "vlan0");
 	else strcpy(vlan, "");
 }
@@ -882,11 +882,10 @@ char *get_productid()
 	char *productid = nvram_safe_get("productid");
 #ifdef RTCONFIG_ODMPID
 	char *odmpid = nvram_safe_get("odmpid");
-	char* pidp = strlen(odmpid) ? odmpid : productid;
-#else
-	char* pidp = productid;
+	if (*odmpid)
+		productid = odmpid;
 #endif
-	return pidp;
+	return productid;
 }
 
 int backup_rx;

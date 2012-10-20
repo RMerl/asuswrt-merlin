@@ -172,6 +172,30 @@ function submitenter(myfield,e)
 	else
    	return true;
 }
+/* password item show or not */
+function pass_checked(obj){
+	if(document.form.show_pass_1.checked)
+		replace_pass_type(obj, "text");
+	else
+		replace_pass_type(obj, "password");
+}
+
+/* change password type depend on browser for fix IE issue*/
+function replace_pass_type(obj, _Type){
+	if(navigator.userAgent.indexOf("MSIE") != -1){ // fix IE issue
+		var input2 = document.createElement('<input class="input_32_table" autocapitalization="off">');  // create input element
+		with (input2){ 
+			id = obj.id; 
+			value = obj.value; 
+			type = _Type; // change input type
+			name = obj.name;
+		} 
+		obj.parentNode.replaceChild(input2,obj);
+	}
+	else{	
+		obj.type= _Type;
+	}
+}
 </script>                                          
 </head>   
 
@@ -239,9 +263,15 @@ function submitenter(myfield,e)
   <tr>
 	<th width="180"><span onmouseout="return nd();" onclick="openHint(7, 27);" style="cursor:help;"><#PPPConnection_Password_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 	<td class="QISformtd">
-	  <input type="password" name="wan_pppoe_passwd" maxlength="64" value="" onkeypress="return is_string(this, event);" class="input_32_table" size="36"/>
+	  <input type="password" id="wan_pppoe_passwd" name="wan_pppoe_passwd" maxlength="64" value="" onkeypress="return is_string(this, event);" class="input_32_table" size="36"/>	  
 	</td>
   </tr>
+	<tr>
+		<th></th>
+		<td>
+			<input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.wan_pppoe_passwd);"><#QIS_show_pass#>
+		</td>
+	</tr>
   <tr><td colspan=2>&nbsp;</td></tr>
   <tr>
   	<td colspan=2 class="QISformtd">

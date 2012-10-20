@@ -38,6 +38,8 @@
 #define WEBDAV_LOCK_INTERVAL "webdav_lock_interval"
 #define WEBDAV_LOCK_TIMES "webdav_lock_times"
 #define WEBDAV_LAST_LOGININFO "webdav_last_login_info"
+#define WEBS_STATE_INFO "webs_state_info"
+#define WEBS_STATE_ERROR "webs_state_error"
 
 #define DBE 0
 
@@ -248,6 +250,18 @@ int nvram_set_webdav_last_login_info(const char* last_login_info)
 {
 	char* set_str = nvram_set(WEBDAV_LAST_LOGININFO, last_login_info);
 	return set_str;
+}
+
+char* nvram_get_latest_version()
+{
+	return nvram_get(WEBS_STATE_INFO);
+}
+
+int nvram_get_webs_state_error()
+{
+	char* res = nvram_get(WEBS_STATE_ERROR);
+	int a = atoi(res);
+	return a;
 }
 
 #endif

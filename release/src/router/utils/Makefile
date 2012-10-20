@@ -34,8 +34,11 @@ WL_EXE  := wl
 endif
 
 CFLAGS += -s -I$(SRCBASE)/include
-ifeq ($(CONFIG_RTR_OPTIMIZE_SIZE),y)
+#ifeq ($(CONFIG_RTR_OPTIMIZE_SIZE),y)
+ifeq ($(SFP),y)
 CFLAGS  += -Os
+CFLAGS  += -ffunction-sections -fdata-sections
+LDFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
 else
 CFLAGS  += -O2
 endif

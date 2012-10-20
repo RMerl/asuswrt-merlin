@@ -28,6 +28,9 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 <% login_state_hook(); %>
 <% wl_get_parameter(); %>
 
+wl_channel_list_2g = '<% channel_list_2g(); %>';
+wl_channel_list_5g = '<% channel_list_5g(); %>';
+
 function initial(){
 	show_menu();	
 	load_body();	
@@ -355,9 +358,7 @@ function clean_input(obj){
 				<tr id="wl_channel_field">
 					<th><a id="wl_channel_select" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 3);"><#WLANConfig11b_Channel_itemname#></a></th>
 					<td>
-				 		<select name="wl_channel" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_channel')">
-							<% select_channel("WLANConfig11b"); %>
-				 		</select>
+				 		<select name="wl_channel" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_channel')"></select>
 					</td>
 			  </tr>
 			  

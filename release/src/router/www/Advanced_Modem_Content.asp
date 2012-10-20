@@ -60,6 +60,7 @@
 <script type="text/javascript" src="/cdma2000_list.js"></script>
 <script type="text/javascript" src="/td-scdma_list.js"></script>
 <script type="text/javascript" src="/wimax_list.js"></script>
+<script type="text/javaScript" src="/jquery.js"></script>
 <script>
 
 <% login_state_hook(); %>
@@ -86,6 +87,7 @@ var passlist = new Array();
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 <% wan_get_parameter(); %>
 
+var $j = jQuery.noConflict();
 if(dualWAN_support != -1){
 	var wan_type_name = wans_dualwan.split(" ")[<% nvram_get("wan_unit"); %>];
 	wan_type_name = wan_type_name.toUpperCase();
@@ -94,6 +96,7 @@ if(dualWAN_support != -1){
 			location.href = "Advanced_DSL_Content.asp";
 			break;
 		case "WAN":
+			break;
 		case "LAN":
 			location.href = "Advanced_WAN_Content.asp";
 			break;	
@@ -132,6 +135,10 @@ function initial(){
 			}
 		}
   }
+
+	
+	
+	check_dongle_status();	
 }
 
 function reloadProfile(){
@@ -152,7 +159,7 @@ function show_modem_list(mode){
 
 function show_3G_modem_list(){
 	modemlist = new Array(
-			"<#Auto#>"
+			"AUTO"
 			, "ASUS-T500"
 			, "BandLuxe-C120"
 			, "BandLuxe-C170"
@@ -201,7 +208,11 @@ function show_3G_modem_list(){
 
 	free_options($("shown_modems"));
 	for(var i = 0; i < modemlist.length; i++){
-		$("shown_modems").options[i] = new Option(modemlist[i], modemlist[i]);
+		if(modemlist[i] == "AUTO")
+			$("shown_modems").options[i] = new Option("<#Auto#>", modemlist[i]);
+		else	
+			$("shown_modems").options[i] = new Option(modemlist[i], modemlist[i]);
+			
 		if(modemlist[i] == modem)
 			$("shown_modems").options[i].selected = "1";
 	}
@@ -216,7 +227,10 @@ function show_4G_modem_list(){
 
 	free_options($("shown_modems"));
 	for(var i = 0; i < modemlist.length; i++){
-		$("shown_modems").options[i] = new Option(modemlist[i], modemlist[i]);
+		if(modemlist[i] == "AUTO")
+			$("shown_modems").options[i] = new Option("<#Auto#>", modemlist[i]);
+		else	
+			$("shown_modems").options[i] = new Option(modemlist[i], modemlist[i]);
 		if(modemlist[i] == modem)
 			$("shown_modems").options[i].selected = "1";
 	}
@@ -417,14 +431,12 @@ function applyRule(){
 	var mode = document.form.modem_enable.value;
 	
 	//check pin code
-	if(document.form.modem_pincode.value != "" && pin_opt){
+	if(pin_opt && document.form.modem_pincode.value != ""){
 		if(document.form.modem_pincode.value.search(/^\d{4,8}$/)==-1) {
 			alert("<#JS_InvalidPIN#>");
 			return;
 		}
 	}
-	else
-		document.form.modem_pincode.disabled = true;
 
 	showLoading(); 
 	document.form.submit();
@@ -490,6 +502,25 @@ function change_wan_unit(){
 
 function done_validating(action){
 	refreshpage();
+}
+
+function check_dongle_status(){
+	 $j.ajax({
+    	url: '/ajax_ddnscode.asp',
+    	dataType: 'script', 
+
+    	error: function(xhr){
+      		check_dongle_status();
+    	},
+    	success: function(response){
+			if(pin_status != "" && pin_status != "0")
+				$("pincode_status").style.display = "";
+			else	
+				$("pincode_status").style.display = "none";
+				
+			setTimeout("check_dongle_status();",5000);
+       }
+   });
 }
 </script>
 </head>
@@ -645,6 +676,7 @@ function done_validating(action){
 						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,2);"><#PIN_code#></a></th>
 						<td>
 							<input id="modem_pincode" name="modem_pincode" class="input_20_table" type="password" autocapitalization="off" maxLength="8" value="<% nvram_get("modem_pincode"); %>"/>
+							<br><span id="pincode_status" style="display:none;">There's something wrong with the PIN code. Please correct the PIN code and re-plug in the USB modem. If the error is still existed, please turn off the PIN code with the SIM card and try again.</span>
 						</td>
 					</tr>
                                 

@@ -3,8 +3,8 @@
 search=$1
 shift
 
-if grep "^\#.*define.*$search" config.h 2>&1 >/dev/null || \
-   grep $search 2>&1 >/dev/null ; then
+if grep "^\#[[:space:]]*define[[:space:]]*$search" config.h >/dev/null 2>&1 || \
+   grep $search >/dev/null 2>&1; then
   exec $*
 fi
 

@@ -236,53 +236,70 @@ Q: What network types are supported by the DHCP server?
 A: Ethernet (and 802.11 wireless) are supported on all platforms. On
    Linux all network types (including FireWire) are supported.
 
-Q: What is this strange "bind-interface" option?
+Q: What are these strange "bind-interface" and "bind-dynamic" options?
 
-A: The DNS spec says that the reply to a DNS query must come from the
-   same address it was sent to. The traditional way to write an UDP
-   server to do this is to find all of the addresses belonging to the
-   machine (ie all the interfaces on the machine) and then create a
-   socket for each interface which is bound to the address of the
-   interface. Then when a packet is sent to address A, it is received
-   on the socket bound to address A and when the reply is also sent
-   via that socket, the source address is set to A by the kernel and
-   everything works. This is the how dnsmasq works when
-   "bind-interfaces" is set, with the obvious extension that is misses
-   out creating sockets for some interfaces depending on the
-   --interface, --address and --except-interface flags.  The
-   disadvantage of this approach is that it breaks if interfaces don't
-   exist or are not configured when the daemon starts and does the
-   socket creation step. In a hotplug-aware world this is a real
-   problem.
+A: Dnsmasq from v2.63 can operate in one of three different "networking
+   modes". This is unfortunate as it requires users configuring dnsmasq
+   to take into account some rather bizzare contraints and select the
+   mode which best fits the requirements of a particular installation.
+   The origin of these are deficiencies in the Unix networking
+   model and APIs and each mode has different advantages and
+   problems. Just to add to the confusion, not all modes are available on
+   all platforms (due the to lack of supporting network APIs).To further
+   add to the confusion, the rules for the DHCP subsystem on dnsmasq are
+   different to the rules for the DNS and TFTP subsystems.
 
-   The alternative approach is to have only one socket, which is bound
-   to the correct port and the wildcard IP address (0.0.0.0). That
-   socket will receive _all_ packets sent to port 53, no matter what
-   destination address they have. This solves the problem of
-   interfaces which are created or reconfigured after daemon
-   start-up. To make this work is more complicated because of the
-   "reply source address" problem. When a UDP packet is sent by a
-   socket bound to 0.0.0.0 its source address will be set to the
-   address of one of the machine's interfaces, but which one is not
-   determined and can vary depending on the OS being run. To get round
-   this it is neccessary to use a scary advanced API to determine the
-   address to which a query was sent, and force that to be the source
-   address in the reply. For IPv4 this stuff in non-portable and quite
-   often not even available (It's different between FreeBSD 5.x and
-   Linux, for instance, and FreeBSD 4.x, Linux 2.0.x and OpenBSD don't
-   have it at all.) Hence "bind-interfaces" has to always be available
-   as a fall back. For IPv6 the API is standard and universally
-   available.
+   The three modes are "wildcard", "bind-interfaces" and "bind-dynamic".
 
-   It could be argued that if the --interface or --address flags are
-   used then binding interfaces is more appropriate, but using
-   wildcard binding means that dnsmasq will quite happily start up
-   after being told to use interfaces which don't exist, but which are
-   created later. Wildcard binding breaks the scenario when dnsmasq is
-   listening on one interface and another server (most probably BIND)
-   is listening on another. It's not possible for BIND to bind to an
-   (address,port) pair when dnsmasq has bound (wildcard,port), hence
-   the ability to explicitly turn off wildcard binding.
+   In "wildcard" mode, dnsmasq binds the wildcard IP address (0.0.0.0 or
+   ::). This allows it to recieve all the packets sent to the server on
+   the relevant port. Access control (--interface, --except-interface,
+   --listen-address, etc) is implemented by dnsmasq: it queries the
+   kernel to determine the interface on which a packet was recieved and
+   the address to which it was sent, and applies the configured
+   rules. Wildcard mode is the default if neither of the other modes are
+   specified. 
+
+   In "bind-interfaces" mode, dnsmasq runs through all the network
+   interfaces available when it starts, finds the set of IP addresses on
+   those interfaces, filters that set using the access control
+   configuration, and then binds the set of IP addresses. Only packets
+   sent to the allowed addresses are delivered by the kernel to dnsmasq.
+
+   In "bind-dynamic" mode, access control filtering is done both by
+   binding individual IP addresses, as for bind-interfaces, and by
+   inspecting individual packets on arrival as for wildcard mode. In
+   addition, dnsmasq notices when new interfaces appear or new addresses
+   appear on existing interfaces, and the resulting IP addresses are
+   bound automatically without having to restart dnsmasq.
+
+   The mode chosen has four different effects: co-existence with other
+   servers, semantics of --interface access control, effect of new
+   interfaces, and legality of --interface specifications for
+   non-existent inferfaces. We will deal with these in order.
+
+   A dnsmasq instance running in wildcard mode precludes a machine from
+   running a second instance of dnsmasq or any other DNS, TFTP or DHCP
+   server. Attempts to do so will fail with an "address in use" error. 
+   Dnsmasq running in --bind-interfaces or bind-dynamic mode allow other
+   instances of dnsmasq or other servers, as long as no two servers are
+   configured to listen on the same interface address. 
+
+   The semantics of --interface varies subtly between wildcard or
+   bind-dynamic mode and bind-interfaces mode. The situation where this
+   matters is a request which arrives via one interface (A), but with a
+   destination address of a second interface (B) and when dnsmasq is
+   configured to listen only on B. In wildcard or bind-dynamic mode, such
+   a request will be ignored, in bind-interfaces mode, it will be
+   accepted.
+
+   The creation of new network interfaces after dnsmasq starts is ignored
+   by dnsmasq when in --bind-interfaces mode. In wildcard or bind-dynamic
+   mode, such interfaces are handled normally.
+
+   A --interface specification for a non-existent interface is a fatal
+   error at start-up when in --bind-interfaces mode, by just generates a
+   warning in wildcard or bind-dynamic mode.
 
 Q: Why doesn't Kerberos work/why can't I get sensible answers to
    queries for SRV records.
@@ -303,7 +320,7 @@ A: Yes, new releases of dnsmasq are always announced through
 
 Q: What does the dhcp-authoritative option do? 
 
-A: See http://www.isc.org/index.pl?/sw/dhcp/authoritative.php - that's
+A: See http://www.isc.org/files/auth.html - that's
    for the ISC daemon, but the same applies to dnsmasq.
 
 Q: Why does my Gentoo box pause for a minute before getting a new
@@ -354,7 +371,7 @@ A: Yes, from version-2.21. The support is only available running under
    If a physical interface has more than one IP address or aliases
    with extra IP addresses, then any dhcp-ranges corresponding to
    these addresses can be used for address allocation. So if an
-   interface has addresses 192.168.1.0/24 and 192.68.2.0/24 and there
+   interface has addresses 192.168.1.0/24 and 192.168.2.0/24 and there
    are DHCP ranges 192.168.1.100-192.168.1.200 and
    192.168.2.100-192.168.2.200 then both ranges would be used for host
    connected to the physical interface. A more typical use might be to
@@ -381,7 +398,7 @@ A: Probably the nameserver is an authoritative nameserver for a
 Q: Does the dnsmasq DHCP server probe addresses before allocating
    them, as recommended in RFC2131?
 
-A: Yes, dynmaically allocated IP addresses are checked by sending an
+A: Yes, dynamically allocated IP addresses are checked by sending an
    ICMP echo request (ping). If a reply is received, then dnsmasq
    assumes that the address is in use, and attempts to allocate an
    different address. The wait for a reply is between two and three
@@ -413,10 +430,11 @@ A: Change your kernel configuration: either deselect CONFIG_SECURITY
    _or_ select CONFIG_SECURITY_CAPABILITIES. Alternatively, you can 
    remove the need to set capabilities by running dnsmasq as root.
 
-Q: Where can I get .rpms Suitable for Suse?
 
-A: Dnsmasq is in Suse itself, and the latest releases are also
-   available at ftp://ftp.suse.com/pub/people/ug/
+Q: Where can I get .rpms Suitable for openSUSE/SLES?
+
+A: Dnsmasq is in openSUSE itself, and the latest releases are also
+   available at http://download.opensuse.org/repositories/network/
 
 
 Q: Can I run dnsmasq in a Linux vserver?
@@ -466,8 +484,18 @@ A: The DHCP client on windows Vista (and possibly later versions)
    work).
 
   
+Q: DHCP doesn't work with windows 7 but everything else is fine.
 
+A: There seems to be a problem if Windows 7 doesn't get a value for
+   DHCP option 252 in DHCP packets it gets from the server. The
+   symtoms have beeen variously reported as continual DHCPINFORM
+   requests in an attempt to get an option-252, or even ignoring DHCP
+   offers completely (and failing to get an IP address) if there is no
+   option-252 supplied. DHCP option 252 is for WPAD, WWW Proxy 
+   Auto Detection and if you don't want or need to use that, then 
+   simplest fix seems to be to supply an empty option with:
 
+   dhcp-option=252,"\n"
 
 
 

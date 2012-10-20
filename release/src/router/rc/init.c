@@ -80,33 +80,38 @@ extern struct nvram_tuple router_state_defaults[];
 static void
 wps_restore_defaults(void)
 {
-	/* cleanly up nvram for WPS */
-	nvram_unset("wps_seed");
-	nvram_unset("wps_config_state");
-	nvram_unset("wps_addER");
-	//nvram_unset("wps_device_pin");
-	nvram_unset("wps_pbc_force");
-	nvram_unset("wps_config_command");
-	nvram_unset("wps_proc_status");
-	nvram_unset("wps_status");
-	nvram_unset("wps_method");
-	nvram_unset("wps_proc_mac");
-	nvram_unset("wps_sta_pin");
-	nvram_unset("wps_currentband");
-	nvram_unset("wps_restart");
-	nvram_unset("wps_event");
+	char macstr[128];
+	int i;
 
-	nvram_unset("wps_enr_mode");
-	nvram_unset("wps_enr_ifname");
+	/* cleanly up nvram for WPS */
+	nvram_unset("wps_config_state");
+	nvram_unset("wps_proc_status");
+	nvram_unset("wps_config_method");
+
+	nvram_unset("wps_restart");
+	nvram_unset("wps_proc_status");
+	nvram_unset("wps_proc_mac");
+
+	nvram_unset("wps_sta_devname");
+	nvram_unset("wps_sta_mac");
+
+	nvram_unset("wps_pinfail");
+	nvram_unset("wps_pinfail_mac");
+	nvram_unset("wps_pinfail_name");
+	nvram_unset("wps_pinfail_state");
+
 	nvram_unset("wps_enr_ssid");
 	nvram_unset("wps_enr_bssid");
 	nvram_unset("wps_enr_wsec");
 
-	nvram_unset("wps_unit");
-
 	nvram_set("wps_device_name", get_productid());
 	nvram_set("wps_modelnum", get_productid());
-	nvram_set("boardnum", nvram_get("serial_no") ? : nvram_safe_get("et0macaddr"));
+
+	strcpy(macstr, nvram_safe_get("et0macaddr"));
+	if (strlen(macstr))
+		for (i = 0; i < strlen(macstr); i++)
+			macstr[i] = tolower(macstr[i]);
+	nvram_set("boardnum", nvram_get("serial_no") ? : macstr);
 }
 #endif /* RTCONFIG_WPS */
 
@@ -263,16 +268,6 @@ wl_defaults(void)
 	if (!nvram_get("wl_country_code"))
 		nvram_set("wl_country_code", "");
 
-	nvram_unset("maxp2ga0");
-	nvram_unset("maxp2ga1");
-	nvram_unset("maxp2ga2");
-	nvram_unset("maxp5ga0");
-	nvram_unset("maxp5ga1");
-	nvram_unset("maxp5ga2");
-	nvram_unset("maxp5gha0");
-	nvram_unset("maxp5gha1");
-	nvram_unset("maxp5gha2");
-
 	unit = 0;
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
@@ -414,7 +409,7 @@ void
 wl_defaults_wps(void)
 {
 	struct nvram_tuple *t;
-	char prefix[]="wlXXXXXX_", tmp[100], tmp2[100];
+	char prefix[]="wlXXXXXX_", tmp[100];
 	char word[256], *next;
 	int unit;
 
@@ -509,7 +504,6 @@ void wlpwr_default()
 	char tmp[100], prefix[]="wlXXXXXX_";
 	int unit;
 	int wlpwrver;
-	char *wltxpwr;
 
 	if(get_model()==MODEL_RTN66U) {
 		wlpwrver = nvram_get_int("wlpwrver");
@@ -535,7 +529,6 @@ void usbctrl_default()
 	char tmp[256], *ptr;
 	int buf_len = 0;
 	int usbctrlver;
-	char *wltxpwr;
 	int acc_num, acc_num_ret, i;
 	char *acc_user, *acc_password;
 	char acc_nvram_username[32], acc_nvram_password[32];
@@ -965,11 +958,9 @@ init_swmode()
 
 int init_nvram(void)
 {
-	int model;
+	int model = get_model();
 	char wan_if[10];
 	int unit = 0;
-
-	model = get_model();
 
 	TRACE_PT("init_nvram for %d\n", model);
 
@@ -1201,6 +1192,13 @@ int init_nvram(void)
 		nvram_set_int("sb/1/ledbh4", 2);
 		nvram_set_int("sb/1/ledbh5", 11);
 		nvram_set_int("sb/1/ledbh6", 11);
+#ifdef RTCONFIG_SWMODE_SWITCH
+		nvram_set_int("btn_swmode1_gpio", 6|GPIO_ACTIVE_LOW);
+		nvram_set_int("btn_swmode2_gpio", 7|GPIO_ACTIVE_LOW);
+		nvram_set_int("btn_swmode3_gpio", 8|GPIO_ACTIVE_LOW);
+		init_swmode(); // is it ok to placed here
+		add_rc_support("swmode_switch");
+#endif
 		/* go to common N12* init */
 		goto case_MODEL_RTN12X;
 
@@ -1213,6 +1211,13 @@ int init_nvram(void)
 		nvram_set_int("led_wps_gpio", 18|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wan_gpio", 4|GPIO_ACTIVE_LOW);
 		nvram_set_int("sb/1/ledbh5", 2);
+#ifdef RTCONFIG_SWMODE_SWITCH
+		nvram_set_int("btn_swmode1_gpio", 6|GPIO_ACTIVE_LOW);
+		nvram_set_int("btn_swmode2_gpio", 7|GPIO_ACTIVE_LOW);
+		nvram_set_int("btn_swmode3_gpio", 8|GPIO_ACTIVE_LOW);
+		init_swmode(); // is it ok to placed here
+		add_rc_support("swmode_switch");
+#endif
 		/* go to common N12* init */
 		goto case_MODEL_RTN12X;
 
@@ -1230,13 +1235,6 @@ int init_nvram(void)
 		nvram_set("wandevs", "et0");
 		nvram_set("wl_ifnames", "eth1");
 
-#ifdef RTCONFIG_SWMODE_SWITCH
-		nvram_set_int("btn_swmode1_gpio", 6|GPIO_ACTIVE_LOW);
-		nvram_set_int("btn_swmode2_gpio", 7|GPIO_ACTIVE_LOW);
-		nvram_set_int("btn_swmode3_gpio", 8|GPIO_ACTIVE_LOW);
-		init_swmode(); // is it ok to placed here
-		add_rc_support("swmode_switch");
-#endif
 		break;
 
 	case MODEL_RTN15U:
@@ -1517,7 +1515,7 @@ int init_nvram(void)
 		add_rc_support("2.4G mssid usbX1");
 		break;
 
-	case MODEL_RTN10D:
+	case MODEL_RTN10D1:
 		nvram_set("lan_ifname", "br0");
 		nvram_set("lan_ifnames", "vlan0 eth1");
 		nvram_set("wan_ifnames", "eth0");
@@ -1665,7 +1663,9 @@ int init_nvram(void)
 #ifdef RTCONFIG_SFP
 	add_rc_support("sfp");
 #endif
-
+#ifdef RTCONFIG_4M_SFP
+	add_rc_support("sfp4m");
+#endif
 	//add_rc_support("ruisp");
 
 	return 0;
@@ -1680,7 +1680,7 @@ void force_free_caches()
 
 	model = get_model();
 
-	if(model==MODEL_RTN53) {
+	if(model==MODEL_RTN53||model==MODEL_RTN10D1) {
 		free_caches(FREE_MEM_PAGE, 2, 0);
 	}
 #endif
@@ -1695,6 +1695,7 @@ static void sysinit(void)
 	struct dirent *de;
 	char s[256];
 	char t[256];
+	int model;
 
 	mount("proc", "/proc", "proc", 0, NULL);
 	mount("tmpfs", "/tmp", "tmpfs", 0, NULL);
@@ -1808,9 +1809,11 @@ POOL_MOUNT_ROOT,
 	if(get_model()==MODEL_RTN53) {
 		f_write_string("/proc/sys/vm/min_free_kbytes", "2048", 0, 0);
 	}
-	force_free_caches();
-
 #endif
+#ifdef RTCONFIG_16M_RAM_SFP
+	f_write_string("/proc/sys/vm/min_free_kbytes", "512", 0, 0);
+#endif
+	force_free_caches();
 
 	// autoreboot after kernel panic
 	f_write_string("/proc/sys/kernel/panic", "3", 0, 0);
@@ -1819,6 +1822,17 @@ POOL_MOUNT_ROOT,
 	// be precise about vm commit
 #ifdef CONFIG_BCMWL5
 	f_write_string("/proc/sys/vm/overcommit_memory", "2", 0, 0);
+
+	model = get_model();
+	if(model==MODEL_RTN53 ||
+		model==MODEL_RTN10U ||
+		model==MODEL_RTN12B1 || model==MODEL_RTN12C1 ||
+		model==MODEL_RTN12D1 || model==MODEL_RTN12HP ||
+		model==MODEL_RTN15U){
+
+		f_write_string("/proc/sys/vm/panic_on_oom", "1", 0, 0);
+		f_write_string("/proc/sys/vm/overcommit_ratio", "100", 0, 0);
+	}
 #endif
 
 #ifdef RTCONFIG_IPV6
@@ -1850,7 +1864,7 @@ POOL_MOUNT_ROOT,
 	if (!noconsole) xstart("console");
 
 #ifdef RTCONFIG_USB_BECEEM
-	system("cp -rf /rom/Beceem_firmware /tmp");
+	eval("cp", "-rf", "/rom/Beceem_firmware", "/tmp");
 #endif
 }
 
@@ -1860,7 +1874,7 @@ int init_main(int argc, char *argv[])
 	sigset_t sigset;
 	int rc_check, dev_check, boot_check; //Power on/off test
 	int boot_fail, dev_fail, dev_fail_count, total_fail_check;
-	char dev_status[20], reboot_log[128], dev_log[128];
+	char reboot_log[128], dev_log[128];
 	int ret;
 
 	sysinit();
@@ -1886,6 +1900,9 @@ int init_main(int argc, char *argv[])
 		switch (state) {
 		case SIGUSR1:		/* USER1: service handler */
 			handle_notifications();
+#ifdef RTCONFIG_16M_RAM_SFP
+			force_free_caches();
+#endif
 			break;
 
 		case SIGHUP:		/* RESTART */
@@ -1996,11 +2013,11 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			if (restore_defaults_g)
 			{
 				restore_defaults_g = 0;
-				if ((nvram_get("wl0_channel") && atoi(nvram_get("wl0_channel"))) ||
-					(nvram_get("wl1_channel") && atoi(nvram_get("wl1_channel"))) ||
-					(nvram_get("wl1_chanspec") && !atoi(nvram_get("wl1_chanspec"))) ||
-					get_model() == MODEL_RTN53)
-					restart_wireless();
+				if ((get_model() == MODEL_RTAC66U) ||
+					(get_model() == MODEL_RTN12HP) ||
+					(get_model() == MODEL_RTN66U))
+					set_wltxpower();
+				restart_wireless();
 			}
 #endif
 			lanaccess_wl();

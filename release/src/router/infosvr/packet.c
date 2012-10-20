@@ -2,6 +2,9 @@
 /*  Version 1.4     by Yuhsin_Lee 2005/1/19 16:31	   */
 /************************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "iboxcom.h"
 #include "packet.h"
 

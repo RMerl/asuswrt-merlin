@@ -157,6 +157,8 @@ int ui_init_flashcmds(void)
 #ifdef FLASH_PARTITION_FILL_ENABLED
 	       "-fill;Fill the partition with char|"
 #endif
+	       "-cfe; write to flash and stay at cfe command mode|"
+	       "-onlytrx1; only write to the 1st partition|"
 	       "-mem;Use memory as source instead of a device");
 
 
@@ -347,6 +349,8 @@ static void ui_check_flashdev(char *in, char *out)
 			return;
 		}
 		if (strncmp(in+i, ".trx", 4) == 0) {
+			if (strcmp(in, "nflash2.trx") == 0) 
+				break;
 			/* Program the trx image */
 			ui_get_trx_flashdev(out);
 			return;
@@ -450,7 +454,7 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
     cfe_loadargs_t la;
     int amtcopy;
     int devtype;
-    int srcdevtype;
+    int srcdevtype = 0;
     int chkheader;
     int sfd;
     int copysize;
@@ -475,6 +479,10 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
     char *scode = "secret_code";
     uint8_t SCODE[5] = {0x53, 0x43, 0x4F, 0x44, 0x45};
 #endif // RESCUE_MODE
+#ifdef DUAL_TRX
+    int cfe = 0;
+    int write_trx2 = 0;
+#endif
 
     /* Get staging buffer */
     memsrc = cmd_sw_isset(cmd,"-mem");
@@ -534,7 +542,6 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
      */
 
     fname = cmd_getarg(cmd,0);
-
     if (!fname) {
 	return ui_showusage(cmd);
 	}
@@ -588,6 +595,10 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
         size = atoi(x);
         }
 
+    cfe = cmd_sw_isset(cmd, "-cfe");
+#ifdef DUAL_TRX
+    write_trx2 = cmd_sw_isset(cmd, "-onlytrx1");
+#endif
     /* Fix up the ptr and size for reading from memory
      * and skip loading to go directly to programming
      */
@@ -614,8 +625,6 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
 		return ui_showerror(sfd,"Could not open source device");
 		}
 	    memset(ptr,0xFF,bufsize);
-
-
 	    if (cfe_ioctl(sfd,IOCTL_FLASH_GETINFO,
 			  (unsigned char *) &flashinfo,
 			  sizeof(flash_info_t),
@@ -629,15 +638,11 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
             else {
 		size = flashinfo.flash_size;
 		}
-
 	    /* Make sure we don't overrun the staging buffer */
-	    
 	    if (size > bufsize) {
 		size = bufsize;
 		}
-
 	    /* Read the flash device here. */
-
 	    res = cfe_read(sfd,ptr,size);
 
 	    cfe_close(sfd);
@@ -673,7 +678,6 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
 	    break;
 
 	default:
-		
 	    res = ui_process_url(fname, cmd, &la);
 	    if (res < 0) {
 		ui_showerror(res,"Invalid file name %s",fname);
@@ -797,13 +801,14 @@ program:
     /*
      * Open the destination flash device.
      */
-
+#ifdef DUAL_TRX
+Open_dev:
+#endif
     fh = cfe_open(flashdev);
     if (fh < 0) {
 	xprintf("Could not open device '%s'\n",flashdev);
 	return CFE_ERR_DEVNOTFOUND;
-	}
-
+    }
     if (cfe_ioctl(fh,IOCTL_FLASH_GETINFO,
 		  (unsigned char *) &flashinfo,
 		  sizeof(flash_info_t),
@@ -811,8 +816,8 @@ program:
 	/* Truncate write if source size is greater than flash size */
 	if ((copysize + offset) > flashinfo.flash_size) {
             copysize = flashinfo.flash_size - offset;
-	    }
 	}
+    }
 
     /*
      * If overwriting the boot flash, we need to use the special IOCTL
@@ -835,7 +840,7 @@ program:
 	/* should not return */
 	return CFE_ERR;
 #endif
-	}
+    }
 
     /*
      * Otherwise: it's not the flash we're using right
@@ -888,23 +893,36 @@ program:
         xprintf("copysize=%d, amtcopy=%d \n", copysize, amtcopy);
         if (copysize == amtcopy) {
                 xprintf("done. %d bytes written\n",amtcopy);
-                for (i=0; i<6; i++)
-                       send_rescueack(0x0006, 0x0001);
-                res = 0;
-                printf("\nBCM47XX SYSTEM RESET!!!\n\n");
-    		cfe_close(fh);
-                ui_docommand("reboot");
+		res = 0;
+#ifdef DUAL_TRX
+    	if((srcdevtype == 10) && !strcmp(flashdev, "nflash1.trx") && !write_trx2) {
+        	strcpy(flashdev, "nflash2.trx");
+		cfe_close(fh);
+	        write_trx2 = 1;
+        	goto Open_dev;
+    	}
+#endif
+		if(!cfe) {
+			cfe_close(fh);
+                	for (i=0; i<6; i++) 
+                       		send_rescueack(0x0006, 0x0001);
+
+                	printf("\nBCM47XX SYSTEM RESET!!!\n\n");
+                	ui_docommand("reboot");
+		}
         }
         else {
                 ui_showerror(amtcopy,"Failed.");
-                for (i=0; i<6; i++)
-                        send_rescueack(0x0006, 0x0000);
+		if(!cfe) {
+                	for (i=0; i<6; i++)
+                        	send_rescueack(0x0006, 0x0000);
+		}
                 res = CFE_ERR_IOERR;
         }
     }
     else {
         if (copysize == amtcopy) {
-                xprintf("done. %d bytes written\n",amtcopy);
+                xprintf("RES: done. %d bytes written\n",amtcopy);
                 res = 0;
                 }
         else {
@@ -914,7 +932,7 @@ program:
    }
 #else
     if (copysize == amtcopy) {
-	xprintf("done. %d bytes written\n",amtcopy);
+	xprintf("NO: done. %d bytes written\n",amtcopy);
 	res = 0;
 	}
     else {

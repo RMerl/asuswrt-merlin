@@ -31,6 +31,8 @@
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ajax.js"></script>
 <script>
 <% login_state_hook(); %>
 
@@ -48,6 +50,62 @@ var flag_manual = 0;
 var issubmit = 0;
 var isrescan = 0;
 var getBand = '<% get_parameter("band"); %>';
+
+// live update
+var $j = jQuery.noConflict();
+var webs_state_update = '<% nvram_get("webs_state_update"); %>';
+var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
+var webs_state_error = '<% nvram_get("webs_state_error"); %>';
+var webs_state_info = '<% nvram_get("webs_state_info"); %>';
+var exist_firmver = "<% nvram_get("firmver"); %>";
+var Latest_firmver = "";
+var Latest_firm = "";
+var Latest_buildno = "";
+var current_firm = "";
+var current_buildno = "";
+var liveUpdateFinish = false;
+var new_FW = false;
+var retry = 0;
+function detect_firmware(){
+	$j.ajax({
+		url: '/detect_firmware.asp',
+		dataType: 'script',
+
+		error: function(xhr){
+				setTimeout("detect_firmware();", 1000);
+		},
+ 		success: function(){
+			if(retry > 20){
+				liveUpdateFinish = true;					
+			}
+			else if(webs_state_update==0){
+					setTimeout("detect_firmware();", 1000);
+					retry++;
+			}
+			else{
+				if(webs_state_error != 1){
+					Latest_firmver = webs_state_info.split("_");
+					Latest_firm = Latest_firmver[0];
+					Latest_buildno = Latest_firmver[1];
+
+					if(Latest_firm.length > 0 && Latest_buildno.length > 0){	//match model FW
+						current_firm = parseInt(exist_firmver.replace(/[.]/gi,""));
+						current_buildno = <% nvram_get("buildno"); %>;
+
+						if((current_buildno < Latest_buildno) || ( current_buildno == Latest_buildno && current_firm < Latest_firm)){
+							new_FW = true;
+						}
+					}
+				}
+				liveUpdateFinish = true;					
+			}
+		}
+	});
+}
+
+function detect_update(){
+	document.start_update.submit();
+}
 
 function set_step(focus_id){
 	/*if(focus_id == "t0")
@@ -443,5 +501,16 @@ function gotoIndex(){
 <input type="hidden" name="flag" value="">
 <input type="hidden" name="prev_page" value="">
 </form>
+
+<form method="post" name="start_update" action="/start_apply2.htm" target="hidden_frame">
+	<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+	<input type="hidden" name="flag" value="liveUpdate">
+	<input type="hidden" name="current_page" value="">
+	<input type="hidden" name="next_page" value="">
+	<input type="hidden" name="action_mode" value="apply">
+	<input type="hidden" name="action_script" value="start_webs_update">
+	<input type="hidden" name="action_wait" value="12">
+</form>
+<iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 </body>
 </html>

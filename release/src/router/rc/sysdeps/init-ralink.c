@@ -106,7 +106,7 @@ void generate_switch_para(void)
 				nvram_set("vlan0ports", "2 3 5*");
 				nvram_set("vlan1ports", "0 1 4 5u");
 			}
-			else {  // default for 0
+			else {	// default for 0
 				nvram_set("vlan0ports", "0 1 2 3 5*");
 				nvram_set("vlan1ports", "4 5u");
 			}
@@ -434,7 +434,7 @@ switch_exist(void)
 	ret = eval("8367m", "41");
 	_dprintf("eval(8367m, 41) ret(%d)\n", ret);
 #endif
-	return !ret;
+	return (ret == 0);
 }
 
 void init_wl(void)
@@ -454,7 +454,6 @@ void init_wl(void)
 
 void fini_wl(void)
 {
-        
 	if (is_module_loaded("hw_nat"))
 		modprobe_r("hw_nat");
 
@@ -466,7 +465,7 @@ void fini_wl(void)
 	}
 
 	if (is_module_loaded("rt2860v2_ap"))
-                modprobe_r("rt2860v2_ap");
+		modprobe_r("rt2860v2_ap");
 }
 
 void init_syspara(void)
@@ -529,27 +528,27 @@ void init_syspara(void)
 	nvram_set("et1macaddr", macaddr2);
 	
 
-        if (FRead(dst, OFFSET_MAC_GMAC0, bytes)<0)
-                dbg("READ MAC address GMAC0: Out of scope\n");
-        else
-        {
-                if (buffer[0]==0xff)
-                {
-                        if (ether_atoe(macaddr, ea))
-                                FWrite(ea, OFFSET_MAC_GMAC0, 6);
-                }
-        }
+	if (FRead(dst, OFFSET_MAC_GMAC0, bytes)<0)
+		dbg("READ MAC address GMAC0: Out of scope\n");
+	else
+	{
+		if (buffer[0]==0xff)
+		{
+			if (ether_atoe(macaddr, ea))
+				FWrite(ea, OFFSET_MAC_GMAC0, 6);
+		}
+	}
 
-        if (FRead(dst, OFFSET_MAC_GMAC2, bytes)<0)
-                dbg("READ MAC address GMAC2: Out of scope\n");
-        else
-        {
-                if (buffer[0]==0xff)
-                {
-                        if (ether_atoe(macaddr2, ea))
-                                FWrite(ea, OFFSET_MAC_GMAC2, 6);
-                }
-        }
+	if (FRead(dst, OFFSET_MAC_GMAC2, bytes)<0)
+		dbg("READ MAC address GMAC2: Out of scope\n");
+	else
+	{
+		if (buffer[0]==0xff)
+		{
+			if (ether_atoe(macaddr2, ea))
+				FWrite(ea, OFFSET_MAC_GMAC2, 6);
+		}
+	}
 
 	/* reserved for Ralink. used as ASUS country code. */
 	dst = (unsigned int *)country_code;
@@ -570,8 +569,8 @@ void init_syspara(void)
 		else
 		{
 			nvram_set("wl_country_code", "DB");
-                        nvram_set("wl0_country_code", "DB");
-                        nvram_set("wl1_country_code", "DB");
+			nvram_set("wl0_country_code", "DB");
+			nvram_set("wl1_country_code", "DB");
 		}
 
 		if (!strcasecmp(nvram_safe_get("wl_country_code"), "BR"))
@@ -601,7 +600,7 @@ void init_syspara(void)
 			nvram_set("secret_code", "12345670");
 	}
 
-	src = 0x50020;  /* /dev/mtd/3, firmware, starts from 0x50000 */
+	src = 0x50020;	/* /dev/mtd/3, firmware, starts from 0x50000 */
 	dst = (unsigned int *)buffer;
 	bytes = 16;
 	if (FRead(dst, src, bytes)<0)
@@ -619,8 +618,8 @@ void init_syspara(void)
 		nvram_set("firmver", trim_r(fwver));
 	}
 
-        memset(buffer, 0, sizeof(buffer));
-        FRead(buffer, OFFSET_BOOT_VER, 4);
+	memset(buffer, 0, sizeof(buffer));
+	FRead(buffer, OFFSET_BOOT_VER, 4);
 //	sprintf(blver, "%c.%c.%c.%c", buffer[0], buffer[1], buffer[2], buffer[3]);
 	sprintf(blver, "%s-0%c-0%c-0%c-0%c", trim_r(productid), buffer[0], buffer[1], buffer[2], buffer[3]);
 	nvram_set("blver", trim_r(blver));
@@ -691,8 +690,13 @@ void reinit_hwnat()
 	// in restart_wireless for wlx_mrate_x
 	
 	if (nvram_get_int("hwnat")) {
-		if (is_nat_enabled() && !((nvram_get_int("qos_enable") /*|| nvram_get_int("fw_pt_l2tp") || nvram_get_int("fw_pt_ipsec") || nvram_get_int("wl0_mrate_x") || nvram_get_int("wl1_mrate_x")*/))) {
-			if (!nvram_get_int("hwnat_disable") && !is_module_loaded("hw_nat")) {
+		if (is_nat_enabled() && !nvram_get_int("qos_enable") &&
+			/* TODO: consider RTCONFIG_DUALWAN case */
+//			!nvram_match("wan0_proto", "l2tp") &&
+//			!nvram_match("wan0_proto", "pptp") &&
+			(nvram_match("wl0_radio", "0") || !nvram_get_int("wl0_mrate_x")) &&
+			(nvram_match("wl1_radio", "0") || !nvram_get_int("wl1_mrate_x"))) {
+			if (!is_module_loaded("hw_nat")) {
 #if 0
 				system("echo 2 > /proc/sys/net/ipv4/conf/default/force_igmp_version");
 				system("echo 2 > /proc/sys/net/ipv4/conf/all/force_igmp_version");

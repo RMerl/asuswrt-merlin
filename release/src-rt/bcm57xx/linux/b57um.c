@@ -4252,6 +4252,12 @@ STATIC int bcm5700_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 			pDevice->PhyAddr = data[0];
 		}
 		LM_WritePhy(pDevice, data[1] & 0x1f, data[2]);
+
+		/* Invalidate current robo page */
+		if ((pDevice->Flags & ROBO_SWITCH_FLAG) && pUmDevice->robo &&
+		    (pDevice->PhyAddr == 0x1e) && ((data[1] & 0x1f) == 0x10))
+			((robo_info_t *)pUmDevice->robo)->page = (data[2] >> 8);
+
 		if (data[0] != 0xffff)
 			pDevice->PhyAddr = savephyaddr;
 		BCM5700_PHY_UNLOCK(pUmDevice, flags);
@@ -4281,6 +4287,12 @@ STATIC int bcm5700_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 			pDevice->PhyAddr = (args[0] >> 16) & 0xffff;
 		}
 		LM_WritePhy(pDevice, args[0] & 0xffff, args[1]);
+
+		/* Invalidate current robo page */
+		if ((pDevice->Flags & ROBO_SWITCH_FLAG) && pUmDevice->robo &&
+		    (pDevice->PhyAddr == 0x1e) && ((args[0] & 0xffff) == 0x10))
+			((robo_info_t *)pUmDevice->robo)->page = ((uint16)args[1] >> 8);
+
 		if (cmd == SIOCSETCPHYWR2)
 			pDevice->PhyAddr = savephyaddr;
 		BCM5700_PHY_UNLOCK(pUmDevice, flags);

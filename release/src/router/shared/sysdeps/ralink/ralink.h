@@ -17,6 +17,7 @@
 #ifndef RTXXXXH
 #define RTXXXXH
 
+#include <iwlib.h>
 
 #define WIF	"ra0"
 #define WIF_5G	"ra0"
@@ -148,7 +149,7 @@ typedef struct _SITE_SURVEY_ARRAY
 #define	RTPRIV_IOCTL_GSTAINFO		(SIOCIWFIRSTPRIV + 0x1A)
 #define	RTPRIV_IOCTL_GSTAT		(SIOCIWFIRSTPRIV + 0x1B)
 #define RTPRIV_IOCTL_GRSSI		(SIOCIWFIRSTPRIV + 0x1C)
-#define RTPRIV_IOCTL_RADIO_STATUS	(SIOCIWFIRSTPRIV + 0x1D)
+#define RTPRIV_IOCTL_RADIO_STATUS	(SIOCIWFIRSTPRIV + 0x1E)
 #define OID_802_11_DISASSOCIATE		0x0114
 #define OID_802_11_BSSID_LIST_SCAN	0x0508
 #define OID_802_11_SSID			0x0509
@@ -268,7 +269,7 @@ int config_3052(int type);
 
 int restore_3052();
 
-void ra_gpio_write_spec(bit_idx, flag);
+void ra_gpio_write_spec(int bit_idx, int flag);
 
 int check_all_tasks();
 
@@ -279,5 +280,7 @@ int ra_gpio_write_int(int value);
 int ra_gpio_read_int(int *value);
 
 int ra_gpio_write_bit(int idx, int value);
+
+extern int wl_ioctl(const char *ifname, int cmd, struct iwreq *pwrq);
 
 #endif

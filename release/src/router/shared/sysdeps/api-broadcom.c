@@ -159,7 +159,7 @@ uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 	} else
 	/* 5325E/535x */
 	/* TODO: same as above, according SDK only 5325 */
-	if (model == MODEL_RTN12 || model == MODEL_RTN10U || model == MODEL_RTN10D || model == MODEL_RTN53 
+	if (model == MODEL_RTN12 || model == MODEL_RTN10U || model == MODEL_RTN10D1 || model == MODEL_RTN53 
 		|| model == MODEL_RTN12B1 || model == MODEL_RTN12C1 || model == MODEL_RTN12D1 || model == MODEL_RTN12HP) {
 		reg = 0x1e;
 		mask= 0x0608;
@@ -270,13 +270,8 @@ void set_radio(int on, int unit, int subunit)
 	else
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
-	if (nvram_match(strcat_r(prefix, "radio", tmp), "0")) return;
+	//if (nvram_match(strcat_r(prefix, "radio", tmp), "0")) return;
 
-#if 0
-	sprintf(tmpstr, "%d", on);
-	nvram_set(strcat_r(prefix, "radio", tmp),  tmpstr);
-	nvram_commit();
-#endif
 #ifdef RTAC66U
 	snprintf(tmp, sizeof(tmp), "%sradio", prefix);
 	if(!strcmp(tmp, "wl1_radio")){

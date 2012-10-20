@@ -21,12 +21,15 @@ var $j = jQuery.noConflict();
 <% wl_get_parameter(); %>
 
 function initial(){
+	$("t0").className = <% nvram_get("wl_unit"); %> ? "tab_NW" : "tabclick_NW";
+	$("t1").className = <% nvram_get("wl_unit"); %> ? "tabclick_NW" : "tab_NW";
+
 	if(sw_mode == 2){
 		if(parent.psta_support == -1){
 			if('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
 				tabclickhandler('<% nvram_get("wl_unit"); %>');
 			}
-			else if(sw_mode == 2 && '<% nvram_get("wl_unit"); %>' != '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' == '1'){
+			else if('<% nvram_get("wl_unit"); %>' != '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' == '1'){
 				tabclickhandler('<% nvram_get("wl_unit"); %>');
 			}
 		}
@@ -44,12 +47,14 @@ function initial(){
 		}
 	}
 	else{
-		if("<% nvram_get("wl_unit"); %>" == "-1" || "<% nvram_get("wl_subunit"); %>" != "-1"){
+		if("<% nvram_get("wl_subunit"); %>" != "-1"){
 			tabclickhandler(0);
 		}
 	}
 
-	flash_button();
+	if("<% nvram_get("wl_unit"); %>" == "-1"){
+		tabclickhandler(0);
+	}
 
 	// modify wlX.1_ssid(SSID to end clients) under repeater mode
 	if(parent.sw_mode == 2 && '<% nvram_get("wlc_band"); %>' == '<% nvram_get("wl_unit"); %>')
@@ -66,9 +71,6 @@ function initial(){
 		*/
 	}
 
-	$("t0").className = <% nvram_get("wl_unit"); %> ? "tab_NW" : "tabclick_NW";
-	$("t1").className = <% nvram_get("wl_unit"); %> ? "tabclick_NW" : "tab_NW";
-
 	if($("t1").className == "tabclick_NW" && 	parent.Rawifi_support != -1)	//no exist Rawifi
 		$("wl_txbf_tr").style.display = "";		//Viz Add 2011.12 for RT-N56U Ralink 			
 
@@ -82,7 +84,7 @@ function initial(){
 	/* Viz banned 2012.06
 	if(document.form.wl_wpa_psk.value.length <= 0)
 		document.form.wl_wpa_psk.value = "<#wireless_psk_fillin#>";
-		*/
+	*/
 	
 	if(sw_mode == 2){				
 			//remove Crypto: WPA & RADIUS
@@ -100,6 +102,7 @@ function initial(){
 	else
 		parent.show_middle_status(document.form.wl_auth_mode_x.value, document.form.wl_wpa_mode.value, parseInt(document.form.wl_wep_x.value));
 	
+	flash_button();
 	automode_hint();		
 }
 
@@ -579,7 +582,7 @@ function gotoSiteSurvey(){
 <input type="hidden" name="next_page" value="">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_wireless">
-<input type="hidden" name="action_wait" value="3">
+<input type="hidden" name="action_wait" value="8">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="wps_enable" value="<% nvram_get("wps_enable"); %>">
 <input type="hidden" name="wsc_config_state" value="<% nvram_get("wsc_config_state"); %>">

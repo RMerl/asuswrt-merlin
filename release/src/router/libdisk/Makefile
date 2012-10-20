@@ -8,33 +8,34 @@ ifeq ($(RTCONFIG_WEBDAV),y)
 PROGS += write_webdav_conf
 endif
 
-CFLAGS += -DASUS_NVRAM $(EXTRACFLAGS)
+CFLAGS += -DASUS_NVRAM $(EXTRACFLAGS) -fPIC
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(LINUXDIR)/include -Wall
-LDFLAGS = -L. -ldisk -L$(TOP)/nvram -lnvram -L$(TOP)/shared -lshared
+LDFLAGS_SO = -L$(TOP)/nvram -lnvram -L$(TOP)/shared -lshared
+LDFLAGS += $(LDFLAGS_SO) -L. -ldisk
 
-CFLAGS += -I$(TOP)/busybox/include -I$(TOP)/busybox/util-linux/volume_id
+CFLAGS += -I$(TOP)/busybox/include
+CFLAGS += -I$(TOP)/busybox/util-linux/volume_id
 OBJS += $(TOP)/busybox/util-linux/volume_id/util2.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/linux_swap.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/ext.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/fat.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/ntfs.o
+#OBJS += libbb_stub.o
 
 #SHARE_STATIC=y
 
 all: $(PROGS)
 
-libdisk.so: $(OBJS) $(TOP)/shared/shutils.o
-	$(LD) -shared -o $@ $^
-	$(STRIP) $@
+#libdisk.so: $(OBJS) $(TOP)/shared/shutils.o
+libdisk.so: $(OBJS)
+	$(LD) $(LDFLAGS_SO) -shared -o $@ $^
 
 write_smb_conf: write_smb_conf.o libdisk.so
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
-	$(STRIP) $@
 
 ifeq ($(RTCONFIG_WEBDAV),y)
 write_webdav_conf: write_webdav_conf.o libdisk.so
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
-	$(STRIP) $@
 endif
 
 test_of_var_files: libdisk.so test_share
@@ -42,24 +43,22 @@ test_of_var_files: libdisk.so test_share
 
 test_disk1: test_disk1.o libdisk.so
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
-	$(STRIP) $@
 
 test_disk2: test_disk2.o
 	$(CC) $(CFLAGS) -L$(TOP)/nvram -lnvram -L$(TOP)/shared -lshared -o $@ $^
-	$(STRIP) $@
 
 ifeq ($(SHARE_STATIC),y)
 test_share: test_share.o disk_share.o
 	@echo Got Static.
-	$(CC) $(CFLAGS) $(LDFLAGS) -s -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 else
 test_share: test_share.o libdisk.so
 	@echo Got lib.
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 endif
-	$(STRIP) $@
 
 install: all
+	$(STRIP) $(PROGS)
 	install -D test_disk1 $(INSTALLDIR)/sbin/test_disk1
 	install -D test_disk2 $(INSTALLDIR)/sbin/test_disk2
 	install -D test_share $(INSTALLDIR)/sbin/test_share
@@ -101,4 +100,3 @@ endif
 
 clean:
 	rm -f *.o $(PROGS) write_webdav_conf
-

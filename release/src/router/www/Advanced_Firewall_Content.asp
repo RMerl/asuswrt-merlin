@@ -29,6 +29,7 @@ function initial(){
 	show_menu();
 	showfilter_lwlist();
 	load_body();
+	check_Timefield_checkbox();
 }
 
 function applyRule(){
@@ -242,7 +243,7 @@ function check_duplicate(){
 											|| (document.form.filter_lw_dstport_x_0.value!="" && $('filter_lwlist_table').rows[i].cells[3].innerHTML =="") ){											
 													return false;
 									}else{
-											alert('<#JS_duplicate#>');
+											alert("<#JS_duplicate#>");
 											return true;
 								}						
 						}							
@@ -314,7 +315,43 @@ function showfilter_lwlist(){
   code +='</table>';
 	$("filter_lwlist_Block").innerHTML = code;
 }
-
+function check_Timefield_checkbox(){	// To check Date checkbox checked or not and control Time field disabled or not, Jieming add at 2012/10/05
+	if(	   document.form.filter_lw_date_x_Mon.checked == true 
+		|| document.form.filter_lw_date_x_Tue.checked == true
+		|| document.form.filter_lw_date_x_Wed.checked == true
+		|| document.form.filter_lw_date_x_Thu.checked == true
+		|| document.form.filter_lw_date_x_Fri.checked == true	){		
+			inputCtrl(document.form.filter_lw_time_x_starthour,1);
+			inputCtrl(document.form.filter_lw_time_x_startmin,1);
+			inputCtrl(document.form.filter_lw_time_x_endhour,1);
+			inputCtrl(document.form.filter_lw_time_x_endmin,1);
+			document.form.filter_lw_time_x.disabled = false;
+	}
+	else{
+			inputCtrl(document.form.filter_lw_time_x_starthour,0);
+			inputCtrl(document.form.filter_lw_time_x_startmin,0);
+			inputCtrl(document.form.filter_lw_time_x_endhour,0);
+			inputCtrl(document.form.filter_lw_time_x_endmin,0);
+			document.form.filter_lw_time_x.disabled = true;
+			$('enable_time_week_tr').style.display ="";
+	}
+		
+	if(document.form.filter_lw_date_x_Sun.checked == true || document.form.filter_lw_date_x_Sat.checked == true){
+		inputCtrl(document.form.filter_lw_time2_x_starthour,1);
+		inputCtrl(document.form.filter_lw_time2_x_startmin,1);
+		inputCtrl(document.form.filter_lw_time2_x_endhour,1);
+		inputCtrl(document.form.filter_lw_time2_x_endmin,1);
+		document.form.filter_lw_time2_x.disabled = false;
+	}
+	else{
+		inputCtrl(document.form.filter_lw_time2_x_starthour,0);
+		inputCtrl(document.form.filter_lw_time2_x_startmin,0);
+		inputCtrl(document.form.filter_lw_time2_x_endhour,0);
+		inputCtrl(document.form.filter_lw_time2_x_endmin,0);
+		document.form.filter_lw_time2_x.disabled = true;
+		$("enable_time_weekend_tr").style.display = ""; 
+	}
+}
 </script>
 </head>
 
@@ -408,14 +445,14 @@ function showfilter_lwlist(){
           					<tr>
           						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(10,1);"><#FirewallConfig_LanWanActiveDate_itemname#></a></th>
           						<td>
-								<input type="checkbox" name="filter_lw_date_x_Mon" class="input" onChange="return changeDate();"><#date_Mon_itemdesc#>
-								<input type="checkbox" name="filter_lw_date_x_Tue" class="input" onChange="return changeDate();"><#date_Tue_itemdesc#>
-								<input type="checkbox" name="filter_lw_date_x_Wed" class="input" onChange="return changeDate();"><#date_Wed_itemdesc#>
-								<input type="checkbox" name="filter_lw_date_x_Thu" class="input" onChange="return changeDate();"><#date_Thu_itemdesc#>
-								<input type="checkbox" name="filter_lw_date_x_Fri" class="input" onChange="return changeDate();"><#date_Fri_itemdesc#>
+								<input type="checkbox" name="filter_lw_date_x_Mon" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Mon_itemdesc#>
+								<input type="checkbox" name="filter_lw_date_x_Tue" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Tue_itemdesc#>
+								<input type="checkbox" name="filter_lw_date_x_Wed" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Wed_itemdesc#>
+								<input type="checkbox" name="filter_lw_date_x_Thu" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Thu_itemdesc#>
+								<input type="checkbox" name="filter_lw_date_x_Fri" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Fri_itemdesc#>
 		  					</td>
         					</tr>
-        					<tr>
+        					<tr id="enable_time_week_tr">
           						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(10,2);"><#FirewallConfig_LanWanActiveTime_itemname#></a></th>
           						<td>
 								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_starthour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 0);"> :
@@ -427,11 +464,11 @@ function showfilter_lwlist(){
 							<tr>
           						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(10,1);"><#FirewallConfig_LanWanActiveDate_itemname#></a></th>
           						<td>
-								<input type="checkbox" name="filter_lw_date_x_Sat" class="input" onChange="return changeDate();"><#date_Sat_itemdesc#>
-								<input type="checkbox" name="filter_lw_date_x_Sun" class="input" onChange="return changeDate();"><#date_Sun_itemdesc#>														
+								<input type="checkbox" name="filter_lw_date_x_Sat" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Sat_itemdesc#>
+								<input type="checkbox" name="filter_lw_date_x_Sun" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Sun_itemdesc#>														
 		  					</td>
         					</tr>
-							<tr>
+							<tr id="enable_time_weekend_tr">
           						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(10,2);"><#FirewallConfig_LanWanActiveTime_itemname#></a></th>
           						<td>
 								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_starthour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 0);"> :

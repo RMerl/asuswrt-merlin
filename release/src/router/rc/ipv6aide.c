@@ -74,6 +74,7 @@ int
 ipv6aide_main(int argc, char *argv[])
 {
 	FILE *fp;
+	sigset_t sigs_to_catch;
 
 	/* write pid */
 	if ((fp=fopen("/var/run/ipv6aide.pid", "w")) != NULL)
@@ -83,6 +84,11 @@ ipv6aide_main(int argc, char *argv[])
 	}
 
 	up = uptime();
+
+	sigemptyset(&sigs_to_catch);
+	sigaddset(&sigs_to_catch, SIGTERM);
+	sigaddset(&sigs_to_catch, SIGALRM);
+	sigprocmask(SIG_UNBLOCK, &sigs_to_catch, NULL);
 	signal(SIGTERM, ipv6aide_exit);
 	signal(SIGALRM, ipv6aide_check);
 	alarmtimer(NORMAL_PERIOD, 0);
@@ -92,4 +98,6 @@ ipv6aide_main(int argc, char *argv[])
 	{
 		pause();
 	}
+
+	return 0;
 }

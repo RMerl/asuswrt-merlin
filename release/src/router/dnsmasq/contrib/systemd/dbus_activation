@@ -1,0 +1,57 @@
+To: dnsmasq-discuss@lists.thekelleys.org.uk
+From: Alex Elsayed <eternaleye+usenet@gmail.com>
+Date: Tue, 15 May 2012 01:53:54 -0700
+Subject: [Dnsmasq-discuss] [PATCH] Support dbus activation
+
+Introduce dbus service file and turn dbus on in the systemd
+unit.
+
+Note to packagers:
+To add support for dbus activation, you must install the dbus
+service file (dbus/uk.org.thekelleys.dnsmasq.service) into
+$DATADIR/dbus-1/system-services.
+
+---
+ contrib/systemd/dnsmasq.service        |    2 +-
+ dbus/uk.org.thekelleys.dnsmasq.service |    7 +++++++
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+ create mode 100644 dbus/uk.org.thekelleys.dnsmasq.service
+
+diff --git a/contrib/systemd/dnsmasq.service 
+b/contrib/systemd/dnsmasq.service
+index a27fe6d..4a784d3 100644
+--- a/contrib/systemd/dnsmasq.service
++++ b/contrib/systemd/dnsmasq.service
+@@ -5,7 +5,7 @@ Description=A lightweight DHCP and caching DNS server
+ Type=dbus
+ BusName=uk.org.thekelleys.dnsmasq
+ ExecStartPre=/usr/sbin/dnsmasq --test
+-ExecStart=/usr/sbin/dnsmasq -k
++ExecStart=/usr/sbin/dnsmasq -k -1
+ ExecReload=/bin/kill -HUP $MAINPID
+ 
+ [Install]
+diff --git a/dbus/uk.org.thekelleys.dnsmasq.service 
+b/dbus/uk.org.thekelleys.dnsmasq.service
+new file mode 100644
+index 0000000..f5fe98d
+--- /dev/null
++++ b/dbus/uk.org.thekelleys.dnsmasq.service
+@@ -0,0 +1,7 @@
++[D-BUS Service]
++Name=uk.org.thekelleys.dnsmasq
++Exec=/usr/sbin/dnsmasq -k -1
++User=root
++SystemdService=dnsmasq.service
++
++
+-- 
+1.7.10.2
+
+
+
+_______________________________________________
+Dnsmasq-discuss mailing list
+Dnsmasq-discuss@lists.thekelleys.org.uk
+http://lists.thekelleys.org.uk/mailman/listinfo/dnsmasq-discuss
+

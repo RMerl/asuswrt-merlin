@@ -10,7 +10,7 @@ min-width:1130px;
 background-color:#014051;
 }
 
-.sicon, .bicon, .button, .ocButton, .ticon, #logo, #treeBanner, #help_image {
+.sicon, .bicon, .button, .ocButton, .ticon, #logo, #treeBanner, #help_image, .navigation li dt, .themes_ctrl {
 background:transparent url("style-metro.png") no-repeat top left;
 }
 
@@ -173,6 +173,10 @@ cursor: pointer;
 color:#5A5A5A;
 }
 
+#hostview .host_item.select{
+background-color:#009583;	
+}
+
 #hostview .host_item:hover{
 font-size:20px;	
 }
@@ -252,6 +256,7 @@ min-width:810px;
 float: left;
 width: 100%;
 height:30px;
+background-color:#191919;
 }
 
 #bottom_region p {
@@ -265,15 +270,12 @@ margin-bottom:0px;
 color:#556A6F;
 }
 
-#bottom_region #function_help{
-height:100%;
-color:#fff;
-position: relative;
-top: 5px;
-left: 60px;
-font-size:12px;
-font-family:"Segoe UI",Arial;
-font-weight:lighter;
+#bottom_region #right_info{
+font-size: 14px;
+color: #6B7A72;
+position: fixed;
+right: 10px;
+bottom: 5px;
 }
 /*--------------------------------------*/
 
@@ -485,9 +487,9 @@ margin:10px;
 background-color:#02675B;
 }
 
-#fileview .albumDiv .albuminfo {
-width:100%;
-height:40px;
+#fileview .albuminfo {
+width:120px;
+height:20px;
 }
 
 .albuminfo a#list_item {
@@ -501,6 +503,7 @@ display:block;
 text-decoration:none;
 width:100%;
 height:100%;
+white-space: nowrap;
 }
 
 .thumb-table-parent {
@@ -511,6 +514,36 @@ height:100%;
 /*--------------------------------------*/
 
 /*--Bottom Region------------------------------------*/
+.themes{
+height: 10px;
+font-size: 75%;
+padding: 3px 0px 0;
+color: white;
+left: 300px;
+bottom: 0px;
+position: absolute;
+}
+
+.themes_ctrl#skin2{
+background-position: -560px -134px;
+width:40px;
+height:20px;
+position: absolute;
+left: 40px;
+top: 0px;
+cursor:pointer;
+}
+
+.themes_ctrl#skin1{
+background-position: -600px -134px;
+width:40px;
+height:20px;
+position: absolute;
+left: 90px;
+top: 0px;
+cursor:pointer;
+}
+
 .lan{
 font-size: 75%;
 padding: 6px 5px 0;
@@ -518,6 +551,23 @@ color:#fff;
 text-align:right;
 float:right;
 margin-right: 20px;
+}
+
+.func_help{
+height: 10px;
+font-size: 75%;
+padding: 3px 0px 0;
+color: white;
+left: 450px;
+bottom: 0px;
+position: absolute;
+}
+
+.func_help span{
+color:#fff;
+font-size:12px;
+font-family:"Segoe UI",Arial;
+font-weight:lighter;
 }
 /*--------------------------------------*/
 
@@ -758,4 +808,122 @@ left: 40px;
 #table_login fieldset {  
 font-family:Verdana, Arial, Helvetica, sans-serif;  
 font-size:14px;  
+}
+/*--------------------------------------*/
+
+/* 整體設置*/ 
+.navigation {
+margin:0; 
+padding:0;
+width:143px;
+list-style-type:none; 
+font:12px Arial; 
+}
+
+.navigation#lan{
+right: 25px;
+top: 30px;
+position:absolute;
+z-index: 10;
+}
+
+.navigation#setting{
+left: 0px;
+bottom: 0px;
+position:absolute;
+z-index: 10;
+}
+
+.navigation#refresh{
+left: 142px;
+bottom: 0px;
+position:absolute;
+z-index: 10;
+}
+
+.navigation li {
+float:left; 
+padding:0; 
+margin:0 10px 0 0; 
+_margin:0 2px 0 0; 
+width:150px;
+}
+ 
+/* 設置選單區塊*/
+.navigation li dl { 
+margin: 0;
+padding: 0;
+}
+ 
+.navigation li dt a , .navigation li dd a{ display:block;}
+ 
+ .navigation#lan li dt {
+background-position: -400px -134px;
+}
+
+.navigation#setting li dt {
+background-position: -640px -134px;
+}
+
+.navigation#refresh li dt {
+background-position: -800px -134px;
+}
+
+/* 設置主選單dt */
+.navigation li dt {
+background-position: -400px -134px;
+padding-top: 8px;
+padding-right: 8px;
+text-align: center;
+font-size: 13px;
+font-weight: bold;
+height: 24px;
+overflow: hidden;
+cursor:pointer;
+}
+ 
+.navigation li dt a ,.navigation  li dt a:visited {
+display:block; 
+color:#fff;
+text-decoration:none;
+}
+ 
+/* 設置子選單dd */
+.navigation li dd {
+margin: 0;
+color: white;
+background-color: #333;
+border-bottom: solid 1px #666;
+width: 143px;
+text-align:center;
+font-size: 13px;
+cursor:pointer;
+}
+
+.navigation li dd:hover {
+background-color: #065280;
+}
+ 
+.navigation li dd.last {
+border-bottom:0;
+}	
+ 
+.navigation li dd a, .navigation  li dd a:visited {
+display:block; 
+color:#fff; 
+text-decoration:none; 
+padding:4px 5px 4px 20px;
+}
+ 
+/*隱藏子選單*/
+.navigation li dd { display:none;}
+ 
+/* 滑鼠滑入顯示子選單 */
+.navigation li:hover dd, .navigation li a:hover dd { display:block;}
+ 
+/*ie6 hack*/
+.navigation li:hover,.navigation li a:hover { border:0;}
+.navigation table { border-collapse:collapse; 
+padding:0; 		
+text-align:left;
 }

@@ -2,4 +2,5 @@ cfe patch against brcm sdk linux-2.6-router-6.30.39.16
     - src/cfe/cfe/arch/mips/board/bcm947xx/src/ui_bcm947xx.c
     - src/include/amemc_core.h
     - src/include/bcmnvram.h
+    - src/include/nflash.h
     - src/shared/nflash.c

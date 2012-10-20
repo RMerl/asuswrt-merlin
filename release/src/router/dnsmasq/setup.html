@@ -221,7 +221,7 @@ triggering dial-on-demand internet links.
 Sending SIGHUP to the dnsmasq process will cause it to empty its cache and 
 then re-load <TT>/etc/hosts</TT> and <TT>/etc/resolv.conf</TT>.
 <P> Sending SIGUSR1 (killall -10 dnsmasq) to the dnsmasq process will
-cause to to write cache usage statisticss to the log, typically
+cause to write cache usage statisticss to the log, typically
 <TT>/var/log/syslog</TT> or <TT>/var/log/messages</TT>.
 <P> The <TT>log-queries</TT> option tells dnsmasq to verbosely log the queries
 it is handling and causes SIGUSR1 to trigger a complete dump of the

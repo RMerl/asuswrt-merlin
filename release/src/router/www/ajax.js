@@ -15,16 +15,16 @@ function makeRequest(url) {
 	http_request.send(null);
 }
 
-var xmlDoc_ie;
+var xmlDoc_ie_ajax;
 
 function makeRequest_ie(file)
 {
-	xmlDoc_ie = new ActiveXObject("Microsoft.XMLDOM");
-	xmlDoc_ie.async = false;
-	if (xmlDoc_ie.readyState==4)
+	xmlDoc_ie_ajax = new ActiveXObject("Microsoft.XMLDOM");
+	xmlDoc_ie_ajax.async = false;
+	if (xmlDoc_ie_ajax.readyState==4)
 	{
-		xmlDoc_ie.load(file);
-		refresh_wpsinfo(xmlDoc_ie);
+		xmlDoc_ie_ajax.load(file);
+		refresh_wpsinfo(xmlDoc_ie_ajax);
 	}
 }
 

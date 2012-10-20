@@ -1,6 +1,6 @@
 ﻿<html>
 <head>
-<title>ASUS ASUS Wireless Router Web Manager</title>
+<title>ASUS Wireless Router Web Manager</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -9,7 +9,8 @@
 </head>
 <body>
 <script>	
-	parent.showLoadingBar(65);	
+	parent.showLoadingBar(65);
+	setTimeout("parent.detect_httpd();", 65000);
 </script>
 </body>
 </html>

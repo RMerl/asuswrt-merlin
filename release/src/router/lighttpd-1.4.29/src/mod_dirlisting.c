@@ -33,7 +33,7 @@
 
 #include "version.h"
 
-#define DBE 0
+#define DBE 1
 /* plugin config for all request/connections */
 
 typedef struct {

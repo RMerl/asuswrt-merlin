@@ -13,6 +13,7 @@
 #define FIELD_ENABLED "Enabled: "
 #define FIELD_HELPPATH "HelpPath: "
 #define FIELD_FILENAME "Filename: "
+#define FIELD_STATUS "Status: "
 
 #define APP_OWNER_ALL "all"
 #define APP_OWNER_ASUS "asus"

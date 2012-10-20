@@ -124,6 +124,17 @@ fi
 
 
 nvram set apps_state_upgrade=2 # INSTALLING
+#if [ "$1" != "asuslighttpd" ]; then
+#	_check_package "asuslighttpd"
+#	if [ "$?" == "0" ]; then
+#		app_install.sh "asuslighttpd"
+#		if [ "$?" != "0" ]; then
+#			# apps_state_error was already set by app_install.sh.
+#			exit 1
+#		fi
+#	fi
+#fi
+
 ipkg install $APPS_INSTALL_PATH$download_dir/$download_file
 if [ "$?" != "0" ]; then
 	echo "Fail to install the package: $1!"

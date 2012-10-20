@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2010 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,15 +14,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define VERSION "2.55"
-
 #define FTABSIZ 150 /* max number of outstanding requests (default) */
 #define MAX_PROCS 20 /* max no children for TCP requests */
 #define CHILD_LIFETIME 150 /* secs 'till terminated (RFC1035 suggests > 120s) */
 #define EDNS_PKTSZ 4096 /* default max EDNS.0 UDP packet from RFC5625 */
+#define KEYBLOCK_LEN 140 /* choose to mininise fragmentation when storing DNSSEC keys */
 #define TIMEOUT 10 /* drop UDP queries after TIMEOUT seconds */
 #define FORWARD_TEST 50 /* try all servers every 50 queries */
-#define FORWARD_TIME 20 /* or 10 seconds */
+#define FORWARD_TIME 20 /* or 20 seconds */
 #define RANDOM_SOCKS 64 /* max simultaneous random ports */
 #define LEASE_RETRY 60 /* on error, retry writing leasefile after LEASE_RETRY seconds */
 #define CACHESIZ 150 /* default cache size */
@@ -34,80 +33,18 @@
 #define SMALLDNAME 40 /* most domain names are smaller than this */
 #define HOSTSFILE "/etc/hosts"
 #define ETHERSFILE "/etc/ethers"
-#ifdef __uClinux__
-#  define RESOLVFILE "/etc/config/resolv.conf"
-#else
-#  define RESOLVFILE "/etc/resolv.conf"
-#endif
-#define RUNFILE "/var/run/dnsmasq.pid"
-
-#ifndef LEASEFILE
-#   if defined(__FreeBSD__) || defined (__OpenBSD__) || defined(__DragonFly__) || defined(__NetBSD__)
-#      define LEASEFILE "/var/db/dnsmasq.leases"
-#   elif defined(__sun__) || defined (__sun)
-#      define LEASEFILE "/var/cache/dnsmasq.leases"
-#   else
-#      define LEASEFILE "/var/lib/misc/dnsmasq.leases"
-#   endif
-#endif
-
-#ifndef CONFFILE
-#   if defined(__FreeBSD__)
-#      define CONFFILE "/usr/local/etc/dnsmasq.conf"
-#   else
-#      define CONFFILE "/etc/dnsmasq.conf"
-#   endif
-#endif
-
 #define DEFLEASE 3600 /* default lease time, 1 hour */
 #define CHUSER "nobody"
 #define CHGRP "dip"
-#define DHCP_SERVER_PORT 67
-#define DHCP_CLIENT_PORT 68
-#define DHCP_SERVER_ALTPORT 1067
-#define DHCP_CLIENT_ALTPORT 1068
-#define PXE_PORT 4011
-#define TFTP_PORT 69
 #define TFTP_MAX_CONNECTIONS 50 /* max simultaneous connections */
 #define LOG_MAX 5 /* log-queue length */
 #define RANDFILE "/dev/urandom"
-#define DAD_WAIT 20 /* retry binding IPv6 sockets for this long */
-
-/* DBUS interface specifics */
-#define DNSMASQ_SERVICE "uk.org.thekelleys.dnsmasq"
+#define EDNS0_OPTION_MAC 5 /* dyndns.org temporary assignment */
+#define DNSMASQ_SERVICE "uk.org.thekelleys.dnsmasq" /* Default - may be overridden by config */
 #define DNSMASQ_PATH "/uk/org/thekelleys/dnsmasq"
 
-/* A small collection of RR-types which are missing on some platforms */
-
-#ifndef T_SIG
-#  define T_SIG 24
-#endif
-
-#ifndef T_SRV
-#  define T_SRV 33
-#endif
-
-#ifndef T_OPT
-#  define T_OPT 41
-#endif
-
-#ifndef T_TKEY
-#  define T_TKEY 249
-#endif
-
-#ifndef T_TSIG
-#  define T_TSIG 250
-#endif
-
-
-/* Follows system specific switches. If you run on a 
-   new system, you may want to edit these. 
-   May replace this with Autoconf one day. 
-
-HAVE_LINUX_NETWORK
-HAVE_BSD_NETWORK
-HAVE_SOLARIS_NETWORK
-   define exactly one of these to alter interaction with kernel networking.
+/* compile-time options: uncomment below to enable or do eg.
+   make COPTS=-DHAVE_BROKEN_RTC
 
 HAVE_BROKEN_RTC
    define this on embedded systems which don't have an RTC
@@ -123,73 +60,135 @@ HAVE_BROKEN_RTC
    NOTE: when enabling or disabling this, be sure to delete any old
    leases file, otherwise dnsmasq may get very confused.
 
+HAVE_LEASEFILE_EXPIRE
+   define this if you want to enable lease file update with expire
+   timeouts instead of expiry times or lease lengths, if HAVE_BROKEN_RTC
+   is also enabled. Lease file will be rewritten upon SIGUSR2 signal
+   reception and/or dnsmasq termination.
+
 HAVE_TFTP
    define this to get dnsmasq's built-in TFTP server.
 
 HAVE_DHCP
-   define this to get dnsmasq's DHCP server.
+   define this to get dnsmasq's DHCPv4 server.
+
+HAVE_DHCP6
+   define this to get dnsmasq's DHCPv6 server. (implies HAVE_DHCP).
 
 HAVE_SCRIPT
-   define this to get the ability to call scripts on lease-change
+   define this to get the ability to call scripts on lease-change.
 
-HAVE_GETOPT_LONG
-   define this if you have GNU libc or GNU getopt. 
-
-HAVE_ARC4RANDOM
-   define this if you have arc4random() to get better security from DNS spoofs
-   by using really random ids (OpenBSD) 
-
-HAVE_SOCKADDR_SA_LEN
-   define this if struct sockaddr has sa_len field (*BSD) 
+HAVE_LUASCRIPT
+   define this to get the ability to call Lua script on lease-change. (implies HAVE_SCRIPT) 
 
 HAVE_DBUS
-   Define this if you want to link against libdbus, and have dnsmasq
-   define some methods to allow (re)configuration of the upstream DNS 
+   define this if you want to link against libdbus, and have dnsmasq
+   support some methods to allow (re)configuration of the upstream DNS 
    servers via DBus.
 
-NOTES:
-   For Linux you should define 
-      HAVE_LINUX_NETWORK
-      HAVE_GETOPT_LONG
-  you should NOT define 
-      HAVE_ARC4RANDOM
-      HAVE_SOCKADDR_SA_LEN
+HAVE_IDN
+   define this if you want international domain name support.
+   NOTE: for backwards compatibility, IDN support is automatically 
+         included when internationalisation support is built, using the 
+	 *-i18n makefile targets, even if HAVE_IDN is not explicitly set.
 
-   For *BSD systems you should define 
-     HAVE_BSD_NETWORK
-     HAVE_SOCKADDR_SA_LEN
-   and you MAY define  
-     HAVE_ARC4RANDOM - OpenBSD and FreeBSD and NetBSD version 2.0 or later
-     HAVE_GETOPT_LONG - NetBSD, later FreeBSD 
-                       (FreeBSD and OpenBSD only if you link GNU getopt) 
+HAVE_CONNTRACK
+   define this to include code which propogates conntrack marks from
+   incoming DNS queries to the corresponding upstream queries. This adds
+   a build-dependency on libnetfilter_conntrack, but the resulting binary will
+   still run happily on a kernel without conntrack support.
+
+NO_IPV6
+NO_TFTP
+NO_DHCP
+NO_DHCP6
+NO_SCRIPT
+NO_LARGEFILE
+   these are avilable to explictly disable compile time options which would 
+   otherwise be enabled automatically (HAVE_IPV6, >2Gb file sizes) or 
+   which are enabled  by default in the distributed source tree. Building dnsmasq
+   with something like "make COPTS=-DNO_SCRIPT" will do the trick.
+
+LEASEFILE
+CONFFILE
+RESOLVFILE
+   the default locations of these files are determined below, but may be overridden 
+   in a build command line using COPTS.
 
 */
 
-/* platform independent options- uncomment to enable */
+
+/* The default set of options to build. Built with these options, dnsmasq
+   has no library dependencies other than libc */
+
 #define HAVE_DHCP
+#define HAVE_DHCP6 
 #define HAVE_TFTP
 #define HAVE_SCRIPT
-#define HAVE_BROKEN_RTC
+/* #define HAVE_LUASCRIPT */
+/* #define HAVE_BROKEN_RTC */
+/* #define HAVE_LEASEFILE_EXPIRE */
 /* #define HAVE_DBUS */
+/* #define HAVE_IDN */
+/* #define HAVE_CONNTRACK */
 
-/* Allow TFTP to be disabled with COPTS=-DNO_TFTP */
-#ifdef NO_TFTP
-#undef HAVE_TFTP
+
+
+/* Default locations for important system files. */
+
+#ifndef LEASEFILE
+#   if defined(__FreeBSD__) || defined (__OpenBSD__) || defined(__DragonFly__) || defined(__NetBSD__)
+#      define LEASEFILE "/var/db/dnsmasq.leases"
+#   elif defined(__sun__) || defined (__sun)
+#      define LEASEFILE "/var/cache/dnsmasq.leases"
+#   elif defined(__ANDROID__)
+#      define LEASEFILE "/data/misc/dhcp/dnsmasq.leases"
+#   else
+#      define LEASEFILE "/var/lib/misc/dnsmasq.leases"
+#   endif
 #endif
 
-/* Allow DHCP to be disabled with COPTS=-DNO_DHCP */
-#ifdef NO_DHCP
-#undef HAVE_DHCP
+#ifndef CONFFILE
+#   if defined(__FreeBSD__)
+#      define CONFFILE "/usr/local/etc/dnsmasq.conf"
+#   else
+#      define CONFFILE "/etc/dnsmasq.conf"
+#   endif
 #endif
 
-/* Allow scripts to be disabled with COPTS=-DNO_SCRIPT */
-#ifdef NO_SCRIPT
-#undef HAVE_SCRIPT
+#ifndef RESOLVFILE
+#   if defined(__uClinux__)
+#      define RESOLVFILE "/etc/config/resolv.conf"
+#   else
+#      define RESOLVFILE "/etc/resolv.conf"
+#   endif
 #endif
 
+#ifndef RUNFILE
+#   if defined(__ANDROID__)
+#      define RUNFILE "/data/dnsmasq.pid"
+#    else
+#      define RUNFILE "/var/run/dnsmasq.pid"
+#    endif
+#endif
 
+/* platform dependent options: these are determined automatically below
 
-/* platform dependent options. */
+HAVE_LINUX_NETWORK
+HAVE_BSD_NETWORK
+HAVE_SOLARIS_NETWORK
+   define exactly one of these to alter interaction with kernel networking.
+
+HAVE_GETOPT_LONG
+   defined when GNU-style getopt_long available. 
+
+HAVE_ARC4RANDOM
+   defined if arc4random() available to get better security from DNS spoofs
+   by using really random ids (OpenBSD) 
+
+HAVE_SOCKADDR_SA_LEN
+   defined if struct sockaddr has sa_len field (*BSD) 
+*/
 
 /* Must preceed __linux__ since uClinux defines __linux__ too. */
 #if defined(__uClinux__)
@@ -214,10 +213,12 @@ NOTES:
 #if !defined(__ARCH_HAS_MMU__) && !defined(__UCLIBC_HAS_MMU__)
 #  define NO_FORK
 #endif
-#if defined(__UCLIBC_HAS_IPV6__)
+#if defined(__UCLIBC_HAS_IPV6__) && defined(USE_IPV6)
 #  ifndef IPV6_V6ONLY
 #    define IPV6_V6ONLY 26
 #  endif
+#elif !defined(NO_IPV6)
+#  define NO_IPV6
 #endif
 
 /* This is for glibc 2.x */
@@ -265,18 +266,12 @@ NOTES:
 #endif
 
 /* Decide if we're going to support IPv6 */
-/* IPv6 can be forced off with "make COPTS=-DNO_IPV6" */
 /* We assume that systems which don't have IPv6
    headers don't have ntop and pton either */
 
-#if defined(INET6_ADDRSTRLEN) && defined(IPV6_V6ONLY) && !defined(NO_IPV6)
+#if defined(INET6_ADDRSTRLEN) && defined(IPV6_V6ONLY)
 #  define HAVE_IPV6
 #  define ADDRSTRLEN INET6_ADDRSTRLEN
-#  if defined(SOL_IPV6)
-#    define IPV6_LEVEL SOL_IPV6
-#  else
-#    define IPV6_LEVEL IPPROTO_IPV6
-#  endif
 #elif defined(INET_ADDRSTRLEN)
 #  undef HAVE_IPV6
 #  define ADDRSTRLEN INET_ADDRSTRLEN
@@ -285,8 +280,103 @@ NOTES:
 #  define ADDRSTRLEN 16 /* 4*3 + 3 dots + NULL */
 #endif
 
-/* Can't do scripts without fork */
-#ifdef NOFORK
-#  undef HAVE_SCRIPT
+
+/* rules to implement compile-time option dependencies and 
+   the NO_XXX flags */
+
+#ifdef NO_IPV6
+#undef HAVE_IPV6
 #endif
+
+#ifdef NO_TFTP
+#undef HAVE_TFTP
+#endif
+
+#ifdef NO_DHCP
+#undef HAVE_DHCP
+#undef HAVE_DHCP6
+#endif
+
+#if defined(NO_DHCP6) || !defined(HAVE_IPV6)
+#undef HAVE_DHCP6
+#endif
+
+/* DHCP6 needs DHCP too */
+#ifdef HAVE_DHCP6
+#define HAVE_DHCP
+#endif
+
+#if defined(NO_SCRIPT) || !defined(HAVE_DHCP) || defined(NO_FORK)
+#undef HAVE_SCRIPT
+#undef HAVE_LUASCRIPT
+#endif
+
+/* Must HAVE_SCRIPT to HAVE_LUASCRIPT */
+#ifdef HAVE_LUASCRIPT
+#define HAVE_SCRIPT
+#endif
+
+
+/* Define a string indicating which options are in use.
+   DNSMASQP_COMPILE_OPTS is only defined in dnsmasq.c */
+
+#ifdef DNSMASQ_COMPILE_OPTS
+
+static char *compile_opts = 
+#ifndef HAVE_IPV6
+"no-"
+#endif
+"IPv6 "
+#ifndef HAVE_GETOPT_LONG
+"no-"
+#endif
+"GNU-getopt "
+#ifdef HAVE_BROKEN_RTC
+"no-RTC "
+#endif
+#ifdef NO_FORK
+"no-MMU "
+#endif
+#ifndef HAVE_DBUS
+"no-"
+#endif
+"DBus "
+#ifndef LOCALEDIR
+"no-"
+#endif
+"i18n "
+#if !defined(LOCALEDIR) && !defined(HAVE_IDN)
+"no-"
+#endif 
+"IDN "
+#ifndef HAVE_DHCP
+"no-"
+#endif
+"DHCP "
+#if defined(HAVE_DHCP)
+#  if !defined (HAVE_DHCP6)
+     "no-"
+#  endif  
+     "DHCPv6 "
+#  if !defined(HAVE_SCRIPT)
+     "no-scripts "
+#  else
+#    if !defined(HAVE_LUASCRIPT)
+       "no-"
+#    endif
+     "Lua "
+#  endif
+#endif
+#ifndef HAVE_TFTP
+"no-"
+#endif
+"TFTP "
+#ifndef HAVE_CONNTRACK
+"no-"
+#endif
+"conntrack";
+
+#endif
+
+
 

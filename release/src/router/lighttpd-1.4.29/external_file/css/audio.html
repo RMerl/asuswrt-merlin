@@ -58,6 +58,7 @@ $(document).ready(function(){
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
 	
+	var generate_sharelink = getUrlVars()["s"];
 	var this_audio = getUrlVars()["a"];
 	var audio_list = getUrlVars()["alist"];
 	g_current_index = getUrlVars()["index"];
@@ -92,45 +93,61 @@ $(document).ready(function(){
 	
 	showHideAudioInterface(false);
 	showHideAudioList(false);
-	
-	var media_hostName = window.location.host;
-	if(media_hostName.indexOf(":")!=-1)
-		media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
-	media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
-	
-	var timer = setInterval(function(){
+
+	if(generate_sharelink==1){
+		var media_hostName = window.location.host;
+		if(media_hostName.indexOf(":")!=-1)
+			media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
+		media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
 		
-		if(on_query==false){
+		var timer = setInterval(function(){
 			
-			if(current_query_index<0||current_query_index>this_audio_list.length-1){
-				clearInterval(timer);
-				initJPlayer();
-				return;
+			if(on_query==false){
+				
+				if(current_query_index<0||current_query_index>this_audio_list.length-1){
+					clearInterval(timer);
+					initJPlayer();
+					return;
+				}
+			
+				var this_audio = this_audio_list[current_query_index];
+				var this_file_name = this_audio.substring( this_audio.lastIndexOf("/")+1, this_audio.length );
+				var this_url = this_audio.substring(0, this_audio.lastIndexOf('/'));
+				
+				on_query = true;			
+				client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){				
+					if(error==200){
+						var data = parseXml(statusstring);
+						var share_link = $(data).find('sharelink').text();
+						share_link = media_hostName + share_link;
+						
+						on_query = false;
+						
+						var obj = [];
+						obj['name'] = mydecodeURI(this_file_name);
+						obj['mp3'] = share_link;
+						g_audio_playlist.push(obj);
+						
+						current_query_index++;
+					}
+				});
 			}
-		
-			var this_audio = this_audio_list[current_query_index];
+		}, 100);
+	}
+	else{
+		for(var i=0; i < this_audio_list.length;i++){
+			var this_audio = this_audio_list[i];
 			var this_file_name = this_audio.substring( this_audio.lastIndexOf("/")+1, this_audio.length );
 			var this_url = this_audio.substring(0, this_audio.lastIndexOf('/'));
-			
-			on_query = true;			
-			client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){				
-				if(error==200){
-					var data = parseXml(statusstring);
-					var share_link = $(data).find('sharelink').text();
-					share_link = media_hostName + share_link;
-					
-					on_query = false;
-					
-					var obj = [];
-					obj['name'] = mydecodeURI(this_file_name);
-					obj['mp3'] = share_link;
-					g_audio_playlist.push(obj);
-					
-					current_query_index++;
-				}
-			});
+				
+			var obj = [];
+			obj['name'] = mydecodeURI(this_file_name);
+			obj['mp3'] = this_audio;
+			g_audio_playlist.push(obj);
 		}
-	}, 100);
+		
+		initJPlayer();	
+	}
 });
 
 function initJPlayer(){

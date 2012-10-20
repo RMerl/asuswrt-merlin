@@ -44,6 +44,13 @@ else
   WPS_LIB_FILE = wps_ap
 endif
 
+ifeq ($(RTCONFIG_4M_SFP),y)
+# Force to support AP only
+export WL_MODE = ap
+export WPS_CONF_FILE = wpsconfig_router_ap
+WPS_LIB_FILE = wps_ap
+endif
+
 # Include wps common make file
 include $(WPSSRC)/common/config/$(WPS_CONF_FILE)
 ifneq ($(CONFIG_WFI),y)

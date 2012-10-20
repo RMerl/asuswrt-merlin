@@ -79,9 +79,22 @@ function qis_delay_redirect(next_url){
 	parent.parent.document.redirectForm.submit();
 }
 
+function afterLiveUpdate(){
+	if(parent.parent.liveUpdateFinish == true){
+		parent.location.href='/qis/QIS_finish.htm';
+	}
+	else{
+		setTimeout("afterLiveUpdate();", 1000);
+	}	
+}
+
 function initial(){
 	if(getflag == "sitesurvey"){
 		parent.setTimeout("update_site_info();", 1000);
+	}
+	if(getflag == "upgrading"){
+		parent.progressBar = 0;
+		parent.showLoadingUpdate();
 	}
 	else if(getflag == "wlcconnect"){
 		parent.errCount = 0;
@@ -103,22 +116,31 @@ function initial(){
 			setTimeout("showdr_advise();", 10000);
 		}
 		else if(getflag == "finish"){
-			if(parent.$("hidden_frame")){			
-				//setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000); // Post
-				setTimeout("parent.location.href='/qis/QIS_finish.htm';", restart_time*1000);  // Get
+			if(parent.$("hidden_frame")){
+				if(parent.parent.live_update_support == -1){
+					//setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000); // Post
+					setTimeout("parent.location.href='/qis/QIS_finish.htm';", restart_time*1000);  // Get
+				}
+				else{
+					setTimeout("parent.parent.detect_update();", restart_time*1000);
+				}
 			}
 			else{
 				parent.parent.showLoading(restart_time, "waiting");
 				setTimeout("showdr_advise('finish');", (restart_time+1)*1000);
 			}
 		}
+		else if(getflag == "liveUpdate"){
+			setTimeout("parent.parent.detect_firmware();", restart_time*1000);
+			setTimeout("afterLiveUpdate();", (restart_time+12)*1000);
+		}		
 		else if(getflag == "adv_ap_mode"){
 			parent.parent.$('drword').innerHTML = "<#LANConfig_ChangedLANIP#>";
 			setTimeout("parent.parent.hideLoading();	",15000);
 			setTimeout("parent.parent.dr_advise();",15000);
 		}
 		else{
-			parent.showLoading(restart_time);
+			parent.parent.showLoading(restart_time);
 			if(navigator.userAgent.indexOf("Safari") >= 0){
 				if(document.redirectForm.flag.value != "")
 					next_page += "?flag=" + document.redirectForm.flag.value;
@@ -133,7 +155,22 @@ function initial(){
 		setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
 	}
 	else{		
-		if(next_page == "/QIS_wizard.htm" || next_page == "/qis/QIS_finish.htm"){
+		if(next_page == "/qis/QIS_finish.htm"){
+			if(parent.parent.live_update_support == -1){
+				if(navigator.userAgent.indexOf("Opera")  >= 0)
+					setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000);
+				else	
+					setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
+			}
+			else{
+				setTimeout("parent.parent.detect_update();", restart_time*1000);
+			}
+		}
+		else if(getflag == "liveUpdate"){
+			setTimeout("parent.parent.detect_firmware();", 1000);
+			setTimeout("afterLiveUpdate();", 1000);
+		}		
+		else if(next_page == "/QIS_wizard.htm"){
 			if(navigator.userAgent.indexOf("Opera")  >= 0)
 				setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000);
 			else	

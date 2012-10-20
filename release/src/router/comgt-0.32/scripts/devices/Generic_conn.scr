@@ -18,6 +18,16 @@ let a=val($x)
 if a<0 goto pinerror
 if a>9999 goto pinerror
 let $c=$left($x,4)
+let $y=$rpipe("nvram get pinerr")
+let a=val($y)
+if a=1 goto pinerror
+#if a=2 goto pintimeerror
+send "AT+CPIN?^m"
+waitfor 20 "SIM PIN","READY","ERROR","ERR"
+if % = -1 goto pintimeerror
+if % = 0 goto enterpin
+if % = 1 goto ready
+goto pinerror
 :enterpin
 system "nvram set g3state_pin=2"
 send "AT+CPIN=\""
@@ -26,9 +36,6 @@ send "\"^m"
 waitfor 20 "OK","ERR","ERROR","+CME ERROR"
 if % = -1 goto pintimeerror
 if % = 0 goto ready
-if % = 1 goto pinerror
-if % = 2 goto pinerror
-if % = 3 goto pinerror
 :pinerror
 system "nvram set pinerr=1"
 system "nvram set g3err=1"
@@ -53,8 +60,7 @@ send "ATZ^m"
 waitfor 10 "OK","ERR","ERROR"
 if % = -1 goto timeerror
 if % = 0 goto next1
-if % = 1 goto error
-if % = 2 goto error
+goto error
 :next1
 system "nvram set g3state_z=1"
 #let $x=$env("COMGTAPN")
@@ -68,8 +74,6 @@ send "\"^m"
 waitfor 20 "OK","ERR","ERROR"
 if % = -1 goto apntimeerror
 if % = 0 goto OK
-if % = 1 goto apnerror
-if % = 2 goto apnerror
 :apnerror
 system "nvram set apnerr=1"
 system "nvram set g3err=1"
@@ -88,15 +92,14 @@ exit 1
 system "nvram set g3state_dial=1"
 let $x=$rpipe("nvram get modem_dialnum")
 let a=len($x)
-if a=0 goto apnerror
+if a=0 goto error
 send "ATD"
 send $x
 send "^m"
 waitfor 10 "CONNECT","ERR","ERROR"
 if % = -1 goto timeerror
 if % = 0 goto next3
-if % = 1 goto error
-if % = 2 goto error
+goto error
 :next3
 system "nvram set g3state_conn=1"
 print "CONNECTED\n"

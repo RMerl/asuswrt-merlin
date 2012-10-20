@@ -111,6 +111,10 @@ OBJS += psta_monitor.o
 endif
 endif
 
+ifeq ($(RTCONFIG_WPS),y)
+OBJS += wpsaide.o
+endif
+
 ifeq ($(RTCONFIG_SHP),y)
 export CFLAGS += -DMEDIA_REVIEW
 endif
@@ -162,11 +166,14 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc autodet
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ddns_updated
 
-	@cd $(INSTALLDIR)/sbin && ln -sf rc wldist
+#	@cd $(INSTALLDIR)/sbin && ln -sf rc wldist
 
 ifeq ($(RTCONFIG_IPV6),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc dhcp6c-state
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ipv6aide
+endif
+ifeq ($(RTCONFIG_WPS),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc wpsaide
 endif
 
 #	ifeq ($(RTCONFIG_HEARTBEAT),y)
@@ -201,6 +208,7 @@ ifeq ($(RTCONFIG_USB),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_usbbcm
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_usb_interface
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ejusb
+	@cd $(INSTALLDIR)/sbin && ln -sf rc disk_monitor
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_app_script 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc restart_wireless

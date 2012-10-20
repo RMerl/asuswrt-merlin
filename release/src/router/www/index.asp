@@ -341,7 +341,7 @@ function disk_html(device_order, all_disk_order){
 	var percentbar = 0;
 
 	if(all_disk_order < foreign_disks().length)
-		disk_model_name = foreign_disk_model_info()[all_disk_order];
+		disk_model_name = decodeURIComponent(foreign_disk_model_info()[all_disk_order]);
 	else
 		disk_model_name = blank_disks()[all_disk_order-foreign_disks().length];
 	

@@ -750,6 +750,9 @@ char *processPacket(int sockfd, char *pdubuf)
 //    int i;
     char ftype[8], prinfo[128];	/* get disk type */
     int free_space;
+#ifdef RTCONFIG_WIRELESSREPEATER
+    char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
+#endif
 
     phdr = (IBOX_COMM_PKT_HDR *)pdubuf;  
     phdr_res = (IBOX_COMM_PKT_RES_EX *)pdubuf_res;
@@ -807,21 +810,37 @@ char *processPacket(int sockfd, char *pdubuf)
 		     _dprintf("NET CMD GETINFO_MANU\n");	// tmp test
 		     ginfo=(PKT_GET_INFO *)(pdubuf_res+sizeof(IBOX_COMM_PKT_RES));
 		     memset(ginfo, 0, sizeof(ginfo));
+#if 0
 #ifdef PRNINFO
 		     readPrnID(ginfo->PrinterInfo);
 #else
 		     memset(ginfo->PrinterInfo, 0, sizeof(ginfo->PrinterInfo));
 #endif
+#else
+			if (strlen(nvram_safe_get("u2ec_mfg")) && strlen(nvram_safe_get("u2ec_device")))
+			{
+				if (strstr(nvram_safe_get("u2ec_device"), nvram_safe_get("u2ec_mfg")))
+					sprintf(ginfo->PrinterInfo, "%s", nvram_safe_get("u2ec_device"));
+				else
+					sprintf(ginfo->PrinterInfo, "%s %s", nvram_safe_get("u2ec_mfg"), nvram_safe_get("u2ec_device"));
+			}
+#endif
 		     /* get disk type */
-		     strcpy(ssid_g, nvram_safe_get("wl0_ssid"));
-//		   strcpy(productid_g, nvram_safe_get("machine_name"));
+#ifdef RTCONFIG_WIRELESSREPEATER
+			snprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
+			if (nvram_get_int("sw_mode") == SW_MODE_REPEATER)
+			{
+				sprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
+				strcpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
+			}
+			else
+#endif
+			strcpy(ssid_g, nvram_safe_get("wl0_ssid"));
 		     strcpy(productid_g, get_productid());
 		     strcpy(ginfo->SSID, ssid_g);
 		     strcpy(ginfo->NetMask, get_lan_netmask());
 		     strcpy(ginfo->ProductID, productid_g);	// disable for tmp
-		     //strcpy(ginfo->ProductID, "WL-500gp V2");	// tmp test
 		     strcpy(ginfo->FirmwareVersion, firmver_g);	// disable for tmp
-		     //strcpy(ginfo->FirmwareVersion, "3.0.3.6");		// tmp test
 		     memcpy(ginfo->MacAddress, mac, 6);
 #ifdef WCLIENT
 		     ginfo->OperationMode = OPERATION_MODE_WB;
@@ -853,18 +872,36 @@ char *processPacket(int sockfd, char *pdubuf)
 			_dprintf("NET CMD GETINFO\n");
 		     ginfo=(PKT_GET_INFO *)(pdubuf_res+sizeof(IBOX_COMM_PKT_RES));
 		     memset(ginfo, 0, sizeof(ginfo));
+#if 0
 #ifdef PRNINFO
     		     readPrnID(ginfo->PrinterInfo);
 #else
 		     memset(ginfo->PrinterInfo, 0, sizeof(ginfo->PrinterInfo));
 #endif
-		     strcpy(ssid_g, nvram_safe_get("wl0_ssid"));	
+#else
+			if (strlen(nvram_safe_get("u2ec_mfg")) && strlen(nvram_safe_get("u2ec_device")))
+			{
+				if (strstr(nvram_safe_get("u2ec_device"), nvram_safe_get("u2ec_mfg")))
+					sprintf(ginfo->PrinterInfo, "%s", nvram_safe_get("u2ec_device"));
+				else
+					sprintf(ginfo->PrinterInfo, "%s %s", nvram_safe_get("u2ec_mfg"), nvram_safe_get("u2ec_device"));
+			}
+#endif
+#ifdef RTCONFIG_WIRELESSREPEATER
+			snprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
+			if (nvram_get_int("sw_mode") == SW_MODE_REPEATER)
+			{
+				sprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
+				strcpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
+			}
+			else
+#endif
+			strcpy(ssid_g, nvram_safe_get("wl0_ssid"));
 		     strcpy(productid_g, get_productid());
    		     strcpy(ginfo->SSID, ssid_g);
 		     strcpy(ginfo->NetMask, get_lan_netmask());
 		     strcpy(ginfo->ProductID, productid_g);	// disable for tmp
 		     strcpy(ginfo->FirmwareVersion, firmver_g); // disable for tmp
-
 		     memcpy(ginfo->MacAddress, mac, 6);
 #ifdef WCLIENT
 		     ginfo->OperationMode = OPERATION_MODE_WB;

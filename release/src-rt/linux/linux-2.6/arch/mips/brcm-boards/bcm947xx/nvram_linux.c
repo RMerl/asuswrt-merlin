@@ -113,6 +113,7 @@ char tmpbuf[1024];
 void
 asusnls_u2c(char *name)
 {
+#ifdef CONFIG_NLS
 	char *codepage;
 	char *xfrstr;
 	struct nls_table *nls;
@@ -187,11 +188,13 @@ asusnls_u2c(char *name)
 	{
 		strcpy(name, "");
 	}
+#endif
 }
 
 void                                                                                                                         
 asusnls_c2u(char *name)
 {
+#ifdef CONFIG_NLS
 	char *codepage;
 	char *xfrstr;
 	struct nls_table *nls;
@@ -265,6 +268,7 @@ asusnls_c2u(char *name)
 	{
 		strcpy(name, "");
 	}
+#endif
 }
 
 char *

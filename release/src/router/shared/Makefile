@@ -15,23 +15,25 @@ ifeq ($(RTAC66U), y)
 CFLAGS += -DRTAC66U
 endif
 
-OBJS = shutils.o wl.o wl_linux.o linux_timer.o defaults.o model.o rtstate.o boardapi.o
+OBJS = shutils.o linux_timer.o defaults.o model.o rtstate.o boardapi.o
 OBJS += misc.o version.o files.o strings.o process.o 
 OBJS += bin_sem_asus.o semaphore.o pids.o notify_rc.o discover.o
 OBJS += base64.o
 
 ifeq ($(RTCONFIG_RALINK),y)
 OBJS += $(TOP)/wireless_tools/iwlib.o
+OBJS += flash_mtd.o api-ralink.o
 ifeq ($(RTCONFIG_RALINK_RT3052),y)
-OBJS += ra3052.o rtl8367m.o flash_mtd.o api-ralink.o
+OBJS += ra3052.o rtl8367m.o
 else
 ifeq ($(RTCONFIG_DSL),y)
-OBJS += rtl8367r.o flash_mtd.o api-ralink.o
+OBJS += rtl8367r.o
 else
-OBJS += rtl8367m.o flash_mtd.o api-ralink.o
+OBJS += rtl8367m.o
 endif
 endif
 else
+OBJS += wl.o wl_linux.o
 OBJS += broadcom.o api-broadcom.o
 endif
 

@@ -8,8 +8,6 @@
 	<array>
 		<string>/usr/local/sbin/dnsmasq</string>
 		<string>--keep-in-foreground</string>
-		<string>--log-queries</string>
-		<string>--log-facility=/var/log/dnsmasq.log</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>

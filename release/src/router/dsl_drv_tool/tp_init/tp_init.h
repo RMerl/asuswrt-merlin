@@ -46,6 +46,12 @@
 #define SHOW_ADSL_STATS "sys tpget wan adsl statistics\x0d\x0a"
 #define SHOW_ADSL_ACTUAL_ANNEX_MODE "w ghs show op\x0d\x0a" //Paul add 2012/4/21
 
+/* Paul add 2012/9/24, for SNR Margin tweaking. */
+#define SET_SNRM_Offset_ADSL "w dmt set snrm "
+#define SET_SNRM_Offset_ADSL2 "w dmt2 set snrm "
+
+#define SET_SRA_ADSL2 "w dmt2 set olr " /* Paul add 2012/10/15, for setting SRA. */
+
 #define SYSVER "sys ver\x0d\x0a"
 
 #define CON_START_RESP_NUM 1

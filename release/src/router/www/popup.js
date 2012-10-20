@@ -55,7 +55,7 @@ function LoadingProgress(seconds){
 		else{
 			$("proceeding_img_text").innerHTML = "<#Main_alert_proceeding_desc3#>";
 			y = 0;
-			if(location.pathname.indexOf("QIS_wizard.htm") < 0 && location.pathname.indexOf("Advanced_FirmwareUpgrade_Content") < 0){
+			if(location.pathname.indexOf("QIS_wizard.htm") < 0 && location.pathname.indexOf("Advanced_FirmwareUpgrade_Content") < 0 && location.pathname.indexOf("Advanced_SettingBackup_Content") < 0){
 				setTimeout("hideLoadingBar();",1000);
 				location.href = "index.asp";
 			}

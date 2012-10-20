@@ -49,7 +49,7 @@ function applyRule(){
 }
 
 function validForm(){
-	if(!validate_ipaddr(document.form.wl_radius_ipaddr, 'wl_radius_ipaddr'))
+	if(!validate_ipaddr_final(document.form.wl_radius_ipaddr, 'wl_radius_ipaddr'))
 		return false;
 	
 	if(!validate_range(document.form.wl_radius_port, 0, 65535))

@@ -106,7 +106,7 @@ bound(void)
 {
 	char *wan_ifname = safe_getenv("interface");
 	char *value;
-	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
+	char tmp[100], tmp2[100], prefix[] = "wanXXXXXXXXXX_";
 	char wanprefix[] = "wanXXXXXXXXXX_";
 	char route[sizeof("255.255.255.255/255")];
 	int unit, ifunit;
@@ -132,10 +132,14 @@ bound(void)
 	if ((value = getenv("router"))) {
 		gateway = 1;
 		nvram_set(strcat_r(prefix, "gateway", tmp), trim_r(value));
+		memset(tmp2, 0, 100);
+		strcpy(tmp2, trim_r(value));
 	}
-	if ((value = getenv("dns")) &&
-	    nvram_match(strcat_r(wanprefix, "dnsenable_x", tmp), "1")) {
-		nvram_set(strcat_r(prefix, "dns", tmp), trim_r(value));
+	if(nvram_match(strcat_r(wanprefix, "dnsenable_x", tmp), "1")){
+		if((value = getenv("dns")))
+			nvram_set(strcat_r(prefix, "dns", tmp), trim_r(value));
+		else if(gateway) // ex: android phone. The gateway is the DNS server.
+			nvram_set(strcat_r(prefix, "dns", tmp), tmp2);
 	}
 	if ((value = getenv("wins")))
 		nvram_set(strcat_r(prefix, "wins", tmp), trim_r(value));

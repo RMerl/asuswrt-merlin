@@ -44,14 +44,15 @@ void del_EbtablesRules(void)
 void add_EbtablesRules(void)
 {
 	if(etable_flag == 1) return;
-	char *p, *g;
-	g = strdup(nvram_safe_get("wl_ifnames"));
-	while(g){
-		if ((p = strsep(&g, " ")) != NULL){
+	char *nv, *p, *g;
+	nv = g = strdup(nvram_safe_get("wl_ifnames"));
+	if(nv){
+		while ((p = strsep(&g, " ")) != NULL){
 			//fprintf(stderr, "%s: g=%s, p=%s\n", __FUNCTION__, g, p); //tmp test
 			eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", p, "-j", "mark", "--set-mark", "6", "--mark-target", "ACCEPT");
 			eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", p, "-j", "mark", "--set-mark", "6", "--mark-target", "ACCEPT");
 		}
+		free(nv);
 	}
 
 	// for MultiSSID

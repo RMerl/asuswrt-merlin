@@ -1484,8 +1484,9 @@ int main (int argc, char **argv) {
 				srv->want_fds--;
 			}
 		}
-
-		if ((n = fdevent_poll(srv->ev, 1000)) > 0) {
+		
+		if ((n = fdevent_poll(srv->ev, 1000)) > 0) {		
+			
 			/* n is the number of events */
 			int revents;
 			int fd_ndx;

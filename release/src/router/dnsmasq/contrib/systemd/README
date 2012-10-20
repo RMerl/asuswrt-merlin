@@ -1,0 +1,16 @@
+Hello,
+
+I created a systemd service file for dnsmasq.
+systemd is a sysvinit replacement (see [1] for more information).
+One of the goals of systemd is to encourage standardization between different
+distributions. This means, while I also submitted a ticket in Debian GNU/Linux,
+I would like to ask you to accept this service file as the upstream
+distributor, so that other distributions can use the same service file and
+don’t have to ship their own.
+
+Please include this file in your next release (just like in init script).
+
+
+[1] http://en.wikipedia.org/wiki/Systemd
+
+

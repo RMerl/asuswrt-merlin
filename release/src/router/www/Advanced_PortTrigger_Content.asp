@@ -228,7 +228,7 @@ function trigger_validate_duplicate(o, v, l, off){
 	for(var i = 0; i < o.length; i++)
 	{
 		if(entry_cmp(o[i][1].toLowerCase(), v.toLowerCase(), l) == 0){
-			alert('<#JS_duplicate#>');	
+			alert("<#JS_duplicate#>");
 			return false;
 		}
 	}

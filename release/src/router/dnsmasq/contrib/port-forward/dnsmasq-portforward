@@ -34,8 +34,18 @@ if [ ${DNSMASQ_OLD_HOSTNAME} ] && [ ${action} = old ] ; then
     hostname=${DNSMASQ_OLD_HOSTNAME}
 fi
 
+# IPv6 leases are not our concern. no NAT there!
+if [ ${DNSMASQ_IAID} ] ; then
+   exit 0
+fi
+
 # action init is not relevant, and will only be seen when leasefile-ro is set.
 if [ ${action} = init ] ; then
+    exit 0
+fi
+
+# action tftp is not relevant.
+if [ ${action} = tftp ] ; then
     exit 0
 fi
 

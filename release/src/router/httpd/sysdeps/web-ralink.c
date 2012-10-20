@@ -372,27 +372,6 @@ ralink_get_range_info(iwrange *	range, char* buffer, int length)
 #define RTPRIV_IOCTL_SHOW		SIOCIWFIRSTPRIV + 0x11
 #define RTPRIV_IOCTL_GET_MAC_TABLE	SIOCIWFIRSTPRIV + 0x0F
 
-int
-wl_ioctl(const char *ifname, int cmd, struct iwreq *pwrq)
-{
-	int ret = 0;
- 	int s;
-
-	/* open socket to kernel */
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		perror("socket");
-		return errno;
-	}
-
-	/* do it */
-	strncpy(pwrq->ifr_name, ifname, IFNAMSIZ);
-	if ((ret = ioctl(s, cmd, pwrq)) < 0)
-		perror(pwrq->ifr_name);
-
-	/* cleanup */
-	close(s);
-	return ret;
-}
 
 char* GetBW(int BW)
 {

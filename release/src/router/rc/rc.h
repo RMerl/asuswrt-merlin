@@ -197,6 +197,10 @@ extern void stop_dhcp6c(void);
 extern int ipv6aide_main(int argc, char *argv[]);
 #endif
 
+#ifdef RTCONFIG_WPS
+extern int wpsaide_main(int argc, char *argv[]);
+#endif
+
 // auth.c
 extern int start_auth(int unit, int wan_up);
 extern int stop_auth(int unit, int wan_down);
@@ -340,6 +344,9 @@ extern int asus_lp(const char *device_name, const char *action);
 extern int asus_sr(const char *device_name, const char *action);
 extern int asus_tty(const char *device_name, const char *action);
 extern int asus_usb_interface(const char *device_name, const char *action);
+extern int diskmon_main(int argc, const char *argv[]);
+extern void start_diskmon(void);
+extern void stop_diskmon(void);
 #endif
 
 //service.c

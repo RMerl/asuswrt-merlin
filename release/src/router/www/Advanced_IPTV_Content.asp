@@ -243,9 +243,9 @@ function applyRule(){
 			||  (original_switch_wantag != document.form.switch_wantag.value)){
 						FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
 				}
-			load_ISP_profile();
-	}
-	
+			load_ISP_profile();			
+	} 
+
 	if(validForm()){
 
 		if(wl6_support != -1)
@@ -287,12 +287,6 @@ function disable_udpxy(){
 	}	
 }// The input fieldof UDP proxy does not relate to Mutlicast Routing. 
 
-function add_options_value(o, str, arr, orig){
-        if(orig == arr)
-                add_option(o, str, arr, 1);
-        else
-                add_option(o, str, arr, 0);
-}
 </script>
 </head>
 

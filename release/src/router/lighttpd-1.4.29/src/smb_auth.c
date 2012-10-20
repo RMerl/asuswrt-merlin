@@ -203,6 +203,12 @@ int startposizition( char *str, int start )
     	return posizition;  
 } 
 
+const char *get_filename_ext(const char *filename) {
+    const char *dot = strrchr(filename, '.');
+    if(!dot || dot == filename) return "";
+    return dot + 1;
+}
+
 int smbc_wrapper_opendir(connection* con, const char *durl)
 {
 	if(con->mode== SMB_BASIC){		
@@ -372,9 +378,9 @@ smbc_wrapper_lseek(connection* con, int fd, off_t offset, int whence)
 	return -1;
 }
 int smbc_wrapper_parse_path(connection* con, char *pWorkgroup, char *pServer, char *pShare, char *pPath){
-	if(con->mode== SMB_BASIC||con->mode== SMB_NTLM){
+	if(con->mode== SMB_BASIC||con->mode== SMB_NTLM){ 
 		smbc_parse_path(con->physical.path->ptr, pWorkgroup, pServer, pShare, pPath);
-
+		
 		//- Jerry add: replace '\\' to '/'
 		do{
 			char buff[4096];
@@ -385,8 +391,7 @@ int smbc_wrapper_parse_path(connection* con, char *pWorkgroup, char *pServer, ch
 	return 1;
 }
 
-int smbc_wrapper_parse_path2(connection* con, char *pWorkgroup, char *pServer, char *pShare, char *pPath){
-	
+int smbc_wrapper_parse_path2(connection* con, char *pWorkgroup, char *pServer, char *pShare, char *pPath){	 
 	if(con->mode== SMB_BASIC||con->mode== SMB_NTLM){
 
 		smbc_parse_path(con->physical_auth_url->ptr, pWorkgroup, pServer, pShare, pPath);
@@ -1097,11 +1102,15 @@ int smbc_parser_basic_authentication(server *srv, connection* con, char** userna
 	data_string* ds = (data_string *)array_get_element(con->request.headers, "Authorization");
 	
 	if(con->share_link_basic_auth->used){
-		Cdbg(DBE, "con->share_link_basic_auth=[%s]", con->share_link_basic_auth->ptr);
+		Cdbg(1, "Use for Sharelink, con->share_link_basic_auth=[%s]", con->share_link_basic_auth->ptr);
 		ds = data_string_init();
 		buffer_copy_string_buffer( ds->value, con->share_link_basic_auth );
 		buffer_reset(con->share_link_basic_auth);
+
+		con->is_share_link = 1;
 	}
+	else
+		con->is_share_link = 0;
 	
 	if (ds != NULL) {
 		char *http_authorization = NULL;
@@ -1532,6 +1541,32 @@ void stop_arpping_process()
 	}
 
 	unlink("/tmp/lighttpd/lighttpd-arpping.pid");
+}
+
+int in_the_same_folder(buffer *src, buffer *dst) 
+{
+	char *sp;
+
+	char *smem = (char *)malloc(src->used);
+	memcpy(smem, src->ptr, src->used);
+		
+	char *dmem = (char *)malloc(dst->used);	
+	memcpy(dmem, dst->ptr, dst->used);
+		
+	sp = strrchr(smem, '/');
+	int slen = sp - smem;
+	sp = strrchr(dmem, '/');
+	int dlen = sp - dmem;
+
+	smem[slen] = '\0';
+	dmem[dlen] = '\0';
+	
+	int res = memcmp(smem, dmem, (slen>dlen) ? slen : dlen);		
+	Cdbg(DBE, "smem=%s,dmem=%s, slen=%d, dlen=%d", smem, dmem, slen, dlen);
+	free(smem);
+	free(dmem);
+
+	return (res) ? 0 : 1;
 }
 
 #if 0

@@ -12,6 +12,9 @@
 # $Id: Makefile 315332 2012-02-16 07:06:36Z $
 #
 
+include ../../common.mak
+CFLAGS	+= $(EXTRACFLAGS)
+
 CFLAGS	+= -I.. -I$(SRCBASE)/include -I$(SRCBASE)/router/shared -Wall -Werror
 CFLAGS	+= $(WLAN_ComponentIncPath)
 

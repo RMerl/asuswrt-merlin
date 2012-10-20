@@ -2,7 +2,6 @@
 var keyPressed;
 var wItem;
 var ip = "";
-var final_flag = 0;	// for validate_ipaddr() always return true.
 
 // 2010.07 James. {
 function inet_network(ip_str){
@@ -310,10 +309,8 @@ function is_number(o,event){
 }
 
 function validate_range(o, min, max) {
-	for(i=0; i<o.value.length; i++)
-	{
-		if (o.value.charAt(i)<'0' || o.value.charAt(i)>'9')
-		{
+	for(i=0; i<o.value.length; i++){
+		if (o.value.charAt(i)<'0' || o.value.charAt(i)>'9'){
 			alert('<#JS_validrange#> ' + min + ' <#JS_validrange_to#> ' + max);
 			//o.value = max;
 			o.focus();
@@ -321,6 +318,7 @@ function validate_range(o, min, max) {
 			return false;
 		}
 	}
+	
 	if(o.value<min || o.value>max) {
 		alert('<#JS_validrange#> ' + min + ' <#JS_validrange_to#> ' + max);
 		//o.value = max;
@@ -331,7 +329,8 @@ function validate_range(o, min, max) {
 	else {
 		o.value = str2val(o.value);
 		if(o.value=="")
-		o.value="0";
+			o.value="0";
+			
 		return true;
 	}
 }
@@ -348,7 +347,8 @@ function validate_range_sp(o, min, max, def) {		//allow to set "0"
 	}
 	else {
 		o.value = str2val(o.value);
-		if(o.value=="") o.value="0";
+		if(o.value=="") 
+			o.value="0";
 		return true;
 	}
 }
@@ -442,209 +442,6 @@ function matchSubnet2(wan_ip1, wan_sb1,lan_ip2,lan_sb2){
 		return 0;
 }
 
-function validate_ipaddr(o, v){
-	if(final_flag)
-		return true;
-	
-num = -1;
-pos = 0;
-if (o.value.length==0)
-{if (v=='dhcp_start' || v=='dhcp_end' || v=='wan_ipaddr_x' || v=='dhcp1_start' || v=='dhcp1_end' ||
-v=='lan_ipaddr' || v=='lan_netmask' || v=='lan1_ipaddr' || v=='lan1_netmask')
-{alert("<#JS_fieldblank#>");
-if (v=='wan_ipaddr_x')
-{document.form.wan_ipaddr_x.value = "10.1.1.1";
-document.form.wan_netmask_x.value = "255.0.0.0";
-}
-else if (v=='lan_ipaddr')
-{document.form.lan_ipaddr.value = "192.168.1.1";
-document.form.lan_netmask.value = "255.255.255.0";
-}
-else if (v=='lan1_ipaddr')
-{document.form.lan1_ipaddr.value = "192.168.2.1";
-document.form.lan1_netmask.value = "255.255.255.0";
-}
-else if (v=='lan_netmask') document.form.lan_netmask.value = "255.255.255.0";
-else if (v=='lan1_netmask') document.form.lan1_netmask.value = "255.255.255.0";
-else if (v=='dhcp_start') document.form.dhcp_start.value = document.form.dhcp_end.value;
-else if (v=='dhcp_end') document.form.dhcp_end.value = document.form.dhcp_start.value;
-else if (v=='dhcp1_start') document.form.dhcp1_start.value = document.form.dhcp1_end.value;
-else if (v=='dhcp1_end') document.form.dhcp1_end.value = document.form.dhcp1_start.value;
-o.focus();
-o.select();
-return false;
-}
-else return true;
-}
-if(v=='wan_ipaddr_x' && document.form.wan_netmask_x.value=="")
-document.form.wan_netmask_x.value="255.255.255.0";
-for(i=0; i<o.value.length; i++) {
-c=o.value.charAt(i);
-if(c>='0' && c<='9')
-{if ( num==-1 )
-{num = (c-'0');
-}
-else
-{num = num*10 + (c-'0');
-}
-}
-else
-{if ( num<0 || num>255 || c!='.')
-{alert(o.value + " <#JS_validip#>");
-o.value = "";
-o.focus();
-o.select();
-return false;
-}
-if (pos==0) v1=num;
-else if (pos==1) v2=num;
-else if (pos==2) v3=num;
-num = -1;
-pos++;
-}
-}
-if (pos!=3 || num<0 || num>255)
-{alert(o.value + " <#JS_validip#>");
-o.value = "";
-o.focus();
-o.select();
-return false;
-}
-else v4=num;
-if (v=='dhcp_start' || v=='dhcp_end' || v=='wan_ipaddr_x' || v=='dhcp1_start' || v=='dhcp1_end' || v=='lan_ipaddr' || v=='lan1_ipaddr' || v=='staticip')
-{
-	
-	//if(v1==255||v2==255||v3==255||v4==255||v1==0||v4==0||v1==127||v1==224)
-	if(v != 'wan_ipaddr_x' && (v1 == 255 || v4 == 255 || v1 == 0 || v4 == 0 || v1 == 127 || v1 == 224))
-{alert(o.value + " <#JS_validip#>");
-o.value = "";
-o.focus();
-o.select();
-return false;
-}
-if ((v=='wan_ipaddr_x' &&  matchSubnet2(o.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)) ||
-(v=='lan_ipaddr' &&  matchSubnet2(o.value, document.form.lan_netmask, document.form.wan_ipaddr_x.value, document.form.wan_netmask_x)) 
-)
-{
-	alert(o.value + " <#JS_validip#>");
-	if (v=='wan_ipaddr_x')
-	{document.form.wan_ipaddr_x.value = "10.1.1.1";
-	document.form.wan_netmask_x.value = "255.0.0.0";
-	}
-	else if(v=='lan_ipaddr')
-	{document.form.lan_ipaddr.value = "192.168.1.1";
-	document.form.lan_netmask.value = "255.255.255.0";
-	}
-	else if(v=='lan1_ipaddr')
-	{document.form.lan1_ipaddr.value = "192.168.2.1";
-	document.form.lan1_netmask.value = "255.255.255.0";
-	}
-	o.focus();
-	o.select();
-	return false;
-}
-
-}
-else if(v=='lan_netmask' || v=='lan1_netmask')
-{if(v1==255&&v2==255&&v3==255&&v4==255)
-{alert(o.value + " <#JS_validip#>");
-o.value = "";
-o.focus();
-o.select();
-return false;
-}
-}
-if (requireWANIP(v) && (
-(v=='wan_netmask_x' &&  matchSubnet2(document.form.wan_ipaddr_x.value, o, document.form.lan_ipaddr.value, document.form.lan_netmask)) ||
-(v=='lan_netmask' &&  matchSubnet2(document.form.lan_ipaddr.value, o, document.form.wan_ipaddr_x.value, document.form.wan_netmask_x))
-))
-{alert(o.value + " <#JS_validip#>");
-if (v=='wan_netmask_x')
-{document.form.wan_ipaddr_x.value = "10.1.1.1";
-document.form.wan_netmask_x.value = "255.0.0.0";
-}
-else if(v=='lan_netmask')
-{document.form.lan_ipaddr.value = "192.168.1.1";
-document.form.lan_netmask.value = "255.255.255.0";
-}
-else if(v=='lan1_netmask')
-{document.form.lan1_ipaddr.value = "192.168.2.1";
-document.form.lan1_netmask.value = "255.255.255.0";
-}
-o.focus();
-o.select();
-return false;
-}
-o.value = v1 + "." + v2 + "." + v3 + "." + v4;
-if ((v1 > 0) && (v1 < 127)) mask = "255.0.0.0";
-else if ((v1 > 127) && (v1 < 192)) mask = "255.255.0.0";
-else if ((v1 > 191) && (v1 < 224)) mask = "255.255.255.0";
-else mask = "0.0.0.0";
-if (v=='wan_ipaddr_x' && document.form.wan_netmask_x.value=="")
-{document.form.wan_netmask_x.value = mask;
-}
-else if (v=='lan_ipaddr' && document.form.lan_netmask.value=="" )
-{document.form.lan_netmask.value = mask;
-}
-else if (v=='dhcp_start')
-{if (!matchSubnet(document.form.lan_ipaddr.value, document.form.dhcp_start.value, 3))
-{alert(o.value + " <#JS_validip#>");
-o.focus();
-o.select();
-return false;
-}
-if (inet_network(o.value)>inet_network(document.form.dhcp_end.value))
-{tmp = document.form.dhcp_start.value;
-document.form.dhcp_start.value = document.form.dhcp_end.value;
-document.form.dhcp_end.value = tmp;
-}
-}
-else if (v=='dhcp_end')
-{if (!matchSubnet(document.form.lan_ipaddr.value, document.form.dhcp_end.value, 3))
-{alert(o.value + " <#JS_validip#>");
-o.focus();
-o.select();
-return false;
-}
-if (inet_network(document.form.dhcp_start.value)>inet_network(o.value))
-{tmp = document.form.dhcp_start.value;
-document.form.dhcp_start.value = document.form.dhcp_end.value;
-document.form.dhcp_end.value = tmp;
-}
-}
-else if (v=='lan1_ipaddr')
-{if(document.form.lan1_netmask.value=="" )
-document.form.lan1_netmask.value = mask;
-}
-else if (v=='dhcp1_start')
-{if (!matchSubnet(document.form.lan1_ipaddr.value, document.form.dhcp1_start.value, 3))
-{alert(o.value + " <#JS_validip#>");
-o.focus();
-o.select();
-return false;
-}
-if (inet_network(o.value)>inet_network(document.form.dhcp1_end.value))
-{tmp = document.form.dhcp1_start.value;
-document.form.dhcp1_start.value = document.form.dhcp1_end.value;
-document.form.dhcp1_end.value = tmp;
-}
-}
-else if (v=='dhcp1_end')
-{if (!matchSubnet(document.form.lan1_ipaddr.value, document.form.dhcp1_end.value, 3))
-{alert(o.value + " <#JS_validip#>");
-o.focus();
-o.select();
-return false;
-}
-if (inet_network(document.form.dhcp1_start.value)>inet_network(o.value))
-{tmp = document.form.dhcp1_start.value;
-document.form.dhcp1_start.value = document.form.dhcp1_end.value;
-document.form.dhcp1_end.value = tmp;
-}
-}
-return true;
-}
-
 function validate_ipaddr_final(o, v){
 	var num = -1;
 	var pos = 0;
@@ -655,7 +452,7 @@ function validate_ipaddr_final(o, v){
 				v == 'dhcp1_start' || v=='dhcp1_end' ||
 				v == 'lan_ipaddr' || v=='lan_netmask' ||
 				v=='lan1_ipaddr' || v=='lan1_netmask' ||
-				v == 'wl_radius_ipaddr') {	
+				v == 'wl_radius_ipaddr' || v == 'dmz_ip') {	
 			alert("<#JS_fieldblank#>");
 			
 			if(v == 'wan_ipaddr_x'){
@@ -1147,9 +944,7 @@ function load_body(){
 		document.form.url_time_x_endhour_1.value = getTimeRange(document.form.url_time_x_1.value, 2);
 		document.form.url_time_x_endmin_1.value = getTimeRange(document.form.url_time_x_1.value, 3);
 	}
-	else if(document.form.current_page.value == "Advanced_DHCP_Content.asp"){
-		final_flag = 1;
-	}
+
 	change = 0;
 }
 
@@ -1680,27 +1475,33 @@ function validate_timerange(o, p)
 	return true;
 }
 
-function matchSubnet(ip1, ip2, count)
-{var c = 0;
-var v1 = 0;
-var v2 = 0;
-for(i=0;i<ip1.length;i++)
-{if (ip1.charAt(i) == '.')
-{if (ip2.charAt(i) != '.')
-return false;
-c++;
-if (v1!=v2) return false;
-v1 = 0;
-v2 = 0;
-}
-else
-{if (ip2.charAt(i)=='.') return false;
-v1 = v1*10 + (ip1.charAt(i) - '0');
-v2 = v2*10 + (ip2.charAt(i) - '0');
-}
-if (c==count) return true;
-}
-return false;
+function matchSubnet(ip1, ip2, count){
+	var c = 0;
+	var v1 = 0;
+	var v2 = 0;
+	for(i=0;i<ip1.length;i++){
+		if (ip1.charAt(i) == '.'){
+			if (ip2.charAt(i) != '.')
+				return false;
+				
+			c++;
+			if (v1!=v2) 
+				return false;
+				
+			v1 = 0;
+			v2 = 0;
+		}
+		else{
+			if (ip2.charAt(i)=='.') 
+				return false;
+				
+			v1 = v1*10 + (ip1.charAt(i) - '0');
+			v2 = v2*10 + (ip2.charAt(i) - '0');
+		}
+		if (c==count) 
+			return true;
+	}
+	return false;
 }
 function subnetPrefix(ip, orig, count)
 {r='';
@@ -1992,16 +1793,27 @@ function change_wep_type(mode, isload){
 }
 
 function insertExtChannelOption(){
-	if('<% nvram_get("wl_unit"); %>' == '1')
-		insertExtChannelOption_5g();
-	else
-		insertExtChannelOption_2g();
+	if('<% nvram_get("wl_unit"); %>' == '1'){
+				insertExtChannelOption_5g();	
+	}else{
+				insertExtChannelOption_2g();
+	}	
 }
 
 function insertExtChannelOption_5g(){
-        var country = "<% nvram_get("wl1_country_code"); %>";
-        var orig = document.form.wl_channel.value;
-        free_options(document.form.wl_channel);   
+    var country = "<% nvram_get("wl1_country_code"); %>";
+    var orig = document.form.wl_channel.value;
+    free_options(document.form.wl_channel);
+		if(wl_channel_list_5g != ""){	//With wireless channel 5g hook
+				wl_channel_list_5g = eval('<% channel_list_5g(); %>');
+				if(document.form.wl_bw.value != "0" && wl_channel_list_5g[wl_channel_list_5g.length-1] == "165"){
+						wl_channel_list_5g.splice(wl_channel_list_5g.length-1,1);
+				}
+				if(wl_channel_list_5g[0] != "<#Auto#>")
+						wl_channel_list_5g.splice(0,0,"0");
+												
+				channels = wl_channel_list_5g;
+		}else{   	//start Without wireless channel 5g hook
         if (document.form.wl_bw.value == "0"){ // 20 MHz
 						inputCtrl(document.form.wl_nctrlsb, 0);
                 	if (country == "AL" || 
@@ -2353,13 +2165,14 @@ function insertExtChannelOption_5g(){
 									else
                 		channels = new Array(36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 149, 153, 157, 161);
                 }                
-        
+    }	//end Without wireless channel 5g hook
+    
         var ch_v = new Array();
         for(var i=0; i<channels.length; i++){
         	ch_v[i] = channels[i];
         }
         if(ch_v[0] == "0")
-        	channels[0] = "Auto";
+        	channels[0] = "<#Auto#>";
         add_options_x2(document.form.wl_channel, channels, ch_v, orig);
 				var x = document.form.wl_nctrlsb;
 				//x.remove(x.selectedIndex);
@@ -2369,8 +2182,26 @@ function insertExtChannelOption_5g(){
 }
 
 function insertExtChannelOption_2g(){
-	var wmode = document.form.wl_nmode_x.value;
-	var CurrentCh = document.form.wl_channel.value;
+	var orig2 = document.form.wl_channel.value;
+	var wmode = document.form.wl_nmode_x.value;	
+  free_options(document.form.wl_channel);
+  
+  if(wl_channel_list_2g != ""){
+  			wl_channel_list_2g = eval('<% channel_list_2g(); %>');
+  			if(wl_channel_list_2g[0] != "<#Auto#>")
+  					wl_channel_list_2g.splice(0,0,"0");
+        var ch_v2 = new Array();
+        for(var i=0; i<wl_channel_list_2g.length; i++){
+        	ch_v2[i] = wl_channel_list_2g[i];
+        }
+        if(ch_v2[0] == "0")
+        	wl_channel_list_2g[0] = "<#Auto#>";                	
+        add_options_x2(document.form.wl_channel, wl_channel_list_2g, ch_v2, orig2);
+	}else{
+			document.form.wl_channel.innerHTML = '<% select_channel("WLANConfig11b"); %>';
+	}
+	
+	var CurrentCh = document.form.wl_channel.value;	
 	var option_length = document.form.wl_channel.options.length;
 	if ((wmode == "0"||wmode == "1") && document.form.wl_bw.value != "0"){
 		inputCtrl(document.form.wl_nctrlsb, 1);

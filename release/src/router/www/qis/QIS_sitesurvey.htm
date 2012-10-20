@@ -35,7 +35,6 @@
 </style>	
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script type="text/JavaScript">
-
 var aplist = new Array();
 var wlc_state = '<% nvram_get("wlc_state"); %>';
 var wlc_sbstate = '<% nvram_get("wlc_sbstate"); %>';
@@ -142,7 +141,7 @@ function update_site_info(){
 				setTimeout("update_site_info();", 2000);
 			}
 			if(isrescan == 0){ // rescan onLoading
-				isrescan++;
+				isrescan++;				
 				rescan();
 				wlc_scan_state = 0;
 			}
@@ -254,12 +253,15 @@ function bind_event(){ //bind <tr> click and hover event
 		$(this).find("td").css("color", "#FFFFFF");
 		idx = $(this)[0].rowIndex;
 
-		var initRow = '<tr class="inputRow" style="display:none;background-color:#708789;"><td style="height:50px;" colspan="5">';
-		var connectedHint = '<span style="color:#FFCC00;"><#APSurvey_msg_connected#></span>';
-		var unEncrypt = '<span style="color:#FFCC00;"><#APSurvey_msg_connect_open_wlan#></span>';
-		var networkKey = '<span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" autocapitalization="off" id="thekey" name="thekey" class="input_25_table">';
-		var wepkeyIndex = '<span style="margin-left:10px;color:#FFFFFF;"><#WLANConfig11b_WEPDefaultKey_itemname#></span><select name="sta_key_index" class="input_option"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>';
-		var connectBtn = '<input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="submitForm('+ idx +')" class="button_gen"> <img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></td></tr>';
+		var initRow = '<tr class="inputRow" style="display:none;background-color:#708789;"><td style="height:50px;" colspan="5"><table><tr>';
+		var connectedHint = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connected#></span></td>';
+		var unEncrypt = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connect_open_wlan#></span></td>';
+		var networkKey = '<td style="border:0px;"><span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" autocapitalization="off" id="thekey" name="thekey" class="input_25_table"></td>';
+		var wepkeyIndex = '<td style="border:0px;"><span style="margin-left:10px;color:#FFFFFF;"><#WLANConfig11b_WEPDefaultKey_itemname#></span><select name="sta_key_index" class="input_option"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td>';
+		var wep_auth = '<td style="border:0px;"><span style="color:#FFFFFF;">Auth: </span><select name="wl_wep_auth" class="input_option"><option value="open" selected>open</option><option value="shared">shared</option></select></td>';
+		var connectBtn = '<td style="border:0px;"><input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="submitForm('+ idx +')" class="button_gen"> <img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></td></tr>';
+		var showPassword = '<tr><td style="border:0px;color:#FFFFFF;"><div style="margin-left:50px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.thekey);"><#QIS_show_pass#></div></td></tr>';
+		var endOfRow = '</table></td></tr>';
 
 		if(wlc_scan_state != 3)
 			initRow = "";
@@ -292,17 +294,21 @@ function bind_event(){ //bind <tr> click and hover event
 				initRow += unEncrypt;
 			else{
 				initRow += networkKey;
-				if(aplist[idx][4] == "WEP")
+				if(aplist[idx][4] == "WEP"){
+					initRow += wep_auth;
 					initRow += wepkeyIndex;
+				}	
 			}
 			initRow += connectBtn;
+			if(aplist[idx][4] != "NONE")
+				initRow += showPassword;
 		}
-		
+		initRow += endOfRow;
 		$(this).after(initRow);
-		$(".inputRow").fadeIn();
-		
+		$(".inputRow").fadeIn();	
 		$("#connect_btn").focus();
 		$("#thekey").focus();
+		
 	});
 
 	for(var i=0; i<aplist.length ;i++){
@@ -313,6 +319,31 @@ function bind_event(){ //bind <tr> click and hover event
 			$("#aplist_table tbody tr").eq(i).css("background-color", "#708789");
 			$("#aplist_table tbody tr").eq(i).find("td").css("color", "#FFFFFF");
 		}
+	}
+}
+
+/* password item show or not */
+function pass_checked(obj){
+	if(document.form.show_pass_1.checked)
+		replace_pass_type(obj, "text");
+	else
+		replace_pass_type(obj, "password");
+}
+
+/* change password type depend on browser for fix IE issue*/
+function replace_pass_type(obj, _Type){
+	if(navigator.userAgent.indexOf("MSIE") != -1){ // fix IE issue
+		var input2 = document.createElement('<input class="input_25_table" autocapitalization="off">');  // create input element
+		with (input2){ 
+			id = obj.id; 
+			value = obj.value; 
+			type = _Type; // change input type
+			name = obj.name;
+		} 
+		obj.parentNode.replaceChild(input2,obj);
+	}
+	else{	
+		obj.type= _Type;
 	}
 }
 
@@ -385,7 +416,10 @@ function submitForm(_idx){	//["band","ssid","channel","auth","encrypt","signal",
 			if(aplist[_idx][4] == "WEP"){
 				document.form.wlc_wep_key.value = document.form.thekey.value;
 				document.form.wlc_key.value = document.form.sta_key_index.value;
-				document.form.wlc_wep.value = 1;
+				if(document.form.thekey.value.length == 5 || document.form.thekey.value.length == 10)
+					document.form.wlc_wep.value = 1;
+				else if(document.form.thekey.value.length == 13 || document.form.thekey.value.length == 26)
+					document.form.wlc_wep.value = 2;
 			}
 			else if(aplist[_idx][4] == "NONE"){
 				document.form.wlc_wep.value = 0;
@@ -398,8 +432,14 @@ function submitForm(_idx){	//["band","ssid","channel","auth","encrypt","signal",
 
 			if(aplist[_idx][3] == "Open System")
 				document.form.wlc_auth_mode.value = "open";
-			else if(aplist[_idx][3] == "Unknown")
-				document.form.wlc_auth_mode.value = "shared"; 
+			else if(aplist[_idx][3] == "Unknown"){
+				if(document.form.wl_wep_auth.value == "open"){
+					document.form.wlc_auth_mode.value = "open";
+				}
+				else if(document.form.wl_wep_auth.value == "shared"){
+					document.form.wlc_auth_mode.value = "shared";
+				}
+			}
 			else if(aplist[_idx][3] == "WPA-PSK"){			
 				document.form.wlc_auth_mode.value = "psk";
 				document.form.wlc_crypto.value = "tkip";
@@ -453,6 +493,7 @@ function submitForm(_idx){	//["band","ssid","channel","auth","encrypt","signal",
 
 function rescan(){
 	issubmit = 0;
+	parent.isrescan = 120; // stop rescan
 	document.form.wlc_ssid.value = decodeURIComponent(document.form.wlc_ssid_orig.value); // Here is ascii code!!
 	document.getElementById("SearchingIcon").style.display = "";
 	document.form.flag.value = "sitesurvey";

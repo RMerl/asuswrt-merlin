@@ -151,7 +151,7 @@ void convert_dsl_wan()
 		else if (nvram_match("dsl0_proto","bridge")) {
 			// disable nat
 			nvram_set("wan0_nat_x","0");
-			
+
 			/* Paul add 2012/7/13, for Bridge connection type wan0_proto set to dhcp, and dsl_proto set as bridge */
 			nvram_set("wan0_proto","dhcp");
 			nvram_set("dsl_proto","bridge");
@@ -179,6 +179,10 @@ void convert_dsl_wan()
 		else if (nvram_match("dsl0_proto","bridge")) {
 			// disable nat
 			nvram_set("wan1_nat_x","0");		
+
+			/* Paul add 2012/7/13, for Bridge connection type wan0_proto set to dhcp, and dsl_proto set as bridge */
+			nvram_set("wan1_proto","dhcp");
+			nvram_set("dsl_proto","bridge");
 		}
 		else if (nvram_match("dsl0_proto","mer")) {
 			if (nvram_match("dslx_DHCPClient","1")) {
@@ -271,7 +275,7 @@ dsl_defaults(void)
 	// this is for upgrading check
 	// if trx is same, the upgrade procedure will be skiped
 	fprintf(stderr, "dump trx header..\n");
-	system("dd if=/dev/mtd3 of=/tmp/trx_hdr.bin count=1");	
+	eval("dd", "if=/dev/mtd3", "of=/tmp/trx_hdr.bin", "count=1");
 
 	convert_dsl_wan_settings(0);
 }

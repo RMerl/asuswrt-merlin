@@ -152,6 +152,7 @@ void get_lan_nvram(){
 #ifdef RTCONFIG_WIRELESSREPEATER
 	if(sw_mode == SW_MODE_REPEATER){
 		wlc_state = nvram_get_int("wlc_state");
+		got_notify = 1;
 	}
 #endif
 
@@ -843,16 +844,16 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 	sprintf(buf, "%s%s%s%s%s%s", buf, "HTTP/1.0 302 Moved Temporarily\r\n", "Server: wanduck\r\n", "Date: ", timebuf, "\r\n");
 
 	memset(dut_addr, 0, 64);
-	strcpy(dut_addr, DUT_DOMAIN_NAME);
 
-	if(nvram_match("wanduck_domain_off", "1")){
-		if((conn_changed_state[wan_unit] == C2D || conn_changed_state[wan_unit] == DISCONN) && disconn_case[wan_unit] == CASE_THESAMESUBNET)
-			strcpy(dut_addr, nvram_safe_get("lan_ipaddr"));
-		else if(isFirstUse && sw_mode == SW_MODE_ROUTER)
-			strcpy(dut_addr, nvram_safe_get("lan_ipaddr"));
-		else if(conn_changed_state[wan_unit] == C2D || conn_changed_state[wan_unit] == DISCONN)
-			strcpy(dut_addr, nvram_safe_get("lan_ipaddr"));
-	}
+#ifdef RTCONFIG_WIRELESSREPEATER
+	if(sw_mode == SW_MODE_REPEATER || sw_mode == SW_MODE_HOTSPOT)
+		strcpy(dut_addr, DUT_DOMAIN_NAME);
+	else
+#endif
+	if(isFirstUse)
+		strcpy(dut_addr, DUT_DOMAIN_NAME);
+	else
+		strcpy(dut_addr, nvram_safe_get("lan_ipaddr"));
 
 	if((conn_changed_state[wan_unit] == C2D || conn_changed_state[wan_unit] == DISCONN) && disconn_case[wan_unit] == CASE_THESAMESUBNET)
 		sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "Location:http://", dut_addr, "/error_page.htm?flag=", disconn_case[wan_unit], "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
@@ -1337,6 +1338,7 @@ int wanduck_main(int argc, const char *argv[]){
 	}
 
 	rule_setup = 0;
+	got_notify = 0;
 	clilen = sizeof(cliaddr);
 
 	sprintf(router_name, "%s", DUT_DOMAIN_NAME);
@@ -1587,7 +1589,7 @@ csprintf("# wanduck: set S_IDLE: CASE_THESAMESUBNET.\n");
 				}
 #endif
 #if defined(RTCONFIG_USB_MODEM) || defined(RTCONFIG_DUALWAN)
-				else if(get_disconn_count(current_wan_unit) == S_IDLE
+				else if(get_disconn_count(current_wan_unit) == S_IDLE && current_state[current_wan_unit] != WAN_STATE_DISABLED
 #ifdef RTCONFIG_DUALWAN
 						&& (!strcmp(dualwan_mode, "off")
 								|| (!strcmp(dualwan_mode, "fo") && get_dualwan_by_unit(other_wan_unit) != WANS_DUALWAN_IF_NONE)
@@ -1639,8 +1641,10 @@ csprintf("# wanduck: set S_COUNT: changed_count[] >= max_disconn_count.\n");
 #endif
 #ifdef RTCONFIG_WIRELESSREPEATER
 		if(sw_mode == SW_MODE_REPEATER){
-			if(conn_changed_state[current_wan_unit] == DISCONN || conn_changed_state[current_wan_unit] == C2D || isFirstUse){
-				if(rule_setup == 0){
+			if(!got_notify)
+				; // do nothing.
+			else if(conn_changed_state[current_wan_unit] == DISCONN || conn_changed_state[current_wan_unit] == C2D || isFirstUse){
+				//if(rule_setup == 0){
 if(conn_changed_state[current_wan_unit] == DISCONN)
 	csprintf("\n# mode(%d): Enable direct rule(DISCONN)\n", sw_mode);
 else if(conn_changed_state[current_wan_unit] == C2D)
@@ -1656,10 +1660,13 @@ else
 					f_write_string("/proc/net/dnsmqctrl", "", 0, 0);
 
 					notify_rc("stop_nat_rules");
-				}
+				//}
+
+				got_notify = 0;
 			}
 			else{
-				if(rule_setup == 1 && !isFirstUse){
+				//if(rule_setup == 1 && !isFirstUse){
+				if(!isFirstUse){
 csprintf("\n# mode(%d): Disable direct rule(CONNED)\n", sw_mode);
 					rule_setup = 0;
 
@@ -1671,6 +1678,8 @@ csprintf("\n# mode(%d): Disable direct rule(CONNED)\n", sw_mode);
 
 					notify_rc("start_nat_rules");
 				}
+
+				got_notify = 0;
 			}
 		}
 		else

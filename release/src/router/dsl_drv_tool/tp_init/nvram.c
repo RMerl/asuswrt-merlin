@@ -21,6 +21,9 @@ extern int AddPvc(int idx, int vlan_id, int vpi, int vci, int encap, int mode);
 extern int SetQosToPvc(int idx, int SvcCat, int Pcr, int Scr, int Mbs);
 extern int SetAdslMode(int EnumAdslModeValue, int FromAteCmd);
 extern int SetAdslType(int EnumAdslTypeValue, int FromAteCmd);
+extern int SetSNRMOffset(int EnumSNRMOffsetValue, int FromAteCmd); /* Paul add 2012/9/24 */
+extern int SetSRA(int EnumSRAValue, int FromAteCmd); /* Paul add 2012/10/15 */
+
 extern char* strcpymax(char *to, const char*from, int max_to_len);
 //
 //int DelPvc(int vpi, int vci)
@@ -142,16 +145,47 @@ int nvram_load_adsl_mode()
 #endif        
 }
 
+/* Paul add start 2012/9/24, for SNR Margin tweaking. */
+int nvram_load_SNRM_offset() 
+{
+#ifndef WIN32
+    char* pValue;
+    pValue = nvram_safe_get("dslx_snrm_offset");
+    if (*pValue == 0) return EnumSNRMOffset;
+    else return atoi(pValue);  
+#else    
+    return EnumSNRMOffset;
+#endif        
+}
+
+/* Paul add 2012/10/15, for setting SRA. */
+int nvram_load_SRA() 
+{
+#ifndef WIN32
+    char* pValue;
+    pValue = nvram_safe_get("dslx_sra");
+    if (*pValue == 0) return EnumSRA;
+    else return atoi(pValue);  
+#else    
+    return EnumSRA;
+#endif        
+}
+
 int nvram_load_config_num(int* iptv)
 {
 #ifndef WIN32
     char* pValue;
-    pValue = nvram_safe_get("switch_stb_x");
-    if (*pValue == 0) *iptv = 1;
-    else *iptv = atoi(pValue);
+    /* Paul modify 2012/10/16, when there is no STB port configured, PVC for IPTV should still be created for UDP Proxy */
+    int ret;
+    //pValue = nvram_safe_get("switch_stb_x");
+    //if (*pValue == 0) *iptv = 1;
+    //else *iptv = atoi(pValue);
     pValue = nvram_safe_get("dslx_config_num");
-    if (*pValue == 0) return 0;
-    else return atoi(pValue);
+    //if (*pValue == 0) return 0;
+    //else return atoi(pValue);
+    ret = *pValue ? atoi(pValue) : 0;
+    *iptv = (ret > 1);
+    return ret;
 #else    
     return 1;
 #endif        
@@ -236,9 +270,11 @@ int write_ipvc_mode(int config_num, int iptv_port)
 
 int nvram_set_adsl_fw_setting(int config_num, int iptv_port, int internet_pvc, int chg_mode)
 {
-    int i;    
-    int EnumAdslType;
-    int EnumAdslMode;    
+	int i;    
+	int EnumAdslType;
+	int EnumAdslMode;
+	int EnumSNRM_Offset;
+	int EnumSRA_;
 	int all_bridge_pvc = 1;	    
 	int pvc_idx;
 	FILE* fp;
@@ -250,12 +286,19 @@ int nvram_set_adsl_fw_setting(int config_num, int iptv_port, int internet_pvc, i
 #else
 	    EnumAdslType=nvram_load_adsl_type();
 #endif	
-	    EnumAdslMode=nvram_load_adsl_mode();    
+	    EnumAdslMode=nvram_load_adsl_mode();
+	    EnumSNRM_Offset=nvram_load_SNRM_offset(); /* Paul add 2012/9/24 */
+	    EnumSRA_=nvram_load_SRA(); /* Paul add 2012/10/15 */
+
 	    // set the setting to adsl fw    
 	    SetAdslType(EnumAdslType,0);
 	    SetAdslMode(EnumAdslMode,0);
+	    SetSNRMOffset(EnumSNRM_Offset,0); /* Paul add 2012/9/24 */
+	    SetSRA(EnumSRA_,0); /* Paul add 2012/10/15 */
 	    myprintf("ADSL MODE : %d\n", EnumAdslType);                
-	    myprintf("ADSL TYPE : %d\n", EnumAdslMode);                        
+	    myprintf("ADSL TYPE : %d\n", EnumAdslMode); 
+			myprintf("SNRM Offset: %d\n", EnumSNRM_Offset); /* Paul add 2012/9/24 */
+			myprintf("SRA: %d\n", EnumSRA_); /* Paul add 2012/10/15 */
     }
     
     // add internet pvc to first vlan

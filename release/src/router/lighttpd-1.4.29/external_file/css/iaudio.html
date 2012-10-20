@@ -1,0 +1,91 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1, user-scalable=no" />
+<title>AiCloud Share Link</title>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript" src="/smb/js/jplayer/jquery.jplayer.min.js"></script>
+<link rel="stylesheet" href="/smb/css/jplayer.ios.css" type="text/css">
+<script type="text/javascript">
+$("document").ready(function() {	
+	var orgfile = window.location.href;
+	var media_hostName = window.location.host;
+	if(media_hostName.indexOf(":")!=-1)
+		media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
+	var audiofile = "http://" + media_hostName + ":" + $("div#http_port").attr("content") + "/" + orgfile.substring( orgfile.indexOf("AICLOUD"), orgfile.length );
+	//alert(audiofile);
+	
+	$('#jquery_jplayer_1').jPlayer({
+		solution: 'html',
+	 	supplied: 'mp3',
+	 	preload: 'metadata',
+	 	volume: 0.8,
+	 	muted: false,
+	 	backgroundColor: '#000000',
+	 	cssSelectorAncestor: '#jp_container_1',
+	 	cssSelector: {
+	  	videoPlay: '.jp-video-play',
+	  	play: '.jp-play',
+	  	pause: '.jp-pause',
+	  	stop: '.jp-stop',
+	  	seekBar: '.jp-seek-bar',
+	  	playBar: '.jp-play-bar',
+	  	mute: '.jp-mute',
+	  	unmute: '.jp-unmute',
+	  	volumeBar: '.jp-volume-bar',
+	  	volumeBarValue: '.jp-volume-bar-value',
+	  	volumeMax: '.jp-volume-max',
+	  	currentTime: '.jp-current-time',
+	  	duration: '.jp-duration',
+	  	gui: '.jp-gui',
+	  	noSolution: '.jp-no-solution'
+	 	},
+	 	ready: function () {
+    	$(this).jPlayer("setMedia", {
+     		mp3: audiofile
+    	});
+   	},
+	 	errorAlerts: false,
+	 	warningAlerts: false
+	});
+});
+
+</script>
+</head>
+<body style='padding-top:20px;margin:0;background-color:#000000'>
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+	<tr style='height:80px'>
+  	<td>  		
+			<div id="container">
+				<div id="jquery_jplayer_1" class="jp-jplayer"></div>
+				<div id="jp_container_1" class="jp-audio">					
+					
+						<div id="jp_interface_1" class="jp-gui jp-interface">
+							<ul class="jp-controls">								
+								<li><a href="javascript:;" class="jp-play" tabindex="1" style="display: block; ">play</a></li>
+								<li><a href="javascript:;" class="jp-pause" tabindex="1" style="display: block; ">pause</a></li>								
+								<!--<li><a href="javascript:;" class="jp-stop" tabindex="1">stop</a></li>-->
+							</ul>
+							<!--<div class="jp-progress">
+								<div class="jp-seek-bar" style="width: 100%; ">
+									<div class="jp-play-bar" style="width: 46.700506341691536%; "></div>	
+								</div>
+							</div>-->
+							<div class="jp-time">
+								<div class="jp-current-time">00:00</div>
+								<div class="jp-split">/</div>
+								<div class="jp-duration">00:00</div>
+							</div>
+							<div class="jp-no-solution" style="display: none; ">
+								<span>Update Required</span>
+							To play the media you will need to either update your browser to a recent version or update your <a href="http://get.adobe.com/flashplayer/" target="_blank">Flash plugin</a>.
+							</div>
+						
+					</div>
+				</div>
+			</div>
+    </td>    
+  </tr>
+</table>
+</body>
+</html>

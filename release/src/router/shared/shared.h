@@ -55,12 +55,12 @@ enum {
 
 #ifndef RTF_UP
 /* Keep this in sync with /usr/src/linux/include/linux/route.h */
-#define RTF_UP          0x0001  /* route usable                 */
-#define RTF_GATEWAY     0x0002  /* destination is a gateway     */
-#define RTF_HOST        0x0004  /* host entry (net otherwise)   */
-#define RTF_REINSTATE   0x0008  /* reinstate route after tmout  */
-#define RTF_DYNAMIC     0x0010  /* created dyn. (by redirect)   */
-#define RTF_MODIFIED    0x0020  /* modified dyn. (by redirect)  */
+#define RTF_UP		0x0001  /* route usable			*/
+#define RTF_GATEWAY     0x0002  /* destination is a gateway	*/
+#define RTF_HOST	0x0004  /* host entry (net otherwise)	*/
+#define RTF_REINSTATE   0x0008  /* reinstate route after tmout	*/
+#define RTF_DYNAMIC     0x0010  /* created dyn. (by redirect)	*/
+#define RTF_MODIFIED    0x0020  /* modified dyn. (by redirect)	*/
 #endif
 #ifndef RTF_DEFAULT
 #define	RTF_DEFAULT	0x00010000	/* default - learned via ND	*/
@@ -181,12 +181,15 @@ extern void file_unlock(int lockfd);
 enum {
 	MODEL_UNKNOWN,
 #ifdef RTCONFIG_RALINK
-	MODEL_EAN66,	
-	MODEL_RTN56U,
-	MODEL_RTN13U,
 #ifdef RTCONFIG_DSL
 	MODEL_DSLN55U,
 #endif
+	MODEL_EAN66,
+	MODEL_RTN13U,
+	MODEL_RTN36U3,
+	MODEL_RTN56U,
+	MODEL_RTN65U,
+	MODEL_RTN67U,
 #endif
 	MODEL_RTN12,
 	MODEL_RTN12B1,
@@ -199,7 +202,7 @@ enum {
 	MODEL_RTN66U,
 	MODEL_RTAC66U,
 	MODEL_RTN10U,
-	MODEL_RTN10D,
+	MODEL_RTN10D1,
 	MODEL_GENERIC
 };
 

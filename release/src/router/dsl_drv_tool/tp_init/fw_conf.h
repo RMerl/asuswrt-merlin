@@ -24,3 +24,11 @@ enum {
     EnumAdslTypeM,
     EnumAdslTypeA_I_J_L_M,    
 };
+
+enum {
+	EnumSNRMOffset,
+};
+
+enum {
+	EnumSRA,
+};

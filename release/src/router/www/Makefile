@@ -83,6 +83,12 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/Advanced_PPTP_Content.asp
 	rm -rf $(INSTALLDIR)/www/mediaserver.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_PerformanceTuning_Content.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_IPv6_Content.asp
+	rm -rf $(INSTALLDIR)/www/Advacned_SwitchCtrl_Content.asp
+	rm -rf $(INSTALLDIR)/www/ure*
+	rm -rf $(INSTALLDIR)/www/disk*
+	rm -rf $(INSTALLDIR)/www/fan.svg
+	rm -rf $(INSTALLDIR)/www/detect_firmware.asp
 	rm -rf $(INSTALLDIR)/www/ajax_coretmp.asp
 	rm -rf $(INSTALLDIR)/www/qis/QIS_tutorial.htm
 	rm -rf $(INSTALLDIR)/www/qis/QIS_internet_ruisp.htm

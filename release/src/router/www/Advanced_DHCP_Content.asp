@@ -321,9 +321,6 @@ function validForm(){
 	if(!validate_range(document.form.dhcp_lease, 120, 604800))
 		return false;
 	
-	if(!validate_ipaddr(document.form.dhcp_wins_x, 'dhcp_wins_x'))
-		return false;
-	
 	return true;
 }
 

@@ -754,7 +754,7 @@ function submitenter(myfield,e)
 </legend>
 	<table id="tblsetting_2" class="QISform" width="400" border="0" align="center" cellpadding="3" cellspacing="0">
 		<tr>
-			<th  width="180">
+			<th  width="190">
 				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_ExternalIPAddress_itemdesc#>');" style="cursor:help;"><#IPConnection_ExternalIPAddress_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" style="margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
@@ -774,7 +774,7 @@ function submitenter(myfield,e)
 		</tr>
 		
 		<tr>
-			<th width="180">
+			<th width="190">
 				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_ExternalSubnetMask_itemdesc#>');" style="cursor:help;"><#IPConnection_x_ExternalSubnetMask_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
@@ -827,7 +827,7 @@ function submitenter(myfield,e)
   </legend>
   <table id="tblsetting_4" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
   <tr>
-	  <th width="180">
+	  <th width="190">
 			<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_DNSServer1_itemdesc#>');" style="cursor:help;"><#IPConnection_x_DNSServer1_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 	  </th>
 	  <td class="QISformtd">
@@ -847,7 +847,7 @@ function submitenter(myfield,e)
 	</tr>
 	
 	<tr>
-	  <th width="180">
+	  <th width="190">
 			<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_DNSServer2_itemdesc#>');" style="cursor:help;"><#IPConnection_x_DNSServer2_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 	  </th>
 	  <td class="QISformtd">
@@ -871,11 +871,11 @@ function submitenter(myfield,e)
 </div>
 </div>
 
-<div id="showserver" style="display:none">
+<div id="showserver" style="width:730px; display:none">
   <fieldset id="ifVPNfield">
 	<table id="heartbeat_server" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="display:none;">
 		<tr>
-			<th width="180">
+			<th width="190">
 				<span onmouseout="return nd();" onclick="overlib('<#BOP_isp_heart_desc2#>');" style="cursor:help;"><#BOP_isp_heart_item#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">	<!-- ASUS 2009.12 for maxlen -->
@@ -885,7 +885,7 @@ function submitenter(myfield,e)
 	</table>
 	<table id="vpn_enable_block" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="display:none;">
 		<tr>
-			<th width="180">
+			<th width="190">
 				<span onmouseout="return nd();" onclick="overlib('<#BOP_isp_heart_desc2#>');" style="cursor:help;"><#QIS_if_vpn_existed#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
@@ -898,12 +898,12 @@ function submitenter(myfield,e)
 	</fieldset>
 </div>
 
-<div id="showhwaddr" style="display:none">
+<div id="showhwaddr" style="width:730px; display:none;">
 	<fieldset id="ifVPNfield">
 	<table id="heartbeat_server" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
 		<tr>
-			<th width="180">
-				<span onmouseout="return nd();" onclick="overlib('<#PPPConnection_x_MacAddressForISP_itemdesc#>', FIXX, 285, FIXY,50);" style="cursor:help;"><#BOP_isp_mac_item#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
+			<th width="190">
+			<div onmouseout="return nd();" onclick="overlib('<#PPPConnection_x_MacAddressForISP_itemdesc#>', FIXX, 285, FIXY,50);" style="white-space:normal;cursor:help;"><#BOP_isp_mac_item#><img align="right" style="cursor:pointer;margin-top:-14px \9;" src="/images/New_ui/helpicon.png"></div>
 			</th>
 			<td class="QISformtd">
 				<input type="text" name="wan_hwaddr_x" onkeypress="return is_hwaddr(this,event);" style="height:25px;" class="input_20_table" size="36" maxlength="17" value="">

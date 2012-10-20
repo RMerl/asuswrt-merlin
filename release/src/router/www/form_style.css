@@ -28,7 +28,7 @@
 .top-messagebold {
 	font-family:Verdana;
 	font-size:11px;
-	color:#4b6688;
+	color:#FFF;
 	line-height:180%;
 	font-weight:bold;
 }
@@ -479,6 +479,7 @@
 	cursor:pointer;
 	outline: none; /* for Firefox */
  	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+ 	white-space:normal;
 }
 .button_gen:hover{
 	font-weight: bolder;
@@ -1044,6 +1045,7 @@ p{margin-top:   0;margin-bottom:   0}
       padding: 5px 1px 5px 11px;
       height: 24px;
       line-height: 22px;
+			font-weight: bold;
     }
 .titlebtn:hover {
       background-position: right -34px;

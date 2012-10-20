@@ -82,6 +82,7 @@ nflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 	}
 
 	size = (len + (NFL_SECTOR_SIZE - 1)) & ~(NFL_SECTOR_SIZE - 1);
+
 	if (size != len)
 		need_copy = 1;
 	if (!need_copy) {
@@ -114,6 +115,7 @@ nflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 			good_bytes += blocksize;
 		}
 	}
+
 	if (blk_idx == nflash->info->numblocks) {
 		ret = CFE_ERR_IOERR;
 		goto done;
@@ -152,7 +154,6 @@ nflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 		buffer->buf_retlen += bytes;
 	}
 
-
 done:
 	if (tmpbuf) {
 		buf = (uchar *) buffer->buf_ptr;
@@ -160,6 +161,7 @@ done:
 		memcpy(buf, tmpbuf+extra, buffer->buf_retlen);
 		KFREE(tmpbuf);
 	}
+
 	return ret;
 }
 
@@ -463,6 +465,9 @@ nflash_cfe_probe(cfe_driver_t *drv,
 		break;
 	case NFL_VENDOR_SAMSUNG:
 		sprintf(type, "Samsung");
+		break;
+	case NFL_VENDOR_ZENTEL:
+		sprintf(type, "Zentel");
 		break;
 	default:
 		sprintf(type, "Unknown type %d", nflash->info->type);

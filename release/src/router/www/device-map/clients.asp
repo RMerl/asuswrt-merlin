@@ -167,7 +167,7 @@ function update_clients(e) {
 }
 
 function gotoMACFilter(){
-	if(parent.ParentalCtrl_support != -1)
+	if(parent.ParentalCtrl2_support != -1)
 		parent.location.href = "/ParentalControl.asp";
 	else
 		parent.location.href = "/Advanced_MACFilter_Content.asp";
@@ -313,7 +313,7 @@ function showclient_list(list){
 			}
 			//code += "<td>"+ gen_prio_code(client_list_col[2]) +"</td>";	
 			
-			if(parent.sw_mode == 1 && ParentalCtrl_support == -1)
+			if(parent.sw_mode == 1 && ParentalCtrl_support != -1)
 				code += '<td width="12%"><input class="remove_btn_NM" type="submit" title="<#Block#>" onclick="block_this_client(this);" value=""/></td></tr>';
 			else
 				code += '</tr>';

@@ -19,7 +19,8 @@ and avoids startup races with the provider of nameserver information.
 
 
 Dnsmasq provides one service on the DBus: uk.org.thekelleys.dnsmasq
-and a single object: /uk/org/thekelleys/dnsmasq
+and a single object: /uk/org/thekelleys/dnsmasq 
+The name of the service may be changed by giving an argument to --enable-dbus.
 
 1. METHODS
 ----------
@@ -91,6 +92,48 @@ is equivalent to
 
 
 Each call to SetServers completely replaces the set of servers
+specified by via the DBus, but it leaves any servers specified via the
+command line or /etc/dnsmasq.conf or /etc/resolv.conf alone.
+
+SetServersEx
+------------
+
+This function is more flexible and the SetServers function, in that it can
+handle address scoping, port numbers, and is easier for clients to use.
+
+Returns nothing. Takes a set of arguments representing the new
+upstream DNS servers to be used by dnsmasq. All addresses (both IPv4 and IPv6)
+are represented as STRINGS.  Each server address may be followed by one or more
+STRINGS, which are the domains for which the preceding server should be used.
+
+This function takes an array of STRING arrays, where each inner array represents
+a set of DNS servers and domains for which those servers may be used.  Each
+string represents a list of upstream DNS servers first, and domains second.
+Mixing of domains and servers within a the string array is not allowed.
+
+Examples.
+
+[
+  ["1.2.3.4", "foobar.com"],
+  ["1003:1234:abcd::1%eth0", "eng.mycorp.com", "lab.mycorp.com"]
+]
+
+is equivalent to
+
+--server=/foobar.com/1.2.3.4 \
+  --server=/eng.mycorp.com/lab.mycorp.com/1003:1234:abcd::1%eth0
+
+An IPv4 address of 0.0.0.0 is interpreted as "no address, local only",
+so
+
+[ ["0.0.0.0", "local.domain"] ]
+
+is equivalent to
+
+--local=/local.domain/
+
+
+Each call to SetServersEx completely replaces the set of servers
 specified by via the DBus, but it leaves any servers specified via the
 command line or /etc/dnsmasq.conf or /etc/resolv.conf alone.
 

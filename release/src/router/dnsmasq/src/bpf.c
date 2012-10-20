@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2010 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,112 +17,158 @@
 #include "dnsmasq.h"
 
 #if defined(HAVE_BSD_NETWORK) || defined(HAVE_SOLARIS_NETWORK)
+#include <ifaddrs.h>
 
-static struct iovec ifconf = {
-  .iov_base = NULL,
-  .iov_len = 0
-};
+#if defined(HAVE_BSD_NETWORK) && !defined(__APPLE__)
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <net/route.h>
+#include <net/if_dl.h>
+#include <netinet/if_ether.h>
 
-static struct iovec ifreq = {
-  .iov_base = NULL,
-  .iov_len = 0
-};
+#ifndef SA_SIZE
+#define SA_SIZE(sa)                                             \
+    (  (!(sa) || ((struct sockaddr *)(sa))->sa_len == 0) ?      \
+        sizeof(long)            :                               \
+        1 + ( (((struct sockaddr *)(sa))->sa_len - 1) | (sizeof(long) - 1) ) )
+#endif
 
-int iface_enumerate(void *parm, int (*ipv4_callback)(), int (*ipv6_callback)())
+int arp_enumerate(void *parm, int (*callback)())
 {
-  char *ptr;
-  struct ifreq *ifr;
-  struct ifconf ifc;
-  int fd, errsav, ret = 0;
-  int lastlen = 0;
-  size_t len = 0;
-  
-  if ((fd = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
+  int mib[6];
+  size_t needed;
+  char *next;
+  struct rt_msghdr *rtm;
+  struct sockaddr_inarp *sin2;
+  struct sockaddr_dl *sdl;
+  struct iovec buff;
+  int rc;
+
+  buff.iov_base = NULL;
+  buff.iov_len = 0;
+
+  mib[0] = CTL_NET;
+  mib[1] = PF_ROUTE;
+  mib[2] = 0;
+  mib[3] = AF_INET;
+  mib[4] = NET_RT_FLAGS;
+#ifdef RTF_LLINFO
+  mib[5] = RTF_LLINFO;
+#else
+  mib[5] = 0;
+#endif	
+  if (sysctl(mib, 6, NULL, &needed, NULL, 0) == -1 || needed == 0)
+    return 0;
+
+  while (1) 
+    {
+      if (!expand_buf(&buff, needed))
+	return 0;
+      if ((rc = sysctl(mib, 6, buff.iov_base, &needed, NULL, 0)) == 0 ||
+	  errno != ENOMEM)
+	break;
+      needed += needed / 8;
+    }
+  if (rc == -1)
     return 0;
   
-  while(1)
+  for (next = buff.iov_base ; next < (char *)buff.iov_base + needed; next += rtm->rtm_msglen)
     {
-      len += 10*sizeof(struct ifreq);
-      
-      if (!expand_buf(&ifconf, len))
-	goto err;
-      
-      ifc.ifc_len = len;
-      ifc.ifc_buf = ifconf.iov_base;
-      
-      if (ioctl(fd, SIOCGIFCONF, &ifc) == -1)
-	{
-	  if (errno != EINVAL || lastlen != 0)
-	    goto err;
-	}
-      else
-	{
-	  if (ifc.ifc_len == lastlen)
-	    break; /* got a big enough buffer now */
-	  lastlen = ifc.ifc_len;
-	}
+      rtm = (struct rt_msghdr *)next;
+      sin2 = (struct sockaddr_inarp *)(rtm + 1);
+      sdl = (struct sockaddr_dl *)((char *)sin2 + SA_SIZE(sin2));
+      if (!(*callback)(AF_INET, &sin2->sin_addr, LLADDR(sdl), sdl->sdl_alen, parm))
+	return 0;
     }
-  
-  for (ptr = ifc.ifc_buf; ptr < (char *)(ifc.ifc_buf + ifc.ifc_len); ptr += len)
+
+  return 1;
+}
+#endif
+
+
+int iface_enumerate(int family, void *parm, int (*callback)())
+{
+  struct ifaddrs *head, *addrs;
+  int errsav, ret = 0;
+
+  if (family == AF_UNSPEC)
+#if defined(HAVE_BSD_NETWORK) && !defined(__APPLE__)
+    return  arp_enumerate(parm, callback);
+#else
+  return 0; /* need code for Solaris and MacOS*/
+#endif
+
+  /* AF_LINK doesn't exist in Linux, so we can't use it in our API */
+  if (family == AF_LOCAL)
+    family = AF_LINK;
+
+  if (getifaddrs(&head) == -1)
+    return 0;
+
+  for (addrs = head; addrs; addrs = addrs->ifa_next)
     {
-      /* subsequent entries may not be aligned, so copy into
-	 an aligned buffer to avoid nasty complaints about 
-	 unaligned accesses. */
-
-      len = sizeof(struct ifreq);
-      
-#ifdef HAVE_SOCKADDR_SA_LEN
-      ifr = (struct ifreq *)ptr;
-      if (ifr->ifr_addr.sa_len > sizeof(ifr->ifr_ifru))
-	len = ifr->ifr_addr.sa_len + offsetof(struct ifreq, ifr_ifru);
-#endif
-      
-      if (!expand_buf(&ifreq, len))
-	goto err;
-
-      ifr = (struct ifreq *)ifreq.iov_base;
-      memcpy(ifr, ptr, len);
-           
-      if (ifr->ifr_addr.sa_family == AF_INET && ipv4_callback)
+      if (addrs->ifa_addr->sa_family == family)
 	{
-	  struct in_addr addr, netmask, broadcast;
-	  broadcast.s_addr = 0;
-	  addr = ((struct sockaddr_in *) &ifr->ifr_addr)->sin_addr;
-	  if (ioctl(fd, SIOCGIFNETMASK, ifr) == -1)
+	  int iface_index = if_nametoindex(addrs->ifa_name);
+
+	  if (iface_index == 0)
 	    continue;
-	  netmask = ((struct sockaddr_in *) &ifr->ifr_addr)->sin_addr;
-	  if (ioctl(fd, SIOCGIFBRDADDR, ifr) != -1)
-	    broadcast = ((struct sockaddr_in *) &ifr->ifr_addr)->sin_addr; 
-	  if (!((*ipv4_callback)(addr, 
-				 (int)if_nametoindex(ifr->ifr_name),
-				 netmask, broadcast, 
-				 parm)))
-	    goto err;
-	}
-#ifdef HAVE_IPV6
-      else if (ifr->ifr_addr.sa_family == AF_INET6 && ipv6_callback)
-	{
-	  struct in6_addr *addr = &((struct sockaddr_in6 *)&ifr->ifr_addr)->sin6_addr;
-	  /* voodoo to clear interface field in address */
-	  if (!(daemon->options & OPT_NOWILD) && IN6_IS_ADDR_LINKLOCAL(addr))
+
+	  if (family == AF_INET)
 	    {
-	      addr->s6_addr[2] = 0;
-	      addr->s6_addr[3] = 0;
+	      struct in_addr addr, netmask, broadcast;
+	      addr = ((struct sockaddr_in *) addrs->ifa_addr)->sin_addr;
+	      netmask = ((struct sockaddr_in *) addrs->ifa_netmask)->sin_addr;
+	      broadcast = ((struct sockaddr_in *) addrs->ifa_broadaddr)->sin_addr; 
+	      if (!((*callback)(addr, iface_index, netmask, broadcast, parm)))
+		goto err;
 	    }
-	  if (!((*ipv6_callback)(addr,
-				 (int)((struct sockaddr_in6 *)&ifr->ifr_addr)->sin6_scope_id,
-				 (int)if_nametoindex(ifr->ifr_name),
-				 parm)))
-	    goto err;
+#ifdef HAVE_IPV6
+	  else if (family == AF_INET6)
+	    {
+	      struct in6_addr *addr = &((struct sockaddr_in6 *) addrs->ifa_addr)->sin6_addr;
+	      unsigned char *netmask = (unsigned char *) &((struct sockaddr_in6 *) addrs->ifa_netmask)->sin6_addr;
+	      int scope_id = ((struct sockaddr_in6 *) addrs->ifa_addr)->sin6_scope_id;
+	      int i, j, prefix = 0;
+	      
+	      for (i = 0; i < IN6ADDRSZ; i++, prefix += 8) 
+                if (netmask[i] != 0xff)
+		  break;
+       
+	      if (i != IN6ADDRSZ && netmask[i]) 
+                for (j = 7; j > 0; j--, prefix++) 
+		  if ((netmask[i] & (1 << j)) == 0)
+		    break;
+	      
+	      /* voodoo to clear interface field in address */
+	      if (!option_bool(OPT_NOWILD) && IN6_IS_ADDR_LINKLOCAL(addr))
+		{
+		  addr->s6_addr[2] = 0;
+		  addr->s6_addr[3] = 0;
+		}
+	      
+	      if (!((*callback)(addr, prefix, scope_id, iface_index, 0, parm)))
+		goto err;
 	}
 #endif
+#ifdef HAVE_DHCP6      
+	  else if (family == AF_LINK)
+	    { 
+	      /* Assume ethernet again here */
+	      struct sockaddr_dl *sdl = (struct sockaddr_dl *) addrs->ifa_addr;
+	      if (sdl->sdl_alen != 0 && 
+		  !((*callback)(iface_index, ARPHRD_ETHER, LLADDR(sdl), sdl->sdl_alen, parm)))
+		goto err;
+	    }
+#endif 
+	}
     }
   
   ret = 1;
 
  err:
   errsav = errno;
-  close(fd);  
+  freeifaddrs(head);  
   errno = errsav;
 
   return ret;
@@ -139,13 +185,10 @@ void init_bpf(void)
 
   while (1) 
     {
-      /* useful size which happens to be sufficient */
-      if (expand_buf(&ifreq, sizeof(struct ifreq)))
-	{
-	  sprintf(ifreq.iov_base, "/dev/bpf%d", i++);
-	  if ((daemon->dhcp_raw_fd = open(ifreq.iov_base, O_RDWR, 0)) != -1)
-	    return;
-	}
+      sprintf(daemon->dhcp_buff, "/dev/bpf%d", i++);
+      if ((daemon->dhcp_raw_fd = open(daemon->dhcp_buff, O_RDWR, 0)) != -1)
+	return;
+
       if (errno != EBUSY)
 	die(_("cannot create DHCP BPF socket: %s"), NULL, EC_BADNET);
     }	     

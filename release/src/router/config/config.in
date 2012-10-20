@@ -262,7 +262,11 @@ config RTCONFIG_SFP
 	default n
 
 config RTCONFIG_4M_SFP
-	bool "Small Footprint: 4MB"
+	bool "Small Footprint: 4MB Flash"
+	default n
+
+config RTCONFIG_16M_RAM_SFP
+	bool "Small Footprint: 16MB RAM"
 	default n
 
 config RTCONFIG_GROCTRL
@@ -292,3 +296,8 @@ config RTCONFIG_ISP_METER
 config RTCONFIG_NVRAM_64K
 	bool "NVRAM_64K"
 	default n
+
+config RTCONFIG_DUAL_TRX
+        bool "DUAL_TRX"
+        default n
+

@@ -11,6 +11,13 @@ typedef enum {
 	SMB_CHUNK
 } CHUNK_TYPE;
 
+typedef struct smb_file_buffer_s {
+	int id;
+	char *buffer;
+	size_t toSend;
+	struct smb_file_buffer_s *prev, *next;
+}smb_file_buffer_t;
+
 typedef struct chunk {
 	CHUNK_TYPE type;
 
@@ -39,6 +46,12 @@ typedef struct chunk {
 			*/
 
 	struct chunk *next;
+
+	//- JerryLin add
+	int open_thread;
+	off_t  roffset;
+	size_t listcount;
+	smb_file_buffer_t *smb_buffer_list;
 } chunk;
 
 typedef struct {

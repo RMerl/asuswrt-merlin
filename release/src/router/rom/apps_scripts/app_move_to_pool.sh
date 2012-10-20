@@ -45,6 +45,11 @@ for obj in $objs; do
 		continue
 	fi
 
+	target=`echo $obj |awk '{FS="-"; printf $1}'`
+	if [ "$target" == "ipkg" ]; then
+		continue
+	fi
+
 	if [ "$obj" != "bin" ] && [ "$obj" != "lib" ] && [ ! -e "$APPS_INSTALL_PATH/$obj" ]; then
 		if [ "$APPS_MOUNTED_FS" != "vfat" ] || [ ! -L "$APPS_PATH/$obj" ]; then
 			cp -rf $APPS_PATH/$obj $APPS_INSTALL_PATH

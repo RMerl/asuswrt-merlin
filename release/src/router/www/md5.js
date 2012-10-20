@@ -235,6 +235,21 @@ function binl2hex(binarray)
 }
 
 /*
+ * Convert an array of little-endian words to a hex string.
+ */
+function binl2hex_c(binarray)
+{
+	var hex_tab = "0123456789ABCDEF";
+	var str = "";
+	for(var i = 0; i < binarray.length; i++)
+	{
+		str += hex_tab.charAt((binarray[i] >> 4) & 0xF) +
+					 hex_tab.charAt((binarray[i]) & 0xF);
+	}
+	return str;
+}
+
+/*
  * Convert an array of little-endian words to a base-64 string
  */
 function binl2b64(binarray)

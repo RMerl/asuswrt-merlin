@@ -21,616 +21,645 @@ msgid "failed to load names from %s: %s"
 msgstr "gagal memuat nama-nama dari %s: %s"
 
 # OK
-#: cache.c:798 dhcp.c:865
+#: cache.c:797 dhcp.c:855
 #, fuzzy, c-format
 msgid "bad address at %s line %d"
 msgstr "kesalahan nama pada %s baris %d"
 
 # OK
-#: cache.c:856 dhcp.c:881
+#: cache.c:846 dhcp.c:871
 #, c-format
 msgid "bad name at %s line %d"
 msgstr "kesalahan nama pada %s baris %d"
 
 # OK
-#: cache.c:863 dhcp.c:956
+#: cache.c:853 dhcp.c:946
 #, c-format
 msgid "read %s - %d addresses"
 msgstr "membaca %s - %d alamat"
 
 # OK
-#: cache.c:902
+#: cache.c:892
 msgid "cleared cache"
 msgstr "cache telah dihapus"
 
-# OK
-#: cache.c:933 option.c:1112
-#, fuzzy, c-format
-msgid "cannot access directory %s: %s"
-msgstr "tidak bisa membaca %s: %s"
+#: cache.c:953
+#, c-format
+msgid "No IPv4 address found for %s"
+msgstr ""
 
-#: cache.c:1053
+#: cache.c:1005
 #, c-format
 msgid "%s is a CNAME, not giving it to the DHCP lease of %s"
 msgstr ""
 
 # OK
-#: cache.c:1059
+#: cache.c:1011
 #, c-format
 msgid "not giving name %s to the DHCP lease of %s because the name exists in %s with address %s"
 msgstr "tidak memberikan nama %s kepada lease DHCP %s karena nama telah ada dalam %sdengan alamat %s"
 
-#: cache.c:1132
+#: cache.c:1086
 #, c-format
 msgid "time %lu"
 msgstr ""
 
 # OK
-#: cache.c:1133
+#: cache.c:1087
 #, fuzzy, c-format
 msgid "cache size %d, %d/%d cache insertions re-used unexpired cache entries."
 msgstr "ukuran cache %d, %d/%d penyisipan cache menimpa cache yang belum kadaluwarsa"
 
-#: cache.c:1135
+#: cache.c:1089
 #, c-format
 msgid "queries forwarded %u, queries answered locally %u"
 msgstr ""
 
-#: cache.c:1158
+#: cache.c:1112
 #, c-format
 msgid "server %s#%d: queries sent %u, retried or failed %u"
 msgstr ""
 
 # OK
-#: util.c:59
+#: util.c:57
 #, fuzzy, c-format
 msgid "failed to seed the random number generator: %s"
 msgstr "gagal mendengarkan di socket: %s"
 
 # OK
-#: util.c:191
+#: util.c:189
 #, fuzzy
 msgid "failed to allocate memory"
 msgstr "gagal memuat %S: %m"
 
 # OK
-#: util.c:229 option.c:567
+#: util.c:227 option.c:717
 msgid "could not get memory"
 msgstr "tidak bisa mendapatkan memory"
 
 # OK
-#: util.c:239
+#: util.c:237
 #, fuzzy, c-format
 msgid "cannot create pipe: %s"
 msgstr "tidak bisa membaca %s: %s"
 
 # OK
-#: util.c:247
+#: util.c:245
 #, fuzzy, c-format
 msgid "failed to allocate %d bytes"
 msgstr "gagal memuat %S: %m"
 
 # OK
-#: util.c:352
+#: util.c:400
 #, c-format
 msgid "infinite"
 msgstr "tak terbatas"
 
 # OK
-#: option.c:240
+#: option.c:254
 msgid "Specify local address(es) to listen on."
 msgstr "Tentukan alamat lokal untuk mendengarkan."
 
 # OK
-#: option.c:241
+#: option.c:255
 msgid "Return ipaddr for all hosts in specified domains."
 msgstr "Menghasilkan ipaddr untuk semua host dalam domain yang dipilih."
 
 # OK
-#: option.c:242
+#: option.c:256
 msgid "Fake reverse lookups for RFC1918 private address ranges."
 msgstr "Fake pencarian balik untuk alamat private sesuai dengan RFC1918."
 
 # OK
-#: option.c:243
+#: option.c:257
 msgid "Treat ipaddr as NXDOMAIN (defeats Verisign wildcard)."
 msgstr "Perlakukan ipaddr sebagai NXDOMAIN (mengalahkan wildcard Verisign)."
 
 # OK
-#: option.c:244
+#: option.c:258
 #, c-format
 msgid "Specify the size of the cache in entries (defaults to %s)."
 msgstr "Tentukan ukuran cache, dalam jumlah isian (default %s)."
 
 # OK
-#: option.c:245
+#: option.c:259
 #, c-format
 msgid "Specify configuration file (defaults to %s)."
 msgstr "Tentukan file konfigurasi (default %s)."
 
 # OK
-#: option.c:246
+#: option.c:260
 msgid "Do NOT fork into the background: run in debug mode."
 msgstr "JANGAN berjalan di background: berjalan dalam modus debug."
 
 # OK
-#: option.c:247
+#: option.c:261
 msgid "Do NOT forward queries with no domain part."
 msgstr "JANGAN teruskan permintaan tanpa bagian domain."
 
 # OK
-#: option.c:248
+#: option.c:262
 msgid "Return self-pointing MX records for local hosts."
 msgstr "Mengembalikan record MX untuk diri sendiri host-host lokal."
 
 # OK
-#: option.c:249
+#: option.c:263
 msgid "Expand simple names in /etc/hosts with domain-suffix."
 msgstr "Melengkapi nama-nama di /etc/hosts dengan akhiran domain."
 
 # OK
-#: option.c:250
+#: option.c:264
 msgid "Don't forward spurious DNS requests from Windows hosts."
 msgstr "Jangan meneruskan permintaan DNS spurious dari host-host Windows."
 
 # OK
-#: option.c:251
+#: option.c:265
 msgid "Enable DHCP in the range given with lease duration."
 msgstr "Bolehkan DHCP dalam jangkauan yang diberikan dengan durasi lease."
 
 # OK
-#: option.c:252
+#: option.c:266
 #, c-format
 msgid "Change to this group after startup (defaults to %s)."
 msgstr "Ubah ke group ini setelah mulai (default %s)."
 
 # OK
-#: option.c:253
+#: option.c:267
 msgid "Set address or hostname for a specified machine."
 msgstr "Setel alamat atau nama host untuk mesin yang disebutkan."
 
 # OK
-#: option.c:254
+#: option.c:268
 #, fuzzy
 msgid "Read DHCP host specs from file."
 msgstr "nama MX salah"
 
-#: option.c:255
+#: option.c:269
 msgid "Read DHCP option specs from file."
 msgstr ""
 
-#: option.c:256
+#: option.c:270
 msgid "Evaluate conditional tag expression."
 msgstr ""
 
 # OK
-#: option.c:257
+#: option.c:271
 #, c-format
 msgid "Do NOT load %s file."
 msgstr "JANGAN muat file %s."
 
 # OK
-#: option.c:258
+#: option.c:272
 #, c-format
 msgid "Specify a hosts file to be read in addition to %s."
 msgstr "Sebutkan sebuah file hosts yang harus dibaca sebagai tambahan untuk %s."
 
 # OK
-#: option.c:259
+#: option.c:273
 msgid "Specify interface(s) to listen on."
 msgstr "Sebutkan antarmuka untuk mendengarkan."
 
 # OK
-#: option.c:260
+#: option.c:274
 msgid "Specify interface(s) NOT to listen on."
 msgstr "Sebutkan antarmuka untuk TIDAK mendengarkan."
 
 # OK
-#: option.c:261
+#: option.c:275
 #, fuzzy
 msgid "Map DHCP user class to tag."
 msgstr "Petakan kelas user DHCP ke setelan yang dipilih."
 
-#: option.c:262
+#: option.c:276
 msgid "Map RFC3046 circuit-id to tag."
 msgstr ""
 
-#: option.c:263
+#: option.c:277
 msgid "Map RFC3046 remote-id to tag."
 msgstr ""
 
-#: option.c:264
+#: option.c:278
 msgid "Map RFC3993 subscriber-id to tag."
 msgstr ""
 
 # OK
-#: option.c:265
+#: option.c:279
 #, fuzzy
 msgid "Don't do DHCP for hosts with tag set."
 msgstr "Jangan menggunakan DHCP untuk host-host yang dipilih."
 
 # OK
-#: option.c:266
+#: option.c:280
 #, fuzzy
 msgid "Force broadcast replies for hosts with tag set."
 msgstr "Jangan menggunakan DHCP untuk host-host yang dipilih."
 
 # OK
-#: option.c:267
+#: option.c:281
 msgid "Do NOT fork into the background, do NOT run in debug mode."
 msgstr "JANGAN berjalan di background, jangan berjalan dalam modus debug."
 
 # OK
-#: option.c:268
+#: option.c:282
 msgid "Assume we are the only DHCP server on the local network."
 msgstr "Berpikir bahwa kita satu-satunya DHCP server dalam jaringan."
 
 # OK
-#: option.c:269
+#: option.c:283
 #, c-format
 msgid "Specify where to store DHCP leases (defaults to %s)."
 msgstr "Sebutkan lokasi untuk menyimpan lease DHCP (default %s)."
 
 # OK
-#: option.c:270
+#: option.c:284
 msgid "Return MX records for local hosts."
 msgstr "Kembalikan rekord MX untuk host-host lokal."
 
 # OK
-#: option.c:271
+#: option.c:285
 msgid "Specify an MX record."
 msgstr "Sebutkan sebuah rekord MX."
 
 # OK
-#: option.c:272
+#: option.c:286
 msgid "Specify BOOTP options to DHCP server."
 msgstr "Sebutkan pilihan-pilihan BOOTP untuk DHCP server."
 
-#: option.c:273
+#: option.c:287
 #, c-format
 msgid "Do NOT poll %s file, reload only on SIGHUP."
 msgstr "Jangan kumpulkan file %s, muat kembali saat SIGHUP."
 
 # OK
-#: option.c:274
+#: option.c:288
 msgid "Do NOT cache failed search results."
 msgstr "JANGAN menyimpan hasil pencarian yang gagal."
 
 # OK
-#: option.c:275
+#: option.c:289
 #, c-format
 msgid "Use nameservers strictly in the order given in %s."
 msgstr "Gunakan secara ketat namaserver yang disebutkan sesuai urutan di %s."
 
 # OK
-#: option.c:276
+#: option.c:290
 #, fuzzy
 msgid "Specify options to be sent to DHCP clients."
 msgstr "Setel pilihan-pilihan tambahan yang akan disetel untuk klien-klien DHCP."
 
-#: option.c:277
+#: option.c:291
 msgid "DHCP option sent even if the client does not request it."
 msgstr ""
 
 # OK
-#: option.c:278
+#: option.c:292
 msgid "Specify port to listen for DNS requests on (defaults to 53)."
 msgstr "Sebutkan port untuk mendengarkan permintaan DNS (default port 53)."
 
 # OK
-#: option.c:279
+#: option.c:293
 #, c-format
 msgid "Maximum supported UDP packet size for EDNS.0 (defaults to %s)."
 msgstr "Ukuran maksimum paket UDP yang didukung untuk EDNS.0 (default %s)."
 
 # OK
-#: option.c:280
+#: option.c:294
 #, fuzzy
 msgid "Log DNS queries."
 msgstr "Permintaan log."
 
 # OK
-#: option.c:281
+#: option.c:295
 #, fuzzy
 msgid "Force the originating port for upstream DNS queries."
 msgstr "Paksa port asal untuk permintaan ke atas."
 
 # OK
-#: option.c:282
+#: option.c:296
 msgid "Do NOT read resolv.conf."
 msgstr "JANGAN baca resolv.conf."
 
 # OK
-#: option.c:283
+#: option.c:297
 #, c-format
 msgid "Specify path to resolv.conf (defaults to %s)."
 msgstr "Sebutkan path ke resolv.conf (default %s)."
 
 # OK
-#: option.c:284
+#: option.c:298
 msgid "Specify address(es) of upstream servers with optional domains."
 msgstr "Sebutkan alamat-alamat server di atas, boleh dilengkapi dengan nama domain."
 
 # OK
-#: option.c:285
+#: option.c:299
 msgid "Never forward queries to specified domains."
 msgstr "JANGAN pernah meneruskan permintaan ke domain yang disebutkan."
 
 # OK
-#: option.c:286
+#: option.c:300
 msgid "Specify the domain to be assigned in DHCP leases."
 msgstr "Sebutkan domain yang digunakan dalam lease DHCP."
 
 # OK
-#: option.c:287
+#: option.c:301
 msgid "Specify default target in an MX record."
 msgstr "Sebutkan tujuan default dalam rekord MX."
 
 # OK
-#: option.c:288
+#: option.c:302
 msgid "Specify time-to-live in seconds for replies from /etc/hosts."
 msgstr "Sebutkan time-to-live dalam detik untuk jawaban dari /etc/hosts."
 
 # OK
-#: option.c:289
+#: option.c:303
 #, fuzzy
 msgid "Specify time-to-live in seconds for negative caching."
 msgstr "Sebutkan time-to-live dalam detik untuk jawaban dari /etc/hosts."
 
 # OK
-#: option.c:290
+#: option.c:304
 #, fuzzy
 msgid "Specify time-to-live in seconds for maximum TTL to send to clients."
 msgstr "Sebutkan time-to-live dalam detik untuk jawaban dari /etc/hosts."
 
 # OK
-#: option.c:291
+#: option.c:305
 #, c-format
 msgid "Change to this user after startup. (defaults to %s)."
 msgstr "Ubah ke user ini setelah mulai. (default %s)."
 
 # OK
-#: option.c:292
+#: option.c:306
 #, fuzzy
 msgid "Map DHCP vendor class to tag."
 msgstr "Memetakan kelas vendor DHCP ke daftar pilihan."
 
 # OK
-#: option.c:293
+#: option.c:307
 msgid "Display dnsmasq version and copyright information."
 msgstr "Menampilkan versi dan informasi hak cipta dnsmasq."
 
 # OK
-#: option.c:294
+#: option.c:308
 msgid "Translate IPv4 addresses from upstream servers."
 msgstr "Terjemahkan alamat-alamat IPv4 dari server-server di atas."
 
 # OK
-#: option.c:295
+#: option.c:309
 msgid "Specify a SRV record."
 msgstr "Sebutkan rekord SRV."
 
-#: option.c:296
+#: option.c:310
 msgid "Display this message. Use --help dhcp for known DHCP options."
 msgstr ""
 
 # OK
-#: option.c:297
+#: option.c:311
 #, fuzzy, c-format
 msgid "Specify path of PID file (defaults to %s)."
 msgstr "Sebutkan path file PID. (default %s)."
 
 # OK
-#: option.c:298
+#: option.c:312
 #, c-format
 msgid "Specify maximum number of DHCP leases (defaults to %s)."
 msgstr "Sebutkan jumlah maksimum lease DHCP (default %s)."
 
 # OK
-#: option.c:299
+#: option.c:313
 msgid "Answer DNS queries based on the interface a query was sent to."
 msgstr "Jawab permintaan DNS berdasarkan antarmuka dimana permintaan dikirimkan."
 
 # OK
-#: option.c:300
+#: option.c:314
 msgid "Specify TXT DNS record."
 msgstr "Sebutkan rekord TXT DNS."
 
 # OK
-#: option.c:301
+#: option.c:315
 #, fuzzy
 msgid "Specify PTR DNS record."
 msgstr "Sebutkan rekord TXT DNS."
 
-#: option.c:302
+#: option.c:316
 msgid "Give DNS name to IPv4 address of interface."
 msgstr ""
 
 # OK
-#: option.c:303
+#: option.c:317
 msgid "Bind only to interfaces in use."
 msgstr "Hanya kaitkan ke antarmuka yang sedang digunakan saja."
 
 # OK
-#: option.c:304
+#: option.c:318
 #, c-format
 msgid "Read DHCP static host information from %s."
 msgstr "Baca informasi statik host DHCP dari %s."
 
 # OK
-#: option.c:305
+#: option.c:319
 msgid "Enable the DBus interface for setting upstream servers, etc."
 msgstr "Mungkinkan antar muka DBus untuk menyetel server-server di atas, dsb."
 
 # OK
-#: option.c:306
+#: option.c:320
 msgid "Do not provide DHCP on this interface, only provide DNS."
 msgstr "JANGAN menyediakan DHCP pada antarmuka ini, hanya menyediakan DNS."
 
 # OK
-#: option.c:307
+#: option.c:321
 msgid "Enable dynamic address allocation for bootp."
 msgstr "Mungkinkan alokasi alamat dinamis untuk bootp."
 
 # OK
-#: option.c:308
+#: option.c:322
 #, fuzzy
 msgid "Map MAC address (with wildcards) to option set."
 msgstr "Memetakan kelas vendor DHCP ke daftar pilihan."
 
-#: option.c:309
+#: option.c:323
 msgid "Treat DHCP requests on aliases as arriving from interface."
 msgstr ""
 
-#: option.c:310
+#: option.c:324
 msgid "Disable ICMP echo address checking in the DHCP server."
 msgstr ""
 
-#: option.c:311
-msgid "Script to run on DHCP lease creation and destruction."
+#: option.c:325
+msgid "Shell script to run on DHCP lease creation and destruction."
 msgstr ""
 
-#: option.c:312
+#: option.c:326
+msgid "Lua script to run on DHCP lease creation and destruction."
+msgstr ""
+
+#: option.c:327
+msgid "Run lease-change scripts as this user."
+msgstr ""
+
+#: option.c:328
 msgid "Read configuration from all the files in this directory."
 msgstr ""
 
 # OK
-#: option.c:313
+#: option.c:329
 #, fuzzy
 msgid "Log to this syslog facility or file. (defaults to DAEMON)"
 msgstr "Ubah ke user ini setelah mulai. (default %s)."
 
-#: option.c:314
+#: option.c:330
 msgid "Do not use leasefile."
 msgstr ""
 
 # OK
-#: option.c:315
+#: option.c:331
 #, fuzzy, c-format
 msgid "Maximum number of concurrent DNS queries. (defaults to %s)"
 msgstr "Sebutkan jumlah maksimum lease DHCP (default %s)."
 
-#: option.c:316
+#: option.c:332
 #, c-format
 msgid "Clear DNS cache when reloading %s."
 msgstr ""
 
-#: option.c:317
+#: option.c:333
 msgid "Ignore hostnames provided by DHCP clients."
 msgstr ""
 
-#: option.c:318
+#: option.c:334
 msgid "Do NOT reuse filename and server fields for extra DHCP options."
 msgstr ""
 
-#: option.c:319
+#: option.c:335
 msgid "Enable integrated read-only TFTP server."
 msgstr ""
 
-#: option.c:320
+#: option.c:336
 msgid "Export files by TFTP only from the specified subtree."
 msgstr ""
 
-#: option.c:321
+#: option.c:337
 msgid "Add client IP address to tftp-root."
 msgstr ""
 
-#: option.c:322
+#: option.c:338
 msgid "Allow access only to files owned by the user running dnsmasq."
 msgstr ""
 
 # OK
-#: option.c:323
+#: option.c:339
 #, fuzzy, c-format
 msgid "Maximum number of conncurrent TFTP transfers (defaults to %s)."
 msgstr "Sebutkan jumlah maksimum lease DHCP (default %s)."
 
-#: option.c:324
+#: option.c:340
 msgid "Disable the TFTP blocksize extension."
 msgstr ""
 
-#: option.c:325
+#: option.c:341
 msgid "Ephemeral port range for use by TFTP transfers."
 msgstr ""
 
-#: option.c:326
+#: option.c:342
 msgid "Extra logging for DHCP."
 msgstr ""
 
-#: option.c:327
+#: option.c:343
 msgid "Enable async. logging; optionally set queue length."
 msgstr ""
 
-#: option.c:328
+#: option.c:344
 msgid "Stop DNS rebinding. Filter private IP ranges when resolving."
 msgstr ""
 
-#: option.c:329
+#: option.c:345
 msgid "Allow rebinding of 127.0.0.0/8, for RBL servers."
 msgstr ""
 
-#: option.c:330
+#: option.c:346
 msgid "Inhibit DNS-rebind protection on this domain."
 msgstr ""
 
-#: option.c:331
+#: option.c:347
 msgid "Always perform DNS queries to all servers."
 msgstr ""
 
-#: option.c:332
+#: option.c:348
 msgid "Set tag if client includes matching option in request."
 msgstr ""
 
-#: option.c:333
+#: option.c:349
 msgid "Use alternative ports for DHCP."
 msgstr ""
 
-#: option.c:334
-msgid "Run lease-change script as this user."
-msgstr ""
-
 # OK
-#: option.c:335
+#: option.c:350
 #, fuzzy
 msgid "Specify NAPTR DNS record."
 msgstr "Sebutkan rekord TXT DNS."
 
-#: option.c:336
+#: option.c:351
 msgid "Specify lowest port available for DNS query transmission."
 msgstr ""
 
-#: option.c:337
+#: option.c:352
 msgid "Use only fully qualified domain names for DHCP clients."
 msgstr ""
 
-#: option.c:338
+#: option.c:353
 msgid "Generate hostnames based on MAC address for nameless clients."
 msgstr ""
 
-#: option.c:339
+#: option.c:354
 msgid "Use these DHCP relays as full proxies."
 msgstr ""
 
-#: option.c:340
+#: option.c:355
 msgid "Specify alias name for LOCAL DNS name."
 msgstr ""
 
 # OK
-#: option.c:341
+#: option.c:356
 #, fuzzy
 msgid "Prompt to send to PXE clients."
 msgstr "Setel pilihan-pilihan tambahan yang akan disetel untuk klien-klien DHCP."
 
-#: option.c:342
+#: option.c:357
 msgid "Boot service for PXE menu."
 msgstr ""
 
-#: option.c:343
+#: option.c:358
 msgid "Check configuration syntax."
 msgstr ""
 
+#: option.c:359
+msgid "Add requestor's MAC address to forwarded DNS queries."
+msgstr ""
+
 # OK
-#: option.c:632
+#: option.c:360
+#, fuzzy
+msgid "Proxy DNSSEC validation results from upstream nameservers."
+msgstr "Terjemahkan alamat-alamat IPv4 dari server-server di atas."
+
+#: option.c:361
+msgid "Attempt to allocate sequential IP addresses to DHCP clients."
+msgstr ""
+
+#: option.c:362
+msgid "Copy connection-track mark from queries to upstream connections."
+msgstr ""
+
+#: option.c:363
+msgid "Allow DHCP clients to do their own DDNS updates."
+msgstr ""
+
+#: option.c:364
+msgid "Send router-advertisements for interfaces doing DHCPv6"
+msgstr ""
+
+# OK
+#: option.c:782
 #, c-format
 msgid ""
 "Usage: dnsmasq [options]\n"
@@ -640,1001 +669,1025 @@ msgstr ""
 "\n"
 
 # OK
-#: option.c:634
+#: option.c:784
 #, c-format
 msgid "Use short options only on the command line.\n"
 msgstr "Gunakan pilihan pendek saja pada perintah baris.\n"
 
 # OK
-#: option.c:636
+#: option.c:786
 #, fuzzy, c-format
 msgid "Valid options are:\n"
 msgstr "Pilihan yang boleh adalah:\n"
 
-#: option.c:677
+#: option.c:827
 #, c-format
 msgid "Known DHCP options:\n"
 msgstr ""
 
+#: option.c:838
+#, c-format
+msgid "Known DHCPv6 options:\n"
+msgstr ""
+
+#: option.c:973
+msgid "unsupported encapsulation for IPv6 option"
+msgstr ""
+
 # OK
-#: option.c:781
+#: option.c:1001
 msgid "bad dhcp-option"
 msgstr "dhcp-option salah"
 
 # OK
-#: option.c:838
+#: option.c:1068
 #, fuzzy
 msgid "bad IP address"
 msgstr "membaca %s - %d alamat"
 
 # OK
-#: option.c:941
+#: option.c:1071 option.c:1177 option.c:2511
+#, fuzzy
+msgid "bad IPv6 address"
+msgstr "membaca %s - %d alamat"
+
+# OK
+#: option.c:1205
 msgid "bad domain in dhcp-option"
 msgstr "domain dalam dhcp-option salah"
 
 # OK
-#: option.c:1007
+#: option.c:1329
 msgid "dhcp-option too long"
 msgstr "dhcp-option terlalu panjang"
 
-#: option.c:1016
+#: option.c:1338
 msgid "illegal dhcp-match"
 msgstr ""
 
-#: option.c:1052
+#: option.c:1392
 msgid "illegal repeated flag"
 msgstr ""
 
-#: option.c:1060
+#: option.c:1400
 msgid "illegal repeated keyword"
 msgstr ""
 
 # OK
-#: option.c:1143 tftp.c:413
+#: option.c:1452 option.c:3536
+#, fuzzy, c-format
+msgid "cannot access directory %s: %s"
+msgstr "tidak bisa membaca %s: %s"
+
+# OK
+#: option.c:1483 tftp.c:464
 #, fuzzy, c-format
 msgid "cannot access %s: %s"
 msgstr "tidak bisa membaca %s: %s"
 
-#: option.c:1188
-msgid "only one dhcp-hostsfile allowed"
+#: option.c:1512
+msgid "setting log facility is not possible under Android"
 msgstr ""
 
-#: option.c:1195
-msgid "only one dhcp-optsfile allowed"
+#: option.c:1521
+msgid "bad log facility"
 msgstr ""
 
 # OK
-#: option.c:1240
+#: option.c:1570
 msgid "bad MX preference"
 msgstr "kesukaan MX salah"
 
 # OK
-#: option.c:1245
+#: option.c:1575
 msgid "bad MX name"
 msgstr "nama MX salah"
 
 # OK
-#: option.c:1259
+#: option.c:1589
 msgid "bad MX target"
 msgstr "target MX salah"
 
-#: option.c:1269
+#: option.c:1601
 msgid "cannot run scripts under uClinux"
 msgstr ""
 
-#: option.c:1271
+#: option.c:1603
 msgid "recompile with HAVE_SCRIPT defined to enable lease-change scripts"
 msgstr ""
 
+#: option.c:1607
+msgid "recompile with HAVE_LUASCRIPT defined to enable Lua scripts"
+msgstr ""
+
 # OK
-#: option.c:1516 option.c:1520
+#: option.c:1988 option.c:1992
 msgid "bad port"
 msgstr "port salah"
 
-#: option.c:1539 option.c:1564
+#: option.c:2015 option.c:2046
 msgid "interface binding not supported"
 msgstr ""
 
 # OK
-#: option.c:1710
+#: option.c:2026 option.c:3088
+#, fuzzy
+msgid "bad interface name"
+msgstr "nama MX salah"
+
+# OK
+#: option.c:2191
 #, fuzzy
 msgid "bad port range"
 msgstr "port salah"
 
-#: option.c:1727
+#: option.c:2208
 msgid "bad bridge-interface"
 msgstr ""
 
 # OK
-#: option.c:1769
+#: option.c:2242
 msgid "bad dhcp-range"
 msgstr "dhcp-range salah"
 
-#: option.c:1797
+#: option.c:2272
 msgid "only one tag allowed"
 msgstr ""
 
 # OK
-#: option.c:1844
+#: option.c:2323
 msgid "inconsistent DHCP range"
 msgstr "jangkauan DHCP tidak konsisten"
 
+#: option.c:2374
+msgid "prefix must be at least 64"
+msgstr ""
+
 # OK
-#: option.c:2019
+#: option.c:2378
+#, fuzzy
+msgid "inconsistent DHCPv6 range"
+msgstr "jangkauan DHCP tidak konsisten"
+
+# OK
+#: option.c:2481 option.c:2521
+#, fuzzy
+msgid "bad hex constant"
+msgstr "dhcp-host salah"
+
+#: option.c:2503
+msgid "cannot match tags in --dhcp-host"
+msgstr ""
+
+# OK
+#: option.c:2583
 #, fuzzy
 msgid "bad DHCP host name"
 msgstr "nama MX salah"
 
 # OK
-#: option.c:2100
+#: option.c:2664
 #, fuzzy
 msgid "bad tag-if"
 msgstr "target MX salah"
 
 # OK
-#: option.c:2374 option.c:2673
+#: option.c:2973 option.c:3258
 msgid "invalid port number"
 msgstr "nomor port tidak benar"
 
 # OK
-#: option.c:2436
+#: option.c:3035
 #, fuzzy
 msgid "bad dhcp-proxy address"
 msgstr "membaca %s - %d alamat"
 
 # OK
-#: option.c:2476
+#: option.c:3075
 #, fuzzy
 msgid "invalid alias range"
 msgstr "weight tidak benar"
 
-# OK
-#: option.c:2489
-#, fuzzy
-msgid "bad interface name"
-msgstr "nama MX salah"
-
-#: option.c:2514
+#: option.c:3113
 msgid "bad CNAME"
 msgstr ""
 
-#: option.c:2519
+#: option.c:3118
 msgid "duplicate CNAME"
 msgstr ""
 
 # OK
-#: option.c:2539
+#: option.c:3138
 #, fuzzy
 msgid "bad PTR record"
 msgstr "rekord SRV salah"
 
 # OK
-#: option.c:2570
+#: option.c:3169
 #, fuzzy
 msgid "bad NAPTR record"
 msgstr "rekord SRV salah"
 
 # OK
-#: option.c:2595
-msgid "TXT record string too long"
-msgstr "string rekord TXT terlalu panjang"
-
-# OK
-#: option.c:2643
+#: option.c:3201
 msgid "bad TXT record"
 msgstr "rekord TXT salah"
 
 # OK
-#: option.c:2659
+#: option.c:3244
 msgid "bad SRV record"
 msgstr "rekord SRV salah"
 
 # OK
-#: option.c:2666
+#: option.c:3251
 msgid "bad SRV target"
 msgstr "target SRV salah"
 
 # OK
-#: option.c:2680
+#: option.c:3265
 msgid "invalid priority"
 msgstr "prioritas tidak benar"
 
 # OK
-#: option.c:2687
+#: option.c:3272
 msgid "invalid weight"
 msgstr "weight tidak benar"
 
-#: option.c:2706
+#: option.c:3291
 msgid "unsupported option (check that dnsmasq was compiled with DHCP/TFTP/DBus support)"
 msgstr ""
 
-#: option.c:2748
-#, c-format
-msgid "files nested too deep in %s"
-msgstr ""
-
 # OK
-#: option.c:2756 tftp.c:567
-#, c-format
-msgid "cannot read %s: %s"
-msgstr "tidak bisa membaca %s: %s"
-
-# OK
-#: option.c:2813
+#: option.c:3355
 msgid "missing \""
 msgstr "kurang \""
 
 # OK
-#: option.c:2872
+#: option.c:3414
 msgid "bad option"
 msgstr "pilihan salah"
 
 # OK
-#: option.c:2874
+#: option.c:3416
 msgid "extraneous parameter"
 msgstr "parameter berlebihan"
 
 # OK
-#: option.c:2876
+#: option.c:3418
 msgid "missing parameter"
 msgstr "parameter kurang"
 
 # OK
-#: option.c:2880
+#: option.c:3422
 msgid "error"
 msgstr "kesalahan"
 
 # OK
-#: option.c:2885
+#: option.c:3427
 #, c-format
 msgid "%s at line %d of %%s"
 msgstr "%s pada baris %d dari %%s"
 
 # OK
-#: option.c:2942 option.c:2973
+#: option.c:3491 tftp.c:627
+#, c-format
+msgid "cannot read %s: %s"
+msgstr "tidak bisa membaca %s: %s"
+
+# OK
+#: option.c:3657 option.c:3693
 #, fuzzy, c-format
 msgid "read %s"
 msgstr "membaca %s"
 
+#: option.c:3745
+msgid "junk found in command line"
+msgstr ""
+
 # OK
-#: option.c:3045
+#: option.c:3780
 #, c-format
 msgid "Dnsmasq version %s  %s\n"
 msgstr "Dnsmasq versi %s  %s\n"
 
 # OK
-#: option.c:3046
-#, c-format
+#: option.c:3781
+#, fuzzy, c-format
 msgid ""
-"Compile time options %s\n"
+"Compile time options: %s\n"
 "\n"
 msgstr ""
 "Pilihan-pilihan saat kompilasi %s\n"
 "\n"
 
 # OK
-#: option.c:3047
+#: option.c:3782
 #, c-format
 msgid "This software comes with ABSOLUTELY NO WARRANTY.\n"
 msgstr "Perangkat lunak ini tersedia TANPA JAMINAN SEDIKITPUN.\n"
 
 # OK
-#: option.c:3048
+#: option.c:3783
 #, c-format
 msgid "Dnsmasq is free software, and you are welcome to redistribute it\n"
 msgstr "Dnsdmasq adalah perangkat lunak bebas, dan Anda dipersilahkan untuk membagikannya\n"
 
 # OK
-#: option.c:3049
+#: option.c:3784
 #, fuzzy, c-format
 msgid "under the terms of the GNU General Public License, version 2 or 3.\n"
 msgstr "dengan aturan GNU General Public License, versi 2.\n"
 
-#: option.c:3060
+#: option.c:3795
 msgid "try --help"
 msgstr ""
 
-#: option.c:3062
+#: option.c:3797
 msgid "try -w"
 msgstr ""
 
 # OK
-#: option.c:3065
+#: option.c:3800
 #, fuzzy, c-format
 msgid "bad command line options: %s"
 msgstr "pilihan baris perintah salah: %s."
 
 # OK
-#: option.c:3106
+#: option.c:3841
 #, c-format
 msgid "cannot get host-name: %s"
 msgstr "tidak bisa mendapatkan host-name: %s"
 
 # OK
-#: option.c:3134
+#: option.c:3869
 msgid "only one resolv.conf file allowed in no-poll mode."
 msgstr "hanya satu file resolv.conf yang diperbolehkan dalam modus no-poll."
 
 # OK
-#: option.c:3144
+#: option.c:3879
 msgid "must have exactly one resolv.conf to read domain from."
 msgstr "harus mempunyai tepat satu resolv.conf untuk mendapatkan nama domain."
 
 # OK
-#: option.c:3147 network.c:813 dhcp.c:814
+#: option.c:3882 network.c:822 dhcp.c:804
 #, fuzzy, c-format
 msgid "failed to read %s: %s"
 msgstr "gagal membaca %s: %s"
 
 # OK
-#: option.c:3164
+#: option.c:3899
 #, c-format
 msgid "no search directive found in %s"
 msgstr "tidak ditemukan direktif search di %s"
 
-#: option.c:3185
+#: option.c:3920
 msgid "there must be a default domain when --dhcp-fqdn is set"
 msgstr ""
 
-#: option.c:3189
+#: option.c:3924
 msgid "syntax check OK"
 msgstr ""
 
 # OK
-#: forward.c:427
+#: forward.c:113
+#, fuzzy, c-format
+msgid "failed to send packet: %s"
+msgstr "gagal mendengarkan di socket: %s"
+
+# OK
+#: forward.c:474
 #, c-format
 msgid "nameserver %s refused to do a recursive query"
 msgstr "nameserver %s menolak melakukan resolusi rekursif"
 
-#: forward.c:455
+#: forward.c:502
 #, c-format
 msgid "possible DNS-rebind attack detected: %s"
 msgstr ""
 
 # OK
-#: network.c:110
+#: network.c:355
 #, fuzzy, c-format
-msgid "unknown interface %s in bridge-interface"
-msgstr "antarmuka tidak dikenal %s"
-
-# OK
-#: network.c:467 dnsmasq.c:188
-#, c-format
-msgid "failed to create listening socket: %s"
+msgid "failed to create listening socket for %s: %s"
 msgstr "gagal membuat socket: %s "
 
-# OK
-#: network.c:474
-#, c-format
-msgid "failed to set IPV6 options on listening socket: %s"
-msgstr "gagal menyetel IPV6 pada socket: %s"
-
-#: network.c:500
-#, c-format
-msgid "failed to bind listening socket for %s: %s"
-msgstr "gagal mem-bind socket untuk mendengarkan %s: %s"
-
-# OK
-#: network.c:505
-#, c-format
-msgid "failed to listen on socket: %s"
-msgstr "gagal mendengarkan di socket: %s"
-
-# OK
-#: network.c:517
-#, fuzzy, c-format
-msgid "failed to create TFTP socket: %s"
-msgstr "gagal membuat socket: %s "
-
-#: network.c:711
+#: network.c:720
 #, fuzzy, c-format
 msgid "failed to bind server socket for %s: %s"
 msgstr "gagal mem-bind socket untuk mendengarkan %s: %s"
 
 # OK
-#: network.c:748
+#: network.c:757
 #, c-format
 msgid "ignoring nameserver %s - local interface"
 msgstr "mengabaikan nameserver %s - antarmuka lokal"
 
 # OK
-#: network.c:759
+#: network.c:768
 #, fuzzy, c-format
 msgid "ignoring nameserver %s - cannot make/bind socket: %s"
 msgstr "mengabaikan nameserver %s - tak dapat membuat/mem-bind socket: %s"
 
 # OK
-#: network.c:776
+#: network.c:785
 msgid "unqualified"
 msgstr "tidak memenuhi syarat"
 
-#: network.c:776
+#: network.c:785
 msgid "names"
 msgstr ""
 
-#: network.c:778
+#: network.c:787
 msgid "default"
 msgstr ""
 
 # OK
-#: network.c:780
+#: network.c:789
 msgid "domain"
 msgstr "domain"
 
 # OK
-#: network.c:783
+#: network.c:792
 #, c-format
 msgid "using local addresses only for %s %s"
 msgstr "menggunakan alamat lokal saja untuk %s %s"
 
 # OK
-#: network.c:785
+#: network.c:794
 #, fuzzy, c-format
 msgid "using standard nameservers for %s %s"
 msgstr "menggunakan nameserver %s#%d untuk %s %s"
 
 # OK
-#: network.c:787
+#: network.c:796
 #, c-format
 msgid "using nameserver %s#%d for %s %s"
 msgstr "menggunakan nameserver %s#%d untuk %s %s"
 
 # OK
-#: network.c:790
+#: network.c:799
 #, fuzzy, c-format
 msgid "using nameserver %s#%d(via %s)"
 msgstr "menggunakan nameserver %s#%d"
 
 # OK
-#: network.c:792
+#: network.c:801
 #, c-format
 msgid "using nameserver %s#%d"
 msgstr "menggunakan nameserver %s#%d"
 
 # OK
-#: dnsmasq.c:145
+#: dnsmasq.c:123
 #, fuzzy
 msgid "TFTP server not available: set HAVE_TFTP in src/config.h"
 msgstr "DBus tidak tersedia: setel HAVE_DBUS dalam src/config.h"
 
-#: dnsmasq.c:150
-msgid "asychronous logging is not available under Solaris"
+#: dnsmasq.c:128
+msgid "Cannot use --conntrack AND --query-port"
 msgstr ""
 
 # OK
-#: dnsmasq.c:169
+#: dnsmasq.c:131
+#, fuzzy
+msgid "Conntrack support not available: set HAVE_CONNTRACK in src/config.h"
+msgstr "DBus tidak tersedia: setel HAVE_DBUS dalam src/config.h"
+
+#: dnsmasq.c:136
+msgid "asychronous logging is not available under Solaris"
+msgstr ""
+
+#: dnsmasq.c:141
+msgid "asychronous logging is not available under Android"
+msgstr ""
+
+# OK
+#: dnsmasq.c:190
 #, c-format
 msgid "failed to find list of interfaces: %s"
 msgstr "gagal mendapatkan daftar antarmuka: %s"
 
 # OK
-#: dnsmasq.c:177
+#: dnsmasq.c:198
 #, c-format
 msgid "unknown interface %s"
 msgstr "antarmuka tidak dikenal %s"
 
 # OK
-#: dnsmasq.c:183
+#: dnsmasq.c:204
 #, c-format
 msgid "no interface with address %s"
 msgstr "tidak ada antarmuka dengan alamat %s"
 
 # OK
-#: dnsmasq.c:200 dnsmasq.c:671
+#: dnsmasq.c:220 dnsmasq.c:770
 #, c-format
 msgid "DBus error: %s"
 msgstr "DBus error: %s"
 
 # OK
-#: dnsmasq.c:203
+#: dnsmasq.c:223
 msgid "DBus not available: set HAVE_DBUS in src/config.h"
 msgstr "DBus tidak tersedia: setel HAVE_DBUS dalam src/config.h"
 
-#: dnsmasq.c:229
+#: dnsmasq.c:251
 #, c-format
 msgid "unknown user or group: %s"
 msgstr ""
 
-#: dnsmasq.c:284
+#: dnsmasq.c:306
 #, c-format
 msgid "cannot chdir to filesystem root: %s"
 msgstr ""
 
 # OK
-#: dnsmasq.c:448
+#: dnsmasq.c:481
 #, fuzzy, c-format
 msgid "started, version %s DNS disabled"
 msgstr "dimulai, cache versi %s di disable"
 
 # OK
-#: dnsmasq.c:450
+#: dnsmasq.c:483
 #, c-format
 msgid "started, version %s cachesize %d"
 msgstr "dimulai, versi %s ukuran cache %d"
 
 # OK
-#: dnsmasq.c:452
+#: dnsmasq.c:485
 #, c-format
 msgid "started, version %s cache disabled"
 msgstr "dimulai, cache versi %s di disable"
 
 # OK
-#: dnsmasq.c:454
+#: dnsmasq.c:487
 #, c-format
 msgid "compile time options: %s"
 msgstr "pilihan-pilihan saat kompilasi: %s"
 
 # OK
-#: dnsmasq.c:460
+#: dnsmasq.c:493
 msgid "DBus support enabled: connected to system bus"
 msgstr "dukungan DBus dimungkinkan: terkoneksi pada bus sistem"
 
 # OK
-#: dnsmasq.c:462
+#: dnsmasq.c:495
 msgid "DBus support enabled: bus connection pending"
 msgstr "dukungan DBus dimungkinkan: koneksi bus ditunda"
 
 # OK
-#: dnsmasq.c:467
+#: dnsmasq.c:500
 #, fuzzy, c-format
 msgid "warning: failed to change owner of %s: %s"
 msgstr "gagal memuat nama-nama dari %s: %s"
 
 # OK
-#: dnsmasq.c:471
+#: dnsmasq.c:504
 msgid "setting --bind-interfaces option because of OS limitations"
 msgstr "setelan opsi --bind-interfaces disebabkan keterbatasan OS"
 
 # OK
-#: dnsmasq.c:476
+#: dnsmasq.c:509
 #, c-format
 msgid "warning: interface %s does not currently exist"
 msgstr "peringatan: antarmuka %s tidak ada"
 
-#: dnsmasq.c:481
+#: dnsmasq.c:514
 msgid "warning: ignoring resolv-file flag because no-resolv is set"
 msgstr ""
 
 # OK
-#: dnsmasq.c:484
+#: dnsmasq.c:517
 #, fuzzy
 msgid "warning: no upstream servers configured"
 msgstr "menyetel server-server di atas dengan DBus"
 
-#: dnsmasq.c:488
+#: dnsmasq.c:521
 #, c-format
 msgid "asynchronous logging enabled, queue limit is %d messages"
 msgstr ""
 
+#: dnsmasq.c:524
+msgid "IPv6 router advertisement enabled"
+msgstr ""
+
 # OK
-#: dnsmasq.c:501
+#: dnsmasq.c:554
 #, c-format
 msgid "DHCP, static leases only on %.0s%s, lease time %s"
 msgstr "DHCP, lease static pada %.0s%s, waktu lease %s"
 
-#: dnsmasq.c:503
+# OK
+#: dnsmasq.c:556
+#, fuzzy, c-format
+msgid "router advertisement only on %.0s%s, lifetime %s"
+msgstr "DHCP, lease static pada %.0s%s, waktu lease %s"
+
+#: dnsmasq.c:558
 #, c-format
 msgid "DHCP, proxy on subnet %.0s%s%.0s"
 msgstr ""
 
 # OK
-#: dnsmasq.c:504
+#: dnsmasq.c:559
 #, c-format
 msgid "DHCP, IP range %s -- %s, lease time %s"
 msgstr "DHCP, jangkaun IP %s -- %s, waktu lease %s"
 
-#: dnsmasq.c:519
+#: dnsmasq.c:588
 msgid "root is "
 msgstr ""
 
 # OK
-#: dnsmasq.c:519
+#: dnsmasq.c:588
 #, fuzzy
 msgid "enabled"
 msgstr "di disable"
 
-#: dnsmasq.c:521
+#: dnsmasq.c:590
 msgid "secure mode"
 msgstr ""
 
-#: dnsmasq.c:547
+#: dnsmasq.c:616
 #, c-format
 msgid "restricting maximum simultaneous TFTP transfers to %d"
 msgstr ""
 
 # OK
-#: dnsmasq.c:673
+#: dnsmasq.c:772
 msgid "connected to system DBus"
 msgstr "terhubung ke sistem DBus"
 
-#: dnsmasq.c:768
+#: dnsmasq.c:912
 #, c-format
 msgid "cannot fork into background: %s"
 msgstr ""
 
 # OK
-#: dnsmasq.c:771
+#: dnsmasq.c:915
 #, fuzzy, c-format
 msgid "failed to create helper: %s"
 msgstr "gagal membaca %s: %s"
 
-#: dnsmasq.c:774
+#: dnsmasq.c:918
 #, c-format
 msgid "setting capabilities failed: %s"
 msgstr ""
 
 # OK
-#: dnsmasq.c:778
+#: dnsmasq.c:921
 #, fuzzy, c-format
 msgid "failed to change user-id to %s: %s"
 msgstr "gagal memuat nama-nama dari %s: %s"
 
 # OK
-#: dnsmasq.c:783
+#: dnsmasq.c:924
 #, fuzzy, c-format
 msgid "failed to change group-id to %s: %s"
 msgstr "gagal memuat nama-nama dari %s: %s"
 
 # OK
-#: dnsmasq.c:786
+#: dnsmasq.c:927
 #, fuzzy, c-format
 msgid "failed to open pidfile %s: %s"
 msgstr "gagal membaca %s: %s"
 
 # OK
-#: dnsmasq.c:789
+#: dnsmasq.c:930
 #, fuzzy, c-format
-msgid "cannot open %s: %s"
+msgid "cannot open log %s: %s"
 msgstr "tidak bisa membuka %s:%s"
 
-#: dnsmasq.c:844
+# OK
+#: dnsmasq.c:933
+#, fuzzy, c-format
+msgid "failed to load Lua script: %s"
+msgstr "gagal memuat %S: %s"
+
+#: dnsmasq.c:1002
 #, c-format
-msgid "child process killed by signal %d"
+msgid "script process killed by signal %d"
 msgstr ""
 
-#: dnsmasq.c:848
+#: dnsmasq.c:1006
 #, c-format
-msgid "child process exited with status %d"
+msgid "script process exited with status %d"
 msgstr ""
 
 # OK
-#: dnsmasq.c:852
+#: dnsmasq.c:1010
 #, fuzzy, c-format
 msgid "failed to execute %s: %s"
 msgstr "gagal mengakses %s: %s"
 
-#: dnsmasq.c:896
+#: dnsmasq.c:1055
 msgid "exiting on receipt of SIGTERM"
 msgstr "keluar karena menerima SIGTERM"
 
 # OK
-#: dnsmasq.c:924
+#: dnsmasq.c:1083
 #, fuzzy, c-format
 msgid "failed to access %s: %s"
 msgstr "gagal mengakses %s: %s"
 
 # OK
-#: dnsmasq.c:954
+#: dnsmasq.c:1113
 #, c-format
 msgid "reading %s"
 msgstr "membaca %s"
 
 # OK
-#: dnsmasq.c:965
+#: dnsmasq.c:1124
 #, fuzzy, c-format
 msgid "no servers found in %s, will retry"
 msgstr "tidak ditemukan direktif search di %s"
 
 # OK
-#: dhcp.c:40
+#: dhcp.c:49
 #, c-format
 msgid "cannot create DHCP socket: %s"
 msgstr "tidak bisa membuat socket DHCP: %s"
 
 # OK
-#: dhcp.c:52
+#: dhcp.c:64
 #, c-format
 msgid "failed to set options on DHCP socket: %s"
 msgstr "gagal menyetel opsi pada socket DHCP: %s"
 
 # OK
-#: dhcp.c:65
+#: dhcp.c:77
 #, fuzzy, c-format
 msgid "failed to set SO_REUSE{ADDR|PORT} on DHCP socket: %s"
 msgstr "gagal menyetel SO_REUSEADDR pada socket DHCP: %s"
 
 # OK
-#: dhcp.c:77
+#: dhcp.c:89
 #, c-format
 msgid "failed to bind DHCP server socket: %s"
 msgstr "gagal mem-bind socket server DHCP: %s"
 
 # OK
-#: dhcp.c:103
+#: dhcp.c:115
 #, c-format
 msgid "cannot create ICMP raw socket: %s."
 msgstr "tidak dapat membuat socket ICMP raw: %s"
 
-#: dhcp.c:281
+# OK
+#: dhcp.c:227
+#, fuzzy, c-format
+msgid "unknown interface %s in bridge-interface"
+msgstr "antarmuka tidak dikenal %s"
+
+#: dhcp.c:252
 #, c-format
 msgid "DHCP packet received on %s which has no address"
 msgstr ""
 
 # OK
-#: dhcp.c:445
+#: dhcp.c:467
 #, c-format
 msgid "DHCP range %s -- %s is not consistent with netmask %s"
 msgstr "jangkauan DHCP %s -- %s tidak konsisten dengan netmask %s"
 
 # OK
-#: dhcp.c:852
+#: dhcp.c:842
 #, fuzzy, c-format
 msgid "bad line at %s line %d"
 msgstr "kesalahan nama pada %s baris %d"
 
-#: dhcp.c:895
+#: dhcp.c:885
 #, c-format
 msgid "ignoring %s line %d, duplicate name or IP address"
 msgstr ""
 
 # OK
-#: dhcp.c:978
-#, c-format
-msgid "duplicate IP address %s in dhcp-config directive."
-msgstr "alamat IP kembar %s dalam direktif dhcp-config"
-
-# OK
-#: dhcp.c:981
-#, fuzzy, c-format
-msgid "duplicate IP address %s in %s."
-msgstr "alamat IP kembar %s dalam direktif dhcp-config"
-
-#: dhcp.c:1024
-#, c-format
-msgid "%s has more than one address in hostsfile, using %s for DHCP"
-msgstr ""
-
-# OK
-#: dhcp.c:1029
-#, c-format
-msgid "duplicate IP address %s (%s) in dhcp-config directive"
-msgstr "alamat IP kembar %s (%s) dalam direktif dhcp-config"
-
-# OK
-#: lease.c:67
+#: lease.c:61
 #, fuzzy, c-format
 msgid "cannot open or create lease file %s: %s"
 msgstr "tidak dapat membuka atau membuat file lease: %s"
 
 # OK
-#: lease.c:93
+#: lease.c:132
 msgid "too many stored leases"
 msgstr "terlalu banyak lease yang disimpan"
 
 # OK
-#: lease.c:129
+#: lease.c:163
 #, fuzzy, c-format
 msgid "cannot run lease-init script %s: %s"
 msgstr "tidak bisa membaca %s: %s"
 
-#: lease.c:135
+#: lease.c:169
 #, c-format
 msgid "lease-init script returned exit code %s"
 msgstr ""
 
 # OK
-#: lease.c:235
+#: lease.c:334
 #, fuzzy, c-format
 msgid "failed to write %s: %s (retry in %us)"
 msgstr "gagal membaca %s: %s"
 
-# OK
-#: rfc2131.c:377
-#, c-format
-msgid "no address range available for DHCP request %s %s"
-msgstr "tidak ada alamat yang bisa dipakai untuk permintaan DHCP %s %s"
-
-# OK
-#: rfc2131.c:378
-msgid "with subnet selector"
-msgstr "dengan pemilih subnet"
-
-# OK
-#: rfc2131.c:378
-msgid "via"
-msgstr "lewat"
-
-# OK
-#: rfc2131.c:393
-#, fuzzy, c-format
-msgid "%u available DHCP subnet: %s/%s"
-msgstr "tidak ada alamat yang bisa dipakai untuk permintaan DHCP %s %s"
-
-#: rfc2131.c:396
-#, c-format
-msgid "%u available DHCP range: %s -- %s"
-msgstr ""
-
-# OK
-#: rfc2131.c:425
-msgid "disabled"
-msgstr "di disable"
-
-# OK
-#: rfc2131.c:466 rfc2131.c:969 rfc2131.c:1335
-msgid "ignored"
-msgstr "diabaikan"
-
-# OK
-#: rfc2131.c:481 rfc2131.c:1183
-msgid "address in use"
-msgstr "alamat telah digunakan"
-
-# OK
-#: rfc2131.c:495 rfc2131.c:1023
-msgid "no address available"
-msgstr "tak ada alamat yang tersedia"
-
-# OK
-#: rfc2131.c:502 rfc2131.c:1146
-msgid "wrong network"
-msgstr "jaringan yang salah"
-
-# OK
-#: rfc2131.c:516
-msgid "no address configured"
-msgstr "tak ada alamat yang disetel"
-
-# OK
-#: rfc2131.c:522 rfc2131.c:1196
-msgid "no leases left"
-msgstr "tak ada lease yang tersisa"
-
-#: rfc2131.c:607
-#, c-format
-msgid "%u client provides name: %s"
-msgstr ""
-
-# OK
-#: rfc2131.c:762
-#, fuzzy, c-format
-msgid "%u vendor class: %s"
-msgstr "DBus error: %s"
-
-# OK
-#: rfc2131.c:764
-#, fuzzy, c-format
-msgid "%u user class: %s"
-msgstr "DBus error: %s"
-
-#: rfc2131.c:823
-msgid "PXE BIS not supported"
-msgstr ""
-
-# OK
-#: rfc2131.c:939
-#, fuzzy, c-format
-msgid "disabling DHCP static address %s for %s"
-msgstr "men-disable alamat statik DHCP %s"
-
-# OK
-#: rfc2131.c:960
-msgid "unknown lease"
-msgstr "lease tidak diketahui"
-
-#: rfc2131.c:992
-#, c-format
-msgid "not using configured address %s because it is leased to %s"
-msgstr ""
-
-#: rfc2131.c:1002
-#, c-format
-msgid "not using configured address %s because it is in use by the server or relay"
-msgstr ""
-
-#: rfc2131.c:1005
-#, c-format
-msgid "not using configured address %s because it was previously declined"
-msgstr ""
-
-#: rfc2131.c:1021 rfc2131.c:1189
-msgid "no unique-id"
-msgstr ""
-
-#: rfc2131.c:1090
-msgid "wrong server-ID"
-msgstr ""
-
-# OK
-#: rfc2131.c:1108
-msgid "wrong address"
-msgstr "alamat salah"
-
-# OK
-#: rfc2131.c:1121
-msgid "lease not found"
-msgstr "lease tak ditemukan"
-
-# OK
-#: rfc2131.c:1154
-msgid "address not available"
-msgstr "alamat tak tersedia"
-
-# OK
-#: rfc2131.c:1165
-msgid "static lease available"
-msgstr "lease statik tak tersedia"
-
-# OK
-#: rfc2131.c:1169
-msgid "address reserved"
-msgstr "alamat telah dipesan"
-
-#: rfc2131.c:1177
-#, c-format
-msgid "abandoning lease to %s of %s"
-msgstr ""
-
-#: rfc2131.c:1757
-#, c-format
-msgid "%u tags: %s"
-msgstr ""
-
-#: rfc2131.c:1770
-#, c-format
-msgid "%u bootfile name: %s"
-msgstr ""
-
-# OK
-#: rfc2131.c:1779
-#, fuzzy, c-format
-msgid "%u server name: %s"
-msgstr "DBus error: %s"
-
-# OK
-#: rfc2131.c:1793
-#, fuzzy, c-format
-msgid "%u next server: %s"
-msgstr "DBus error: %s"
-
-#: rfc2131.c:1796
-#, c-format
-msgid "%u broadcast response"
-msgstr ""
-
-#: rfc2131.c:1859
-#, c-format
-msgid "cannot send DHCP/BOOTP option %d: no space left in packet"
-msgstr ""
-
-#: rfc2131.c:2105
-msgid "PXE menu too large"
-msgstr ""
-
-#: rfc2131.c:2218
+#: lease.c:693
 #, c-format
 msgid "Ignoring domain %s for DHCP host name %s"
 msgstr ""
 
 # OK
-#: rfc2131.c:2236
+#: rfc2131.c:337
+#, c-format
+msgid "no address range available for DHCP request %s %s"
+msgstr "tidak ada alamat yang bisa dipakai untuk permintaan DHCP %s %s"
+
+# OK
+#: rfc2131.c:338
+msgid "with subnet selector"
+msgstr "dengan pemilih subnet"
+
+# OK
+#: rfc2131.c:338
+msgid "via"
+msgstr "lewat"
+
+# OK
+#: rfc2131.c:350
+#, fuzzy, c-format
+msgid "%u available DHCP subnet: %s/%s"
+msgstr "tidak ada alamat yang bisa dipakai untuk permintaan DHCP %s %s"
+
+#: rfc2131.c:353 rfc3315.c:209
+#, c-format
+msgid "%u available DHCP range: %s -- %s"
+msgstr ""
+
+# OK
+#: rfc2131.c:382
+msgid "disabled"
+msgstr "di disable"
+
+# OK
+#: rfc2131.c:423 rfc2131.c:941 rfc2131.c:1341
+msgid "ignored"
+msgstr "diabaikan"
+
+# OK
+#: rfc2131.c:438 rfc2131.c:1179
+msgid "address in use"
+msgstr "alamat telah digunakan"
+
+# OK
+#: rfc2131.c:452 rfc2131.c:995
+msgid "no address available"
+msgstr "tak ada alamat yang tersedia"
+
+# OK
+#: rfc2131.c:459 rfc2131.c:1142
+msgid "wrong network"
+msgstr "jaringan yang salah"
+
+# OK
+#: rfc2131.c:474
+msgid "no address configured"
+msgstr "tak ada alamat yang disetel"
+
+# OK
+#: rfc2131.c:480 rfc2131.c:1192
+msgid "no leases left"
+msgstr "tak ada lease yang tersisa"
+
+#: rfc2131.c:564 rfc3315.c:362
+#, c-format
+msgid "%u client provides name: %s"
+msgstr ""
+
+# OK
+#: rfc2131.c:719
+#, fuzzy, c-format
+msgid "%u vendor class: %s"
+msgstr "DBus error: %s"
+
+# OK
+#: rfc2131.c:721
+#, fuzzy, c-format
+msgid "%u user class: %s"
+msgstr "DBus error: %s"
+
+#: rfc2131.c:780
+msgid "PXE BIS not supported"
+msgstr ""
+
+# OK
+#: rfc2131.c:911 rfc3315.c:1098
+#, fuzzy, c-format
+msgid "disabling DHCP static address %s for %s"
+msgstr "men-disable alamat statik DHCP %s"
+
+# OK
+#: rfc2131.c:932
+msgid "unknown lease"
+msgstr "lease tidak diketahui"
+
+#: rfc2131.c:964 rfc3315.c:556
+#, c-format
+msgid "not using configured address %s because it is leased to %s"
+msgstr ""
+
+#: rfc2131.c:974
+#, c-format
+msgid "not using configured address %s because it is in use by the server or relay"
+msgstr ""
+
+#: rfc2131.c:977 rfc3315.c:560
+#, c-format
+msgid "not using configured address %s because it was previously declined"
+msgstr ""
+
+#: rfc2131.c:993 rfc2131.c:1185
+msgid "no unique-id"
+msgstr ""
+
+#: rfc2131.c:1080
+msgid "wrong server-ID"
+msgstr ""
+
+# OK
+#: rfc2131.c:1099
+msgid "wrong address"
+msgstr "alamat salah"
+
+# OK
+#: rfc2131.c:1117
+msgid "lease not found"
+msgstr "lease tak ditemukan"
+
+# OK
+#: rfc2131.c:1150
+msgid "address not available"
+msgstr "alamat tak tersedia"
+
+# OK
+#: rfc2131.c:1161
+msgid "static lease available"
+msgstr "lease statik tak tersedia"
+
+# OK
+#: rfc2131.c:1165
+msgid "address reserved"
+msgstr "alamat telah dipesan"
+
+#: rfc2131.c:1173
+#, c-format
+msgid "abandoning lease to %s of %s"
+msgstr ""
+
+#: rfc2131.c:1658
+#, c-format
+msgid "%u bootfile name: %s"
+msgstr ""
+
+# OK
+#: rfc2131.c:1667
+#, fuzzy, c-format
+msgid "%u server name: %s"
+msgstr "DBus error: %s"
+
+# OK
+#: rfc2131.c:1675
+#, fuzzy, c-format
+msgid "%u next server: %s"
+msgstr "DBus error: %s"
+
+#: rfc2131.c:1678
+#, c-format
+msgid "%u broadcast response"
+msgstr ""
+
+#: rfc2131.c:1741
+#, c-format
+msgid "cannot send DHCP/BOOTP option %d: no space left in packet"
+msgstr ""
+
+#: rfc2131.c:1981
+msgid "PXE menu too large"
+msgstr ""
+
+# OK
+#: rfc2131.c:2117 rfc3315.c:1294
 #, fuzzy, c-format
 msgid "%u requested options: %s"
 msgstr "pilihan-pilihan saat kompilasi: %s"
 
-#: rfc2131.c:2503
+#: rfc2131.c:2392
 #, c-format
 msgid "cannot send RFC3925 option: too many options for enterprise number %d"
 msgstr ""
 
 # OK
-#: netlink.c:66
+#: netlink.c:71
 #, fuzzy, c-format
 msgid "cannot create netlink socket: %s"
 msgstr "tidak bisa mem-bind netlink socket: %s"
 
 # OK
-#: netlink.c:265
+#: netlink.c:323
 #, fuzzy, c-format
 msgid "netlink returns error: %s"
 msgstr "DBus error: %s"
@@ -1655,71 +1708,171 @@ msgid "could not register a DBus message handler"
 msgstr "tidak bisa mendaftar sebuah DBus message handler"
 
 # OK
-#: bpf.c:150
+#: bpf.c:239
 #, c-format
 msgid "cannot create DHCP BPF socket: %s"
 msgstr "tidak dapat membuat socket DHCP BPF: %s"
 
 # OK
-#: bpf.c:178
+#: bpf.c:267
 #, fuzzy, c-format
 msgid "DHCP request for unsupported hardware type (%d) received on %s"
 msgstr "permintaan DHCP untuk tipe hardware yang tidak didukung (%d) diterima pada %s"
 
-#: tftp.c:233
+#: helper.c:140
+msgid "lease() function missing in Lua script"
+msgstr ""
+
+#: tftp.c:285
 msgid "unable to get free port for TFTP"
 msgstr ""
 
-#: tftp.c:248
+#: tftp.c:300
 #, c-format
 msgid "unsupported request from %s"
 msgstr ""
 
-#: tftp.c:336
-#, c-format
-msgid "sent %s to %s"
-msgstr ""
-
 # OK
-#: tftp.c:359
+#: tftp.c:410
 #, fuzzy, c-format
 msgid "file %s not found"
 msgstr "lease tak ditemukan"
 
-#: tftp.c:470
+#: tftp.c:525
 #, c-format
 msgid "error %d %s received from %s"
 msgstr ""
 
 # OK
-#: tftp.c:501
+#: tftp.c:557
 #, fuzzy, c-format
 msgid "failed sending %s to %s"
 msgstr "gagal membaca %s: %s"
 
-#: log.c:173
+#: tftp.c:571
+#, c-format
+msgid "sent %s to %s"
+msgstr ""
+
+#: log.c:190
 #, c-format
 msgid "overflow: %d log entries lost"
 msgstr ""
 
-#: log.c:250
+#: log.c:268
 #, c-format
 msgid "log failed: %s"
 msgstr ""
 
 # OK
-#: log.c:431
+#: log.c:472
 msgid "FAILED to start up"
 msgstr "GAGAL untuk memulai"
+
+#: conntrack.c:65
+#, c-format
+msgid "Conntrack connection mark retrieval failed: %s"
+msgstr ""
+
+# OK
+#: dhcp6.c:46
+#, fuzzy, c-format
+msgid "cannot create DHCPv6 socket: %s"
+msgstr "tidak bisa membuat socket DHCP: %s"
+
+# OK
+#: dhcp6.c:57
+#, fuzzy, c-format
+msgid "failed to bind DHCPv6 server socket: %s"
+msgstr "gagal mem-bind socket server DHCP: %s"
+
+# OK
+#: rfc3315.c:94
+#, fuzzy, c-format
+msgid "no address range available for DHCPv6 request from relay at %s"
+msgstr "tidak ada alamat yang bisa dipakai untuk permintaan DHCP %s %s"
+
+# OK
+#: rfc3315.c:103
+#, fuzzy, c-format
+msgid "no address range available for DHCPv6 request via %s"
+msgstr "tidak ada alamat yang bisa dipakai untuk permintaan DHCP %s %s"
+
+# OK
+#: rfc3315.c:206
+#, fuzzy, c-format
+msgid "%u available DHCPv6 subnet: %s/%d"
+msgstr "tidak ada alamat yang bisa dipakai untuk permintaan DHCP %s %s"
+
+#: dhcp-common.c:138
+#, c-format
+msgid "Ignoring duplicate dhcp-option %d"
+msgstr ""
+
+#: dhcp-common.c:208
+#, c-format
+msgid "%u tags: %s"
+msgstr ""
+
+# OK
+#: dhcp-common.c:261
+#, c-format
+msgid "duplicate IP address %s in dhcp-config directive."
+msgstr "alamat IP kembar %s dalam direktif dhcp-config"
+
+# OK
+#: dhcp-common.c:264
+#, fuzzy, c-format
+msgid "duplicate IP address %s in %s."
+msgstr "alamat IP kembar %s dalam direktif dhcp-config"
+
+#: dhcp-common.c:323
+#, c-format
+msgid "%s has more than one address in hostsfile, using %s for DHCP"
+msgstr ""
+
+# OK
+#: dhcp-common.c:344
+#, c-format
+msgid "duplicate IP address %s (%s) in dhcp-config directive"
+msgstr "alamat IP kembar %s (%s) dalam direktif dhcp-config"
+
+# OK
+#: dhcp-common.c:443
+#, fuzzy, c-format
+msgid "failed to join DHCPv6 multicast group: %s"
+msgstr "gagal mem-bind socket server DHCP: %s"
+
+# OK
+#: radv.c:76
+#, fuzzy, c-format
+msgid "cannot create ICMPv6 socket: %s"
+msgstr "tidak bisa membuat socket DHCP: %s"
+
+# OK
+#, fuzzy
+#~ msgid "Specify path to Lua script (no default)."
+#~ msgstr "Sebutkan path file PID. (default %s)."
+
+# OK
+#~ msgid "TXT record string too long"
+#~ msgstr "string rekord TXT terlalu panjang"
+
+# OK
+#~ msgid "failed to set IPV6 options on listening socket: %s"
+#~ msgstr "gagal menyetel IPV6 pada socket: %s"
+
+#~ msgid "failed to bind listening socket for %s: %s"
+#~ msgstr "gagal mem-bind socket untuk mendengarkan %s: %s"
+
+# OK
+#, fuzzy
+#~ msgid "failed to create TFTP socket: %s"
+#~ msgstr "gagal membuat socket: %s "
 
 # OK
 #~ msgid "must set exactly one interface on broken systems without IP_RECVIF"
 #~ msgstr "harus menyetel satu antarmuka saja pada sistem yang tidak benar dengan IP_RECVIF"
-
-# OK
-#, fuzzy
-#~ msgid "failed to load %s: %s"
-#~ msgstr "gagal memuat %S: %s"
 
 # OK
 #~ msgid "bad name in %s"
@@ -1746,10 +1899,6 @@ msgstr "GAGAL untuk memulai"
 #, fuzzy
 #~ msgid "read %s - %d hosts"
 #~ msgstr "membaca %s - %d alamat"
-
-# OK
-#~ msgid "bad dhcp-host"
-#~ msgstr "dhcp-host salah"
 
 # OK
 #~ msgid "domains"

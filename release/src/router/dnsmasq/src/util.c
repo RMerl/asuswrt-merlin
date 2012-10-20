@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2010 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 #include <sys/times.h>
 #endif
 
-#ifdef LOCALEDIR
+#if defined(LOCALEDIR) || defined(HAVE_IDN)
 #include <idna.h>
 #endif
 
@@ -43,11 +43,9 @@ unsigned short rand16(void)
 
 /* SURF random number generator */
 
-typedef unsigned int uint32;
-
-static uint32 seed[32];
-static uint32 in[12];
-static uint32 out[8];
+static u32 seed[32];
+static u32 in[12];
+static u32 out[8];
 
 void rand_init()
 {
@@ -66,7 +64,7 @@ void rand_init()
 
 static void surf(void)
 {
-  uint32 t[12]; uint32 x; uint32 sum = 0;
+  u32 t[12]; u32 x; u32 sum = 0;
   int r; int i; int loop;
 
   for (i = 0;i < 12;++i) t[i] = in[i] ^ seed[12 + i];
@@ -120,11 +118,11 @@ static int check_name(char *in)
 	dotgap = 0;
       else if (++dotgap > MAXLABEL)
 	return 0;
-      else if (isascii(c) && iscntrl(c)) 
+      else if (isascii((unsigned char)c) && iscntrl((unsigned char)c)) 
 	/* iscntrl only gives expected results for ascii */
 	return 0;
-#ifndef LOCALEDIR
-      else if (!isascii(c))
+#if !defined(LOCALEDIR) && !defined(HAVE_IDN)
+      else if (!isascii((unsigned char)c))
 	return 0;
 #endif
       else if (c != ' ')
@@ -170,7 +168,7 @@ int legal_hostname(char *name)
 char *canonicalise(char *in, int *nomem)
 {
   char *ret = NULL;
-#ifdef LOCALEDIR
+#if defined(LOCALEDIR) || defined(HAVE_IDN)
   int rc;
 #endif
 
@@ -180,7 +178,7 @@ char *canonicalise(char *in, int *nomem)
   if (!check_name(in))
     return NULL;
   
-#ifdef LOCALEDIR
+#if defined(LOCALEDIR) || defined(HAVE_IDN)
   if ((rc = idna_to_ascii_lz(in, &ret, 0)) != IDNA_SUCCESS)
     {
       if (ret)
@@ -322,6 +320,48 @@ int is_same_net(struct in_addr a, struct in_addr b, struct in_addr mask)
   return (a.s_addr & mask.s_addr) == (b.s_addr & mask.s_addr);
 } 
 
+#ifdef HAVE_IPV6
+int is_same_net6(struct in6_addr *a, struct in6_addr *b, int prefixlen)
+{
+  int pfbytes = prefixlen >> 3;
+  int pfbits = prefixlen & 7;
+
+  if (memcmp(&a->s6_addr, &b->s6_addr, pfbytes) != 0)
+    return 0;
+
+  if (pfbits == 0 ||
+      (a->s6_addr[pfbytes] >> (8 - pfbits) == b->s6_addr[pfbytes] >> (8 - pfbits)))
+    return 1;
+
+  return 0;
+}
+
+/* return least signigicant 64 bits if IPv6 address */
+u64 addr6part(struct in6_addr *addr)
+{
+  int i;
+  u64 ret = 0;
+
+  for (i = 8; i < 16; i++)
+    ret = (ret << 8) + addr->s6_addr[i];
+
+  return ret;
+}
+
+void setaddr6part(struct in6_addr *addr, u64 host)
+{
+  int i;
+
+  for (i = 15; i >= 8; i--)
+    {
+      addr->s6_addr[i] = host;
+      host = host >> 8;
+    }
+}
+
+#endif
+ 
+
 /* returns port number from address */
 int prettyprint_addr(union mysockaddr *addr, char *buf)
 {
@@ -335,7 +375,15 @@ int prettyprint_addr(union mysockaddr *addr, char *buf)
     }
   else if (addr->sa.sa_family == AF_INET6)
     {
+      char name[IF_NAMESIZE];
       inet_ntop(AF_INET6, &addr->in6.sin6_addr, buf, ADDRSTRLEN);
+      if (addr->in6.sin6_scope_id != 0 &&
+	  if_indextoname(addr->in6.sin6_scope_id, name) &&
+	  strlen(buf) + strlen(name) + 2 <= ADDRSTRLEN)
+	{
+	  strcat(buf, "%");
+	  strcat(buf, name);
+	}
       port = ntohs(addr->in6.sin6_port);
     }
 #else
@@ -365,7 +413,8 @@ void prettyprint_time(char *buf, unsigned int t)
 }
 
 
-/* in may equal out, when maxlen may be -1 (No max len). */
+/* in may equal out, when maxlen may be -1 (No max len). 
+   Return -1 for extraneous no-hex chars found. */
 int parse_hex(char *in, unsigned char *out, int maxlen, 
 	      unsigned int *wildcard_mask, int *mac_type)
 {
@@ -377,7 +426,10 @@ int parse_hex(char *in, unsigned char *out, int maxlen,
   
   while (maxlen == -1 || i < maxlen)
     {
-      for (r = in; *r != 0 && *r != ':' && *r != '-'; r++);
+      for (r = in; *r != 0 && *r != ':' && *r != '-' && *r != ' '; r++)
+	if (*r != '*' && !isxdigit((unsigned char)*r))
+	  return -1;
+      
       if (*r == 0)
 	maxlen = i;
       
@@ -392,12 +444,29 @@ int parse_hex(char *in, unsigned char *out, int maxlen,
 	  else
 	    {
 	      *r = 0;
-	      mask = mask << 1;
 	      if (strcmp(in, "*") == 0)
-		mask |= 1;
+		{
+		  mask = (mask << 1) | 1;
+		  i++;
+		}
 	      else
-		out[i] = strtol(in, NULL, 16);
-	      i++;
+		{
+		  int j, bytes = (1 + (r - in))/2;
+		  for (j = 0; j < bytes; j++)
+		    { 
+		      char sav;
+		      if (j < bytes - 1)
+			{
+			  sav = in[(j+1)*2];
+			  in[(j+1)*2] = 0;
+			}
+		      out[i] = strtol(&in[j*2], NULL, 16);
+		      mask = mask << 1;
+		      i++;
+		      if (j < bytes - 1)
+			in[(j+1)*2] = sav;
+		    }
+		}
 	    }
 	}
       in = r+1;
@@ -473,7 +542,7 @@ void bump_maxfd(int fd, int *max)
 int retry_send(void)
 {
    struct timespec waiter;
-   if (errno == EAGAIN)
+   if (errno == EAGAIN || errno == EWOULDBLOCK)
      {
        waiter.tv_sec = 0;
        waiter.tv_nsec = 10000;

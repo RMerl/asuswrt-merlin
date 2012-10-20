@@ -16,31 +16,31 @@
 // stub for wlconf, etc.
 struct nvram_tuple router_defaults[] = {
 	// NVRAM for init_syspara: system paraamters getting from MFG/NVRAM Area
- 	//{ "boardflags", "" },
+ 	//{ "boardflags", "" }, 
 	//{ "productid", "" },
 	//{ "firmver", "" },
 	//{ "hardware_version", "" }, // bootloader and hardware version
-	//{ "et0macaddr", "" },
-	//{ "wl0macaddr", "" },
+	//{ "et0macaddr", "" }, 
+	//{ "wl0macaddr", "" }, 
 	//{ "wl1macaddr", "" },
 
 	// NVRAM for restore_defaults: system wide parameters
 	{ "nvramver", RTCONFIG_NVRAM_VER},
 	{ "restore_defaults",	"0"	},	// Set to 0 to not restore defaults on boot
-	{ "sw_mode", "1" 		}, 	// big switch for different mode
-	{ "asus_mfg", "0"		}, 	// for MFG
+	{ "sw_mode", "1" 		}, 	// big switch for different mode 
+	{ "asus_mfg", "0"		}, 	// for MFG 
 	{ "preferred_lang", "EN"	},
-	// NVRAM from init_nvram: system wide parameters accodring to model and mode
+	// NVRAM from init_nvram: system wide parameters accodring to model and mode 
 	//{ "wan_ifnames", "" },
 	//{ "lan_ifnames", "" },
 	//{ "lan1_ifnames", "" },
 	//{ "vlan_enable", "" },
 	//{ "vlan0ports",  "" },
 	//{ "vlan1ports",  "" },
-	//{ "vlan2ports",  "" },
+	//{ "vlan2ports",  "" }, 
 	/* Guest H/W parameters */
 
-	// NVRAM for switch
+	// NVRAM for switch	
 	{ "switch_stb_x", "0"}, 		// oleg patch
 	{ "switch_wantag", "none"},		//for IPTV/VoIP case
 	{ "switch_wan0tagid", "" },		//Wan Port
@@ -108,6 +108,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_chanspec", "0"},			/* Channel specification */
 #endif
 #ifndef RTCONFIG_RALINK
+	{ "wl_noisereduction", "1"},
 	{ "wl_reg_mode", "off"},		/* Regulatory: 802.11H(h)/802.11D(d)/off(off) */
 #if 0
 	{ "wl_dfs_preism", "60"},		/* 802.11H pre network CAC time */
@@ -210,9 +211,6 @@ struct nvram_tuple router_defaults[] = {
 	/* WSC parameters */
 	{ "wps_version2", "enabled"},		/* Must specified before other wps variables */
 	{ "wl_wps_mode", "enabled"},		/* enabled wps */
-#ifndef RTCONFIG_RALINK
-	{ "wps_mode", "enabled"},		/* enabled wps */
-#endif
 	{ "wl_wps_config_state", "0"},		/* config state unconfiged */
 #if 0
 	{ "wps_modelname", RT_BUILD_NAME},
@@ -222,14 +220,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "wps_mfstring", "ASUSTeK Computer Inc."},
 //	{ "wps_device_name", RT_BUILD_NAME},
 	{ "wl_wps_reg", "enabled"},
-	//{ "wps_device_pin", "12345670"}, it is mapped to secret_code
+//	{ "wps_device_pin", "12345670"}, it is mapped to secret_code
 	{ "wps_sta_pin", "00000000"},
-#if 0
-	{ "wps_modelnum", "123456"},
-#else
 //	{ "wps_modelnum", RT_BUILD_NAME},
-#endif
-	{ "wps_timeout_enable", "0"},
 	/* Allow or Deny Wireless External Registrar get or configure AP security settings */
 	{ "wps_wer_mode", "allow"},
 
@@ -291,7 +284,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "emf_rtport_entry", ""},		/* IGMP frames forwarding ports */
 #endif /* __CONFIG_EMF__ */
 
-	// ASUS used only?
+	// ASUS used only?	
 	{ "wl_nmode_x", 		"0"	},	/* 0/1/2, auto/nonly,bgmixed*/
 #ifdef RTCONFIG_BCMWL6
 	{ "wl_bw", 			"0"	},	/* 0/1/2/3 auto/20/40/80MHz */
@@ -382,14 +375,13 @@ struct nvram_tuple router_defaults[] = {
 	{ "emf_rtport_entry",		""		},	// IGMP frames forwarding ports
 	{ "emf_enable",			"0"		},	// Enable EMF by default
 #endif
-// WPS
+// WPS 
 //	#if defined (W7_LOGO) || defined (WIFI_LOGO)
 	{ "wps_enable", "1"},
 //	#else
 //	{ "wps_enable", "0"},					// win7 logo
 //	#endif
 #ifdef RTCONFIG_RALINK
-	{ "wps_mode", "1"},					/* AP WSC PIN method */
 	{ "wl_wsc_config_state", "0"},				/* config state unconfiged */
 #endif
 	{ "wps_band", "0"},					/* "0": 2.4G, "1": 5G */
@@ -477,12 +469,13 @@ struct nvram_tuple router_defaults[] = {
 #ifdef CONFIG_BCMWL5
 	{ "ctf_disable",		"0"		},
 	{ "ctf_disable_force", 		"0"		},
+	{ "gro_disable_force", 		"0"		},
 #endif
 #ifdef RTCONFIG_BCMWL6
 	{ "pktc_disable", 		"0"		},
 #endif
 
-	// NVRAM for start_lan:
+	// NVRAM for start_lan: 
 // LAN H/W parameters
 	{ "lan_hwnames",		""		},	// LAN driver names (e.g. et0)
 	{ "lan_hwaddr",			""		},	// LAN interface MAC address
@@ -667,7 +660,8 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_DSL
 	{ "dslx_modulation", "5" }, // multiple mode
-
+	{ "dslx_snrm_offset", "0" }, /* Paul add start 2012/9/24, for SNR Margin tweaking. */
+	{ "dslx_sra", "0" }, /* Paul add 2012/10/15, for setting SRA. */
 #ifdef RTCONFIG_DSL_ANNEX_B //Paul add 2012/8/21
 	{ "dslx_annex", "0" }, // Annex B
 #else
@@ -675,9 +669,9 @@ struct nvram_tuple router_defaults[] = {
 #endif
 
 // the following variables suppose can be removed
-	{ "dslx_nat", "1" },
-	{ "dslx_upnp_enable", "1" },
-	{ "dslx_link_enable", "1" },
+	{ "dslx_nat", "1" },	
+	{ "dslx_upnp_enable", "1" },	
+	{ "dslx_link_enable", "1" },	
 	{ "dslx_DHCPClient", "1" },
 	{ "dslx_dhcp_clientid", "" },	//Required by some ISP using RFC 1483 MER.
 	{ "dslx_ipaddr", "0.0.0.0"},	/* IP address */
@@ -685,29 +679,29 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_gateway", "0.0.0.0"},	/* gateway */
 	{ "dslx_dnsenable", "1"},
 	{ "dslx_dns1", ""},
-	{ "dslx_dns2", ""},
-// now use switch_stb_x
+	{ "dslx_dns2", ""},	
+// now use switch_stb_x	
 	{ "dslx_pppoe_username", ""},
 	{ "dslx_pppoe_passwd", ""},
 	// this one is no longer to use
 	//{ "dslx_pppoe_dial_on_demand", ""},
 	{ "dslx_pppoe_idletime", "0"},
 	{ "dslx_pppoe_mtu", "1492"},
-	// this one is no longer to use
+	// this one is no longer to use	
 //	{ "dslx_pppoe_mru", ""},
 	{ "dslx_pppoe_service", ""},
 	{ "dslx_pppoe_ac", ""},
-	{ "dslx_pppoe_options", ""},
+	{ "dslx_pppoe_options", ""},	
 	{ "dslx_hwaddr", ""},
-//
-	{ "dsl_unit", "0"},
+//	
+	{ "dsl_unit", "0"}, 
 //
 	{ "dsl_enable", ""},
 	{ "dsl_vpi", ""},
 	{ "dsl_vci", ""},
 	{ "dsl_encap", ""},
 	{ "dsl_proto", ""},
-
+	
 	/* Paul modify 2012/8/6, set default Service Category to UBR without PCR, with PCR, SCR and MBS set to 0. */
 	{ "dsl_svc_cat", "0"},
 	{ "dsl_pcr", "0"},
@@ -733,7 +727,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl1_svc_cat", ""},
 	{ "dsl1_pcr", ""},
 	{ "dsl1_scr", ""},
-	{ "dsl1_mbs", ""},
+	{ "dsl1_mbs", ""},	
 //
 	{ "dsl2_enable", "0"},
 	{ "dsl2_vpi", ""},
@@ -743,7 +737,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl2_svc_cat", ""},
 	{ "dsl2_pcr", ""},
 	{ "dsl2_scr", ""},
-	{ "dsl2_mbs", ""},
+	{ "dsl2_mbs", ""},	
 //
 	{ "dsl3_enable", "0"},
 	{ "dsl3_vpi", ""},
@@ -793,11 +787,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl7_svc_cat", ""},
 	{ "dsl7_pcr", ""},
 	{ "dsl7_scr", ""},
-	{ "dsl7_mbs", ""},
+	{ "dsl7_mbs", ""},	
 // number of PVC , program generated
 	{ "dslx_config_num", "0"},
 // for debug , program generated
-	{ "dslx_debug", "0"},
+	{ "dslx_debug", "0"},	
 #endif
 
 	// NVRAM for start_firewall/start_qos
@@ -865,18 +859,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "fw_dos_x", "0" },
 	{ "fw_log_x", "none" },
 	{ "fw_pt_pptp", "1" },
-#ifndef RTCONFIG_RALINK
 	{ "fw_pt_l2tp", "1" },
 	{ "fw_pt_ipsec", "1" },
-#else
-#ifdef RTCONFIG_DSL /* Paul add 2012/7/20, enable L2TP and IPSec Passthrough by default for DSL model. */
-	{ "fw_pt_l2tp", "1" },
-	{ "fw_pt_ipsec", "1" },
-#else
-	{ "fw_pt_l2tp", "0" },
-	{ "fw_pt_ipsec", "0" },
-#endif
-#endif
 	{ "fw_pt_rtsp", "1" },
 	{ "fw_pt_pppoerelay", "0"},
 	{ "misc_http_x", "0" },
@@ -885,8 +869,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "misc_httpsport_x", "8443" },
 #endif
 	{ "misc_ping_x", "0" },
-	{ "misc_lpr_x", "0" },
-
+	{ "misc_lpr_x", "0" },	
+	
 	// UrlList
 	{ "url_enable_x", "0"},
 	{ "url_date_x", "1111111"},
@@ -1023,6 +1007,13 @@ struct nvram_tuple router_defaults[] = {
 	{ "enable_cloudsync", "0" },
 	{ "cloud_sync", ""},
 #endif
+
+	{ "diskmon_freq", "0"}, // 0: disable, 1: Month, 2: Week, 3: Hour
+	{ "diskmon_freq_time", ""}, // DAY>WEEK>HOUR
+	{ "diskmon_policy", "all"}, // all, disk, part
+	{ "diskmon_usbport", ""}, // 1, 2
+	{ "diskmon_part", ""}, // sda1, sdb1
+	{ "diskmon_force_stop", "0"}, // 0: disable, 1: stop if possible
 #endif
 
 #ifdef RTCONFIG_HTTPS
@@ -1385,7 +1376,7 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_IPV6
 	// IPv6 parameters
 	{ "ipv6_service",	"disabled"	},	// disabled/staic6/dhcp6/6to4/6in4/6rd/other
-	{ "ipv6_ifdev",		"ppp"		},
+	{ "ipv6_ifdev",		"ppp"		},	
 	{ "ipv6_prefix",	""		},	// The global-scope IPv6 prefix to route/advertise
 	{ "ipv6_prefix_length",	"64"		},	// The bit length of the prefix. Used by dhcp6c. For radvd, /64 is always assumed.
 	{ "ipv6_rtr_addr",	""		},	// defaults to $ipv6_prefix::1
@@ -1399,7 +1390,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_relay",		"192.88.99.1"	},	// IPv6 Anycast Address
 	{ "ipv6_tun_v4end",	"0.0.0.0"	},	// Foreign IPv4 endpoint of SIT tunnel
 	{ "ipv6_tun_addr",	""		},	// IPv6 address to assign to local tunnel endpoint
-	{ "ipv6_tun_addrlen",	"64"		},	// CIDR prefix length for tunnel's IPv6 address
+	{ "ipv6_tun_addrlen",	"64"		},	// CIDR prefix length for tunnel's IPv6 address	
 	{ "ipv6_tun_mtu",	"0"		},	// Tunnel MTU, 0 for default
 	{ "ipv6_tun_ttl",	"255"		},	// Tunnel TTL
 	{ "ipv6_6rd_dhcp",	"1"		},
@@ -1419,7 +1410,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_debug",		"0"		},
 #endif
 
-	{ "web_redirect", 	"1"		},      // Only NOLINK is redirected in default, it is overwrited in init_nvram
+	{ "web_redirect", 	"1"		},      // Only NOLINK is redirected in default, it is overwrited in init_nvram			
 
 #ifdef RTCONFIG_FANCTRL
 	{ "fanctrl_dutycycle",		"0"},
@@ -1602,6 +1593,8 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "apps_state_error", "" },
 	{ "apps_state_autofix", "1" },
 
+	{ "diskmon_status", "" },
+
 	{ "webs_state_update", "" },
 	{ "webs_state_upgrade", "" },
 	{ "webs_state_error", "" },
@@ -1612,30 +1605,30 @@ struct nvram_tuple router_state_defaults[] = {
 #ifdef RTCONFIG_SWMODE_SWITCH
 	{ "swmode_switch", "0"},
 #endif
-
+	
 #ifdef RTCONFIG_DSL
 // name starting with 'dsl' are reserved for dsl unit
 // for temp variable please use dsltmp_xxx
 	{ "dsltmp_autodet_state", ""},
-	{ "dsltmp_autodet_vpi", "0"},
+	{ "dsltmp_autodet_vpi", "0"},	
 	{ "dsltmp_autodet_vci", "35"},
-	{ "dsltmp_autodet_encap", "0"},
-// manually config
-	{ "dsltmp_cfg_prctl", "0"},
-	{ "dsltmp_cfg_vpi", "0"},
-	{ "dsltmp_cfg_vci", "35"},
-	{ "dsltmp_cfg_encap", "0"},
+	{ "dsltmp_autodet_encap", "0"},			
+// manually config	
+	{ "dsltmp_cfg_prctl", "0"},		
+	{ "dsltmp_cfg_vpi", "0"},	
+	{ "dsltmp_cfg_vci", "35"},		
+	{ "dsltmp_cfg_encap", "0"},			
 	{ "dsltmp_cfg_iptv_idx", ""},
-	{ "dsltmp_cfg_iptv_num_pvc", "0"},
+	{ "dsltmp_cfg_iptv_num_pvc", "0"},	
 	{ "dsltmp_cfg_ispname", ""},
 	{ "dsltmp_cfg_country", ""},
-// tmp variable for QIS , it will write to dsl0_xxx after finish page
+// tmp variable for QIS , it will write to dsl0_xxx after finish page	
 	{ "dsltmp_qis_vpi", ""},
 	{ "dsltmp_qis_vci", ""},
 	{ "dsltmp_qis_proto", ""},
 	{ "dsltmp_qis_encap", ""},
 	{ "dsltmp_qis_pppoe_username", ""},
-	{ "dsltmp_qis_pppoe_passwd", ""},
+	{ "dsltmp_qis_pppoe_passwd", ""},			
 	{ "dsltmp_qis_pppoe_dial_on_demand", ""},
 	{ "dsltmp_qis_pppoe_idletime", ""},
 	{ "dsltmp_qis_pppoe_mtu", ""},
@@ -1645,31 +1638,31 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "dsltmp_qis_DHCPClient", ""},
 	{ "dsltmp_qis_ipaddr", ""},
 	{ "dsltmp_qis_netmask", ""},
-	{ "dsltmp_qis_gateway", ""},
+	{ "dsltmp_qis_gateway", ""},	
 	{ "dsltmp_qis_dnsenable", ""},
 	{ "dsltmp_qis_dns1", ""},
-	{ "dsltmp_qis_dns2", ""},
+	{ "dsltmp_qis_dns2", ""},	
 	{ "dsltmp_qis_svc_cat", ""},
-	{ "dsltmp_qis_pcr", ""},
-	{ "dsltmp_qis_scr", ""},
-	{ "dsltmp_qis_mbs", ""},
-	{ "dsltmp_qis_pppoe_relay", ""},
-	{ "dsltmp_qis_hwaddr", ""},
-	{ "dsltmp_qis_admin_passwd", ""},
+	{ "dsltmp_qis_pcr", ""},	
+	{ "dsltmp_qis_scr", ""},		
+	{ "dsltmp_qis_mbs", ""},			
+	{ "dsltmp_qis_pppoe_relay", ""},			
+	{ "dsltmp_qis_hwaddr", ""},				
+	{ "dsltmp_qis_admin_passwd", ""},					
 	{ "dsltmp_qis_admin_passwd_set", "0"},
-	{ "dsltmp_qis_dsl_pvc_set", "0"},
+	{ "dsltmp_qis_dsl_pvc_set", "0"},	
 // for DSL driver and tool
-	{ "dsltmp_tc_resp_to_d", ""},
+	{ "dsltmp_tc_resp_to_d", ""},			
 	{ "dsltmp_adslatequit", "0"},
-	{ "dsltmp_tcbootup", "0"},
-	{ "dsltmp_adslsyncsts", ""},
-	{ "dsltmp_adslsyncsts_detail", ""},
+	{ "dsltmp_tcbootup", "0"},	
+	{ "dsltmp_adslsyncsts", ""},	
+	{ "dsltmp_adslsyncsts_detail", ""},	
 // for web ui identify , 1=old ui, 2=asuswrt
-	{ "dsltmp_web_ui_ver", "2"},
+	{ "dsltmp_web_ui_ver", "2"},	
 #endif
 	{ "ddns_return_code", ""},
 	{ "ddns_return_code_chk", ""},
-	{ "reboot_time", "70"},
+	{ "reboot_time", "70"},	
 	{ NULL, NULL }
 };
 
@@ -1804,7 +1797,7 @@ fix_name(const char *name, char *fixed_name)
 }
 
 
-/*
+/* 
  * Find nvram param name; return pointer which should be treated as const
  * return NULL if not found.
  *

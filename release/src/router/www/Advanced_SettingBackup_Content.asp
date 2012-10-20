@@ -17,7 +17,10 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ajax.js"></script>
 <script>
+var $j = jQuery.noConflict();
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
@@ -37,7 +40,8 @@ function restoreRule(){
 	alert_string += "<#Setting_factorydefault_hint2#>";
 	if(confirm(alert_string)){
 		document.form.action1.blur();
-		showtext($("loading_text"), "<#SAVE_restart_desc#>");
+		showtext($("loading_block2"), "<#SAVE_restart_desc#>");
+		$('loading_block3').style.display = "none";
 		showLoading();
 		document.restoreform.submit();
 	}
@@ -64,10 +68,38 @@ function uploadSetting(){
 	}
 	else{		
 		disableCheckChangedStatus();
-		showtext($("loading_text"), "<#SET_ok_desc#>");
+		showtext($("loading_block2"), "<#SET_ok_desc#>");
+		$('loading_block3').style.display = "none";
 		document.form.submit();
 	}	
 }
+
+var dead = 0;
+function detect_httpd(){
+
+	$j.ajax({
+    		url: '/httpd_check.htm',
+    		dataType: 'script',
+				timeout: 1000,
+    		error: function(xhr){
+    				dead++;
+    				if(dead < 6){
+    						setTimeout("detect_httpd();", 1000);
+    				}else{
+    						$('loading_block1').style.display = "none";
+    						$('loading_block2').style.display = "none";
+    						$('loading_block2').style.display = "";
+    						$('loading_block3').innerHTML = "<div><#LANConfig_ChangedLANIP#></div>";
+    				}
+    		},
+
+    		success: function(){
+    				setTimeout("hideLoadingBar();",1000);
+      			location.href = "index.asp";
+  			}
+  		});
+}
+
 </script>
 </head>
 
@@ -78,11 +110,12 @@ function uploadSetting(){
 <table cellpadding="5" cellspacing="0" id="loadingBarBlock" class="loadingBarBlock" align="center">
 	<tr>
 		<td height="80">
-		<div class="Bar_container">
-			<span id="proceeding_img_text" ></span>
+		<div id="loading_block1" class="Bar_container">
+			<span id="proceeding_img_text"></span>
 			<div id="proceeding_img"></div>
 		</div>
-		<div id="loading_text" style="margin:5px auto; width:85%;"><#SAVE_restart_desc#></div>
+		<div id="loading_block2" style="margin:5px auto; width:85%;"></div>
+		<div id="loading_block3" style="margin:5px auto; width:85%; font-size:12pt;"></div>	
 		</td>
 	</tr>
 </table>

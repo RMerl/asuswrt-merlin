@@ -121,6 +121,7 @@ apps_info_t *get_apps_list(char *argv){
 	char line[128], buf[4096];
 	char *tmp_apps_name;
 	int got_apps;
+	char *STATUS;
 
 	if(!argv || strcmp(argv, APP_OWNER_OTHERS)){
 		// Get the newest version of the installed packages,
@@ -274,6 +275,14 @@ apps_info_t *get_apps_list(char *argv){
 
 			memset(line, 0, sizeof(line));
 		}while(fgets(line, 128, fp) != NULL && strlen(line) > 1);
+
+		if((STATUS = get_status_field(pkg_head, FIELD_STATUS)) == NULL)
+			continue;
+		if(strstr(STATUS, "not-installed")){
+			free(STATUS);
+			continue;
+		}
+		free(STATUS);
 
 		follow_apps_info = apps_info_list;
 		got_apps = 0;

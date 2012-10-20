@@ -89,7 +89,7 @@ ALLOBJS += dev_sflash.o sflash.o
 endif
 
 ifeq ($(strip ${CFG_NFLASH}),1)
-CFLAGS += -DCFG_NFLASH=1 -DNFLASH_SUPPORT -DCFG_HEAP_SIZE=1024
+CFLAGS += -DCFG_NFLASH=1 -DNFLASH_SUPPORT -DCFG_HEAP_SIZE=2048
 ALLOBJS += dev_nflash.o nflash.o
 endif
 

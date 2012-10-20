@@ -71,6 +71,10 @@ function initial(){
 												["Servers Center", tablink[3][1], "<#UPnPMediaServer_Help#>", "server.png"],
 												["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer.png"],
 												["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png"]];
+	
+	if(media_support == -1){
+			default_apps_array[1].splice(2,1,"<#MediaServer_Help#>");						
+	}											
 
 	if(dualWAN_support != -1){
 		default_apps_array[3][2] += "<br><br>Make sure Dual WAN support is enabled first.";

@@ -17,6 +17,9 @@
 </style>
 <script type="text/JavaScript" src="/jquery.js"></script>
 <script type="text/javascript">
+
+<% start_autodet(); %>
+
 var now_flag = '<% get_parameter("flag"); %>';
 var wantype = '';
 var wanstate = -1;
@@ -29,7 +32,7 @@ var RetryCountDown_fail = 5;
 function QKDetect_load_body(){
 	parent.set_step("t1");
 	parent.document.title = "<#Web_Title#> - <#QKSet_detect_sanglass#>";
-	setTimeout("getWANStatus();", 2000);
+	setTimeout("getWANStatus();", 3000);
 }
 
 function getWANStatus(){

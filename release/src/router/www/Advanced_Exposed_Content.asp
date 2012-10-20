@@ -32,9 +32,7 @@ function applyRule(){
 }
 
 function validForm(){
-	if(!validate_ipaddr(document.form.dmz_ip, 'dmz_ip')){
-		document.form.dmz_ip.focus();
-		document.form.dmz_ip.select();
+	if(!validate_ipaddr_final(document.form.dmz_ip, 'dmz_ip')){
 		return false;
 	}
 	

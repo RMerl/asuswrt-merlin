@@ -100,14 +100,14 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-var cloud_sync;
+
 var cloud_status = "";
 var cloud_obj = "";
 var cloud_msg = "";
 var curRule = -1;
 var enable_cloudsync = '<% nvram_get("enable_cloudsync"); %>';
-<% cloud_status(); %>
-
+<% UI_cloud_status(); %>
+var cloud_sync = '<% nvram_get("cloud_sync"); %>';
 /* type>user>password>url>dir>rule>enable */
 var cloud_synclist_array = cloud_sync.replace(/>/g, "&#62").replace(/</g, "&#60"); 
 var cloud_synclist_all = new Array(); 
@@ -184,7 +184,7 @@ function Do_addRow_Group(){
 function edit_Row(r){ 	
 	document.form.cloud_username.value = cloud_synclist_all[r][1];
 	document.form.cloud_password.value = cloud_synclist_all[r][2];
-	document.form.cloud_dir.value = cloud_synclist_all[r][5];
+	document.form.cloud_dir.value = cloud_synclist_all[r][5].substring(4);
 	document.form.cloud_rule.value = cloud_synclist_all[r][4];
 }
 
@@ -275,7 +275,7 @@ function showcloud_synclist(){
 
 function updateCloudStatus(){
     $j.ajax({
-    	url: '/update_cloudstatus.asp',
+    	url: '/cloud_status.asp',
     	dataType: 'script', 
 
     	error: function(xhr){
@@ -344,10 +344,16 @@ function updateCloudStatus(){
 }
 
 function validform(){
+	if(!Block_chars(document.form.cloud_username, ["<", ">"]))
+		return false;
+
 	if(document.form.cloud_username.value == ''){
 		alert("<#File_Pop_content_alert_desc1#>");
 		return false;
 	}
+
+	if(!Block_chars(document.form.cloud_password, ["<", ">"]))
+		return false;
 
 	if(document.form.cloud_password.value == ''){
 		alert("<#File_Pop_content_alert_desc6#>");
@@ -430,8 +436,18 @@ function get_layer_items(layer_order){
 function get_tree_items(treeitems){
 	document.aidiskForm.test_flag.value = 0;
 	this.isLoading = 1;
-	this.Items = treeitems;
-	if(this.Items && this.Items.length > 0){
+	var array_temp = new Array();
+	var array_temp_split = new Array();
+	for(var j=0;j<treeitems.length;j++){ // To hide folder 'Download2' & 'asusware'
+		array_temp_split[j] = treeitems[j].split("#");
+		if( array_temp_split[j][0].match(/^Download2$/) || array_temp_split[j][0].match(/^asusware$/)	){
+			continue;					
+		}
+		
+		array_temp.push(treeitems[j]);
+	}
+	this.Items = array_temp;
+	if(this.Items && this.Items.length >= 0){
 		BuildTree();
 	}	
 }
@@ -919,7 +935,7 @@ function cal_panel_block(){
 								<#PPPConnection_Password_itemname#>
 							</th>			
 							<td>
-								<input id="cloud_password" name="cloud_password" type="password" autocapitalization="off" onBlur="switchType(false);" onFocus="switchType(true);switchType_IE(this);" maxlength="32" class="input_32_table" style="height: 25px;" value="">
+								<input id="cloud_password" name="cloud_password" type="text" autocapitalization="off" onBlur="switchType(false);" onFocus="switchType(true);switchType_IE(this);" maxlength="32" class="input_32_table" style="height: 25px;" value="">
 							  <input id="cloud_password_text" name="cloud_password_text" type="text" autocapitalization="off" onBlur="switchType_IE(this);" maxlength="32" class="input_32_table" style="height:25px; display:none;" value="">
 							</td>
 						  </tr>						  				

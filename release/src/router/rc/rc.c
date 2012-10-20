@@ -121,7 +121,12 @@ static int rctest_main(int argc, char *argv[])
 			{
 #ifdef RTCONFIG_RALINK
 				if (nvram_get_int("hwnat") &&
-//					!((nvram_get_int("fw_pt_l2tp") || nvram_get_int("fw_pt_ipsec") || nvram_get_int("wl0_mrate_x") || nvram_get_int("wl1_mrate_x"))) &&
+					/* TODO: consider RTCONFIG_DUALWAN case */
+//					!nvram_match("wan0_proto", "l2tp") &&
+//					!nvram_match("wan0_proto", "pptp") &&
+//					!(nvram_get_int("fw_pt_l2tp") || nvram_get_int("fw_pt_ipsec") &&
+					(nvram_match("wl0_radio", "0") || nvram_get_int("wl0_mrate_x")) &&
+					(nvram_match("wl1_radio", "0") || nvram_get_int("wl1_mrate_x")) &&
 					!is_module_loaded("hw_nat"))
 				{
 #if 0
@@ -246,6 +251,9 @@ static const applets_t applets[] = {
 	{ "dhcp6c-state",		dhcp6c_state_main		},
 	{ "ipv6aide",			ipv6aide_main			},
 #endif
+#ifdef RTCONFIG_WPS
+	{ "wpsaide",			wpsaide_main			},
+#endif
 	{ "halt",			reboothalt_main			},
 	{ "reboot",			reboothalt_main			},
 	{ "ntp", 			ntp_main			},
@@ -263,7 +271,8 @@ static const applets_t applets[] = {
 	{ "mount-cifs",			mount_cifs_main			},
 #endif
 #ifdef RTCONFIG_USB
-	{ "ejusb",                   ejusb_main                   },
+	{ "ejusb",			ejusb_main			},
+	{ "disk_monitor",		diskmon_main			},
 #endif
 	{ "service",			service_main		},
 	{NULL, NULL}

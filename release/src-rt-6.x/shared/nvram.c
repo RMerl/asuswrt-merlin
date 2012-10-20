@@ -481,7 +481,7 @@ BCMINITFN(_nvram_init)(void *sih)
 		printf("nvram_init: out of memory\n");
 		return -12; /* -ENOMEM */
 	}
-	printf("_nvram_init: allocat header: %lu, size= %lu\n", header, NVRAM_SPACE);
+	printf("_nvram_init: allocat size= %d\n", NVRAM_SPACE);
 	if ((ret = _nvram_read(header)) == 0 &&
 	    header->magic == NVRAM_MAGIC)
 		nvram_rehash(header);

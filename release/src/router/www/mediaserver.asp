@@ -22,7 +22,7 @@
 <script type="text/javascript" src="/aidisk/AiDisk_folder_tree.js"></script>
 <style type="text/css">
 .upnp_table{
-	height: 780px;
+	height: 790px;
 	width:750px;
 	padding:5px; 
 	padding-top:20px; 
@@ -221,10 +221,20 @@ function get_layer_items(layer_order){
 function get_tree_items(treeitems){
 	document.aidiskForm.test_flag.value = 0;
 	this.isLoading = 1;
-	this.Items = treeitems;
-		if(this.Items && this.Items.length > 0){
-			BuildTree();
-		}	
+	var array_temp = new Array();
+	var array_temp_split = new Array();
+	for(var j=0;j<treeitems.length;j++){ // To hide folder 'Download2' & 'asusware'
+		array_temp_split[j] = treeitems[j].split("#");
+		if( array_temp_split[j][0].match(/^Download2$/) || array_temp_split[j][0].match(/^asusware$/)	){
+			continue;					
+		}
+		
+		array_temp.push(treeitems[j]);
+	}
+	this.Items = array_temp;	
+	if(this.Items && this.Items.length >= 0){
+		BuildTree();
+	}	
 }
 function BuildTree(){
 	var ItemText, ItemSub, ItemIcon;
@@ -234,14 +244,12 @@ function BuildTree(){
 	var shown_ItemText = "";
 	var ItemBarCode ="";		
 	var TempObject = "";
-	
 	for(var i = 0; i < this.Items.length; ++i){	
 		this.Items[i] = this.Items[i].split("#");
 		var Item_size = 0;
 		Item_size = this.Items[i].length;
 		if(Item_size > 3){
-			var temp_array = new Array(3);	
-			
+			var temp_array = new Array(3);				
 			temp_array[2] = this.Items[i][Item_size-1];
 			temp_array[1] = this.Items[i][Item_size-2];			
 			temp_array[0] = "";
@@ -418,8 +426,7 @@ function GetFolderItem(selectedObj, haveSubTree){
 		$('deleteFolderBtn').onclick = function(){};
 		$('modifyFolderBtn').onclick = function(){};
 		document.aidiskForm.layer_order.disabled = "disabled";
-		document.aidiskForm.layer_order.value = barcode;
-		
+		document.aidiskForm.layer_order.value = barcode;		
 	}
 	else if(layer == 3){
 		// chose Shared-Folder

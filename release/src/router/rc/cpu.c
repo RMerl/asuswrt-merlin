@@ -57,7 +57,7 @@ static void alarm_handler(int i)
 {
 	        gotalarm = 1;
 }
-
+#if 0
 static struct itimerval itv;
 static void
 alarmtimer(unsigned long sec, unsigned long usec)
@@ -67,7 +67,7 @@ alarmtimer(unsigned long sec, unsigned long usec)
 	itv.it_interval = itv.it_value;
 	setitimer(ITIMER_REAL, &itv, NULL);
 }
-
+#endif
 /*****************************************************************************/
 
 static void usage(FILE *fp, int rc)

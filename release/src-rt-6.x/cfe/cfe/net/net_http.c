@@ -74,6 +74,7 @@
 
 #include "net_http.h"
 #include <trxhdr.h>
+#include <bcmnvram.h>
 
 #ifndef	NULL
 #define NULL (void *)0
@@ -621,7 +622,7 @@ httpd_appcall(struct httpd_state *hs)
 		/* Send mini-web index page out */
 		httpd_page_init(hs);
 		httpd_printf(hs,
-			"<table border=0 cellpadding=0 cellspacing=0 bgcolor=#306498>\r\n"
+			/*"<table border=0 cellpadding=0 cellspacing=0 bgcolor=#4D595D>\r\n"
 			"<tr><td height=57 width=600>\r\n"
 			"<font face=Arial size=6 color=#ffffff>ASUSTeK - CFE miniWeb Server</font>\r\n"
 			"</td></tr>\r\n"
@@ -633,8 +634,29 @@ httpd_appcall(struct httpd_state *hs)
 			"</form>\r\n"
 			"<form action=do.htm method=get>\r\n"
 			"<br>Command:<br><a href=do.htm?cmd=reboot>Reboot.</a>\r\n"
-			"<br><a href=do.htm?cmd=nvram+erase>Restore default NVRAM values.</a>\r\n"
-			"</form>\r\n");
+			"<br><a href=do.htm?cmd=nvram+erase>Restore default NVRAM values.</a>\r\n"*/
+			"<br><br>\r\n"	
+			"<form action=f2.htm method=post encType=multipart/form-data>\r\n"
+			"<table width=470px align=center cellspacing=5px style=margin-top:20px;margin-bottom:20px;font-family:Segoe UI, Arial, sans-serif>\r\n"
+			"<tr height=100px style=color:FFFFFF>\r\n"
+			"<td width=120px style=background-color:01536B;>\r\n"
+			"<div align=right style=margin-right:10px;font-size:26px;font-weight:bold>ASUS</div><div style=margin-right:10px;font-size:18px; align=right>%s</div></td>\r\n"
+			"<td style=background-color:008F6D>\r\n"
+			"<div style=margin-left:10px;font-size:20px>Please upgrade to the latest firmware</div></td></tr>\r\n"
+			"<tr height=150px style=color:FFFFFF>\r\n"
+			"<td colspan=2 style=background-color:3285EF;padding:10px>\r\n"
+			"<div>Visit ASUS support site at http://support.asus.com to download the latest firmware</div>\r\n"
+			"<div>Upload firmware file <input type=file size=35 name=files></div>\r\n"
+			"<div style=margin-top:10px; align=right><input type=submit value=Upload></div></td></tr>\r\n"
+			"</table></form>\r\n"
+			"<br><br>\r\n"
+			"<form action=do.htm method=get align=center>\r\n"
+			"<div style=background-color:A6A6A6;font-family:Segoe UI, Arial, sans-serif; align=center>\r\n"
+			"<a style=color:404040 href=do.htm?cmd=reboot>Reboot</a>&nbsp&nbsp&nbsp&nbsp\r\n"
+			"<a style=color:404040 href=do.htm?cmd=nvram+erase>Restore default NVRAM values</a>\r\n"
+			"</div></form>\r\n",
+			nvram_get("model")
+			);
 		httpd_page_end(hs, 0, 0);
 		return 0;
 

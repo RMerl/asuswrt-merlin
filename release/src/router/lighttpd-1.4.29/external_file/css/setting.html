@@ -65,8 +65,11 @@ $("document").ready(function() {
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
 	
+	var init_page = ( getUrlVars()["p"] == undefined ) ? 0 : getUrlVars()["p"];
+	//alert(init_page);
+	
 	// 預設顯示第一個 Tab
-	var _showTab = 0;
+	var _showTab = init_page;
 	$('ul.tabs li').eq(_showTab).addClass('active');
 	$('.tab_content').hide().eq(_showTab).show();
 	
@@ -81,6 +84,9 @@ $("document").ready(function() {
 		$this.addClass('active').siblings('.active').removeClass('active');
 		// 淡入相對應的內容並隱藏兄弟元素
 		$(_clickTab).stop(false, true).fadeIn().siblings().hide();
+ 		 		
+ 		if(_clickTab=="#tab3")
+ 			getLatestVersion();
  		
 		return false;
 	}).find('a').focus(function(){
@@ -100,11 +106,43 @@ $("document").ready(function() {
 	$('#btn_rescan').text(m.getString('btn_rescan'));
 	$('span#desc_rescan').text(m.getString('title_desc_rescan'));
 	
-	$('span#desc_version').text(m.getString('title_version'));
+	$('span#desc_version').text(m.getString('title_version')+": ");
 	$('span#version').text(g_storage.get('router_version'));
 	
 	refreshShareLinkList();
 });
+
+function getLatestVersion(){
+	var client = new davlib.DavClient();
+	client.initialize();
+	
+	$("#update").text(m.getString('msg_check_latest_ver'));
+	
+	client.GETLATESTVER("/", function(error, content, statusstring){	
+		if(error==200){
+			var data = parseXml(statusstring);
+			var x = $(data);
+			
+			var ver = x.find("version").text();
+			var a = ver.split("_");
+			var build_no = a[1];
+			
+			var cur_ver = g_storage.get('router_version');
+			var b = cur_ver.split(".");
+			var cur_build_no = b[3];
+			
+			if(build_no>cur_build_no)
+				$("#update").text(m.getString('msg_update_latest_ver'));
+			else
+				$("#update").text(m.getString('msg_latest_ver'));
+		}
+		else{
+			$("#update").text(m.getString('msg_check_latest_ver_error'));
+		}
+	
+		client = null;
+	});
+}
 
 function refreshShareLinkList(){
 	var client = new davlib.DavClient();
@@ -138,7 +176,7 @@ function refreshShareLinkList(){
 				var minute = parseInt(lefttime%3600/60);
 												
 				table_html += "<tr nid='" + i + "' class='even'>";
-    		table_html += "<td fid='filename' align='center'><a href='" + url + "'>" + filename + "</a></td>";
+    		table_html += "<td fid='filename' align='center'><a href='" + url + "' target='_blank'>" + filename + "</a></td>";
        	table_html += "<td fid='createtime' align='center'>" + createtime + "</td>";
        	if(expiretime==0){
        		table_html += "<td fid='expiretime' align='center'>" + m.getString('title_unlimited') + "</td>";
@@ -166,7 +204,7 @@ function refreshShareLinkList(){
 			$(".dellink").click(function(){
 				
 				var r=confirm(m.getString('msg_confirm_delete_sharelink'));
-			
+				
 				if (r==true){
 					client.REMOVESL("/", $(this).attr("link"), function(error, content, statusstring){	
 						if(error==200){
@@ -206,8 +244,6 @@ function getUrlVars(){
     }
     return vars;
 }
-
-
 </script>
 </head>
 <body>
@@ -230,7 +266,8 @@ function getUrlVars(){
 					</div>
 					<div id="tab3" class="tab_content">
 						<span id="desc_version"></span>
-						<span id="version"></span>
+						<span id="version"></span><br>
+						<span id="update" style="color:red"></span>
 					</div>
 				</div>
 			</div>

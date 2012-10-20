@@ -11,7 +11,7 @@ endif
 CFLAGS += -Wall -O
 CFLAGS += -DASUS -DASUS_NVRAM
 CFLAGS += -I$(TOP)/shared -I$(SRCBASE)/include
-CFLAGS += -I$(SRCBASE)/linux/linux-2.6.21.x/drivers/net/raeth
+CFLAGS += -I$(SRCBASE)/linux/linux-2.6.21.x/drivers/net/raeth.dsl
 CFLAGS += -I$(SRCBASE)/linux/linux-2.6.21.x/include
 LDFLAGS = -L$(TOP)/shared -lshared -L$(TOP)/nvram -lnvram
 INSTALL = install

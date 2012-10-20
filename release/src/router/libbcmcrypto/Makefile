@@ -36,7 +36,7 @@ MAP := .map
 UNR := .unresolved
 SYM := .symbols
 
-all: libbcmcrypto.so
+all: libbcmcrypto.so libbcmcrypto.a
 
 install: all
 	install -d $(INSTALLDIR)/usr/lib
@@ -49,8 +49,12 @@ clean:
 libbcmcrypto.so: $(OBJS)
 	$(LD) -shared -o $@ $^
 
+libbcmcrypto.a: $(OBJS)
+	@rm -f $@
+	$(AR) cruv $@ $^
+
 # rule for removing unneeded symbols in the shared library
-optimize: libbcmcrypto.so
+optimize: libbcmcrypto.so libbcmcrypto.a
 	$(NM) -o --defined-only --no-sort libbcmcrypto.so | cut -d' ' -f3 > $(MAP)
 	$(NM) --dynamic -u --no-sort $(BINARIES) | sort -u > $(UNR)
 	rm -rf $(SYM)
@@ -59,7 +63,6 @@ optimize: libbcmcrypto.so
 	fi ; done
 	# if no symbols are needed then delete the shared lib
 	if ls $(SYM) ; then \
-	$(AR) cr libbcmcrypto.a $(OBJS) ; \
 	xargs -t $(LD) -shared -o libbcmcrypto.so libbcmcrypto.a < $(SYM) ; \
 	install libbcmcrypto.so $(TARGETDIR)/usr/lib ; \
 	$(STRIP) $(TARGETDIR)/usr/lib/libbcmcrypto.so ; \

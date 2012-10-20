@@ -2,6 +2,7 @@ include ../common.mak
 
 #APPS_TEST_SERVER=y
 DM_VERSION=3.1.0.59
+HTTP_VERSION=3.1.0.65
 
 all:
 	@echo "" >rom/etc/motd
@@ -21,6 +22,7 @@ ifeq ($(RTCONFIG_APP_PREINSTALLED),y)
 
 	install -m 0644 packages/asus_base_apps.tgz $(INSTALLDIR)/rom # Don't need if installing from Internet.
 	install -m 0644 packages/downloadmaster_$(DM_VERSION)_mipsel.ipk $(INSTALLDIR)/rom
+	#install -m 0644 packages/asuslighttpd_$(HTTP_VERSION)_mipsel.ipk $(INSTALLDIR)/rom
 #ifeq ($(TODO_TEMP_REMOVE),y)
 	install -m 0644 packages/openssl_*_mipsel.ipk $(INSTALLDIR)/rom
 	install -m 0644 packages/zlib_*_mipsel.ipk $(INSTALLDIR)/rom
@@ -33,6 +35,7 @@ ifeq ($(RTCONFIG_APP_PREINSTALLED),y)
 	install -m 0644 packages/libpar2_*_mipsel.ipk $(INSTALLDIR)/rom
 	install -m 0644 packages/pcre_*_mipsel.ipk $(INSTALLDIR)/rom
 	install -m 0644 packages/spawn-fcgi_*_mipsel.ipk $(INSTALLDIR)/rom
+	install -m 0644 packages/libuclibc++_*_mipsel.ipk $(INSTALLDIR)/rom
 #endif
 endif
 

@@ -160,6 +160,10 @@ static struct language_table language_tables[] = {
 	{"es-cl", "ES"},
 	{"es-mx", "ES"},
 	{"es-sv", "ES"},
+	{"it", "IT"},
+	{"it-it", "IT"},
+	{"it-ch", "IT"},
+	{"uk", "UK"},
 	{NULL, NULL}
 };
 

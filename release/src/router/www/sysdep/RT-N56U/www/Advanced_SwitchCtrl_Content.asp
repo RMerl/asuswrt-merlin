@@ -134,7 +134,14 @@ function valid_form(){
         	<td>
           	<input type="text" maxlength="4" class="input_6_table" id="switch_ctrlrate_broadcast" name="switch_ctrlrate_broadcast" value="<% nvram_get("switch_ctrlrate_broadcast"); %>" onkeypress="return is_number(this, event);">
           </td>
-				</tr>								
+				</tr>
+      	<tr>
+      		<th><#nat_enable#></th>
+          <td>
+              <input type="radio" name="hwnat" value="1" <% nvram_match("hwnat", "1", "checked"); %>><#checkbox_Yes#>
+              <input type="radio" name="hwnat" value="0" <% nvram_match("hwnat", "0", "checked"); %>><#checkbox_No#>
+          </td>
+      	</tr>					
 		</table>	
 
 		<div class="apply_gen">
