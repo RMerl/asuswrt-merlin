@@ -261,7 +261,7 @@ function showcloud_synclist(){
 						code +='<td width="'+wid[j]+'%" id="cloudStatus"></td>';
 					}
 					else{
-						code +='<td width="'+wid[j]+'%"><span style="display:none;">'+ cloud_synclist_col[j] +'</span><span style="word-break:normal;">'+ cloud_synclist_col[j].substr(4, cloud_synclist_col[j].length) +'</span></td>';
+						code +='<td width="'+wid[j]+'%"><span style="display:none;">'+ cloud_synclist_col[j] +'</span><span style="word-break:break-all;">'+ cloud_synclist_col[j].substr(4, cloud_synclist_col[j].length) +'</span></td>';
 					}
 				}
 			}
@@ -875,7 +875,7 @@ function cal_panel_block(){
 									</td>
 									<td>&nbsp;&nbsp;</td>
 									<td>
-										<div style="padding:10px;width:95%;font-style:italic;font-size:14px;word-break:break-all;">
+										<div style="padding:10px;width:95%;font-style:italic;font-size:14px;word-break:normal;">
 												<#smart_sync1#><br />
 												<#smart_sync2#>											
 										</div>
