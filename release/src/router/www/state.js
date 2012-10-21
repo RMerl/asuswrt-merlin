@@ -102,7 +102,7 @@ function show_banner(L3){// L3 = The third Level of Menu
 	banner_code +='<span onclick="change_wl_unit_status(1)" id="elliptic_ssid_5g" style="margin-left:-5px;" class="title_link"></span>\n';
 	banner_code +='</td>\n';
 
-	if(wifi_hw_sw_support != -1)
+//	if(wifi_hw_sw_support != -1)
 		banner_code +='<td width="30"><div id="wifi_hw_sw_status"></div></td>\n';
 
 	if(cooler_support != -1)
