@@ -315,8 +315,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.220.19:
-   - NEW: Rebased on 3.0.0.4.246.
+3.0.0.4.246.19:
+   - NEW: Rebased on 3.0.0.4.246.  Some notable changes:
+            o New "Enhanced interference management" option under Wireless -> Professional.
+            o Improved AiCloud webui
+            o dnsmasq updated to 2.64
+
    - NEW: Option to enable simpler share names.  When enabled, the folder
           Share will be shared as "Share" instead of "Share (on sda1)".
           The option can be found on the Misc tab, under USB Application.
@@ -327,8 +331,10 @@ History
    - NEW: Added service applet to rc.  For example, "service restart_samba" will 
           restart the Samba service.  For advanced usage/debugging only.
    - NEW: Backported OpenSSL ASM optimization from 1.0.1, for significant performance
-          improvements in things like OpenVPN.
+          improvements in applications such as OpenVPN.
    - NEW: Report the current CFE/Bootloader version on the Sysinfo page.
+   - FIXED: Minor tweaks to the AiCloud pages so they can fit on a 15" laptop screen
+            (some close buttons were unreachable)
    - FIXED: Enabling SSH access from WAN didn't work if DualWAN
             was set to load-balancing.
    - FIXED: Removed MAC Filter page, as it doesn't work (not compatible
