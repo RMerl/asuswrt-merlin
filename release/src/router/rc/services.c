@@ -379,7 +379,11 @@ void start_dnsmasq()
 	write_vpn_dnsmasq_config(fp);
 #endif
 
+	append_custom_config("dnsmasq.conf",fp);
+
 	fclose(fp);
+
+	use_custom_config("dnsmasq.conf","/etc/dnsmasq.conf");
 
 	eval("touch", "/tmp/resolv.conf");
 	chmod("/tmp/resolv.conf", 0666);
