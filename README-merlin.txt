@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.246.19 (xx-Oct-2012)
+Asuswrt-Merlin - build 3.0.0.4.246.19 (22-Oct-2012)
 ===================================================
 
 About
@@ -41,7 +41,6 @@ Here is a list of features that Asuswrt-merlin brings over the original firmware
 - Persistent JFFS partition
 - User scripts that run on specific events
 - SSHD (through dropbear)
-- HTTPS web interface
 - Crond
 - Clicking on the MAC address of an unidentified client will do a lookup in
   the OUI database (ported from DD-WRT).
@@ -65,6 +64,13 @@ Here is a list of features that Asuswrt-merlin brings over the original firmware
 - Customized config files for router services
 
 
+A few features that first started in Asuswrt-Merlin have since been 
+integrated/enabled in the official firmware:
+
+- HTTPS
+- Turning WPS button into a radio on/off toggle
+
+
 
 Installation
 ------------
@@ -73,9 +79,10 @@ factory defaults, unless coming from a version that used a different
 nvram size.  You can revert back to an original Asus firmware at any time just
 by flashing one.
 
-NOTE: If you were still running a 32KB nvram firmware on an RT-N66U, the
-first time you flash a 64KB-enabled firmware (such as Asuswrt-merlin) it 
-will wipe ALL your current settings and revert back to factory default!
+NOTE: If you were still running a 32KB nvram firmware on an RT-N66U (which 
+usually mean an original firmware older than 3.0.0.4.220), the first time 
+you flash a 64KB-enabled firmware (such as Asuswrt-merlin) it will 
+wipe ALL your current settings and revert back to factory default!
 This is required to upgrade the nvram storage to 64 KB.
 
 
@@ -149,18 +156,6 @@ insert a RSA public key there for keypair-based authentication.  There
 is also an option to make ssh access available over WAN.
 
 
-* HTTPS management *
-I re-enabled HTTPS access in the firmware.  From the Administration->System 
-page you can configure your router so it accepts connections on http, https 
-or both.  You can also change the https port to a different one 
-(default is 8443).
-
-
-
-* WPS button mode - toggle radio *
-That feature is now built in the original Asus firmware.
-
-
 
 * Crond *
 Crond will automatically start at boot time.  You can 
@@ -224,7 +219,7 @@ mount \\\\192.168.1.100\\ShareName /cifs1 -t cifs -o "username=User,password=Pas
 
 
 * Dual WAN (EXPERIMENTAL) *
-Asuswrt originally supports using a USB 3G/4G modem to use as a 
+Asuswrt originally support using a USB 3G/4G modem as a 
 failover Internet connection.  Dual WAN is the next step, also 
 developped by Asus but left disabled so far in their official 
 releases (probably because this is still work in progress).  
@@ -236,8 +231,9 @@ interface.  The second difference is that in addition to failover
 mode, Dual WAN also supports a load balancing mode, allowing 
 you to share both connections at once.
 
-Keep in mind that Dual WAN is still an experimental feature, until 
-the time Asus finishes developping and testing it.
+Keep in mind that Dual WAN is still an EXPERIMENTAL feature, until 
+the time Asus finishes developping and testing it.  Some things are 
+expected to not work properly.
 
 
 
@@ -331,10 +327,10 @@ History
    - NEW: Added service applet to rc.  For example, "service restart_samba" will 
           restart the Samba service.  For advanced usage/debugging only.
    - NEW: Backported OpenSSL ASM optimization from 1.0.1, for significant performance
-          improvements in applications such as OpenVPN.
+          improvements in applications such as OpenVPN or SSH when using AES.
    - NEW: Report the current CFE/Bootloader version on the Sysinfo page.
    - FIXED: Minor tweaks to the AiCloud pages so they can fit on a 15" laptop screen
-            (some close buttons were unreachable)
+            (some close buttons at the bottom were unreachable)
    - FIXED: Enabling SSH access from WAN didn't work if DualWAN
             was set to load-balancing.
    - FIXED: Removed MAC Filter page, as it doesn't work (not compatible
@@ -636,9 +632,8 @@ Twitter: https://twitter.com/RMerlinDev
 Development news will be posted on Twitter.  You can also keep a closer eye 
 on development as it happens through the Github site.
 
-For support question, plese use the SmallNetBuilder forums whenever possible, I regularily 
-post there (in the Asus Wireless section).
-
+For support questions, plese use the SmallNetBuilder forums whenever possible.  There's a 
+dedicated Asuswrt-Merlin sub-forum there, under the Asus Wireless section.
 
 Drop me a note if you are using this firmware and are enjoying it.  If you really like it and want 
 to give more than a simple "Thank you", there is also a Paypal donation button on my website.
