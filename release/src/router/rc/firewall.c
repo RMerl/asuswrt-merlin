@@ -3742,7 +3742,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 			     "-p", "tcp", "--dport", "80",
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
-
+#if 0  // New NAT loopback code already marked it, so no longer needed
 		/* mark VTS loopback connections */
 		if (nvram_match("vts_enable_x", "1")||!nvram_match("dmz_ip", "")) {
 			char lan_class[32];
@@ -3752,6 +3752,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 			     "-o", lan_if, "-s", lan_class, "-d", lan_class,
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
+#endif
 	}
 #endif
 }
