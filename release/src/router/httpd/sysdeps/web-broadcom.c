@@ -766,8 +766,8 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int i, j, val = 0, ret = 0;
 	int ii, jj;
 	char *arplist = NULL, *arplistptr;
-#ifdef RTCONFIG_DNSMASQ
 	char *leaselist = NULL, *leaselistptr;
+#ifdef RTCONFIG_DNSMASQ
 	char hostnameentry[16], hostname[16];
 #endif
 	char ip[40], ipentry[40], macentry[18];
@@ -872,13 +872,13 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 #endif
 
 	ret += websWrite(wp, "\n");
-#ifdef RTCONFIG_DNSMASQ
-        ret += websWrite(wp, "Stations List                                        Rx/Tx  speed  rssi\n");
-        ret += websWrite(wp, "--------------------------------------------------------------------------------------\n");
-#else
-        ret += websWrite(wp, "Stations List                      Rx/Tx  speed   rssi\n");
-        ret += websWrite(wp, "----------------------------------------------------------------------\n");
-#endif
+	if (leaselist) {
+	        ret += websWrite(wp, "Stations List                                        Rx/Tx  speed  rssi     state\n");
+	        ret += websWrite(wp, "--------------------------------------------------------------------------------------\n");
+	} else {
+	        ret += websWrite(wp, "Stations List                        Rx/Tx  speed   rssi     state\n");
+	        ret += websWrite(wp, "----------------------------------------------------------------------\n");
+	}
 //                            00:00:00:00:00:00 111.222.333.444 hostnamexxxxxxx  xxxx/xxxx Mbps  -xx dBm  assoc auth
 
 	/* build authenticated/associated/authorized sta list */
@@ -913,8 +913,10 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			if (leaselistptr) {
 				sscanf(leaselistptr, "%*s %15s", hostnameentry);
 				sprintf(hostname,"%-15s ",hostnameentry);
-				ret += websWrite(wp, hostname);
+			} else {
+				sprintf(hostname,"%-15s ","");
 			}
+			ret += websWrite(wp, hostname);
 		}
 #endif
 
@@ -1024,8 +1026,10 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					if (leaselistptr) {
 						sscanf(leaselistptr, "%*s %15s", hostnameentry);
 						sprintf(hostname,"%-15s ",hostnameentry);
-						ret += websWrite(wp, hostname);
+					} else {
+						sprintf(hostname,"%-15s ","");
 					}
+					ret += websWrite(wp, hostname);
 				}
 #endif
 
