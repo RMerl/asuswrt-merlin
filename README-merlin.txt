@@ -340,6 +340,7 @@ History
             breaking the webui by using invalid ones such as quotes.
    - FIXED: OpenVPN Client wasn't properly applying DNS settings that
             the server was pushing to us.
+   - FIXED: Wireless client list alignment in AP mode.
    - CHANGED: Less strict rules when validating user-entered MAC hwaddr.
 
 
