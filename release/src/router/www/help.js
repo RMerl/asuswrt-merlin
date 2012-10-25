@@ -487,11 +487,29 @@ function overHint(itemNum){
 	// wifi hw switch
 	if(itemNum == 8){
 		statusmenu = "<div class='StatusHint'>Wi-Fi:</div>";
-		if(wifi_hw_switch == "wifi_hw_switch=0")
-			wifiDesc = "Wi-Fi=Disabled"
-		else
-			wifiDesc = "Wi-Fi=Enabled"
 
+		if(wifi_hw_sw_support != -1)
+		{
+			if(wifi_hw_switch == "wifi_hw_switch=0")
+				wifiDesc = "Wi-Fi=Disabled"
+			else
+				wifiDesc = "Wi-Fi=Enabled"
+
+		} else {	// Report radio states
+			if ( <% nvram_get("wl0_radio"); %> )
+				radiostate = "2.4G: Enabled"
+			else
+				radiostate = "2.4G: Disabled"
+
+			if (band5g_support != -1) {
+				if ( <% nvram_get("wl1_radio"); %>)
+					radiostate += "<br>&nbsp;&nbsp;5G: Enabled"
+				else
+					radiostate += "<br>&nbsp;&nbsp;5G: Disabled"
+			}
+			wifiDesc="Wi-Fi:"+radiostate;
+
+		}
 		statusmenu += "<span>" + wifiDesc.substring(6, wifiDesc.length) + "</span>";
 	}	
 	

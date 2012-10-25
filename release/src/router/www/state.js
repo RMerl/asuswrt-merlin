@@ -1919,7 +1919,7 @@ function refresh_info_status(xmldoc)
 	}
 
 	// wifi hw sw status
-//	if(wifi_hw_sw_support != -1){
+	if(wifi_hw_sw_support != -1){
 		if(wifi_hw_switch == "wifi_hw_switch=0"){
 			$("wifi_hw_sw_status").className = "wifihwswstatusoff";
 			$("wifi_hw_sw_status").onclick = function(){}
@@ -1930,7 +1930,35 @@ function refresh_info_status(xmldoc)
 				}
 		$("wifi_hw_sw_status").onmouseover = function(){overHint(8);}
 		$("wifi_hw_sw_status").onmouseout = function(){nd();}
-//	}	
+	}	
+	else	// No HW switch - reflect actual radio states
+	{
+		radio0 = <% nvram_get("wl0_radio"); %>;
+
+		if (band5g_support != -1)
+			radio1 = <% nvram_get("wl1_radio"); %>;
+		else
+			radio1 = 1;
+
+		if (radio0 && radio1)
+		{
+			$("wifi_hw_sw_status").className = "wifihwswstatuson";
+			$("wifi_hw_sw_status").onclick = function(){}
+		}
+		else if (radio0 || radio1)
+		{
+			$("wifi_hw_sw_status").className = "wifihwswstatuspartial";  
+			$("wifi_hw_sw_status").onclick = function(){}
+		}
+		else
+		{
+			$("wifi_hw_sw_status").className = "wifihwswstatusoff"; 
+			$("wifi_hw_sw_status").onclick = function(){}
+		}
+// TODO: Report both radio states, now it only reports 2.4G state
+		$("wifi_hw_sw_status").onmouseover = function(){overHint(8);}
+		$("wifi_hw_sw_status").onmouseout = function(){nd();}
+	}
 
 	// usb
 	if(usb_support != -1){

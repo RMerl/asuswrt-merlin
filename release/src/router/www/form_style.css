@@ -1433,6 +1433,14 @@ padding-top:1px;
 	width:30px;
 	cursor: pointer;
 }
+.wifihwswstatuspartial{
+        background-image:url(/images/wifi_hw_sw.png);
+        background-repeat:no-repeat;    
+        background-position:2px -73px;
+        height:29px;
+        width:30px;
+        cursor: pointer;
+}
 .wifihwswstatusoff{
 	background-image:url(/images/wifi_hw_sw.png);
 	background-repeat:no-repeat;	
