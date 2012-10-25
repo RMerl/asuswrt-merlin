@@ -1955,7 +1955,6 @@ function refresh_info_status(xmldoc)
 			$("wifi_hw_sw_status").className = "wifihwswstatusoff"; 
 			$("wifi_hw_sw_status").onclick = function(){}
 		}
-// TODO: Report both radio states, now it only reports 2.4G state
 		$("wifi_hw_sw_status").onmouseover = function(){overHint(8);}
 		$("wifi_hw_sw_status").onmouseout = function(){nd();}
 	}
