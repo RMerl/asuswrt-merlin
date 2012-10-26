@@ -643,7 +643,7 @@ Twitter: https://twitter.com/RMerlinDev
 Development news will be posted on Twitter.  You can also keep a closer eye 
 on development as it happens through the Github site.
 
-For support questions, plese use the SmallNetBuilder forums whenever possible.  There's a 
+For support questions, please use the SmallNetBuilder forums whenever possible.  There's a 
 dedicated Asuswrt-Merlin sub-forum there, under the Asus Wireless section.
 
 Drop me a note if you are using this firmware and are enjoying it.  If you really like it and want 
