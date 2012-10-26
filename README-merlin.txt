@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.246.19 (22-Oct-2012)
-===================================================
+Asuswrt-Merlin - build 3.0.0.4.246.19b (24-Oct-2012)
+====================================================
 
 About
 -----
@@ -311,6 +311,16 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.246.20:
+   - NEW: Wifi status icon will be half colored if only one radio is enabled.
+   - NEW: Wifi status icon popup will report the state of each radios.
+
+
+3.0.0.4.246.19b:
+   - FIXED: Reverted wireless driver to build 220 version as the new 
+            one caused various connection issues for some (RT-N66U).
+
+
 3.0.0.4.246.19:
    - NEW: Rebased on 3.0.0.4.246.  Some notable changes:
             o New "Enhanced interference management" option under Wireless -> Professional.
