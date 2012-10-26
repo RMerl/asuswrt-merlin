@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.246.19b (24-Oct-2012)
-====================================================
+Asuswrt-Merlin - build 3.0.0.4.246.20 (xx-Oct-2012)
+===================================================
 
 About
 -----
@@ -314,6 +314,8 @@ History
 3.0.0.4.246.20:
    - NEW: Wifi status icon will be half colored if only one radio is enabled.
    - NEW: Wifi status icon popup will report the state of each radios.
+   - FIXED: Radio toggle through WPS button would be overriden by a scheduled
+            radio.  Reverted "switch" to "toggle" code to prevent this.
 
 
 3.0.0.4.246.19b:
