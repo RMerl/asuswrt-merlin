@@ -1456,15 +1456,7 @@ void use_custom_config(char *config, char *target)
 void append_custom_config(char *config, FILE *fp)
 {
 	char filename[256];
-	char *addendum;
 
 	sprintf(filename,"/jffs/configs/%s.add", config);
-
-	if (check_if_file_exist(filename)) {
-		addendum = read_whole_file(filename);
-		if (addendum) {
-			fwrite(addendum, 1, strlen(addendum), fp);
-			free(addendum);
-		}
-        }
+	fappend(fp, filename);
 }
