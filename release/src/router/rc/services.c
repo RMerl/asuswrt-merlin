@@ -2289,8 +2289,10 @@ void start_upnp(void)
 TRACE_PT("config 5\n");
 
 				fappend(f, "/etc/upnp/config.custom");
+				append_custom_config("upnp", fp);
 				fprintf(f, "\ndeny 0-65535 0.0.0.0/0 0-65535\n");
 				fclose(f);
+				use_custom_config("upnp", "/etc/upnp/config");
 				xstart("miniupnpd", "-f", "/etc/upnp/config");
 			}
 		}
