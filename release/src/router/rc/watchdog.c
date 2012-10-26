@@ -284,7 +284,7 @@ void btn_check(void)
 		&& (nvram_get_int("sw_mode") != SW_MODE_REPEATER)) // repeater mode not support HW radio
 	{
 		if (btn_pressed_toggle_radio == 0){
-			eval("radio","switch");
+			eval("radio","toggle");
 			btn_pressed_toggle_radio = 1;
 			return;
 		}
