@@ -452,7 +452,7 @@ function validate_ipaddr_final(o, v){
 				v == 'dhcp1_start' || v=='dhcp1_end' ||
 				v == 'lan_ipaddr' || v=='lan_netmask' ||
 				v=='lan1_ipaddr' || v=='lan1_netmask' ||
-				v == 'wl_radius_ipaddr' || v == 'dmz_ip') {	
+				v == 'wl_radius_ipaddr') {	
 			alert("<#JS_fieldblank#>");
 			
 			if(v == 'wan_ipaddr_x'){
