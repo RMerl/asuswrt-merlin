@@ -297,6 +297,7 @@ The list of available config overrides:
 * smb.conf
 * minidlna.conf
 * profile (shell profile, only profile.add suypported)
+* upnp (for miniupnpd)
 
 
 
@@ -314,8 +315,11 @@ History
 3.0.0.4.246.20:
    - NEW: Wifi status icon will be half colored if only one radio is enabled.
    - NEW: Wifi status icon popup will report the state of each radios.
+   - NEW: upnp custom config file for miniupnpd
    - FIXED: Radio toggle through WPS button would be overriden by a scheduled
             radio.  Reverted "switch" to "toggle" code to prevent this.
+   - FIXED: You couldn't disable DMZ by clearing the IP field.
+   - FIXED: You couldn't edit entered text in DHCP/MAC/etc name field
 
 
 3.0.0.4.246.19b:
