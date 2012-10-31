@@ -1377,14 +1377,14 @@ function is_string(o, event){
 }
 
 function is_alphanum(o, event){
-	keyPressed = event.keyCode ? event.keyCode : event.which;
+	keyPressed = event.keyCode;
 
-	if (keyPressed>=48&&keyPressed<=57) return true;	//0-9
-	if (keyPressed>=97&&keyPressed<=122) return true;	//little EN
-	if (keyPressed>=65&&keyPressed<=90) return true;	//Large EN
-	if (keyPressed==45) return true;	//-
-	if (keyPressed==46) return true;	//.
-	if (keyPressed==32) return true;	//space
+	if ((keyPressed>=48&&keyPressed<=57) ||	//0-9
+	   (keyPressed>=97&&keyPressed<=122) ||	//little EN
+	   (keyPressed>=65&&keyPressed<=90) ||	//Large EN
+	   (keyPressed==45) ||			//-
+	   (keyPressed==46) ||			//.
+	   (keyPressed==32)) return true;	//space
 
 	return false;
 }
