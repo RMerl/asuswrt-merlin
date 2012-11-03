@@ -129,6 +129,8 @@ certain events occur.  Those scripts must be saved in /jffs/scripts/
   mounting. This script is also passed the device path being mounted as an 
   argument which can be used in the script using $1.
 - post-mount:  Just after a partition is mounted
+- unmount: Just before unmounting a partition.  This is a blocking script, so be
+  careful with it.  The mount point is passed as an argument to the script.
 
 Don't forget to set them as executable:
 
@@ -316,10 +318,15 @@ History
    - NEW: Wifi status icon will be half colored if only one radio is enabled.
    - NEW: Wifi status icon popup will report the state of each radios.
    - NEW: upnp custom config file for miniupnpd
+   - NEW: unmount user script
    - FIXED: Radio toggle through WPS button would be overriden by a scheduled
             radio.  Reverted "switch" to "toggle" code to prevent this.
    - FIXED: You couldn't disable DMZ by clearing the IP field.
    - FIXED: You couldn't edit entered text in DHCP/MAC/etc name field
+   - FIXED: clientid passing for some ISPs requiring it (like Sky UK)
+            was broken with the DHCP client change of build 220.
+   - FIXED: No longer reboot the router three times during boot time if one 
+            of the radios is disabled by the user. (RT-N66U)
 
 
 3.0.0.4.246.19b:
