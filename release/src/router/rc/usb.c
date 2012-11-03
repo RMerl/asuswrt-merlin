@@ -752,6 +752,8 @@ _dprintf("cloudsync: mounted_path=%s.\n", mounted_path);
 		stop_app();
 #endif
 
+	run_custom_script_blocking("unmount", mnt->mnt_dir);
+
 	sync();
 	sleep(1);	// Give some time for buffers to be physically written to disk
 
