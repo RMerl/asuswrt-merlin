@@ -2049,7 +2049,7 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			}
 
 			ate_dev_status();
-
+/*
 			//For 66U normal boot & check device
 			if((get_model()==MODEL_RTN66U) && nvram_match("Ate_power_on_off_enable", "0")) {
 			    if(nvram_get_int("dev_fail_reboot")!=0) {
@@ -2076,7 +2076,7 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 				}
 			    }
 			}
-
+*/
 			if(nvram_match("Ate_power_on_off_enable", "1")) {
 				dev_check = nvram_get_int("Ate_dev_check");
 				dev_fail = nvram_get_int("Ate_dev_fail");
