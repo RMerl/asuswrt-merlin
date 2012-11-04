@@ -327,6 +327,7 @@ History
             was broken with the DHCP client change of build 220.
    - FIXED: No longer reboot the router three times during boot time if one 
             of the radios is disabled by the user. (RT-N66U)
+   - CHANGED: Improved SMB read performance by up to 33%
 
 
 3.0.0.4.246.19b:
