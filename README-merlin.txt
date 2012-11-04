@@ -319,6 +319,7 @@ History
    - NEW: Wifi status icon popup will report the state of each radios.
    - NEW: upnp custom config file for miniupnpd
    - NEW: unmount user script
+   - NEW: makemime applet (for use in conjunction with sendmail)
    - FIXED: Radio toggle through WPS button would be overriden by a scheduled
             radio.  Reverted "switch" to "toggle" code to prevent this.
    - FIXED: You couldn't disable DMZ by clearing the IP field.
