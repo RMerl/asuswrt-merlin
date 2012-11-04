@@ -198,7 +198,7 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "bind interfaces only = yes\n");	// ASUS add
 	fprintf(fp, "interfaces = lo br0 %s\n", (!nvram_match("sw_mode", "3") ? nvram_safe_get("wan0_ifname") : ""));
 	//	fprintf(fp, "dns proxy = no\n");				// J--
-	fprintf(fp, "use sendfile = yes\n");
+	fprintf(fp, "use sendfile = no\n");
 
 //	fprintf(fp, "domain master = no\n");				// J++
 //	fprintf(fp, "wins support = no\n");				// J++
