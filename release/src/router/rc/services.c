@@ -815,7 +815,7 @@ void start_radvd(void)
 		// Start radvd
 		argc = 1;
 		argv[argc++] = "-u";
-		argv[argc++] = "admin";
+		argv[argc++] = nvram_get("http_username");
 		if (nvram_get_int("ipv6_debug")) {
 			argv[argc++] = "-d";
 			argv[argc++] = "5";
