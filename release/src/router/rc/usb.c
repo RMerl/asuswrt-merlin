@@ -1440,6 +1440,7 @@ void write_ftpd_conf()
 	fprintf(fp, "dirmessage_enable=NO\n");
 	fprintf(fp, "xferlog_enable=NO\n");
 	fprintf(fp, "syslog_enable=NO\n");
+	fprintf(fp, "use_sendfile=NO\n");
 	fprintf(fp, "connect_from_port_20=YES\n");
 //	fprintf(fp, "listen=YES\n");
 	fprintf(fp, "listen%s=YES\n",
