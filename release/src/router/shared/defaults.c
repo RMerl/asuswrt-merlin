@@ -1445,6 +1445,7 @@ struct nvram_tuple router_defaults[] = {
 
 	{ "webui_resolve_conn", "0"},
 	{ "wol_list", ""},  // WOL user-entered list
+	{ "led_disable", "0"},
 
 	{ NULL, NULL    }
 };

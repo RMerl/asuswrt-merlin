@@ -147,6 +147,10 @@ int led_control(int which, int mode)
 //	int gpio_value;
 	int enable, disable;
 
+	// Did the user disable the leds?
+	if ((mode == LED_ON) && (nvram_get_int("led_disable") == 1))
+		return 0;
+
 	get_gpio_values_once();
 	switch(which) {
 		case LED_POWER:
