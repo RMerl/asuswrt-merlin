@@ -37,4 +37,7 @@ ifeq ($(RTCONFIG_OPENVPN),y)
 	install -m 0700 setuprsa.sh $(INSTALLDIR)/usr/sbin
 endif
 
+# Batch LED control scripts
+	install -m 0700 disable_leds.sh $(INSTALLDIR)/usr/sbin/
+	install -m 0700 restore_leds.sh $(INSTALLDIR)/usr/sbin/
 clean:
