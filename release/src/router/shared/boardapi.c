@@ -176,6 +176,20 @@ int led_control(int which, int mode)
 		case HAVE_FAN:
 			use_gpio = have_fan_gpio;
 			break;
+		case LED_SWITCH:
+			if ((get_model() == MODEL_RTN66U) || (get_model() == MODEL_RTAC66U)) {
+				if (mode == LED_ON)
+				{
+					eval("et", "robowr", "0x00", "0x18", "0x1ff");
+					eval("et", "robowr", "0x00", "0x1a", "0x1ff");
+				} else if (mode == LED_OFF)
+				{
+					eval("et", "robowr", "0x00", "0x18", "0x1e0");
+					eval("et", "robowr", "0x00", "0x1a", "0x1e0");
+				}
+			}
+			use_gpio = 0xff;
+			break;
 		default:
 			use_gpio = 0xff;
 			break;
