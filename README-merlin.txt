@@ -62,6 +62,7 @@ Here is a list of features that Asuswrt-merlin brings over the original firmware
   Keith Moyer for Tomato and reused with his 
   permission. (RT-N66U, RT-AC66U)
 - Customized config files for router services
+- LED control - put your Dark Knight in Stealth Mode by turning off all LEDs
 
 
 A few features that first started in Asuswrt-Merlin have since been 
@@ -319,7 +320,9 @@ History
    - NEW: Wifi status icon popup will report the state of each radios.
    - NEW: upnp custom config file for miniupnpd
    - NEW: unmount user script
-   - NEW: makemime applet (for use in conjunction with sendmail)
+   - NEW: led_ctrl, makemime applet (for use in conjunction with sendmail)
+   - NEW: Implemented control for network switch LED (all four at once)
+   - NEW: disable_leds.sh (turn off all LEDs) and restore_leds.sh (back to normal)
    - FIXED: Radio toggle through WPS button would be overriden by a scheduled
             radio.  Reverted "switch" to "toggle" code to prevent this.
    - FIXED: You couldn't disable DMZ by clearing the IP field.
@@ -328,7 +331,11 @@ History
             was broken with the DHCP client change of build 220.
    - FIXED: No longer reboot the router three times during boot time if one 
             of the radios is disabled by the user. (RT-N66U)
-   - CHANGED: Improved SMB read performance by up to 33%
+   - FIXED: Changing the router login name to anything other than "admin"
+            would prevent radvd, ecmh and the cru script from working 
+            properly - they all assumed "admin".  Made then use
+            http_username instead (which is tied to the superuser)
+   - CHANGED: Improved SMB and vsftpd read performance by up to 30%
 
 
 3.0.0.4.246.19b:
