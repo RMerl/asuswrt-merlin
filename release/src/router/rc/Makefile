@@ -142,7 +142,7 @@ install: all
 	@cd $(INSTALLDIR)/sbin && ln -sf rc service
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rcheck
 	@cd $(INSTALLDIR)/sbin && ln -sf rc radio
-	@cd $(INSTALLDIR)/sbin && ln -sf rc led
+	@cd $(INSTALLDIR)/sbin && ln -sf rc led_ctrl
 	@cd $(INSTALLDIR)/sbin && ln -sf rc reboot
 	@cd $(INSTALLDIR)/sbin && ln -sf rc halt
 	@cd $(INSTALLDIR)/sbin && ln -sf rc gpio
