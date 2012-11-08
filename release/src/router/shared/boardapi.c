@@ -181,7 +181,7 @@ int led_control(int which, int mode)
 			use_gpio = have_fan_gpio;
 			break;
 		case LED_SWITCH:
-			if ((get_model() == MODEL_RTN66U) || (get_model() == MODEL_RTAC66U)) {
+			if ((get_model() == MODEL_RTN66U) || (get_model() == MODEL_RTAC66U) || (get_model() == MODEL_RTN16)) {
 				if (mode == LED_ON)
 				{
 					eval("et", "robowr", "0x00", "0x18", "0x1ff");
@@ -195,7 +195,7 @@ int led_control(int which, int mode)
 			use_gpio = 0xff;
 			break;
 		case LED_WIFI:
-			if ((get_model() == MODEL_RTN66U) || (get_model() == MODEL_RTAC66U)) {
+			if ((get_model() == MODEL_RTN66U) || (get_model() == MODEL_RTAC66U)  || (get_model() == MODEL_RTN16)) {
 				if (mode == LED_ON)
 					eval("wl", "leddc", "0");
 				else if (mode == LED_OFF)
