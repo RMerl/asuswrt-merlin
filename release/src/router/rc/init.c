@@ -2142,6 +2142,8 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			}
 #endif
 #endif
+			if (nvram_get_int("led_disable")==1)
+				setup_leds();
 
 			nvram_set("success_start_service", "1");
 

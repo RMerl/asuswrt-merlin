@@ -350,6 +350,7 @@ extern void stop_diskmon(void);
 #endif
 
 //service.c
+extern void setup_leds();
 extern void write_static_leases(char *file);
 #ifdef RTCONFIG_DNSMASQ
 extern void restart_dnsmasq();

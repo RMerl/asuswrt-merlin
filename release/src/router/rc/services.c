@@ -3783,6 +3783,9 @@ again:
 	}
 #endif
 #endif
+	else if (strcmp(script, "leds") == 0) {
+		setup_leds();
+	}
 	else
 	{
 		fprintf(stderr,
@@ -4057,5 +4060,27 @@ int service_main(int argc, char *argv[])
 	notify_rc(argv[1]);
 	printf("\nDone.\n");
 	return 0;
+}
+
+void setup_leds()
+{
+	if (nvram_get_int("led_disable")==1) {
+		led_control(LED_WIFI, LED_OFF);
+		led_control(LED_POWER, LED_OFF);
+		led_control(LED_WAN, LED_OFF);
+		led_control(LED_SWITCH, LED_OFF);
+#ifdef RTCONFIG_USB
+		stop_usbled();
+		led_control(LED_USB, LED_OFF);
+#endif
+	} else {
+		led_control(LED_WIFI, LED_ON);
+		led_control(LED_POWER, LED_ON);
+		led_control(LED_WAN, LED_ON);
+		led_control(LED_SWITCH, LED_ON);
+#ifdef RTCONFIG_USB
+		start_usbled();
+#endif
+	}
 }
 
