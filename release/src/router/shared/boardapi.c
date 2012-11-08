@@ -197,9 +197,9 @@ int led_control(int which, int mode)
 		case LED_WIFI:
 			if ((get_model() == MODEL_RTN66U) || (get_model() == MODEL_RTAC66U)) {
 				if (mode == LED_ON)
-					eval("wl", "leddc", "1");
-				else
 					eval("wl", "leddc", "0");
+				else if (mode == LED_OFF)
+					eval("wl", "leddc", "1");
 			}
 			use_gpio = 0xff;
 			break;
