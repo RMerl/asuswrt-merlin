@@ -293,7 +293,6 @@ extern int f_wait_notexists(const char *name, int max);
 #define LED_2G				7
 #define LED_5G				8
 #define LED_SWITCH			20
-#define LED_WIFI			21
 
 #define	LED_OFF				0
 #define	LED_ON				1
