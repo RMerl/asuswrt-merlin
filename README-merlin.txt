@@ -322,7 +322,7 @@ History
    - NEW: unmount user script
    - NEW: led_ctrl, makemime applet (for use in conjunction with sendmail)
    - NEW: Implemented control for network switch LED (all four at once)
-   - NEW: disable_leds.sh (turn off all LEDs) and restore_leds.sh (back to normal)
+   - NEW: Stealth Mode: option to disable all LEDs
    - FIXED: Radio toggle through WPS button would be overriden by a scheduled
             radio.  Reverted "switch" to "toggle" code to prevent this.
    - FIXED: You couldn't disable DMZ by clearing the IP field.
