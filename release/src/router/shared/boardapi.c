@@ -185,9 +185,9 @@ int led_control(int which, int mode)
 				use_gpio = 0xff;
 			} else if (model == MODEL_RTAC66U) {
 				if (mode == LED_ON)
-					nvram_set("led_5g", 1);
+					nvram_set("led_5g", "1");
 				else if (mode == LED_OFF)
-					nvram_set("led_5g", 0);
+					nvram_set("led_5g", "0");
 				use_gpio = led_5g_gpio;
                         } else {
                                 use_gpio = led_5g_gpio;
