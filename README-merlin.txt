@@ -301,6 +301,7 @@ The list of available config overrides:
 * minidlna.conf
 * profile (shell profile, only profile.add suypported)
 * upnp (for miniupnpd)
+* radvd.conf
 
 
 
