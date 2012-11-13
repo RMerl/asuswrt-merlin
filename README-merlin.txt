@@ -324,6 +324,7 @@ History
    - NEW: led_ctrl, makemime applet (for use in conjunction with sendmail)
    - NEW: Implemented control for network switch LED (all four at once)
    - NEW: Stealth Mode: option to disable all LEDs
+   - NEW: Added CONFIG_IP_NF_RAW and CONFIG_NETFILTER_XT_TARGET_NOTRACK modules.
    - FIXED: Radio toggle through WPS button would be overriden by a scheduled
             radio.  Reverted "switch" to "toggle" code to prevent this.
    - FIXED: You couldn't disable DMZ by clearing the IP field.
