@@ -62,8 +62,8 @@ endif
 #20120613 Jerry add
 copy-prebuild:
 	if test -d '../prebuild' ; then \
-		cp ../prebuild/mod_smbdav.so .libs/mod_smbdav.so; \
-		cp ../prebuild/mod_aidisk_access.so .libs/mod_aidisk_access.so; \
+		cp ../prebuild/mod_smbdav.so.l .libs/mod_smbdav.so; \
+		cp ../prebuild/mod_aidisk_access.so.l .libs/mod_aidisk_access.so; \
 		cp ../prebuild/mod_sharelink.so.l .libs/mod_sharelink.so; \
 	fi
 
