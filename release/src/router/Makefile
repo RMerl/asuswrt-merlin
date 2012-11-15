@@ -1789,6 +1789,8 @@ lighttpd-1.4.29/stamp-h1:
 	touch lighttpd-1.4.29/stamp-h1
 
 lighttpd-1.4.29: shared nvram libdisk samba-3.5.8 pcre-8.12 libxml2 sqlite openssl lighttpd-1.4.29/stamp-h1
+	$(MAKE) -C lighttpd-1.4.29
+	$(MAKE) -C lighttpd-1.4.29/src copy-prebuild
 
 lighttpd-1.4.29-install: samba-3.5.8 sqlite libxml2 pcre-8.12 openssl lighttpd-1.4.29
 	install -D lighttpd-1.4.29/src/.libs/lighttpd $(INSTALLDIR)/lighttpd-1.4.29/usr/sbin/lighttpd

@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.246.20 (xx-Oct-2012)
+Asuswrt-Merlin - build 3.0.0.4.246.20 (14-Nov-2012)
 ===================================================
 
 About
@@ -23,8 +23,8 @@ performance, and performance over features.
 Supported Devices
 -----------------
 Supported devices are:
- * RT-N66U
- * RT-AC66U
+ * RT-N66U and RT-N66R
+ * RT-AC66U and RT-AC66R
 
 These devices have experimental support (because I don't own one to test it):
  * RT-N16
@@ -65,9 +65,10 @@ Here is a list of features that Asuswrt-merlin brings over the original firmware
 - LED control - put your Dark Knight in Stealth Mode by turning off all LEDs
 
 
-A few features that first started in Asuswrt-Merlin have since been 
+A few features that first debuted in Asuswrt-Merlin have since been 
 integrated/enabled in the official firmware:
 
+- 64K NVRAM (RT-N66U)
 - HTTPS
 - Turning WPS button into a radio on/off toggle
 
@@ -91,11 +92,11 @@ Usage
 -----
 
 * JFFS *
-JFFS is a writable section of the flash memory (around 12 MB) which will 
-allow you to store small files (such as scripts) inside the router without 
-needing to have a USB disk plugged in.  This space will survive reboot (but 
-it *MIGHT NOT survive firmware flashing*, so back it up first before flashing!).  
-It will also be available fairly early at boot (before USB disks).
+JFFS is a writable section of the flash memory which will allow you to store small 
+files (such as scripts) inside the router without needing to have a USB disk 
+plugged in.  This space will survive reboot (but it *MIGHT NOT survive 
+firmware flashing*, so back it up first before flashing!).  It will also be 
+available fairly early at boot (before USB disks).
 
 To enable this option, go to the Administration page, under the System tab.
 
@@ -169,6 +170,11 @@ put your cron script somewhere such as in the jffs partition,
 and at boot time copy it to /var/spool/cron/crontabs/ using 
 an init-start user script.
 
+A simple way to manage your cron jobs is through the
+included "cru" command.  Just run "cru" to see the 
+usage information.  You can then put your "cru" 
+commands inside a user script to re-generate your cron jobs 
+at boot time.
 
 
 * Traffic history saving *
@@ -234,9 +240,9 @@ interface.  The second difference is that in addition to failover
 mode, Dual WAN also supports a load balancing mode, allowing 
 you to share both connections at once.
 
-Keep in mind that Dual WAN is still an EXPERIMENTAL feature, until 
-the time Asus finishes developping and testing it.  Some things are 
-expected to not work properly.
+Keep in mind that Dual WAN is still an EXPERIMENTAL and UNSUPPORTED 
+feature, until the time Asus finishes developping and testing it.  
+Some things are expected to not work properly.
 
 
 
@@ -321,8 +327,8 @@ History
    - NEW: Wifi status icon popup will report the state of each radios.
    - NEW: upnp custom config file for miniupnpd
    - NEW: unmount user script
-   - NEW: led_ctrl, makemime applet (for use in conjunction with sendmail)
-   - NEW: Implemented control for network switch LED (all four at once)
+   - NEW: led_ctrl and makemime (for use in conjunction with sendmail) applets.
+   - NEW: Implemented control for network switch LEDs (all four at once)
    - NEW: Stealth Mode: option to disable all LEDs
    - NEW: Added CONFIG_IP_NF_RAW and CONFIG_NETFILTER_XT_TARGET_NOTRACK modules.
    - FIXED: Radio toggle through WPS button would be overriden by a scheduled
