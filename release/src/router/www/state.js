@@ -1377,13 +1377,7 @@ function is_string(o, event){
 }
 
 function is_alphanum(o, event){
-
-	if (event.which == null)
-		keyPressed = event.keyCode;	// IE
-	 else if (event.which != 0 && event.charCode != 0)
-		keyPressed = event.which	// All others
-	else
-		return true;			// Special key
+	keyPressed = event.keyCode;
 
 	if ((keyPressed>=48&&keyPressed<=57) ||	//0-9
 	   (keyPressed>=97&&keyPressed<=122) ||	//little EN
@@ -1939,19 +1933,17 @@ function refresh_info_status(xmldoc)
 	}	
 	else	// No HW switch - reflect actual radio states
 	{
-		radio0 = <% nvram_get("wl0_radio"); %>;
+		<%radio_status();%>
 
-		if (band5g_support != -1)
-			radio1 = <% nvram_get("wl1_radio"); %>;
-		else
-			radio1 = 1;
+		if (band5g_support == -1)
+			radio_5 = 1;
 
-		if (radio0 && radio1)
+		if (radio_2 && radio_5)
 		{
 			$("wifi_hw_sw_status").className = "wifihwswstatuson";
 			$("wifi_hw_sw_status").onclick = function(){}
 		}
-		else if (radio0 || radio1)
+		else if (radio_2 || radio_5)
 		{
 			$("wifi_hw_sw_status").className = "wifihwswstatuspartial";  
 			$("wifi_hw_sw_status").onclick = function(){}

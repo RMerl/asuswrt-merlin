@@ -484,6 +484,8 @@ function overHint(itemNum){
 	var title2 = 0;
 	var title5 = 0;
 
+	<%radio_status();%>
+
 	// wifi hw switch
 	if(itemNum == 8){
 		statusmenu = "<div class='StatusHint'>Wi-Fi:</div>";
@@ -496,13 +498,13 @@ function overHint(itemNum){
 				wifiDesc = "Wi-Fi=Enabled"
 
 		} else {	// Report radio states
-			if ( <% nvram_get("wl0_radio"); %> )
+			if ( radio_2 )
 				radiostate = "2.4G: Enabled"
 			else
 				radiostate = "2.4G: Disabled"
 
 			if (band5g_support != -1) {
-				if ( <% nvram_get("wl1_radio"); %>)
+				if ( radio_5)
 					radiostate += "<br>&nbsp;&nbsp;5G: Enabled"
 				else
 					radiostate += "<br>&nbsp;&nbsp;5G: Disabled"
