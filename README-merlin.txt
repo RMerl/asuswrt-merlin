@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.246.20 (14-Nov-2012)
+Asuswrt-Merlin - build 3.0.0.4.246.21 (xx-Nov-2012)
 ===================================================
 
 About
@@ -322,6 +322,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.246.21:
+   - FIXED: Firefox compatibility issues on the DHCP static and 
+            MAC filter name fields.
+
+
 3.0.0.4.246.20:
    - NEW: Wifi status icon will be half colored if only one radio is enabled.
    - NEW: Wifi status icon popup will report the state of each radios.
