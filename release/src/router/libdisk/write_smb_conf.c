@@ -116,6 +116,7 @@ int check_existed_share(const char *string){
 
 int main(int argc, char *argv[]) {
 	FILE *fp;
+	char *nv;
 	int n=0;
 	char *p_computer_name = NULL;
 	disk_info_t *follow_disk, *disks_info = NULL;
@@ -199,6 +200,20 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "interfaces = lo br0 %s\n", (!nvram_match("sw_mode", "3") ? nvram_safe_get("wan0_ifname") : ""));
 	//	fprintf(fp, "dns proxy = no\n");				// J--
 	fprintf(fp, "use sendfile = no\n");
+
+	if (!strcmp(nvram_safe_get("smbd_wins"), "1")) {
+		nv = nvram_safe_get("dhcp_wins_x");
+		if ((*nv == 0) || (strcmp(nv, "0.0.0.0") == 0)) {
+			fprintf(fp, "wins support = yes\n");
+		}
+	}
+
+	if (!strcmp(nvram_safe_get("smbd_master"), "1")) {
+		fprintf(fp, "os level = 255\n");
+		fprintf(fp, "domain master = yes\n");
+		fprintf(fp, "local master = yes\n");
+		fprintf(fp, "preferred master = yes\n");
+	}
 
 //	fprintf(fp, "domain master = no\n");				// J++
 //	fprintf(fp, "wins support = no\n");				// J++
