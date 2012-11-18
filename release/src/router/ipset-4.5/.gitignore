@@ -1,6 +1,0 @@
-*.o
-*.so
-kernel/*.o
-kernel/*.ko
-kernel/.tmp_versions/*
-ipset

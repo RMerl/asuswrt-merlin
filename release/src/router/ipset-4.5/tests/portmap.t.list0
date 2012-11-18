@@ -1,8 +1,0 @@
-Name: test
-Type: portmap
-References: 0
-Header: from: 1 to: 1024
-Members:
-1
-1024
-
