@@ -1,0 +1,7 @@
+Name: test
+Type: nethash
+References: 0
+Header: hashsize: 128 probes: 4 resize: 50
+Members:
+192.168.68.64/27
+2.0.0.0/24

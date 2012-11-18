@@ -241,6 +241,7 @@ obj-y += ez-ipupdate
 # Merlin addons
 obj-y += wol
 obj-y += netstat-nat
+obj-y += ipset
 obj-clean := $(foreach obj, $(obj-y) $(obj-n) $(obj-), $(obj)-clean)
 obj-install := $(foreach obj,$(obj-y),$(obj)-install)
 
@@ -416,6 +417,7 @@ endif
 	$(if $(RTCONFIG_OPENVPN),@cp -f,$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv)) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/tun.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_EBTABLES),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/net/bridge/netfilter/ebt*.*o $(PLATFORMDIR)/extras/ || true
 
+	@cp $(TARGETDIR)/lib/modules/*/kernel/net/netfilter/ipset/*.o $(PLATFORMDIR)/extras/ || true
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/net/ifb.*o $(PLATFORMDIR)/extras/ || true
 	@mv $(TARGETDIR)/lib/modules/*/kernel/net/sched/sch_red.*o $(PLATFORMDIR)/extras/ || true
 	@mv $(TARGETDIR)/lib/modules/*/kernel/fs/ntfs.*o $(PLATFORMDIR)/extras/ || true
@@ -1972,6 +1974,23 @@ sd-idle-install: sd-idle-2.6
 	install -D sd-idle/sd-idle-2.6 $(INSTALLDIR)/sd-idle/usr/sbin/sd-idle-2.6
 	$(STRIP) -s $(INSTALLDIR)/sd-idle/usr/sbin/sd-idle-2.6
 
+ipset:
+	$(MAKE) -C ipset-4.5 KERNEL_DIR=$(LINUXDIR)
+
+ipset-install:
+	install -D ipset-4.5/ipset $(INSTALLDIR)/ipset/usr/sbin/ipset
+
+	install -d $(INSTALLDIR)/ipset/usr/lib/ipset
+	install -d $(INSTALLDIR)/ipset/lib/modules/2.6.22.19/kernel/net/netfilter/ipset
+
+	install -D ipset-4.5/libipset_*.so $(INSTALLDIR)/ipset/usr/lib/ipset/
+	install -D ipset-4.5/kernel/*.ko $(INSTALLDIR)/ipset/lib/modules/2.6.22.19/kernel/net/netfilter/ipset/
+
+	$(STRIP) $(INSTALLDIR)/ipset/usr/sbin/ipset
+	$(STRIP) $(INSTALLDIR)/ipset/usr/lib/ipset/*.so
+
+ipset-clean:
+	-@$(MAKE) -C ipset-4.5 clean KERNEL_DIR=$(LINUXDIR)
 #
 # Generic rules
 #

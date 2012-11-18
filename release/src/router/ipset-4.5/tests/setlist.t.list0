@@ -1,0 +1,8 @@
+Name: test
+Type: setlist
+References: 0
+Header: size: 8
+Members:
+foo
+bar
+

@@ -1,0 +1,3 @@
+ifdef CONFIG_IP_NF_SET
+	export-objs += ip_set.o
+endif
