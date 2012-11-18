@@ -67,6 +67,11 @@ var liveUpdateFinish = false;
 var new_FW = false;
 var retry = 0;
 function detect_firmware(){
+        
+	// Disable FW check
+	liveUpdateFinish = true;
+	return;
+
 	$j.ajax({
 		url: '/detect_firmware.asp',
 		dataType: 'script',
