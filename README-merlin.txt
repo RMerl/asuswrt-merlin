@@ -35,34 +35,44 @@ Features
 --------
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
-- Based on the source code of release 3.0.0.4.246
-- Various bugfixes (like the crash on VPN/NAT Loopback access of LAN devices)
-- WakeOnLan web interface (with user-entered preset targets)
-- Persistent JFFS partition
-- User scripts that run on specific events
-- SSHD (through dropbear)
-- Crond
-- Clicking on the MAC address of an unidentified client will do a lookup in
-  the OUI database (ported from DD-WRT).
-- Optionally save traffic stats to disk (USB or JFFS partition)
-- Display monthly traffic reports
-- Display active/tracked network connections
-- Allows tweaking TCP/UDP connection tracking timeouts
-- CIFS client support (for mounting remote SMB share on the router)
-- Layer7 iptables matching
-- User-defined options for WAN DHCP queries (required by some ISPs)
-- Name field on the DHCP reservation list and Wireless ACL list
-- Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
-- Dual WAN support (both failover and load 
-  balancing supported) (EXPERIMENTAL) (RT-N66U, RT-AC66U)
-- Disk spindown after user-configurable inactivity timeout
-- System info summary page
-- Wireless client IP, hostname, rate and rssi on the Wireless Log page
-- OpenVPN client and server, based on code originally written by
-  Keith Moyer for Tomato and reused with his 
-  permission. (RT-N66U, RT-AC66U)
-- Customized config files for router services
-- LED control - put your Dark Knight in Stealth Mode by turning off all LEDs
+System:
+   - Based on the 3.0.0.4.246 source release from Asus
+   - Various bugfixes (like the crash on VPN/NAT Loopback access of LAN devices)
+   - Persistent JFFS partition
+   - User scripts that run on specific events
+   - Cron jobs
+   - Customized config files for router services
+   - LED control - put your Dark Knight in Stealth Mode by turning off all LEDs
+
+Disk sharing:
+   - Act as a Master Browser
+   - Act as a WINS server
+   - Optionally use shorter share names (folder name only)
+   - Disk spindown after user-configurable inactivity timeout
+
+Networking:
+   - WakeOnLan web interface (with user-entered preset targets)
+   - SSHD
+   - Allows tweaking TCP/UDP connection tracking timeouts
+   - CIFS client support (for mounting remote SMB share on the router)
+   - Layer7 iptables matching
+   - User-defined options for WAN DHCP queries (required by some ISPs)
+   - Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
+   - Dual WAN support (both failover and load
+     balancing supported) (EXPERIMENTAL) (RT-N66U, RT-AC66U)
+   - OpenVPN client and server, based on code originally written by
+     Keith Moyer for Tomato and reused with his permission. (RT-N66U, RT-AC66U)
+
+Web interface:
+   - Clicking on the MAC address of an unidentified client will do a lookup in
+     the OUI database (ported from DD-WRT).
+   - Optionally save traffic stats to disk (USB or JFFS partition)
+   - Display monthly traffic reports
+   - Display active/tracked network connections
+   - Name field on the DHCP reservation list and Wireless ACL list
+   - System info summary page
+   - Wireless client IP, hostname, rate and rssi on the Wireless Log page
+   - Wifi icon reports the state of both radios
 
 
 A few features that first debuted in Asuswrt-Merlin have since been 
@@ -323,8 +333,14 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.246.21:
+   - NEW: Option to force the router into becoming the SMB Master Browser.
+   - NEW: Option to make the router act as a WINS server.
    - FIXED: Firefox compatibility issues on the DHCP static and 
             MAC filter name fields.
+   - FIXED: Wifi status icon wasn't accurately reporting states if they
+            were changed by a radio schedule.
+   - FIXED: QIS would report newer firmwares, potentially overwriting
+            Asuswrt-Merlin with an original Asus firmware.
 
 
 3.0.0.4.246.20:
