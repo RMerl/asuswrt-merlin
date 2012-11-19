@@ -341,6 +341,8 @@ History
             were changed by a radio schedule.
    - FIXED: QIS would report newer firmwares, potentially overwriting
             Asuswrt-Merlin with an original Asus firmware.
+   - FIXED: Wifi LEDs would turn back on if radios were enabled while
+            in Stealth Mode (now they turn back off after a few seconds)
 
 
 3.0.0.4.246.20:
