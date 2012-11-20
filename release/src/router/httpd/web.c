@@ -3019,6 +3019,9 @@ static int ej_get_client_detail_info(int eid, webs_t wp, int argc, char_t **argv
 	int i, shm_client_info_id;
 	void *shared_client_info=(void *) 0;
 	char output_buf[256];
+	char devname[LINE_SIZE], character;
+	int j, len;
+
 	P_CLIENT_DETAIL_INFO_TABLE p_client_info_tab;
 
 	spinlock_lock(SPINLOCK_Networkmap);
@@ -3039,9 +3042,20 @@ static int ej_get_client_detail_info(int eid, webs_t wp, int argc, char_t **argv
 	p_client_info_tab = (P_CLIENT_DETAIL_INFO_TABLE)shared_client_info;
 	for(i=0; i<p_client_info_tab->ip_mac_num; i++) {
 		memset(output_buf, 0, 256);
+		memset(devname, 0, LINE_SIZE);
+
+		len = strlen( p_client_info_tab->device_name[i]);
+		for (j=0; (j < len) && (j < LINE_SIZE-1); j++) {
+			character = p_client_info_tab->device_name[i][j];
+			if ((isalnum(character)) || (character == ' ') || (character == '-') || (character == '_'))
+				devname[j] = character;
+			else
+				devname[j] = ' ';
+		}
+
 		sprintf(output_buf, "<%d>%s>%d.%d.%d.%d>%02X:%02X:%02X:%02X:%02X:%02X>%d>%d>%d",
 		p_client_info_tab->type[i],
-		p_client_info_tab->device_name[i],
+		devname,
 		p_client_info_tab->ip_addr[i][0],p_client_info_tab->ip_addr[i][1],
 		p_client_info_tab->ip_addr[i][2],p_client_info_tab->ip_addr[i][3],
 		p_client_info_tab->mac_addr[i][0],p_client_info_tab->mac_addr[i][1],
