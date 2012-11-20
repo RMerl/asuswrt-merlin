@@ -62,6 +62,8 @@ Networking:
      balancing supported) (EXPERIMENTAL) (RT-N66U, RT-AC66U)
    - OpenVPN client and server, based on code originally written by
      Keith Moyer for Tomato and reused with his permission. (RT-N66U, RT-AC66U)
+   - Option to control Spanning-Tree Protocol support.
+
 
 Web interface:
    - Clicking on the MAC address of an unidentified client will do a lookup in
@@ -335,6 +337,7 @@ History
 3.0.0.4.246.21:
    - NEW: Option to force the router into becoming the SMB Master Browser.
    - NEW: Option to make the router act as a WINS server.
+   - NEW: Option to control Spanning-Tree Protocol
    - FIXED: Firefox compatibility issues on the DHCP static and 
             MAC filter name fields.
    - FIXED: Wifi status icon wasn't accurately reporting states if they
@@ -343,6 +346,8 @@ History
             Asuswrt-Merlin with an original Asus firmware.
    - FIXED: Wifi LEDs would turn back on if radios were enabled while
             in Stealth Mode (now they turn back off after a few seconds)
+    - FIXED: Webui would break if a network device had an invalid
+             NetBIOS name (such as the Sonos Dock).
 
 
 3.0.0.4.246.20:
