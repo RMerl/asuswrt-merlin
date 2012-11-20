@@ -118,11 +118,20 @@ function valid_form(){
 	    <tr>
 	      <th>Disable GRO(Generic Receive Offload)</th>
 	          <td>
-	              <input type="radio" name="gro_disable_force" value="1" <% nvram_match("gro_disable_force", "1", "checked"); %>><#checkbox_Yes#>
+	              <input type="radio" name="gro_disable_force" value="1" <% nvram_match("gro_disable_force", 
+"1", "checked"); %>><#checkbox_Yes#>
 	              <input type="radio" name="gro_disable_force" value="0" <% nvram_match("gro_disable_force", "0", "checked"); %>><#checkbox_No#>
 	          </td>
 	      </tr>       
 -->
+		<tr>
+		<th>Spanning-Tree Protocol</th>
+			<td>
+				<input type="radio" name="lan_stp" value="1" <% nvram_match("lan_stp", "1", "checked"); %>><#checkbox_Yes#>
+				<input type="radio" name="lan_stp" value="0" <% nvram_match("lan_stp", "0", "checked"); %>><#checkbox_No#>
+			</td>
+		</tr>
+
 			</table>	
 
 		<div class="apply_gen">
