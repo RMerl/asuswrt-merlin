@@ -1891,6 +1891,7 @@ int init_main(int argc, char *argv[])
 #endif
 
 	run_custom_script("init-start");
+	use_custom_config("fstab", "/etc/fstab");
 
 	state = SIGUSR2;	/* START */
 
