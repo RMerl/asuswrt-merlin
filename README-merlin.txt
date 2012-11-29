@@ -320,7 +320,8 @@ The list of available config overrides:
 * profile (shell profile, only profile.add suypported)
 * upnp (for miniupnpd)
 * radvd.conf
-
+* fstab (only fstab supported, remember to create mount point
+        through init-start first if it doesn't exist!)
 
 
 Source code
@@ -338,6 +339,7 @@ History
    - NEW: Option to force the router into becoming the SMB Master Browser.
    - NEW: Option to make the router act as a WINS server.
    - NEW: Option to control Spanning-Tree Protocol
+   - NEW: fstab custom config file
    - FIXED: Firefox compatibility issues on the DHCP static and 
             MAC filter name fields.
    - FIXED: Wifi status icon wasn't accurately reporting states if they
