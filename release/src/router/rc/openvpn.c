@@ -31,7 +31,7 @@
 #define BUF_SIZE 256
 #define IF_SIZE 8
 
-static int waitfor(const char *name)
+static int ovpn_waitfor(const char *name)
 {
 	int pid, n = 5;
 
@@ -471,7 +471,7 @@ void stop_vpnclient(int clientNum)
 	// Stop the VPN client
 	vpnlog(VPN_LOG_EXTRA,"Stopping OpenVPN client.");
 	sprintf(&buffer[0], "vpnclient%d", clientNum);
-	if ( !waitfor(&buffer[0]) )
+	if ( !ovpn_waitfor(&buffer[0]) )
 		vpnlog(VPN_LOG_EXTRA,"OpenVPN client stopped.");
 
 	// NVRAM setting for device type could have changed, just try to remove both
@@ -1007,7 +1007,7 @@ void stop_vpnserver(int serverNum)
 	// Stop the VPN server
 	vpnlog(VPN_LOG_EXTRA,"Stopping OpenVPN server.");
 	sprintf(&buffer[0], "vpnserver%d", serverNum);
-	if ( !waitfor(&buffer[0]) )
+	if ( !ovpn_waitfor(&buffer[0]) )
 		vpnlog(VPN_LOG_EXTRA,"OpenVPN server stopped.");
 
 	// NVRAM setting for device type could have changed, just try to remove both

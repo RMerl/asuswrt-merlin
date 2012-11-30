@@ -44,19 +44,10 @@
 #include <bcmnvram_f.h>
 #include <common.h>
 
+
 /* #define sys_upgrade(url) (1) */
 #define sys_stats(url)   (1)
 
 #define MAX_LINE_SIZE 512
 #define UPNP_E_SUCCESS 0
 #define UPNP_E_INVALID_ARGUMENT -1
-
-static unsigned long
-inet_atoul(char *cp)
-{
-	struct in_addr in;
-
-	inet_aton(cp, &in);
-	return in.s_addr;
-}
-

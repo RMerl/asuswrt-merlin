@@ -371,6 +371,8 @@ function create_guest_unit(_unit, _subunit){
 	NewInput.name = "wl"+ _unit + "." + _subunit +"_bss_enabled";
 	NewInput.value = "1";
 	document.unitform.appendChild(NewInput);
+	document.unitform.wl_unit.value = _unit;
+	document.unitform.wl_subunit.value = _subunit;
 	document.unitform.submit();
 }
 </script>
@@ -398,6 +400,8 @@ function create_guest_unit(_unit, _subunit){
 <form method="post" name="unitform" action="/start_apply2.htm" target="hidden_frame">
 <input type="hidden" name="current_page" value="Guest_network.asp">
 <input type="hidden" name="next_page" value="Guest_network.asp">
+<input type="hidden" name="wl_unit" value="<% nvram_get("wl_unit"); %>">
+<input type="hidden" name="wl_subunit" value="<% nvram_get("wl_subunit"); %>">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_wireless">
 <input type="hidden" name="action_wait" value="8">

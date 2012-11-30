@@ -222,11 +222,11 @@ int check_imagefile(char *fname)
 		uint8_t hw[MAX_HW_COUNT][4];	/* Compatible hw list lo maj.min, hi maj.min */
 		uint8_t	pad[0];			/* Padding up to MAX_VERSION_LEN */
 	} version;
-	int i;
+	int i, model;
 
 	fp = fopen(fname, "r");
-
-	if (fp == NULL) return 0;
+	if (fp == NULL)
+		return 0;
 
 	fseek(fp, -MAX_VERSION_LEN, SEEK_END);
 	fread(&version, 1, sizeof(version), fp);
@@ -243,8 +243,21 @@ int check_imagefile(char *fname)
 	for (i--; i >= 0 && version.pid[i] == '\x20'; i--)
 		version.pid[i] = '\0';
 
-	/* compare up to the first \0 or MAX_PID_LEN */
-	return (strncmp(nvram_safe_get("productid"), version.pid, MAX_PID_LEN) == 0);
+	model = get_model();
+
+	/* compare up to the first \0 or MAX_PID_LEN
+	 * nvram productid or hw model's original productid */
+	if (strncmp(nvram_safe_get("productid"), version.pid, MAX_PID_LEN) == 0 ||
+	    strncmp(get_modelid(model), version.pid, MAX_PID_LEN) == 0)
+		return 1;
+
+	/* common RT-N12 productid FW image */
+	if ((model == MODEL_RTN12B1 || model == MODEL_RTN12C1 ||
+	     model == MODEL_RTN12D1 || model == MODEL_RTN12HP) &&
+	    strncmp(get_modelid(MODEL_RTN12), version.pid, MAX_PID_LEN) == 0)
+		return 1;
+
+	return 0;
 }
 
 int get_radio(int unit, int subunit)

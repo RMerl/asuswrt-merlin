@@ -91,7 +91,7 @@ function showDDNS(){
 	}
 	else{
 		$("haveDDNS").style.display = "none";
-		$("noFTP").style.display = "";
+		$("noFTP").style.display = "none";
 		$("noDDNS").style.display = "none";
 	}
 }

@@ -28,7 +28,27 @@ var hw_modelid = '<% nvram_get("hardware_version"); %>';
 <% wl_get_parameter(); %>
 
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-										
+var mcast_rates = [
+	["HTMIX 6.5/15", "14", 0, 1],
+	["HTMIX 13/30",	 "15", 0, 1],
+	["HTMIX 19.5/45","16", 0, 1],
+	["HTMIX 13/30",	 "17", 0, 1],
+	["HTMIX 26/60",	 "18", 0, 1],
+	["HTMIX 130/144","13", 0, 1],
+	["OFDM 6",	 "4",  0, 0],
+	["OFDM 9",	 "5",  0, 0],
+	["OFDM 12",	 "7",  0, 0],
+	["OFDM 18",	 "8",  0, 0],
+	["OFDM 24",	 "9",  0, 0],
+	["OFDM 36",	 "10", 0, 0],
+	["OFDM 48",	 "11", 0, 0],
+	["OFDM 54",	 "12", 0, 0],
+	["CCK 1",	 "1",  1, 0],
+	["CCK 2",	 "2",  1, 0],
+	["CCK 5.5",	 "3",  1, 0],
+	["CCK 11",	 "6",  1, 0]
+];
+
 function initial(){
 	show_menu();
 	load_body();
@@ -51,15 +71,23 @@ function initial(){
 		$("DLSCapable").style.display = "none";	
 		$("PktAggregate").style.display = "none";
 		$("enable_wl_multicast_forward").style.display = "";
-		if('<% nvram_get("wl_unit"); %>' == '1'){		//remove "noiseReduction" in 5G
-				$("noiseReduction").style.display = "none";
-		}				
-	}
-	else{ // Ralink
-		free_options(document.form.wl_mrate_x);
-		add_option(document.form.wl_mrate_x, "<#CTL_Disabled#>", 0, <% nvram_get("wl_mrate_x"); %> == 0);
-		add_option(document.form.wl_mrate_x, "Auto", 13, <% nvram_get("wl_mrate_x"); %> == 13);		
+		if('<% nvram_get("wl_unit"); %>' == '1'){
+			$("noiseReduction").style.display = "none";
+		}
+	} else
 		$("noiseReduction").style.display = "none";
+
+	var mcast_rate = '<% nvram_get("wl_mrate_x"); %>';
+	var mcast_unit = '<% nvram_get("wl_unit"); %>';
+	//free_options(document.form.wl_mrate_x);
+	for (var i = 0; i < mcast_rates.length; i++) {
+		if (mcast_unit == '1' && mcast_rates[i][2]) // 5Ghz && CCK
+			continue;
+		if (Rawifi_support == -1 && mcast_rates[i][3]) // BCM && HTMIX
+			continue;
+		add_option(document.form.wl_mrate_x,
+			mcast_rates[i][0], mcast_rates[i][1],
+			(mcast_rate == mcast_rates[i][1]) ? 1 : 0);
 	}
 
 	if(repeater_support != -1){		//with RE mode
@@ -388,28 +416,14 @@ function check_Timefield_checkbox(){	// To check Date checkbox checked or not an
 							</div>
 			  			</td>
 					</tr>
-			<!-- 2008.03 James. patch for Oleg's patch. { -->
 					<tr id="wl_mrate_select">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 7);"><#WLANConfig11b_MultiRateAll_itemname#></a></th>
 						<td>
 							<select name="wl_mrate_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_mrate_x')">
 								<option value="0" <% nvram_match("wl_mrate_x", "0", "selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
-								<option value="1" <% nvram_match("wl_mrate_x", "1", "selected"); %>>1</option>
-								<option value="2" <% nvram_match("wl_mrate_x", "2", "selected"); %>>2</option>
-								<option value="3" <% nvram_match("wl_mrate_x", "3", "selected"); %>>5.5</option>
-								<option value="4" <% nvram_match("wl_mrate_x", "4", "selected"); %>>6</option>
-								<option value="5" <% nvram_match("wl_mrate_x", "5", "selected"); %>>9</option>
-								<option value="6" <% nvram_match("wl_mrate_x", "6", "selected"); %>>11</option>
-								<option value="7" <% nvram_match("wl_mrate_x", "7", "selected"); %>>12</option>
-								<option value="8" <% nvram_match("wl_mrate_x", "8", "selected"); %>>18</option>
-								<option value="9" <% nvram_match("wl_mrate_x", "9", "selected"); %>>24</option>
-								<option value="10" <% nvram_match("wl_mrate_x", "10", "selected"); %>>36</option>
-								<option value="11" <% nvram_match("wl_mrate_x", "11", "selected"); %>>48</option>
-								<option value="12" <% nvram_match("wl_mrate_x", "12", "selected"); %>>54</option>
 							</select>
 						</td>
 					</tr>
-			<!-- 2008.03 James. patch for Oleg's patch. } -->
 					<tr style="display:none;">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 8);"><#WLANConfig11b_DataRate_itemname#></a></th>
 			  			<td>

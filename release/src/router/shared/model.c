@@ -79,3 +79,20 @@ int get_model(void)
 #endif
 	return model;
 }
+
+#if !defined(RTCONFIG_RALINK)
+/* returns product id */
+char *get_modelid(int model)
+{
+	char *pid = "unknown";
+	const struct model_s *p;
+
+	for (p = &model_list[0]; p->pid; ++p) {
+		if (model == p->model) {
+			pid = p->pid;
+			break;
+		}
+	}
+	return pid;
+}
+#endif

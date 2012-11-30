@@ -115,7 +115,7 @@
 	margin:-117px 0px 0px 410px;
 }
 .er_title{
-	color:#FFF;
+	color:#4b6688;
 	background-color:#000000;
 	font-weight:bolder;
 	width:450px;
@@ -164,6 +164,36 @@
 	background-repeat: repeat;
 	visibility:hidden;
 	overflow:hidden;
+}
+
+.button_gen{
+	font-weight: bolder;
+	text-shadow: 1px 1px 0px black;
+  background: transparent url(/images/New_ui/contentbt_normal.png) no-repeat scroll center top;
+  _background: transparent url(/images/New_ui/contentbt_normal_ie6.png) no-repeat scroll center top;
+  border:0;
+  color: #FFFFFF;
+	height:33px;
+	font-family:Verdana;
+	font-size:12px;
+  padding:0 .70em 0 .70em;  
+ 	width:122px;
+  overflow:visible;
+	cursor:pointer;
+	outline: none; /* for Firefox */
+ 	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+ 	white-space:normal;
+}
+.button_gen:hover{
+	font-weight: bolder;
+	background:url(/images/New_ui/contentbt_over.png) no-repeat;
+	height:33px;
+ 	width:122px;
+ 	padding:0 .70em 0 .70em;  
+ 	background-position:0px;
+	cursor:pointer;
+	outline: none; /* for Firefox */
+ 	hlbr:expression(this.onFocus=this.blur()); /* for IE */
 }
 </style>	
 <script type="text/JavaScript" src="/jquery.js"></script>
@@ -255,8 +285,9 @@ function initial(){
 		$("#case5").show();
 	}
 	else if(casenum == 6){
-		new_lan_ip = get_new_lanip();				
-		if(LoginIP != nowIP){
+		new_lan_ip = get_new_lanip();
+
+		if(LoginIP != "0.0.0.0" && LoginIP != nowIP){
 					showtext($("#failReason1")[0], "IP conflict detected. Please check again.");
 					$("#case6")[0].innerHTML = html_code_notlogin;
 					$("#Epage_Suggest1")[0].style.display= "none";
@@ -281,7 +312,7 @@ function initial(){
 		new_lan_ip = get_new_lanip();		
 		showtext($("#failReason1")[0], "<#APSurvey_action_ConnectingStatus0#>");
 		
-		if(LoginIP != nowIP){
+		if(LoginIP != "0.0.0.0" && LoginIP != nowIP){
 					$("#case8")[0].innerHTML = html_code_notlogin;
 					$("#Epage_Suggest1")[0].style.display= "none";
 					$("#Epage_Suggest2")[0].style.display= "";

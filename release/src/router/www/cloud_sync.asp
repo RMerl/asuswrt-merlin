@@ -107,8 +107,8 @@ var cloud_msg = "";
 var curRule = -1;
 var enable_cloudsync = '<% nvram_get("enable_cloudsync"); %>';
 <% UI_cloud_status(); %>
-var cloud_sync = '<% nvram_get("cloud_sync"); %>';
-/* type>user>password>url>dir>rule>enable */
+var cloud_sync = '<% nvram_show_chinese_char("cloud_sync"); %>';
+/* type>user>password>url>rule>dir>enable */
 var cloud_synclist_array = cloud_sync.replace(/>/g, "&#62").replace(/</g, "&#60"); 
 var cloud_synclist_all = new Array(); 
 var isEdit = 0;

@@ -448,7 +448,7 @@ lighttpd_arpping_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_CFLAGS) $(CFLAGS) $(lighttpd_arpping_LDFLAGS) $(LDFLAGS) \
 	-o $@
 am_lighttpd_monitor_OBJECTS = log.$(OBJEXT) buffer.$(OBJEXT) \
-	lighttpd-monitor.$(OBJEXT)
+	lighttpd-monitor.$(OBJEXT) nvram_control.$(OBJEXT)
 lighttpd_monitor_OBJECTS = $(am_lighttpd_monitor_OBJECTS)
 lighttpd_monitor_LDADD = $(LDADD)
 am_proc_open_OBJECTS = proc_open-proc_open.$(OBJEXT) \
@@ -683,7 +683,7 @@ MAKE_SMBDAV_MODULE = 0
 LEMON = $(top_builddir)/src/lemon$(EXEEXT)
 lemon_SOURCES = lemon.c
 lighttpd_angel_SOURCES = lighttpd-angel.c
-lighttpd_monitor_SOURCES = log.c buffer.c lighttpd-monitor.c
+lighttpd_monitor_SOURCES = log.c buffer.c lighttpd-monitor.c nvram_control.c
 lighttpd_arpping_SOURCES = log.c buffer.c arpping_thread.c nvram_control.c
 lighttpd_arpping_LDFLAGS = -lsmbclient
 BUILT_SOURCES = parsers versionstamp 

@@ -235,17 +235,16 @@ void do_f(char *path, webs_t wp)
 {
 	FILE *f;
 	char buf[1024];
-	int nr;
 	int ret;
 
 //printf("do_f: %s\n", path);
 	if ((f = fopen(path, "r")) != NULL) {
 //		while ((nr = fread(buf, 1, sizeof(buf), f)) > 0){
-		while ((nr = fgets(buf, sizeof(buf), f)) > 0){
+		while (fgets(buf, sizeof(buf), f) != NULL){
 //printf("%s\n", buf);
 			ret += websWrite(wp, buf);
 		}
 		fclose(f);	
 	}
-	return 0;
+	return;
 }

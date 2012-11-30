@@ -59,6 +59,7 @@
 //#include <sys/stat.h>
 #include <assert.h>
 #include <sys/ioctl.h>
+#include <ctype.h>
 
 typedef unsigned int __u32;   // 1225 ham
 
@@ -87,6 +88,7 @@ typedef unsigned int __u32;   // 1225 ham
 #include <shutils.h>
 #define SERVER_PORT_SSL	443
 #endif
+#include "bcmnvram_f.h"
 
 /* A multi-family sockaddr. */
 typedef union {
@@ -118,6 +120,78 @@ char host_name[64];
 
 #ifdef TRANSLATE_ON_FLY
 char Accept_Language[16];
+
+struct language_table language_tables[] = {
+	{"en-us", "EN"},
+	{"en", "EN"},
+	{"ru-ru", "RU"},
+	{"ru", "RU"},
+	{"fr", "FR"},
+	{"fr-fr", "FR"},
+	{"de-at", "DE"},
+	{"de-li", "DE"},
+	{"de-lu", "DE"},
+	{"de-de", "DE"},
+	{"de-ch", "DE"},
+	{"de", "DE"},
+	{"cs-cz", "CZ"},
+	{"cs", "CZ"},
+	{"pl-pl", "PL"},
+	{"pl", "PL"},
+	{"zh-tw", "TW"},
+	{"zh", "TW"},   
+	{"zh-hk", "CN"},
+	{"zh-cn", "CN"},
+	{"ms", "MS"},
+	{"ms-MY", "MS"},
+	{"ms-BN", "MS"},
+	{"th", "TH"},
+	{"th-TH", "TH"},
+	{"th-TH-TH", "TH"},
+	{"tr", "TR"},
+	{"tr-TR", "TR"},
+	{"da", "DA"},
+	{"da-DK", "DA"},
+	{"fi", "FI"},
+	{"fi-FI", "FI"},
+	{"no", "NO"},
+	{"nb-NO", "NO"},
+	{"nn-NO", "NO"},
+	{"sv", "SV"},
+	{"sv-FI", "SV"},
+	{"sv-SE", "SV"},
+	{"br", "BR"},
+	{"pt-BR", "BR"},
+	{"ja", "JP"},
+	{"ja-JP", "JP"},
+	{"es", "ES"},
+	{"es-ec", "ES"},
+	{"es-py", "ES"},
+	{"es-pa", "ES"},
+	{"es-ni", "ES"},
+        {"es-gt", "ES"},
+	{"es-do", "ES"},
+	{"es-es", "ES"},
+	{"es-hn", "ES"},
+	{"es-ve", "ES"},
+	{"es-pr", "ES"},
+	{"es-ar", "ES"},
+	{"es-bo", "ES"},
+	{"es-us", "ES"},
+	{"es-co", "ES"},
+	{"es-cr", "ES"},
+	{"es-uy", "ES"},
+	{"es-pe", "ES"},
+	{"es-cl", "ES"},
+	{"es-mx", "ES"},
+	{"es-sv", "ES"},
+	{"it", "IT"},
+	{"it-it", "IT"},
+	{"it-ch", "IT"},
+	{"uk", "UK"},
+	{NULL, NULL}
+};
+
 #endif //TRANSLATE_ON_FLY
 
 /* Forwards. */
@@ -177,7 +251,7 @@ void sethost(char *host)
 	*cp = '\0';
 }
 
-char *gethost()
+char *gethost(void)
 {
 	if(strlen(host_name)) {
 		return host_name;
@@ -987,11 +1061,9 @@ load_dictionary (char *lang, pkw_t pkw)
 	char dfn[16];
 	char dummy_buf[16];
 	int dict_item_idx;
-	char dict_item_num_buf[16];
 	char* tmp_ptr;
 	int dict_item; // number of dict item, now get from text file
-	FILE* fp;
-	char *p, *q;
+	char *q;
 	FILE *dfp = NULL;
 	int remain_dict;
 	int dict_size = 0;
@@ -1133,7 +1205,7 @@ char*
 search_desc (pkw_t pkw, char *name)
 {
 	int i;
-	char *p, *ret = NULL;
+	char *ret = NULL;
 	int dict_idx;
 	char name_buf[128];
 	
@@ -1159,6 +1231,7 @@ search_desc (pkw_t pkw, char *name)
 	
 /*	
 	for (i = 0; i < pkw->len; ++i)  {
+		char *p;
 		p = pkw->idx[i];
 		if (strncmp (name, p, strlen (name)) == 0)      {
 			ret = p + strlen (name);
@@ -1548,7 +1621,6 @@ void start_ssl(void)
 	int retry;
 	unsigned long long sn;
 	char t[32];
-	int init;
 	
 	//fprintf(stderr,"[httpd] start_ssl running!!\n");
 	//nvram_set("https_crt_gen", "1");

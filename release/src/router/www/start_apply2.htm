@@ -92,7 +92,7 @@ function initial(){
 	if(getflag == "sitesurvey"){
 		parent.setTimeout("update_site_info();", 1000);
 	}
-	if(getflag == "upgrading"){
+	else if(getflag == "upgrading"){
 		parent.progressBar = 0;
 		parent.showLoadingUpdate();
 	}

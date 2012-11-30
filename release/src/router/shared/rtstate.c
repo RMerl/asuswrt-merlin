@@ -199,7 +199,9 @@ int get_wanports_status(int wan_unit)
 	if(get_dualwan_by_unit(wan_unit) == WANS_DUALWAN_IF_DSL)
 #endif
 	{
-		if (nvram_match("dsltmp_adslsyncsts","up")) return 1;
+		/* Paul modify 2012/10/17, shouldn't check ADSL sync status, check WAN0 state instead. */
+		//if (nvram_match("dsltmp_adslsyncsts","up")) return 1;
+		if (nvram_match("wan0_state_t","2")) return 1;
 		return 0;
 	}
 #ifdef RTCONFIG_DUALWAN

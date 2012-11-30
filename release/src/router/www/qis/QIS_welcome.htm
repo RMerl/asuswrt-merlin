@@ -14,9 +14,44 @@
 <script type="text/javascript">
 <% start_autodet(); %> // initial QIS detecting process.
 <% wanlink(); %>
+var hw_ver = '<% nvram_get("hardware_version"); %>';
 function QKinternettype_load_body(){
 	parent.document.title = "<#Web_Title#> - Welcome!";
 	parent.set_step("t0");
+		
+	var check_desc1 = "<#QIS_welcome_feature1#>";	
+	var check_desc2 = "<#QIS_welcome_feature2#>";	
+	var check_desc3 = "<#QIS_welcome_feature3#>";	
+	var check_desc4 = "<#QIS_welcome_feature4#>";	
+		
+	if(hw_ver.search("RTN12") != -1){	//MODELDEP : RT-N12
+			var desc1_split = check_desc1.split("#ZVSPLITVZ#");
+			var desc2_split = check_desc2.split("#ZVSPLITVZ#");
+			var desc3_split = check_desc3.split("#ZVSPLITVZ#");
+			var desc4_split = check_desc4.split("#ZVSPLITVZ#");						
+			
+			if( hw_ver.search("RTN12HP") != -1 	//RT-N12HP
+					&& check_desc1.split("#ZVSPLITVZ#").length == 2
+					&& check_desc2.split("#ZVSPLITVZ#").length == 2
+					&& check_desc3.split("#ZVSPLITVZ#").length == 2
+					&& check_desc4.split("#ZVSPLITVZ#").length == 2){
+							document.getElementById("Productdesc_1").innerHTML = desc1_split[1];
+							document.getElementById("Productdesc_2").innerHTML = desc2_split[1];
+							document.getElementById("Productdesc_3").innerHTML = desc3_split[1];
+							document.getElementById("Productdesc_4").innerHTML = desc4_split[1];
+			}else{	// rest of RT-N12
+							document.getElementById("Productdesc_1").innerHTML = desc1_split[0];
+							document.getElementById("Productdesc_2").innerHTML = desc2_split[0];
+							document.getElementById("Productdesc_3").innerHTML = desc3_split[0];
+							document.getElementById("Productdesc_4").innerHTML = desc4_split[0];
+			}	
+	}else{
+		document.getElementById("Productdesc_1").innerHTML = check_desc1;
+		document.getElementById("Productdesc_2").innerHTML = check_desc2;
+		document.getElementById("Productdesc_3").innerHTML = check_desc3;
+		document.getElementById("Productdesc_4").innerHTML = check_desc4;
+	}	
+	
 	document.getElementById("btn_next_step").focus();
 }
 
@@ -120,13 +155,13 @@ function submitenter(myfield,e)
 <table style="margin-top:-40px;margin-left:20px;" width="98%" border=0 align="center" cellpadding="5" cellspacing="0">
 	<tr>
 		<td width="55%" colspan="2">
-			<div id="productDesc" style="font-style:italic;">
-				<ul>
-					<p style="font-size:20px;font-weight:bolder;margin-bottom:15px;"><#statusTitle_System#></p>
-					<li style="line-height:25px;"><#QIS_welcome_feature1#>
-					<li style="line-height:25px;"><#QIS_welcome_feature2#>
-					<li style="line-height:25px;"><#QIS_welcome_feature3#>
-					<li style="line-height:25px;"><#QIS_welcome_feature4#>
+			<div id="productDesc" style="font-style:italic;">				
+				<p style="font-size:20px;font-weight:bolder;margin-bottom:15px;"><#statusTitle_System#></p>
+				<ul>		
+					<li style="line-height:25px;" id="Productdesc_1"></li>
+					<li style="line-height:25px;" id="Productdesc_2"></li>
+					<li style="line-height:25px;" id="Productdesc_3"></li>
+					<li style="line-height:25px;" id="Productdesc_4"></li>
 				</ul>	
 			</div>
 		</td>

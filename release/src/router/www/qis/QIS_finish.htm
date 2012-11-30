@@ -85,7 +85,7 @@ function detect_httpd(){
 			if(dead < 20)
 				setTimeout("detect_httpd();", 1000);
 			else{
-				document.getElementById("updateProgress").setAttribute("width", "100%");
+				document.getElementById("updateProgress").style.width = "100%";
 				document.getElementById("newFWgradedFail").style.display = "";
 			}
 		},
@@ -95,8 +95,9 @@ function detect_httpd(){
 			}
 
 			progressBar = 100;
-			document.getElementById("updateProgress").setAttribute("width", "100%");
-			document.getElementById("newFWgraded").style.display = "";
+			document.getElementById("updateProgress").style.width = "100%";
+			document.getElementById('progress_bar_no').innerHTML = progressBar+"%";
+			document.getElementById("newFWgraded").style.display = "";		
 		}
 	});
 }
@@ -107,17 +108,20 @@ function showLoadingUpdate(){
 		detect_httpd();
 	}
 	
-	if(progressBar == 99){
-		document.getElementById("updateProgress").setAttribute("width", progressBar+"%");
+	/*if(progressBar == 99){
+		document.getElementById("updateProgress").style.width = progressBar+"%";
 	}
-	else if(progressBar > 99){
+	else if(progressBar > 99){*/
+	if(progressBar > 99){
 		return false;
 	}
 	else{	
-		document.getElementById("updateProgress").setAttribute("width", progressBar+"%");
+		document.getElementById("updateProgress").style.width = progressBar+"%";
+		document.getElementById('progress_bar_no').innerHTML = progressBar+"%";
 		setTimeout("showLoadingUpdate();", 3000);
 	}
-	progressBar++;
+	
+	progressBar++;	
 }
 
 function QKfinish_load_body(){
@@ -739,12 +743,12 @@ function showclock(){
       </div>
   </div>
 
-	<div id="progressBar" class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;display:none;">
+	<div id="progressBar" class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;display:none;*margin-left:70px;">
 		<div style="text-align:left;">
 		<#FIRM_ok_desc#>
 		</div>
 		<br>
-		<div id="updateProgress_bg" style="text-align:left;">
+		<div id="updateProgress_bg" style="text-align:left;*margin-left:-65px;">
 			<div align="left">
 				<style>
 					#updateProgress_bg{
@@ -755,7 +759,8 @@ function showclock(){
 						background-repeat: repeat-x;
 					}
 				</style>
-				<img id="updateProgress" src="/images/quotabar.gif" width="0" height="30px">
+				<span id="progress_bar_no" style="position:absolute;margin-left:285px;margin-top:7px;*margin-left:290px">0%</span>
+				<img id="updateProgress" src="/images/quotabar.gif" style="width:0%" height="30px">
 			</div>
 			<!--progress max="100" value="60" style="height:30px;width:50%"></progress-->
 		</div>

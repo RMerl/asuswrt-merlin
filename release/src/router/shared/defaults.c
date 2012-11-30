@@ -464,12 +464,12 @@ struct nvram_tuple router_defaults[] = {
 	{ "ct_tcp_timeout",		""},
 	{ "ct_udp_timeout",		"30 180"},
 	{ "ct_timeout",			""},
-	{ "ct_max",			""}, // per model default value is assigned in init_nvram
+	{ "ct_max",			""}, //per model default value is assigned in init_nvram
 
 #ifdef CONFIG_BCMWL5
 	{ "ctf_disable",		"0"		},
 	{ "ctf_disable_force", 		"0"		},
-	{ "gro_disable_force", 		"0"		},
+	{ "gro_disable_force", 		"1"		},
 #endif
 #ifdef RTCONFIG_BCMWL6
 	{ "pktc_disable", 		"0"		},
@@ -660,8 +660,8 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_DSL
 	{ "dslx_modulation", "5" }, // multiple mode
-	{ "dslx_snrm_offset", "0" }, /* Paul add start 2012/9/24, for SNR Margin tweaking. */
-	{ "dslx_sra", "0" }, /* Paul add 2012/10/15, for setting SRA. */
+	{ "dslx_snrm_offset", "0" }, /* Paul add 2012/9/24, for SNR Margin tweaking. */
+	{ "dslx_sra", "1" }, /* Paul add 2012/10/15, for setting SRA. */
 #ifdef RTCONFIG_DSL_ANNEX_B //Paul add 2012/8/21
 	{ "dslx_annex", "0" }, // Annex B
 #else

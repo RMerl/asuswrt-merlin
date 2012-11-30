@@ -24,6 +24,7 @@
 #ifndef _httpd_h_
 #define _httpd_h_
 
+#include <arpa/inet.h>
 #if defined(DEBUG) && defined(DMALLOC)
 #include <dmalloc.h>
 #endif
@@ -96,76 +97,7 @@ struct language_table{
 	char *Target_Lang;
 };
 
-static struct language_table language_tables[] = {
-	{"en-us", "EN"},
-	{"en", "EN"},
-	{"ru-ru", "RU"},
-	{"ru", "RU"},
-	{"fr", "FR"},
-	{"fr-fr", "FR"},
-	{"de-at", "DE"},
-	{"de-li", "DE"},
-	{"de-lu", "DE"},
-	{"de-de", "DE"},
-	{"de-ch", "DE"},
-	{"de", "DE"},
-	{"cs-cz", "CZ"},
-	{"cs", "CZ"},
-	{"pl-pl", "PL"},
-	{"pl", "PL"},
-	{"zh-tw", "TW"},
-	{"zh", "TW"},   
-	{"zh-hk", "CN"},
-	{"zh-cn", "CN"},
-	{"ms", "MS"},
-	{"ms-MY", "MS"},
-	{"ms-BN", "MS"},
-	{"th", "TH"},
-	{"th-TH", "TH"},
-	{"th-TH-TH", "TH"},
-	{"tr", "TR"},
-	{"tr-TR", "TR"},
-	{"da", "DA"},
-	{"da-DK", "DA"},
-	{"fi", "FI"},
-	{"fi-FI", "FI"},
-	{"no", "NO"},
-	{"nb-NO", "NO"},
-	{"nn-NO", "NO"},
-	{"sv", "SV"},
-	{"sv-FI", "SV"},
-	{"sv-SE", "SV"},
-	{"br", "BR"},
-	{"pt-BR", "BR"},
-	{"ja", "JP"},
-	{"ja-JP", "JP"},
-	{"es", "ES"},
-	{"es-ec", "ES"},
-	{"es-py", "ES"},
-	{"es-pa", "ES"},
-	{"es-ni", "ES"},
-        {"es-gt", "ES"},
-	{"es-do", "ES"},
-	{"es-es", "ES"},
-	{"es-hn", "ES"},
-	{"es-ve", "ES"},
-	{"es-pr", "ES"},
-	{"es-ar", "ES"},
-	{"es-bo", "ES"},
-	{"es-us", "ES"},
-	{"es-co", "ES"},
-	{"es-cr", "ES"},
-	{"es-uy", "ES"},
-	{"es-pe", "ES"},
-	{"es-cl", "ES"},
-	{"es-mx", "ES"},
-	{"es-sv", "ES"},
-	{"it", "IT"},
-	{"it-it", "IT"},
-	{"it-ch", "IT"},
-	{"uk", "UK"},
-	{NULL, NULL}
-};
+extern struct language_table language_tables[];
 
 //2008.10 magic}
 typedef struct kw_s     {
@@ -240,5 +172,42 @@ extern void release_dictionary (pkw_t pkw);
 extern char* search_desc (pkw_t pkw, char *name);
 //extern char Accept_Language[16];
 #endif //defined TRANSLATE_ON_FLY
+
+extern int http_port;
+
+/* api-*.c */
+extern int check_imageheader(char *buf, long *filelen);
+extern int check_imagefile(char *fname);
+extern unsigned int get_radio_status(char *ifname);
+
+/* aspbw.c */
+extern void do_f(char *path, webs_t wp);
+
+/* cgi.c */
+extern int web_read(void *buffer, int len);
+extern void set_cgi(char *name, char *value);
+
+/* httpd.c */
+extern void start_ssl(void);
+extern char *gethost(void);
+extern void http_logout(unsigned int ip);
+extern int is_auth(void);
+extern int is_firsttime(void);
+
+/* web.c */
+extern int ej_lan_leases(int eid, webs_t wp, int argc, char_t **argv);
+extern int get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv);
+extern int ej_route_table(int eid, webs_t wp, int argc, char_t **argv);
+extern void copy_index_to_unindex(char *prefix, int unit, int subunit);
+extern void logmessage(char *logheader, char *fmt, ...);
+extern int is_private_subnet(const char *ip);
+extern char* INET6_rresolve(struct sockaddr_in6 *sin6, int numeric);
+extern char *trim_r(char *str);
+
+/* web-*.c */
+extern int ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit);
+extern int ej_wl_status_2g(int eid, webs_t wp, int argc, char_t **argv);
+extern int ej_wps_info_2g(int eid, webs_t wp, int argc, char_t **argv);
+extern int ej_wps_info(int eid, webs_t wp, int argc, char_t **argv);
 
 #endif /* _httpd_h_ */

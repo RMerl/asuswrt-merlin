@@ -1,4 +1,8 @@
 /************************************************************/
+/*  Version 2.2     by Cheni	  2012/11/1		    */
+/*  AppHttpPort Info                                        */
+/************************************************************/
+/************************************************************/
 /*  Version 2.1     by Cheni      2012/5/31		    */
 /*  Webdav Info						    */
 /************************************************************/
@@ -201,7 +205,6 @@ typedef struct ws_info_t	{
 } WS_INFO_T;
 #endif
 
-#ifdef RTCONFIG_WEBDAV
 #define EXTEND_MAGIC			0x8082
 #define EXTEND_CAP_WEBDAV 		0x0001
 #define EXTEND_CAP_SYNC			0x0002
@@ -230,52 +233,9 @@ typedef struct storage_info_t {
 		WEBDAV_INFO_T wt;
 		BYTE Reserved[128];
 	} u;
+	WORD AppHttpPort;      	/* Port for accessing app UI */
 } STORAGE_INFO_T;
 
-#else
-#define APPS_CAP_DOWNLOAD 	0x01
-#define APPS_CAP_WEBSERVER 	0x02
-#define APPS_CAP_PHOTOALBUM 	0x04
-#define APPS_CAP_DMS 		0x08
-#define APPS_CAP_DMS_ITUNES	0x10
-#define APPS_CAP_BACKUP 	0x80
-
-#define DISK_STATUS_NONE	0x00
-#define DISK_STATUS_BLANK 	0x01
-#define DISK_STATUS_CLAIMED 	0x02
-#define DISK_STATUS_INSTALLING  0x04
-
-#define APPS_STATUS_SWAP 		0x0001	//  0
-#define APPS_STATUS_FILECOMPLETENESS 	0x0002	//  1
-#define APPS_STATUS_FREESPACE 		0x0004	//  2
-#define APPS_STATUS_SAMBAMODE 		0x0008	//  3
-#define APPS_STATUS_RUNNING 		0x0010	//  4
-#define APPS_STATUS_DISCONPORT		0x0020	//  5
-#define APPS_STATUS_DMPORT		0x0040	//  6
-#define APPS_STATUS_DMMODE		0x0080	//  7
-#define APPS_STATUS_CHECKED		0x0100	//  8
-#define APPS_STATUS_USBPORT1		0x0200	//  9
-#define APPS_STATUS_USBPORT2		0x0400	// 10
-#define APPS_STATUS_FS_NTFS             0x0800  // 11
-#define APPS_STATUS_BLOCKED             0x1000  // 12
-#define APPS_STATUS_SMBUSER             0x2000  // 13
-#define APPS_SLOW_DISK			0x4000	// 14
-
-// appended after wave server
-typedef struct storage_info_t
-{
-	DWORD 	Capability;		// APPS_CAP_XXXX
-	DWORD 	AppsStatus;		// APPS_STATUS_XXXX
-	BYTE 	AppsPool[32];		// Name of Pool, len=0 means none
-	BYTE 	AppsShare[32];		// Name of Share, len=0 means none
-	BYTE 	DiskStatus;		// DISK_STATUS_XXXX
-	BYTE 	DiskModel[32];		// Name of Disk
-	DWORD 	DiskSize;		// Size in Bytes
-	BYTE 	PrinterModel1[32];	// Name of Printer Model
-	BYTE 	PrinterModel2[32];	// Name of Printer Model
-	BYTE 	Apps_Model_Name[32];	// Name of Model
-} STORAGE_INFO_T;
-#endif
 
 typedef struct PktGetInfoEx1
 {
@@ -494,9 +454,7 @@ typedef struct PktEZProbeInfo
 	BYTE Acl;	    // ACL Mode, in ACL_MODE
   	BYTE ProductID[32]; // Not used now
   	BYTE FirmwareVersion[16]; // Not used now
-//#ifdef WL700G
 	STORAGE_INFO_T StorageInfo;
-//#endif
 } PKT_EZPROBE_INFO;
 
 typedef struct PktSetInfoGWQuickKey

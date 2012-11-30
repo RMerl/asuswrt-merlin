@@ -41,7 +41,7 @@ extern char * file2str(const char *path);
  * @param	timeout	seconds to wait before timing out or 0 for no timeout
  * @return	1 if descriptor changed status or 0 if timed out or -1 on error
  */
-//	extern int waitfor(int fd, int timeout);
+extern int waitfor(int fd, int timeout);
 
 /* 
  * Concatenates NULL-terminated list of arguments into a single

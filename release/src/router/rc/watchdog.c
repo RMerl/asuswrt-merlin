@@ -668,6 +668,7 @@ static void catch_sig(int sig)
 	{
 		if (nvram_match("wps_ign_btn", "1")) return;
 
+//		strcmp(wan_proto, "bigpond") == 0 ||
 		dbG("[watchdog] Handle WPS LED for WPS Stop\n");
 
 		btn_pressed_setup = BTNSETUP_NONE;
@@ -697,18 +698,7 @@ static void catch_sig(int sig)
 #ifdef RTCONFIG_DSL
 		case MODEL_DSLN55U:
 #endif
-			doSystem("iwpriv %s set RadioOn=0", WIF_2G);
-			int unit = 0;
-			char prefix[]="wlXXXXXX_", tmp[100];
-			snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-			if (nvram_match(strcat_r(prefix, "radio", tmp), "1")) {
-				char *svcDate = nvram_safe_get(strcat_r(prefix, "radio_date_x", tmp));
-				char *svcTime = nvram_safe_get(strcat_r(prefix, "radio_time_x", tmp));
-				char *svcTime2 = nvram_safe_get(strcat_r(prefix, "radio_time2_x", tmp));
-				int activeNow = timecheck_item(svcDate, svcTime, svcTime2);
-				if (activeNow)
-					doSystem("iwpriv %s set RadioOn=1", WIF_2G);
-			}
+			restart_wireless();
 			break;
 		}
 	}

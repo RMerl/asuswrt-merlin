@@ -9,6 +9,12 @@
 #include <time.h>
 #include <signal.h>
 
+#ifdef EMBEDDED_EANBLE 
+#include <utils.h>
+#include <shutils.h>
+#include <shared.h>
+#include "nvram_control.h"
+#endif
 
 #define DBE 1
 #define LIGHTTPD_PID_FILE_PATH	"/tmp/lighttpd/lighttpd.pid"
@@ -123,6 +129,7 @@ int main(int argc, char **argv) {
 	time_t prv_ts = time(NULL);
 
 	int stop_arp_count = 0;
+	int commit_count = 0;
 	
 	while (!is_shutdown) {
 		
@@ -151,6 +158,7 @@ int main(int argc, char **argv) {
 		}
 	#endif
 		
+		//-every 30 sec 
 		if(cur_ts - prv_ts >= 30){
 	
 			if(start_lighttpd){
@@ -173,13 +181,32 @@ int main(int argc, char **argv) {
 			#endif
 			}
 
+			//-every 2 hour
 			if(stop_arp_count>=240){
 				stop_arpping_process();
-				stop_arp_count++;
+				stop_arp_count=0;
+			}
+
+			//-every 12 hour
+			if(commit_count>=1440){				
+
+				#if EMBEDDED_EANBLE
+				int i, act;
+				for (i = 30; i > 0; --i) {
+			    	if (((act = check_action()) == ACT_IDLE) || (act == ACT_REBOOT)) break;
+			        fprintf(stderr, "Busy with %d. Waiting before shutdown... %d", act, i);
+			        sleep(1);
+			    }
+					
+				nvram_do_commit();
+				#endif
+				
+				commit_count=0;
 			}
 			
 			prv_ts = cur_ts;
 			stop_arp_count++;
+			commit_count++;
 		}
 	}
 

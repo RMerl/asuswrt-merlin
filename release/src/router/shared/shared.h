@@ -29,6 +29,7 @@
 //version.c
 extern const char *rt_version;
 extern const char *rt_serialno;
+extern const char *rt_extendno;
 extern const char *rt_buildname;
 extern const char *rt_buildinfo;
 
@@ -245,6 +246,7 @@ enum {
 extern int check_hw_type(void);
 //	extern int get_hardware(void) __attribute__ ((weak, alias ("check_hw_type")));
 extern int get_model(void);
+extern char *get_modelid(int model);
 extern int supports(unsigned long attr);
 
 // pids.c
@@ -332,5 +334,22 @@ extern void config8367m(int argc, char *argv[]);
 // file.c
 extern int check_if_file_exist(const char *file);
 extern int check_if_dir_exist(const char *file);
+extern int check_if_dir_writable(const char *dir);
+
+/* misc.c */
+extern char *get_logfile_path(void);
+extern char *get_syslog_fname(unsigned int idx);
+#if defined(RTCONFIG_SSH) || defined(RTCONFIG_HTTPS)
+extern int nvram_get_file(const char *key, const char *fname, int max);
+extern int nvram_set_file(const char *key, const char *fname, int max);
+#endif
+extern int free_caches(const char *clean_mode, const int clean_time, const unsigned int threshold);
+extern unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2);
+
+/* notify_rc.c */
+extern void notify_rc(const char *event_name);
+extern void notify_rc_after_wait(const char *event_name);
+extern void notify_rc_after_period_wait(const char *event_name, int wait);
+extern void notify_rc_and_wait(const char *event_name);
 
 #endif

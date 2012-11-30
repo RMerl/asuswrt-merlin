@@ -10,7 +10,7 @@ lemon_SOURCES=lemon.c
 
 lighttpd_angel_SOURCES=lighttpd-angel.c
 
-lighttpd_monitor_SOURCES=log.c buffer.c lighttpd-monitor.c
+lighttpd_monitor_SOURCES=log.c buffer.c lighttpd-monitor.c nvram_control.c
 
 lighttpd_arpping_SOURCES=log.c buffer.c arpping_thread.c nvram_control.c
 lighttpd_arpping_LDFLAGS= -lsmbclient

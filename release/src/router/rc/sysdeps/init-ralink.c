@@ -486,6 +486,7 @@ void init_syspara(void)
 	char ea[ETHER_ADDR_LEN];
 
 	nvram_set("buildno", rt_serialno);
+	nvram_set("extendno", rt_extendno);
 	nvram_set("buildinfo", rt_buildinfo);
 
 	/* /dev/mtd/2, RF parameters, starts from 0x40000 */

@@ -660,6 +660,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	int j;
 	char *nv, *nvp, *b;
 	int wl_key_type[MAX_NO_MSSID];
+	int mcast_phy, mcast_mcs;
 
 	if (!is_iNIC)
 	{
@@ -2770,7 +2771,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	fprintf(fp, "IgmpSnEnable=%d\n", 1);
 
 	/*	McastPhyMode, PHY mode for Multicast frames
-	 *	McastMcs, MCS for Multicast frames, ranges from 0 to 7
+	 *	McastMcs, MCS for Multicast frames, ranges from 0 to 15
 	 *
 	 *	MODE=1, MCS=0: Legacy CCK 1Mbps
 	 *	MODE=1, MCS=1: Legacy CCK 2Mbps
@@ -2784,89 +2785,83 @@ int gen_ralink_config(int band, int is_iNIC)
 	 * 	MODE=2, MCS=5: Legacy OFDM 36Mbps
 	 *	MODE=2, MCS=6: Legacy OFDM 48Mbps
 	 *	MODE=2, MCS=7: Legacy OFDM 54Mbps
+	 *	MODE=3, MCS=0: HTMIX 6.5/15Mbps
+	 *	MODE=3, MCS=1: HTMIX 15/30Mbps
+	 *	MODE=3, MCS=2: HTMIX 19.5/45Mbps
+	 *	MODE=3, MCS=8: HTMIX 13/30Mbps
+	 *	MODE=3, MCS=9: HTMIX 26/60Mbps
+	 *	MODE=3, MCS=10: HTMIX 39/90Mbps
 	 *	MODE=3, MCS=15: HTMIX 130/144Mbps
 	 **/
-	str = nvram_safe_get(strcat_r(prefix, "mrate_x", tmp));
-	if (str && strlen(str))
-	{
-		if (atoi(str) == 0)		// Disable
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 0);
-			fprintf(fp, "McastMcs=%d\n", 0);
-		}
-#if 0
-		else if (atoi(str) == 1)	// Legacy CCK 1Mbps
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 1);
-			fprintf(fp, "McastMcs=%d\n", 0);
-		}
-		else if (atoi(str) == 2)	// Legacy CCK 2Mbps
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 1);
-			fprintf(fp, "McastMcs=%d\n", 1);
-		}
-		else if (atoi(str) == 3)	// Legacy CCK 5.5Mbps
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 1);
-			fprintf(fp, "McastMcs=%d\n", 2);
-		}
-		else if (atoi(str) == 4)	// Legacy CCK 11Mbps
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 1);
-			fprintf(fp, "McastMcs=%d\n", 3);
-		}
-		else if (atoi(str) == 5)	// Legacy OFDM 6Mbps
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 2);
-			fprintf(fp, "McastMcs=%d\n", 0);
-		}
-		else if (atoi(str) == 6)	// Legacy OFDM 9Mbps
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 2);
-			fprintf(fp, "McastMcs=%d\n", 1);
-		}
-		else if (atoi(str) == 7)	// Legacy OFDM 12Mbps
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 2);
-			fprintf(fp, "McastMcs=%d\n", 2);
-		}
-		else if (atoi(str) == 8)	// Legacy OFDM 18Mbps
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 2);
-			fprintf(fp, "McastMcs=%d\n", 3);
-		}
-		else if (atoi(str) == 9)	// Legacy OFDM 24Mbps
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 2);
-			fprintf(fp, "McastMcs=%d\n", 4);
-		}
-		else if (atoi(str) == 10)	// Legacy OFDM 36Mbps
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 2);
-			fprintf(fp, "McastMcs=%d\n", 5);
-		}
-		else if (atoi(str) == 11)	// Legacy OFDM 48Mbps
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 2);
-			fprintf(fp, "McastMcs=%d\n", 6);
-		}
-		else if (atoi(str) == 12)	// Legacy OFDM 54Mbps
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 2);
-			fprintf(fp, "McastMcs=%d\n", 7);
-		}
-//		else if (atoi(str) == 13)	// HTMIX 130/144Mbps => Auto
-#endif
-		else
-		{
-			fprintf(fp, "McastPhyMode=%d\n", 3);
-			fprintf(fp, "McastMcs=%d\n", 15);
-		}
+	i = nvram_get_int(strcat_r(prefix, "mrate_x", tmp));
+next_mrate:
+	switch (i++) {
+	case 1: /* Legacy CCK 1Mbps */
+		mcast_phy = 1, mcast_mcs = 0;
+		break;
+	case 2: /* Legacy CCK 2Mbps */
+		mcast_phy = 1, mcast_mcs = 1;
+		break;
+	case 3: /* Legacy CCK 5.5Mbps */
+		mcast_phy = 1, mcast_mcs = 2;
+		break;
+	case 4: /* Legacy OFDM 6Mbps */
+		mcast_phy = 2, mcast_mcs = 0;
+		break;
+	case 5: /* Legacy OFDM 9Mbps */
+		mcast_phy = 2, mcast_mcs = 1;
+		break;
+	case 6: /* Legacy CCK 11Mbps */
+		mcast_phy = 1, mcast_mcs = 3;
+		break;
+	case 7: /* Legacy OFDM 12Mbps */
+		mcast_phy = 2, mcast_mcs = 2;
+		break;
+	case 8: /* Legacy OFDM 18Mbps */
+		mcast_phy = 2, mcast_mcs = 3;
+		break;
+	case 9: /* Legacy OFDM 24Mbps */
+		mcast_phy = 2, mcast_mcs = 4;
+		break;
+	case 10: /* Legacy OFDM 36Mbps */
+		mcast_phy = 2, mcast_mcs = 5;
+		break;
+	case 11: /* Legacy OFDM 48Mbps */
+		mcast_phy = 2, mcast_mcs = 6;
+		break;
+	case 12: /* Legacy OFDM 54Mbps */
+		mcast_phy = 2, mcast_mcs = 7;
+		break;
+	case 13: /* HTMIX 130/144Mbps */
+		mcast_phy = 3, mcast_mcs = 15;
+		break;
+	case 14: /* HTMIX HTMIX 6.5/15Mbps */
+		mcast_phy = 3, mcast_mcs = 0;
+		break;
+	case 15: /* HTMIX 13/30Mbps */
+		mcast_phy = 3, mcast_mcs = 1;
+		break;
+	case 16: /* HTMIX 19.5/45Mbps */
+		mcast_phy = 3, mcast_mcs = 2;
+		break;
+	case 17: /* HTMIX 13/30Mbps 2S */
+		mcast_phy = 3, mcast_mcs = 8;
+		break;
+	case 18: /* HTMIX 26/60Mbps 2S */
+		mcast_phy = 3, mcast_mcs = 9;
+		break;
+	case 19: /* HTMIX 36/90Mbps 2S */
+		mcast_phy = 3, mcast_mcs = 10;
+		break;
+	default: /* Disable */
+		mcast_phy = 0, mcast_mcs = 0;
+		break;
 	}
-	else
-	{
-		warning = 53;
-	}
+	/* No CCK for 5Ghz band */
+	if (band && mcast_phy == 1)
+		goto next_mrate;
+	fprintf(fp, "McastPhyMode=%d\n", mcast_phy);
+	fprintf(fp, "McastMcs=%d\n", mcast_mcs);
 
 	if (warning)
 	{

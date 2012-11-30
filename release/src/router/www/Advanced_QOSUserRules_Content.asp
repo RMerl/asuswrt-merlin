@@ -670,7 +670,7 @@ function valid_IPorMAC(obj){
 			return true;
 	}else{
 			var hwaddr = new RegExp("(([a-fA-F0-9]{2}(\:|$)){6})", "gi");		// ,"g" whole erea match & "i" Ignore Letter
-			var legal_hwaddr = new RegExp("(^([a-fA-F0-9][cC048])(\:))", "gi"); // for legal MAC, unicast & globally unique (OUI enforced)
+			var legal_hwaddr = new RegExp("(^([a-fA-F0-9][aAcCeE02468])(\:))", "gi"); // for legal MAC, unicast & globally unique (OUI enforced)
 
 			if(obj.value.split(":").length >= 2){
 					if(!hwaddr.test(obj.value)){	

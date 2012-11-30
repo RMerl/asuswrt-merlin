@@ -929,14 +929,13 @@ static void sigaction_handler(int sig, siginfo_t *si, void *context) {
 
 	switch (sig) {
 	case SIGTERM:{
-		#if EMBEDDED_EANBLE	
-
+		#if XXEMBEDDED_EANBLE
 		int i, act;
 		for (i = 30; i > 0; --i) {
-        		if (((act = check_action()) == ACT_IDLE) || (act == ACT_REBOOT)) break;
-        		fprintf(stderr, "Busy with %d. Waiting before shutdown... %d", act, i);
-        		sleep(1);
-    		}
+        	if (((act = check_action()) == ACT_IDLE) || (act == ACT_REBOOT)) break;
+        	fprintf(stderr, "Busy with %d. Waiting before shutdown... %d", act, i);
+        	sleep(1);
+    	}
 		
 		nvram_do_commit();
 		#endif
@@ -989,9 +988,6 @@ static void sigaction_handler(int sig, siginfo_t *si, void *context) {
 
 		//free(smb_srv_info_list);
 		g_threadIndex = 0;
-		
-		Cdbg(DBE, "222222222222222222222222222222222222222222222222222");
-		break;
 		
 		break;
 	}

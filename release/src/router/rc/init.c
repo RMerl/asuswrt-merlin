@@ -636,6 +636,9 @@ restore_defaults(void)
 			// add special default value handle here		
 			if(strcmp(t->name, "computer_name")==0) 
 				nvram_set(t->name, get_productid());
+			else if(strcmp(t->name, "ct_max")==0) {
+				// handled in init_nvram already
+			}
 			else nvram_set(t->name, t->value);			
 		}
 	}
@@ -807,22 +810,6 @@ static int console_init(void)
 	set_term(0);
 
 	return 0;
-}
-
-/*
- * Waits for a file descriptor to change status or unblocked signal
- * @param	fd	file descriptor
- * @param	timeout	seconds to wait before timing out or 0 for no timeout
- * @return	1 if descriptor changed status or 0 if timed out or -1 on error
- */
-static int waitfor(int fd, int timeout)
-{
-	fd_set rfds;
-	struct timeval tv = { timeout, 0 };
-
-	FD_ZERO(&rfds);
-	FD_SET(fd, &rfds);
-	return select(fd + 1, &rfds, NULL, NULL, (timeout > 0) ? &tv : NULL);
 }
 
 static pid_t run_shell(int timeout, int nowait)
@@ -1289,6 +1276,7 @@ int init_nvram(void)
 			nvram_set("ct_max", "15000");
 		add_rc_support("2.4G mssid usbX1");
 		add_rc_support("switchctrl"); // broadcom: for jumbo frame only
+		add_rc_support("manual_stb");
 		break;
 
 	case MODEL_RTN16:
@@ -1381,7 +1369,7 @@ int init_nvram(void)
 		nvram_unset("vlan2hwname");
 		/* end */
 		if(!nvram_get("ct_max")) 
-			nvram_set("ct_max", "8192");
+			nvram_set("ct_max", "2048");
 
 		add_rc_support("2.4G 5G update mssid no5gmssid");
 		break;
@@ -1511,7 +1499,7 @@ int init_nvram(void)
 		nvram_set("ehci_ports", "1-1");
 		nvram_set("ohci_ports", "2-1");
 		if(!nvram_get("ct_max")) 
-			nvram_set("ct_max", "8192");
+			nvram_set("ct_max", "2048");
 		add_rc_support("2.4G mssid usbX1");
 		break;
 
@@ -1527,7 +1515,7 @@ int init_nvram(void)
 		nvram_set_int("led_pwr_gpio", 6|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wps_gpio", 7);
 		if(!nvram_get("ct_max")) 
-			nvram_set("ct_max", "8192");
+			nvram_set("ct_max", "1024");
 		add_rc_support("2.4G mssid");
 		break;
 #endif // CONFIG_BCMWL5

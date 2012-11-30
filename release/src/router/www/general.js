@@ -1611,7 +1611,7 @@ function updateDateTime(s)
 function openLink(s){
 	if (s == 'x_DDNSServer'){
 		if (document.form.ddns_server_x.value.indexOf("WWW.DYNDNS.ORG")!=-1)
-			tourl = "https://www.dyndns.org/account/create.html";
+			tourl = "https://account.dyn.com/services/zones/svc/add.html?_add_dns=c&trial=standarddns";
 		else if (document.form.ddns_server_x.value == 'WWW.TZO.COM')
 			tourl = "https://controlpanel.tzo.com/cgi-bin/tzopanel.exe";
 		else if (document.form.ddns_server_x.value == 'WWW.ZONEEDIT.COM')
@@ -2505,12 +2505,15 @@ function check_hwaddr_flag(obj){  //check_hwaddr() remove alert()
 	if(obj.value == ""){
 			return 0;
 	}else{
-		var hwaddr = new RegExp("(([a-fA-F0-9]{2}(\:|$)){6})", "gi");			
+		var hwaddr = new RegExp("(([a-fA-F0-9]{2}(\:|$)){6})", "gi");
+		var legal_hwaddr = new RegExp("(^([a-fA-F0-9][aAcCeE02468])(\:))", "gi"); // for legal MAC, unicast & globally unique (OUI enforced)
 		
 		if(!hwaddr.test(obj.value))
     	return 1;
+  	else if(!legal_hwaddr.test(obj.value))
+    	return 2;
 		else
-			return 0;
+			 return 0;
   }
 }
 

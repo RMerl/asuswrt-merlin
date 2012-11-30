@@ -891,7 +891,7 @@ char *get_productid()
 int backup_rx;
 int backup_tx;
 
-uint32 netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2)
+unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2)
 {
 	char word[100], word1[100], *next, *next1;
 	char tmp[100];

@@ -86,8 +86,6 @@ apps: .conf
 		--with-krb5=no \
 		--with-libsmbclient=yes \
 		--with-shared-modules=MODULES \
-		--disable-external-libtalloc \
-		--disable-external-libtdb \
 		--disable-static \
 		--disable-cups \
 		--disable-iprint \

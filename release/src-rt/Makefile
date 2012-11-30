@@ -79,15 +79,16 @@ KERNEL_BINARY=$(LINUXDIR)/arch/mips/brcm-board/bcm947xx/compressed/zImage
 endif
 
 rt_ver:
-	echo '#ifndef RTVERSION' > router/shared/version.h
-	echo '#define RT_MAJOR_VERSION "$(KERNEL_VER)"' >> router/shared/version.h
-	echo '#define RT_MINOR_VERSION "$(FS_VER)"' >> router/shared/version.h
-	echo '#define RT_VERSION "$(KERNEL_VER).$(FS_VER)"' >> router/shared/version.h
-	echo '#define RT_SERIALNO "$(SERIALNO)"' >> router/shared/version.h
-	echo '#define RT_BUILD_NAME "$(BUILD_NAME)"' >> router/shared/version.h
-	echo '#define RT_BUILD_INFO "$(BUILD_TIME) $(BUILD_USER)@$(BUILD_INFO)"' >> router/shared/version.h
-	echo '#endif' >> router/shared/version.h
-	echo '$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER) $(BUILD_TIME)' > router/shared/version
+	@echo '#ifndef RTVERSION' > router/shared/version.h
+	@echo '#define RT_MAJOR_VERSION "$(KERNEL_VER)"' >> router/shared/version.h
+	@echo '#define RT_MINOR_VERSION "$(FS_VER)"' >> router/shared/version.h
+	@echo '#define RT_VERSION "$(KERNEL_VER).$(FS_VER)"' >> router/shared/version.h
+	@echo '#define RT_SERIALNO "$(SERIALNO)"' >> router/shared/version.h
+	@echo '#define RT_EXTENDNO "$(EXTENDNO)"' >> router/shared/version.h
+	@echo '#define RT_BUILD_NAME "$(BUILD_NAME)"' >> router/shared/version.h
+	@echo '#define RT_BUILD_INFO "$(BUILD_TIME) $(BUILD_USER)@$(BUILD_INFO)"' >> router/shared/version.h
+	@echo '#endif' >> router/shared/version.h
+	@echo '$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER) $(BUILD_TIME)' > router/shared/version
 
 all: rt_ver
 	@echo ""

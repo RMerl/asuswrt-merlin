@@ -14,14 +14,14 @@
 var selectedAccount = parent.getSelectedAccount();
 
 function initial(){
-	showtext($("selected_account"), selectedAccount);
+	showtext($("selected_account"), decodeURIComponent(selectedAccount));
 	document.deleteAccountForm.Cancel.focus();	
 	clickevent();
 }
 
 function clickevent(){
 	$("Submit").onclick = function(){
-			$("account").value = selectedAccount;
+			$("account").value = decodeURIComponent(selectedAccount);
 			
 			parent.showLoading();
 			document.deleteAccountForm.submit();

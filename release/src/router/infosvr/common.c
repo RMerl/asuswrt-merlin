@@ -827,10 +827,9 @@ char *processPacket(int sockfd, char *pdubuf)
 #endif
 		     /* get disk type */
 #ifdef RTCONFIG_WIRELESSREPEATER
-			snprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
 			if (nvram_get_int("sw_mode") == SW_MODE_REPEATER)
 			{
-				sprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
+				snprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
 				strcpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
 			}
 			else
@@ -888,10 +887,9 @@ char *processPacket(int sockfd, char *pdubuf)
 			}
 #endif
 #ifdef RTCONFIG_WIRELESSREPEATER
-			snprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
 			if (nvram_get_int("sw_mode") == SW_MODE_REPEATER)
 			{
-				sprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
+				snprintf(prefix, sizeof(prefix), "wl%d.1_", nvram_get_int("wlc_band"));
 				strcpy(ssid_g, nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
 			}
 			else
