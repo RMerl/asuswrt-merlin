@@ -89,9 +89,9 @@ integrated/enabled in the official firmware:
 Installation
 ------------
 Simply flash it like any regular update.  You should not need to reset to 
-factory defaults, unless coming from a version that used a different 
-nvram size.  You can revert back to an original Asus firmware at any time just
-by flashing one.
+factory defaults (see note below for one exception).  
+You can revert back to an original Asus firmware at any time just
+by flashing a firmware downloaded from Asus's website.
 
 NOTE: If you were still running a 32KB nvram firmware on an RT-N66U (which 
 usually mean an original firmware older than 3.0.0.4.220), the first time 
@@ -353,8 +353,8 @@ History
             Asuswrt-Merlin with an original Asus firmware.
    - FIXED: Wifi LEDs would turn back on if radios were enabled while
             in Stealth Mode (now they turn back off after a few seconds)
-    - FIXED: Webui would break if a network device had an invalid
-             NetBIOS name (such as the Sonos Dock).
+   - FIXED: Webui would break if a network device had an invalid
+            NetBIOS name (such as the Sonos Dock).
 
 
 3.0.0.4.246.20:
