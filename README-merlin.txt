@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.246.21 (xx-Nov-2012)
+Asuswrt-Merlin - build 3.0.0.4.260.21 (xx-Dec-2012)
 ===================================================
 
 About
@@ -36,7 +36,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on the 3.0.0.4.246 source release from Asus
+   - Based on the 3.0.0.4.260 source release from Asus
    - Various bugfixes (like the crash on VPN/NAT Loopback access of LAN devices)
    - Persistent JFFS partition
    - User scripts that run on specific events
@@ -335,7 +335,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.246.21:
+3.0.0.4.260.21:
+   - NEW: Rebased on 3.0.0.4.260.  This version should
+          resolve issues with some Russian ISPs.  Note that
+          the RT-N66U build still uses the wireless driver
+          from release 220, as this seems to be the most stable
+          at this time.
    - NEW: Option to force the router into becoming the SMB Master Browser.
    - NEW: Option to make the router act as a WINS server.
    - NEW: Option to control Spanning-Tree Protocol
