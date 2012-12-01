@@ -92,3 +92,7 @@ obj-$(CONFIG_IP_NF_LFP) += lfp.o
 
 # DNSMQ
 obj-$(CONFIG_IP_NF_DNSMQ) += dnsmq.o
+
+# account
+obj-$(CONFIG_IP_NF_MATCH_RECENT) += ipt_recent.o
+obj-$(CONFIG_IP_NF_MATCH_ACCOUNT) += ipt_account.o

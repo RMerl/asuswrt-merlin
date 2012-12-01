@@ -511,3 +511,22 @@ config IP_NF_DNSMQ
 
 endmenu
 
+config IP_NF_MATCH_ACCOUNT
+  tristate "account match support"
+  depends on IP_NF_IPTABLES
+  ---help---
+    This patch adds the account match
+
+    The account match provides simple traffic accounting for continuous networks.
+    --aaddr   subnet for which enable traffic accounting
+    --aname   table name with traffic counters, it can be accessed by reading
+              /proc/net/ipt_account/<table name>
+    --ashort  do simple statistics (no tcp/udp/icmp counters)
+
+    More options can be found on project homepage.
+
+    Project homepage:
+    http://www.svn.barbara.eu.org/ipt_account/
+      
+    To compile it as a module, choose M here.  If unsure, say N.
+
