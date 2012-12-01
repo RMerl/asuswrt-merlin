@@ -73,6 +73,7 @@ obj-y += ntpclient
 
 ifneq ($(RTCONFIG_4M_SFP),y)
 obj-y += rstats
+obj-y += cstats
 endif
 
 ifeq ($(RTCONFIG_RALINK),y)
