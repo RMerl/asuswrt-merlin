@@ -97,6 +97,19 @@ int pidof(const char *name)
 	return p;
 }
 
+int ppid(int pid) {
+	char buf[512];
+	char path[64];
+	int ppid = 0;
+
+	buf[0] = 0;
+	sprintf(path, "/proc/%d/stat", pid);
+	if ((f_read_string(path, buf, sizeof(buf)) > 4))
+		sscanf(buf, "%*d %*s %*c %d", &ppid);
+
+	return ppid;
+}
+
 int killall(const char *name, int sig)
 {
 	pid_t *pids;

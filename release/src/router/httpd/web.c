@@ -59,6 +59,8 @@
 #include <common.h>
 #include <shared.h>
 #include <rtstate.h>
+#include "iptraffic.h"
+#include <sys/sysinfo.h>
 
 #ifdef RTCONFIG_FANCTRL
 #include <wlutils.h>
@@ -4599,6 +4601,322 @@ void wo_bwmbackup(char *url, webs_t wp)
 }
 // end Viz ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+void wo_iptbackup(char *url, webs_t wp)
+{
+	static const char *ifn = "/var/lib/misc/cstats-history.gz";
+	struct stat st;
+	time_t t;
+	int i;
+
+	if (stat(ifn, &st) == 0) {
+		t = st.st_mtime;
+		sleep(1);
+	}
+	else {
+		t = 0;
+	}
+	killall("cstats", SIGHUP);
+	for (i = 20; i > 0; --i) { // may take a long time for gzip to complete
+		if ((stat(ifn, &st) == 0) && (st.st_mtime != t)) break;
+		sleep(1);
+	}
+	if (i == 0) {
+//		send_error(500, NULL, NULL);
+		return;
+	}
+//	send_header(200, NULL, mime_binary, 0);
+	do_f((char *)ifn, wp);
+}
+
+void ej_iptmon(int eid, webs_t wp, int argc, char **argv) {
+
+	char comma;
+	char sa[256];
+	FILE *a;
+	char *exclude;
+	char *include;
+
+	char ip[INET6_ADDRSTRLEN];
+
+	unsigned long tx, rx;
+
+	exclude = nvram_safe_get("cstats_exclude");
+	include = nvram_safe_get("cstats_include");
+
+	char br;
+	char name[] = "/proc/net/ipt_account/lanX";
+
+	websWrite(wp, "\n\niptmon={");
+	comma = ' ';
+
+	for(br=0 ; br<=3 ; br++) {
+
+		char wholenetstatsline = 1;
+
+		char bridge[2] = "0";
+		if (br!=0)
+			bridge[0]+=br;
+		else
+			strcpy(bridge, "");
+
+		sprintf(name, "/proc/net/ipt_account/lan%s", bridge);
+
+		if ((a = fopen(name, "r")) == NULL) continue;
+
+		if (!wholenetstatsline)
+			fgets(sa, sizeof(sa), a); // network
+
+		while (fgets(sa, sizeof(sa), a)) {
+			if(sscanf(sa, 
+				"ip = %s bytes_src = %lu %*u %*u %*u %*u packets_src = %*u %*u %*u %*u %*u bytes_dst = %lu %*u %*u %*u %*u packets_dst = %*u %*u %*u %*u %*u time = %*u",
+				ip, &tx, &rx) != 3 ) continue;
+
+			if (find_word(exclude, ip)) {
+				wholenetstatsline = 0;
+				continue;
+			}
+
+			if (((find_word(include, ip)) || (wholenetstatsline == 1)) || ((nvram_get_int("cstats_all")) && ((rx > 0) || (tx > 0)) )) 
+{
+//			if ((find_word(include, ip)) || (wholenetstatsline == 1)) {
+//			if ((tx > 0) || (rx > 0) || (wholenetstatsline == 1)) {
+//			if ((tx > 0) || (rx > 0)) {
+				websWrite(wp,"%c'%s':{rx:0x%lx,tx:0x%lx}", comma, ip, rx, tx);
+				comma = ',';
+			}
+			wholenetstatsline = 0;
+		}
+		fclose(a);
+	}
+	websWrite(wp,"};\n");
+}
+
+void ej_ipt_bandwidth(int eid, webs_t wp, int argc, char **argv)
+{
+	char *name;
+	int sig;
+
+	if ((nvram_get_int("cstats_enable") == 1) && (argc == 1)) {
+		if (strcmp(argv[0], "speed") == 0) {
+			sig = SIGUSR1;
+			name = "/var/spool/cstats-speed.js";
+		}
+		else {
+			sig = SIGUSR2;
+			name = "/var/spool/cstats-history.js";
+		}
+		unlink(name);
+		killall("cstats", sig);
+		f_wait_exists(name, 5);
+		do_f(name, wp);
+		unlink(name);
+	}
+}
+
+void ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
+	char comma;
+	char sa[256];
+	FILE *a;
+	char ip[INET_ADDRSTRLEN];
+
+	char *exclude;
+
+	unsigned long tx_bytes, rx_bytes;
+	unsigned long tp_tcp, rp_tcp;
+	unsigned long tp_udp, rp_udp;
+	unsigned long tp_icmp, rp_icmp;
+	unsigned int ct_tcp, ct_udp;
+
+	exclude = nvram_safe_get("cstats_exclude");
+
+	Node tmp;
+	Node *ptr;
+
+	iptraffic_conntrack_init();
+
+	char br;
+	char name[] = "/proc/net/ipt_account/lanX";
+
+	websWrite(wp, "\n\niptraffic=[");
+	comma = ' ';
+
+	for(br=0 ; br<=3 ; br++) {
+		char bridge[2] = "0";
+		if (br!=0)
+			bridge[0]+=br;
+		else
+			strcpy(bridge, "");
+
+		sprintf(name, "/proc/net/ipt_account/lan%s", bridge);
+
+		if ((a = fopen(name, "r")) == NULL) continue;
+
+		fgets(sa, sizeof(sa), a); // network
+		while (fgets(sa, sizeof(sa), a)) {
+			if(sscanf(sa, 
+				"ip = %s bytes_src = %lu %*u %*u %*u %*u packets_src = %*u %lu %lu %lu %*u bytes_dst = %lu %*u %*u %*u %*u packets_dst = %*u %lu %lu %lu %*u time = %*u",
+				ip, &tx_bytes, &tp_tcp, &tp_udp, &tp_icmp, &rx_bytes, &rp_tcp, &rp_udp, &rp_icmp) != 9 ) continue;
+			if (find_word(exclude, ip)) continue ;
+			if ((tx_bytes > 0) || (rx_bytes > 0)){
+				strncpy(tmp.ipaddr, ip, INET_ADDRSTRLEN);
+				ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
+				if (!ptr) {
+					ct_tcp = 0;
+					ct_udp = 0;
+				} else {
+					ct_tcp = ptr->tcp_conn;
+					ct_udp = ptr->udp_conn;
+				}
+				websWrite(wp, "%c['%s', %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu]", 
+							comma, ip, rx_bytes, tx_bytes, rp_tcp, tp_tcp, rp_udp, tp_udp, rp_icmp, tp_icmp, ct_tcp, ct_udp);
+				comma = ',';
+			}
+		}
+		fclose(a);
+	}
+	websWrite(wp, "];\n");
+
+	TREE_FORWARD_APPLY(&tree, _Node, linkage, Node_housekeeping, NULL);
+}
+
+void iptraffic_conntrack_init() {
+	unsigned int a_time, a_proto;
+	char a_src[INET_ADDRSTRLEN];
+	char a_dst[INET_ADDRSTRLEN];
+	char b_src[INET_ADDRSTRLEN];
+	char b_dst[INET_ADDRSTRLEN];
+
+	char sa[256];
+	char sb[256];
+	FILE *a;
+	char *p;
+	int x;
+
+	Node tmp;
+	Node *ptr;
+
+	unsigned long rip[4];
+	unsigned long lan[4];
+	unsigned long mask[4];
+	unsigned short int br;
+
+	for(br=0 ; br<=3 ; br++) {
+		char bridge[2] = "0";
+		if (br!=0)
+			bridge[0]+=br;
+		else
+			strcpy(bridge, "");
+		sprintf(sa, "lan%s_ifname", bridge);
+
+		if (strcmp(nvram_safe_get(sa), "") != 0) {
+			sprintf(sa, "lan%s_ipaddr", bridge);
+			rip[br] = inet_addr(nvram_safe_get(sa));
+			sprintf(sa, "lan%s_netmask", bridge);
+			mask[br] = inet_addr(nvram_safe_get(sa));
+			lan[br] = rip[br] & mask[br];
+//			_dprintf("rip[%d]=%lu\n", br, rip[br]);
+//			_dprintf("mask[%d]=%lu\n", br, mask[br]);
+//			_dprintf("lan[%d]=%lu\n", br, lan[br]);
+		} else {
+			mask[br] = 0;
+			rip[br] = 0;
+			lan[br] = 0;
+		}
+	}
+
+	const char conntrack[] = "/proc/net/ip_conntrack";
+
+	if ((a = fopen(conntrack, "r")) == NULL) return;
+
+	ctvbuf(a);	// if possible, read in one go
+
+	while (fgets(sa, sizeof(sa), a)) {
+		if (sscanf(sa, "%*s %u %u", &a_proto, &a_time) != 2) continue;
+
+		if ((a_proto != 6) && (a_proto != 17)) continue;
+
+		if ((p = strstr(sa, "src=")) == NULL) continue;
+		if (sscanf(p, "src=%s dst=%s %n", a_src, a_dst, &x) != 2) continue;
+		p += x;
+
+		if ((p = strstr(p, "src=")) == NULL) continue;
+		if (sscanf(p, "src=%s dst=%s", b_src, b_dst) != 2) continue;
+
+		snprintf(sb, sizeof(sb), "%s %s %s %s", a_src, a_dst, b_src, b_dst);
+		remove_dups(sb, sizeof(sb));
+
+		char ipaddr[INET_ADDRSTRLEN], *next = NULL;
+		char skip;
+
+		foreach(ipaddr, sb, next) {
+			skip = 1;
+			for(br=0 ; br<=3 ; br++) {
+				if ((mask[br] != 0) && ((inet_addr(ipaddr) & mask[br]) == lan[br])) {
+						skip = 0;
+						break;
+				}
+			}
+			if (skip == 1) continue;
+
+			strncpy(tmp.ipaddr, ipaddr, INET_ADDRSTRLEN);
+			ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
+
+			if (!ptr) {
+				_dprintf("%s: new ip: %s\n", __FUNCTION__, ipaddr);
+				TREE_INSERT(&tree, _Node, linkage, Node_new(ipaddr));
+				ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
+			}
+			if (a_proto == 6) ++ptr->tcp_conn;
+			if (a_proto == 17) ++ptr->udp_conn;
+		}
+	}
+	fclose(a);
+//	Tree_info();
+}
+
+void ctvbuf(FILE *f) {
+	int n;
+	struct sysinfo si;
+//	meminfo_t mem;
+
+#if 1
+	const char *p;
+
+	if ((p = nvram_get("ct_max")) != NULL) {
+		n = atoi(p);
+		if (n == 0) n = 2048;
+		else if (n < 1024) n = 1024;
+		else if (n > 10240) n = 10240;
+	}
+	else {
+		n = 2048;
+	}
+#else
+	char s[64];
+
+	if (f_read_string("/proc/sys/net/ipv4/ip_conntrack_max", s, sizeof(s)) > 0) n = atoi(s);
+		else n = 1024;
+	if (n < 1024) n = 1024;
+		else if (n > 10240) n = 10240;
+#endif
+
+	n *= 170;	// avg tested
+
+//	get_memory(&mem);
+//	if (mem.maxfreeram < (n + (64 * 1024))) n = mem.maxfreeram - (64 * 1024);
+
+	sysinfo(&si);
+	if (si.freeram < (n + (64 * 1024))) n = si.freeram - (64 * 1024);
+
+//	cprintf("free: %dK, buffer: %dK\n", si.freeram / 1024, n / 1024);
+
+	if (n > 4096) {
+//		n =
+		setvbuf(f, NULL, _IOFBF, n);
+//		cprintf("setvbuf = %d\n", n);
+	}
+}
+
 static void
 do_prf_file(char *url, FILE *stream)
 {
@@ -4680,7 +4998,8 @@ struct mime_handler mime_handlers[] = {
 	// Viz 2010.08 vvvvv  
 	{ "update.cgi*", "text/javascript", no_cache_IE7, do_html_post_and_get, do_update_cgi, do_auth }, // jerry5 
 	{ "bwm/*.gz", NULL, no_cache, do_html_post_and_get, wo_bwmbackup, do_auth }, // jerry5
-	// end Viz  ^^^^^^^^ 
+	// end Viz  ^^^^^^^^  
+	{ "ipt/*.gz", NULL, no_cache, do_html_post_and_get, wo_iptbackup, do_auth },
 #ifdef TRANSLATE_ON_FLY
 	{ "change_lang.cgi*", "text/html", no_cache_IE7, do_lang_post, do_lang_cgi, do_auth },
 #endif //TRANSLATE_ON_FLY
@@ -7327,6 +7646,11 @@ struct ej_handler ej_handlers[] = {
 	{ "qrate", ej_qos_packet},
 	{ "ctdump", ej_ctdump},
 	{ "netdev", ej_netdev},
+
+	{ "iptraffic", ej_iptraffic},
+	{ "iptmon", ej_iptmon},
+	{ "ipt_bandwidth", ej_ipt_bandwidth},
+
 	{ "bandwidth", ej_bandwidth},
 	{ "backup_nvram", ej_backup_nvram},
 //tomato qos^^^^^^^^^^^^ end Viz

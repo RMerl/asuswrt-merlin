@@ -1860,6 +1860,11 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 
 	strcpy(macaccept, "");
 
+// Setup traffic accounting
+	if (nvram_match("cstats_enable", "1")) {
+		ipt_account(fp);
+	}
+
 #ifdef RTCONFIG_OLD_PARENTALCTRL
 	parental_ctrl();
 #endif	/* RTCONFIG_OLD_PARENTALCTRL */
@@ -4161,4 +4166,60 @@ void enable_ip_forward(void)
 #endif
 #endif
 }
+
+#if 0
+void ipt_account(FILE *fp) {
+	struct in_addr ipaddr, netmask, network;
+	char netaddrnetmask[] = "255.255.255.255/255.255.255.255 ";
+
+	inet_aton(nvram_safe_get("lan_ipaddr"), &ipaddr);
+	inet_aton(nvram_safe_get("lan_netmask"), &netmask);
+
+	// bitwise AND of ip and netmask gives the network
+	network.s_addr = ipaddr.s_addr & netmask.s_addr;
+
+	sprintf(netaddrnetmask, "%s/%s", inet_ntoa(network), nvram_safe_get("lan_netmask"));
+
+	//ipv4 only
+	fprintf(fp, "-A FORWARD -m account --aaddr %s --aname lan\n", netaddrnetmask);
+}
+#else
+void ipt_account(FILE *fp) {
+	struct in_addr ipaddr, netmask, network;
+	char lanN_ifname[] = "lanXX_ifname";
+	char lanN_ipaddr[] = "lanXX_ipaddr";
+	char lanN_netmask[] = "lanXX_netmask";
+	char lanN[] = "lanXX";
+	char netaddrnetmask[] = "255.255.255.255/255.255.255.255 ";
+	char br;
+
+	for(br=0 ; br<=3 ; br++) {
+		char bridge[2] = "0";
+		if (br!=0)
+			bridge[0]+=br;
+		else
+			strcpy(bridge, "");
+
+		sprintf(lanN_ifname, "lan%s_ifname", bridge);
+
+		if (strcmp(nvram_safe_get(lanN_ifname), "")!=0) {
+
+			sprintf(lanN_ipaddr, "lan%s_ipaddr", bridge);
+			sprintf(lanN_netmask, "lan%s_netmask", bridge);
+			sprintf(lanN, "lan%s", bridge);
+
+			inet_aton(nvram_safe_get(lanN_ipaddr), &ipaddr);
+			inet_aton(nvram_safe_get(lanN_netmask), &netmask);
+
+			// bitwise AND of ip and netmask gives the network
+			network.s_addr = ipaddr.s_addr & netmask.s_addr;
+
+			sprintf(netaddrnetmask, "%s/%s", inet_ntoa(network), nvram_safe_get(lanN_netmask));
+
+			//ipv4 only
+			fprintf(fp, "-A FORWARD -m account --aaddr %s --aname %s\n", netaddrnetmask, lanN);
+		}
+	}
+}
+#endif
 
