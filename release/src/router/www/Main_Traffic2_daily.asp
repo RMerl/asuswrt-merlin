@@ -23,6 +23,8 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
+lan_ipaddr = '<% nvram_get("lan_ipaddr"); %>';
+lan_netmask = '<% nvram_get("lan_netmask"); %>';
 
 try {
 //	<% ipt_bandwidth("daily"); %>
@@ -40,8 +42,8 @@ if (typeof(daily_history) == 'undefined') {
 var filterip = [];
 var filteripe = [];
 var filteripe_before = [];
-var dateFormat = -1;
-var scale = -1;
+var dateFormat = 1;
+var scale = 2;
 
 hostnamecache = [];
 
@@ -102,11 +104,11 @@ function redraw()
 			fskip=0;
 			b = daily_history[i];
 
-/*
-			if (E('_f_ignorezeroes').checked)
+// Hide IPs with zero traffic?
+			if (1)
 				if ((b[2] < 1) || (b[3] < 1))
 					continue;
-*/
+
 /*
 			if (E('_f_begin_date').value.toString() != '0') {
 				if (b[0] < E('_f_begin_date').value)
@@ -118,24 +120,21 @@ function redraw()
 					continue;
 			}
 */
-/*
-			if ((b[1] == getNetworkAddress(nvram.lan_ipaddr,nvram.lan_netmask)) ||
-				(b[1] == getNetworkAddress(nvram.lan1_ipaddr,nvram.lan1_netmask)) ||
-				(b[1] == getNetworkAddress(nvram.lan2_ipaddr,nvram.lan2_netmask)) ||
-				(b[1] == getNetworkAddress(nvram.lan3_ipaddr,nvram.lan3_netmask))) {
-				if(E('_f_subnet').checked == 0) {
-					continue;
+// Display subnet total?
+			if (0) {
+				if (b[1] == fixIP(ntoa(aton(lan_ipaddr) & aton(lan_netmask)))) {
+					if(1) {
+						continue;
+					} else {
+						subnetslisted.push(b[1]);
+					}
 				} else {
-					subnetslisted.push(b[1]);
+					hostslisted.push(b[1]);
+					rx += b[2];
+					tx += b[3];
 				}
-			} else {
-*/
-				hostslisted.push(b[1]);
-				rx += b[2];
-				tx += b[3];
-/*
 			}
-*/
+
 			if (hostslisted.length > 0) {
 				hostslisted.sort();
 				for (var j = 1; j < hostslisted.length; j++ ) {
@@ -155,14 +154,16 @@ function redraw()
 			}
 
 			var h = b[1];
-/*
 
-			if (E('_f_hostnames').checked) {
+
+//			if (E('_f_hostnames').checked) {
+
 				if(hostnamecache[b[1]] != null) {
 					h = hostnamecache[b[1]] + ((b[1].indexOf(':') != -1) ? '<br>' : ' ') + '<small>(' + b[1] + ')</small>';
+
 				}
-			}
-*/
+//			}
+
 
 			var ymd = getYMD(b[0]);
 			d = [ymdText(ymd[0], ymd[1], ymd[2]), h, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3])];
@@ -194,8 +195,7 @@ function init()
 {
 	var s;
 
-// TODO: FIXME
-//	if (nvram.cstats_enable != '1') return;
+	if (<% nvram_get("cstats_enable"); %> != '1') return;
 
 	if ((s = cookie.get('daily')) != null) {
 		if (s.match(/^([0-2])$/)) {
@@ -203,10 +203,50 @@ function init()
 		}
 	}
 
+
 	initDate('ymd');
 	daily_history.sort(cmpHist);
+	populateCache();
 	redraw();
 }
+
+function populateCache() {
+	var s;
+
+	// Retrieve client names through networkmap list
+
+	var client_list_array = '<% get_client_detail_info(); %>'; 
+
+        if (client_list_array) {
+                s = client_list_array.split('<');
+                for (var i = 0; i < s.length; ++i) {
+                        var t = s[i].split('>');
+                        if (t.length == 7) {
+                                if (t[1] != '')
+                                        hostnamecache[t[2]] = t[1].split(' ').splice(0,1);
+                        }
+                }
+        }
+
+	// Retrieve manually entered descriptions in static lease list
+	// We want to override hostnames if applicable
+
+	dhcpstaticlist = '<% nvram_get("dhcp_staticlist"); %>';
+
+	if (dhcpstaticlist) {
+		s = dhcpstaticlist.split('&#60');
+		for (var i = 0; i < s.length; ++i) {
+			var t = s[i].split('&#62');
+			if ((t.length == 3) || (t.length == 4)) {
+				if (t[2] != '')
+					hostnamecache[t[1]] = t[2].split(' ').splice(0,1);
+			}
+		}
+	}
+
+	hostnamecache[fixIP(ntoa(aton(lan_ipaddr) & aton(lan_netmask)))] = 'LAN';
+}
+
 
 function switchPage(page){
 	if(page == "1")
