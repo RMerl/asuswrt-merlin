@@ -213,23 +213,24 @@ function init()
 function populateCache() {
 	var s;
 
-	// Retrieve client names through networkmap list
-
+	// Retrieve NETBIOS client names through networkmap list
+	// This might NOT be accurate if the device IP is dynamic.
+	// TODO: Should we force a network scan first to update that list?
 	var client_list_array = '<% get_client_detail_info(); %>'; 
 
-        if (client_list_array) {
-                s = client_list_array.split('<');
-                for (var i = 0; i < s.length; ++i) {
-                        var t = s[i].split('>');
-                        if (t.length == 7) {
-                                if (t[1] != '')
-                                        hostnamecache[t[2]] = t[1].split(' ').splice(0,1);
-                        }
-                }
-        }
+	if (client_list_array) {
+		s = client_list_array.split('<');
+		for (var i = 0; i < s.length; ++i) {
+			var t = s[i].split('>');
+			if (t.length == 7) {
+				if (t[1] != '')
+					hostnamecache[t[2]] = t[1].split(' ').splice(0,1);
+			}
+		}
+	}
 
 	// Retrieve manually entered descriptions in static lease list
-	// We want to override hostnames if applicable
+	// We want to override netbios names if we havee a better name
 
 	dhcpstaticlist = '<% nvram_get("dhcp_staticlist"); %>';
 
