@@ -4643,51 +4643,36 @@ void ej_iptmon(int eid, webs_t wp, int argc, char **argv) {
 	exclude = nvram_safe_get("cstats_exclude");
 	include = nvram_safe_get("cstats_include");
 
-	char br;
-	char name[] = "/proc/net/ipt_account/lanX";
-
 	websWrite(wp, "\n\niptmon={");
 	comma = ' ';
 
-	for(br=0 ; br<=3 ; br++) {
+	char wholenetstatsline = 1;
 
-		char wholenetstatsline = 1;
+	if ((a = fopen("/proc/net/ipt_account/lan", "r")) == NULL) return;
 
-		char bridge[2] = "0";
-		if (br!=0)
-			bridge[0]+=br;
-		else
-			strcpy(bridge, "");
+	if (!wholenetstatsline)
+		fgets(sa, sizeof(sa), a); // network
 
-		sprintf(name, "/proc/net/ipt_account/lan%s", bridge);
+	while (fgets(sa, sizeof(sa), a)) {
+		if(sscanf(sa, 
+			"ip = %s bytes_src = %lu %*u %*u %*u %*u packets_src = %*u %*u %*u %*u %*u bytes_dst = %lu %*u %*u %*u %*u packets_dst = %*u %*u %*u %*u %*u time = %*u",
+			ip, &tx, &rx) != 3 ) continue;
 
-		if ((a = fopen(name, "r")) == NULL) continue;
-
-		if (!wholenetstatsline)
-			fgets(sa, sizeof(sa), a); // network
-
-		while (fgets(sa, sizeof(sa), a)) {
-			if(sscanf(sa, 
-				"ip = %s bytes_src = %lu %*u %*u %*u %*u packets_src = %*u %*u %*u %*u %*u bytes_dst = %lu %*u %*u %*u %*u packets_dst = %*u %*u %*u %*u %*u time = %*u",
-				ip, &tx, &rx) != 3 ) continue;
-
-			if (find_word(exclude, ip)) {
-				wholenetstatsline = 0;
-				continue;
-			}
-
-			if (((find_word(include, ip)) || (wholenetstatsline == 1)) || ((nvram_get_int("cstats_all")) && ((rx > 0) || (tx > 0)) )) 
-{
-//			if ((find_word(include, ip)) || (wholenetstatsline == 1)) {
-//			if ((tx > 0) || (rx > 0) || (wholenetstatsline == 1)) {
-//			if ((tx > 0) || (rx > 0)) {
-				websWrite(wp,"%c'%s':{rx:0x%lx,tx:0x%lx}", comma, ip, rx, tx);
-				comma = ',';
-			}
+		if (find_word(exclude, ip)) {
 			wholenetstatsline = 0;
+			continue;
 		}
-		fclose(a);
+
+		if (((find_word(include, ip)) || (wholenetstatsline == 1)) || ((nvram_get_int("cstats_all")) && ((rx > 0) || (tx > 0)) )) {
+//		if ((find_word(include, ip)) || (wholenetstatsline == 1)) {
+//		if ((tx > 0) || (rx > 0) || (wholenetstatsline == 1)) {
+//		if ((tx > 0) || (rx > 0)) {
+			websWrite(wp,"%c'%s':{rx:0x%lx,tx:0x%lx}", comma, ip, rx, tx);
+			comma = ',';
+		}
+		wholenetstatsline = 0;
 	}
+	fclose(a);
 	websWrite(wp,"};\n");
 }
 
@@ -4734,46 +4719,33 @@ void ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
 
 	iptraffic_conntrack_init();
 
-	char br;
-	char name[] = "/proc/net/ipt_account/lanX";
-
 	websWrite(wp, "\n\niptraffic=[");
 	comma = ' ';
 
-	for(br=0 ; br<=3 ; br++) {
-		char bridge[2] = "0";
-		if (br!=0)
-			bridge[0]+=br;
-		else
-			strcpy(bridge, "");
+	if ((a = fopen("/proc/net/ipt_account/lan", "r")) == NULL) return;
 
-		sprintf(name, "/proc/net/ipt_account/lan%s", bridge);
-
-		if ((a = fopen(name, "r")) == NULL) continue;
-
-		fgets(sa, sizeof(sa), a); // network
-		while (fgets(sa, sizeof(sa), a)) {
-			if(sscanf(sa, 
-				"ip = %s bytes_src = %lu %*u %*u %*u %*u packets_src = %*u %lu %lu %lu %*u bytes_dst = %lu %*u %*u %*u %*u packets_dst = %*u %lu %lu %lu %*u time = %*u",
-				ip, &tx_bytes, &tp_tcp, &tp_udp, &tp_icmp, &rx_bytes, &rp_tcp, &rp_udp, &rp_icmp) != 9 ) continue;
-			if (find_word(exclude, ip)) continue ;
-			if ((tx_bytes > 0) || (rx_bytes > 0)){
-				strncpy(tmp.ipaddr, ip, INET_ADDRSTRLEN);
-				ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
-				if (!ptr) {
-					ct_tcp = 0;
-					ct_udp = 0;
-				} else {
-					ct_tcp = ptr->tcp_conn;
-					ct_udp = ptr->udp_conn;
-				}
-				websWrite(wp, "%c['%s', %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu]", 
-							comma, ip, rx_bytes, tx_bytes, rp_tcp, tp_tcp, rp_udp, tp_udp, rp_icmp, tp_icmp, ct_tcp, ct_udp);
-				comma = ',';
+	fgets(sa, sizeof(sa), a); // network
+	while (fgets(sa, sizeof(sa), a)) {
+		if(sscanf(sa, 
+			"ip = %s bytes_src = %lu %*u %*u %*u %*u packets_src = %*u %lu %lu %lu %*u bytes_dst = %lu %*u %*u %*u %*u packets_dst = %*u %lu %lu %lu %*u time = %*u",
+			ip, &tx_bytes, &tp_tcp, &tp_udp, &tp_icmp, &rx_bytes, &rp_tcp, &rp_udp, &rp_icmp) != 9 ) continue;
+		if (find_word(exclude, ip)) continue ;
+		if ((tx_bytes > 0) || (rx_bytes > 0)){
+			strncpy(tmp.ipaddr, ip, INET_ADDRSTRLEN);
+			ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
+			if (!ptr) {
+				ct_tcp = 0;
+				ct_udp = 0;
+			} else {
+				ct_tcp = ptr->tcp_conn;
+				ct_udp = ptr->udp_conn;
 			}
+			websWrite(wp, "%c['%s', %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu]", 
+						comma, ip, rx_bytes, tx_bytes, rp_tcp, tp_tcp, rp_udp, tp_udp, rp_icmp, tp_icmp, ct_tcp, ct_udp);
+			comma = ',';
 		}
-		fclose(a);
 	}
+	fclose(a);
 	websWrite(wp, "];\n");
 
 	TREE_FORWARD_APPLY(&tree, _Node, linkage, Node_housekeeping, NULL);
@@ -4795,33 +4767,21 @@ void iptraffic_conntrack_init() {
 	Node tmp;
 	Node *ptr;
 
-	unsigned long rip[4];
-	unsigned long lan[4];
-	unsigned long mask[4];
-	unsigned short int br;
+	unsigned long rip;
+	unsigned long lan;
+	unsigned long mask;
 
-	for(br=0 ; br<=3 ; br++) {
-		char bridge[2] = "0";
-		if (br!=0)
-			bridge[0]+=br;
-		else
-			strcpy(bridge, "");
-		sprintf(sa, "lan%s_ifname", bridge);
-
-		if (strcmp(nvram_safe_get(sa), "") != 0) {
-			sprintf(sa, "lan%s_ipaddr", bridge);
-			rip[br] = inet_addr(nvram_safe_get(sa));
-			sprintf(sa, "lan%s_netmask", bridge);
-			mask[br] = inet_addr(nvram_safe_get(sa));
-			lan[br] = rip[br] & mask[br];
-//			_dprintf("rip[%d]=%lu\n", br, rip[br]);
-//			_dprintf("mask[%d]=%lu\n", br, mask[br]);
-//			_dprintf("lan[%d]=%lu\n", br, lan[br]);
-		} else {
-			mask[br] = 0;
-			rip[br] = 0;
-			lan[br] = 0;
-		}
+	if (strcmp(nvram_safe_get("lan_ifname"), "") != 0) {
+		rip = inet_addr(nvram_safe_get("lan_ipaddr"));
+		mask = inet_addr(nvram_safe_get("lan_netmask"));
+		lan = rip & mask;
+//		_dprintf("rip[%d]=%lu\n", br, rip[br]);
+//		_dprintf("mask[%d]=%lu\n", br, mask[br]);
+//		_dprintf("lan[%d]=%lu\n", br, lan[br]);
+	} else {
+		mask = 0;
+		rip = 0;
+		lan = 0;
 	}
 
 	const char conntrack[] = "/proc/net/ip_conntrack";
@@ -4846,17 +4806,9 @@ void iptraffic_conntrack_init() {
 		remove_dups(sb, sizeof(sb));
 
 		char ipaddr[INET_ADDRSTRLEN], *next = NULL;
-		char skip;
 
 		foreach(ipaddr, sb, next) {
-			skip = 1;
-			for(br=0 ; br<=3 ; br++) {
-				if ((mask[br] != 0) && ((inet_addr(ipaddr) & mask[br]) == lan[br])) {
-						skip = 0;
-						break;
-				}
-			}
-			if (skip == 1) continue;
+			if (!((mask != 0) && ((inet_addr(ipaddr) & mask) == lan))) continue;
 
 			strncpy(tmp.ipaddr, ipaddr, INET_ADDRSTRLEN);
 			ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
