@@ -1377,7 +1377,13 @@ function is_string(o, event){
 }
 
 function is_alphanum(o, event){
-	keyPressed = event.keyCode;
+
+	if (event.which == null)
+		keyPressed = event.keyCode;	// IE
+	 else if (event.which != 0 && event.charCode != 0)
+		keyPressed = event.which	// All others
+	else
+		return true;			// Special key
 
 	if ((keyPressed>=48&&keyPressed<=57) ||	//0-9
 	   (keyPressed>=97&&keyPressed<=122) ||	//little EN
