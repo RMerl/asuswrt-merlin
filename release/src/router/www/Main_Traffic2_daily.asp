@@ -53,21 +53,6 @@ function save()
 	cookie.set('daily', scale, 31);
 }
 
-function genData() {
-	var w, i, h, t;
-
-	w = window.open('', 'tomato_ipt_data_d');
-	w.document.writeln('<pre>');
-	for (i = 0; i < daily_history.length; ++i) {
-		h = daily_history[i];
-		t = getYMD(h[0]);
-		w.document.writeln([t[0], t[1] + 1, t[2], h[1], h[2], h[3]].join(','));
-	}
-	w.document.writeln('</pre>');
-	w.document.close();
-}
-
-
 function getYMD(n)
 {
 	// [y,m,d]
@@ -82,10 +67,9 @@ function redraw()
 	var ymd;
 	var i, b, d;
 	var fskip;
-	var tx = 0;
-	var rx = 0;
-	var hostslisted = [];
-	var subnetslisted = [];
+
+	var style_open;
+	var style_close;
 
 	rows = 0;
 	block = '';
@@ -102,6 +86,9 @@ function redraw()
 	if (daily_history.length > 0) {
 		for (i = 0; i < daily_history.length; ++i) {
 			fskip=0;
+			style_open = "";
+			style_close = "";
+
 			b = daily_history[i];
 
 // Hide IPs with zero traffic?
@@ -121,54 +108,25 @@ function redraw()
 			}
 */
 // Display subnet total?
-			if (0) {
-				if (b[1] == fixIP(ntoa(aton(lan_ipaddr) & aton(lan_netmask)))) {
-					if(1) {
-						continue;
-					} else {
-						subnetslisted.push(b[1]);
-					}
-				} else {
-					hostslisted.push(b[1]);
-					rx += b[2];
-					tx += b[3];
-				}
-			}
-
-			if (hostslisted.length > 0) {
-				hostslisted.sort();
-				for (var j = 1; j < hostslisted.length; j++ ) {
-					if (hostslisted[j] === hostslisted[j - 1]) {
-						hostslisted.splice(j--, 1);
-					}
-				}
-			}
-
-			if (subnetslisted.length > 0) {
-				subnetslisted.sort();
-				for (var j = 1; j < subnetslisted.length; j++ ) {
-					if (subnetslisted[j] === subnetslisted[j - 1]) {
-						subnetslisted.splice(j--, 1);
-					}
-				}
+			if (b[1] == fixIP(ntoa(aton(lan_ipaddr) & aton(lan_netmask)))) {
+				style_open='<span style="color: yellow;">';
+				style_close='</span>';
 			}
 
 			var h = b[1];
 
-
-//			if (E('_f_hostnames').checked) {
-
+// Display hostnames?
+			if (1) {
 				if(hostnamecache[b[1]] != null) {
-					h = hostnamecache[b[1]] + ((b[1].indexOf(':') != -1) ? '<br>' : ' ') + '<small>(' + b[1] + ')</small>';
+					h = "<b>" + hostnamecache[b[1]] + '</b>  <small>(' + b[1] + ')</small>';
 
 				}
-//			}
-
+			}
 
 			var ymd = getYMD(b[0]);
 			d = [ymdText(ymd[0], ymd[1], ymd[2]), h, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3])];
 
-			grid += addrow(((rows & 1) ? 'odd' : 'even'), ymdText(ymd[0], ymd[1], ymd[2]), h, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3]));
+			grid += addrow(((rows & 1) ? 'odd' : 'even'), ymdText(ymd[0], ymd[1], ymd[2]), style_open + h + style_close, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3]));
 			++rows;
 		}
 	}
@@ -191,8 +149,7 @@ function addrow(rclass, rtitle, host, dl, ul, total)
 }
 
 
-function init()
-{
+function init() {
 	var s;
 
 	if (<% nvram_get("cstats_enable"); %> != '1') return;
@@ -203,11 +160,19 @@ function init()
 		}
 	}
 
-
 	initDate('ymd');
-	daily_history.sort(cmpHist);
+
+	daily_history.sort(cmpDualFields);
 	populateCache();
 	redraw();
+}
+
+function cmpDualFields(a, b) {
+
+	if (cmpHist(a, b) == 0)
+		return aton(a[1])-aton(b[1]);
+	else
+		return cmpHist(a,b);
 }
 
 function populateCache() {
@@ -216,7 +181,8 @@ function populateCache() {
 	// Retrieve NETBIOS client names through networkmap list
 	// This might NOT be accurate if the device IP is dynamic.
 	// TODO: Should we force a network scan first to update that list?
-	var client_list_array = '<% get_client_detail_info(); %>'; 
+	//       See what happens if we access this right after a reboot
+	var client_list_array = '<% get_client_detail_info(); %>';
 
 	if (client_list_array) {
 		s = client_list_array.split('<');
