@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.260.21 (1-Dec-2012)
-==================================================
+Asuswrt-Merlin - build 3.0.0.4.260.22 (XX-Dec-2012)
+===================================================
 
 About
 -----
@@ -335,6 +335,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.260.22:
+   - FIXED: Really fixed Firefox issue (the fix wasn't merged
+            in release 260.21).
+
+
 3.0.0.4.260.21:
    - NEW: Rebased on 3.0.0.4.260.  This version should
           resolve issues with some Russian ISPs.  Note that
