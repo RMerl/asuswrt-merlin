@@ -5,7 +5,7 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 
-<title><#Web_Title#> - <#menu5_8_3#></title>
+<title><#Web_Title#> - Daily Traffic</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
@@ -91,32 +91,55 @@ function redraw()
 
 			b = daily_history[i];
 
-// Hide IPs with zero traffic?
-			if (1)
+			if (getRadioValue(document.form._f_show_zero) == 0) {
 				if ((b[2] < 1) || (b[3] < 1))
 					continue;
+			}
 
-/*
-			if (E('_f_begin_date').value.toString() != '0') {
-				if (b[0] < E('_f_begin_date').value)
+			if (document.form._f_begin_date.value.toString() != '0') {
+				if (b[0] < document.form._f_begin_date.value)
 					continue;
 			}
 
-			if (E('_f_end_date').value.toString() != '0') {
-				if (b[0] > E('_f_end_date').value)
+			if (document.form._f_end_date.value.toString() != '0') {
+				if (b[0] > document.form._f_end_date.value)
 					continue;
 			}
-*/
-// Display subnet total?
+
 			if (b[1] == fixIP(ntoa(aton(lan_ipaddr) & aton(lan_netmask)))) {
-				style_open='<span style="color: yellow;">';
-				style_close='</span>';
+				if (getRadioValue(document.form._f_show_subnet) == 1) {
+					style_open='<span style="color: yellow;">';
+					style_close='</span>';
+				} else {
+					continue;
+				}
+			}
+
+			if (filteripe.length>0) {
+				fskip = 0;
+				for (var x = 0; x < filteripe.length; ++x) {
+					if (b[1] == filteripe[x]){
+						fskip=1;
+						break;
+					}
+				}
+				if (fskip == 1) continue;
+			}
+
+			if (filterip.length>0) {
+				fskip = 1;
+				for (var x = 0; x < filterip.length; ++x) {
+					if (b[1] == filterip[x]){
+						fskip=0;
+						break;
+					}
+				}
+				if (fskip == 1) continue;
 			}
 
 			var h = b[1];
 
-// Display hostnames?
-			if (1) {
+			if (getRadioValue(document.form._f_show_hostnames) == 1) {
 				if(hostnamecache[b[1]] != null) {
 					h = "<b>" + hostnamecache[b[1]] + '</b>  <small>(' + b[1] + ')</small>';
 
@@ -132,13 +155,61 @@ function redraw()
 	}
 
 	if(rows == 0)
-		grid +='<tr><td style="color:#FFCC00;" colspan="4"><#IPConnection_VSList_Norule#></td></tr>';
+		grid +='<tr><td style="color:#FFCC00;" colspan="5"><#IPConnection_VSList_Norule#></td></tr>';
 
 	E('bwm-daily-grid').innerHTML = grid + '</table>';
 }
 
-function addrow(rclass, rtitle, host, dl, ul, total)
-{
+function update_display(option, value) {
+	cookie.set('ipt_' + option, value);
+	redraw();
+}
+
+function update_filter() {
+	var i;
+
+	if (document.form._f_filter_ip.value.length>0) {
+		filterip = document.form._f_filter_ip.value.split(',');
+		for (i = 0; i < filterip.length; ++i) {
+			if ((filterip[i] = fixIP(filterip[i])) == null) {
+				filterip.splice(i,1);
+			}
+		}
+		document.form._f_filter_ip.value = (filterip.length > 0) ? filterip.join(',') : '';
+	} else {
+		filterip = [];
+	}
+
+	if (document.form._f_filter_ipe.value.length>0) {
+		filteripe = document.form._f_filter_ipe.value.split(',');
+		for (i = 0; i < filteripe.length; ++i) {
+			if ((filteripe[i] = fixIP(filteripe[i])) == null) {
+				filteripe.splice(i,1);
+			}
+		}
+		document.form._f_filter_ipe.value = (filteripe.length > 0) ? filteripe.join(',') : '';
+	} else {
+		filteripe = [];
+	}
+
+	cookie.set('ipt_addr_shown', (filterip.length > 0) ? filterip.join(',') : '', 1);
+	cookie.set('ipt_addr_hidden', (filteripe.length > 0) ? filteripe.join(',') : '', 1);
+
+	redraw();
+}
+
+function update_visibility() {
+	s = getRadioValue(document.form._f_show_options);
+
+	for (i = 0; i < 5; i++) {
+		showhide("adv" + i, s);
+	}
+
+	cookie.set('ipt_options', s);
+
+}
+
+function addrow(rclass, rtitle, host, dl, ul, total) {
         return '<tr class="' + rclass + '">' +
                 '<td class="rtitle">' + rtitle + '</td>' +
                 '<td class="host">' + host + '</td>' +
@@ -150,21 +221,73 @@ function addrow(rclass, rtitle, host, dl, ul, total)
 
 
 function init() {
-	var s;
 
 	if (<% nvram_get("cstats_enable"); %> != '1') return;
 
-	if ((s = cookie.get('daily')) != null) {
-		if (s.match(/^([0-2])$/)) {
+// TODO: fixme/remove me
+	if ((c = cookie.get('daily')) != null) {
+		if (c.match(/^([0-2])$/)) {
 			E('scale').value = scale = RegExp.$1 * 1;
 		}
 	}
 
+	if ((c = cookie.get('ipt_addr_shown')) != null) {
+		if (c.length>6) {
+			document.form._f_filter_ip.value = c;
+			filterip = c.split(',');
+		}
+	}
+
+	if ((c = cookie.get('ipt_addr_hidden')) != null) {
+		if (c.length>6) {
+			document.form._f_filter_ipe.value = c;
+			filteripe = c.split(',');
+		}
+	}
+
+	setRadioValue(document.form._f_show_options , (((c = cookie.get('ipt_options')) != null) && (c == '1')));
+	setRadioValue(document.form._f_show_subnet , (((c = cookie.get('ipt_subnet')) != null) && (c == '1')));
+	setRadioValue(document.form._f_show_hostnames , (((c = cookie.get('ipt_hostnames')) != null) && (c == '1')));
+	setRadioValue(document.form._f_show_zero , (((c = cookie.get('ipt_zero')) != null) && (c == '1')));
+	update_visibility();
+
 	initDate('ymd');
 
 	daily_history.sort(cmpDualFields);
+	init_filter_dates();
 	populateCache();
 	redraw();
+}
+
+function init_filter_dates() {
+	var dates = [];
+	if (daily_history.length > 0) {
+		for (var i = 0; i < daily_history.length; ++i) {
+			dates.push('0x' + daily_history[i][0].toString(16));
+		}
+		if (dates.length > 0) {
+			dates.sort();
+			for (var j = 1; j < dates.length; j++ ) {
+				if (dates[j] === dates[j - 1]) {
+					dates.splice(j--, 1);
+				}
+			}
+		}
+	}
+	var d = new Date();
+	free_options(document.form._f_begin_date);
+	free_options(document.form._f_end_date);
+
+	for (var i = 0; i < dates.length; ++i) {
+		var ymd = getYMD(dates[i]);
+		add_option(document.form._f_begin_date,ymdText(ymd[0], ymd[1], ymd[2]), dates[i], (i == 0));
+		add_option(document.form._f_end_date,ymdText(ymd[0], ymd[1], ymd[2]), dates[i], ((ymd[0]==d.getFullYear()) && (ymd[1]==d.getMonth()) && (ymd[2]==d.getDate())) );
+	}
+}
+
+function update_date_format(o, f) {
+	changeDate(o, f);
+	init_filter_dates();
 }
 
 function cmpDualFields(a, b) {
@@ -215,6 +338,23 @@ function populateCache() {
 }
 
 
+// TODO: Move me to external file - also used by OpenVPN pages
+function getRadioValue(obj) {
+	for (var i=0; i<obj.length; i++) {
+		if (obj[i].checked)
+			return obj[i].value;
+	}
+	return 0;
+}
+
+function setRadioValue(obj,val) {
+	for (var i=0; i<obj.length; i++) {
+		if (obj[i].value==val)
+			obj[i].checked = true;
+	}
+}
+
+
 function switchPage(page){
 	if(page == "1")
 		location.href = "/Main_TrafficMonitor_realtime.asp";
@@ -237,8 +377,8 @@ function switchPage(page){
 
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" action="apply.cgi" target="hidden_frame">
-<input type="hidden" name="current_page" value="Main_TrafficMonitor_daily.asp">
-<input type="hidden" name="next_page" value="Main_TrafficMonitor_daily.asp">
+<input type="hidden" name="current_page" value="Main_Traffic2_daily.asp">
+<input type="hidden" name="next_page" value="Main_Traffic2_daily.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
@@ -275,10 +415,9 @@ function switchPage(page){
         			<tr>
 
 						<td  class="formfonttitle" align="left">
-										<div style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
+										<div style="margin-top:5px;"><#Menu_TrafficManager#> - Daily Hosts Traffic</div>
 									</td>
-
-          			<td>
+          				<td>
      							<div align="right">
 			    					<select class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
 											<!--option><#switchpage#></option-->
@@ -308,7 +447,7 @@ function switchPage(page){
 										<tr class='even'>
 											<th width="40%"><#Date#></th>
 											<td>
-												<select class="input_option" style="width:130px" onchange='changeDate(this, "ymd")' id='dafm'>
+												<select class="input_option" style="width:130px" onchange='update_date_format(this, "ymd")' id='dafm'>
 													<option value=0>yyyy-mm-dd</option>
 													<option value=1>mm-dd-yyyy</option>
 													<option value=2>mmm, dd, yyyy</option>
@@ -325,6 +464,64 @@ function switchPage(page){
 													<option value=2 selected>GB</option>
 												</select>
 											</td>
+										</tr>
+										<tr>
+											<th width="40%">Date range</th>
+											<td>
+												<div>
+													<label>From:</label>
+													<select name="_f_begin_date" onchange="redraw();" class="input_option" style="width:120px">
+													</select>
+													<label>To:</label>
+													<select name="_f_end_date" onchange="redraw();" class="input_option" style="width:120px">
+													</select>
+												</div>
+											</td>
+										</tr>
+
+										<tr>
+											<th>Display advanced filter options</th>
+											<td>
+												<input type="radio" name="_f_show_options" class="input" value="1" onclick="update_visibility();"><#checkbox_Yes#>
+												<input type="radio" name="_f_show_options" class="input" checked value="0" onclick="update_visibility();"><#checkbox_No#>
+											</td>
+					 					</tr>
+										<tr id="adv0">
+											<th>List of IPs to display (comma-separated):</th>
+											<td>
+<!-- TODO: filter out for digits, dots and commas -->
+												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onchange="update_filter();">
+											</td>
+										</tr>
+										<tr id="adv1">
+											<th>List of IPs to exclude (comma-separated):</th>
+											<td>
+<!-- TODO: filter out for digits, dots and commas -->
+												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onchange="update_filter();">
+											</td>
+										</tr>
+
+										<tr id="adv2">
+											<th>Display hostnames</th>
+								        		<td>
+													<input type="radio" name="_f_show_hostnames" class="input" value="1" checked onclick="update_display('hostnames',1);"><#checkbox_Yes#>
+													<input type="radio" name="_f_show_hostnames" class="input" value="0" onclick="update_display('hostnames',0);"><#checkbox_No#>
+								   			</td>
+										</tr>
+										<tr id="adv3">
+											<th>Display IPs with no traffic</th>
+								        		<td>
+													<input type="radio" name="_f_show_zero" class="input" value="1" onclick="update_display('zero',1);"><#checkbox_Yes#>
+													<input type="radio" name="_f_show_zero" class="input" value="0" checked onclick="update_display('zero',0);"><#checkbox_No#>
+								   			</td>
+										</tr>
+
+										<tr id="adv4">
+											<th>Show subnet totals</th>
+								        		<td>
+													<input type="radio" name="_f_show_subnet" class="input" value="1" onclick="update_display('subnet',1);"><#checkbox_Yes#>
+													<input type="radio" name="_f_show_subnet" class="input" value="0" checked onclick="update_display('subnet',0);"><#checkbox_No#>
+								   			</td>
 										</tr>
 									</tbody>
 								</table>
