@@ -17,6 +17,7 @@
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmhist.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
+<script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
 
 <script type='text/javascript'>
 
@@ -71,8 +72,6 @@ function redraw()
 	var style_close;
 
 	rows = 0;
-	block = '';
-	gn = 0;
 
 	grid = '<table width="730px" class="FormTable_NWM">';
 	grid += "<tr><th style=\"height:30px;\"><#Date#></th>";
@@ -332,23 +331,6 @@ function populateCache() {
 	}
 
 	hostnamecache[fixIP(ntoa(aton(lan_ipaddr) & aton(lan_netmask)))] = 'LAN';
-}
-
-
-// TODO: Move me to external file - also used by OpenVPN pages
-function getRadioValue(obj) {
-	for (var i=0; i<obj.length; i++) {
-		if (obj[i].checked)
-			return obj[i].value;
-	}
-	return 0;
-}
-
-function setRadioValue(obj,val) {
-	for (var i=0; i<obj.length; i++) {
-		if (obj[i].value==val)
-			obj[i].checked = true;
-	}
 }
 
 

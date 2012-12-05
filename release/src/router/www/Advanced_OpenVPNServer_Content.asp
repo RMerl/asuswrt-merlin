@@ -17,6 +17,8 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/detect.js"></script>
+<script type="text/javascript" language="JavaScript" src="/merlin.js"></script>
+
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
@@ -244,24 +246,6 @@ function del_Row(r){
 	if(vpn_clientlist_array == "")
 		vpn_clientlist();
 }
-
-
-function setRadioValue(obj,val) {
-	for (var i=0; i<obj.length; i++) {
-		if (obj[i].value==val)
-			obj[i].checked = true;
-	}
-}
-
-
-function getRadioValue(obj) {
-	for (var i=0; i<obj.length; i++) {
-		if (obj[i].checked)
-			return obj[i].value;
-	}
-	return 0;
-}
-
 
 function applyRule(){
 

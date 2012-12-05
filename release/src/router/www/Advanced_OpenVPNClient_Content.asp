@@ -17,6 +17,8 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/detect.js"></script>
+<script type="text/javascript" language="JavaScript" src="/merlin.js"></script>
+
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
@@ -140,28 +142,6 @@ function update_visibility(){
 	showhide("client_cn_label", ((auth == "tls") && (tlsremote == 1)) ? 1 : 0);
 
 }
-
-
-function setRadioValue(theObj,theObjValue) {
-
-	for (var i=0; i<theObj.length; i++) {
-		if (theObj[i].value==theObjValue) {
-			theObj[i].checked = true;
-		}
-	}
-}
-
-
-function getRadioValue(theObj) {
-
-        for (var i=0; i<theObj.length; i++) {
-
-			if (theObj[i].checked)
-				return theObj[i].value;
-        }
-	return 0;
-}
-
 
 function applyRule(){
 
