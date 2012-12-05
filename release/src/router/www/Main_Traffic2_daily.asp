@@ -251,8 +251,6 @@ function init() {
 	setRadioValue(document.form._f_show_zero , (((c = cookie.get('ipt_zero')) != null) && (c == '1')));
 	update_visibility();
 
-	initDate('ymd');
-
 	daily_history.sort(cmpDualFields);
 	init_filter_dates();
 	populateCache();
@@ -357,14 +355,15 @@ function setRadioValue(obj,val) {
 
 function switchPage(page){
 	if(page == "1")
-		location.href = "/Main_TrafficMonitor_realtime.asp";
+		location.href = "/Main_Traffic2_realtime.asp";
 	else if(page == "2")
-		location.href = "/Main_TrafficMonitor_last24.asp";
+		location.href = "/Main_Traffic2_last24.asp";
 	else if(page == "4")
-		location.href = "/Main_TrafficMonitor_monthly.asp";
+		location.href = "/Main_Traffic2_monthly.asp";
 	else
 		return false;
 }
+
 
 </script>
 </head>
