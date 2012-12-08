@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -6,7 +6,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 
 <title><#Web_Title#> - <#menu5_8_3#></title>
-<link rel="stylesheet" type="text/css" href="index_style.css"> 
+<link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
 <link rel="shortcut icon" href="images/favicon.png">
@@ -87,12 +87,12 @@ function redraw()
 	block = '';
 	gn = 0;
 
-	grid = '<table width="730px" class="FormTable_NWM">'; 
+	grid = '<table width="730px" class="FormTable_NWM">';
 	grid += "<tr><th style=\"height:30px;\"><#Date#></th>";
 	grid += "<th><#tm_reception#></th>";
 	grid += "<th><#tm_transmission#></th>";
 	grid += "<th><#Total#></th></tr>";
-	
+
 	for (i = 0; i < daily_history.length-1; ++i) {
 		h = daily_history[i];
 		ymd = getYMD(h[0]);
@@ -104,11 +104,11 @@ function redraw()
 			lastu += h[2];
 		}
 	}
-	
+
 	if(rows == 0)
 		grid +='<tr><td style="color:#FFCC00;" colspan="4"><#IPConnection_VSList_Norule#></td></tr>';
 
-	E('bwm-daily-grid').innerHTML = grid + '</table>';	
+	E('bwm-daily-grid').innerHTML = grid + '</table>';
 	E('last-dn').innerHTML = rescale(lastd);
 	E('last-up').innerHTML = rescale(lastu);
 	E('last-total').innerHTML = rescale(lastu + lastd);
@@ -138,6 +138,12 @@ function switchPage(page){
 		location.href = "/Main_TrafficMonitor_last24.asp";
 	else if(page == "4")
 		location.href = "/Main_TrafficMonitor_monthly.asp";
+	else if(page == "5")
+		location.href = "/Main_Traffic2_details.asp";
+	else if(page == "6")
+		location.href = "/Main_Traffic2_daily.asp";
+	else if(page == "7")
+		location.href = "/Main_Traffic2_monthly.asp";
 	else
 		return false;
 }
@@ -174,15 +180,15 @@ function switchPage(page){
 	 	<div id="mainMenu"></div>
 	 	<div id="subMenu"></div>
 	</td>
-		
+
     	<td valign="top">
 		<div id="tabMenu" class="submenuBlock"></div>
 <!--===================================Beginning of Main Content===========================================-->
       	<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 	 	<tr>
-         		<td align="left"  valign="top">           
-				<table width="100%" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">		
-				<tbody>	
+         		<td align="left"  valign="top">
+				<table width="100%" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
+				<tbody>
 				<!--===================================Beginning of QoS Content===========================================-->
 	      		<tr>
 	      			<td bgcolor="#4D595D" valign="top">
@@ -190,20 +196,26 @@ function switchPage(page){
 						<tr><td><table width=100%" >
         			<tr>
 
-						<td  class="formfonttitle" align="left">								
+						<td  class="formfonttitle" align="left">
 										<div style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
 									</td>
 
           			<td>
      							<div align="right">
 			    					<select class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
-											<!--option><#switchpage#></option-->
+										<!--option><#switchpage#></option-->
+										<optgroup label="Global">
 											<option value="1"><#menu4_2_1#></option>
 											<option value="2"><#menu4_2_2#></option>
 											<option value="3" selected><#menu4_2_3#></option>
 											<option value="4">Monthly</option>
-										</select>
-			    					
+										</optgroup>
+											<optgroup label="Per device">
+											<option value="5"><#menu4_2_1#></option>
+											<option value="6"><#menu4_2_3#></option>
+											<option value="7">Monthly</option>
+										</optgroup>
+									</select>
 									</div>
 								</td>
         			</tr>
@@ -247,7 +259,7 @@ function switchPage(page){
 							</td>
 						</tr>
 						<tr >
-							<td>		
+							<td>
 								<div id='bwm-daily-grid' style='float:left'></div>
 							</td>
 						</tr>
@@ -255,7 +267,7 @@ function switchPage(page){
 	     					<tr >
 	      					<td bgcolor="#4D595D">
 	      						<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >
-	      						<thead>	
+	      						<thead>
 	      						<tr>
 	      							<td colspan="2" id="TriggerList" style="text-align:left;"><#Last30days#> <span style="color:#FFF;background-color:transparent;" id='last-dates'></span></td>
 	      						</tr>
@@ -264,21 +276,21 @@ function switchPage(page){
 	      						<tr class='even'><th width="40%"><#tm_reception#></th><td id='last-dn'>-</td></tr>
 	      						<tr class='odd'><th width="40%"><#tm_transmission#></th><td id='last-up'>-</td></tr>
 	      						<tr class='footer'><th width="40%"><#Total#></th><td id='last-total'>-</td></tr>
-	      						</tbody>	
+	      						</tbody>
 	      						</table>
 	      					</td>
 	     					</tr>
 	     					</table>
 	     				</td>
-	     			</tr>		
+	     			</tr>
 				</tbody>
 				</table>
 			</td>
 		</tr>
-		</table>				
+		</table>
 		</div>
 	</td>
-		
+
     	<td width="10" align="center" valign="top">&nbsp;</td>
 </tr>
 </table>

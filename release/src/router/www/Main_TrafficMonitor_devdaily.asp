@@ -247,6 +247,8 @@ function init() {
 	setRadioValue(document.form._f_show_zero , (((c = cookie.get('ipt_zero')) != null) && (c == '1')));
 	update_visibility();
 
+// TODO: We got the wrong date format at start time
+
 	daily_history.sort(cmpDualFields);
 	init_filter_dates();
 	populateCache();
@@ -274,8 +276,9 @@ function init_filter_dates() {
 
 	for (var i = 0; i < dates.length; ++i) {
 		var ymd = getYMD(dates[i]);
-		add_option(document.form._f_begin_date,ymdText(ymd[0], ymd[1], ymd[2]), dates[i], (i == 0));
-		add_option(document.form._f_end_date,ymdText(ymd[0], ymd[1], ymd[2]), dates[i], ((ymd[0]==d.getFullYear()) && (ymd[1]==d.getMonth()) && (ymd[2]==d.getDate())) );
+		var selected = ((ymd[0]==d.getFullYear()) && (ymd[1]==d.getMonth()) && (ymd[2]==d.getDate()));
+		add_option(document.form._f_begin_date,ymdText(ymd[0], ymd[1], ymd[2]), dates[i], selected);
+		add_option(document.form._f_end_date,ymdText(ymd[0], ymd[1], ymd[2]), dates[i], selected);
 	}
 }
 
@@ -294,9 +297,17 @@ function cmpDualFields(a, b) {
 
 function switchPage(page){
 	if(page == "1")
-		location.href = "/Main_Traffic2_details.asp";
+		location.href = "/Main_TrafficMonitor_realtime.asp";
+	else if(page == "2")
+		location.href = "/Main_TrafficMonitor_last24.asp";
+	else if(page == "3")
+		location.href = "/Main_TrafficMonitor_daily.asp";
 	else if(page == "4")
-		location.href = "/Main_Traffic2_monthly.asp";
+		location.href = "/Main_TrafficMonitor_monthly.asp";
+	else if(page == "5")
+		location.href = "/Main_TrafficMonitor_devdetails.asp";
+	else if(page == "7")
+		location.href = "/Main_TrafficMonitor_devmonthly.asp";
 	else
 		return false;
 }
@@ -313,8 +324,8 @@ function switchPage(page){
 
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" action="apply.cgi" target="hidden_frame">
-<input type="hidden" name="current_page" value="Main_Traffic2_daily.asp">
-<input type="hidden" name="next_page" value="Main_Traffic2_daily.asp">
+<input type="hidden" name="current_page" value="Main_TrafficMonitor_devdaily.asp">
+<input type="hidden" name="next_page" value="Main_TrafficMonitor_devdaily.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
@@ -347,19 +358,27 @@ function switchPage(page){
 	      		<tr>
 	      			<td bgcolor="#4D595D" valign="top">
 	      				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
-						<tr><td><table width=100%" >
+						<tr><td><table width="100%" >
         			<tr>
 
 						<td  class="formfonttitle" align="left">
-										<div style="margin-top:5px;"><#Menu_TrafficManager#> - Daily Hosts Traffic</div>
+										<div style="margin-top:5px;"><#Menu_TrafficManager#> - Traffic Monitor per device</div>
 									</td>
           				<td>
      							<div align="right">
 			    					<select class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
 											<!--option><#switchpage#></option-->
-											<option value="1">Details</option>
-											<option value="3" selected>Daily</option>
-											<option value="4">Monthly</option>
+											<optgroup label="Global">
+												<option value="1"><#menu4_2_1#></option>
+												<option value="2"><#menu4_2_2#></option>
+												<option value="3"><#menu4_2_3#></option>
+												<option value="4">Monthly</option>
+											</optgroup>
+												<optgroup label="Per device">
+												<option value="5"><#menu4_2_1#></option>
+												<option value="6" selected><#menu4_2_3#></option>
+												<option value="7">Monthly</option>
+											</optgroup>
 										</select>
 
 									</div>

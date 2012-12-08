@@ -6,7 +6,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE10" />
 <meta name="svg.render.forceflash" content="false" />
-<title><#Web_Title#> - <#traffic_monitor#> : <#menu4_2_1#></title>
+<title><#Web_Title#> - <#traffic_monitor#> : Details</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
@@ -34,18 +34,6 @@ lan_netmask = '<% nvram_get("lan_netmask"); %>';
 
 var client_list_array = '<% get_client_detail_info(); %>';
 
-var cprefix = 'bw_r';
-var updateInt = 2;
-var updateDiv = updateInt;
-var updateMaxL = 300;
-var updateReTotal = 1;
-var prev = [];
-var speed_history = [];
-var avgMode = 0;
-sortColumn = 0;
-
-var ref = new TomatoRefresh('update.cgi', 'output=iptraffic', 2);
-
 var cstats_busy = 0;
 
 try {
@@ -61,20 +49,24 @@ if (typeof(iptraffic) == 'undefined') {
 	cstats_busy = 1;
 }
 
-var scale = -1;
+var prev = [];
+var speed_history = [];
+var avgMode = 0;
+sortColumn = 0;
+var scale = 1;
 var updating = 0;
 
 var filterip = [];
 var filteripe = [];
 var filteripe_before = [];
 
-var updateInt = 2;
-var updateDiv = updateInt;
 var prevtimestamp = new Date().getTime();
 var thistimestamp;
 var difftimestamp;
 var avgiptraffic = [];
 var lastiptraffic = iptraffic;
+
+var ref = new TomatoRefresh('update.cgi', 'output=iptraffic', 2);
 
 ref.refresh = function(text) {
 
@@ -152,7 +144,7 @@ function redraw() {
 
 	sortfield = "color: yellow;";
 	grid = '<table width="730px" class="FormTable_NWM">';
-	grid += "<tr><th onclick=\"setSort(this,0)\" style=\"cursor:pointer; height:30px; background-image: url(images/general_th.gif);" + (sortColumn == 0 ? sortfield : "") + "\">Host</th>";
+	grid += "<tr><th onclick=\"setSort(this, 0)\" style=\"cursor:pointer; height:30px; background-image: url(images/general_th.gif);" + (sortColumn == 0 ? sortfield : "") + "\">Host</th>";
 	grid += "<th onclick=\"setSort(this, 1);\" style=\"background-image: url(images/general_th.gif); cursor:pointer;" + (sortColumn == 1 ? sortfield : "") + "\">Reception<br>(bytes/s)</th>";
 	grid += "<th onclick=\"setSort(this, 2);\" style=\"background-image: url(images/general_th.gif); cursor:pointer;" + (sortColumn == 2 ? sortfield : "") + "\">Transmission<br>(bytes/s)</th>";
 	grid += "<th onclick=\"setSort(this, 3);\" style=\"background-image: url(images/general_th.gif); cursor:pointer;" + (sortColumn == 3 ? sortfield : "") + "\">TCP In/Out<br>(pkts/s)</th>";
@@ -279,12 +271,11 @@ function setSort(o,value) {
 }
 
 function sortCompare(a, b) {
-	var col = sortColumn;
 	var r = 0;
 
-	switch (col) {
+	switch (sortColumn) {
 	case 0:	// host
-		r = cmpText(a,b);
+		r = aton(b[0])-aton(a[0]);
 		break;
 	case 1:	// Download
 		r = cmpFloat(a[1], b[1]);
@@ -386,7 +377,7 @@ function init()
 
 	if ((c = cookie.get('ipt_sortfield')) != null) {
 		if (c < 8) {
-			sortColumn = c;
+			sortColumn = parseInt(c);
 		}
 	}
 
@@ -415,25 +406,35 @@ function init()
 }
 
 function switchPage(page){
-	if(page == "3")
-		location.href = "/Main_Traffic2_daily.asp";
+	if(page == "1")
+		location.href = "/Main_TrafficMonitor_realtime.asp";
+	else if(page == "2")
+		location.href = "/Main_TrafficMonitor_last24.asp";
+	else if(page == "3")
+		location.href = "/Main_TrafficMonitor_daily.asp";
 	else if(page == "4")
-		location.href = "/Main_Traffic2_monthly.asp";
+		location.href = "/Main_TrafficMonitor_monthly.asp";
+	else if(page == "6")
+		location.href = "/Main_TrafficMonitor_devdaily.asp";
+	else if(page == "7")
+		location.href = "/Main_TrafficMonitor_devmonthly.asp";
 	else
 		return false;
+
 }
 </script>
 </head>
 
 <body onload="show_menu();init();" >
+
 <div id="TopBanner"></div>
 
 <div id="Loading" class="popup_bg"></div>
 
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" action="apply.cgi" target="hidden_frame">
-<input type="hidden" name="current_page" value="Main_Traffic2_details.asp">
-<input type="hidden" name="next_page" value="Main_Traffic2_details.asp">
+<input type="hidden" name="current_page" value="Main_TrafficMonitor_devrealtime.asp">
+<input type="hidden" name="next_page" value="Main_TrafficMonitor_devrealtime.asp">
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
@@ -466,19 +467,26 @@ function switchPage(page){
 	      		<tr>
 	      			<td bgcolor="#4D595D" valign="top">
 	      				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
-						<tr><td><table width=100%" >
+						<tr><td><table width="100%" >
         			<tr>
 
 						<td  class="formfonttitle" align="left">
-										<div style="margin-top:5px;"><#Menu_TrafficManager#> - Daily Hosts Traffic</div>
+										<div style="margin-top:5px;"><#Menu_TrafficManager#> - Traffic Monitor per device</div>
 									</td>
           				<td>
      							<div align="right">
 			    					<select class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
-											<!--option><#switchpage#></option-->
-											<option value="1" selected>Details</option>
-											<option value="3">Daily</option>
-											<option value="4">Monthly</option>
+											<optgroup label="Global">
+												<option value="1"><#menu4_2_1#></option>
+												<option value="2"><#menu4_2_2#></option>
+												<option value="3"><#menu4_2_3#></option>
+												<option value="4">Monthly</option>
+											</optgroup>
+												<optgroup label="Per device">
+												<option value="5" selected><#menu4_2_1#></option>
+												<option value="6"><#menu4_2_3#></option>
+												<option value="7">Monthly</option>
+											</optgroup>
 										</select>
 
 									</div>
@@ -486,6 +494,13 @@ function switchPage(page){
         			</tr>
 					</table></td></tr>
 
+					<tr>
+						<td>
+							<div class="formfontdesc">
+								Click on a column header to sort by that field.
+							</div>
+						</td>
+					</tr>
         			<tr>
           				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
