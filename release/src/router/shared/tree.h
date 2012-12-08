@@ -174,8 +174,9 @@
     if (self)												\
       {													\
 	TREE_FORWARD_APPLY_ALL_##node##_##field(self->field.avl_left, function, data);			\
+	struct node *right = self->field.avl_right; /* Preserve before removing */			\
 	function(self, data);										\
-	TREE_FORWARD_APPLY_ALL_##node##_##field(self->field.avl_right, function, data);			\
+	TREE_FORWARD_APPLY_ALL_##node##_##field(right, function, data);					\
       }													\
   }													\
 													\

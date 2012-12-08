@@ -42,7 +42,7 @@ Node *Node_new(char *ipaddr) {
 		strncpy(self->ipaddr, ipaddr, INET_ADDRSTRLEN);
 		self->tcp_conn = 0;
 		self->udp_conn = 0;
-		_dprintf("%s: new node ip=%s, sizeof(Node)=%d (bytes)\n", __FUNCTION__, self->ipaddr, sizeof(Node));
+//		printf("+++ %s: new node ip=%s, sizeof(Node)=%d (bytes)\n", __FUNCTION__, self->ipaddr, sizeof(Node));
 	}
 	return self;
 }
@@ -54,12 +54,12 @@ int Node_compare(Node *lhs, Node *rhs) {
 Tree tree = TREE_INITIALIZER(Node_compare);
 
 void Node_housekeeping(Node *self, void *info) {
+//	printf("--- freed: %s\n", self->ipaddr);
 	free(self);
-	TREE_REMOVE(&tree, _Node, linkage, self);
 }
 
 // DEBUG
-/*
+
 void Node_print(Node *self, FILE *stream) {
 	fprintf(stream, "%s/%d/%d", self->ipaddr, self->tcp_conn, self->udp_conn);
 }
@@ -70,10 +70,10 @@ void Node_printer(Node *self, void *stream) {
 }
 
 void Tree_info(void) {
-	_dprintf("Tree = ");
+	printf("Tree = ");
 	TREE_FORWARD_APPLY(&tree, _Node, linkage, Node_printer, stdout);
-	_dprintf("\n");
-	_dprintf("Tree depth = %d\n", TREE_DEPTH(&tree, linkage));
+	printf("\n");
+	printf("Tree depth = %d\n", TREE_DEPTH(&tree, linkage));
 }
-*/
+
 

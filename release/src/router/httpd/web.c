@@ -4740,7 +4740,7 @@ void ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
 				ct_tcp = ptr->tcp_conn;
 				ct_udp = ptr->udp_conn;
 			}
-			websWrite(wp, "%c['%s', %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu]", 
+			websWrite(wp, "%c['%s', %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %u, %u]", 
 						comma, ip, rx_bytes, tx_bytes, rp_tcp, tp_tcp, rp_udp, tp_udp, rp_icmp, tp_icmp, ct_tcp, ct_udp);
 			comma = ',';
 		}
@@ -4749,6 +4749,7 @@ void ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
 	websWrite(wp, "];\n");
 
 	TREE_FORWARD_APPLY(&tree, _Node, linkage, Node_housekeeping, NULL);
+	TREE_INIT(&tree, Node_compare);
 }
 
 void iptraffic_conntrack_init() {
@@ -4788,7 +4789,7 @@ void iptraffic_conntrack_init() {
 
 	if ((a = fopen(conntrack, "r")) == NULL) return;
 
-	ctvbuf(a);	// if possible, read in one go
+//	ctvbuf(a);	// if possible, read in one go
 
 	while (fgets(sa, sizeof(sa), a)) {
 		if (sscanf(sa, "%*s %u %u", &a_proto, &a_time) != 2) continue;
@@ -4808,7 +4809,7 @@ void iptraffic_conntrack_init() {
 		char ipaddr[INET_ADDRSTRLEN], *next = NULL;
 
 		foreach(ipaddr, sb, next) {
-			if (!((mask != 0) && ((inet_addr(ipaddr) & mask) == lan))) continue;
+			if ((mask == 0) || ((inet_addr(ipaddr) & mask) != lan)) continue;
 
 			strncpy(tmp.ipaddr, ipaddr, INET_ADDRSTRLEN);
 			ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
