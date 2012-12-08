@@ -4,9 +4,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE10" />
-<meta name="svg.render.forceflash" content="false" />
-<title><#Web_Title#> - <#traffic_monitor#> : Details</title>
+
+<title><#Web_Title#> - <#traffic_monitor#> : Realtime per IP</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
@@ -27,8 +26,6 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-lan_ipaddr = '<% nvram_get("lan_ipaddr"); %>';
-lan_netmask = '<% nvram_get("lan_netmask"); %>';
 
 <% backup_nvram("wan_ifname,cstats_enable,lan_ipaddr,lan_netmask,dhcp_staticlist"); %>;
 
@@ -142,7 +139,7 @@ function redraw() {
 	var tcpconn = 0;
 	var udpconn = 0;
 
-	sortfield = "color: yellow;";
+	sortfield = "color: #FFCC00;";
 	grid = '<table width="730px" class="FormTable_NWM">';
 	grid += "<tr><th onclick=\"setSort(this, 0)\" style=\"cursor:pointer; height:30px; background-image: url(images/general_th.gif);" + (sortColumn == 0 ? sortfield : "") + "\">Host</th>";
 	grid += "<th onclick=\"setSort(this, 1);\" style=\"background-image: url(images/general_th.gif); cursor:pointer;" + (sortColumn == 1 ? sortfield : "") + "\">Reception<br>(bytes/s)</th>";
@@ -263,7 +260,7 @@ function addrow(style, host, dl, ul, tcpin, tcpout, udpin, udpout, icmpin, icmpo
 
 function setSort(o,value) {
 
-	o.style.color="yellow";
+	o.style.color="#FFCC00";
 	sortColumn = value;
 	avgiptraffic.sort(sortCompare);
 
@@ -335,8 +332,8 @@ function update_filter() {
 		filteripe = [];
 	}
 
-	cookie.set('ipt_addr_shown', (filterip.length > 0) ? filterip.join(',') : '', 1);
-	cookie.set('ipt_addr_hidden', (filteripe.length > 0) ? filteripe.join(',') : '', 1);
+	cookie.set('ipt_rt_addr_shown', (filterip.length > 0) ? filterip.join(',') : '', 1);
+	cookie.set('ipt_rt_addr_hidden', (filteripe.length > 0) ? filteripe.join(',') : '', 1);
 
 	redraw();
 }
@@ -353,7 +350,6 @@ function update_visibility() {
 }
 
 
-/* TODO: Move me to merlin.js */
 function getArrayPosByElement(haystack, needle, index) {
 	for (var i = 0; i < haystack.length; ++i) {
 		if (haystack[i][index] == needle) {
@@ -366,9 +362,8 @@ function getArrayPosByElement(haystack, needle, index) {
 
 function init()
 {
-	if (<% nvram_get("cstats_enable"); %> != '1') return;
+	if (nvram.cstats_enable != '1') return;
 
-// TODO: fixme/remove me
 	if ((c = cookie.get('details')) != null) {
 		if (c.match(/^([0-2])$/)) {
 			E('scale').value = scale = RegExp.$1 * 1;
@@ -381,14 +376,14 @@ function init()
 		}
 	}
 
-	if ((c = cookie.get('ipt_addr_shown')) != null) {
+	if ((c = cookie.get('ipt_rt_addr_shown')) != null) {
 		if (c.length>6) {
 			document.form._f_filter_ip.value = c;
 			filterip = c.split(',');
 		}
 	}
 
-	if ((c = cookie.get('ipt_addr_hidden')) != null) {
+	if ((c = cookie.get('ipt_rt_addr_hidden')) != null) {
 		if (c.length>6) {
 			document.form._f_filter_ipe.value = c;
 			filteripe = c.split(',');
@@ -534,14 +529,12 @@ function switchPage(page){
 										<tr id="adv0">
 											<th>List of IPs to display (comma-separated):</th>
 											<td>
-<!-- TODO: filter out for digits, dots and commas -->
 												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onchange="update_filter();">
 											</td>
 										</tr>
 										<tr id="adv1">
 											<th>List of IPs to exclude (comma-separated):</th>
 											<td>
-<!-- TODO: filter out for digits, dots and commas -->
 												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onchange="update_filter();">
 											</td>
 										</tr>

@@ -52,7 +52,7 @@ function populateCache() {
 		}
 	}
 
-	hostnamecache[fixIP(ntoa(aton(lan_ipaddr) & aton(lan_netmask)))] = 'LAN';
+	hostnamecache[fixIP(ntoa(aton(nvram.lan_ipaddr) & aton(nvram.lan_netmask)))] = 'LAN';
 }
 
 function cmpFloat(a, b)

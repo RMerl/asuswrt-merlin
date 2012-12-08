@@ -139,11 +139,11 @@ function switchPage(page){
 	else if(page == "4")
 		location.href = "/Main_TrafficMonitor_monthly.asp";
 	else if(page == "5")
-		location.href = "/Main_Traffic2_details.asp";
+		location.href = "/Main_TrafficMonitor_devrealtime.asp";
 	else if(page == "6")
-		location.href = "/Main_Traffic2_daily.asp";
+		location.href = "/Main_TrafficMonitor_devdaily.asp";
 	else if(page == "7")
-		location.href = "/Main_Traffic2_monthly.asp";
+		location.href = "/Main_TrafficMOnitor_devmonthly.asp";
 	else
 		return false;
 }

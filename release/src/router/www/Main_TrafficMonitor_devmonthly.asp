@@ -5,7 +5,7 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 
-<title><#Web_Title#> - Monthly Traffic</title>
+<title><#Web_Title#> - Monthly per IP</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
@@ -24,8 +24,8 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-lan_ipaddr = '<% nvram_get("lan_ipaddr"); %>';
-lan_netmask = '<% nvram_get("lan_netmask"); %>';
+
+<% backup_nvram("cstats_enable,lan_ipaddr,lan_netmask"); %>;
 
 try {
 //	<% ipt_bandwidth("monthly"); %>
@@ -64,6 +64,7 @@ function redraw()
 	var rows;
 	var i, b, d;
 	var fskip;
+	var filtered =0;
 
 	var style_open;
 	var style_close;
@@ -101,9 +102,9 @@ function redraw()
 					continue;
 			}
 
-			if (b[1] == fixIP(ntoa(aton(lan_ipaddr) & aton(lan_netmask)))) {
+			if (b[1] == fixIP(ntoa(aton(nvram.lan_ipaddr) & aton(nvram.lan_netmask)))) {
 				if (getRadioValue(document.form._f_show_subnet) == 1) {
-					style_open='<span style="color: yellow;">';
+					style_open='<span style="color: #FFCC00;">';
 					style_close='</span>';
 				} else {
 					continue;
@@ -118,7 +119,10 @@ function redraw()
 						break;
 					}
 				}
-				if (fskip == 1) continue;
+				if (fskip == 1) {
+					filtered++;
+					continue;
+				}
 			}
 
 			if (filterip.length>0) {
@@ -129,7 +133,10 @@ function redraw()
 						break;
 					}
 				}
-				if (fskip == 1) continue;
+				if (fskip == 1) {
+					filtered++;
+					continue;
+				}
 			}
 
 			var h = b[1];
@@ -147,6 +154,10 @@ function redraw()
 			grid += addrow(((rows & 1) ? 'odd' : 'even'), ymText(ymd[0], ymd[1]), style_open + h + style_close, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3]));
 			++rows;
 		}
+	}
+
+	if(filtered > 0) {
+		grid +='<tr><td style="color:#FFCC00;" colspan="5">'+ filtered +' entries filtered out.</td></tr>';
 	}
 
 	if(rows == 0)
@@ -217,9 +228,8 @@ function addrow(rclass, rtitle, host, dl, ul, total) {
 
 function init() {
 
-	if (<% nvram_get("cstats_enable"); %> != '1') return;
+	if (nvram.cstats_enable != '1') return;
 
-// TODO: fixme/remove me
 	if ((c = cookie.get('monthly')) != null) {
 		if (c.match(/^([0-2])$/)) {
 			E('scale').value = scale = RegExp.$1 * 1;
@@ -246,6 +256,7 @@ function init() {
 	setRadioValue(document.form._f_show_zero , (((c = cookie.get('ipt_zero')) != null) && (c == '1')));
 	update_visibility();
 
+	initDate('ymd');
 	monthly_history.sort(cmpDualFields);
 	init_filter_dates();
 	populateCache();
@@ -438,14 +449,12 @@ function switchPage(page){
 										<tr id="adv0">
 											<th>List of IPs to display (comma-separated):</th>
 											<td>
-<!-- TODO: filter out for digits, dots and commas -->
 												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onchange="update_filter();">
 											</td>
 										</tr>
 										<tr id="adv1">
 											<th>List of IPs to exclude (comma-separated):</th>
 											<td>
-<!-- TODO: filter out for digits, dots and commas -->
 												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onchange="update_filter();">
 											</td>
 										</tr>
