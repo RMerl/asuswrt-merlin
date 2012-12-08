@@ -46,9 +46,6 @@ var filteripe_before = [];
 var dateFormat = 1;
 var scale = 2;
 
-hostnamecache = [];
-
-
 function save()
 {
 	cookie.set('daily', scale, 31);
@@ -295,51 +292,9 @@ function cmpDualFields(a, b) {
 		return cmpHist(a,b);
 }
 
-function populateCache() {
-	var s;
-
-	// Retrieve NETBIOS client names through networkmap list
-	// This might NOT be accurate if the device IP is dynamic.
-	// TODO: Should we force a network scan first to update that list?
-	//       See what happens if we access this right after a reboot
-	var client_list_array = '<% get_client_detail_info(); %>';
-
-	if (client_list_array) {
-		s = client_list_array.split('<');
-		for (var i = 0; i < s.length; ++i) {
-			var t = s[i].split('>');
-			if (t.length == 7) {
-				if (t[1] != '')
-					hostnamecache[t[2]] = t[1].split(' ').splice(0,1);
-			}
-		}
-	}
-
-	// Retrieve manually entered descriptions in static lease list
-	// We want to override netbios names if we havee a better name
-
-	dhcpstaticlist = '<% nvram_get("dhcp_staticlist"); %>';
-
-	if (dhcpstaticlist) {
-		s = dhcpstaticlist.split('&#60');
-		for (var i = 0; i < s.length; ++i) {
-			var t = s[i].split('&#62');
-			if ((t.length == 3) || (t.length == 4)) {
-				if (t[2] != '')
-					hostnamecache[t[1]] = t[2].split(' ').splice(0,1);
-			}
-		}
-	}
-
-	hostnamecache[fixIP(ntoa(aton(lan_ipaddr) & aton(lan_netmask)))] = 'LAN';
-}
-
-
 function switchPage(page){
 	if(page == "1")
-		location.href = "/Main_Traffic2_realtime.asp";
-	else if(page == "2")
-		location.href = "/Main_Traffic2_last24.asp";
+		location.href = "/Main_Traffic2_details.asp";
 	else if(page == "4")
 		location.href = "/Main_Traffic2_monthly.asp";
 	else
@@ -402,9 +357,8 @@ function switchPage(page){
      							<div align="right">
 			    					<select class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
 											<!--option><#switchpage#></option-->
-											<option value="1"><#menu4_2_1#></option>
-											<option value="2"><#menu4_2_2#></option>
-											<option value="3" selected><#menu4_2_3#></option>
+											<option value="1">Details</option>
+											<option value="3" selected>Daily</option>
 											<option value="4">Monthly</option>
 										</select>
 
