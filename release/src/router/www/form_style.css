@@ -1686,6 +1686,17 @@ padding-top:1px;
 	border-style:bevel;
 	color:#FFFFFF;
 }
+.traffictable th{
+	cursor:pointer;
+	height:30px;
+	background-image: url(images/general_th.gif);
+}
+.traffictable_footer td{
+	color: cyan;
+	background-color:#4d595d;
+}
+
+
 .panel_folder{
 	font-family:Courier ;
 	width:500px;

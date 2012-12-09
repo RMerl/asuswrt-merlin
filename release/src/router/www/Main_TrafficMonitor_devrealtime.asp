@@ -141,14 +141,14 @@ function redraw() {
 
 	sortfield = "color: #FFCC00;";
 	grid = '<table width="730px" class="FormTable_NWM">';
-	grid += "<tr><th onclick=\"setSort(this, 0)\" style=\"cursor:pointer; height:30px; background-image: url(images/general_th.gif);" + (sortColumn == 0 ? sortfield : "") + "\">Host</th>";
-	grid += "<th onclick=\"setSort(this, 1);\" style=\"background-image: url(images/general_th.gif); cursor:pointer;" + (sortColumn == 1 ? sortfield : "") + "\">Reception<br>(bytes/s)</th>";
-	grid += "<th onclick=\"setSort(this, 2);\" style=\"background-image: url(images/general_th.gif); cursor:pointer;" + (sortColumn == 2 ? sortfield : "") + "\">Transmission<br>(bytes/s)</th>";
-	grid += "<th onclick=\"setSort(this, 3);\" style=\"background-image: url(images/general_th.gif); cursor:pointer;" + (sortColumn == 3 ? sortfield : "") + "\">TCP In/Out<br>(pkts/s)</th>";
-	grid += "<th onclick=\"setSort(this, 4);\" style=\"background-image: url(images/general_th.gif); cursor:pointer;" + (sortColumn == 4 ? sortfield : "") + "\">UDP In/Out<br>(pkts/s)</th>";
-	grid += "<th onclick=\"setSort(this, 5);\" style=\"background-image: url(images/general_th.gif); cursor:pointer;" + (sortColumn == 5 ? sortfield : "") + "\">ICMP In/Out<br>(pkts/s)</th>";
-	grid += "<th onclick=\"setSort(this, 6);\" style=\"background-image: url(images/general_th.gif); cursor:pointer;" + (sortColumn == 6 ? sortfield : "") + "\">TCP <br>Connections</th>";
-	grid += "<th onclick=\"setSort(this, 7);\" style=\"background-image: url(images/general_th.gif); cursor:pointer;" + (sortColumn == 7 ? sortfield : "") + "\">UDP <br>Connections</th></tr>";
+	grid += '<tr class="traffictable"><th onclick="setSort(this, 0);" style="min-width: 150px; ' + (sortColumn == 0 ? sortfield : "") + '">Host</th>';
+	grid += '<th onclick="setSort(this, 1);" style="' + (sortColumn == 1 ? sortfield : "") + '">Reception<br>(bytes/s)</th>';
+	grid += '<th onclick="setSort(this, 2);" style="' + (sortColumn == 2 ? sortfield : "") + '">Transmission<br>(bytes/s)</th>';
+	grid += '<th onclick="setSort(this, 3);" style="' + (sortColumn == 3 ? sortfield : "") + '">TCP In/Out<br>(pkts/s)</th>';
+	grid += '<th onclick="setSort(this, 4);" style="' + (sortColumn == 4 ? sortfield : "") + '">UDP In/Out<br>(pkts/s)</th>';
+	grid += '<th onclick="setSort(this, 5);" style="' + (sortColumn == 5 ? sortfield : "") + '">ICMP In/Out<br>(pkts/s)</th>';
+	grid += '<th onclick="setSort(this, 6);" style="' + (sortColumn == 6 ? sortfield : "") + '">TCP <br>Connections</th>';
+	grid += '<th onclick="setSort(this, 7);" style="' + (sortColumn == 7 ? sortfield : "") + '">UDP <br>Connections</th>';
 
 	for (i = 0; i < avgiptraffic.length; ++i) {
 		fskip = 0;
@@ -221,10 +221,11 @@ function redraw() {
 	}
 
 	if(rows == 0)
-		grid +='<tr><td style="color:#FFCC00;" colspan="5"><#IPConnection_VSList_Norule#></td></tr>';
+		grid +='<tr><td style="color:#FFCC00;" colspan="8"><#IPConnection_VSList_Norule#></td></tr>';
 
 
-		grid += addrow("color: cyan;",
+	if(rows >1)
+		grid += addrow("traffictable_footer",
 			'Total: ' + ('<small><i>(' + ((hostslisted.length > 0) ? (hostslisted.length + ' hosts') : 'no data') + ')</i></small>'),
 			rescale((rx/1024).toFixed(2)).toString(),
 			rescale((tx/1024).toFixed(2)).toString(),
@@ -242,18 +243,18 @@ function redraw() {
 
 }
 
-function addrow(style, host, dl, ul, tcpin, tcpout, udpin, udpout, icmpin, icmpout, tcpconn, udpconn) {
+function addrow(rclass, host, dl, ul, tcpin, tcpout, udpin, udpout, icmpin, icmpout, tcpconn, udpconn) {
 
-	sep = "<span style='color: cyan;'> / </span>";
-	return '<tr style="' + style + '">' +
-                '<td style="' + style + '">' + host + '</td>' +
-                '<td style="' + style + '">' + dl + '</td>' +
-                '<td style="' + style + '">' + ul + '</td>' +
-                '<td style="' + style + '">' + tcpin + sep +tcpout + '</td>' +
-                '<td style="' + style + '">' + udpin + sep + udpout + '</td>' +
-                '<td style="' + style + '">' + icmpin + sep + icmpout + '</td>' +
-                '<td style="' + style + '">' + tcpconn + '</td>' +
-                '<td style="' + style + '">' + udpconn + '</td>' +
+	sep = "<span> / </span>";
+	return '<tr class="' + rclass + '">' +
+                '<td>' + host + '</td>' +
+                '<td>' + dl + '</td>' +
+                '<td>' + ul + '</td>' +
+                '<td>' + tcpin + sep +tcpout + '</td>' +
+                '<td>' + udpin + sep + udpout + '</td>' +
+                '<td>' + icmpin + sep + icmpout + '</td>' +
+                '<td>' + tcpconn + '</td>' +
+                '<td>' + udpconn + '</td>' +
                 '</tr>';
 }
 
@@ -394,11 +395,11 @@ function init()
 
 
         if ((c = cookie.get('ipt_rt_options')) != null ) {
-                setRadioValue(document.form._f_show_options , (c == 1)) 
+                setRadioValue(document.form._f_show_options , (c == 1))
         }
 
         if ((c = cookie.get('ipt_rt_hostnames')) != null ) {
-                setRadioValue(document.form._f_show_hostnames , (c == 1)) 
+                setRadioValue(document.form._f_show_hostnames , (c == 1))
         }
 
 	if ((c = cookie.get('ipt_rt_zero')) != null ) {
