@@ -301,7 +301,7 @@ function sortCompare(a, b) {
 
 
 function update_display(option, value) {
-	cookie.set('ipt_' + option, value);
+	cookie.set('ipt_rt_' + option, value);
 	redraw();
 }
 
@@ -345,7 +345,7 @@ function update_visibility() {
 		showhide("adv" + i, s);
 	}
 
-	cookie.set('ipt_options', s);
+	cookie.set('ipt_rt_options', s);
 
 }
 
@@ -372,7 +372,7 @@ function init()
 		}
 	}
 
-	if ((c = cookie.get('ipt_sortfield')) != null) {
+	if ((c = cookie.get('ipt_rt_sortfield')) != null) {
 		if (c < 8) {
 			sortColumn = parseInt(c);
 		}
@@ -393,9 +393,18 @@ function init()
 	}
 
 
-	setRadioValue(document.form._f_show_options , (((c = cookie.get('ipt_options')) != null) && (c == '1')));
-	setRadioValue(document.form._f_show_hostnames , (((c = cookie.get('ipt_hostnames')) != null) && (c == '1')));
-	setRadioValue(document.form._f_show_zero , (((c = cookie.get('ipt_zero')) != null) && (c == '1')));
+        if ((c = cookie.get('ipt_rt_options')) != null ) {
+                setRadioValue(document.form._f_show_options , (c == 1)) 
+        }
+
+        if ((c = cookie.get('ipt_rt_hostnames')) != null ) {
+                setRadioValue(document.form._f_show_hostnames , (c == 1)) 
+        }
+
+	if ((c = cookie.get('ipt_rt_zero')) != null ) {
+		setRadioValue(document.form._f_show_zero , (c == 1))
+	}
+
 	update_visibility();
 
 	populateCache();
@@ -546,8 +555,8 @@ function switchPage(page){
 										<tr id="adv3">
 											<th>Display IPs with no traffic</th>
 								        		<td>
-													<input type="radio" name="_f_show_zero" class="input" value="1" onclick="update_display('zero',1);"><#checkbox_Yes#>
-													<input type="radio" name="_f_show_zero" class="input" value="0" checked onclick="update_display('zero',0);"><#checkbox_No#>
+													<input type="radio" name="_f_show_zero" class="input" value="1" checked onclick="update_display('zero',1);"><#checkbox_Yes#>
+													<input type="radio" name="_f_show_zero" class="input" value="0" onclick="update_display('zero',0);"><#checkbox_No#>
 								   			</td>
 										</tr>
 
