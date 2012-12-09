@@ -89,7 +89,7 @@ static int get_stime(void) {
 	return 90;
 #else
 	int t;
-	t = nvram_get_int("cstats_stime");
+	t = nvram_get_int("rstats_stime");
 	if (t < 1) t = 1;
 		else if (t > 8760) t = 8760;
 	return t * SHOUR;
@@ -170,7 +170,7 @@ static void save(int quick) {
 				if (eval("cp", hgz, tmp) == 0) {
 					printf("%s: copy ok\n", __FUNCTION__);
 
-					if (!nvram_match("cstats_bak", "0")) {
+					if (!nvram_match("rstats_bak", "0")) {
 						now = time(0);
 						tms = localtime(&now);
 						if (lastbak != tms->tm_yday) {
@@ -324,7 +324,7 @@ static void load(int new) {
 
 	printf("%s: new=%d, uptime=%lu\n", __FUNCTION__, new, current_uptime);
 
-	strlcpy(save_path, nvram_safe_get("cstats_path"), sizeof(save_path) - 32);
+	strlcpy(save_path, nvram_safe_get("rstats_path"), sizeof(save_path) - 32);
 	if (((n = strlen(save_path)) > 0) && (save_path[n - 1] == '/')) {
 		ether_atoe(nvram_safe_get("et0macaddr"), mac);
 		sprintf(save_path + n, "tomato_cstats_%02x%02x%02x%02x%02x%02x.gz",
@@ -543,21 +543,8 @@ static void calc(void) {
 	unsigned long tx;
 	unsigned long rx;
 	char ip[INET_ADDRSTRLEN];
-	char br;
 
-	char name[] = "/proc/net/ipt_account/lanX";
-
-	for(br=0 ; br<=3 ; br++) {
-
-		char bridge[2] = "0";
-		if (br!=0)
-			bridge[0]+=br;
-		else
-			strcpy(bridge, "");
-
-		sprintf(name, "/proc/net/ipt_account/lan%s", bridge);
-
-		if ((f = fopen(name, "r")) == NULL) continue;
+		if ((f = fopen("/proc/net/ipt_account/lan", "r")) == NULL) continue;
 
 		while (fgets(buf, sizeof(buf), f)) {
 			if(sscanf(buf, 
@@ -649,7 +636,7 @@ static void calc(void) {
 					}
 				}
 
-				if (now > Y2K) {	/* Skip this if the time&date is not set yet */
+				if (now > 1325376000) {	/* Skip this if the time&date is not set yet */
 #ifdef DEBUG_CSTATS
 					printf("%s: calling bump %s ptr->dailyp=%d\n", __FUNCTION__, ptr->ipaddr, ptr->dailyp);
 #endif
@@ -660,7 +647,7 @@ static void calc(void) {
 #ifdef DEBUG_CSTATS
 					printf("%s: calling bump %s ptr->monthlyp=%d\n", __FUNCTION__, ptr->ipaddr, ptr->monthlyp);
 #endif
-					n = nvram_get_int("cstats_offset");
+					n = nvram_get_int("rstats_offset");
 					if ((n < 1) || (n > 31)) n = 1;
 					mon = now + ((1 - n) * (60 * 60 * 24));
 					tms = localtime(&mon);
@@ -671,7 +658,6 @@ static void calc(void) {
 			}
 		}
 		fclose(f);
-	}
 
 	// remove/exclude history (if we still have any data previously stored)
 	char *nvp, *b;

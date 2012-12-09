@@ -1141,17 +1141,12 @@ struct nvram_tuple router_defaults[] = {
 	{"rstats_sshut", "1"},
 	{"rstats_bak", "0"},
 
-	/* IPTraffic V2 traffic monitor */
+	/* IPTraffic traffic monitor */
 	{ "cstats_enable", "0"},
-	{ "cstats_path", ""},
-	{ "cstats_stime", "48"},
-	{ "cstats_offset", "1"},
-	{ "cstats_labels", "0"},
 	{ "cstats_exclude",""},
 	{ "cstats_include", ""},
 	{ "cstats_all", "1"},
 	{ "cstats_sshut", "1"},
-	{ "cstats_bak", "0"},
 
 	{"http_id", "TIDe855a6487043d70a"},
 
