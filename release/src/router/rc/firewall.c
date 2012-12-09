@@ -1860,6 +1860,11 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 
 	strcpy(macaccept, "");
 
+// Setup traffic accounting
+	if (nvram_match("cstats_enable", "1")) {
+		ipt_account(fp);
+	}
+
 #ifdef RTCONFIG_OLD_PARENTALCTRL
 	parental_ctrl();
 #endif	/* RTCONFIG_OLD_PARENTALCTRL */
@@ -4162,3 +4167,18 @@ void enable_ip_forward(void)
 #endif
 }
 
+void ipt_account(FILE *fp) {
+	struct in_addr ipaddr, netmask, network;
+	char netaddrnetmask[] = "255.255.255.255/255.255.255.255 ";
+
+	inet_aton(nvram_safe_get("lan_ipaddr"), &ipaddr);
+	inet_aton(nvram_safe_get("lan_netmask"), &netmask);
+
+	// bitwise AND of ip and netmask gives the network
+	network.s_addr = ipaddr.s_addr & netmask.s_addr;
+
+	sprintf(netaddrnetmask, "%s/%s", inet_ntoa(network), nvram_safe_get("lan_netmask"));
+
+	//ipv4 only
+	fprintf(fp, "-A FORWARD -m account --aaddr %s --aname lan\n", netaddrnetmask);
+}

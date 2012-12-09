@@ -1,4 +1,4 @@
-﻿//For operation mode;
+//For operation mode;
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode = 2;
@@ -155,7 +155,7 @@ tablink[5] = new Array("", "Advanced_PPTP_Content.asp", "Advanced_PPTPAdvanced_C
 tablink[6] = new Array("", "Advanced_BasicFirewall_Content.asp", "Advanced_URLFilter_Content.asp", "Advanced_KeywordFilter_Content.asp","Advanced_MACFilter_Content.asp", "Advanced_Firewall_Content.asp");
 tablink[7] = new Array("", "Advanced_OperationMode_Content.asp", "Advanced_System_Content.asp", "Advanced_FirmwareUpgrade_Content.asp", "Advanced_SettingBackup_Content.asp", "Advanced_PerformanceTuning_Content.asp", "Advanced_ADSL_Content.asp");
 tablink[8] = new Array("", "Main_LogStatus_Content.asp", "Main_DHCPStatus_Content.asp", "Main_WStatus_Content.asp", "Main_IPTStatus_Content.asp", "Main_RouteStatus_Content.asp", "Main_AdslStatus_Content.asp", "Main_ConnStatus_Content.asp");
-tablink[9] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp");
+tablink[9] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp");
 tablink[10] = new Array("", "Tools_Sysinfo.asp", "Tools_WOL.asp", "Tools_OtherSettings.asp", "Tools_RunCmd.asp");
 
 //Level 2 Menu
@@ -1092,11 +1092,11 @@ function show_selected_language(){
 			break;
 		}
 		case 'CN':{
-			$('selected_lang').innerHTML = "简体中文";
+			$('selected_lang').innerHTML = "????";
 			break;
 		}	
 		case 'TW':{
-			$('selected_lang').innerHTML = "繁體中文";
+			$('selected_lang').innerHTML = "????";
 			break;
 		}
 		case 'BR':{
@@ -1104,7 +1104,7 @@ function show_selected_language(){
 			break;
 		}
 		case 'CZ':{
-			$('selected_lang').innerHTML = "Česky";
+			$('selected_lang').innerHTML = "?esky";
 			break;
 		}
 		case 'DA':{
@@ -1132,7 +1132,7 @@ function show_selected_language(){
 			break;
 		}		
 		case 'JP':{
-			$('selected_lang').innerHTML = "日本語";
+			$('selected_lang').innerHTML = "???";
 			break;
 		}
 		case 'MS':{
@@ -1148,7 +1148,7 @@ function show_selected_language(){
 			break;
 		}
 		case 'RU':{
-			$('selected_lang').innerHTML = "Pусский";
+			$('selected_lang').innerHTML = "P??????";
 			break;
 		}
 		case 'SV':{
@@ -1156,7 +1156,7 @@ function show_selected_language(){
 			break;
 		}		
 		case 'TH':{
-			$('selected_lang').innerHTML = "ไทย";
+			$('selected_lang').innerHTML = "???";
 			break;
 		}			
 		case 'TR':{

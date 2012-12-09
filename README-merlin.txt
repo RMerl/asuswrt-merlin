@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.260.22 (XX-Dec-2012)
-===================================================
+Asuswrt-Merlin - build 3.0.0.4.260.22 (8-Dec-2012)
+==================================================
 
 About
 -----
@@ -69,7 +69,7 @@ Web interface:
    - Clicking on the MAC address of an unidentified client will do a lookup in
      the OUI database (ported from DD-WRT).
    - Optionally save traffic stats to disk (USB or JFFS partition)
-   - Display monthly traffic reports
+   - Enhanced traffic monitoring: added monthly, as well as per IP monitoring
    - Display active/tracked network connections
    - Name field on the DHCP reservation list and Wireless ACL list
    - System info summary page
@@ -336,6 +336,9 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.260.22:
+   - NEW: Traffic monitoring per IP added to the Traffic Monitor section.
+          Based on the Tomato IPTraffic implementation by Teaman.
+   - FIXED: Tabs would disappear while on the Monthly traffic page.
    - FIXED: Really fixed Firefox issue (the fix wasn't merged
             in release 260.21).
 

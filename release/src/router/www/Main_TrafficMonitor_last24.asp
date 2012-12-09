@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -7,14 +7,14 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE10" />
 <meta name="svg.render.forceflash" content="false" />
 <title><#Web_Title#> - <#traffic_monitor#> : <#menu4_2_2#></title>
-<link rel="stylesheet" type="text/css" href="index_style.css"> 
+<link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
 <link rel="stylesheet" type="text/css" href="menu_style.css">  <!--  Viz 2010.09 -->
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
 <script language="JavaScript" type="text/javascript" src="help.js"></script>
-<script src='svg.js' data-path="/svghtc/" data-debug="false"></script>	
+<script src='svg.js' data-path="/svghtc/" data-debug="false"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
@@ -27,7 +27,7 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-<% backup_nvram("wan_ifname,lan_ifname,wl_ifname,wan_proto,web_svg,rstats_enable,rstats_colors"); %>
+<% backup_nvram("wan_ifname,lan_ifname,wl_ifname,wan_proto,web_svg,rstats_enable,rstats_colors,cstats_enable"); %>
 
 var cprefix = 'bw_24';
 var updateInt = 30;
@@ -109,6 +109,11 @@ ref.initX = function()
 
 function init()
 {
+
+	if (nvram.cstats_enable == '1') {
+		E('page_select').innerHTML += '<optgroup label="Per device" ><option value="5"><#menu4_2_1#></option><option value="6"><#menu4_2_3#></option><option value="7">Monthly</option></optgroup>';
+	}
+
 	if (nvram.rstats_enable != '1') return;
 
 	try {
@@ -121,7 +126,7 @@ function init()
 	if (typeof(speed_history) == 'undefined') {
 		speed_history = {};
 		rstats_busy = 1;
-//		E('rbusy').style.display = '';	
+//		E('rbusy').style.display = '';
 	}
 
 	hours = fixInt(cookie.get(cprefix + 'hrs'), 1, 24, 24);
@@ -139,8 +144,14 @@ function switchPage(page){
 		return false;
 	else if(page == "4")
 		location.href = "/Main_TrafficMonitor_monthly.asp";
-	else
+	else if(page == "3")
 		location.href = "/Main_TrafficMonitor_daily.asp";
+	else if(page == "5")
+		location.href = "/Main_TrafficMonitor_devrealtime.asp";
+	else if(page == "6")
+		location.href = "/Main_TrafficMonitor_devdaily.asp";
+	else if(page == "7")
+		location.href = "/Main_TrafficMonitor_devmonthly.asp";
 }
 
 function Zoom(func){
@@ -148,7 +159,7 @@ function Zoom(func){
 		document.form.zoom.value = parseInt(document.form.zoom.value) - 1;
 	else
 		document.form.zoom.value = parseInt(document.form.zoom.value) + 1;;
-		
+
 	if(document.form.zoom.value == 1)
 		switchHours("4");
 	else if(document.form.zoom.value == 2)
@@ -196,16 +207,16 @@ function Zoom(func){
 	  <div id="mainMenu"></div>
 	  <div id="subMenu"></div>
 	</td>
-		
+
     <td valign="top">
 	<div id="tabMenu" class="submenuBlock"></div>
 <!--===================================Beginning of Main Content===========================================-->
       <table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
       	<tr>
-          		<td align="left"  valign="top" >         
-            		<table width="100%" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">		
-            		<tbody>	
-            		<!--===================================Beginning of graph Content===========================================-->	
+          		<td align="left"  valign="top" >
+            		<table width="100%" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
+            		<tbody>
+            		<!--===================================Beginning of graph Content===========================================-->
 	      		<tr>
 					<td bgcolor="#4D595D" valign="top"  >
 		  				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="TMTable">
@@ -213,18 +224,20 @@ function Zoom(func){
 						<td>
 						<table width="100%" >
 							<tr>
-							<td  class="formfonttitle" align="left">								
+							<td  class="formfonttitle" align="left">
 										<div style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
 									</td>
 							<td>
      						<div align="right">
-			    				<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option" style="margin-top:8px;">
+			    				<select id="page_select" onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option" style="margin-top:8px;">
 									<!--option><#switchpage#></option-->
-									<option value="1"><#menu4_2_1#></option>
-									<option value="2" selected><#menu4_2_2#></option>
-									<option value="3"><#menu4_2_3#></option>
-									<option value="4">Monthly</option>
-								</select>	
+										<optgroup label="Global">
+											<option value="1"><#menu4_2_1#></option>
+											<option value="2" selected><#menu4_2_2#></option>
+											<option value="3"><#menu4_2_3#></option>
+											<option value="4">Monthly</option>
+										</optgroup>
+								</select>
 							</div>
 							</td></tr></table>
 						</td>
@@ -234,7 +247,7 @@ function Zoom(func){
         			</tr>
         			<tr>
           				<td height="30" align="left" valign="middle" >
-							<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc1#></p></div>										
+							<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc1#></p></div>
           				</td>
         			</tr>
         			<tr>
@@ -243,20 +256,20 @@ function Zoom(func){
 								<tr><th width="16%"></th><th width="26%"><#tm_internet#></th><th width="29%"><#tm_wired#></th><th width="29%"><#tm_wireless#></th></tr>
 								<tr><th><#tm_reception#></th><td style="color:#FF9000;"><#tm_recp_int#></td><td style="color:#3CF;"><#tm_recp_wired#></td><td style="color:#3CF;"><#tm_recp_wireless#></td></tr>
 								<tr><th><#tm_transmission#></th><td style="color:#3CF;"><#tm_trans_int#></td><td style="color:#FF9000;"><#tm_trans_wired#></td><td style="color:#FF9000;"><#tm_trans_wireless#></td></tr>
-							</table>	
+							</table>
           				</td>
         			</tr>
         			<tr>
           				<td height="30" align="left" valign="middle" >
-							<div class="formfontcontent"><p><#traffic_monitor_desc2#></p></div>		
-							<div class="formfontcontent"><p><a id="faq0" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;"><#traffic_monitor#> FAQ</a></p></div>	
+							<div class="formfontcontent"><p><#traffic_monitor_desc2#></p></div>
+							<div class="formfontcontent"><p><a id="faq0" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;"><#traffic_monitor#> FAQ</a></p></div>
           				</td>
-        			</tr>    			
+        			</tr>
 
         			<tr>
 						<td>
-							<span id="tab-area"></span>										
-							<span style="display:none;">	
+							<span id="tab-area"></span>
+							<span style="display:none;">
 								<input title="Zoom in" type="button" onclick="Zoom('in');" class="zoomin_btn" name="button">
          						<input title="Zoom out" type="button" onclick="Zoom('out');" class="zoomout_btn" name="button">
 							</span>
@@ -271,10 +284,10 @@ function Zoom(func){
 							<!--<![endif]-->
 								</object>
 							<!--========= svg =========-->
-      			
+
                     	</td>
         	    	</tr>
-        	    
+
   		     		<tr>
 						<td>
 				    	 	<table width="735px"   border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_NWM" style="margin-top:10px">
@@ -288,16 +301,16 @@ function Zoom(func){
 						  		<tr>
 						  			<td style="text-align:center; background-color:#111;">
 										<div id='rx-sel'><#tm_reception#></div>
-						  			</td>						  			
+						  			</td>
 						  			<td style="text-align:center;font-weight: bold; background-color:#111;"><span id='rx-current' style="color:#FF9000;"></span></td>
 						  			<td style="text-align:center; background-color:#111;" id='rx-avg'></td>
 						  			<td style="text-align:center; background-color:#111;" id='rx-max'></td>
 						  			<td style="text-align:center; background-color:#111;" id='rx-total'></td>
-						    	</tr>						    		
+						    	</tr>
 						    	<tr>
 						    		<td style="text-align:center; background-color:#111;">
-										<div id='tx-sel'><#tm_transmission#></div> 																			             			                            
-						    		</td>						    			
+										<div id='tx-sel'><#tm_transmission#></div>
+						    		</td>
 									<td style="text-align:center;font-weight: bold; background-color:#111;"><span id='tx-current' style="color:#3CF;"></span></td>
 									<td style="text-align:center; background-color:#111;" id='tx-avg'></td>
 									<td style="text-align:center; background-color:#111;" id='tx-max'></td>
@@ -308,7 +321,7 @@ function Zoom(func){
 					</tr>
 						</table>
 					</td>
-				</tr>	
+				</tr>
 				<tr style="display:none">
 					<td bgcolor="#FFFFFF">
 		  				<table width="100%"  border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
@@ -317,7 +330,7 @@ function Zoom(func){
 									<td colspan="5" id="TriggerList">Display Options</td>
 								</tr>
 		    				</thead>
-							<div id='bwm-controls'>						
+							<div id='bwm-controls'>
 								<tr>
 									<th width='50%'><#Traffic_Hours#>:&nbsp;</th>
 									<td>
@@ -327,7 +340,7 @@ function Zoom(func){
 										<a href='javascript:switchHours(18);' id='hr18'>18</a>,
 										<a href='javascript:switchHours(24);' id='hr24'>24</a>
 									</td>
-								</tr>						
+								</tr>
 								<tr>
 									<th><#Traffic_Avg#>:&nbsp;</th>
 									<td>
@@ -337,37 +350,37 @@ function Zoom(func){
 										<a href='javascript:switchAvg(6)' id='avg6'>6x</a>,
 										<a href='javascript:switchAvg(8)' id='avg8'>8x</a>
 									</td>
-								</tr>			
+								</tr>
 								<tr>
 									<th><#Traffic_Max#>:&nbsp;</th>
 									<td>
 										<a href='javascript:switchScale(0)' id='scale0'>Uniform</a>,
 										<a href='javascript:switchScale(1)' id='scale1'>Per IF</a>
 									</td>
-								</tr>			
+								</tr>
 								<tr>
 									<th><#Traffic_SvgDisp#>:&nbsp;</th>
 									<td>
 										<a href='javascript:switchDraw(0)' id='draw0'>Solid</a>,
 										<a href='javascript:switchDraw(1)' id='draw1'>Line</a>
 									</td>
-								</tr>		
+								</tr>
 								<tr>
 									<th><#Traffic_Color#>:&nbsp; </th>
 									<td>
 										<a href='javascript:switchColor()' id='drawcolor'> </a><small><a href='javascript:switchColor(1)' id='drawrev'><#Traffic_Reverse#></a></small>
 									</td>
-								</tr>	
-							</div>							
+								</tr>
+							</div>
 						</table>
 					</td>
 				</tr>
-			</tbody>		
-			</table>	
+			</tbody>
+			</table>
 		</td>
 	</tr>
-	</table>				
-	</td>   	 
+	</table>
+	</td>
 	</tr>
 </table>
 

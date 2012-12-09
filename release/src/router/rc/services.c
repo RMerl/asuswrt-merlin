@@ -1997,6 +1997,7 @@ stop_misc(void)
 #endif
 	stop_lltd();
 	stop_rstats();
+	stop_cstats();
 }
 
 void
@@ -2458,6 +2459,7 @@ start_services(void)
 	start_infosvr();
 	start_networkmap();
 	restart_rstats();
+	restart_cstats();
 	start_watchdog();
 #ifdef RTCONFIG_FANCTRL
 	start_phy_tempsense();
@@ -2533,6 +2535,7 @@ stop_services(void)
 	stop_psta_monitor();
 #endif
 #endif
+	stop_cstats();
 	stop_rstats();
 	stop_networkmap();
 	stop_infosvr();
@@ -3765,6 +3768,11 @@ again:
 		if(action&RC_SERVICE_STOP) stop_rstats();
 		if(action&RC_SERVICE_START) restart_rstats();
 	}
+        else if (strcmp(script, "cstats") == 0)
+        {
+                if(action&RC_SERVICE_STOP) stop_cstats();
+                if(action&RC_SERVICE_START) restart_cstats();
+        }
 	else if (strcmp(script, "conntrack") == 0)
 	{
 		setup_conntrack();
@@ -4083,5 +4091,60 @@ void setup_leds()
 		start_usbled();
 #endif
 	}
+}
+
+void stop_cstats(void)
+{
+	int n, m;
+	int pid;
+	int pidz;
+	int ppidz;
+	int w = 0;
+
+	n = 60;
+	m = 15;
+	while ((n-- > 0) && ((pid = pidof("cstats")) > 0)) {
+		w = 1;
+		pidz = pidof("gzip");
+		if (pidz < 1) pidz = pidof("cp");
+		ppidz = ppid(ppid(pidz));
+		if ((m > 0) && (pidz > 0) && (pid == ppidz)) {
+			syslog(LOG_DEBUG, "cstats(PID %d) shutting down, waiting for helper process to complete(PID %d, PPID %d).\n", pid, pidz, ppidz);
+			--m;
+		} else {
+			kill(pid, SIGTERM);
+		}
+		sleep(1);
+	}
+	if ((w == 1) && (n > 0))
+		syslog(LOG_DEBUG, "cstats stopped.\n");
+}
+
+void start_cstats(int new)
+{
+	if (nvram_match("cstats_enable", "1")) {
+		stop_cstats();
+		if (new) {
+			syslog(LOG_DEBUG, "starting cstats (new datafile).\n");
+			xstart("cstats", "--new");
+		} else {
+			syslog(LOG_DEBUG, "starting cstats.\n");
+			xstart("cstats");
+		}
+	}
+}
+
+void
+restart_cstats()
+{
+        if (nvram_match("cstats_new", "1"))
+        {
+                start_cstats(1);
+                nvram_set("cstats_new", "0");
+        }
+        else
+        {
+                start_cstats(0);
+        }
 }
 

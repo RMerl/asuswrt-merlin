@@ -17,10 +17,12 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
+
 
 function initial()
 {
@@ -28,7 +30,8 @@ function initial()
 	initConntrackValues()
 	set_rstats_location();
 	hide_rstats_storage(document.form.rstats_location.value);
-
+	hide_cstats(getRadioValue(document.form.cstats_enable));
+	hide_cstats_ip(getRadioValue(document.form.cstats_all));
 	if (document.form.usb_idle_exclude.value.indexOf("a") != -1)
 		document.form.usb_idle_exclude_a.checked = true;
 	if (document.form.usb_idle_exclude.value.indexOf("b") != -1)
@@ -62,6 +65,20 @@ function hide_rstats_storage(_value){
         $("rstats_new_tr").style.display = (_value == "1" || _value == "2") ? "" : "none";
         $("rstats_stime_tr").style.display = (_value == "1" || _value == "2") ? "" : "none";
         $("rstats_path_tr").style.display = (_value == "1") ? "" : "none";
+
+}
+
+function hide_cstats_ip(_value){
+
+        $("cstats_inc_tr").style.display = (_value == "0" ? "" : "none");
+}
+
+function hide_cstats(_value){
+
+        $("cstats_1_tr").style.display = (_value == "1" ? "" : "none");
+        $("cstats_2_tr").style.display = (_value == "1" ? "" : "none");
+        $("cstats_inc_tr").style.display = ((_value == "1" && getRadioValue(document.form.cstats_all) == 0) ? "" : "none");
+        $("cstats_exc_tr").style.display = (_value == "1" ? "" : "none");
 }
 
 function initConntrackValues(){
@@ -96,7 +113,7 @@ function applyRule(){
 	{
 		document.form.rstats_path.value = "";
 	}
-	
+
 	document.form.ct_tcp_timeout.value = "0 "+
 		document.form.tcp_established.value +" " +
 		document.form.tcp_syn_sent.value +" " +
@@ -112,9 +129,9 @@ function applyRule(){
 	excluded = "";
 	if (document.form.usb_idle_exclude_a.checked)
 		excluded += "a";
-        if (document.form.usb_idle_exclude_b.checked)   
+        if (document.form.usb_idle_exclude_b.checked)
                 excluded += "b";
-        if (document.form.usb_idle_exclude_c.checked)   
+        if (document.form.usb_idle_exclude_c.checked)
                 excluded += "c";
 
 	document.form.usb_idle_exclude.value = excluded;
@@ -125,6 +142,17 @@ function applyRule(){
 	document.form.submit();
 }
 
+function validate(){
+
+	if ((document.form.rstats_location.value == "2") && (getRadioValue(document.form.cstats_enable) == "1")) {
+		$('invalid_location').style.display = "";
+		document.form.rstats_location.focus();
+
+		return false;
+	}
+
+	applyRule();
+}
 
 function done_validating(action){
         refreshpage();
@@ -146,7 +174,7 @@ function done_validating(action){
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="restart_rstats;restart_conntrack;restart_leds">
+<input type="hidden" name="action_script" value="restart_rstats;restart_cstats;restart_conntrack;restart_leds">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="SystemCmd" value="">
@@ -192,6 +220,7 @@ function done_validating(action){
 								<option value="1">Custom location</option>
 								<option value="2">NVRAM</option>
 							</select>
+							<span id="invalid_location" style="display:none;" class="formfontdesc">Cannot use NVRAM if per IP monitoring is enabled!</span>
 			   			</td>
 					</tr>
 
@@ -209,20 +238,54 @@ function done_validating(action){
 						</td>
 					</tr>
 					<tr id="rstats_path_tr">
-						<th>Save history location:<br><i>Directory must end with a '/'.</i></th>
+						<th>Save history location<br><i>Directory must end with a '/'.</i></th>
 						<td><input type="text" id="rstats_path" size=32 maxlength=90 name="rstats_path" class="input_32_table" value="<% nvram_get("rstats_path"); %>"></td>
 					</tr>
 					<tr id="rstats_new_tr">
-			        		<th>Create or reset data files:<br><i>Enable if using a new location</i></th>
-				        	<td>
-	        		       			<input type="radio" name="rstats_new" class="input" value="1" <% nvram_match_x("", "rstats_new", "1", "checked"); %>><#checkbox_Yes#>
-			        		        <input type="radio" name="rstats_new" class="input" value="0" <% nvram_match_x("", "rstats_new", "0", "checked"); %>><#checkbox_No#>
-			       	        	</td>
-	        			</tr>
+		        		<th>Create or reset data files:<br><i>Enable if using a new location</i></th>
+			        	<td>
+       		       			<input type="radio" name="rstats_new" class="input" value="1" <% nvram_match_x("", "rstats_new", "1", "checked"); %>><#checkbox_Yes#>
+	        		        <input type="radio" name="rstats_new" class="input" value="0" <% nvram_match_x("", "rstats_new", "0", "checked"); %>><#checkbox_No#>
+	       	        	</td>
+        			</tr>
 					<tr>
-					        <th>Starting day of monthly cycle</th>
-				        	<td><input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>"></td>
-				        </tr>
+				        <th>Starting day of monthly cycle</th>
+			        	<td><input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>"></td>
+			        </tr>
+					<tr id="cstats_enable_tr">
+		        		<th>Enable advanced (per IP) monitoring</i></th>
+			        	<td>
+       		       			<input type="radio" name="cstats_enable" class="input" value="1" <% nvram_match_x("", "cstats_enable", "1", "checked"); %> onchange="hide_cstats(this.value);"><#checkbox_Yes#>
+	        		        <input type="radio" name="cstats_enable" class="input" value="0" <% nvram_match_x("", "cstats_enable", "0", "checked"); %> onchange="hide_cstats(this.value);"><#checkbox_No#>
+	       	        	</td>
+        			</tr>
+					<tr id="cstats_1_tr">
+		        		<th>Create or reset advanced data files</th>
+			        	<td>
+       		       			<input type="radio" name="cstats_new" class="input" value="1" <% nvram_match_x("", "cstats_new", "1", "checked"); %>><#checkbox_Yes#>
+	        		        <input type="radio" name="cstats_new" class="input" value="0" <% nvram_match_x("", "cstats_new", "0", "checked"); %>><#checkbox_No#>
+	       	        	</td>
+        			</tr>
+					<tr id="cstats_2_tr">
+		        		<th>Monitor all IPs by default</th>
+			        	<td>
+       		       			<input type="radio" name="cstats_all" class="input" value="1" <% nvram_match_x("", "cstats_all", "1", "checked"); %> onchange="hide_cstats_ip(this.value);"><#checkbox_Yes#>
+	        		        <input type="radio" name="cstats_all" class="input" value="0" <% nvram_match_x("", "cstats_all", "0", "checked"); %> onchange="hide_cstats_ip(this.value);"><#checkbox_No#>
+	       	        	</td>
+        			</tr>
+					<tr id="cstats_inc_tr">
+						<th>List of IPs to monitor (comma-separated):</th>
+						<td>
+							<input type="text" maxlength="512" class="input_32_table" name="cstats_include" onchange="update_filter();">
+						</td>
+					</tr>
+					<tr id="cstats_exc_tr">
+						<th>List of IPs to exclude (comma-separated):</th>
+						<td>
+							<input type="text" maxlength="512" class="input_32_table" name="cstats_exclude" onchange="update_filter();">
+						</td>
+					</tr>
+
 				</table>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -251,7 +314,7 @@ function done_validating(action){
 						<td>
 							<input type="checkbox" name="usb_idle_exclude_a">sda</input>
 							<input type="checkbox" name="usb_idle_exclude_b">sdb</input>
-							<input type="checkbox" name="usb_idle_exclude_c">sdc</input> 
+							<input type="checkbox" name="usb_idle_exclude_c">sdc</input>
 						</td>
 					</tr>
 					<tr>
@@ -282,7 +345,7 @@ function done_validating(action){
 								<input type="text" maxlength="5" class="input_6_table" name="tcp_established" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
 								<span>Default: 1200</span>
 							</td>
-                        
+
 						</tr>
 
  						<tr>
@@ -305,7 +368,7 @@ function done_validating(action){
 							<th>TCP Timeout: fin_wait</th>
 							<td>
 								<input type="text" maxlength="5" class="input_6_table" name="tcp_fin_wait" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
-								<span>Default: 120</span> 
+								<span>Default: 120</span>
 							</td>
 						</tr>
 
@@ -313,7 +376,7 @@ function done_validating(action){
 							<th>TCP Timeout: time_wait</th>
 							<td>
 								<input type="text" maxlength="5" class="input_6_table" name="tcp_time_wait" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
-								<span>Default: 120</span> 
+								<span>Default: 120</span>
 							</td>
 						</tr>
 
@@ -321,7 +384,7 @@ function done_validating(action){
 							<th>TCP Timeout: close</th>
 							<td>
 								<input type="text" maxlength="5" class="input_6_table" name="tcp_close" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
-								<span>Default: 10</span> 
+								<span>Default: 10</span>
 							</td>
 						</tr>
 
@@ -329,7 +392,7 @@ function done_validating(action){
 							<th>TCP Timeout: close_wait</th>
 							<td>
 								<input type="text" maxlength="5" class="input_6_table" name="tcp_close_wait" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
-								<span>Default: 60</span> 
+								<span>Default: 60</span>
 							</td>
 						</tr>
 
@@ -337,7 +400,7 @@ function done_validating(action){
 							<th>TCP Timeout: last_ack</th>
 							<td>
 								<input type="text" maxlength="5" class="input_6_table" name="tcp_last_ack" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
-								<span>Default: 30</span> 
+								<span>Default: 30</span>
 							</td>
 						</tr>
 
@@ -353,12 +416,12 @@ function done_validating(action){
 							<th>UDP Timeout: Unreplied</th>
 							<td>
 								<input type="text" maxlength="5" class="input_6_table" name="udp_unreplied" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1,86400)" value="">
-								<span>Default: 30</span> 
+								<span>Default: 30</span>
 							</td>
 						</tr>
 					</table>
 					<div class="apply_gen">
-						<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_apply#>"/>
+						<input name="button" type="button" class="button_gen" onclick="validate();" value="<#CTL_apply#>"/>
 			        </div>
 				</td></tr>
 	        </tbody>

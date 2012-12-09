@@ -204,6 +204,14 @@ extern int is_private_subnet(const char *ip);
 extern char* INET6_rresolve(struct sockaddr_in6 *sin6, int numeric);
 extern char *trim_r(char *str);
 
+extern void wo_iptbackup(char *url, webs_t wp);
+
+extern void ej_ipt_bandwidth(int eid, webs_t wp, int argc, char **argv);
+extern void ej_iptmon(int eid, webs_t wp, int argc, char **argv);
+extern void ej_climon(int argc, char **argv, webs_t wp);
+extern void ej_iptraffic(int eid, webs_t wp, int argc, char **argv);
+
+
 /* web-*.c */
 extern int ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit);
 extern int ej_wl_status_2g(int eid, webs_t wp, int argc, char_t **argv);

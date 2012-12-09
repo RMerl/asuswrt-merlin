@@ -24,7 +24,7 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-<% backup_nvram("wan_ifname,lan_ifname,rstats_enable"); %>
+<% backup_nvram("wan_ifname,lan_ifname,rstats_enable,cstats_enable"); %>
 try {
 	<% bandwidth("monthly"); %>
 }
@@ -99,6 +99,10 @@ function init()
 {
 	var s;
 
+	if (nvram.cstats_enable == '1') {
+		E('page_select').innerHTML += '<optgroup label="Per device" ><option value="5"><#menu4_2_1#></option><option value="6"><#menu4_2_3#></option><option value="7">Monthly</option></optgroup>';
+	}
+
 	if (nvram.rstats_enable != '1') return;
 
 	if ((s = cookie.get('monthly')) != null) {
@@ -119,6 +123,12 @@ function switchPage(page){
 		location.href = "/Main_TrafficMonitor_last24.asp";
 	else if(page == "3")
 		location.href = "/Main_TrafficMonitor_daily.asp";
+	else if(page == "5")
+		location.href = "/Main_TrafficMonitor_devrealtime.asp";
+	else if(page == "6")
+		location.href = "/Main_TrafficMonitor_devdaily.asp";
+	else if(page == "7")
+		location.href = "/Main_TrafficMonitor_devmonthly.asp";
 	else
 		return false;
 }
@@ -167,19 +177,21 @@ function switchPage(page){
 	      		<tr>
 	      			<td bgcolor="#4D595D" valign="top">
 	      				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
-						<tr><td><table width=100%" >
+						<tr><td><table width="100%" >
 	        				<tr>
 							<td  class="formfonttitle" align="left">
 								<div style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
 							</td>
 		          				<td>
      								<div align="right">
-			    						<select class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
+			    						<select id="page_select" class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
 												<!--option><#switchpage#></option-->
+											<optgroup label="Global">
 												<option value="1"><#menu4_2_1#></option>
 												<option value="2"><#menu4_2_2#></option>
 												<option value="3"><#menu4_2_3#></option>
 												<option value="4" selected>Monthly</option>
+											</optgroup>
 											</select>&nbsp;&nbsp;&nbsp;
 
 										<select class="input_option" style="width:100px" onchange='changeDate(this, "ym")' id='dafm'>

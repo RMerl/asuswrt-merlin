@@ -1140,6 +1140,14 @@ struct nvram_tuple router_defaults[] = {
 	{"rstats_exclude", ""},
 	{"rstats_sshut", "1"},
 	{"rstats_bak", "0"},
+
+	/* IPTraffic traffic monitor */
+	{ "cstats_enable", "0"},
+	{ "cstats_exclude",""},
+	{ "cstats_include", ""},
+	{ "cstats_all", "1"},
+	{ "cstats_sshut", "1"},
+
 	{"http_id", "TIDe855a6487043d70a"},
 
 	{"asus_debug", "0"},
