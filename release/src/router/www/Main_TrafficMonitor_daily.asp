@@ -24,7 +24,7 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-<% backup_nvram("wan_ifname,lan_ifname,rstats_enable"); %>
+<% backup_nvram("wan_ifname,lan_ifname,rstats_enable,cstats_enable"); %>
 try {
 	<% bandwidth("daily"); %>
 }
@@ -118,6 +118,10 @@ function init()
 {
 	var s;
 
+	if (nvram.cstats_enable == '1') {
+		E('page_select').innerHTML += '<optgroup label="Per device"><option value="5"><#menu4_2_1#></option><option value="6"><#menu4_2_3#></option><option value="7">Monthly</option></optgroup>';
+	}
+
 	if (nvram.rstats_enable != '1') return;
 
 	if ((s = cookie.get('daily')) != null) {
@@ -193,7 +197,7 @@ function switchPage(page){
 	      		<tr>
 	      			<td bgcolor="#4D595D" valign="top">
 	      				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
-						<tr><td><table width=100%" >
+						<tr><td><table width="100%" >
         			<tr>
 
 						<td  class="formfonttitle" align="left">
@@ -202,18 +206,13 @@ function switchPage(page){
 
           			<td>
      							<div align="right">
-			    					<select class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
+			    					<select id="page_select" class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
 										<!--option><#switchpage#></option-->
 										<optgroup label="Global">
 											<option value="1"><#menu4_2_1#></option>
 											<option value="2"><#menu4_2_2#></option>
 											<option value="3" selected><#menu4_2_3#></option>
 											<option value="4">Monthly</option>
-										</optgroup>
-											<optgroup label="Per device">
-											<option value="5"><#menu4_2_1#></option>
-											<option value="6"><#menu4_2_3#></option>
-											<option value="7">Monthly</option>
 										</optgroup>
 									</select>
 									</div>

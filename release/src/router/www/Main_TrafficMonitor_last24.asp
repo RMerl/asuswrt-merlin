@@ -27,7 +27,7 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-<% backup_nvram("wan_ifname,lan_ifname,wl_ifname,wan_proto,web_svg,rstats_enable,rstats_colors"); %>
+<% backup_nvram("wan_ifname,lan_ifname,wl_ifname,wan_proto,web_svg,rstats_enable,rstats_colors,cstats_enable"); %>
 
 var cprefix = 'bw_24';
 var updateInt = 30;
@@ -109,6 +109,11 @@ ref.initX = function()
 
 function init()
 {
+
+	if (nvram.cstats_enable == '1') {
+		E('page_select').innerHTML += '<optgroup label="Per device" ><option value="5"><#menu4_2_1#></option><option value="6"><#menu4_2_3#></option><option value="7">Monthly</option></optgroup>';
+	}
+
 	if (nvram.rstats_enable != '1') return;
 
 	try {
@@ -224,18 +229,13 @@ function Zoom(func){
 									</td>
 							<td>
      						<div align="right">
-			    				<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option" style="margin-top:8px;">
+			    				<select id="page_select" onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option" style="margin-top:8px;">
 									<!--option><#switchpage#></option-->
 										<optgroup label="Global">
 											<option value="1"><#menu4_2_1#></option>
 											<option value="2" selected><#menu4_2_2#></option>
 											<option value="3"><#menu4_2_3#></option>
 											<option value="4">Monthly</option>
-										</optgroup>
-											<optgroup label="Per device">
-											<option value="5"><#menu4_2_1#></option>
-											<option value="6"><#menu4_2_3#></option>
-											<option value="7">Monthly</option>
 										</optgroup>
 								</select>
 							</div>

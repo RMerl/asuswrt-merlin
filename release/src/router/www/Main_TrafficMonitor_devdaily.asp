@@ -229,7 +229,9 @@ function addrow(rclass, rtitle, host, dl, ul, total) {
 
 function init() {
 
-	if (nvram.cstats_enable != '1') return;
+	if (nvram.cstats_enable == '1') {
+		E('page_select').innerHTML += '<optgroup label="Per device"><option value="5"><#menu4_2_1#></option><option value="6" selected><#menu4_2_3#></option><option value="7">Monthly</option></optgroup>';
+	}
 
 	if ((c = cookie.get('daily')) != null) {
 		if (c.match(/^([0-2])$/)) {
@@ -376,18 +378,13 @@ function switchPage(page){
 									</td>
           				<td>
      							<div align="right">
-			    					<select class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
+			    					<select id="page_select" class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
 											<!--option><#switchpage#></option-->
 											<optgroup label="Global">
 												<option value="1"><#menu4_2_1#></option>
 												<option value="2"><#menu4_2_2#></option>
 												<option value="3"><#menu4_2_3#></option>
 												<option value="4">Monthly</option>
-											</optgroup>
-												<optgroup label="Per device">
-												<option value="5"><#menu4_2_1#></option>
-												<option value="6" selected><#menu4_2_3#></option>
-												<option value="7">Monthly</option>
 											</optgroup>
 										</select>
 
