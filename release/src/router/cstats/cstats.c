@@ -544,7 +544,7 @@ static void calc(void) {
 	unsigned long rx;
 	char ip[INET_ADDRSTRLEN];
 
-		if ((f = fopen("/proc/net/ipt_account/lan", "r")) == NULL) continue;
+	if ((f = fopen("/proc/net/ipt_account/lan", "r"))) {
 
 		while (fgets(buf, sizeof(buf), f)) {
 			if(sscanf(buf, 
@@ -658,7 +658,7 @@ static void calc(void) {
 			}
 		}
 		fclose(f);
-
+	}
 	// remove/exclude history (if we still have any data previously stored)
 	char *nvp, *b;
 	nvp = exclude;
