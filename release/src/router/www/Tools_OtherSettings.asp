@@ -65,6 +65,7 @@ function hide_rstats_storage(_value){
         $("rstats_new_tr").style.display = (_value == "1" || _value == "2") ? "" : "none";
         $("rstats_stime_tr").style.display = (_value == "1" || _value == "2") ? "" : "none";
         $("rstats_path_tr").style.display = (_value == "1") ? "" : "none";
+
 }
 
 function hide_cstats_ip(_value){
@@ -141,6 +142,17 @@ function applyRule(){
 	document.form.submit();
 }
 
+function validate(){
+
+	if ((document.form.rstats_location.value == "2") && (getRadioValue(document.form.cstats_enable) == "1")) {
+		$('invalid_location').style.display = "";
+		document.form.rstats_location.focus();
+
+		return false;
+	}
+
+	applyRule();
+}
 
 function done_validating(action){
         refreshpage();
@@ -208,6 +220,7 @@ function done_validating(action){
 								<option value="1">Custom location</option>
 								<option value="2">NVRAM</option>
 							</select>
+							<span id="invalid_location" style="display:none;" class="formfontdesc">Cannot use NVRAM if per IP monitoring is enabled!</span>
 			   			</td>
 					</tr>
 
@@ -408,7 +421,7 @@ function done_validating(action){
 						</tr>
 					</table>
 					<div class="apply_gen">
-						<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_apply#>"/>
+						<input name="button" type="button" class="button_gen" onclick="validate();" value="<#CTL_apply#>"/>
 			        </div>
 				</td></tr>
 	        </tbody>
