@@ -1974,7 +1974,7 @@ void generate_wl_para(int unit, int subunit)
 	char tmp[100], prefix[]="wlXXXXXXX_";
 	char tmp2[100], prefix2[]="wlXXXXXXX_";
 	char list[640];
-	char *nv, *nvp, *b;
+	char *nv, *nvp, *b, *c;
 #ifndef RTCONFIG_BCMWL6
 	char word[256], *next;
 	int match;
@@ -2135,6 +2135,7 @@ void generate_wl_para(int unit, int subunit)
 		if (nv) {
 			while ((b = strsep(&nvp, "<")) != NULL) {
 				if (strlen(b)==0) continue;
+				if((vstrsep(b, ">", &c)!=1)) continue;
 				if (list[0]==0)
 					sprintf(list, "%s", b);
 				else
