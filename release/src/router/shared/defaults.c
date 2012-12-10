@@ -1380,6 +1380,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client_password",	""		},
 	{ "vpn_client_useronly",	"0"		},
 #endif
+#ifdef LINUX26
+	{ "nf_sip",			"1"		},
+#endif
 
 #ifdef RTCONFIG_IPV6
 	// IPv6 parameters
