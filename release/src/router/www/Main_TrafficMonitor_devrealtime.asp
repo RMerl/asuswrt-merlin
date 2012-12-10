@@ -141,7 +141,7 @@ function redraw() {
 
 	sortfield = "color: #FFCC00;";
 	grid = '<table width="730px" class="FormTable_NWM">';
-	grid += '<tr class="traffictable"><th onclick="setSort(this, 0);" style="min-width: 150px; ' + (sortColumn == 0 ? sortfield : "") + '">Host</th>';
+	grid += '<tr class="traffictable"><th onclick="setSort(this, 0);" style="min-width: 100px; ' + (sortColumn == 0 ? sortfield : "") + '">Host</th>';
 	grid += '<th onclick="setSort(this, 1);" style="' + (sortColumn == 1 ? sortfield : "") + '">Reception<br>(bytes/s)</th>';
 	grid += '<th onclick="setSort(this, 2);" style="' + (sortColumn == 2 ? sortfield : "") + '">Transmission<br>(bytes/s)</th>';
 	grid += '<th onclick="setSort(this, 3);" style="' + (sortColumn == 3 ? sortfield : "") + '">TCP In/Out<br>(pkts/s)</th>';
