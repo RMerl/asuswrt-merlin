@@ -189,7 +189,7 @@ commands inside a user script to re-generate your cron jobs
 at boot time.
 
 
-* Traffic history saving *
+* Enhanced Traffic monitoring *
 Under Tools -> Other Settings are options that will allow you 
 to save your traffic history to disk, preserving it between 
 router reboots (by default it is currently kept in RAM, 
@@ -204,8 +204,24 @@ if you are saving to jffs, to reduce wearing out
 your flash memory.  Make sure not to forget the trailing 
 slash ad the end of the path.
 
-Also, a new "Monthly" page has been added to the Traffic 
-Monitor pages.
+Also, Asuswrt-Merlin can now track your traffic on a 
+per device (IP) basis, allowing you to monitor traffic 
+history of individual computers.  To enable this, you 
+must first set a custom location to store your 
+traffic database (see above).  Once done, enable 
+the Advanced Traffic Monitoring option.  This will 
+add three new entries to the Traffic Monitor 
+page selector (on the Traffic Monitoring page).
+
+You can optionally specify which IP to monitor, 
+or exclude some IPs from monitoring.  Each IP 
+must be separated by a comma.
+
+It's strongly recommended that you assign a static 
+IP to devices you wish to monitor to ensure they 
+don't get a different IP over time, which would 
+make the collected data somewhat unreliable.
+The monitoring is done per IP, NOT per MAC.
 
 
 
@@ -338,6 +354,8 @@ History
 3.0.0.4.260.22:
    - NEW: Traffic monitoring per IP added to the Traffic Monitor section.
           Based on the Tomato IPTraffic implementation by Teaman.
+   - NEW: Option to disable the Netfilter SIP helper (under Firewall), allows
+          people to manually forward port 5060 to their own SIP server
    - FIXED: Tabs would disappear while on the Monthly traffic page.
    - FIXED: Really fixed Firefox issue (the fix wasn't merged
             in release 260.21).
