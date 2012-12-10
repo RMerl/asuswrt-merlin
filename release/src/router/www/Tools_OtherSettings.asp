@@ -276,13 +276,13 @@ function done_validating(action){
 					<tr id="cstats_inc_tr">
 						<th>List of IPs to monitor (comma-separated):</th>
 						<td>
-							<input type="text" maxlength="512" class="input_32_table" name="cstats_include" onchange="update_filter();">
+							<input type="text" maxlength="512" class="input_32_table" name="cstats_include" onchange="update_filter();" value="<% nvram_get("cstats_include"); %>">
 						</td>
 					</tr>
 					<tr id="cstats_exc_tr">
 						<th>List of IPs to exclude (comma-separated):</th>
 						<td>
-							<input type="text" maxlength="512" class="input_32_table" name="cstats_exclude" onchange="update_filter();">
+							<input type="text" maxlength="512" class="input_32_table" name="cstats_exclude" onchange="update_filter();" value="<% nvram_get("cstats_exclude"); %>">
 						</td>
 					</tr>
 
