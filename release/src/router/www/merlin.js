@@ -62,3 +62,19 @@ function cmpFloat(a, b)
         return ((isNaN(a)) ? -Number.MAX_VALUE : a) - ((isNaN(b)) ? -Number.MAX_VALUE : b);
 }
 
+function validate_iplist(o, event){
+
+        if (event.which == null)
+                keyPressed = event.keyCode;     // IE
+         else if (event.which != 0 && event.charCode != 0)
+                keyPressed = event.which        // All others
+        else
+                return true;                    // Special key
+
+        if ((keyPressed>=48&&keyPressed<=57) || //0-9
+           (keyPressed==46) ||                  //.
+           (keyPressed==44)) return true;		//,
+
+        return false;
+}
+

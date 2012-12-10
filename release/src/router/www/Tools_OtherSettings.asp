@@ -18,6 +18,7 @@
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
+<script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
@@ -140,6 +141,21 @@ function applyRule(){
                 document.form.action_script.value += ";restart_sdidle";
 
 	document.form.submit();
+}
+
+function update_filter(o,v) {
+	var i;
+	var filterip = [];
+
+	if (v.length>0) {
+		filterip = v.split(',');
+		for (i = 0; i < filterip.length; ++i) {
+			if ((filterip[i] = fixIP(filterip[i])) == null) {
+				filterip.splice(i,1);
+			}
+		}
+		o.value = (filterip.length > 0) ? filterip.join(',') : '';
+	}
 }
 
 function validate(){
@@ -276,13 +292,13 @@ function done_validating(action){
 					<tr id="cstats_inc_tr">
 						<th>List of IPs to monitor (comma-separated):</th>
 						<td>
-							<input type="text" maxlength="512" class="input_32_table" name="cstats_include" onchange="update_filter();" value="<% nvram_get("cstats_include"); %>">
+							<input type="text" maxlength="512" class="input_32_table" name="cstats_include" onKeyPress="return validate_iplist(this,event);" onchange="update_filter(this,this.value);" value="<% nvram_get("cstats_include"); %>">
 						</td>
 					</tr>
 					<tr id="cstats_exc_tr">
 						<th>List of IPs to exclude (comma-separated):</th>
 						<td>
-							<input type="text" maxlength="512" class="input_32_table" name="cstats_exclude" onchange="update_filter();" value="<% nvram_get("cstats_exclude"); %>">
+							<input type="text" maxlength="512" class="input_32_table" name="cstats_exclude" onKeyPress="return validate_iplist(this,event);" onchange="update_filter(this,this.value);" value="<% nvram_get("cstats_exclude"); %>">
 						</td>
 					</tr>
 

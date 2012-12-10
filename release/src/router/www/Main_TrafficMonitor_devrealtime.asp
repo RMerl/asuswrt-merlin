@@ -536,13 +536,13 @@ function switchPage(page){
 										<tr id="adv0">
 											<th>List of IPs to display (comma-separated):</th>
 											<td>
-												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onchange="update_filter();">
+												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onKeyPress="return validate_iplist(this,event);" onchange="update_filter();">
 											</td>
 										</tr>
 										<tr id="adv1">
 											<th>List of IPs to exclude (comma-separated):</th>
 											<td>
-												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onchange="update_filter();">
+												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onKeyPress="return validate_iplist(this,event);" onchange="update_filter();">
 											</td>
 										</tr>
 
