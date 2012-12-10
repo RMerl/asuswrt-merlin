@@ -481,7 +481,7 @@ function create_guest_unit(_unit, _subunit){
 			
 			<!-- info table -->
 			<div id="guest_table2"></div>
-			<div id="guest_table5" style="margin-top:200px;"></div>
+			<div id="guest_table5" style="margin-top:250px;"></div>
 
 			<!-- setting table -->
 			<table width="80%" border="1" align="center" style="margin-top:10px;margin-bottom:20px;" cellpadding="4" cellspacing="0" id="gnset_table" class="FormTable">
