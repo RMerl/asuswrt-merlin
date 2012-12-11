@@ -593,7 +593,7 @@ function change_vpn_unit(val){
 					<tr>
 						<th>TLS Renegotiation Time<br><i>(in seconds, -1 for default)</th>
 						<td>
-							<input type="text" maxlength="5" class="input_6_table" name="vpn_server_reneg" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, -1, 2147483647)" value="<% nvram_get("vpn_server_reneg"); %>">
+							<input type="text" maxlength="5" class="input_6_table" name="vpn_server_reneg" onblur="validate_number_range(this, -1, 2147483647)" value="<% nvram_get("vpn_server_reneg"); %>">
 						</td>
 					</tr>
 
