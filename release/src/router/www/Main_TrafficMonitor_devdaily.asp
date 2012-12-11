@@ -152,7 +152,7 @@ function redraw()
 			var ymd = getYMD(b[0]);
 			d = [ymdText(ymd[0], ymd[1], ymd[2]), h, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3])];
 
-			grid += addrow(((rows & 1) ? 'odd' : 'even'), ymdText(ymd[0], ymd[1], ymd[2]), style_open + h + style_close, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3]));
+			grid += addrow(((rows & 1) ? 'odd' : 'even'), ymdText(ymd[0], ymd[1], ymd[2]), style_open + h + style_close, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3]), b[1]);
 			++rows;
 		}
 	}
@@ -170,6 +170,22 @@ function redraw()
 function update_display(option, value) {
 	cookie.set('ipt_' + option, value);
 	redraw();
+}
+
+function _validate_iplist(o, event) {
+	if (event.which == null)
+		keyPressed = event.keyCode;     // IE
+	else if (event.which != 0 && event.charCode != 0)
+		keyPressed = event.which        // All others
+	else
+		return true;                    // Special key
+
+	if (keyPressed == 13) {
+		update_filter();
+		return true;
+	} else {
+		return validate_iplist(o, event);
+	}
 }
 
 function update_filter() {
@@ -216,16 +232,25 @@ function update_visibility() {
 
 }
 
-function addrow(rclass, rtitle, host, dl, ul, total) {
-        return '<tr class="' + rclass + '">' +
+function addrow(rclass, rtitle, host, dl, ul, total, ip) {
+	if (ip != "")
+		link = 'style = "cursor:pointer;" onclick="popupWindow(\'' + ip +'\');"'
+	else
+		link = "";
+
+	return '<tr class="' + rclass + '">' +
                 '<td class="rtitle">' + rtitle + '</td>' +
-                '<td class="host">' + host + '</td>' +
-                '<td class="dl">' + dl + '</td>' +
-                '<td class="ul">' + ul + '</td>' +
-                '<td class="total">' + total + '</td>' +
+                '<td  ' + link + ' class="host">' + host + '</td>' +
+                '<td>' + dl + '</td>' +
+                '<td>' + ul + '</td>' +
+                '<td>' + total + '</td>' +
                 '</tr>';
 }
 
+function popupWindow(ip) {
+	cookie.set("ipt_singleip",ip,1)
+	window.open("Main_TrafficMonitor_devrealtime.asp", '', 'width=1100,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
+}
 
 function init() {
 
@@ -239,36 +264,58 @@ function init() {
 		}
 	}
 
-	if ((c = cookie.get('ipt_addr_shown')) != null) {
-		if (c.length>6) {
-			document.form._f_filter_ip.value = c;
-			filterip = c.split(',');
+	if (((c = cookie.get('ipt_singleip')) != null) && (c.length>6)) {
+		cookie.unset('ipt_singleip');
+		filterip = c.split(',');
+		dateselect = 0;
+	} else {
+
+		if ((c = cookie.get('ipt_addr_shown')) != null) {
+			if (c.length>6) {
+				document.form._f_filter_ip.value = c;
+				filterip = c.split(',');
+			}
 		}
+
+		if ((c = cookie.get('ipt_addr_hidden')) != null) {
+			if (c.length>6) {
+				document.form._f_filter_ipe.value = c;
+				filteripe = c.split(',');
+			}
+		}
+
+		if ((c = cookie.get('ipt_options')) != null ) {
+			setRadioValue(document.form._f_show_options , (c == 1))
+		}
+
+		if ((c = cookie.get('ipt_zero')) != null ) {
+			setRadioValue(document.form._f_show_zero , (c == 1))
+		}
+		dateselect = 2;
 	}
 
-	if ((c = cookie.get('ipt_addr_hidden')) != null) {
-		if (c.length>6) {
-			document.form._f_filter_ipe.value = c;
-			filteripe = c.split(',');
-		}
+	if ((c = cookie.get('ipt_subnet')) != null ) {
+		setRadioValue(document.form._f_show_subnet , (c == 1))
 	}
 
-	setRadioValue(document.form._f_show_options , (((c = cookie.get('ipt_options')) != null) && (c == '1')));
-	setRadioValue(document.form._f_show_subnet , (((c = cookie.get('ipt_subnet')) != null) && (c == '1')));
-	setRadioValue(document.form._f_show_hostnames , (((c = cookie.get('ipt_hostnames')) != null) && (c == '1')));
-	setRadioValue(document.form._f_show_zero , (((c = cookie.get('ipt_zero')) != null) && (c == '1')));
+	if ((c = cookie.get('ipt_hostnames')) != null ) {
+		setRadioValue(document.form._f_show_hostnames , (c == 1))
+	}
+
 	update_visibility();
-
 	initDate('ymd');
-
 	daily_history.sort(cmpDualFields);
-	init_filter_dates();
+	init_filter_dates(dateselect);
 	populateCache();
 	redraw();
 }
 
-function init_filter_dates() {
+// dateselect: 0 == all, 1 == current, 2 == today
+function init_filter_dates(dateselect) {
 	var dates = [];
+	var selected1 = false;
+	var selected2 = false;
+
 	if (daily_history.length > 0) {
 		for (var i = 0; i < daily_history.length; ++i) {
 			dates.push('0x' + daily_history[i][0].toString(16));
@@ -283,24 +330,40 @@ function init_filter_dates() {
 		}
 	}
 	var d = new Date();
+
+	if (dateselect == 1) {
+		current1 = document.form._f_begin_date.value;
+		current2 = document.form._f_end_date.value;
+	}
+
 	free_options(document.form._f_begin_date);
 	free_options(document.form._f_end_date);
 
 	for (var i = 0; i < dates.length; ++i) {
-		var ymd = getYMD(dates[i]);
-		var selected = ((ymd[0]==d.getFullYear()) && (ymd[1]==d.getMonth()) && (ymd[2]==d.getDate()));
-		add_option(document.form._f_begin_date,ymdText(ymd[0], ymd[1], ymd[2]), dates[i], selected);
-		add_option(document.form._f_end_date,ymdText(ymd[0], ymd[1], ymd[2]), dates[i], selected);
+		ymd = getYMD(dates[i]);
+
+		if ((dateselect == 0)) {
+			selected1 = (i == 0);
+			selected2 = (i == dates.length-1);
+		} else if (dateselect == 1) {
+			selected1 = (dates[i] == current1);
+			selected2 = (dates[i] == current2);
+		} else if (dateselect == 2) {
+			selected1 = (i == dates.length-1);
+			selected2 = (i == dates.length-1);
+		}
+
+		add_option(document.form._f_begin_date,ymdText(ymd[0], ymd[1], ymd[2]), dates[i], selected1);
+		add_option(document.form._f_end_date,ymdText(ymd[0], ymd[1], ymd[2]), dates[i], selected2);
 	}
 }
 
 function update_date_format(o, f) {
 	changeDate(o, f);
-	init_filter_dates();
+	init_filter_dates(1);
 }
 
 function cmpDualFields(a, b) {
-
 	if (cmpHist(a, b) == 0)
 		return aton(a[1])-aton(b[1]);
 	else
@@ -393,6 +456,14 @@ function switchPage(page){
         			</tr>
 					</table></td></tr>
 
+					<tr>
+						<td>
+							<div class="formfontdesc">
+								<p>Click on a host to monitor that host's current activity.
+							</div>
+						</td>
+					</tr>
+
         			<tr>
           				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
@@ -450,13 +521,13 @@ function switchPage(page){
 										<tr id="adv0">
 											<th>List of IPs to display (comma-separated):</th>
 											<td>
-												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onKeyPress="return validate_iplist(this,event);" onchange="update_filter();">
+												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onKeyPress="return _validate_iplist(this,event);" onchange="update_filter();">
 											</td>
 										</tr>
 										<tr id="adv1">
 											<th>List of IPs to exclude (comma-separated):</th>
 											<td>
-												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onKeyPress="return validate_iplist(this,event);" onchange="update_filter();">
+												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onKeyPress="return _validate_iplist(this,event);" onchange="update_filter();">
 											</td>
 										</tr>
 

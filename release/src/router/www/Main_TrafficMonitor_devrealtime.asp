@@ -197,9 +197,7 @@ function redraw() {
 		var h = b[0];
 		if (getRadioValue(document.form._f_show_hostnames) == 1) {
 			if(hostnamecache[b[0]] != null) {
-//				h = hostnamecache[b[0]] + ((b[0].indexOf(':') != -1) ? '<br>' : ' ') + '<small>(' + b[0] + ')</small>';
 				h = "<b>" + hostnamecache[b[0]] + '</b>  <small>(' + b[0] + ')</small>';
-
 			}
 		}
 
@@ -214,7 +212,8 @@ function redraw() {
 			b[7].toFixed(0).toString(),
 			b[8].toFixed(0).toString(),
 			b[9].toString(),
-			b[10].toString());
+			b[10].toString(),
+			b[0]);
 
 			++rows;
 
@@ -236,18 +235,23 @@ function redraw() {
 			icmpi.toFixed(0).toString(),
 			icmpo.toFixed(0).toString(),
 			tcpconn.toString(),
-			udpconn.toString());
+			udpconn.toString(),
+			"");
 
 
 	E('bwm-details-grid').innerHTML = grid + '</table>';
 
 }
 
-function addrow(rclass, host, dl, ul, tcpin, tcpout, udpin, udpout, icmpin, icmpout, tcpconn, udpconn) {
-
+function addrow(rclass, host, dl, ul, tcpin, tcpout, udpin, udpout, icmpin, icmpout, tcpconn, udpconn, ip) {
 	sep = "<span> / </span>";
+	if (ip != "")
+		link = 'style = "cursor:pointer;" onclick="popupWindow(\'' + ip +'\');"'
+	else
+		link = "";
+
 	return '<tr class="' + rclass + '">' +
-                '<td>' + host + '</td>' +
+                '<td ' + link + ' >' + host + '</td>' +
                 '<td>' + dl + '</td>' +
                 '<td>' + ul + '</td>' +
                 '<td>' + tcpin + sep +tcpout + '</td>' +
@@ -260,7 +264,6 @@ function addrow(rclass, host, dl, ul, tcpin, tcpout, udpin, udpout, icmpin, icmp
 
 
 function setSort(o,value) {
-
 	o.style.color="#FFCC00";
 	sortColumn = value;
 	avgiptraffic.sort(sortCompare);
@@ -304,6 +307,22 @@ function sortCompare(a, b) {
 function update_display(option, value) {
 	cookie.set('ipt_rt_' + option, value);
 	redraw();
+}
+
+function _validate_iplist(o, event) {
+	if (event.which == null)
+		keyPressed = event.keyCode;     // IE
+	else if (event.which != 0 && event.charCode != 0)
+		keyPressed = event.which        // All others
+	else
+		return true;                    // Special key
+
+	if (keyPressed == 13) {
+		update_filter();
+		return true;
+	} else {
+		return validate_iplist(o, event);
+	}
 }
 
 function update_filter() {
@@ -360,6 +379,10 @@ function getArrayPosByElement(haystack, needle, index) {
 	return -1;
 }
 
+function popupWindow(ip) {
+	cookie.set("ipt_singleip",ip,1)
+	window.open("Main_TrafficMonitor_devdaily.asp", '', 'width=1100,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
+}
 
 function init()
 {
@@ -379,31 +402,36 @@ function init()
 		}
 	}
 
-	if ((c = cookie.get('ipt_rt_addr_shown')) != null) {
-		if (c.length>6) {
-			document.form._f_filter_ip.value = c;
-			filterip = c.split(',');
+	if ((c = cookie.get('ipt_singleip')) != null) {
+		cookie.unset('ipt_singleip');
+		filterip = c.split(',');
+	} else {
+
+		if ((c = cookie.get('ipt_addr_shown')) != null) {
+			if (c.length>6) {
+				document.form._f_filter_ip.value = c;
+				filterip = c.split(',');
+			}
+		}
+
+		if ((c = cookie.get('ipt_addr_hidden')) != null) {
+			if (c.length>6) {
+				document.form._f_filter_ipe.value = c;
+				filteripe = c.split(',');
+			}
+		}
+
+		if ((c = cookie.get('ipt_options')) != null ) {
+			setRadioValue(document.form._f_show_options , (c == 1))
+		}
+
+		if ((c = cookie.get('ipt_rt_zero')) != null ) {
+			setRadioValue(document.form._f_show_zero , (c == 1))
 		}
 	}
 
-	if ((c = cookie.get('ipt_rt_addr_hidden')) != null) {
-		if (c.length>6) {
-			document.form._f_filter_ipe.value = c;
-			filteripe = c.split(',');
-		}
-	}
-
-
-        if ((c = cookie.get('ipt_rt_options')) != null ) {
-                setRadioValue(document.form._f_show_options , (c == 1))
-        }
-
-        if ((c = cookie.get('ipt_rt_hostnames')) != null ) {
-                setRadioValue(document.form._f_show_hostnames , (c == 1))
-        }
-
-	if ((c = cookie.get('ipt_rt_zero')) != null ) {
-		setRadioValue(document.form._f_show_zero , (c == 1))
+	if ((c = cookie.get('ipt_rt_hostnames')) != null ) {
+		setRadioValue(document.form._f_show_hostnames , (c == 1))
 	}
 
 	update_visibility();
@@ -499,7 +527,8 @@ function switchPage(page){
 					<tr>
 						<td>
 							<div class="formfontdesc">
-								Click on a column header to sort by that field.
+								<p>Click on a column header to sort by that field.
+								<p>Click on a host to view the daily history for that host.
 							</div>
 						</td>
 					</tr>
@@ -536,13 +565,13 @@ function switchPage(page){
 										<tr id="adv0">
 											<th>List of IPs to display (comma-separated):</th>
 											<td>
-												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onKeyPress="return validate_iplist(this,event);" onchange="update_filter();">
+												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onKeyPress="return _validate_iplist(this,event);" onchange="update_filter();">
 											</td>
 										</tr>
 										<tr id="adv1">
 											<th>List of IPs to exclude (comma-separated):</th>
 											<td>
-												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onKeyPress="return validate_iplist(this,event);" onchange="update_filter();">
+												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onKeyPress="return _validate_iplist(this,event);" onchange="update_filter();">
 											</td>
 										</tr>
 
