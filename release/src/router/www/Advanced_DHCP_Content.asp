@@ -623,7 +623,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 
 		  	<tr>
      			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,9);"><#LANHostConfig_ManualDHCPEnable_itemname#></a></th>
-					<td colspan="2" style="text-align:left;">
+					<td>
           	<input type="radio" value="1" name="dhcp_static_x"  onclick="return change_common_radio(this, 'LANHostConfig', 'dhcp_static_x', '1')" <% nvram_match("dhcp_static_x", "1", "checked"); %> /><#checkbox_Yes#>
       		  <input type="radio" value="0" name="dhcp_static_x"  onclick="return change_common_radio(this, 'LANHostConfig', 'dhcp_static_x', '0')" <% nvram_match("dhcp_static_x", "0", "checked"); %> /><#checkbox_No#>
       		</td>
@@ -633,7 +633,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 			  	<thead>
 			  		<tr>
-						<td colspan="3" id="GWStatic"><#LANHostConfig_ManualDHCPList_groupitemdesc#></td><!--Viz hold on this : &nbsp;&nbsp;(<#List_limit#> 32)-->
+						<td colspan="4" id="GWStatic"><#LANHostConfig_ManualDHCPList_groupitemdesc#></td><!--Viz hold on this : &nbsp;&nbsp;(<#List_limit#> 32)-->
 			  		</tr>
 			  	</thead>
 
