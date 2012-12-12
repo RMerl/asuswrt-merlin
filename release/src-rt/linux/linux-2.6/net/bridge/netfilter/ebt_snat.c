@@ -8,12 +8,13 @@
  *
  */
 
-#include <linux/netfilter_bridge/ebtables.h>
-#include <linux/netfilter_bridge/ebt_nat.h>
 #include <linux/module.h>
 #include <net/sock.h>
 #include <linux/if_arp.h>
 #include <net/arp.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_bridge/ebtables.h>
+#include <linux/netfilter_bridge/ebt_nat.h>
 
 static int ebt_target_snat(struct sk_buff **pskb, unsigned int hooknr,
    const struct net_device *in, const struct net_device *out,
@@ -55,7 +56,7 @@ static int ebt_target_snat_check(const char *tablename, unsigned int hookmask,
 	struct ebt_nat_info *info = (struct ebt_nat_info *) data;
 	int tmp;
 
-	if (datalen != EBT_ALIGN(sizeof(struct ebt_nat_info)))
+	if (datalen != XT_ALIGN(sizeof(struct ebt_nat_info)))
 		return -EINVAL;
 	tmp = info->target | ~EBT_VERDICT_BITS;
 	if (BASE_CHAIN && tmp == EBT_RETURN)

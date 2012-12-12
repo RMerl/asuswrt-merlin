@@ -8,10 +8,11 @@
  *
  */
 
-#include <linux/netfilter_bridge/ebtables.h>
-#include <linux/netfilter_bridge/ebt_nat.h>
 #include <linux/module.h>
 #include <net/sock.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_bridge/ebtables.h>
+#include <linux/netfilter_bridge/ebt_nat.h>
 
 static int ebt_target_dnat(struct sk_buff **pskb, unsigned int hooknr,
    const struct net_device *in, const struct net_device *out,
@@ -46,7 +47,7 @@ static int ebt_target_dnat_check(const char *tablename, unsigned int hookmask,
 	   (hookmask & ~((1 << NF_BR_PRE_ROUTING) | (1 << NF_BR_LOCAL_OUT)))) &&
 	   (strcmp(tablename, "broute") || hookmask & ~(1 << NF_BR_BROUTING)) )
 		return -EINVAL;
-	if (datalen != EBT_ALIGN(sizeof(struct ebt_nat_info)))
+	if (datalen != XT_ALIGN(sizeof(struct ebt_nat_info)))
 		return -EINVAL;
 	if (INVALID_TARGET)
 		return -EINVAL;

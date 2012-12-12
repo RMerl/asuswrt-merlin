@@ -37,10 +37,11 @@
 #include <linux/netlink.h>
 #include <linux/netdevice.h>
 #include <linux/module.h>
-#include <linux/netfilter_bridge/ebtables.h>
-#include <linux/netfilter_bridge/ebt_ulog.h>
 #include <net/sock.h>
 #include "../br_private.h"
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_bridge/ebtables.h>
+#include <linux/netfilter_bridge/ebt_ulog.h>
 
 #define PRINTR(format, args...) do { if (net_ratelimit()) \
 				printk(format , ## args); } while (0)
@@ -260,7 +261,7 @@ static int ebt_ulog_check(const char *tablename, unsigned int hookmask,
 {
 	struct ebt_ulog_info *uloginfo = (struct ebt_ulog_info *)data;
 
-	if (datalen != EBT_ALIGN(sizeof(struct ebt_ulog_info)) ||
+	if (datalen != XT_ALIGN(sizeof(struct ebt_ulog_info)) ||
 	    uloginfo->nlgroup > 31)
 		return -EINVAL;
 

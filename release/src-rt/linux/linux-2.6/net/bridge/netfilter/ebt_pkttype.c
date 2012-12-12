@@ -8,9 +8,10 @@
  *
  */
 
+#include <linux/module.h>
+#include <linux/netfilter/x_tables.h>
 #include <linux/netfilter_bridge/ebtables.h>
 #include <linux/netfilter_bridge/ebt_pkttype.h>
-#include <linux/module.h>
 
 static int ebt_filter_pkttype(const struct sk_buff *skb,
    const struct net_device *in,
@@ -28,7 +29,7 @@ static int ebt_pkttype_check(const char *tablename, unsigned int hookmask,
 {
 	struct ebt_pkttype_info *info = (struct ebt_pkttype_info *)data;
 
-	if (datalen != EBT_ALIGN(sizeof(struct ebt_pkttype_info)))
+	if (datalen != XT_ALIGN(sizeof(struct ebt_pkttype_info)))
 		return -EINVAL;
 	if (info->invert != 0 && info->invert != 1)
 		return -EINVAL;

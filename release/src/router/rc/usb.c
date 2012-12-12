@@ -29,6 +29,8 @@
 #include <disk_share.h>
 #include <disk_initial.h>
 
+#include <linux/version.h>
+
 #include <bin_sem_asus.h>
 
 char *usb_dev_file = "/proc/bus/usb/devices";
@@ -1440,8 +1442,10 @@ void write_ftpd_conf()
 	fprintf(fp, "dirmessage_enable=NO\n");
 	fprintf(fp, "xferlog_enable=NO\n");
 	fprintf(fp, "syslog_enable=NO\n");
-	fprintf(fp, "use_sendfile=NO\n");
 	fprintf(fp, "connect_from_port_20=YES\n");
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,0,0)
+	fprintf(fp, "use_sendfile=NO\n");
+#endif
 //	fprintf(fp, "listen=YES\n");
 	fprintf(fp, "listen%s=YES\n",
 #ifdef RTCONFIG_IPV6
@@ -2386,6 +2390,7 @@ int ejusb_main(int argc, const char *argv[]){
 	return 0;
 }
 
+#ifdef RTCONFIG_DISK_MONITOR
 static int diskmon_status(int status)
 {
 	static int run_status = DISKMON_IDLE;
@@ -2638,6 +2643,7 @@ cprintf("disk_monitor: wait_second=%d...\n", wait_second);
 
 	unlink("/var/run/disk_monitor.pid");
 }
+#endif
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 int start_app(){

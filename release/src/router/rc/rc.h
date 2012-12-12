@@ -344,9 +344,11 @@ extern int asus_lp(const char *device_name, const char *action);
 extern int asus_sr(const char *device_name, const char *action);
 extern int asus_tty(const char *device_name, const char *action);
 extern int asus_usb_interface(const char *device_name, const char *action);
+#ifdef RTCONFIG_DISK_MONITOR
 extern int diskmon_main(int argc, const char *argv[]);
 extern void start_diskmon(void);
 extern void stop_diskmon(void);
+#endif
 #endif
 
 //service.c

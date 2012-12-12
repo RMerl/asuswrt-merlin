@@ -557,7 +557,7 @@ start_ecmh(char *wan_ifname)
 	case IPV6_NATIVE:
 	case IPV6_NATIVE_DHCP:
 	case IPV6_MANUAL:
-		eval("/bin/ecmh", "-u", nvram_get("http_username"), "-i", wan_ifname);
+		eval("/bin/ecmh", "-u", nvram_safe_get("http_username"), "-i", (char*)wan_ifname);
 		break;
 	}
 }

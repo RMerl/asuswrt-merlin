@@ -224,37 +224,6 @@ function getCaretPos(obj){
   }
 }
 
-function DomainValidate(o){
-	var domain_reg=/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
-	var ip_reg=/^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/;
-	
-	var key = 0;
-	var s = o.value.split(".");
-	for(var i=0; i<s.length; i++){
-		if(!isNaN(s[i])){
-			key++;	
-		}
-	}
-	
-	if(o.value.length == 0){
-		alert(o.title +"<#JS_fieldblank#>")
-		o.focus();
-		o.select();
-		return false;
-	}
-	else if(key < 4 && domain_reg.test(o.value)){ //區分是否為domain
-		return true;
-	}
-	else if(key == 4 && ip_reg.test(o.value)){ //區分是否為IP
-		return true;
-	}
-	else{
-		alert(o.title + " <#JS_fieldInputError#>")
-		o.focus();
-		o.select();
-		return false;
-	}
-}
 function IP_Validate(o){
 	var ip_reg=/^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/;
 	

@@ -35,11 +35,14 @@ export STRIP := $(CROSS_COMPILE)strip -R .note -R .comment
 export SIZE := $(CROSS_COMPILE)size
 
 # Determine kernel version
-kver=$(subst ",,$(word 3, $(shell grep "UTS_RELEASE" $(LINUXDIR)/include/linux/$(1))))
-
-LINUX_KERNEL=$(call kver,version.h)
+SCMD=sed -e 's,[^=]*=[        ]*\([^  ]*\).*,\1,'
+KVERSION:=	$(shell grep '^VERSION[ 	]*=' $(LINUXDIR)/Makefile|$(SCMD))
+KPATCHLEVEL:=	$(shell grep '^PATCHLEVEL[ 	]*=' $(LINUXDIR)/Makefile|$(SCMD))
+KSUBLEVEL:=	$(shell grep '^SUBLEVEL[ 	]*=' $(LINUXDIR)/Makefile|$(SCMD))
+KEXTRAVERSION:=	$(shell grep '^EXTRAVERSION[ 	]*=' $(LINUXDIR)/Makefile|$(SCMD))
+LINUX_KERNEL=$(KVERSION).$(KPATCHLEVEL).$(KSUBLEVEL)$(KEXTRAVERSION)
 ifeq ($(LINUX_KERNEL),)
-LINUX_KERNEL=$(call kver,utsrelease.h)
+$(error Empty LINUX_KERNEL variable)
 endif
 
 include $(SRCBASE)/target.mak

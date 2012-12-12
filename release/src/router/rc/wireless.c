@@ -238,7 +238,7 @@ _dprintf("%s: Start to run...\n", __FUNCTION__);
 		// let ret be two value: connected, disconnected.
 		if(ret != WLC_STATE_CONNECTED)
 			ret = WLC_STATE_CONNECTING;
-		else if(nvram_match("lan_proto", "dhcp") && nvram_get_int("lan_state_t")!=LAN_STATE_CONNECTED) 
+		else if(nvram_match("lan_proto", "dhcp") && nvram_get_int("lan_state_t") != LAN_STATE_CONNECTED) 
 			ret = WLC_STATE_CONNECTING;
 
 		if(link_setup == 1){
@@ -277,21 +277,19 @@ _dprintf("Ready to disconnect...%d.\n", wlc_count);
 					notify_rc_and_wait("restart_wlcmode 0");
 			}
 
+#ifdef WEB_REDIRECT
+			if(wanduck_notify == NOTIFY_DISCONN){
+				wanduck_notify = NOTIFY_IDLE;
+
+				logmessage("notify wanduck", "wlc_state change!");
+				_dprintf("%s: notify wanduck: wlc_state=%d.\n", __FUNCTION__, ret);
+				// notify the change to wanduck.
+				kill_pidfile_s("/var/run/wanduck.pid", SIGUSR1);
+			}
+#endif
+
 			old_ret = ret;
 		}
-#ifdef WEB_REDIRECT
-		else if(wanduck_notify != NOTIFY_IDLE){
-			wanduck_notify = NOTIFY_IDLE;
-
-			if(ret == WLC_STATE_CONNECTED)
-				repeater_nat_setting();
-
-			logmessage("notify wanduck", "wlc state change!");
-			_dprintf("%s: notify wanduck: wlcstate=%d.\n", __FUNCTION__, ret);
-			// notify the change to wanduck.
-			kill_pidfile_s("/var/run/wanduck.pid", SIGUSR1);
-		}
-#endif
 
 		sleep(5);
 	}

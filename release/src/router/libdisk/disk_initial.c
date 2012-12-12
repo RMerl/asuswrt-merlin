@@ -85,8 +85,15 @@ extern disk_info_t *read_disk_data(){
 			}
 
 			follow_partition_list = &(parent_disk_info->partitions);
-			while(*follow_partition_list != NULL)
-				follow_partition_list = &((*follow_partition_list)->next);
+			while(*follow_partition_list != NULL){
+				if((*follow_partition_list)->partition_order == 0){
+					free_partition_data(follow_partition_list);
+					parent_disk_info->partitions = NULL;
+					follow_partition_list = &(parent_disk_info->partitions);
+				}
+				else
+					follow_partition_list = &((*follow_partition_list)->next);
+			}
 
 			new_partition_info = create_partition(device_name, follow_partition_list);
 			if(new_partition_info != NULL)
@@ -280,10 +287,12 @@ extern disk_info_t *create_disk(const char *device_name, disk_info_t **new_disk_
 
 			++(follow_disk_info->partition_number);
 			++(follow_disk_info->mounted_number);
+			if(!strcmp(new_partition_info->device, follow_disk_info->device))
+				new_partition_info->size_in_kilobytes = follow_disk_info->size_in_kilobytes-4;
 		}
 	}
 
-	if(follow_disk_info->partition_number == 0)
+	if(!strcmp(follow_disk_info->device, follow_disk_info->partitions->device))
 		get_disk_partitionnumber(device_name, &(follow_disk_info->partition_number), &(follow_disk_info->mounted_number));
 
 	*new_disk_info = follow_disk_info;
@@ -472,32 +481,41 @@ extern int get_disk_partitionnumber(const char *string, u32 *partition_number, u
 	int len;
 	char *mount_info = NULL, target[8];
 
+	if(string == NULL)
+		return 0;
+
 	if(partition_number == NULL)
 		return 0;
 
 	*partition_number = 0; // initial value.
-	if(mounted_number != NULL)
+	if(mounted_number != NULL){
 		*mounted_number = 0; // initial value.
-
-	if(string == NULL)
-		return 0;
+		mount_info = read_whole_file(MOUNT_FILE);
+	}
 
 	len = strlen(string);
 	if(!is_disk_name(string)){
 		while(isdigit(string[len-1]))
 			--len;
 	}
+	else if(mounted_number != NULL && mount_info != NULL){
+		memset(target, 0, 8);
+		sprintf(target, "%s ", string);
+		if(strstr(mount_info, target) != NULL)
+			++(*mounted_number);
+	}
 	memset(disk_name, 0, 8);
 	strncpy(disk_name, string, len);
 
 	memset(target_path, 0, 128);
 	sprintf(target_path, "%s/%s", SYS_BLOCK, disk_name);
-	if((dp = opendir(target_path)) == NULL)
+	if((dp = opendir(target_path)) == NULL){
+		if(mount_info != NULL)
+			free(mount_info);
 		return 0;
+	}
 
 	len = strlen(disk_name);
-	if(mounted_number != NULL)
-		mount_info = read_whole_file(MOUNT_FILE);
 	while((file = readdir(dp)) != NULL){
 		if(file->d_name[0] == '.')
 			continue;
@@ -579,7 +597,7 @@ ret:
 extern partition_info_t *create_partition(const char *device_name, partition_info_t **new_part_info){
 	partition_info_t *follow_part_info;
 	char label[128];
-	u32 partition_order;
+	u32 partition_order = 0;
 	u64 size_in_kilobytes = 0, total_kilobytes = 0, used_kilobytes = 0;
 	char buf1[PATH_MAX], buf2[64], buf3[PATH_MAX]; // options of mount info needs more buffer size.
 	int len;
@@ -664,11 +682,11 @@ extern partition_info_t *create_partition(const char *device_name, partition_inf
 		}
 	}
 	else{
-		if(is_disk_name(device_name)){	// Disk
+		/*if(is_disk_name(device_name)){	// Disk
 			free_partition_data(&follow_part_info);
 			return NULL;
 		}
-		else{
+		else{//*/
 			len = strlen(PARTITION_TYPE_UNKNOWN);
 			follow_part_info->file_system = (char *)malloc(len+1);
 			if(follow_part_info->file_system == NULL){
@@ -681,7 +699,7 @@ extern partition_info_t *create_partition(const char *device_name, partition_inf
 
 			get_partition_size(device_name, &size_in_kilobytes);
 			follow_part_info->size_in_kilobytes = size_in_kilobytes;
-		}
+		//}
 	}
 
 	*new_part_info = follow_part_info;

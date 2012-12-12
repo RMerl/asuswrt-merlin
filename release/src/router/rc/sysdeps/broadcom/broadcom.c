@@ -1057,8 +1057,8 @@ void ate_commit_bootlog(char *err_code) {
 	nvram_set("Ate_power_on_off_enable", err_code);
 	nvram_commit();
 	nvram_set("asuscfeAte_power_on_off_ret", err_code);
-	nvram_set("asuscfeAte_fail_reboot_log", nvram_get("Ate_reboot_log"));
-	nvram_set("asuscfeAte_fail_dev_log", nvram_get("Ate_dev_log"));
+	//nvram_set("asuscfeAte_fail_reboot_log", nvram_get("Ate_reboot_log"));
+	//nvram_set("asuscfeAte_fail_dev_log", nvram_get("Ate_dev_log"));
 	nvram_set("asuscfecommit=", "1");
 }
 

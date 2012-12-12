@@ -17,7 +17,6 @@
 
 #define VERSION 1
 //#define PC
-#define RTCONFIG_USB
 
 #include <stdio.h>
 #include <string.h>
@@ -28,7 +27,10 @@
 #include <limits.h>
 #include <dirent.h>
 
-#include <rtstate.h>
+// From BusyBox and get volume's label.
+#include <autoconf.h>
+#include <volume_id_internal.h>
+#include <shared.h>
 
 #include "disk_initial.h"
 
@@ -279,8 +281,15 @@ extern disk_info_t *read_disk_data(){
 			}
 
 			follow_partition_list = &(parent_disk_info->partitions);
-			while(*follow_partition_list != NULL)
-				follow_partition_list = &((*follow_partition_list)->next);
+			while(*follow_partition_list != NULL){
+				if((*follow_partition_list)->partition_order == 0){
+					free_partition_data(follow_partition_list);
+					parent_disk_info->partitions = NULL;
+					follow_partition_list = &(parent_disk_info->partitions);
+				}
+				else
+					follow_partition_list = &((*follow_partition_list)->next);
+			}
 
 			new_partition_info = create_partition(device_name, follow_partition_list);
 			if(new_partition_info != NULL)
@@ -474,10 +483,12 @@ extern disk_info_t *create_disk(const char *device_name, disk_info_t **new_disk_
 
 			++(follow_disk_info->partition_number);
 			++(follow_disk_info->mounted_number);
+			if(!strcmp(new_partition_info->device, follow_disk_info->device))
+				new_partition_info->size_in_kilobytes = follow_disk_info->size_in_kilobytes-4;
 		}
 	}
 
-	if(follow_disk_info->partition_number == 0)
+	if(!strcmp(follow_disk_info->device, follow_disk_info->partitions->device))
 		get_disk_partitionnumber(device_name, &(follow_disk_info->partition_number), &(follow_disk_info->mounted_number));
 
 	*new_disk_info = follow_disk_info;
@@ -666,32 +677,41 @@ extern int get_disk_partitionnumber(const char *string, u32 *partition_number, u
 	int len;
 	char *mount_info = NULL, target[8];
 
+	if(string == NULL)
+		return 0;
+
 	if(partition_number == NULL)
 		return 0;
 
 	*partition_number = 0; // initial value.
-	if(mounted_number != NULL)
+	if(mounted_number != NULL){
 		*mounted_number = 0; // initial value.
-
-	if(string == NULL)
-		return 0;
+		mount_info = read_whole_file(MOUNT_FILE);
+	}
 
 	len = strlen(string);
 	if(!is_disk_name(string)){
 		while(isdigit(string[len-1]))
 			--len;
 	}
+	else if(mounted_number != NULL && mount_info != NULL){
+		memset(target, 0, 8);
+		sprintf(target, "%s ", string);
+		if(strstr(mount_info, target) != NULL)
+			++(*mounted_number);
+	}
 	memset(disk_name, 0, 8);
 	strncpy(disk_name, string, len);
 
 	memset(target_path, 0, 128);
 	sprintf(target_path, "%s/%s", SYS_BLOCK, disk_name);
-	if((dp = opendir(target_path)) == NULL)
+	if((dp = opendir(target_path)) == NULL){
+		if(mount_info != NULL)
+			free(mount_info);
 		return 0;
+	}
 
 	len = strlen(disk_name);
-	if(mounted_number != NULL)
-		mount_info = read_whole_file(MOUNT_FILE);
 	while((file = readdir(dp)) != NULL){
 		if(file->d_name[0] == '.')
 			continue;
@@ -739,9 +759,41 @@ extern int is_partition_name(const char *device_name, u32 *partition_order){
 	return 1;
 }
 
+int find_partition_label(const char *dev_name, char *label){
+	struct volume_id id;
+	char dev_path[128];
+
+	memset(dev_path, 0, 128);
+	sprintf(dev_path, "/dev/%s", dev_name);
+
+	memset(&id, 0x00, sizeof(id));
+	if((id.fd = open(dev_path, O_RDONLY)) < 0)
+		return 0;
+
+	if(label) *label = 0;
+
+	volume_id_get_buffer(&id, 0, SB_BUFFER_SIZE);
+
+	if(volume_id_probe_linux_swap(&id) == 0 || id.error)
+		goto ret;
+	if(volume_id_probe_ext(&id) == 0 || id.error)
+		goto ret;
+	if(volume_id_probe_vfat(&id) == 0 || id.error)
+		goto ret;
+	if(volume_id_probe_ntfs(&id) == 0 || id.error)
+		goto ret;
+ret:
+	volume_id_free_buffer(&id);
+	if(label && (*id.label != 0))
+		strcpy(label, id.label);
+	close(id.fd);
+	return (label && *label != 0);
+}
+
 extern partition_info_t *create_partition(const char *device_name, partition_info_t **new_part_info){
 	partition_info_t *follow_part_info;
-	u32 partition_order;
+	char label[128];
+	u32 partition_order = 0;
 	u64 size_in_kilobytes = 0, total_kilobytes = 0, used_kilobytes = 0;
 	char buf1[PATH_MAX], buf2[64], buf3[PATH_MAX]; // options of mount info needs more buffer size.
 	int len;
@@ -773,6 +825,19 @@ extern partition_info_t *create_partition(const char *device_name, partition_inf
 	}
 	strncpy(follow_part_info->device, device_name, len);
 	follow_part_info->device[len] = 0;
+
+	if(find_partition_label(device_name, label)){
+		strntrim(label);
+		len = strlen(label);
+		follow_part_info->label = (char *)malloc(len+1);
+		if(follow_part_info->label == NULL){
+			usb_dbg("No memory!!(follow_part_info->label)\n");
+			free_partition_data(&follow_part_info);
+			return NULL;
+		}
+		strncpy(follow_part_info->label, label, len);
+		follow_part_info->label[len] = 0;
+	}
 
 	follow_part_info->partition_order = partition_order;
 
@@ -813,11 +878,11 @@ extern partition_info_t *create_partition(const char *device_name, partition_inf
 		}
 	}
 	else{
-		if(is_disk_name(device_name)){	// Disk
+		/*if(is_disk_name(device_name)){	// Disk
 			free_partition_data(&follow_part_info);
 			return NULL;
 		}
-		else{
+		else{//*/
 			len = strlen(PARTITION_TYPE_UNKNOWN);
 			follow_part_info->file_system = (char *)malloc(len+1);
 			if(follow_part_info->file_system == NULL){
@@ -830,7 +895,7 @@ extern partition_info_t *create_partition(const char *device_name, partition_inf
 
 			get_partition_size(device_name, &size_in_kilobytes);
 			follow_part_info->size_in_kilobytes = size_in_kilobytes;
-		}
+		//}
 	}
 
 	*new_part_info = follow_part_info;
@@ -851,6 +916,7 @@ extern partition_info_t *initial_part_data(partition_info_t **part_info_list){
 	follow_part = *part_info_list;
 
 	follow_part->device = NULL;
+	follow_part->label = NULL;
 	follow_part->partition_order = (u32)0;
 	follow_part->mount_point = NULL;
 	follow_part->file_system = NULL;
@@ -873,6 +939,8 @@ extern void free_partition_data(partition_info_t **partition_info_list){
 	while(follow_partition != NULL){
 		if(follow_partition->device != NULL)
 			free(follow_partition->device);
+		if(follow_partition->label != NULL)
+			free(follow_partition->label);
 		if(follow_partition->mount_point != NULL)
 			free(follow_partition->mount_point);
 		if(follow_partition->file_system != NULL)
@@ -1070,6 +1138,7 @@ extern void print_partition(const partition_info_t *const partition_info){
 	if(partition_info->disk != NULL)
 		usb_dbg("      Parent disk: %s.\n", partition_info->disk->device);
 	usb_dbg("           device: %s.\n", partition_info->device);
+	usb_dbg("            label: %s.\n", partition_info->label);
 	usb_dbg("  partition_order: %u.\n", partition_info->partition_order);
 	usb_dbg("      mount_point: %s.\n", partition_info->mount_point);
 	usb_dbg("      file_system: %s.\n", partition_info->file_system);
@@ -1126,7 +1195,7 @@ int main(int argc, char *argv[]){
 
 		disk_list = read_disk_data();
 
-		print_disks(disk_list);
+//		print_disks(disk_list);
 
 		free_disk_data(&disk_list);
 	}

@@ -61,7 +61,6 @@ ifeq ($(RTCONFIG_USB),y)
 OBJS += usb.o
 OBJS += usbled.o
 OBJS += usb_devices.o
-OBJS += diskutils.o
 endif
 
 ifeq ($(RTCONFIG_JFFS2),y)
@@ -145,7 +144,7 @@ install: all
 	@cd $(INSTALLDIR)/sbin && ln -sf rc led_ctrl
 	@cd $(INSTALLDIR)/sbin && ln -sf rc reboot
 	@cd $(INSTALLDIR)/sbin && ln -sf rc halt
-	@cd $(INSTALLDIR)/sbin && ln -sf rc gpio
+#	@cd $(INSTALLDIR)/sbin && ln -sf rc gpio
 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-write
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-erase
@@ -208,7 +207,9 @@ ifeq ($(RTCONFIG_USB),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_usbbcm
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_usb_interface
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ejusb
+ifeq ($(RTCONFIG_DISK_MONITOR),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc disk_monitor
+endif
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_app_script 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc restart_wireless

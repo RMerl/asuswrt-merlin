@@ -18,6 +18,7 @@
 #include <bcmnvram.h>
 #endif
 #include <syslog.h>
+#include <shared.h>
 
 #define MAX_DOMAIN_LEN	50	// hostname len (32) + "asuscomm.com" ~~ 45, reserve 5 char
 
@@ -417,9 +418,9 @@ int asus_update_entry(void)
 		PRINT("Update IP successful\n");
 		break;
 
-        case 220:
-                PRINT("Update same domain success.\n");
-                break;
+	case 220:
+		PRINT("Update same domain success.\n");
+		break;
 
 	case 297:
 		PRINT("Invalid hostname\n");
@@ -520,9 +521,9 @@ wl_wscPincheck(char *pin_string)
     accum += 1 * ((PIN / 1) % 10); 
  
     if (0 == (accum % 10))
-         return 0;   // The PIN code is Vaild.
+	return 0;   // The PIN code is Vaild.
     else
-        return 1;    // Invalid
+	return 1;    // Invalid
 }
 
 
@@ -540,6 +541,9 @@ int asus_private(void)
 	memset (user, 0, sizeof (user));
 	memset (bin_pwd, 0, sizeof (bin_pwd));
 
+	if ((get_model() == MODEL_RTN56U))
+		p = nvram_get ("et1macaddr");
+	else
 	p = nvram_get ("et0macaddr");
 	if (p == NULL)	{
 		PRINT ("ERROR: %s() can not take MAC address from et0macaddr\n");

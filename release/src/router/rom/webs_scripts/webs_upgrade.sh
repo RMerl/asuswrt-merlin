@@ -18,6 +18,8 @@ if [ "$?" != "0" ]; then
 else
 	# TODO write to flash
 	unzip -o /tmp/linux.zip -d /tmp
+	rm -f /tmp/linux.zip
+	nvram set webs_rm_zip=1
 	rc rc_service start_upgrade
 fi
 

@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.260.22 (xx-Dec-2012)
+Asuswrt-Merlin - build 3.0.0.4.264.22 (xx-Dec-2012)
 ===================================================
 
 About
@@ -351,7 +351,8 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.260.22:
+3.0.0.4.264.22:
+   - NEW: Rebased on 3.0.0.4.264 (from the RT-N53 GPL).
    - NEW: Traffic monitoring per IP added to the Traffic Monitor section.
           Based on the Tomato IPTraffic implementation by Teaman.
    - NEW: Option to disable the Netfilter SIP helper (under Firewall), allows
@@ -359,6 +360,9 @@ History
    - FIXED: Tabs would disappear while on the Monthly traffic page.
    - FIXED: Really fixed Firefox issue (the fix wasn't merged
             in release 260.21).
+   - FIXED: Router crash if the list of MAC filters + their names got too long.
+   - FIXED: OpenVPN webui: TLS Reneg and Connection Retry wouldn't let 
+            you enter -1 as value.
 
 
 3.0.0.4.260.21:

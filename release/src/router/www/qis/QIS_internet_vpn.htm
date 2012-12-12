@@ -68,7 +68,7 @@ function gotoAccount(){
 		return false;
 	}
 	
-	if(!DomainValidate(document.form.wan_heartbeat_x))
+	if(!validate_string(document.form.wan_heartbeat_x))
 		return false;
 	
 	get_value_to_parent();

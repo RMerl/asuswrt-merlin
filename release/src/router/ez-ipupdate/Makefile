@@ -97,8 +97,7 @@ ez_ipupdate_LDFLAGS =
 
 # 2007.03.14 Yau add for ASUS DDNS
 ez_ipupdate_OBJECTS += asus_ddns.o
-                                                                                
-CFLAGS += -I$(SRCBASE)/include -DASUS_DDNS
+CFLAGS += -I$(SRCBASE)/include -I$(TOP)/shared -DASUS_DDNS
 LDFLAGS += -L$(TOP)/shared -lshared -L$(TOP)/nvram -lnvram 
 #end of Yau add
 

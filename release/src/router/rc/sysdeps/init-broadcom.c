@@ -477,8 +477,8 @@ int
 switch_exist(void)
 {
 	FILE *fp;
-	char line[32];
-	int ret;
+	char buf[128], *line;
+	int ret = 1;
 
 	fp = popen("et robord 0 0", "r");
 	if (fp == NULL) {
@@ -486,16 +486,14 @@ switch_exist(void)
 		return 0;
 	}
 
-	//check switch boot up or not
-	ret = 1;
-	while (fgets(line, sizeof(line), fp)) {
-		if (strstr(line, "et interface not found")) {
-			_dprintf("No switch interface!!!\n");
-			ret = 0;
-			break;
-		}
+	line = fgets(buf, sizeof(buf), fp);
+	if ((line == NULL) ||
+	    (strstr(line, "not found") != NULL)) {
+		_dprintf("No switch interface!!!: %s\n", line ? : "");
+		ret = 0;
 	}
 	pclose(fp);
+
 	return ret;
 }
 
@@ -2870,31 +2868,27 @@ char *get_wlifname(int unit, int subunit, int subunit_x, char *buf)
 int
 wl_exist(char *ifname, int band)
 {
-	char buf[128];
-	int ret = 0;
-	memset(buf, 0, 128);
-	sprintf(buf, "wl -i %s status &> /tmp/wl_check", ifname);
-	system(buf);
 	FILE *fp;
-	if( (fp = fopen("/tmp/wl_check", "r")) != NULL ) {
-		while(fgets(buf, sizeof(buf), fp)) {
-			if( band==1 ) { //it should be 2G
-				if( strstr(buf, "Chanspec: 2.4GHz") ) {
-					ret = 1;
-					break;
-				}
-			}
-			else if( band==2 ) { //it should be 5G
-				if( strstr(buf, "Chanspec: 5GHz") ) {
-					ret = 1;
-					break;
-				}
-			}
+	char buf[128], *line;
+	int ret = 1;
 
-		}
-		fclose(fp);
-		system("rm -rf /tmp/wl_check");
+	sprintf(buf, "wl -i %s bands", ifname);
+	fp = popen(buf, "r");
+	if (fp == NULL) {
+		perror("popen");
+		return 0;
 	}
+
+	line = fgets(buf, sizeof(buf), fp);
+	if ((line == NULL) ||
+	    (strstr(line, "not found") != NULL) ||
+	    (band == 1 && !strstr(line, "b ")) ||
+	    (band == 2 && !strstr(line, "a "))) {
+		_dprintf("No wireless %s interface!!!: %s\n", ifname, line ? : "");
+		ret = 0;
+	}
+	pclose(fp);
+
 	return ret;
 }
 

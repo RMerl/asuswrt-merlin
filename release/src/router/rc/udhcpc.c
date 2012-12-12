@@ -524,10 +524,12 @@ deconfig_lan(void)
 	char *lan_ifname = safe_getenv("interface");
 
 	//ifconfig(lan_ifname, IFUP, "0.0.0.0", NULL);
-	ifconfig(lan_ifname, IFUP, 
-			nvram_safe_get("lan_ipaddr"),
-			nvram_safe_get("lan_netmask"));
-	
+_dprintf("%s: IFUP.\n", __FUNCTION__);
+	if(nvram_match("lan_proto", "static"))
+		ifconfig(lan_ifname, IFUP, nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
+	else
+		ifconfig(lan_ifname, IFUP, nvram_default_get("lan_ipaddr"), nvram_default_get("lan_netmask"));
+
 	expires_lan(lan_ifname, 0);
 
 	lan_down(lan_ifname);
@@ -547,7 +549,7 @@ bound_lan(void)
 {
 	char *lan_ifname = safe_getenv("interface");
 	char *value;
-	
+
 	if ((value = getenv("ip")))
 		nvram_set("lan_ipaddr", trim_r(value));
 	if ((value = getenv("subnet")))
@@ -560,6 +562,15 @@ bound_lan(void)
 	}
 	if ((value = getenv("dns")))
 		nvram_set("lan_dns", trim_r(value));
+
+_dprintf("%s: IFUP.\n", __FUNCTION__);
+#ifdef RTCONFIG_WIRELESSREPEATER
+	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_mode") == 0){
+		update_lan_state(LAN_STATE_CONNECTED, 0);
+		_dprintf("done\n");
+		return 0;
+	}
+#endif
 
 	ifconfig(lan_ifname, IFUP, nvram_safe_get("lan_ipaddr"),
 		nvram_safe_get("lan_netmask"));

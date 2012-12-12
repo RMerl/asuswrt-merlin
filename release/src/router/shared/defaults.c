@@ -1008,12 +1008,14 @@ struct nvram_tuple router_defaults[] = {
 	{ "cloud_sync", ""},
 #endif
 
+#ifdef RTCONFIG_DISK_MONITOR
 	{ "diskmon_freq", "0"}, // 0: disable, 1: Month, 2: Week, 3: Hour
 	{ "diskmon_freq_time", ""}, // DAY>WEEK>HOUR
 	{ "diskmon_policy", "all"}, // all, disk, part
 	{ "diskmon_usbport", ""}, // 1, 2
 	{ "diskmon_part", ""}, // sda1, sdb1
 	{ "diskmon_force_stop", "0"}, // 0: disable, 1: stop if possible
+#endif
 #endif
 
 #ifdef RTCONFIG_HTTPS
@@ -1605,7 +1607,9 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "apps_state_error", "" },
 	{ "apps_state_autofix", "1" },
 
+#ifdef RTCONFIG_DISK_MONITOR
 	{ "diskmon_status", "" },
+#endif
 
 	{ "webs_state_update", "" },
 	{ "webs_state_upgrade", "" },
@@ -1614,10 +1618,6 @@ struct nvram_tuple router_state_defaults[] = {
 
 	{ "ftp_ports", ""},
 
-#ifdef RTCONFIG_SWMODE_SWITCH
-	{ "swmode_switch", "0"},
-#endif
-	
 #ifdef RTCONFIG_DSL
 // name starting with 'dsl' are reserved for dsl unit
 // for temp variable please use dsltmp_xxx

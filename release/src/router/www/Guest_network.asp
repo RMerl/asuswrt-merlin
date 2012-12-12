@@ -248,6 +248,9 @@ function applyRule(){
 		if(wl6_support != -1)
 			document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
 
+		if(Rawifi_support != -1)
+			document.form.action_wait.value = parseInt(document.form.action_wait.value)+5;			// extend waiting time for RaLink
+		
 		document.form.submit();
 	}
 }
@@ -352,6 +355,8 @@ function close_guest_unit(_unit, _subunit){
 	NewInput.name = "wl"+ _unit + "." + _subunit +"_bss_enabled";
 	NewInput.value = "0";
 	document.unitform.appendChild(NewInput);
+	if(Rawifi_support != -1)
+			document.unitform.action_wait.value = parseInt(document.unitform.action_wait.value)+5;			// extend waiting time for RaLink
 	document.unitform.submit();
 }
 
@@ -362,6 +367,8 @@ function change_guest_unit(_unit, _subunit){
 	document.form.next_page.value = "Guest_network.asp?flag=1";
 	FormActions("apply.cgi", "change_wl_unit", "", "");
 	document.form.target = "";
+	if(Rawifi_support != -1)
+			document.form.action_wait.value = parseInt(document.form.action_wait.value)+5;			// extend waiting time for RaLink	
 	document.form.submit();
 }
 
@@ -373,7 +380,36 @@ function create_guest_unit(_unit, _subunit){
 	document.unitform.appendChild(NewInput);
 	document.unitform.wl_unit.value = _unit;
 	document.unitform.wl_subunit.value = _subunit;
+	if(Rawifi_support != -1)
+			document.unitform.action_wait.value = parseInt(document.unitform.action_wait.value)+5;			// extend waiting time for RaLink	
 	document.unitform.submit();
+}
+
+function genBWTable(_unit){
+	cur = '<% nvram_get("wl_bw"); %>';
+
+	if(document.form.wl_nmode_x.value == 2){
+		var bws = new Array("1");
+		var bwsDesc = new Array("20 MHz");
+	}
+	else if(_unit == 0){
+		var bws = new Array(0, 1, 2);
+		var bwsDesc = new Array("20/40 MHz", "20 MHz", "40 MHz");
+	}
+	else{
+		var bws = new Array(0, 1, 2, 3);
+		var bwsDesc = new Array("20/40/80 MHz", "20 MHz", "40 MHz", "80 MHz");
+	}
+
+	document.form.wl_bw.length = bws.length;
+	for (var i in bws) {
+		document.form.wl_bw[i] = new Option(bwsDesc[i], bws[i]);
+		document.form.wl_bw[i].value = bws[i];
+
+		if (bws[i] == cur) {
+			document.form.wl_bw[i].selected = true;
+		}
+	}
 }
 </script>
 </head>

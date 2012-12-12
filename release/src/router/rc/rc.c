@@ -272,7 +272,9 @@ static const applets_t applets[] = {
 #endif
 #ifdef RTCONFIG_USB
 	{ "ejusb",			ejusb_main			},
+#ifdef RTCONFIG_DISK_MONITOR
 	{ "disk_monitor",		diskmon_main			},
+#endif
 #endif
 	{ "service",			service_main		},
 	{NULL, NULL}

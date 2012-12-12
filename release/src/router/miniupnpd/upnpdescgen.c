@@ -509,6 +509,8 @@ genXML(char * str, int * len, int * tmplen,
 				str = strcat_char(str, len, tmplen, '<');
 				str = strcat_str(str, len, tmplen, eltname);
 				str = strcat_char(str, len, tmplen, '>');
+				str = strcat_char(str, len, tmplen, '\r');
+				str = strcat_char(str, len, tmplen, '\n');
 			}
 			for(;;)
 			{
@@ -526,6 +528,8 @@ genXML(char * str, int * len, int * tmplen,
 					for(c = *s; c > ' '; c = *(++s))
 						str = strcat_char(str, len, tmplen, c);
 					str = strcat_char(str, len, tmplen, '>');
+					str = strcat_char(str, len, tmplen, '\r');
+					str = strcat_char(str, len, tmplen, '\n');
 					top--;
 				}
 				else
@@ -538,6 +542,8 @@ genXML(char * str, int * len, int * tmplen,
 			str = strcat_char(str, len, tmplen, '<');
 			str = strcat_str(str, len, tmplen, eltname);
 			str = strcat_char(str, len, tmplen, '>');
+			str = strcat_char(str, len, tmplen, '\r');
+			str = strcat_char(str, len, tmplen, '\n');
 			k = (unsigned long)p[i].data;
 			i = k & 0xffff;
 			j = i + (k >> 16);

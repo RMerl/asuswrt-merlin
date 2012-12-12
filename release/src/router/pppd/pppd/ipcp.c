@@ -1787,6 +1787,8 @@ ipcp_up(f)
      */
     if (!ho->neg_addr && !ho->old_addrs)
 	ho->hisaddr = wo->hisaddr;
+    else if (ho->neg_addr && bad_ip_adrs(ho->hisaddr))
+	ho->hisaddr = wo->hisaddr;
 
     if (!(go->neg_addr || go->old_addrs) && (wo->neg_addr || wo->old_addrs)
 	&& wo->ouraddr != 0) {

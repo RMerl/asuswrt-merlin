@@ -256,7 +256,7 @@ void rfc1305print(char *data, struct ntptime *arrival)
 		if (get_ipv6_service() != IPV6_DISABLED)
 			notify_rc("restart_radvd");
 #endif
-#ifdef RTCONFIG_USB
+#ifdef RTCONFIG_DISK_MONITOR
 		/* Improper place. Better to callback one rc script */
 		notify_rc("restart_diskmon");
 #endif

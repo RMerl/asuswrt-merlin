@@ -186,8 +186,12 @@ function showSiteTable(){
 		}
 		else{
 			for(var i = 0; i < aplist.length; i++){
-				if(aplist[i][1].search("%FFFF") != -1)
+				if(aplist[i][1] == null)
 					continue;
+				else if(aplist[i][1].search("%FFFF") != -1)
+					continue;
+				
+				// initial
 				htmlCode += '<tr>';
 
 				//ssid
@@ -223,7 +227,7 @@ function showSiteTable(){
 	document.getElementById("wlscan_table").innerHTML = htmlCode;
 
 	if(document.getElementById("wlscan_table_container").scrollHeight > document.getElementById("wlscan_table_container").clientHeight)
-		document.getElementById("wlscan_table").style.marginLeft = "35px";
+		document.getElementById("wlscan_table").style.marginLeft = "32px";
 	else
 		document.getElementById("wlscan_table").style.marginLeft = "18px";
 

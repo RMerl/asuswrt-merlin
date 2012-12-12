@@ -208,7 +208,8 @@ static void notify_nvram_changed(int signo){
 
 	link_wan[unit] = is_usb_modem_ready();
 #endif
-		csprintf("# wanduck: nvram changed: x_Setting=%d, link_modem=%d.\n", !isFirstUse, link_wan[unit]);
+
+	csprintf("# wanduck: nvram changed: x_Setting=%d, link_modem=%d.\n", !isFirstUse, link_wan[unit]);
 }
 #endif
 
@@ -767,7 +768,10 @@ int if_wan_phyconnected(int wan_unit, int wan_state){
 			return DISCONN;
 		}
 		else if(sw_mode == SW_MODE_REPEATER){
-			return CONNED;
+			if(nvram_match("lan_proto", "dhcp") && nvram_get_int("lan_state_t") != LAN_STATE_CONNECTED)
+				return DISCONN;
+			else
+				return CONNED;
 		}
 	}
 #endif
@@ -853,6 +857,11 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 	if(isFirstUse)
 		strcpy(dut_addr, DUT_DOMAIN_NAME);
 	else
+/*#ifdef RTCONFIG_WIRELESSREPEATER
+	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_match("lan_proto", "dhcp") && nvram_get_int("lan_state_t") != LAN_STATE_CONNECTED)
+		strcpy(dut_addr, nvram_default_get("lan_ipaddr"));
+	else
+#endif//*/
 		strcpy(dut_addr, nvram_safe_get("lan_ipaddr"));
 
 	if((conn_changed_state[wan_unit] == C2D || conn_changed_state[wan_unit] == DISCONN) && disconn_case[wan_unit] == CASE_THESAMESUBNET)
@@ -1019,7 +1028,7 @@ void handle_dns_req(int sfd, char *line, int maxlen, struct sockaddr *pcliaddr, 
 	
 	if(!upper_strcmp(query_name, router_name)){
 #ifdef RTCONFIG_WIRELESSREPEATER
-		if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_state") != WLC_STATE_CONNECTED)
+		if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_match("lan_proto", "dhcp") && nvram_get_int("lan_state_t") != LAN_STATE_CONNECTED)
 			d_reply.answers.addr = inet_addr_(nvram_default_get("lan_ipaddr"));
 		else
 #endif

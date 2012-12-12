@@ -372,6 +372,10 @@ define RouterOptions
 			echo "RTCONFIG_NTFS=y" >>$(1); \
 			echo "RTCONFIG_NTFS3G=y" >>$(1); \
 		fi; \
+		if [ "$(DISK_MONITOR)" = "y" ]; then \
+			sed -i "/RTCONFIG_DISK_MONITOR/d" $(1); \
+			echo "RTCONFIG_DISK_MONITOR=y" >>$(1); \
+		fi; \
 		if [ "$(MEDIASRV)" = "y" ]; then \
 			sed -i "/RTCONFIG_MEDIA_SERVER/d" $(1); \
 			echo "RTCONFIG_MEDIA_SERVER=y" >>$(1); \

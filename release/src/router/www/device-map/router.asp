@@ -717,8 +717,8 @@ function gotoSiteSurvey(){
       			<p class="formfonttitle_nwm" ><#WPA-PSKKey#>
 						</p>	
       			<span id="sta_wpa_psk_span">
-							<input id="wl_wpa_psk" name="wl_wpa_psk" style="width:260px;*margin-top:-7px;" type="password" autocapitalization="off" onBlur="switchType(false);" onFocus="switchType(true);switchType_IE(this);parent.showHelpofDrSurf(0, 7);" value="" maxlength="65" class="input_25_table"/>
-							<input id="wl_wpa_psk_text" name="wl_wpa_psk_text" style="width:260px;*margin-top:-7px;display:none;" type="text" autocapitalization="off" onClick="clean_input(this);" onBlur="switchType_IE(this);parent.showHelpofDrSurf(0, 7);" value="" maxlength="65" class="input_25_table"/>
+							<input id="wl_wpa_psk" name="wl_wpa_psk" style="width:260px;*margin-top:-7px;" type="password" autocapitalization="off" onBlur="switchType(false);" onFocus="switchType(true);switchType_IE(this);parent.showHelpofDrSurf(0, 7);" value="" maxlength="64" class="input_25_table"/>
+							<input id="wl_wpa_psk_text" name="wl_wpa_psk_text" style="width:260px;*margin-top:-7px;display:none;" type="text" autocapitalization="off" onClick="clean_input(this);" onBlur="switchType_IE(this);parent.showHelpofDrSurf(0, 7);" value="" maxlength="64" class="input_25_table"/>
 						</span>
       			<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
     			</td>

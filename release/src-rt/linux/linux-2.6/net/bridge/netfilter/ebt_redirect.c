@@ -8,11 +8,12 @@
  *
  */
 
-#include <linux/netfilter_bridge/ebtables.h>
-#include <linux/netfilter_bridge/ebt_redirect.h>
 #include <linux/module.h>
 #include <net/sock.h>
 #include "../br_private.h"
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_bridge/ebtables.h>
+#include <linux/netfilter_bridge/ebt_redirect.h>
 
 static int ebt_target_redirect(struct sk_buff **pskb, unsigned int hooknr,
    const struct net_device *in, const struct net_device *out,
@@ -45,7 +46,7 @@ static int ebt_target_redirect_check(const char *tablename, unsigned int hookmas
 {
 	struct ebt_redirect_info *info = (struct ebt_redirect_info *)data;
 
-	if (datalen != EBT_ALIGN(sizeof(struct ebt_redirect_info)))
+	if (datalen != XT_ALIGN(sizeof(struct ebt_redirect_info)))
 		return -EINVAL;
 	if (BASE_CHAIN && info->target == EBT_RETURN)
 		return -EINVAL;

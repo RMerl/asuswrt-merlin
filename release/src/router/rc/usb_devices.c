@@ -44,14 +44,14 @@ int is_beceem_dongle(const int mode, const char *vid, const char *pid){
 	if(mode){ // modem mode.
 		if(!strcmp(vid, "198f") // Yota
 				|| (!strcmp(vid, "0b05") && (!strcmp(pid, "1780") || !strcmp(pid, "1781"))) // GMC
-				|| (!strcmp(vid, "19d2") && (!strcmp(pid, "0172") || !strcmp(pid, "0044"))) // FreshTel
+				|| (!strcmp(vid, "19d2") && (!strcmp(pid, "0172") || !strcmp(pid, "0044"))) // FreshTel or Giraffe
 				)
 			return 1;
 	}
 	else{ // zero-cd mode.
 		if(!strcmp(vid, "198f") // Yota
 				|| (!strcmp(vid, "0b05") && !strcmp(pid, "bccd")) // GMC
-				|| (!strcmp(vid, "19d2") && (!strcmp(pid, "bccd") || !strcmp(pid, "0065"))) // FreshTel
+				|| (!strcmp(vid, "19d2") && (!strcmp(pid, "bccd") || !strcmp(pid, "0065"))) // FreshTel or Giraffe
 				)
 			return 1;
 	}
@@ -2088,30 +2088,30 @@ int write_3g_ppp_conf(const char *modem_node){
 		system(cmd);
 
 		if((fp = fopen(PPP_CONF_FOR_3G, "w+")) == NULL){
-			file_unlock(lock);
 			usb_dbg("(%s): test 4.\n", modem_node);
+			file_unlock(lock);
 			return 0;
 		}
 	}
 
 	// Get USB node.
-	if(get_usb_node_by_device(modem_node, usb_node, sizeof(usb_node)) == NULL){
-		file_unlock(lock);
+	if(get_usb_node_by_device(modem_node, usb_node, 8) == NULL){
 		usb_dbg("(%s): test 5.\n", modem_node);
+		file_unlock(lock);
 		return 0;
 	}
 
 	// Get VID.
 	if(get_usb_vid(usb_node, vid, 8) == NULL){
-		file_unlock(lock);
 		usb_dbg("(%s): test 6.\n", modem_node);
+		file_unlock(lock);
 		return 0;
 	}
 
 	// Get PID.
 	if(get_usb_pid(usb_node, pid, 8) == NULL){
-		file_unlock(lock);
 		usb_dbg("(%s): test 7.\n", modem_node);
+		file_unlock(lock);
 		return 0;
 	}
 
@@ -2205,8 +2205,8 @@ int write_beceem_conf(const char *eth_node){
 		system(cmd);
 
 		if((fp = fopen(BECEEM_CONF, "w+")) == NULL){
-			file_unlock(lock);
 			usb_dbg("(%s): test 2.\n", eth_node);
+			file_unlock(lock);
 			return 0;
 		}
 	}
@@ -2218,8 +2218,8 @@ int write_beceem_conf(const char *eth_node){
 	char *ttlsid = nvram_safe_get("modem_ttlsid");
 
 	if(strcmp(modem_enable, "4") || !strcmp(isp, "")){
-		file_unlock(lock);
 		usb_dbg("(%s): test 3.\n", eth_node);
+		file_unlock(lock);
 		return 0;
 	}
 
@@ -2254,6 +2254,15 @@ int write_beceem_conf(const char *eth_node){
 	}
 	else if(!strcmp(isp, "FreshTel")){
 		fprintf(fp, "CenterFrequencyMHz                3405 3415 3425 3435 3445 3455 3465 3475 3485 3495 3505 3515 3525 3535 3545 3555 3565 3575 3585 3595 3417 3431 3459 3473 3487 3517 3531 3559 3573 3587\n");
+		fprintf(fp, "EAPMethod                         0\n");
+		fprintf(fp, "ValidateServerCert                No\n");
+		fprintf(fp, "UserIdentity                      '%s'\n", user);
+		fprintf(fp, "UserPassword                      '%s'\n", pass);
+		if(strlen(ttlsid) > 0)
+			fprintf(fp, "TTLSAnonymousIdentity             '%s'\n", ttlsid);
+	}
+	else if(!strcmp(isp, "Giraffe")){
+		fprintf(fp, "CenterFrequencyMHz                2355 2365 2375 2385 2395\n");
 		fprintf(fp, "EAPMethod                         0\n");
 		fprintf(fp, "ValidateServerCert                No\n");
 		fprintf(fp, "UserIdentity                      '%s'\n", user);
@@ -2558,7 +2567,7 @@ int asus_sd(const char *device_name, const char *action){
 	}
 
 	// Get USB node.
-	if(get_usb_node_by_device(device_name, usb_node, sizeof(usb_node)) == NULL){
+	if(get_usb_node_by_device(device_name, usb_node, 8) == NULL){
 		usb_dbg("(%s): Fail to get usb node.\n", device_name);
 		file_unlock(isLock);
 		return 0;
@@ -2578,7 +2587,11 @@ int asus_sd(const char *device_name, const char *action){
 		++retry;
 		sleep(1); // Wait the printer module to be ready.
 	}
+#ifdef REMOVE
+	// When the dongle was plugged off during changing the mode, this delay will confuse the procedure.
+	// TODO: Find the strange printers which need this delay. Will let them be the special case.
 	sleep(1); // Wait the printer interface to be ready.
+#endif
 
 	if(hadPrinterInterface(usb_node)){
 		usb_dbg("(%s): Had Printer interface on Port %s.\n", device_name, usb_node);
@@ -2726,7 +2739,7 @@ int asus_lp(const char *device_name, const char *action){
 	}
 
 	// Get USB node.
-	if(get_usb_node_by_device(device_name, usb_node, sizeof(usb_node)) == NULL){
+	if(get_usb_node_by_device(device_name, usb_node, 8) == NULL){
 		usb_dbg("(%s): Fail to get usb node.\n", device_name);
 		file_unlock(isLock);
 		return 0;
@@ -2813,7 +2826,7 @@ int asus_sg(const char *device_name, const char *action){
 	}
 
 	// Get USB node.
-	if(get_usb_node_by_device(device_name, usb_node, sizeof(usb_node)) == NULL){
+	if(get_usb_node_by_device(device_name, usb_node, 8) == NULL){
 		usb_dbg("(%s): Fail to get usb node.\n", device_name);
 		file_unlock(isLock);
 		return 0;
@@ -2974,7 +2987,7 @@ int asus_sr(const char *device_name, const char *action){
 
 int asus_tty(const char *device_name, const char *action){
 #ifdef RTCONFIG_USB_MODEM
-	char *ptr, usb_port[8], interface_name[16];
+	char *ptr, usb_port[8], usb_node[8], vid[8], pid[8], interface_name[16];
 	int port_num = 0, got_Int_endpoint = 0;
 	int isLock;
 	char nvram_name[32], current_value[16], nvram_name2[32];
@@ -3109,6 +3122,27 @@ usb_dbg("%s: kill pppd(%d).\n", __FUNCTION__, pppd_pid);
 		return 0;
 	}
 
+	// Get USB node.
+	if(get_usb_node_by_device(device_name, usb_node, 8) == NULL){
+		usb_dbg("(%s): Fail to get usb node.\n", device_name);
+		file_unlock(isLock);
+		return 0;
+	}
+
+	// Get VID.
+	if(get_usb_vid(usb_node, vid, 8) == NULL){
+		usb_dbg("(%s): Fail to get VID of USB(%s).\n", device_name, usb_node);
+		file_unlock(isLock);
+		return 0;
+	}
+
+	// Get PID.
+	if(get_usb_pid(usb_node, pid, 8) == NULL){
+		usb_dbg("(%s): Fail to get PID of USB(%s).\n", device_name, usb_node);
+		file_unlock(isLock);
+		return 0;
+	}
+
 	// Don't support the second modem device on a DUT.
 	// Only see the other usb port, because in the same port there are more modem interfaces and they need to compare.
 	if((port_num == 1 && !strcmp(nvram_safe_get("usb_path2"), "modem"))
@@ -3160,7 +3194,15 @@ usb_dbg("%s: kill pppd(%d).\n", __FUNCTION__, pppd_pid);
 			}
 		}
 
-		if(!strcmp(current_value, "")){
+		if(!strcmp(vid, "0f3d") && !strcmp(pid, "68aa")){
+			if(!strcmp(device_name, "ttyUSB3"))
+				nvram_set(nvram_name, device_name);
+			else{
+				file_unlock(isLock);
+				return 0;
+			}
+		}
+		else if(!strcmp(current_value, "")){
 			nvram_set(nvram_name, device_name);
 		}
 		else{
@@ -3245,11 +3287,7 @@ usb_dbg("(%s): got tty nodes and notify restart wan(%d)...\n", device_name, wan_
 #endif
 
 			// show the manual-setting dongle in Networkmap when it was plugged after reboot.
-			memset(nvram_name, 0, 32);
-			sprintf(nvram_name, "usb_path%d_vid", port_num);
-			memset(nvram_name2, 0, 32);
-			sprintf(nvram_name2, "usb_path%d_pid", port_num);
-			init_3g_param(nvram_safe_get(nvram_name), nvram_safe_get(nvram_name2), port_num);
+			init_3g_param(vid, pid, port_num);
 #ifdef RTCONFIG_DUALWAN
 		}
 		else
@@ -3400,7 +3438,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 	}
 
 	// Get USB node.
-	if(get_usb_node_by_string(device_name, usb_node, sizeof(usb_node)) == NULL){
+	if(get_usb_node_by_string(device_name, usb_node, 8) == NULL){
 		usb_dbg("(%s): Fail to get usb node.\n", device_name);
 		file_unlock(isLock);
 		return 0;
@@ -3541,12 +3579,22 @@ int asus_usb_interface(const char *device_name, const char *action){
 		char *isp = nvram_safe_get("modem_isp");
 
 		unlink("/tmp/Beceem_firmware/macxvi.cfg");
-		if(!strcmp(isp, "Yota"))
+		if(!strcmp(isp, "Yota")){
+			system("ln -sf /tmp/Beceem_firmware/macxvi200.bin.normal /tmp/Beceem_firmware/macxvi200.bin");
 			system("ln -sf /tmp/Beceem_firmware/macxvi.cfg.yota /tmp/Beceem_firmware/macxvi.cfg");
-		else if(!strcmp(isp, "GMC"))
+		}
+		else if(!strcmp(isp, "GMC")){
+			system("ln -sf /tmp/Beceem_firmware/macxvi200.bin.normal /tmp/Beceem_firmware/macxvi200.bin");
 			system("ln -sf /tmp/Beceem_firmware/macxvi.cfg.gmc /tmp/Beceem_firmware/macxvi.cfg");
-		else if(!strcmp(isp, "FreshTel"))
+		}
+		else if(!strcmp(isp, "FreshTel")){
+			system("ln -sf /tmp/Beceem_firmware/macxvi200.bin.normal /tmp/Beceem_firmware/macxvi200.bin");
 			system("ln -sf /tmp/Beceem_firmware/macxvi.cfg.freshtel /tmp/Beceem_firmware/macxvi.cfg");
+		}
+		else if(!strcmp(isp, "Giraffe")){
+			system("ln -sf /tmp/Beceem_firmware/macxvi200.bin.giraffe /tmp/Beceem_firmware/macxvi200.bin");
+			system("ln -sf /tmp/Beceem_firmware/macxvi.cfg.giraffe /tmp/Beceem_firmware/macxvi.cfg");
+		}
 		else{
 			usb_dbg("(%s): Didn't assign the ISP or it was not supported.\n", device_name);
 			file_unlock(isLock);

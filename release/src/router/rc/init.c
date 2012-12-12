@@ -961,6 +961,7 @@ int init_nvram(void)
 	nvram_set_int("btn_swmode1_gpio", 0xff);
 	nvram_set_int("btn_swmode2_gpio", 0xff);
 	nvram_set_int("btn_swmode3_gpio", 0xff);
+	nvram_set_int("swmode_switch", 0);
 #endif
 #ifdef RTCONFIG_WIRELESS_SWITCH
 	nvram_set_int("btn_wifi_gpio", 0xff);
@@ -1149,8 +1150,8 @@ int init_nvram(void)
 		nvram_set_int("btn_wps_gpio", 23|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 18|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wps_gpio", 18|GPIO_ACTIVE_LOW);
-		nvram_set_int("led_wan_gpio", 4|GPIO_ACTIVE_LOW);
-		nvram_set_int("sb/1/ledbh5", 2);
+		nvram_set_int("led_wan_gpio", 4|GPIO_ACTIVE_LOW);	/* does HP have it */
+		nvram_set_int("sb/1/ledbh5", 2);			/* is active_high? set 7 then */
 		add_rc_support("pwrctrl");
 		/* go to common N12* init */
 		goto case_MODEL_RTN12X;
@@ -1162,8 +1163,7 @@ int init_nvram(void)
 		nvram_set_int("btn_wps_gpio", 23|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 18|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wps_gpio", 18|GPIO_ACTIVE_LOW);
-		nvram_set_int("led_wan_gpio", 4|GPIO_ACTIVE_LOW);
-		nvram_set_int("sb/1/ledbh5", 2);
+		nvram_set_int("sb/1/ledbh5", 7);
 		/* go to common N12* init */
 		goto case_MODEL_RTN12X;
 
@@ -1183,8 +1183,8 @@ int init_nvram(void)
 		nvram_set_int("btn_swmode1_gpio", 6|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_swmode2_gpio", 7|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_swmode3_gpio", 8|GPIO_ACTIVE_LOW);
-		init_swmode(); // is it ok to placed here
 		add_rc_support("swmode_switch");
+		nvram_set_int("swmode_switch", 1);
 #endif
 		/* go to common N12* init */
 		goto case_MODEL_RTN12X;
@@ -1202,8 +1202,8 @@ int init_nvram(void)
 		nvram_set_int("btn_swmode1_gpio", 6|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_swmode2_gpio", 7|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_swmode3_gpio", 8|GPIO_ACTIVE_LOW);
-		init_swmode(); // is it ok to placed here
 		add_rc_support("swmode_switch");
+		nvram_set_int("swmode_switch", 1);
 #endif
 		/* go to common N12* init */
 		goto case_MODEL_RTN12X;
@@ -1619,11 +1619,10 @@ int init_nvram(void)
 #ifdef RTCONFIG_MEDIA_SERVER
 	add_rc_support("media");
 #endif
-
-#endif // RTCONFIG_PREINSTALLED
+#endif // RTCONFIG_APP_PREINSTALLED
 
 #ifdef RTCONFIG_APP_NETINSTALLED
-	if(model==MODEL_RTN10U || model==MODEL_RTN15U)
+	if(model==MODEL_RTN10U)
 		add_rc_support("appnone");
 	else add_rc_support("appnet");
 
@@ -1635,6 +1634,11 @@ int init_nvram(void)
 //#endif
 //#endif
 #endif // RTCONFIG_APP_NETINSTALLED
+
+#ifdef RTCONFIG_DISK_MONITOR
+	add_rc_support("diskutility");
+#endif
+
 #endif // RTCONFIG_USB
 
 #ifdef RTCONFIG_WIRELESSREPEATER
@@ -1791,6 +1795,9 @@ POOL_MOUNT_ROOT,
 #ifdef RTCONFIG_RALINK
 	// avoid the process like fsck to devour the memory.
 	// ex: when DUT ran fscking, restarting wireless would let DUT crash.
+	if (get_model() == MODEL_RTN56U)
+		f_write_string("/proc/sys/vm/min_free_kbytes", "4096", 0, 0);
+	else
 	f_write_string("/proc/sys/vm/min_free_kbytes", "2048", 0, 0);
 #else
 	// At the Broadcom platform, restarting wireless won't use too much memory.
@@ -1840,6 +1847,9 @@ POOL_MOUNT_ROOT,
 	init_nvram();  // for system indepent part after getting model	
 	restore_defaults(); // restore default if necessary 
 	init_gpio();   // for system dependent part
+#ifdef RTCONFIG_SWMODE_SWITCH
+	init_swmode(); // need to check after gpio initized
+#endif
 	init_switch(); // for system dependent part
 	init_wl();     // for system dependent part
 
