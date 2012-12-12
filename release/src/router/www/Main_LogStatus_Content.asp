@@ -155,4 +155,13 @@ function clearLog(){
 </table>
 <div id="footer"></div>
 </body>
+<script type="text/javascript">
+<!--[if !IE]>-->
+        jQuery.noConflict();
+        (function($){
+                var textArea = document.getElementById('textarea');
+                textArea.scrollTop = textArea.scrollHeight;
+        })(jQuery);
+<!--<![endif]-->
+</script>
 </html>
