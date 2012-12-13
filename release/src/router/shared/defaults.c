@@ -1150,6 +1150,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "cstats_include", ""},
 	{ "cstats_all", "1"},
 	{ "cstats_sshut", "1"},
+	{ "cstats_new", "0"},
 
 	{"http_id", "TIDe855a6487043d70a"},
 
