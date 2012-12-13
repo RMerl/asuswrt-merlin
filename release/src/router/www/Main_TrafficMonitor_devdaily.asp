@@ -44,7 +44,7 @@ var filterip = [];
 var filteripe = [];
 var filteripe_before = [];
 var dateFormat = 1;
-var scale = 2;
+var scale = 1;
 
 
 
