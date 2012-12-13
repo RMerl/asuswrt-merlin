@@ -55,15 +55,20 @@ function populateCache() {
 	hostnamecache[fixIP(ntoa(aton(nvram.lan_ipaddr) & aton(nvram.lan_netmask)))] = 'LAN';
 }
 
-function cmpFloat(a, b)
-{
+function cmpFloat(a, b) {
         a = parseFloat(a);
         b = parseFloat(b);
         return ((isNaN(a)) ? -Number.MAX_VALUE : a) - ((isNaN(b)) ? -Number.MAX_VALUE : b);
 }
 
-function validate_iplist(o, event){
+function cmpDualFields(a, b) {
+	if (cmpHist(a, b) == 0)
+		return aton(a[1])-aton(b[1]);
+	else
+		return cmpHist(a,b);
+}
 
+function validate_iplist(o, event) {
         if (event.which == null)
                 keyPressed = event.keyCode;     // IE
          else if (event.which != 0 && event.charCode != 0)
@@ -73,7 +78,7 @@ function validate_iplist(o, event){
 
         if ((keyPressed>=48&&keyPressed<=57) || //0-9
            (keyPressed==46) ||                  //.
-           (keyPressed==44)) return true;		//,
+           (keyPressed==44)) return true;	//,
 
         return false;
 }

@@ -354,14 +354,6 @@ function update_date_format(o, f) {
 	init_filter_dates(1);
 }
 
-function cmpDualFields(a, b) {
-
-	if (cmpHist(a, b) == 0)
-		return aton(a[1])-aton(b[1]);
-	else
-		return cmpHist(a,b);
-}
-
 function switchPage(page){
 	if(page == "1")
 		location.href = "/Main_TrafficMonitor_realtime.asp";
