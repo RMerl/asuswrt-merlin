@@ -46,19 +46,9 @@ var filteripe_before = [];
 var dateFormat = 1;
 var scale = 2;
 
-function save()
-{
-	cookie.set('daily', scale, 31);
-}
 
-function getYMD(n)
-{
-	// [y,m,d]
-	return [(((n >> 16) & 0xFF) + 1900), ((n >>> 8) & 0xFF), (n & 0xFF)];
-}
 
-function redraw()
-{
+function redraw() {
 	var h;
 	var grid;
 	var rows;
@@ -188,6 +178,14 @@ function _validate_iplist(o, event) {
 	}
 }
 
+
+function update_scale(o) {
+	scale = o.value;
+	cookie.set('daily', scale, 31);
+	return changeScale(o);
+}
+
+
 function update_filter() {
 	var i;
 
@@ -247,10 +245,12 @@ function addrow(rclass, rtitle, host, dl, ul, total, ip) {
                 '</tr>';
 }
 
+
 function popupWindow(ip) {
 	cookie.set("ipt_singleip",ip,1)
 	window.open("Main_TrafficMonitor_devrealtime.asp", '', 'width=1100,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
 }
+
 
 function init() {
 
@@ -260,9 +260,10 @@ function init() {
 
 	if ((c = cookie.get('daily')) != null) {
 		if (c.match(/^([0-2])$/)) {
-			E('scale').value = scale = RegExp.$1 * 1;
+			scale = RegExp.$1 * 1;
 		}
 	}
+	E('scale').value = scale;
 
 	if (((c = cookie.get('ipt_singleip')) != null) && (c.length>6)) {
 		cookie.unset('ipt_singleip');
@@ -309,6 +310,7 @@ function init() {
 	populateCache();
 	redraw();
 }
+
 
 // dateselect: 0 == all, 1 == current, 2 == today
 function init_filter_dates(dateselect) {
@@ -358,10 +360,12 @@ function init_filter_dates(dateselect) {
 	}
 }
 
+
 function update_date_format(o, f) {
 	changeDate(o, f);
 	init_filter_dates(1);
 }
+
 
 function switchPage(page){
 	if(page == "1")
@@ -379,7 +383,6 @@ function switchPage(page){
 	else
 		return false;
 }
-
 
 </script>
 </head>
@@ -427,15 +430,14 @@ function switchPage(page){
 	      			<td bgcolor="#4D595D" valign="top">
 	      				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
 						<tr><td><table width="100%" >
-        			<tr>
+        				<tr>
 
-						<td  class="formfonttitle" align="left">
-										<div style="margin-top:5px;"><#Menu_TrafficManager#> - Traffic Monitor per device</div>
-									</td>
-          				<td>
+							<td  class="formfonttitle" align="left">
+								<div style="margin-top:5px;"><#Menu_TrafficManager#> - Traffic Monitor per device</div>
+							</td>
+          					<td>
      							<div align="right">
 			    					<select id="page_select" class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
-											<!--option><#switchpage#></option-->
 											<optgroup label="Global">
 												<option value="1"><#menu4_2_1#></option>
 												<option value="2"><#menu4_2_2#></option>
@@ -443,10 +445,9 @@ function switchPage(page){
 												<option value="4">Monthly</option>
 											</optgroup>
 										</select>
-
 									</div>
 								</td>
-        			</tr>
+        				</tr>
 					</table></td></tr>
 
 					<tr>
@@ -460,102 +461,100 @@ function switchPage(page){
         			<tr>
           				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
-						<tr>
-							<td bgcolor="#4D595D">
-								<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-									<thead>
-										<tr>
-											<td colspan="2"><#t2BC#></td>
-										</tr>
-									</thead>
-									<tbody>
-										<tr class='even'>
-											<th width="40%"><#Date#></th>
-											<td>
-												<select class="input_option" style="width:130px" onchange='update_date_format(this, "ymd")' id='dafm'>
-													<option value=0>yyyy-mm-dd</option>
-													<option value=1>mm-dd-yyyy</option>
-													<option value=2>mmm, dd, yyyy</option>
-													<option value=3>dd.mm.yyyy</option>
+					<tr>
+						<td bgcolor="#4D595D">
+							<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+								<thead>
+									<tr>
+										<td colspan="2">Display Options</td>
+									</tr>
+								</thead>
+								<tbody>
+									<tr class='even'>
+										<th width="40%"><#Date#></th>
+										<td>
+											<select class="input_option" style="width:130px" onchange='update_date_format(this, "ymd")' id='dafm'>
+												<option value=0>yyyy-mm-dd</option>
+												<option value=1>mm-dd-yyyy</option>
+												<option value=2>mmm, dd, yyyy</option>
+												<option value=3>dd.mm.yyyy</option>
+											</select>
+										</td>
+									</tr>
+									<tr class='even'>
+										<th width="40%"><#Scale#></th>
+										<td>
+											<select style="width:70px" class="input_option" onchange='update_scale(this)' id='scale'>
+												<option value=0>KB</option>
+												<option value=1>MB</option>
+												<option value=2 selected>GB</option>
+											</select>
+										</td>
+									</tr>
+									<tr>
+										<th width="40%">Date range</th>
+										<td>
+											<div>
+												<label>From:</label>
+												<select name="_f_begin_date" onchange="redraw();" class="input_option" style="width:120px">
 												</select>
-											</td>
-										</tr>
-										<tr class='even'>
-											<th width="40%"><#Scale#></th>
-											<td>
-												<select style="width:70px" class="input_option" onchange='changeScale(this)' id='scale'>
-													<option value=0>KB</option>
-													<option value=1>MB</option>
-													<option value=2 selected>GB</option>
+												<label>To:</label>
+												<select name="_f_end_date" onchange="redraw();" class="input_option" style="width:120px">
 												</select>
-											</td>
-										</tr>
-										<tr>
-											<th width="40%">Date range</th>
-											<td>
-												<div>
-													<label>From:</label>
-													<select name="_f_begin_date" onchange="redraw();" class="input_option" style="width:120px">
-													</select>
-													<label>To:</label>
-													<select name="_f_end_date" onchange="redraw();" class="input_option" style="width:120px">
-													</select>
-												</div>
-											</td>
-										</tr>
+											</div>
+										</td>
+									</tr>
 
-										<tr>
-											<th>Display advanced filter options</th>
-											<td>
-												<input type="radio" name="_f_show_options" class="input" value="1" onclick="update_visibility();"><#checkbox_Yes#>
-												<input type="radio" name="_f_show_options" class="input" checked value="0" onclick="update_visibility();"><#checkbox_No#>
-											</td>
-					 					</tr>
-										<tr id="adv0">
-											<th>List of IPs to display (comma-separated):</th>
-											<td>
-												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onKeyPress="return _validate_iplist(this,event);" onchange="update_filter();">
-											</td>
-										</tr>
-										<tr id="adv1">
-											<th>List of IPs to exclude (comma-separated):</th>
-											<td>
-												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onKeyPress="return _validate_iplist(this,event);" onchange="update_filter();">
-											</td>
-										</tr>
+									<tr>
+										<th>Display advanced filter options</th>
+										<td>
+											<input type="radio" name="_f_show_options" class="input" value="1" onclick="update_visibility();"><#checkbox_Yes#>
+											<input type="radio" name="_f_show_options" class="input" checked value="0" onclick="update_visibility();"><#checkbox_No#>
+										</td>
+				 					</tr>
+									<tr id="adv0">
+										<th>List of IPs to display (comma-separated):</th>
+										<td>
+											<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onKeyPress="return _validate_iplist(this,event);" onchange="update_filter();">
+										</td>
+									</tr>
+									<tr id="adv1">
+										<th>List of IPs to exclude (comma-separated):</th>
+										<td>
+											<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onKeyPress="return _validate_iplist(this,event);" onchange="update_filter();">
+										</td>
+									</tr>
+									<tr id="adv2">
+										<th>Display hostnames</th>
+						        		<td>
+											<input type="radio" name="_f_show_hostnames" class="input" value="1" checked onclick="update_display('hostnames',1);"><#checkbox_Yes#>
+											<input type="radio" name="_f_show_hostnames" class="input" value="0" onclick="update_display('hostnames',0);"><#checkbox_No#>
+							   			</td>
+									</tr>
+									<tr id="adv3">
+										<th>Display IPs with no traffic</th>
+						        		<td>
+											<input type="radio" name="_f_show_zero" class="input" value="1" onclick="update_display('zero',1);"><#checkbox_Yes#>
+											<input type="radio" name="_f_show_zero" class="input" value="0" checked onclick="update_display('zero',0);"><#checkbox_No#>
+							   			</td>
+									</tr>
 
-										<tr id="adv2">
-											<th>Display hostnames</th>
-								        		<td>
-													<input type="radio" name="_f_show_hostnames" class="input" value="1" checked onclick="update_display('hostnames',1);"><#checkbox_Yes#>
-													<input type="radio" name="_f_show_hostnames" class="input" value="0" onclick="update_display('hostnames',0);"><#checkbox_No#>
-								   			</td>
-										</tr>
-										<tr id="adv3">
-											<th>Display IPs with no traffic</th>
-								        		<td>
-													<input type="radio" name="_f_show_zero" class="input" value="1" onclick="update_display('zero',1);"><#checkbox_Yes#>
-													<input type="radio" name="_f_show_zero" class="input" value="0" checked onclick="update_display('zero',0);"><#checkbox_No#>
-								   			</td>
-										</tr>
-
-										<tr id="adv4">
-											<th>Show subnet totals</th>
-								        		<td>
-													<input type="radio" name="_f_show_subnet" class="input" value="1" onclick="update_display('subnet',1);"><#checkbox_Yes#>
-													<input type="radio" name="_f_show_subnet" class="input" value="0" checked onclick="update_display('subnet',0);"><#checkbox_No#>
-								   			</td>
-										</tr>
-									</tbody>
+									<tr id="adv4">
+										<th>Show subnet totals</th>
+						        		<td>
+											<input type="radio" name="_f_show_subnet" class="input" value="1" onclick="update_display('subnet',1);"><#checkbox_Yes#>
+											<input type="radio" name="_f_show_subnet" class="input" value="0" checked onclick="update_display('subnet',0);"><#checkbox_No#>
+							   			</td>
+									</tr>
+								</tbody>
 								</table>
 							</td>
 						</tr>
-						<tr >
+						<tr>
 							<td>
 								<div id='bwm-daily-grid' style='float:left'></div>
 							</td>
 						</tr>
-
 	     					</table>
 	     				</td>
 	     			</tr>
@@ -566,12 +565,9 @@ function switchPage(page){
 		</table>
 		</div>
 	</td>
-
-    	<td width="10" align="center" valign="top">&nbsp;</td>
+   	<td width="10" align="center" valign="top">&nbsp;</td>
 </tr>
 </table>
 <div id="footer"></div>
 </body>
 </html>
-
-

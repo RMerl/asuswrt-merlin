@@ -46,17 +46,12 @@ if (typeof(iptraffic) == 'undefined') {
 	cstats_busy = 1;
 }
 
-var prev = [];
-var speed_history = [];
-var avgMode = 0;
 sortColumn = 0;
-var scale = 1;
 var updating = 0;
+var scale = 1;
 
 var filterip = [];
 var filteripe = [];
-var filteripe_before = [];
-
 var prevtimestamp = new Date().getTime();
 var thistimestamp;
 var difftimestamp;
@@ -64,6 +59,7 @@ var avgiptraffic = [];
 var lastiptraffic = iptraffic;
 
 var ref = new TomatoRefresh('update.cgi', 'output=iptraffic', 2);
+
 
 ref.refresh = function(text) {
 
@@ -109,8 +105,6 @@ ref.refresh = function(text) {
 		lastiptraffic[k][9] = b[9];
 		lastiptraffic[k][10] = b[10];
 	}
-
-//	setTimeout(function() { E('loading').style.visibility = 'hidden'; }, 100);
 
 	--updating;
 
@@ -215,15 +209,13 @@ function redraw() {
 			b[10].toString(),
 			b[0]);
 
-			++rows;
-
+		++rows;
 	}
 
 	if(rows == 0)
 		grid +='<tr><td style="color:#FFCC00;" colspan="8"><#IPConnection_VSList_Norule#></td></tr>';
 
-
-	if(rows >1)
+	if(rows > 1)
 		grid += addrow("traffictable_footer",
 			'Total: ' + ('<small><i>(' + ((hostslisted.length > 0) ? (hostslisted.length + ' hosts') : 'no data') + ')</i></small>'),
 			rescale((rx/1024).toFixed(2)).toString(),
@@ -238,10 +230,9 @@ function redraw() {
 			udpconn.toString(),
 			"");
 
-
 	E('bwm-details-grid').innerHTML = grid + '</table>';
-
 }
+
 
 function addrow(rclass, host, dl, ul, tcpin, tcpout, udpin, udpout, icmpin, icmpout, tcpconn, udpconn, ip) {
 	sep = "<span> / </span>";
@@ -271,34 +262,36 @@ function setSort(o,value) {
 	update_display("sortfield", value);
 }
 
+
 function sortCompare(a, b) {
 	var r = 0;
 
 	switch (sortColumn) {
-	case 0:	// host
-		r = aton(b[0])-aton(a[0]);
-		break;
-	case 1:	// Download
-		r = cmpFloat(a[1], b[1]);
-		break;
-	case 2:	// Upload
-		r = cmpFloat(a[2], b[2]);
-		break;
-	case 3:	// TCP pkts
-		r = cmpInt(a[3]+a[4], b[3]+b[4]);
-		break;
-	case 4:	// UDP pkts
-		r = cmpInt(a[5]+a[6], b[5]+b[6]);
-		break;
-	case 5:	// ICMP pkts
-		r = cmpInt(a[7]+a[8], b[7]+b[8]);
-		break;
-	case 6:	// TCP connections
-		r = cmpInt(a[9], b[9]);
-		break;
-	case 7:	// UDP connections
-		r = cmpInt(a[10], b[10]);
-		break;
+
+		case 0:	// host
+			r = aton(b[0])-aton(a[0]);
+			break;
+		case 1:	// Download
+			r = cmpFloat(a[1], b[1]);
+			break;
+		case 2:	// Upload
+			r = cmpFloat(a[2], b[2]);
+			break;
+		case 3:	// TCP pkts
+			r = cmpInt(a[3]+a[4], b[3]+b[4]);
+			break;
+		case 4:	// UDP pkts
+			r = cmpInt(a[5]+a[6], b[5]+b[6]);
+			break;
+		case 5:	// ICMP pkts
+			r = cmpInt(a[7]+a[8], b[7]+b[8]);
+			break;
+		case 6:	// TCP connections
+			r = cmpInt(a[9], b[9]);
+			break;
+		case 7:	// UDP connections
+			r = cmpInt(a[10], b[10]);
+			break;
 	}
 	return -r;
 }
@@ -309,6 +302,7 @@ function update_display(option, value) {
 	redraw();
 }
 
+
 function _validate_iplist(o, event) {
 	if (event.which == null)
 		keyPressed = event.keyCode;     // IE
@@ -317,13 +311,21 @@ function _validate_iplist(o, event) {
 	else
 		return true;                    // Special key
 
-	if (keyPressed == 13) {
+	if (keyPressed == 13) {				// Enter
 		update_filter();
 		return true;
 	} else {
 		return validate_iplist(o, event);
 	}
 }
+
+
+function update_scale(o) {
+	scale = o.value;
+	cookie.set('realtime', scale, 31);
+	return changeScale(o);
+}
+
 
 function update_filter() {
 	var i;
@@ -358,6 +360,7 @@ function update_filter() {
 	redraw();
 }
 
+
 function update_visibility() {
 	s = getRadioValue(document.form._f_show_options);
 
@@ -366,7 +369,6 @@ function update_visibility() {
 	}
 
 	cookie.set('ipt_rt_options', s);
-
 }
 
 
@@ -379,22 +381,24 @@ function getArrayPosByElement(haystack, needle, index) {
 	return -1;
 }
 
+
 function popupWindow(ip) {
 	cookie.set("ipt_singleip",ip,1)
 	window.open("Main_TrafficMonitor_devdaily.asp", '', 'width=1100,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
 }
 
-function init()
-{
+
+function init() {
 	if (nvram.cstats_enable == '1') {
 		E('page_select').innerHTML += '<optgroup label="Per device"><option value="5" selected><#menu4_2_1#></option><option value="6"><#menu4_2_3#></option><option value="7">Monthly</option></optgroup>';
 	}
 
-	if ((c = cookie.get('details')) != null) {
+	if ((c = cookie.get('realtime')) != null) {
 		if (c.match(/^([0-2])$/)) {
-			E('scale').value = scale = RegExp.$1 * 1;
+			scale = RegExp.$1 * 1;
 		}
 	}
+	E('scale').value = scale;
 
 	if ((c = cookie.get('ipt_rt_sortfield')) != null) {
 		if (c < 8) {
@@ -405,8 +409,8 @@ function init()
 	if ((c = cookie.get('ipt_singleip')) != null) {
 		cookie.unset('ipt_singleip');
 		filterip = c.split(',');
-	} else {
 
+	} else {
 		if ((c = cookie.get('ipt_addr_shown')) != null) {
 			if (c.length>6) {
 				document.form._f_filter_ip.value = c;
@@ -455,8 +459,8 @@ function switchPage(page){
 		location.href = "/Main_TrafficMonitor_devmonthly.asp";
 	else
 		return false;
-
 }
+
 </script>
 </head>
 
@@ -535,72 +539,70 @@ function switchPage(page){
         			<tr>
           				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
-						<tr>
-							<td bgcolor="#4D595D">
-								<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-									<thead>
-										<tr>
-											<td colspan="2"><#t2BC#></td>
-										</tr>
-									</thead>
-									<tbody>
-										<tr class='even'>
-											<th width="40%"><#Scale#></th>
-											<td>
-												<select style="width:70px" class="input_option" onchange='changeScale(this)' id='scale'>
-													<option value=0>KB</option>
-													<option value=1 selected>MB</option>
-													<option value=2>GB</option>
-												</select>
-											</td>
-										</tr>
+					<tr>
+						<td bgcolor="#4D595D">
+							<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+								<thead>
+									<tr>
+										<td colspan="2">Display Options</td>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<th width="40%"><#Scale#></th>
+										<td>
+											<select style="width:70px" class="input_option" onchange='update_scale(this)' id='scale'>
+												<option value=0>KB</option>
+												<option value=1>MB</option>
+												<option value=2>GB</option>
+											</select>
+										</td>
+									</tr>
 
-										<tr>
-											<th>Display advanced filter options</th>
-											<td>
-												<input type="radio" name="_f_show_options" class="input" value="1" onclick="update_visibility();"><#checkbox_Yes#>
-												<input type="radio" name="_f_show_options" class="input" checked value="0" onclick="update_visibility();"><#checkbox_No#>
-											</td>
-					 					</tr>
-										<tr id="adv0">
-											<th>List of IPs to display (comma-separated):</th>
-											<td>
-												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onKeyPress="return _validate_iplist(this,event);" onchange="update_filter();">
-											</td>
-										</tr>
-										<tr id="adv1">
-											<th>List of IPs to exclude (comma-separated):</th>
-											<td>
-												<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onKeyPress="return _validate_iplist(this,event);" onchange="update_filter();">
-											</td>
-										</tr>
+									<tr>
+										<th>Display advanced filter options</th>
+										<td>
+											<input type="radio" name="_f_show_options" class="input" value="1" onclick="update_visibility();"><#checkbox_Yes#>
+											<input type="radio" name="_f_show_options" class="input" checked value="0" onclick="update_visibility();"><#checkbox_No#>
+										</td>
+				 					</tr>
+									<tr id="adv0">
+										<th>List of IPs to display (comma-separated):</th>
+										<td>
+											<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ip" onKeyPress="return _validate_iplist(this,event);" onchange="update_filter();">
+										</td>
+									</tr>
+									<tr id="adv1">
+										<th>List of IPs to exclude (comma-separated):</th>
+										<td>
+											<input type="text" maxlength="512" class="input_32_table" name="_f_filter_ipe" onKeyPress="return _validate_iplist(this,event);" onchange="update_filter();">
+										</td>
+									</tr>
+									<tr id="adv2">
+										<th>Display hostnames</th>
+						        		<td>
+											<input type="radio" name="_f_show_hostnames" class="input" value="1" checked onclick="update_display('hostnames',1);"><#checkbox_Yes#>
+											<input type="radio" name="_f_show_hostnames" class="input" value="0" onclick="update_display('hostnames',0);"><#checkbox_No#>
+							   			</td>
+									</tr>
+									<tr id="adv3">
+										<th>Display IPs with no traffic</th>
+						        		<td>
+											<input type="radio" name="_f_show_zero" class="input" value="1" checked onclick="update_display('zero',1);"><#checkbox_Yes#>
+											<input type="radio" name="_f_show_zero" class="input" value="0" onclick="update_display('zero',0);"><#checkbox_No#>
+							   			</td>
+									</tr>
+								</tbody>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<div id='bwm-details-grid' style='float:left'></div>
+						</td>
+					</tr>
 
-										<tr id="adv2">
-											<th>Display hostnames</th>
-								        		<td>
-													<input type="radio" name="_f_show_hostnames" class="input" value="1" checked onclick="update_display('hostnames',1);"><#checkbox_Yes#>
-													<input type="radio" name="_f_show_hostnames" class="input" value="0" onclick="update_display('hostnames',0);"><#checkbox_No#>
-								   			</td>
-										</tr>
-										<tr id="adv3">
-											<th>Display IPs with no traffic</th>
-								        		<td>
-													<input type="radio" name="_f_show_zero" class="input" value="1" checked onclick="update_display('zero',1);"><#checkbox_Yes#>
-													<input type="radio" name="_f_show_zero" class="input" value="0" onclick="update_display('zero',0);"><#checkbox_No#>
-								   			</td>
-										</tr>
-
-									</tbody>
-								</table>
-							</td>
-						</tr>
-						<tr >
-							<td>
-								<div id='bwm-details-grid' style='float:left'></div>
-							</td>
-						</tr>
-
-	     					</table>
+     					</table>
 	     				</td>
 	     			</tr>
 				</tbody>
@@ -610,7 +612,6 @@ function switchPage(page){
 		</table>
 		</div>
 	</td>
-
     	<td width="10" align="center" valign="top">&nbsp;</td>
 </tr>
 </table>

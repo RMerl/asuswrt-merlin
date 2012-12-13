@@ -83,3 +83,7 @@ function validate_iplist(o, event) {
         return false;
 }
 
+function getYMD(n) {
+	// [y,m,d]
+	return [(((n >> 16) & 0xFF) + 1900), ((n >>> 8) & 0xFF), (n & 0xFF)];
+}
