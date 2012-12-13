@@ -71,14 +71,14 @@ function hide_rstats_storage(_value){
 
 function hide_cstats_ip(_value){
 
-        $("cstats_inc_tr").style.display = (_value == "0" ? "" : "none");
+        $("cstats_inc_tr").style.display = (((_value == "0") && (getRadioValue(document.form.cstats_enable) == 1)) ? "" : "none");
 }
 
 function hide_cstats(_value){
 
         $("cstats_1_tr").style.display = (_value == "1" ? "" : "none");
         $("cstats_2_tr").style.display = (_value == "1" ? "" : "none");
-        $("cstats_inc_tr").style.display = ((_value == "1" && getRadioValue(document.form.cstats_all) == 0) ? "" : "none");
+        $("cstats_inc_tr").style.display = (((_value == "1") && (getRadioValue(document.form.cstats_all) == 0)) ? "" : "none");
         $("cstats_exc_tr").style.display = (_value == "1" ? "" : "none");
 }
 
