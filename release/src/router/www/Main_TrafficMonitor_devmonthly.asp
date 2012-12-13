@@ -232,7 +232,7 @@ function update_visibility() {
 }
 
 function addrow(rclass, rtitle, host, dl, ul, total, ip) {
-	if (ip != "")
+	if ((ip != "") && (ip != fixIP(ntoa(aton(nvram.lan_ipaddr) & aton(nvram.lan_netmask)))))
 		link = 'class="traffictable_link" onclick="popupWindow(\'' + ip +'\');"'
 	else
 		link = "";
