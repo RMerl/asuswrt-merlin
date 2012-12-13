@@ -531,7 +531,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dhcp_static_x", "0"},
 	{ "dhcp_staticlist", ""},
 	{ "dhcpd_lmax", "253"},
-	{ "dhcpd_querylog", "1"),
+	{ "dhcpd_querylog", "1"},
 
 	// NVRAM for start_dhcpd
 	// Guest DHCP server parameters
