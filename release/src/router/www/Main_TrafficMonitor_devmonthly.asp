@@ -233,7 +233,7 @@ function update_visibility() {
 
 function addrow(rclass, rtitle, host, dl, ul, total, ip) {
 	if (ip != "")
-		link = 'style = "cursor:pointer;" onclick="popupWindow(\'' + ip +'\');"'
+		link = 'class="traffictable_link" onclick="popupWindow(\'' + ip +'\');"'
 	else
 		link = "";
 

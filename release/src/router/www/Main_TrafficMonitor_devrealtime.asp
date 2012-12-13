@@ -246,7 +246,7 @@ function redraw() {
 function addrow(rclass, host, dl, ul, tcpin, tcpout, udpin, udpout, icmpin, icmpout, tcpconn, udpconn, ip) {
 	sep = "<span> / </span>";
 	if (ip != "")
-		link = 'style = "cursor:pointer;" onclick="popupWindow(\'' + ip +'\');"'
+		link = 'class="traffictable_link" onclick="popupWindow(\'' + ip +'\');"'
 	else
 		link = "";
 

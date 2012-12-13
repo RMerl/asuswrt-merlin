@@ -1687,15 +1687,24 @@ padding-top:1px;
 	color:#FFFFFF;
 }
 .traffictable th{
-	cursor:pointer;
 	height:30px;
 	background-image: url(images/general_th.gif);
 }
+
+.traffictable th:hover{
+        cursor:pointer;                
+        text-decoration: underline;
+}
+
 .traffictable_footer td{
 	color: cyan;
 	background-color:#4d595d;
 }
 
+.traffictable_link:hover {
+	cursor:pointer;
+	text-decoration: underline;
+}
 
 .panel_folder{
 	font-family:Courier ;
