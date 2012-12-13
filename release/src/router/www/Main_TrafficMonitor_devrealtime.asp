@@ -411,21 +411,21 @@ function init() {
 		filterip = c.split(',');
 
 	} else {
-		if ((c = cookie.get('ipt_addr_shown')) != null) {
+		if ((c = cookie.get('ipt_rt_addr_shown')) != null) {
 			if (c.length>6) {
 				document.form._f_filter_ip.value = c;
 				filterip = c.split(',');
 			}
 		}
 
-		if ((c = cookie.get('ipt_addr_hidden')) != null) {
+		if ((c = cookie.get('ipt_rt_addr_hidden')) != null) {
 			if (c.length>6) {
 				document.form._f_filter_ipe.value = c;
 				filteripe = c.split(',');
 			}
 		}
 
-		if ((c = cookie.get('ipt_options')) != null ) {
+		if ((c = cookie.get('ipt_rt_options')) != null ) {
 			setRadioValue(document.form._f_show_options , (c == 1))
 		}
 
