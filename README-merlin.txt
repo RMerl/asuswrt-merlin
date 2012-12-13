@@ -36,7 +36,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on the 3.0.0.4.260 source release from Asus
+   - Based on the 3.0.0.4.264 source release from Asus
    - Various bugfixes (like the crash on VPN/NAT Loopback access of LAN devices)
    - Persistent JFFS partition
    - User scripts that run on specific events
@@ -355,14 +355,17 @@ History
    - NEW: Rebased on 3.0.0.4.264 (from the RT-N53 GPL).
    - NEW: Traffic monitoring per IP added to the Traffic Monitor section.
           Based on the Tomato IPTraffic implementation by Teaman.
-   - NEW: Option to disable the Netfilter SIP helper (under Firewall), allows
+   - NEW: Option to disable the Netfilter SIP helper (Firewall page), allows
           people to manually forward port 5060 to their own SIP server
+   - NEW: Option to enable/disable logging DHCP client queries (LAN->DHCP page)
    - FIXED: Tabs would disappear while on the Monthly traffic page.
    - FIXED: Really fixed Firefox issue (the fix wasn't merged
             in release 260.21).
    - FIXED: Router crash if the list of MAC filters + their names got too long.
    - FIXED: OpenVPN webui: TLS Reneg and Connection Retry wouldn't let 
             you enter -1 as value.
+   - FIXED: Layout issues on the DHCP page (one in Asus code, another in Merlin code)
+   - CHANGED: System log starts at the bottom (backported from GPL 314)
 
 
 3.0.0.4.260.21:
