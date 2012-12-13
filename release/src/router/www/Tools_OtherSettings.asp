@@ -140,6 +140,11 @@ function applyRule(){
 	if ( (excluded != "<% nvram_get("usb_idle_exclude"); %>") ||  (document.form.usb_idle_timeout.value != <% nvram_get("usb_idle_timeout"); %>) )
                 document.form.action_script.value += ";restart_sdidle";
 
+	if (getRadioValue(document.form.cstats_enable) != "<% nvram_get("cstats_enable"); %>")
+		document.form.action_script.value += ";restart_firewall;restart_cstats";
+	else
+		document.form.action_script.value += ";restart_cstats";
+
 	document.form.submit();
 }
 
@@ -190,7 +195,7 @@ function done_validating(action){
 <input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="restart_rstats;restart_cstats;restart_conntrack;restart_leds">
+<input type="hidden" name="action_script" value="restart_rstats;restart_conntrack;restart_leds">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="SystemCmd" value="">
