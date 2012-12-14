@@ -1,4 +1,4 @@
-//For operation mode;
+﻿//For operation mode;
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode = 2;
@@ -1109,11 +1109,11 @@ function show_selected_language(){
 			break;
 		}
 		case 'CN':{
-			$('selected_lang').innerHTML = "????";
+			$('selected_lang').innerHTML = "简体中文";
 			break;
 		}	
 		case 'TW':{
-			$('selected_lang').innerHTML = "????";
+			$('selected_lang').innerHTML = "繁體中文";
 			break;
 		}
 		case 'BR':{
@@ -1121,7 +1121,7 @@ function show_selected_language(){
 			break;
 		}
 		case 'CZ':{
-			$('selected_lang').innerHTML = "?esky";
+			$('selected_lang').innerHTML = "Česky";
 			break;
 		}
 		case 'DA':{
@@ -1149,7 +1149,7 @@ function show_selected_language(){
 			break;
 		}		
 		case 'JP':{
-			$('selected_lang').innerHTML = "???";
+			$('selected_lang').innerHTML = "日本語";
 			break;
 		}
 		case 'MS':{
@@ -1165,7 +1165,7 @@ function show_selected_language(){
 			break;
 		}
 		case 'RU':{
-			$('selected_lang').innerHTML = "P??????";
+			$('selected_lang').innerHTML = "Pусский";
 			break;
 		}
 		case 'SV':{
@@ -1173,7 +1173,7 @@ function show_selected_language(){
 			break;
 		}		
 		case 'TH':{
-			$('selected_lang').innerHTML = "???";
+			$('selected_lang').innerHTML = "ไทย";
 			break;
 		}			
 		case 'TR':{
@@ -1186,6 +1186,7 @@ function show_selected_language(){
 		}		
 	}
 }
+
 
 function submit_language(obj){
 	//if($("select_lang").value != $("preferred_lang").value){
