@@ -1688,24 +1688,28 @@ int update_resolvconf()
 	}
 #endif
 #endif
-	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
-		char *wan_dns, *wan_xdns;
+
+	/* Add DNS from VPN clients, others if non-exclusive */
+	if (!write_vpn_resolv(fp)) {
+
+		for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+			char *wan_dns, *wan_xdns;
 	
-	/* TODO: Skip unused wans
-		if (wan disabled or inactive)
-			continue */
+		/* TODO: Skip unused wans
+			if (wan disabled or inactive)
+				continue */
 
-		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-		wan_dns = nvram_safe_get(strcat_r(prefix, "dns", tmp));
-		wan_xdns = nvram_safe_get(strcat_r(prefix, "xdns", tmp));
+			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+			wan_dns = nvram_safe_get(strcat_r(prefix, "dns", tmp));
+			wan_xdns = nvram_safe_get(strcat_r(prefix, "xdns", tmp));
 
-		if (strlen(wan_dns) <= 0 && strlen(wan_xdns) <= 0)
-			continue;
+			if (strlen(wan_dns) <= 0 && strlen(wan_xdns) <= 0)
+				continue;
 
-		foreach(word, (*wan_dns ? wan_dns : wan_xdns), next)
-			fprintf(fp, "nameserver %s\n", word);
+			foreach(word, (*wan_dns ? wan_dns : wan_xdns), next)
+				fprintf(fp, "nameserver %s\n", word);
+		}
 	}
-
 	fclose(fp);
 
 	file_unlock(lock);
