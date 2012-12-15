@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.264.22 (xx-Dec-2012)
+Asuswrt-Merlin - build 3.0.0.4.264.22 (15-Dec-2012)
 ===================================================
 
 About
@@ -58,8 +58,6 @@ Networking:
    - Layer7 iptables matching
    - User-defined options for WAN DHCP queries (required by some ISPs)
    - Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
-   - Dual WAN support (both failover and load
-     balancing supported) (EXPERIMENTAL) (RT-N66U, RT-AC66U)
    - OpenVPN client and server, based on code originally written by
      Keith Moyer for Tomato and reused with his permission. (RT-N66U, RT-AC66U)
    - Option to control Spanning-Tree Protocol support.
@@ -256,6 +254,8 @@ mount \\\\192.168.1.100\\ShareName /cifs1 -t cifs -o "username=User,password=Pas
 
 
 * Dual WAN (EXPERIMENTAL) *
+*** Disabled in regular builds - this feature isn't ready yet ***
+
 Asuswrt originally support using a USB 3G/4G modem as a 
 failover Internet connection.  Dual WAN is the next step, also 
 developped by Asus but left disabled so far in their official 
@@ -365,7 +365,11 @@ History
    - FIXED: OpenVPN webui: TLS Reneg and Connection Retry wouldn't let 
             you enter -1 as value.
    - FIXED: Layout issues on the DHCP page (one in Asus code, another in Merlin code)
+   - FIXED: Beeline Corbina was unable to connect to PPTP/L2TP server due to DNS
+            issues.
    - CHANGED: System log starts at the bottom (backported from GPL 314)
+   - CHANGED: Dual WAN is no longer enabled in regular builds - too many issues 
+              with it at this point.  Regular USB failover still works.
 
 
 3.0.0.4.260.21:
