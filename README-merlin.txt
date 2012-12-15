@@ -741,6 +741,7 @@ Website: http://www.lostrealm.ca/
 Github: https://github.com/RMerl/asuswrt-merlin
 Email: rmerl@lostrealm.ca
 Twitter: https://twitter.com/RMerlinDev
+Download: http://wwww.mediafire.com/asuswrt-merlin/
 
 Development news will be posted on Twitter.  You can also keep a closer eye 
 on development as it happens through the Github site.
