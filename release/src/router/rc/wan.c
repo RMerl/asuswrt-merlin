@@ -1690,8 +1690,9 @@ int update_resolvconf()
 #endif
 
 	/* Add DNS from VPN clients, others if non-exclusive */
+#ifdef RTCONFIG_OPENVPN
 	if (!write_vpn_resolv(fp)) {
-
+#endif
 		for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
 			char *wan_dns, *wan_xdns;
 	
@@ -1709,7 +1710,9 @@ int update_resolvconf()
 			foreach(word, (*wan_dns ? wan_dns : wan_xdns), next)
 				fprintf(fp, "nameserver %s\n", word);
 		}
+#if RTCONFIG_OPENVPN
 	}
+#endif
 	fclose(fp);
 
 	file_unlock(lock);
