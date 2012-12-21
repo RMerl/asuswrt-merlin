@@ -395,9 +395,12 @@ set_filter_flags(char * filter, struct upnphttp *h)
 	char *item, *saveptr = NULL;
 	u_int32_t flags = 0;
 
-	if( !filter || (strlen(filter) <= 1) )
-		/* Not the full 32 bits.  Skip vendor-specific stuff by default. */
-		return 0xFFFFFF;
+	if( !filter || (strlen(filter) <= 1) ) {
+ 		/* Not the full 32 bits.  Skip vendor-specific stuff by default. */
+		if( h->reqflags & FLAG_SAMSUNG )
+			return 0xFFFFFF  | FILTER_SEC_CAPTION_INFO_EX | FILTER_SEC_DCM_INFO; 
+ 		return 0xFFFFFF;
+        }
 	if( h->reqflags & FLAG_SAMSUNG )
 		flags |= FILTER_DLNA_NAMESPACE;
 	item = strtok_r(filter, ",", &saveptr);
