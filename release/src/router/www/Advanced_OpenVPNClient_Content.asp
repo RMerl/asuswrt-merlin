@@ -365,7 +365,7 @@ function change_vpn_unit(val){
 								<option value="-1" <% nvram_match("vpn_client_hmac","-1","selected"); %> >Disabled</option>
 								<option value="2" <% nvram_match("vpn_client_hmac","2","selected"); %> >Bi-directional</option>
 								<option value="0" <% nvram_match("vpn_client_hmac","0","selected"); %> >Incoming (0)</option>
-								<option value="1" <% nvram_match("vpn_client_hmac","1","selected"); %> >Incoming (1)</option>
+								<option value="1" <% nvram_match("vpn_client_hmac","1","selected"); %> >Outgoing (1)</option>
 							</select>
 			   			</td>
 					</tr>
