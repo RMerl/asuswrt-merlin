@@ -268,8 +268,8 @@ function detect_httpd(){
 		  <div>&nbsp;</div>
 		  <div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_3#></div>
 		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  <div class="formfontdesc">Visit <a href="http://www.lostrealm.ca/asuswrt-merlin/" target="_blank">http://www.lostrealm.ca/asuswrt-merlin/<a> for the latest version.<br>
-		  For support related to the original firmware, visit http://support.asus.com/ .</div>
+		  <div class="formfontdesc">Visit <a style="text-decoration: underline;" href="http://www.lostrealm.ca/asuswrt-merlin/" target="_blank">http://www.lostrealm.ca/asuswrt-merlin/<a> for the latest version.<br>
+		  For support related to the original firmware, visit <a style="text-decoration: underline;" href="http://support.asus.com/" target="_blank">http://support.asus.com</a></div>
 
 		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 			<tr>
