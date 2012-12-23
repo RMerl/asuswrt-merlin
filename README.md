@@ -17,3 +17,6 @@ At this time, the supported devices are:
 Also available in experimental (untested) state:
 - RT-N16
 
+Firmware builds can be downloaded from the official download site:
+
+http://www.mediafire.com/asuswrt-merlin/
