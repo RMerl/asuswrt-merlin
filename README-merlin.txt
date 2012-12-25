@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.264.22 (15-Dec-2012)
+Asuswrt-Merlin - build 3.0.0.4.264.23 (XX-XXX-2012)
 ===================================================
 
 About
@@ -351,6 +351,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.264.23:
+   - NEW: Tools icon contributed by Maximilian Czarnecki.
+   - FIXED: Skip bad blocks while erasing MTD partition (fixes RT-AC66U
+            failing to format JFFS2 partition due to bad blocks)
+
+
 3.0.0.4.264.22:
    - NEW: Rebased on 3.0.0.4.264 (from the RT-N53 GPL).
    - NEW: Traffic monitoring per IP added to the Traffic Monitor section.
