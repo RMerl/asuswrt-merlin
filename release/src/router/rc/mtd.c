@@ -119,12 +119,13 @@ static int _unlock_erase(const char *mtdname, int erase)
 	int mf;
 	mtd_info_t mi;
 	erase_info_t ei;
-	int r;
+	int r, ret, skipbb;
 
 	if (!wait_action_idle(5)) return 0;
 	set_action(ACT_ERASE_NVRAM);
 
 	r = 0;
+	skipbb = 0;
 	if ((mf = mtd_open(mtdname, &mi)) >= 0) {
 			r = 1;
 #if 1
@@ -133,6 +134,22 @@ static int _unlock_erase(const char *mtdname, int erase)
 				printf("%sing 0x%x - 0x%x\n", erase ? "Eras" : "Unlock", ei.start, (ei.start + ei.length) - 1);
 				fflush(stdout);
 
+				if (!skipbb) {
+					loff_t offset = ei.start;
+
+					if ((ret = ioctl(mf, MEMGETBADBLOCK, &offset)) > 0) {
+						printf("Skipping bad block at 0x%08x\n", ei.start);
+						continue;
+					} else if (ret < 0) {
+						if (errno == EOPNOTSUPP) {
+							skipbb = 1;	// Not supported by this device
+						} else {
+							perror("MEMGETBADBLOCK");
+							r = 0;
+							break;
+						}
+					}
+				}
 				if (ioctl(mf, MEMUNLOCK, &ei) != 0) {
 //					perror("MEMUNLOCK");
 //					r = 0;
