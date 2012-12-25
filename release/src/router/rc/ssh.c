@@ -6,6 +6,7 @@
 */
 
 #include "rc.h"
+#include <shared.h>
 
 static inline int check_host_key(const char *ktype, const char *nvname, const char *hkfn)
 {
@@ -24,6 +25,7 @@ static inline int check_host_key(const char *ktype, const char *nvname, const ch
 void start_sshd(void)
 {
 	int dirty = 0;
+	FILE *fp;
 
 	mkdir("/etc/dropbear", 0700);
 	mkdir("/root/.ssh", 0700);
@@ -59,6 +61,15 @@ void start_sshd(void)
 
 	argv[argc] = NULL;
 	_eval(argv, NULL, 0, NULL);
+
+	if (get_productid())
+	{
+		if ((fp=fopen("/proc/sys/kernel/hostname", "w+")))
+		{
+			fputs(get_productid(), fp);
+			fclose(fp);
+		}
+	}
 }
 
 void stop_sshd(void)
