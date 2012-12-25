@@ -342,6 +342,7 @@ extern int nvram_set_file(const char *key, const char *fname, int max);
 #endif
 extern int free_caches(const char *clean_mode, const int clean_time, const unsigned int threshold);
 extern unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2);
+extern char *get_productid();
 
 /* notify_rc.c */
 extern void notify_rc(const char *event_name);
