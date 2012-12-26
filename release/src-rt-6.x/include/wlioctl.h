@@ -315,6 +315,9 @@ typedef enum wl_scan_type {
 #define WL_BSS_FLAGS_FROM_CACHE		0x02	/* bss_info collected from cache */
 #define WL_BSS_FLAGS_RSSI_ONCHANNEL     0x04 /* rssi info was received on channel (vs offchannel) */
 
+/* bssinfo flag for nbss_cap */
+#define VHT_BI_SGI_80MHZ			0x00000100
+
 typedef struct wl_extdscan_params {
 	int8 		nprobes;		/* 0, passive, otherwise active */
 	int8    	split_scan;		/* split scan */

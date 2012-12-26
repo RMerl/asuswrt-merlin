@@ -339,6 +339,20 @@ function gotoIndex(){
 	else
 		location.href = '/index.asp';
 }
+
+function check_DUT(){
+	$j.ajax({
+		url: '/httpd_check.htm',
+		dataType: 'script',
+		
+		error: function(xhr){
+			setTimeout("check_DUT();", 3000);
+		},
+		success: function(response){
+			setTimeout("location.href ='/QIS_wizard.htm?flag=verify_detect'", 3000);
+		}
+	});
+}
 </script>
 </head>
 

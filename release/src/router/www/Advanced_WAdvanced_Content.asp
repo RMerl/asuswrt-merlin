@@ -72,10 +72,11 @@ function initial(){
 		$("PktAggregate").style.display = "none";
 		$("enable_wl_multicast_forward").style.display = "";
 		if('<% nvram_get("wl_unit"); %>' == '1'){
-			$("noiseReduction").style.display = "none";
+			inputCtrl(document.form.wl_noisemitigation, 0);
 		}
-	} else
-		$("noiseReduction").style.display = "none";
+	}else{
+		inputCtrl(document.form.wl_noisemitigation, 0);
+	}	
 
 	var mcast_rate = '<% nvram_get("wl_mrate_x"); %>';
 	var mcast_unit = '<% nvram_get("wl_unit"); %>';
@@ -554,9 +555,9 @@ function check_Timefield_checkbox(){	// To check Date checkbox checked or not an
 					<tr id="noiseReduction"> <!-- BRCM Only  -->
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,21);">Enhanced interference management</a></th>
 						<td>
-							<select name="wl_noisereduction" class="input_option" onChange="">
-								<option value="0" <% nvram_match("wl_noisereduction", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
-								<option value="1" <% nvram_match("wl_noisereduction", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							<select name="wl_noisemitigation" class="input_option" onChange="">
+								<option value="0" <% nvram_match("wl_noisemitigation", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+								<option value="1" <% nvram_match("wl_noisemitigation", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 							</select>
 						</td>
 					</tr>

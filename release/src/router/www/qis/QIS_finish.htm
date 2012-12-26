@@ -57,7 +57,6 @@ function doLiveUpdate(_do){
 	if(_do){
 		document.getElementById("newFWDetected").style.display = "none";
 		document.getElementById("progressBar").style.display = "";
-		
 		document.start_update.action_mode.value="apply";
 		document.start_update.action_script.value="start_webs_upgrade";
 		document.start_update.action_wait.value="300";
@@ -82,7 +81,7 @@ function detect_httpd(){
 		timeout: 2000,
 		error: function(xhr){
 			dead++;
-			if(dead < 20)
+			if(dead < 30)
 				setTimeout("detect_httpd();", 1000);
 			else{
 				document.getElementById("updateProgress").style.width = "100%";
@@ -90,29 +89,31 @@ function detect_httpd(){
 			}
 		},
 		success: function(){
-			if(webs_state_upgrade == '0'){
+			if(webs_state_error == "1"){
+				document.getElementById('progress_bar_no').innerHTML = "100%";
+				document.getElementById("updateProgress").style.width = "100%";
 				document.getElementById("liveUpdateResult").innerHTML = "<#FIRM_fail_desc#>";
+				document.getElementById("newFWgraded").style.display = "";
+				return false;
 			}
 
-			progressBar = 100;
-			document.getElementById("updateProgress").style.width = "100%";
-			document.getElementById('progress_bar_no').innerHTML = progressBar+"%";
-			document.getElementById("newFWgraded").style.display = "";		
+			if(webs_state_upgrade == ""){
+				progressBar = 100;
+				document.getElementById("updateProgress").style.width = "100%";
+				document.getElementById('progress_bar_no').innerHTML = progressBar+"%";
+				document.getElementById("newFWgraded").style.display = "";		
+			}
+			else{
+				setTimeout("detect_httpd();", 1000);
+			}
 		}
 	});
 }
 
 var progressBar = 0;
 function showLoadingUpdate(){
-	if(progressBar == 98){
+	if(progressBar == 90){
 		detect_httpd();
-	}
-	
-	/*if(progressBar == 99){
-		document.getElementById("updateProgress").style.width = progressBar+"%";
-	}
-	else if(progressBar > 99){*/
-	if(progressBar > 99){
 		return false;
 	}
 	else{	
@@ -135,7 +136,7 @@ function QKfinish_load_body(){
 		$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno; 
 		$("#latestFW")[0].innerHTML = "" 
 		for(var i=0; i<parent.Latest_firm.length; i++){
-			$("#latestFW")[0].innerHTML += parent.Latest_firm[i];
+			$("#latestFW")[0].innerHTML += parent.Latest_firm.charAt(i);
 			if(i == parent.Latest_firm.length - 1)
 				$("#latestFW")[0].innerHTML += "_";
 			else

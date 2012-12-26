@@ -145,11 +145,12 @@ function detectUSBStatusIndex(){
     			detectUSBStatusIndex();
     		},
     		success: function(){
-					clickEvent($("iconRouter"));
-					$("statusframe").src = "/device-map/router.asp";
-					show_device();
-  			}
-  });
+			return 0;
+			clickEvent($("iconRouter"));
+			$("statusframe").src = "/device-map/router.asp";
+			show_device();
+  		}
+	});
 }
 
 function customize_NM_table(img){

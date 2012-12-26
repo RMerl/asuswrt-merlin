@@ -46,6 +46,8 @@ extern char wan6face[];
 #define is_phyconnected() (nvram_match("link_wan","1"))
 #endif
 
+#define NAT_RULES	"/tmp/nat_rules"
+
 #ifdef RTCONFIG_OLD_PARENTALCTRL
 int nvram_set_by_seq(char *name, unsigned int seq, char *value);
 char * nvram_get_by_seq(char *name, unsigned int seq);
@@ -75,7 +77,8 @@ int parental_ctrl(void);
 
 #ifdef RTCONFIG_USB_BECEEM
 #define BECEEM_DIR "/tmp/Beceem_firmware"
-#define BECEEM_CONF "/tmp/Beceem_firmware/wimaxd.conf"
+#define WIMAX_CONF "/tmp/wimax.conf"
+#define WIMAX_LOG "/tmp/wimax.log"
 #endif
 
 #define BOOT		0
@@ -325,7 +328,7 @@ static inline void start_vpn_eas() { }
 #endif
 
 // wanduck.c
-extern int wanduck_main(int argc, const char *argv[]);
+extern int wanduck_main(int argc, char *argv[]);
 
 // tcpcheck.c
 extern int setupsocket(int sock);
@@ -341,8 +344,10 @@ extern int tcpcheck_main(int argc, const char *argv[]);
 #ifdef RTCONFIG_USB
 extern int asus_sd(const char *device_name, const char *action);
 extern int asus_lp(const char *device_name, const char *action);
+extern int asus_sg(const char *device_name, const char *action);
 extern int asus_sr(const char *device_name, const char *action);
 extern int asus_tty(const char *device_name, const char *action);
+extern int asus_usbbcm(const char *device_name, const char *action);
 extern int asus_usb_interface(const char *device_name, const char *action);
 #ifdef RTCONFIG_DISK_MONITOR
 extern int diskmon_main(int argc, const char *argv[]);

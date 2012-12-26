@@ -625,9 +625,11 @@ function submitForm(){
 			document.form.switch_wan2tagid.value = parent.document.QKform.switch_wan2tagid.value;
 			document.form.switch_wan2prio.value = parent.document.QKform.switch_wan2prio.value;
 			document.form.switch_stb_x.value = parent.document.QKform.switch_stb_x.value;
+			document.form.flag.value = "verify_detect";
   		if(original_switch_wantag != document.form.switch_wantag.value){
-					document.form.action_script.value	= "reboot";
-					document.form.action_wait.value	= "50";
+					document.form.action_script.value = "reboot";
+					document.form.flag.value = "verify_detect_reboot";
+					document.form.action_wait.value	= "<% get_default_reboot_time(); %>";
 					$("loadHint").style.display = "";
 					$("nextButton").style.display = "none";
 					$("prevButton").style.display = "none";
@@ -635,7 +637,6 @@ function submitForm(){
 
 			$("x_Setting").disabled = false;
 			document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';
-			document.form.flag.value = "verify_detect";
 			document.form.sw_mode.value = 1;
 			document.form.action="/start_apply.htm";
 			document.form.submit();

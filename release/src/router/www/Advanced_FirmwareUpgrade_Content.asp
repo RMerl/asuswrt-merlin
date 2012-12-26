@@ -93,18 +93,18 @@ function detect_firmware(){
       										if(confirm("<#exist_new#>")){
       												document.start_update.action_mode.value="apply";
       												document.start_update.action_script.value="start_webs_upgrade";
-      												document.start_update.action_wait.value="300";
+      												document.start_update.action_wait.value="270";
 															document.start_update.submit();
 															return;
       										}
       										
       								}else{
-      										var flag = getCookie("after_check");
-      										if(flag==1){
+      										//var flag = getCookie("after_check");
+      										//if(flag==1){
       							  				$('update_states').innerHTML="<#is_latest#>";
       												$('update_scan').style.display="none";
-      												setCookie("after_check", 0, 365);
-      										}
+      												//setCookie("after_check", 0, 365);
+      										//}
       								}
       						}
       						else{		//miss-match model FW
@@ -119,7 +119,7 @@ function detect_firmware(){
 }
 
 function detect_update(){
-	setCookie("after_check", 1, 365);
+	//setCookie("after_check", 1, 365);
   document.start_update.action_mode.value="apply";
   document.start_update.action_script.value="start_webs_update";
   document.start_update.action_wait.value="12";
@@ -194,6 +194,47 @@ function detect_httpd(){
   		});
 }
 
+var rebooting = 0;
+function isDownloading(){
+	$j.ajax({
+    		url: '/detect_firmware.asp',
+    		dataType: 'script',
+				timeout: 1500,
+    		error: function(xhr){
+					// start reboot.
+					if(rebooting > 20){
+						$("hiddenMask").style.visibility = "hidden";
+						showLoadingBar(180);
+    				setTimeout("location.href='index.asp';", 180000); // force to refresh
+					}
+					else
+						rebooting++
+    		},
+    		success: function(){
+					rebooting = 0;
+					if(webs_state_upgrade == 1 && webs_state_error == 1){
+						$("drword").innerHTML = "<#FIRM_fail_desc#>";
+						return false;
+					}
+					else if(webs_state_upgrade != 0 && webs_state_error == 0){
+						$("hiddenMask").style.visibility = "hidden";
+						showLoadingBar(270);
+						setTimeout("detect_httpd();", 272000);
+						return false;
+					}
+					else{
+    				setTimeout("isDownloading();", 2000);
+					}
+  			}
+  		});
+}
+
+function startDownloading(){
+	disableCheckChangedStatus();			
+	dr_advise();
+	$("drword").innerHTML = "&nbsp;&nbsp;&nbsp;Firmware downloading...";
+	isDownloading();
+}
 </script>
 </head>
 
@@ -219,15 +260,10 @@ function detect_httpd(){
 <div id="Loading" class="popup_bg"></div><!--for uniform show, useless but have exist-->
 
 <div id="hiddenMask" class="popup_bg">
-	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center">
+	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center" style="height:100px;">
 		<tr>
 		<td>
-			<br/>
-			<div class="drword" id="drword" style="height:50px;">&nbsp;&nbsp;&nbsp;<#Main_alert_proceeding_desc1#>...
-			<br/>
-			<br/>
-	    </div>
-		  <!--div class="drImg"><img src="/images/DrsurfImg.gif"></div-->
+			<div class="drword" id="drword" style=""><#Main_alert_proceeding_desc1#>...</div>
 		</td>
 		</tr>
 	</table>

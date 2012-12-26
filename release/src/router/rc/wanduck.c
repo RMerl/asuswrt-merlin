@@ -14,10 +14,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
+#include <rtconfig.h>
+#ifdef RTCONFIG_USB_MODEM
+#include <usb_info.h>
+#endif
 
 #include "wanduck.h"
 
 #define NO_DETECT_INTERNET
+#define NO_IOS_DETECT_INTERNET
 
 static void safe_leave(int signo){
 	csprintf("\n## wanduck.safeexit ##\n");
@@ -46,6 +51,10 @@ static void safe_leave(int signo){
 #endif
 
 	if(rule_setup == 1){
+		int len;
+		char *fn = NAT_RULES, ln[PATH_MAX];
+		struct stat s;
+
 		csprintf("\n# Disable direct rule(exit wanduck)\n");
 
 		rule_setup = 0;
@@ -63,22 +72,28 @@ static void safe_leave(int signo){
 		// Couldn't directly use nvram_set().
 		// Must use the command: nvram, and set the nat_state.
 		char buf[16];
-		FILE *fp = fopen("/tmp/nat_rules", "r");
+		FILE *fp = fopen(NAT_RULES, "r");
 
 		memset(buf, 0, 16);
 		if(fp != NULL){
 			fclose(fp);
 
+			if (!lstat(NAT_RULES, &s) && S_ISLNK(s.st_mode) &&
+			    (len = readlink(NAT_RULES, ln, sizeof(ln))) > 0) {
+				ln[len] = '\0';
+				fn = ln;
+			}
+
 			sprintf(buf, "nat_state=%d", NAT_STATE_NORMAL);
 			eval("nvram", "set", buf);
 
-			_dprintf("%s: apply the nat_rules: %s!\n", __FUNCTION__, buf);
-			logmessage("wanduck exit", "apply the nat_rules!");
+			_dprintf("%s: apply the nat_rules(%s): %s!\n", __FUNCTION__, fn, buf);
+			logmessage("wanduck exit", "apply the nat_rules(%s)!", fn);
 
 			setup_ct_timeout(TRUE);
 			setup_udp_timeout(TRUE);
 
-			eval("iptables-restore", "/tmp/nat_rules");
+			eval("iptables-restore", NAT_RULES);
 		}
 		else{
 			sprintf(buf, "nat_state=%d", NAT_STATE_INITIALIZING);
@@ -407,7 +422,7 @@ int trigger_ppp_connection(int wan_unit){
 	sprintf(prefix_wan, "wan%d_", wan_unit);
 
 	if(nvram_match(strcat_r(prefix_wan, "proto", nvram_name), "pppoe")
-			&& nvram_match(strcat_r(prefix_wan, "pppoe_demand", nvram_name), "1")
+			&& nvram_get_int(strcat_r(prefix_wan, "pppoe_demand", nvram_name))
 			&& (nvram_match(strcat_r(prefix_wan, "ipaddr", nvram_name), "") || nvram_match(strcat_r(prefix_wan, "ipaddr", nvram_name), "10.64.64.64"))
 			){
 csprintf("# wanduck trigger the PPP connection!\n");
@@ -787,17 +802,29 @@ int if_wan_phyconnected(int wan_unit, int wan_state){
 
 void handle_wan_line(int wan_unit, int action){
 	char cmd[32];
+	char prefix_wan[8], nvram_name[16], wan_proto[16];
 
 	// Redirect rules.
 	if(action){
-		notify_rc("stop_nat_rules");
+		stop_nat_rules();
 	}
 	/*
 	 * When C2C and remove the redirect rules,
 	 * it means dissolve the default state.
 	 */
 	else if(conn_changed_state[wan_unit] == D2C || conn_changed_state[wan_unit] == CONNED){
-		notify_rc("start_nat_rules");
+		start_nat_rules();
+
+		memset(prefix_wan, 0, 8);
+		sprintf(prefix_wan, "wan%d_", wan_unit);
+
+		memset(wan_proto, 0, 16);
+		strcpy(wan_proto, nvram_safe_get(strcat_r(prefix_wan, "proto", nvram_name)));
+
+		if(!strcmp(wan_proto, "static")){
+			/* Sync time */
+			refresh_ntpc();
+		}
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 		if(check_if_dir_exist("/opt/lib/ipkg")){
@@ -845,6 +872,14 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 	now = uptime();
 	(void)strftime(timebuf, sizeof(timebuf), RFC1123FMT, gmtime(&now));
 
+#ifdef NO_IOS_DETECT_INTERNET
+	// disable iOS popup window. Jerry5 2012.11.27
+	if (!strcmp(url,"www.apple.com/library/test/success.html")){
+		sprintf(buf, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", buf, "HTTP/1.0 200 OK\r\n", "Server: Apache/2.2.3 (Oracle)\r\n", "Content-Type: text/html; charset=UTF-8\r\n", "Cache-Control: max-age=557\r\n","Expires: ", timebuf, "\r\n", "Date: ", timebuf, "\r\n", "Content-Length: 127\r\n", "Connection: close\r\n\r\n","<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\">\n","<HTML>\n","<HEAD>\n\t","<TITLE>Success</TITLE>\n","</HEAD>\n","<BODY>\n","Success\n","</BODY>\n","</HTML>\n");
+	}
+	else{
+#endif
+
 	sprintf(buf, "%s%s%s%s%s%s", buf, "HTTP/1.0 302 Moved Temporarily\r\n", "Server: wanduck\r\n", "Date: ", timebuf, "\r\n");
 
 	memset(dut_addr, 0, 64);
@@ -857,11 +892,6 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 	if(isFirstUse)
 		strcpy(dut_addr, DUT_DOMAIN_NAME);
 	else
-/*#ifdef RTCONFIG_WIRELESSREPEATER
-	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_match("lan_proto", "dhcp") && nvram_get_int("lan_state_t") != LAN_STATE_CONNECTED)
-		strcpy(dut_addr, nvram_default_get("lan_ipaddr"));
-	else
-#endif//*/
 		strcpy(dut_addr, nvram_safe_get("lan_ipaddr"));
 
 	if((conn_changed_state[wan_unit] == C2D || conn_changed_state[wan_unit] == DISCONN) && disconn_case[wan_unit] == CASE_THESAMESUBNET)
@@ -881,6 +911,9 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 		sprintf(buf, "%s%s%s%s%s", buf, "Connection: close\r\n", "Location:http://", dut_addr, "/index.asp\r\nContent-Type: text/plain\r\n\r\n<html></html>\r\n"); 
 #endif
 
+#ifdef NO_IOS_DETECT_INTERNET
+	}
+#endif
 	write(sfd, buf, strlen(buf));
 	close_socket(sfd, T_HTTP);
 }
@@ -1286,7 +1319,7 @@ TRACE_PT("%s.\n", cmd);
 	return 1;
 }
 
-int wanduck_main(int argc, const char *argv[]){
+int wanduck_main(int argc, char *argv[]){
 	char *http_servport, *dns_servport;
 	int clilen;
 	struct sockaddr_in cliaddr;
@@ -1668,9 +1701,8 @@ else
 					eval("ebtables", "-t", "filter", "-I", "FORWARD", "-i", nvram_safe_get(wlc_nvname("ifname")), "-j", "DROP");
 					f_write_string("/proc/net/dnsmqctrl", "", 0, 0);
 
-					notify_rc("stop_nat_rules");
+					stop_nat_rules();
 				//}
-
 				got_notify = 0;
 			}
 			else{
@@ -1685,7 +1717,7 @@ csprintf("\n# mode(%d): Disable direct rule(CONNED)\n", sw_mode);
 					sprintf(domain_mapping, "%x %s", inet_addr(nvram_safe_get("lan_ipaddr")), DUT_DOMAIN_NAME);
 					f_write_string("/proc/net/dnsmqctrl", domain_mapping, 0, 0);
 
-					notify_rc("start_nat_rules");
+					start_nat_rules();
 				}
 
 				got_notify = 0;
@@ -1699,7 +1731,12 @@ csprintf("\n# mode(%d): Disable direct rule(CONNED)\n", sw_mode);
 		else if(conn_changed_state[current_wan_unit] == C2D || (conn_changed_state[current_wan_unit] == CONNED && isFirstUse)){
 			if(rule_setup == 0){
 if(conn_changed_state[current_wan_unit] == C2D)
+{
+#ifdef RTCONFIG_DSL /* Paul add 2012/10/18 */
+	led_control(LED_WAN, LED_OFF);
+#endif
 	csprintf("\n# Enable direct rule(C2D)\n");
+}
 else
 	csprintf("\n# Enable direct rule(isFirstUse)\n");
 				rule_setup = 1;

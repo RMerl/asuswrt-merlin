@@ -84,7 +84,9 @@ endif
 
 # !!TB - updated Broadcom Wireless driver
 ifneq ($(RTCONFIG_RALINK),y)
+ifneq ($(RTCONFIG_BCMWL6),y)
 obj-y += et
+endif
 obj-y += wlconf
 obj-y += utils
 obj-y += nas
@@ -1240,8 +1242,6 @@ gctwimax-0.0.3rc4: $@/stamp-h1
 gctwimax-0.0.3rc4-install: gctwimax-0.0.3rc4
 	install -D gctwimax-0.0.3rc4/gctwimax $(INSTALLDIR)/gctwimax-0.0.3rc4/usr/sbin/gctwimax
 	$(STRIP) $(INSTALLDIR)/gctwimax-0.0.3rc4/usr/sbin/gctwimax
-	install -D gctwimax-0.0.3rc4/src/event.sh $(INSTALLDIR)/gctwimax-0.0.3rc4/usr/share/event.sh
-	install -D gctwimax-0.0.3rc4/src/gctwimax.conf $(INSTALLDIR)/gctwimax-0.0.3rc4/usr/share/gctwimax.conf
 
 gctwimax-0.0.3rc4-clean:
 	$(MAKE) -C gctwimax-0.0.3rc4 clean
@@ -1706,7 +1706,7 @@ igs-clean:
 
 ebtables: dummy
 	$(MAKE) -C ebtables CC=$(CC) LD=$(LD) \
-	CFLAGS="-Os $(EXTRACFLAGS) -DEBT_MIN_ALIGN=4 -Wall -Wunused" \
+	CFLAGS="-Os $(EXTRACFLAGS) -Wall -Wunused" \
 	BINDIR="/usr/sbin" LIBDIR="/usr/lib/ebtables" KERNEL_INCLUDES=$(LINUXDIR)/include $(if $(RTCONFIG_IPV6),DO_IPV6=1,)
 
 ebtables-install: ebtables
@@ -1915,7 +1915,6 @@ madwimax-0.1.1: libusb10 madwimax-0.1.1/stamp-h1
 	@$(MAKE) -C madwimax-0.1.1 all
 
 madwimax-0.1.1-install: madwimax-0.1.1
-	install -D madwimax-0.1.1/scripts/events/event.sh $(INSTALLDIR)/madwimax-0.1.1/usr/sbin/event.sh
 	install -D madwimax-0.1.1/src/madwimax $(INSTALLDIR)/madwimax-0.1.1/usr/sbin/madwimax
 	$(STRIP) $(INSTALLDIR)/madwimax-0.1.1/usr/sbin/madwimax
 

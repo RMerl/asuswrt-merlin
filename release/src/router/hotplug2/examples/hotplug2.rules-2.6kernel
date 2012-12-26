@@ -14,7 +14,15 @@ SUBSYSTEM == usb, DEVICENAME ~~ ^([1-2]-[1-2]:[1-9].[0-9]+)$, ACTION ~~ ^(add|re
 	exec /sbin/asus_usb_interface %DEVICENAME% %ACTION% ;
 }
 
+SUBSYSTEM == usb, DEVICENAME ~~ ^([1-2]-[1-2]:[1-9][1-9].[0-9]+)$, ACTION ~~ ^(add|remove)$ {
+	exec /sbin/asus_usb_interface %DEVICENAME% %ACTION% ;
+}
+
 SUBSYSTEM == usb, DEVICENAME ~~ ^([1-2]-[1-2].[0-9]:[1-9].[0-9]+)$, ACTION ~~ ^(add|remove)$ {
+	exec /sbin/asus_usb_interface %DEVICENAME% %ACTION% ;
+}
+
+SUBSYSTEM == usb, DEVICENAME ~~ ^([1-2]-[1-2].[0-9]:[1-9][1-9].[0-9]+)$, ACTION ~~ ^(add|remove)$ {
 	exec /sbin/asus_usb_interface %DEVICENAME% %ACTION% ;
 }
 

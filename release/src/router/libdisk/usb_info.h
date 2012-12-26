@@ -80,11 +80,12 @@ extern int isSerialInterface(const char *interface_name);
 extern int isACMInterface(const char *interface_name);
 extern int isRNDISInterface(const char *interface_name);
 #ifdef RTCONFIG_USB_BECEEM
+extern int isGCTInterface(const char *interface_name);
 extern int hadBeceemModule();
+extern int hadGCTModule(void);
 extern int isBeceemNode(const char *device_name);
-extern int isBeceemInterface(const char *interface_name);
 #endif
-extern int is_usb_modem_ready();
+extern int is_usb_modem_ready(void);
 #endif
 
 #ifdef RTCONFIG_USB_PRINTER

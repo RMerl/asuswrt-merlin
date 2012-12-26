@@ -3974,7 +3974,7 @@ void start_nat_rules() {
 	setup_ct_timeout(TRUE);
 	setup_udp_timeout(TRUE);
 
-	eval("iptables-restore", "/tmp/nat_rules");
+	eval("iptables-restore", NAT_RULES);
 
 	run_custom_script("nat-start");
 	return;

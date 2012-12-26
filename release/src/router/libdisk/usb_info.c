@@ -865,7 +865,7 @@ extern int hadRNDISModule(){
 }
 
 #ifdef RTCONFIG_USB_BECEEM
-extern int hadBeceemModule(){
+int hadBeceemModule(void){
 	char target_file[128];
 	DIR *module_dir;
 
@@ -878,30 +878,50 @@ extern int hadBeceemModule(){
 	else
 		return 0;
 }
+
+int hadGCTModule(void){
+	char target_file[128];
+	DIR *module_dir;
+
+	memset(target_file, 0, 128);
+	sprintf(target_file, "%s/tun", SYS_MODULE);
+	if((module_dir = opendir(target_file)) != NULL){
+		closedir(module_dir);
+		return 1;
+	}
+	else
+		return 0;
+}
 #endif
 
-extern int isSerialNode(const char *device_name){
+int isSerialNode(const char *device_name)
+{
 	if(strstr(device_name, "ttyUSB") == NULL)
 		return 0;
 
 	return 1;
 }
 
-extern int isACMNode(const char *device_name){
+int isACMNode(const char *device_name)
+{
 	if(strstr(device_name, "ttyACM") == NULL)
 		return 0;
 
 	return 1;
 }
 
-extern int isBeceemNode(const char *device_name){
+#ifdef RTCONFIG_USB_BECEEM
+int isBeceemNode(const char *device_name)
+{
 	if(strstr(device_name, "usbbcm") == NULL)
 		return 0;
 
 	return 1;
 }
+#endif
 
-extern int isSerialInterface(const char *interface_name){
+int isSerialInterface(const char *interface_name)
+{
 	char interface_class[4];
 
 	if(get_usb_interface_class(interface_name, interface_class, 4) == NULL)
@@ -913,7 +933,8 @@ extern int isSerialInterface(const char *interface_name){
 	return 1;
 }
 
-extern int isACMInterface(const char *interface_name){
+int isACMInterface(const char *interface_name)
+{
 	char interface_class[4];
 
 	if(get_usb_interface_class(interface_name, interface_class, 4) == NULL)
@@ -925,7 +946,8 @@ extern int isACMInterface(const char *interface_name){
 	return 1;
 }
 
-extern int isRNDISInterface(const char *interface_name){
+int isRNDISInterface(const char *interface_name)
+{
 	char interface_class[4];
 	char target_file[128];
 	DIR *module_dir;
@@ -946,7 +968,22 @@ extern int isRNDISInterface(const char *interface_name){
 	return 1;
 }
 
-extern int is_usb_modem_ready(){
+#ifdef RTCONFIG_USB_BECEEM
+int isGCTInterface(const char *interface_name){
+	char interface_class[4];
+
+	if(get_usb_interface_class(interface_name, interface_class, 4) == NULL)
+		return 0;
+
+	if(strcmp(interface_class, "0a"))
+		return 0;
+
+	return 1;
+}
+#endif
+
+int is_usb_modem_ready(void)
+{
 	if(nvram_invmatch("modem_enable", "0")
 			&& ((!strcmp(nvram_safe_get("usb_path1"), "modem") && strcmp(nvram_safe_get("usb_path1_act"), ""))
 					|| (!strcmp(nvram_safe_get("usb_path2"), "modem") && strcmp(nvram_safe_get("usb_path2_act"), ""))

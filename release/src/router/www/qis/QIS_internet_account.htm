@@ -226,14 +226,14 @@ function replace_pass_type(obj, _Type){
 <input type="hidden" name="x_Setting" id="x_Setting" value="" disabled>
 <input type="hidden" name="sw_mode" value="">
 <!-- unifi -->
-<input type="hidden" name="switch_wantag" value="">
-<input type="hidden" name="switch_wan0tagid" value="">
-<input type="hidden" name="switch_wan0prio" value="">
-<input type="hidden" name="switch_wan1tagid" value="">
-<input type="hidden" name="switch_wan1prio" value="">
-<input type="hidden" name="switch_wan2tagid" value="">
-<input type="hidden" name="switch_wan2prio" value="">
-<input type="hidden" name="switch_stb_x" value="">
+<input type="hidden" name="switch_wantag" value="<% nvram_get("switch_wantag"); %>">
+<input type="hidden" name="switch_wan0tagid" value="<% nvram_get("switch_wan0tagid"); %>">
+<input type="hidden" name="switch_wan0prio" value="<% nvram_get("switch_wan0prio"); %>">
+<input type="hidden" name="switch_wan1tagid" value="<% nvram_get("switch_wan1tagid"); %>">
+<input type="hidden" name="switch_wan1prio" value="<% nvram_get("switch_wan1prio"); %>">
+<input type="hidden" name="switch_wan2tagid" value="<% nvram_get("switch_wan2tagid"); %>">
+<input type="hidden" name="switch_wan2prio" value="<% nvram_get("switch_wan2prio"); %>">
+<input type="hidden" name="switch_stb_x" value="<% nvram_get("switch_stb_x"); %>">
 
 <div class="QISmain">
 		<div>

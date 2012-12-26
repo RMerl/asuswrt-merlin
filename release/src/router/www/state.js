@@ -1878,6 +1878,10 @@ var usb_path1;
 var usb_path2;
 var usb_path1_tmp = "init";
 var usb_path2_tmp = "init";
+var usb_path1_removed;
+var usb_path2_removed;
+var usb_path1_removed_tmp = "init";
+var usb_path2_removed_tmp = "init";
 
 function refresh_info_status(xmldoc)
 {
@@ -1893,6 +1897,8 @@ function refresh_info_status(xmldoc)
 	_wlc_state = wanStatus[7].firstChild.nodeValue;	
 	_wlc_sbstate = wanStatus[8].firstChild.nodeValue;	
 	wifi_hw_switch = wanStatus[9].firstChild.nodeValue;
+	usb_path1_removed = wanStatus[11].firstChild.nodeValue;	
+	usb_path2_removed = wanStatus[12].firstChild.nodeValue;
 
 	if(location.pathname == "/QIS_wizard.htm")
 		return false;	
@@ -1984,31 +1990,29 @@ function refresh_info_status(xmldoc)
 
 	// usb
 	if(usb_support != -1){
-		if(foreign_disk_total_mounted_number().length == 0){
-			if(usb_path1 == "usb=storage")
-				usb_path1 = "usb=";
-			if(usb_path2 == "usb=storage")
-				usb_path2 = "usb=";
-		}
-		else{
-			var mountNum = 0;
-			for(var i=0; i<foreign_disk_total_mounted_number().length; i++){
-				if(foreign_disk_total_mounted_number()[i] != 0)
-					mountNum++;
-					break;
+		if(current_url=="index.asp"||current_url==""){
+			if((usb_path1_removed != usb_path1_removed_tmp && usb_path1_removed_tmp != "init")){
+				location.href = "/index.asp";
 			}
-			if(mountNum == 0){
-				if(usb_path1 == "usb=storage")
-					usb_path1 = "usb=";
-				if(usb_path1 == "usb=storage")
-					usb_path2 = "usb=";
+			else if(usb_path1_removed == "umount=0"){ // umount=0->umount=0, 0->storage
+				if((usb_path1 != usb_path1_tmp && usb_path1_tmp != "init"))
+					location.href = "/index.asp";
+			}
+
+			if((usb_path2_removed != usb_path2_removed_tmp && usb_path2_removed_tmp != "init")){
+				location.href = "/index.asp";
+			}
+			else if(usb_path2_removed == "umount=0"){ // umount=0->umount=0, 0->storage
+				if((usb_path2 != usb_path2_tmp && usb_path2_tmp != "init"))
+					location.href = "/index.asp";
 			}
 		}
 
-		if((current_url=="index.asp"||current_url=="")&&
-		   ((usb_path1!=usb_path1_tmp&&usb_path1_tmp!="init")||
-		    (usb_path2!=usb_path2_tmp&&usb_path2_tmp!="init")))
-			updateUSBStatus();
+		if(usb_path1_removed == "umount=1")
+			usb_path1 = "usb=";
+
+		if(usb_path2_removed == "umount=1")
+			usb_path2 = "usb=";
 
 		if(usb_path1 == "usb=" && usb_path2 == "usb="){
 			$("usb_status").className = "usbstatusoff";
@@ -2020,8 +2024,8 @@ function refresh_info_status(xmldoc)
 				$("printer_status").onmouseout = function(){nd();}
 			}
 		}
-		else{ // !storage
-			if(usb_path1 == "usb=printer" || usb_path2 == "usb=printer"){
+		else{
+			if(usb_path1 == "usb=printer" || usb_path2 == "usb=printer"){ // printer
 				if((current_url == "index.asp" || current_url == "") && $("printerName0") == null && $("printerName1") == null)
 					updateUSBStatus();
 				if(printer_support != -1){
@@ -2035,22 +2039,27 @@ function refresh_info_status(xmldoc)
 				else
 					$("usb_status").className = "usbstatuson";
 			}
-			else{
+			else{ // !printer
 				if((current_url == "index.asp" || current_url == "") && ($("printerName0") != null || $("printerName1") != null))
-					updateUSBStatus();
+					location.href = "/index.asp";
+
 				if(printer_support != -1){
 					$("printer_status").className = "printstatusoff";
 					$("printer_status").onmouseover = function(){overHint(5);}
 					$("printer_status").onmouseout = function(){nd();}
 				}
+
 				$("usb_status").className = "usbstatuson";
 			}
 			$("usb_status").onclick = function(){openHint(24,2);}
 		}
 		$("usb_status").onmouseover = function(){overHint(2);}
 		$("usb_status").onmouseout = function(){nd();}
+
 		usb_path1_tmp = usb_path1;
 		usb_path2_tmp = usb_path2;
+		usb_path1_removed_tmp = usb_path1_removed;
+		usb_path2_removed_tmp = usb_path2_removed;
 	}
 
 	// guest network

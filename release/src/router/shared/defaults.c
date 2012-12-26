@@ -108,7 +108,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_chanspec", "0"},			/* Channel specification */
 #endif
 #ifndef RTCONFIG_RALINK
-	{ "wl_noisereduction", "1"},
+	{ "wl_noisemitigation", "0"},
 	{ "wl_reg_mode", "off"},		/* Regulatory: 802.11H(h)/802.11D(d)/off(off) */
 #if 0
 	{ "wl_dfs_preism", "60"},		/* 802.11H pre network CAC time */
@@ -469,7 +469,7 @@ struct nvram_tuple router_defaults[] = {
 #ifdef CONFIG_BCMWL5
 	{ "ctf_disable",		"0"		},
 	{ "ctf_disable_force", 		"0"		},
-	{ "gro_disable_force", 		"1"		},
+	{ "gro_disable", 		"1"		},
 #endif
 #ifdef RTCONFIG_BCMWL6
 	{ "pktc_disable", 		"0"		},
@@ -1425,7 +1425,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_debug",		"0"		},
 #endif
 
-	{ "web_redirect", 	"1"		},      // Only NOLINK is redirected in default, it is overwrited in init_nvram			
+	{ "web_redirect", 	"1"		},      // Only NOLINK is redirected in default, it is overwrited in init_nvram		
+	{ "disiosdet",          "1"             },
 
 #ifdef RTCONFIG_FANCTRL
 	{ "fanctrl_dutycycle",		"0"},

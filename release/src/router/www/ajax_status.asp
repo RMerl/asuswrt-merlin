@@ -9,4 +9,6 @@
   <wan>wlc_sbstate=<% nvram_get("wlc_sbstate"); %></wan>
   <wan>wifi_hw_switch=<% nvram_get("wl0_radio"); %></wan>
   <wan>psta:<% wlc_psta_state(); %></wan>
+  <wan>umount=<% nvram_get("usb_path1_removed"); %></wan>
+  <wan>umount=<% nvram_get("usb_path2_removed"); %></wan>
 </devicemap>

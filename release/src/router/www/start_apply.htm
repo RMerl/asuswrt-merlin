@@ -87,8 +87,14 @@ function initial(){
 		else {
 			if(getflag.length > 0)
 				document.redirectForm.flag.value = getflag;
-	
+				
 			if(parent.document.getElementById("hidden_frame")){
+
+				if(getflag == "verify_detect_reboot"){
+					setTimeout("parent.parent.check_DUT();", restart_time*1000);
+					return;
+				}
+				
 				setTimeout("qis_delay_redirect('/qis/QIS_verify_detect.htm');", restart_time*1000);
 			}
 			else{
@@ -131,7 +137,7 @@ function initial(){
   	setTimeout("parent.parent.checkDDNSReturnCode();", 1000);
 	}
 	else if(action_script.indexOf("start_webs_upgrade") >= 0) {
-		setTimeout("parent.showLoadingBar(restart_time);", 1000); 
+  	setTimeout("parent.startDownloading();", 1000);
 	}
 	else if(action_script == "restart_cloudsync"){
 		/* if multi-rule

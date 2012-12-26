@@ -1,7 +1,7 @@
 #
 # Linux dcs Makefile
 #
-# Copyright (C) 2011, Broadcom Corporation
+# Copyright (C) 2012, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,24 +9,22 @@
 # or duplicated in any form, in whole or in part, without the prior
 # written permission of Broadcom Corporation.
 #
-# $Id: Makefile 315423 2012-02-16 18:25:04Z $
+# $Id: Makefile 341899 2012-06-29 04:06:38Z $
 #
 
 CFLAGS	+= -I. -I$(TOP)/shared -I$(SRCBASE)/include -Wall
-CFLAGS	+= $(if $(WLAN_ComponentIncPath),$(WLAN_ComponentIncPath),$(addprefix -I,$(wildcard $(SRCBASE)/wl/bcmwifi/include)))
+#CFLAGS	+= $(if $(WLAN_ComponentIncPath),$(WLAN_ComponentIncPath),$(addprefix -I,$(wildcard $(SRCBASE)/shared/bcmwifi/include)))
 #CFLAGS	+= -g -DDEBUG
 CFLAGS	+= -s -O2
 LDFLAGS += -L$(TOP)/nvram -L$(INSTALLDIR)/nvram/usr/lib -lnvram
 LDFLAGS += -L$(TOP)/shared -L$(INSTALLDIR)/shared/usr/lib -lshared
-ifeq ($(RTAC66U), y)
-#CFLAGS  += -DACS_ONCE
-endif
+LDFLAGS += $(EXTRA_LDFLAGS)
 
 vpath %.c $(SRCBASE)/shared/
 
 ifeq ($(wildcard $(SRCBASE)/router/acsd/*.c),)
 all:
-	-cp -f prebuilt/acsd acsd
+	-cp -f prebuild/acsd acsd
 else
 all: acsd #acs_cli
 endif

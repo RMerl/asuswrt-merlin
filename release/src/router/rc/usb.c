@@ -1585,7 +1585,7 @@ void enable_gro()
 	char lan_ifname[32], *lan_ifnames, *next;
 	char path[64] = {0};
 
-	if(nvram_get_int("gro_disable_force")) return;
+	if(nvram_get_int("gro_disable")) return;
 
 	/* enabled gso on vlan interface */
 	lan_ifnames = nvram_safe_get("lan_ifnames");

@@ -947,7 +947,9 @@ int init_nvram(void)
 {
 	int model = get_model();
 	char wan_if[10];
+#if defined(RTCONFIG_DUALWAN) || defined(RTCONFIG_RALINK)
 	int unit = 0;
+#endif
 
 	TRACE_PT("init_nvram for %d\n", model);
 
@@ -1500,7 +1502,7 @@ int init_nvram(void)
 		nvram_set("ohci_ports", "2-1");
 		if(!nvram_get("ct_max")) 
 			nvram_set("ct_max", "2048");
-		add_rc_support("2.4G mssid usbX1");
+		add_rc_support("2.4G mssid usbX1 update");
 		break;
 
 	case MODEL_RTN10D1:
