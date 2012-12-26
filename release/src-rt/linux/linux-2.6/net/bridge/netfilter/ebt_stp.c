@@ -8,11 +8,10 @@
  *  July, 2003
  */
 
-#include <linux/etherdevice.h>
-#include <linux/module.h>
-#include <linux/netfilter/x_tables.h>
 #include <linux/netfilter_bridge/ebtables.h>
 #include <linux/netfilter_bridge/ebt_stp.h>
+#include <linux/etherdevice.h>
+#include <linux/module.h>
 
 #define BPDU_TYPE_CONFIG 0
 #define BPDU_TYPE_TCN 0x80
@@ -156,7 +155,7 @@ static int ebt_stp_check(const char *tablename, unsigned int hookmask,
    const struct ebt_entry *e, void *data, unsigned int datalen)
 {
 	struct ebt_stp_info *info = (struct ebt_stp_info *)data;
-	int len = XT_ALIGN(sizeof(struct ebt_stp_info));
+	int len = EBT_ALIGN(sizeof(struct ebt_stp_info));
 	uint8_t bridge_ula[6] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x00 };
 	uint8_t msk[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
