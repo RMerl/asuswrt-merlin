@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.264.23 (XX-XXX-2012)
+Asuswrt-Merlin - build 3.0.0.4.266.23 (XX-XXX-2012)
 ===================================================
 
 About
@@ -36,7 +36,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on the 3.0.0.4.264 source release from Asus
+   - Based on the 3.0.0.4.266 source release from Asus
    - Various bugfixes (like the crash on VPN/NAT Loopback access of LAN devices)
    - Persistent JFFS partition
    - User scripts that run on specific events
@@ -351,10 +351,14 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.264.23:
+3.0.0.4.266.23:
+   - NEW: Rebased on 3.0.0.4.266 (from the RT-AC66U GPL)
    - NEW: Tools icon contributed by Maximilian Czarnecki.
    - FIXED: Skip bad blocks while erasing MTD partition (fixes RT-AC66U
             failing to format JFFS2 partition due to bad blocks)
+   - FIXED: Router would have no hostname if you enabled ssh but kept
+            telnet disabled.
+   - FIXED: Couldn't add new ebtables rules (regression in 264.22)
 
 
 3.0.0.4.264.22:
