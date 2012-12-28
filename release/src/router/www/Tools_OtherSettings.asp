@@ -140,11 +140,14 @@ function applyRule(){
 	if ( (excluded != "<% nvram_get("usb_idle_exclude"); %>") ||  (document.form.usb_idle_timeout.value != <% nvram_get("usb_idle_timeout"); %>) )
                 document.form.action_script.value += ";restart_sdidle";
 
-	if (getRadioValue(document.form.cstats_enable) != "<% nvram_get("cstats_enable"); %>")
-		document.form.action_script.value += ";restart_firewall;restart_cstats";
-	else
+	if (getRadioValue(document.form.cstats_enable) != "<% nvram_get("cstats_enable"); %>") {
+		if ( (getRadioValue(document.form.cstats_enable) == 1) && (<% nvram_get("ctf_disable"); %> == 0) )
+			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+		else
+			document.form.action_script.value += ";restart_firewall;restart_cstats";
+	} else {
 		document.form.action_script.value += ";restart_cstats";
-
+	}
 	document.form.submit();
 }
 
