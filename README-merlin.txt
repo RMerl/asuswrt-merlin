@@ -359,6 +359,9 @@ History
    - FIXED: Router would have no hostname if you enabled ssh but kept
             telnet disabled.
    - FIXED: Couldn't add new ebtables rules (regression in 264.22)
+   - FIXED: customized minidlna.conf
+   - FIXED: Traffic monitoring per IP is unreliable if hardware acceleration
+            is enabled.  Do not load CTF if booting with cstats enabled.
 
 
 3.0.0.4.264.22:
