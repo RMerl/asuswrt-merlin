@@ -428,7 +428,7 @@ void init_switch()
 
 #ifdef CONFIG_BCMWL5
 	// ctf should be disabled when some functions are enabled
-	if(nvram_get_int("qos_enable") || nvram_get_int("url_enable_x") || nvram_get_int("keyword_enable_x") || nvram_get_int("ctf_disable_force")
+	if(nvram_get_int("cstats_enable") || nvram_get_int("qos_enable") || nvram_get_int("url_enable_x") || nvram_get_int("keyword_enable_x") || nvram_get_int("ctf_disable_force")
 #ifdef RTCONFIG_WIRELESSREPEATER
 #ifndef RTCONFIG_PROXYSTA
 	|| nvram_get_int("sw_mode") == SW_MODE_REPEATER
