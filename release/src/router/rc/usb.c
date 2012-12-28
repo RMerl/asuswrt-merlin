@@ -1802,13 +1802,12 @@ void start_dms(void)
 				dmsdir,
 				serial
 				);
-
-			use_custom_config(MEDIA_SERVER_APP".conf", f);
+			append_custom_config(MEDIA_SERVER_APP".conf",f);
 
 			fclose(f);
 		}
 
-		append_custom_config(MEDIA_SERVER_APP".conf","/etc/"MEDIA_SERVER_APP".conf");
+		use_custom_config(MEDIA_SERVER_APP".conf","/etc/"MEDIA_SERVER_APP".conf");
 
 		/* start media server if it's not already running */
 		if (pidof(MEDIA_SERVER_APP) <= 0) {
