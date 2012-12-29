@@ -331,7 +331,7 @@ function parseStatus(text, block){
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td>OpenVPN Server 1<span id="server1_Block_Running" style="background: transparent; color: inherit;"></span><span id="server1_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
+							<td><span id="server1_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Server 1<span id="server1_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -347,7 +347,7 @@ function parseStatus(text, block){
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td>OpenVPN Server 2<span id="server2_Block_Running" style="background: transparent; color: inherit;"></span><span id="server2_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
+							<td><span id="server2_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Server 2<span id="server2_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -363,7 +363,7 @@ function parseStatus(text, block){
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td>OpenVPN Client 1<span id="client1_Block_Running" style="background: transparent; color: inherit;"></span><span id="client1_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
+							<td><span id="client1_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Client 1<span id="client1_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -379,7 +379,7 @@ function parseStatus(text, block){
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td>OpenVPN Client 2<span id="client2_Block_Running" style="background: transparent; color: inherit;"></span><span id="client2_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
+							<td><span id="client2_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Client 2<span id="client2_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -395,7 +395,7 @@ function parseStatus(text, block){
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td>PPTP VPN Server<span id="pptp_Block_Running" style="background: transparent; color: inherit;"></span><span id="pptp_Block_UpdateTime" style="float: right; background: transparent; color: inherit;"></span></td>
+							<td><span id="pptp_Block_UpdateTime" style="float: right; background: transparent;"></span>PPTP VPN Server<span id="pptp_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
