@@ -362,6 +362,7 @@ History
    - FIXED: customized minidlna.conf
    - FIXED: Traffic monitoring per IP is unreliable if hardware acceleration
             is enabled.  Do not load CTF if booting with cstats enabled.
+   - FIXED: Per Device traffic monitor pages missing under IE
 
 
 3.0.0.4.264.22:
