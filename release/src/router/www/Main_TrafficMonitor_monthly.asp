@@ -100,7 +100,25 @@ function init()
 	var s;
 
 	if (nvram.cstats_enable == '1') {
-		E('page_select').innerHTML += '<optgroup label="Per device" ><option value="5"><#menu4_2_1#></option><option value="6"><#menu4_2_3#></option><option value="7">Monthly</option></optgroup>';
+		selGroup = E('page_select');
+
+		optGroup = document.createElement('OPTGROUP');
+		optGroup.label = "Per device";
+
+		opt = document.createElement('option');
+		opt.innerText = "<#menu4_2_1#>";
+		opt.value = "5";
+		optGroup.appendChild(opt);
+		opt = document.createElement('option');
+		opt.innerText = "<#menu4_2_3#>";
+		opt.value = "6";
+		optGroup.appendChild(opt);
+		opt = document.createElement('option');
+		opt.innerText = "Monthly";
+		opt.value = "7";
+		optGroup.appendChild(opt);
+
+		selGroup.appendChild(optGroup);
 	}
 
 	if (nvram.rstats_enable != '1') return;
