@@ -396,16 +396,16 @@ function init() {
 		optGroup.label = "Per device";
 
 		opt = document.createElement('option');
-		opt.innerText = "<#menu4_2_1#>";
+		opt.innerHTML = "<#menu4_2_1#>";
 		opt.value = "5";
 		opt.selected = true;
 		optGroup.appendChild(opt);
 		opt = document.createElement('option');
-		opt.innerText = "<#menu4_2_3#>";
+		opt.innerHTML = "<#menu4_2_3#>";
 		opt.value = "6";
 		optGroup.appendChild(opt);
 		opt = document.createElement('option');
-		opt.innerText = "Monthly";
+		opt.innerHTML = "Monthly";
 		opt.value = "7";
 		optGroup.appendChild(opt);
 
