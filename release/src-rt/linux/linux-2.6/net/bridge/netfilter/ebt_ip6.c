@@ -14,13 +14,14 @@
  *  Jan, 2008
  */
 
-#include <linux/netfilter_bridge/ebtables.h>
-#include <linux/netfilter_bridge/ebt_ip6.h>
 #include <linux/ipv6.h>
 #include <net/ipv6.h>
 #include <linux/in.h>
 #include <linux/module.h>
 #include <net/dsfield.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_bridge/ebtables.h>
+#include <linux/netfilter_bridge/ebt_ip6.h>
 
 struct tcpudphdr {
 	__be16 src;
@@ -97,7 +98,7 @@ static int ebt_ip6_check(const char *tablename, unsigned int hookmask,
 {
 	struct ebt_ip6_info *info = (struct ebt_ip6_info *)data;
 
-	if (datalen != EBT_ALIGN(sizeof(struct ebt_ip6_info)))
+	if (datalen != XT_ALIGN(sizeof(struct ebt_ip6_info)))
 		return -EINVAL;
 	if (e->ethproto != htons(ETH_P_IPV6) || e->invflags & EBT_IPROTO)
 		return -EINVAL;

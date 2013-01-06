@@ -12,12 +12,13 @@
  *    September, 2002
  */
 
-#include <linux/netfilter_bridge/ebtables.h>
-#include <linux/netfilter_bridge/ebt_ip.h>
 #include <linux/ip.h>
 #include <net/ip.h>
 #include <linux/in.h>
 #include <linux/module.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_bridge/ebtables.h>
+#include <linux/netfilter_bridge/ebt_ip.h>
 
 struct tcpudphdr {
 	__be16 src;
@@ -81,7 +82,7 @@ static int ebt_ip_check(const char *tablename, unsigned int hookmask,
 {
 	struct ebt_ip_info *info = (struct ebt_ip_info *)data;
 
-	if (datalen != EBT_ALIGN(sizeof(struct ebt_ip_info)))
+	if (datalen != XT_ALIGN(sizeof(struct ebt_ip_info)))
 		return -EINVAL;
 	if (e->ethproto != htons(ETH_P_IP) ||
 	   e->invflags & EBT_IPROTO)

@@ -22,6 +22,7 @@
 #include <linux/if_vlan.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
+#include <linux/netfilter/x_tables.h>
 #include <linux/netfilter_bridge/ebtables.h>
 #include <linux/netfilter_bridge/ebt_vlan.h>
 
@@ -96,7 +97,7 @@ ebt_check_vlan(const char *tablename,
 	struct ebt_vlan_info *info = (struct ebt_vlan_info *) data;
 
 	/* Parameters buffer overflow check */
-	if (datalen != EBT_ALIGN(sizeof(struct ebt_vlan_info))) {
+	if (datalen != XT_ALIGN(sizeof(struct ebt_vlan_info))) {
 		DEBUG_MSG
 		    ("passed size %d is not eq to ebt_vlan_info (%Zd)\n",
 		     datalen, sizeof(struct ebt_vlan_info));

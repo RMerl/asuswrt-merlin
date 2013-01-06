@@ -11,12 +11,12 @@
  *
  */
 
-#include <linux/netfilter_bridge/ebtables.h>
-#include <linux/netfilter_bridge/ebt_limit.h>
 #include <linux/module.h>
-
 #include <linux/netdevice.h>
 #include <linux/spinlock.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_bridge/ebtables.h>
+#include <linux/netfilter_bridge/ebt_limit.h>
 
 static DEFINE_SPINLOCK(limit_lock);
 
@@ -71,7 +71,7 @@ static int ebt_limit_check(const char *tablename, unsigned int hookmask,
 {
 	struct ebt_limit_info *info = (struct ebt_limit_info *)data;
 
-	if (datalen != EBT_ALIGN(sizeof(struct ebt_limit_info)))
+	if (datalen != XT_ALIGN(sizeof(struct ebt_limit_info)))
 		return -EINVAL;
 
 	/* Check for overflow. */

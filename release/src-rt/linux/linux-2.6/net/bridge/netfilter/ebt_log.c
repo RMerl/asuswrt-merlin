@@ -10,9 +10,6 @@
  */
 
 #include <linux/in.h>
-#include <linux/netfilter_bridge/ebtables.h>
-#include <linux/netfilter_bridge/ebt_log.h>
-#include <linux/netfilter.h>
 #include <linux/module.h>
 #include <linux/ip.h>
 #include <linux/in.h>
@@ -21,6 +18,10 @@
 #include <linux/ipv6.h>
 #include <net/ipv6.h>
 #include <linux/in6.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_bridge/ebtables.h>
+#include <linux/netfilter_bridge/ebt_log.h>
 
 static DEFINE_SPINLOCK(ebt_log_lock);
 
@@ -29,7 +30,7 @@ static int ebt_log_check(const char *tablename, unsigned int hookmask,
 {
 	struct ebt_log_info *info = (struct ebt_log_info *)data;
 
-	if (datalen != EBT_ALIGN(sizeof(struct ebt_log_info)))
+	if (datalen != XT_ALIGN(sizeof(struct ebt_log_info)))
 		return -EINVAL;
 	if (info->bitmask & ~EBT_LOG_MASK)
 		return -EINVAL;

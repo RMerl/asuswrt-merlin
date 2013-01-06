@@ -8,9 +8,10 @@
  *
  */
 
+#include <linux/module.h>
+#include <linux/netfilter/x_tables.h>
 #include <linux/netfilter_bridge/ebtables.h>
 #include <linux/netfilter_bridge/ebt_mark_m.h>
-#include <linux/module.h>
 
 static int ebt_filter_mark(const struct sk_buff *skb,
    const struct net_device *in, const struct net_device *out, const void *data,
@@ -28,7 +29,7 @@ static int ebt_mark_check(const char *tablename, unsigned int hookmask,
 {
 	struct ebt_mark_m_info *info = (struct ebt_mark_m_info *) data;
 
-	if (datalen != EBT_ALIGN(sizeof(struct ebt_mark_m_info)))
+	if (datalen != XT_ALIGN(sizeof(struct ebt_mark_m_info)))
 		return -EINVAL;
 	if (info->bitmask & ~EBT_MARK_MASK)
 		return -EINVAL;
