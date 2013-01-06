@@ -13,9 +13,10 @@
  * Marking a frame doesn't really change anything in the frame anyway.
  */
 
+#include <linux/module.h>
+#include <linux/netfilter/x_tables.h>
 #include <linux/netfilter_bridge/ebtables.h>
 #include <linux/netfilter_bridge/ebt_mark_t.h>
-#include <linux/module.h>
 
 static int ebt_target_mark(struct sk_buff **pskb, unsigned int hooknr,
    const struct net_device *in, const struct net_device *out,
@@ -42,7 +43,7 @@ static int ebt_target_mark_check(const char *tablename, unsigned int hookmask,
 	struct ebt_mark_t_info *info = (struct ebt_mark_t_info *)data;
 	int tmp;
 
-	if (datalen != EBT_ALIGN(sizeof(struct ebt_mark_t_info)))
+	if (datalen != XT_ALIGN(sizeof(struct ebt_mark_t_info)))
 		return -EINVAL;
 	tmp = info->target | ~EBT_VERDICT_BITS;
 	if (BASE_CHAIN && tmp == EBT_RETURN)
