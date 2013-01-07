@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.266.23 (31-Dec-2012)
-===================================================
+Asuswrt-Merlin - build 3.0.0.4.266.24 (xx-xxx-2013)
+====================================================
 
 About
 -----
@@ -351,6 +351,20 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.266.24:
+   - CHANGED: Improved name resolution on traffic monitor page, now uses
+              a device's hostname if it reported one.
+   - CHANGED: Client List now uses our improved name resolution code,
+              will overwrite names with those entered on the DHCP static
+              lease page.
+   - FIXED: ebtables were still broken, fixed by a complete rebuild.
+
+
+3.0.0.4.266.23b:
+   - FIXED: The IE fix ended up breaking Firefox (and meanwhile, Chrome worked
+            fine no matter which method was used to build that dropdown).
+
+
 3.0.0.4.266.23:
    - NEW: Rebased on 3.0.0.4.266 (from the RT-AC66U GPL)
    - NEW: Tools icon contributed by Maximilian Czarnecki.
