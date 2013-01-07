@@ -63,6 +63,8 @@ p{
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/tmmenu.js"></script>
+<script language="JavaScript" type="text/javascript" src="/nameresolv.js"></script>
 <script>
 var $j = jQuery.noConflict();
 <% login_state_hook(); %>
@@ -75,80 +77,10 @@ var macfilter_rulelist_array = '<% nvram_get("macfilter_rulelist"); %>';
 var macfilter_rulelist_row = macfilter_rulelist_array.split('&#60'); 
 var macfilter_enable =  '<% nvram_get("macfilter_enable_x"); %>';
 
-/* get client info form dhcp lease log */
-loadXMLDoc("/getdhcpLeaseInfo.asp");
-var _xmlhttp;
-function loadXMLDoc(url){
-	if(parent.sw_mode != 1) return false;
- 
-	var ie = window.ActiveXObject;
-	if(ie)
-		_loadXMLDoc_ie(url);
-	else
-		_loadXMLDoc(url);
-}
-
-var _xmlDoc_ie;
-function _loadXMLDoc_ie(file){
-	_xmlDoc_ie = new ActiveXObject("Microsoft.XMLDOM");
-	_xmlDoc_ie.async = false;
-	if (_xmlDoc_ie.readyState==4){
-		_xmlDoc_ie.load(file);
-		setTimeout("parsedhcpLease(_xmlDoc_ie);", 1000);
-	}
-}
-
-function _loadXMLDoc(url) {
-	_xmlhttp = new XMLHttpRequest();
-	if (_xmlhttp && _xmlhttp.overrideMimeType)
-		_xmlhttp.overrideMimeType('text/xml');
-	else
-		return false;
-
-	_xmlhttp.onreadystatechange = state_Change;
-	_xmlhttp.open('GET', url, true);
-	_xmlhttp.send(null);
-}
-
-function state_Change(){
-	if(_xmlhttp.readyState==4){// 4 = "loaded"
-  	if(_xmlhttp.status==200){// 200 = OK
-			parsedhcpLease(_xmlhttp.responseXML);    
-		}
-  	else{
-			return false;
-    }
-  }
-}
-
-var leasehostname;
-var leasemac;
-function parsedhcpLease(xmldoc)
-{
-	var dhcpleaseXML = xmldoc.getElementsByTagName("dhcplease");
-	leasehostname = dhcpleaseXML[0].getElementsByTagName("hostname");
-	leasemac = dhcpleaseXML[0].getElementsByTagName("mac");
-}
-
-var retHostName = function(_mac){
-	if(parent.sw_mode != 1) return false;
-
-	for(var idx=0; idx<leasemac.length; idx++){
-		if(!(leasehostname[idx].childNodes[0].nodeValue.split("value=")[1]) || !(leasemac[idx].childNodes[0].nodeValue.split("value=")[1]))
-			continue;
-
-		if( _mac.toLowerCase() == leasemac[idx].childNodes[0].nodeValue.split("value=")[1].toLowerCase()){
-			if(leasehostname[idx].childNodes[0].nodeValue.split("value=")[1] != "*")
-				return leasehostname[idx].childNodes[0].nodeValue.split("value=")[1];
-			else
-				return "";
-		}
-	}
-	return "";
-}
-/* end */
-
 function update_clients(e) {
+
+  populateCache();
+
   $j.ajax({
     url: '/update_clients.asp',
     dataType: 'script', 
@@ -259,8 +191,8 @@ function showclient_list(list){
 			var client_list_col = client_list_row[i].split('>');
 			var overlib_str = "";
 
-			if(client_list_col[1] == "")	
-				client_list_col[1] = retHostName(client_list_col[3]);
+//			if(client_list_col[1] == "")	
+//				client_list_col[1] = retHostName(client_list_col[3]);
 
 			if(client_list_col[1].length > 16){
 				overlib_str += "<p><#PPPConnection_UserName_itemname#></p>" + client_list_col[1];
@@ -295,7 +227,9 @@ function showclient_list(list){
 					}	
 				}
 				else if(j == 1){
-					if(client_list_col[1] != "")	
+					if(hostnamecache[client_list_col[2]] != null)
+						code += '<td width="40%"><span class="ClientName" onmouseover="return overlib(\''+overlib_str +'\');" onmouseout="nd();">'+ hostnamecache[client_list_col[2]] +'</span></td>';        //Device-name
+					else if(client_list_col[1] != "")	
 						code += '<td width="40%"><span class="ClientName" onmouseover="return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ client_list_col[1] +'</span></td>';	//Device-name
 					else
 						code += '<td width="40%"><span class="ClientName" onmouseover="return overlib(\''+ overlib_str +'\');" onmouseout="nd();" onclick="getOUIFromMAC(\'' + client_list_col[3] +'\');" style="cursor:pointer; text-decoration:underline;">'+ client_list_col[3] +'</span></td>';  //MAC 

@@ -22,11 +22,23 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
+hwacc = "<% nvram_get("ctf_disable"); %>";
+
 function initial(){
 	show_menu();
 	showbootTime();
+	hwaccel_state();
 }
 
+
+function hwaccel_state(){
+	if (hwacc == "1")
+		$("hwaccel").innerHTML = "<span>Disabled</span>";
+	else if (hwacc == "0")
+		$("hwaccel").innerHTML = "<span>Enabled</span>";
+	else
+		$("hwaccel").innerHTML = "<span>N/A</span>";
+}
 
 function showbootTime(){
         Days = Math.floor(boottime / (60*60*24));        
@@ -202,9 +214,13 @@ function showbootTime(){
                                                         <td colspan="2">Network</td>
                                                 </tr>
                                         </thead>
-                                        <tr>
-                                                <th>Connections</th>
-                                                <td><% sysinfo("conn.total"); %>&nbsp;/ <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;<% sysinfo("conn.active"); %> active</td>
+					<tr>
+						<th>HW acceleration</th>
+						<td id="hwaccel"></td>
+					</tr>
+					<tr>
+						<th>Connections</th>
+						<td><% sysinfo("conn.total"); %>&nbsp;/ <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;<% sysinfo("conn.active"); %> active</td>
 					</tr>
 					<tr>
 						<th>Wireless clients (2.4 GHz)</th>
