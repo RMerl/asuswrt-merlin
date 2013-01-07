@@ -20,6 +20,7 @@
 <script language="JavaScript" type="text/javascript" src="tmhist.js"></script>
 <script language="JavaScript" type="text/javascript" src="popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="merlin.js"></script>
+<script language="JavaScript" type="text/javascript" src="/nameresolv.js"></script>
 
 <script type='text/javascript'>
 
