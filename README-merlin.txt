@@ -352,12 +352,15 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.266.24:
+   - NEW: Report CTF (HW Acceleration) state on Sysinfo page.
    - CHANGED: Improved name resolution on traffic monitor page, now uses
               a device's hostname if it reported one.
    - CHANGED: Client List now uses our improved name resolution code,
               will overwrite names with those entered on the DHCP static
               lease page.
+   - CHANGED: Updated to OpenVPN 2.3.0 and lzo 2.06.
    - FIXED: ebtables were still broken, fixed by a complete rebuild.
+   - FIXED: Some OpenVPN fields rejected -1 as being valid.
 
 
 3.0.0.4.266.23b:
