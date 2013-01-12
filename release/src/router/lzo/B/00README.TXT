@@ -4,10 +4,10 @@ Simple make drivers for DOS, Windows, OS/2 and other systems
 This directory contains a bunch of simple build scripts - I've tried
 to make them as foolproof as possible.
 
-To build LZO for your system type `b\OS\COMPILER' in the base directory,
-e.g. `b\win32\vc.bat' will build the Win32 Visual C/C++ version.
+To build LZO for your system type 'b\OS\COMPILER' in the base directory,
+e.g. 'b\win32\vc.bat' will build the Win32 Visual C/C++ version.
 
-After building do a basic test by running `lzotest.exe -mlzo COPYING'.
+After building do a basic test by running 'lzotest.exe -mlzo COPYING'.
 util\check.sh is an example of a more thorough test driver.
 
 Please send me your additional/improved versions.

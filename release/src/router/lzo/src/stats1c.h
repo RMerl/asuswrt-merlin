@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -45,7 +48,7 @@
 
 
 #ifndef __LZO_STATS1C_H
-#define __LZO_STATS1C_H
+#define __LZO_STATS1C_H 1
 
 #define lzo1b_stats_t       lzo1c_stats_t
 #define lzo1b_stats         lzo1c_stats

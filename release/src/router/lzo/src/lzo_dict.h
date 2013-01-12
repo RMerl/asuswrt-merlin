@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -45,7 +48,7 @@
 
 
 #ifndef __LZO_DICT_H
-#define __LZO_DICT_H
+#define __LZO_DICT_H 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -97,10 +100,10 @@ extern "C" {
 #if (D_BITS != DL_BITS + DD_BITS)
 #  error "D_BITS does not match"
 #endif
-#if (D_BITS < 8 || D_BITS > 18)
+#if (D_BITS < 6 || D_BITS > 18)
 #  error "invalid D_BITS"
 #endif
-#if (DL_BITS < 8 || DL_BITS > 20)
+#if (DL_BITS < 6 || DL_BITS > 20)
 #  error "invalid DL_BITS"
 #endif
 #if (DD_BITS < 0 || DD_BITS > 6)
@@ -169,7 +172,7 @@ extern "C" {
 
 #elif (LZO_HASH == LZO_HASH_GZIP_INCREMENTAL)
    /* incremental hash like in gzip/zlib (deflate) */
-#  define __LZO_HASH_INCREMENTAL
+#  define __LZO_HASH_INCREMENTAL 1
 #  define DVAL_FIRST(dv,p)  dv = _DV_A((p),DL_SHIFT)
 #  define DVAL_NEXT(dv,p)   dv = (((dv) << DL_SHIFT) ^ p[2])
 #  define _DINDEX(dv,p)     (dv)
@@ -177,7 +180,7 @@ extern "C" {
 
 #elif (LZO_HASH == LZO_HASH_LZO_INCREMENTAL_A)
    /* incremental LZO hash version A */
-#  define __LZO_HASH_INCREMENTAL
+#  define __LZO_HASH_INCREMENTAL 1
 #  define DVAL_FIRST(dv,p)  dv = _DV_A((p),5)
 #  define DVAL_NEXT(dv,p) \
                 dv ^= (lzo_xint)(p[-1]) << (2*5); dv = (((dv) << 5) ^ p[2])
@@ -186,7 +189,7 @@ extern "C" {
 
 #elif (LZO_HASH == LZO_HASH_LZO_INCREMENTAL_B)
    /* incremental LZO hash version B */
-#  define __LZO_HASH_INCREMENTAL
+#  define __LZO_HASH_INCREMENTAL 1
 #  define DVAL_FIRST(dv,p)  dv = _DV_B((p),5)
 #  define DVAL_NEXT(dv,p) \
                 dv ^= p[-1]; dv = (((dv) >> 5) ^ ((lzo_xint)(p[2]) << (2*5)))
@@ -219,7 +222,12 @@ extern "C" {
 
 #if !defined(DVAL_ASSERT)
 #if defined(__LZO_HASH_INCREMENTAL) && !defined(NDEBUG)
-static void DVAL_ASSERT(lzo_xint dv, const lzo_bytep p)
+#if (LZO_CC_CLANG || (LZO_CC_GNUC >= 0x020700ul) || LZO_CC_LLVM)
+static void __attribute__((__unused__))
+#else
+static void
+#endif
+DVAL_ASSERT(lzo_xint dv, const lzo_bytep p)
 {
     lzo_xint df;
     DVAL_FIRST(df,(p));
@@ -236,11 +244,11 @@ static void DVAL_ASSERT(lzo_xint dv, const lzo_bytep p)
 // dictionary updating
 ************************************************************************/
 
-#if defined(LZO_DICT_USE_PTR)
+#if (LZO_DICT_USE_PTR)
 #  define DENTRY(p,in)                          (p)
 #  define GINDEX(m_pos,m_off,dict,dindex,in)    m_pos = dict[dindex]
 #else
-#  define DENTRY(p,in)                          ((lzo_uint) ((p)-(in)))
+#  define DENTRY(p,in)                          ((lzo_dict_t) pd(p, in))
 #  define GINDEX(m_pos,m_off,dict,dindex,in)    m_off = dict[dindex]
 #endif
 
@@ -267,7 +275,7 @@ static void DVAL_ASSERT(lzo_xint dv, const lzo_bytep p)
 // test for a match
 ************************************************************************/
 
-#if defined(LZO_DICT_USE_PTR)
+#if (LZO_DICT_USE_PTR)
 
 /* m_pos is either NULL or a valid pointer */
 #define LZO_CHECK_MPOS_DET(m_pos,m_off,in,ip,max_offset) \
@@ -278,7 +286,7 @@ static void DVAL_ASSERT(lzo_xint dv, const lzo_bytep p)
     (BOUNDS_CHECKING_OFF_IN_EXPR(( \
         m_pos = ip - (lzo_uint) PTR_DIFF(ip,m_pos), \
         PTR_LT(m_pos,in) || \
-        (m_off = (lzo_uint) PTR_DIFF(ip,m_pos)) <= 0 || \
+        (m_off = (lzo_uint) PTR_DIFF(ip,m_pos)) == 0 || \
          m_off > max_offset )))
 
 #else
@@ -296,7 +304,7 @@ static void DVAL_ASSERT(lzo_xint dv, const lzo_bytep p)
 #endif
 
 
-#if defined(LZO_DETERMINISTIC)
+#if (LZO_DETERMINISTIC)
 #  define LZO_CHECK_MPOS    LZO_CHECK_MPOS_DET
 #else
 #  define LZO_CHECK_MPOS    LZO_CHECK_MPOS_NON_DET

@@ -47,7 +47,7 @@ Because of historical reasons - I want to support unlimited
 backward compatibility.
 
 Don't get misled by the size of the library - using one algorithm
-increases the size of your application by only a few kB.
+increases the size of your application by only a few KiB.
 
 If you just want to add a little bit of data compression to your
 application you may be looking for miniLZO.
@@ -73,7 +73,7 @@ What's the difference between the decompressors per algorithm ?
 Once again let's use LZO1X for explanation:
 
 - lzo1x_decompress
-    The `standard' decompressor. Pretty fast - use this whenever possible.
+    The 'standard' decompressor. Pretty fast - use this whenever possible.
 
     This decompressor expects valid compressed data.
     If the compressed data gets corrupted somehow (e.g. transmission
@@ -81,7 +81,7 @@ Once again let's use LZO1X for explanation:
     your application because absolutely no additional checks are done.
 
 - lzo1x_decompress_safe
-    The `safe' decompressor. Somewhat slower.
+    The 'safe' decompressor. Somewhat slower.
 
     This decompressor will catch all compressed data violations and
     return an error code in this case - it will never crash.
@@ -111,7 +111,7 @@ Once again let's use LZO1X for explanation:
 Notes:
 ------
 - When using a safe decompressor you must pass the number of
-  bytes available in `dst' via the parameter `dst_len'.
+  bytes available in 'dst' via the parameter 'dst_len'.
 
 - If you want to be sure that your data is not corrupted you must
   use a checksum - just using the safe decompressor is not enough,
@@ -153,7 +153,7 @@ So after verifying that everything works fine you can try if activating
 the LZO_ALIGNED_OK_4 macro improves LZO1X and LZO1Y decompression
 performance. Change the file config.h accordingly and recompile everything.
 
-On a i386 architecture you should evaluate the assembler versions.
+On an i386 architecture you should evaluate the assembler versions.
 
 
 How can I reduce memory requirements when (de)compressing ?

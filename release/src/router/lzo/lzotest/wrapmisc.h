@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -51,14 +54,14 @@ static
 int zlib_compress       ( const m_bytep src, m_uint  src_len,
                                 m_bytep dst, m_uintp dst_len,
                                 m_voidp wrkmem,
-                                int method, int level )
+                                int method, int compression_level )
 {
     int err;
     uLong destLen;
 
     assert(method == Z_DEFLATED);
-    destLen = *dst_len;
-    err = compress2(dst, &destLen, src, src_len, level);
+    destLen = (uLong) *dst_len;
+    err = compress2(dst, &destLen, src, (uLong) src_len, compression_level);
     *dst_len = destLen;
     LZO_UNUSED(method);
     LZO_UNUSED(wrkmem);
@@ -74,8 +77,8 @@ zlib_decompress         ( const m_bytep src, m_uint  src_len,
     int err;
     uLong destLen;
 
-    destLen = *dst_len;
-    err = uncompress(dst, &destLen, src, src_len);
+    destLen = (uLong) *dst_len;
+    err = uncompress(dst, &destLen, src, (uLong) src_len);
     *dst_len = destLen;
     LZO_UNUSED(wrkmem);
     return err;
@@ -153,15 +156,15 @@ static
 int bzip2_compress      ( const m_bytep src, m_uint  src_len,
                                 m_bytep dst, m_uintp dst_len,
                                 m_voidp wrkmem,
-                                int level )
+                                int compression_level )
 {
     int err;
     unsigned destLen;
-    union { const m_bytep csrc; char* src; } u;
+    union { const m_bytep csrc; char *src; } u;
 
     u.csrc = src; /* UNCONST */
     destLen = *dst_len;
-    err = BZ2_bzBuffToBuffCompress((char*)dst, &destLen, u.src, src_len, level, 0, 0);
+    err = BZ2_bzBuffToBuffCompress((char*)dst, &destLen, u.src, src_len, compression_level, 0, 0);
     *dst_len = destLen;
     LZO_UNUSED(wrkmem);
     return err;
@@ -175,7 +178,7 @@ bzip2_decompress        ( const m_bytep src, m_uint  src_len,
 {
     int err;
     unsigned destLen;
-    union { const m_bytep csrc; char* src; } u;
+    union { const m_bytep csrc; char *src; } u;
 
     u.csrc = src; /* UNCONST */
     destLen = *dst_len;
@@ -256,7 +259,7 @@ zlib_adler32_x_compress ( const m_bytep src, m_uint  src_len,
                                 m_voidp wrkmem )
 {
     uLong adler;
-    adler = adler32(1L, src, src_len);
+    adler = adler32(1L, src, (uInt) src_len);
     *dst_len = src_len;
     LZO_UNUSED(adler);
     LZO_UNUSED(dst);
@@ -271,7 +274,7 @@ zlib_crc32_x_compress   ( const m_bytep src, m_uint  src_len,
                                 m_voidp wrkmem )
 {
     uLong crc;
-    crc = crc32(0L, src, src_len);
+    crc = crc32(0L, src, (uInt) src_len);
     *dst_len = src_len;
     LZO_UNUSED(crc);
     LZO_UNUSED(dst);

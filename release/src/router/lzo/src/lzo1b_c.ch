@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -44,17 +47,17 @@
 ************************************************************************/
 
 #if !defined(LZO_HAVE_R1) && !defined(LZO_NO_R1)
-#  define LZO_HAVE_R1
+#  define LZO_HAVE_R1 1
 #endif
 
 #if !defined(LZO_HAVE_M3) && !defined(LZO_NO_M3)
 #  if (M3O_BITS < 8)
-#    define LZO_HAVE_M3
+#    define LZO_HAVE_M3 1
 #  endif
 #endif
 
 
-#define MI
+#define MI      /*empty*/
 #define SI      MI
 #if (DD_BITS > 0)
 #define DI      ++ii; DVAL_NEXT(dv,ii); UPDATE_D(dict,drun,dv,ii,in); MI
@@ -97,7 +100,7 @@ do_compress    ( const lzo_bytep in , lzo_uint  in_len,
     lzo_dict_p const dict = (lzo_dict_p) wrkmem;
 
 
-#if defined(LZO_COLLECT_STATS)
+#if (LZO_COLLECT_STATS)
     lzo_stats->r_bits   = R_BITS;
     lzo_stats->m3o_bits = M3O_BITS;
     lzo_stats->dd_bits  = DD_BITS;
@@ -109,7 +112,7 @@ do_compress    ( const lzo_bytep in , lzo_uint  in_len,
 #endif
 
     /* init dictionary */
-#if defined(LZO_DETERMINISTIC)
+#if (LZO_DETERMINISTIC)
     BZERO8_PTR(wrkmem,sizeof(lzo_dict_t),D_SIZE);
 #endif
 
@@ -135,7 +138,7 @@ do_compress    ( const lzo_bytep in , lzo_uint  in_len,
 #if !defined(NDEBUG)
         const lzo_bytep m_pos_sav = NULL;
 #endif
-        lzo_uint m_off;
+        LZO_DEFINE_UNINITIALIZED_VAR(lzo_uint, m_off, 0);
 #if (DD_BITS == 0)
         lzo_uint dindex;
 #endif
@@ -225,7 +228,7 @@ match:
 
     assert(ip <= in_end);
 
-#if defined(LZO_COLLECT_STATS)
+#if (LZO_COLLECT_STATS)
     {
         lzo_uint i;
         const lzo_bytep p;

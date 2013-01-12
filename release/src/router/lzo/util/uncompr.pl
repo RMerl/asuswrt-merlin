@@ -8,9 +8,9 @@
 ##      Markus F.X.J. Oberhumer         <markus@oberhumer.com>
 ##
 ##  Description:
-##      Create uncompressible files for compression test
+##      Create incompressible files for compression test
 ##
-##  Copyright (C) 1996-2008 Markus Franz Xaver Johannes Oberhumer
+##  Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer
 ##
 ##---------------------------------------------------------------------------##
 

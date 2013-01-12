@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -35,17 +38,29 @@
    Markus F.X.J. Oberhumer
    <markus@oberhumer.com>
    http://www.oberhumer.com/opensource/lzo/
-*/
+ */
 
 /***** DO NOT EDIT - GENERATED AUTOMATICALLY *****/
 
 #include "asminit.def"
-typef(_lzo1x_decompress_asm)
-typef(F(lzo1x_decompress_asm))
-global(_lzo1x_decompress_asm)
-global(F(lzo1x_decompress_asm))
-_lzo1x_decompress_asm:
-F(lzo1x_decompress_asm):
+#ifdef NAME1
+typef(NAME1(lzo1x_decompress_asm))
+#endif
+#ifdef NAME2
+typef(NAME2(lzo1x_decompress_asm))
+#endif
+#ifdef NAME1
+globalf(NAME1(lzo1x_decompress_asm))
+#endif
+#ifdef NAME2
+globalf(NAME2(lzo1x_decompress_asm))
+#endif
+#ifdef NAME1
+NAME1(lzo1x_decompress_asm):
+#endif
+#ifdef NAME2
+NAME2(lzo1x_decompress_asm):
+#endif
 db 85,87,86,83,81,82,131,236,12,252,139,116,36,40,139,124
 db 36,48,189,3,0,0,0,49,192,49,219,172,60,17,118,35
 db 44,17,60,4,115,40,137,193,235,56,5,255,0,0,0,138
@@ -76,5 +91,9 @@ db 36,40,3,84,36,44,57,214,119,38,114,29,43,124,36,48
 db 139,84,36,52,137,58,247,216,131,196,12,90,89,91,94,95
 db 93,195,184,1,0,0,0,235,227,184,8,0,0,0,235,220
 db 184,4,0,0,0,235,213,137,246,141,188,39,0,0,0,0
-size(_lzo1x_decompress_asm,.-_lzo1x_decompress_asm)
-size(F(lzo1x_decompress_asm),.-F(lzo1x_decompress_asm))
+#ifdef NAME1
+sizef(NAME1(lzo1x_decompress_asm),.-NAME1(lzo1x_decompress_asm))
+#endif
+#ifdef NAME2
+sizef(NAME2(lzo1x_decompress_asm),.-NAME2(lzo1x_decompress_asm))
+#endif

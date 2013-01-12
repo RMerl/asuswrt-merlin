@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -95,8 +98,8 @@ DO_DECOMPRESS    ( const lzo_bytep in , lzo_uint  in_len,
                     NEED_IP(t); NEED_OP(t);
 #if 1 && defined(LZO_UNALIGNED_OK_4)
                     do {
-                        * (lzo_uint32p) (op+0) = * (const lzo_uint32p) (ip+0);
-                        * (lzo_uint32p) (op+4) = * (const lzo_uint32p) (ip+4);
+                        UA_COPY32(op+0, ip+0);
+                        UA_COPY32(op+4, ip+4);
                         op += 8; ip += 8;
                         t -= 8;
                     } while (t > 0);
@@ -114,7 +117,7 @@ DO_DECOMPRESS    ( const lzo_bytep in , lzo_uint  in_len,
             if (t >= 4)
             {
                 do {
-                    * (lzo_uint32p) op = * (const lzo_uint32p) ip;
+                    UA_COPY32(op, ip);
                     op += 4; ip += 4; t -= 4;
                 } while (t >= 4);
                 if (t > 0) do *op++ = *ip++; while (--t > 0);
@@ -205,10 +208,10 @@ match:
 #if defined(LZO_UNALIGNED_OK_4)
             if (t >= 2 * 4 - (M3_MIN_LEN - 1) && (op - m_pos) >= 4)
             {
-                * (lzo_uint32p) op = * (const lzo_uint32p) m_pos;
+                UA_COPY32(op, m_pos);
                 op += 4; m_pos += 4; t -= 4 - (M3_MIN_LEN - 1);
                 do {
-                    * (lzo_uint32p) op = * (const lzo_uint32p) m_pos;
+                    UA_COPY32(op, m_pos);
                     op += 4; m_pos += 4; t -= 4;
                 } while (t >= 4);
                 if (t > 0) do *op++ = *m_pos++; while (--t > 0);

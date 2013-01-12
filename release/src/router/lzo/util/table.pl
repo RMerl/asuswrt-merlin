@@ -10,7 +10,7 @@
 ##  Description:
 ##      Convert the output of the LZO lzotest program into a nice table.
 ##
-##  Copyright (C) 1996-2008 Markus Franz Xaver Johannes Oberhumer
+##  Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer
 ##
 ##---------------------------------------------------------------------------##
 

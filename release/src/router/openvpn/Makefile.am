@@ -7,6 +7,7 @@
 #
 #  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
 #  Copyright (C) 2010      David Sommerseth <dazo@users.sourceforge.net>
+#  Copyright (C) 2006-2012 Alon Bar-Lev <alon.barlev@gmail.com>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License version 2
@@ -23,142 +24,78 @@
 #  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-LDADD = @LIBOBJS@
-.PHONY: plugin
-
 # This option prevents autoreconf from overriding our COPYING and
 # INSTALL targets:
-AUTOMAKE_OPTIONS = foreign
+AUTOMAKE_OPTIONS = foreign 1.9
+ACLOCAL_AMFLAGS = -I m4
 
 MAINTAINERCLEANFILES = \
 	config.log config.status \
 	$(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(srcdir)/config.h.in~ $(srcdir)/configure \
 	$(srcdir)/install-sh $(srcdir)/ltmain.sh $(srcdir)/missing \
+	$(srcdir)/m4/libtool.m4 $(srcdir)/m4/lt~obsolete.m4 \
+	$(srcdir)/m4/ltoptions.m4 $(srcdir)/m4/ltsugar.m4 \
+	$(srcdir)/m4/ltversion.m4 \
 	$(srcdir)/depcomp $(srcdir)/aclocal.m4 \
-	$(srcdir)/config.guess $(srcdir)/config.sub \
-	$(srcdir)/openvpn.spec
-CLEANFILES = openvpn.8.html configure.h
+	$(srcdir)/config.guess $(srcdir)/config.sub
+
+CLEANFILES = \
+	config-version.h
 
 EXTRA_DIST = \
-	easy-rsa \
-	sample-config-files \
-	sample-keys \
-	sample-scripts \
-	suse \
-	tap-win32 \
 	contrib \
-	debug \
-	plugin \
-	win
+	debug
 
-SUBDIRS = \
-	images \
-	service-win32 \
-	install-win32
+.PHONY: config-version.h
 
-TESTS = t_client.sh t_lpback.sh t_cltsrv.sh
-sbin_PROGRAMS = openvpn
+if GIT_CHECKOUT
+BUILT_SOURCES = \
+	config-version.h
+endif
+
+SUBDIRS = build distro include src sample doc tests
 
 dist_doc_DATA = \
-	management/management-notes.txt
-
-dist_noinst_SCRIPTS = \
-	$(TESTS) \
-	doclean \
-	domake-win \
-	t_cltsrv-down.sh \
-	configure_h.awk configure_log.awk
+	README \
+	README.IPv6 \
+	README.polarssl \
+	COPYRIGHT.GPL \
+	COPYING
 
 dist_noinst_DATA = \
-	openvpn.spec \
-	COPYRIGHT.GPL \
+	.gitignore \
+	.gitattributes \
+	config-version.h.in \
 	PORTS \
-	INSTALL-win32.txt \
-	service-win32/msvc.mak
-
-openvpn_SOURCES = \
-        base64.c base64.h \
-	basic.h \
-	buffer.c buffer.h \
-	circ_list.h \
-	common.h \
-	crypto.c crypto.h \
-	dhcp.c dhcp.h \
-	errlevel.h \
-	error.c error.h \
-	event.c event.h \
-	fdmisc.c fdmisc.h \
-        forward.c forward.h forward-inline.h \
-	fragment.c fragment.h \
-	gremlin.c gremlin.h \
-	helper.c helper.h \
-	httpdigest.c httpdigest.h \
-	lladdr.c lladdr.h \
-	init.c init.h \
-	integer.h \
-        interval.c interval.h \
-	list.c list.h \
-	lzo.c lzo.h \
-	manage.c manage.h \
-	mbuf.c mbuf.h \
-        memdbg.h \
-	misc.c misc.h \
-	mroute.c mroute.h \
-	mss.c mss.h \
-	mtcp.c mtcp.h \
-	mtu.c mtu.h \
-	mudp.c mudp.h \
-	multi.c multi.h \
-        ntlm.c ntlm.h \
-	occ.c occ.h occ-inline.h \
-	pkcs11.c pkcs11.h \
-	openvpn.c openvpn.h \
-	openvpn-plugin.h \
-	options.c options.h \
-	otime.c otime.h \
-	packet_id.c packet_id.h \
-	perf.c perf.h \
-	pf.c pf.h pf-inline.h \
-	ping.c ping.h ping-inline.h \
-	plugin.c plugin.h \
-	pool.c pool.h \
-	proto.c proto.h \
-	proxy.c proxy.h \
-	ieproxy.h ieproxy.c \
-        ps.c ps.h \
-	push.c push.h \
-	pushlist.h \
-	reliable.c reliable.h \
-	route.c route.h \
-	schedule.c schedule.h \
-	session_id.c session_id.h \
-	shaper.c shaper.h \
-	sig.c sig.h \
-	socket.c socket.h \
-	socks.c socks.h \
-	ssl.c ssl.h \
-	status.c status.h \
-	syshead.h \
-	tun.c tun.h \
-	win32.h win32.c \
-	cryptoapi.h cryptoapi.c
-
-nodist_openvpn_SOURCES = configure.h
-options.$(OBJEXT): configure.h
-
-configure.h: Makefile
-	awk -f $(srcdir)/configure_h.awk config.h > $@
-	awk -f $(srcdir)/configure_log.awk config.log >> $@
-
-dist-hook:
-	cd $(distdir) && for i in $(EXTRA_DIST) $(SUBDIRS) ; do find $$i -name .svn -type d -prune -exec rm -rf '{}' ';' ; rm -f `find $$i -type f | grep -E '(^|\/)\.?\#|\~$$|\.s?o$$'` ; done
+	README.IPv6 TODO.IPv6 \
+	README.polarssl \
+	openvpn.sln \
+	msvc-env.bat \
+	msvc-dev.bat \
+	msvc-build.bat
 
 if WIN32
-dist_noinst_DATA += openvpn.8
-nodist_html_DATA = openvpn.8.html
-openvpn.8.html: $(srcdir)/openvpn.8
-	$(MAN2HTML) < $(srcdir)/openvpn.8 > openvpn.8.html
+dist_doc_DATA += INSTALL-win32.txt
 else
-dist_man_MANS = openvpn.8
+dist_noinst_DATA += INSTALL-win32.txt
 endif
+
+dist_noinst_HEADERS = \
+	config-msvc.h \
+	config-msvc-version.h.in
+
+if WIN32
+rootdir=$(prefix)
+root_DATA = version.sh
+endif
+
+config-version.h:
+	@CONFIGURE_GIT_REVISION="`GIT_DIR=\"$(top_srcdir)/.git\" $(GIT) rev-parse --symbolic-full-name HEAD`/`GIT_DIR=\"$(top_srcdir)/.git\" $(GIT) rev-parse --short=16 HEAD`"; \
+		$(SED) "s#@CONFIGURE_GIT_REVISION[@]#$${CONFIGURE_GIT_REVISION}#g" "$(srcdir)/config-version.h.in" > config-version.h.tmp
+	@if ! [ -f config-version.h ] || ! cmp -s config-version.h.tmp config-version.h; then \
+		echo "replacing config-version.h"; \
+		mv config-version.h.tmp config-version.h; \
+	else \
+		rm -f config-version.h.tmp; \
+	fi

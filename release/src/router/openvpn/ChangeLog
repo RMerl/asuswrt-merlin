@@ -1,78 +1,701 @@
 OpenVPN Change Log
-Copyright (C) 2002-2011 OpenVPN Technologies, Inc. <sales@openvpn.net>
+Copyright (C) 2002-2012 OpenVPN Technologies, Inc. <sales@openvpn.net>
 
-2011.12.14 -- Version 2.2.2
+2013.01.07 -- Version 2.3.0
+Gert Doering (2):
+      Fix parameter type for IP_TOS setsockopt on non-Linux systems.
+      Fix client crash on double PUSH_REPLY.
+
+2012.12.17 -- Version 2.3_rc2
+Adriaan de Jong (1):
+      Fix --show-pkcs11-ids (Bug #239)
+
+Arne Schwabe (4):
+      Error message if max-routes used incorrectly
+      Properly require --key even if defined(MANAGMENT_EXTERNAL_KEY)
+      Remove dnsflags_to_socktype, it is not used anywhere
+      Fix the proto is used inconsistently warning
+
+David Sommerseth (3):
+      Fix double-free issue in pf_destroy_context()
+      The get_default_gateway() function uses warn() instead of msg()
+      Avoid recursion in virtual_output_callback_func()
+
+Gert Doering (2):
+      Implement --mssfix handling for IPv6 packets.
+      Fix option inconsistency warnings about "proto" and "tun-ipv6"
+
+Joachim Schipper (2):
+      doc/management-notes.txt: fix typo
+      Fix typo in ./configure message
+
+2012.10.31 -- Version 2.3_rc1
+Adriaan de Jong (1):
+      Fixed a bug where PolarSSL gave an error when using an inline file tag.
+
+Arne Schwabe (2):
+      Document man agent-external-key
+      Options parsing demands unnecessary configuration if PKCS11 is used
+
+David Sommerseth (2):
+      Make git ignore some more files
+      Remove the support for using system() when executing external programs or scripts
+
+Heiko Hund (2):
+      Fix display of plugin hook types
+      Support UTF-8 --client-config-dir
+
+Kenneth Rose (1):
+      Fix v3 plugins to support returning values back to OpenVPN.
+
+2012.09.12 -- Version 2.3_beta1
+Arne Schwabe (7):
+      Fixes error: --key fails with EXTERNAL_PRIVATE_KEY: No such file or directory if --management-external-key is used
+      Merge almost identical create_socket_tcp and create_socket_tcp6
+      Document the inlining of files in openvpn and document key-direction
+      Merge getaddr_multi and getaddr6 into one function
+      Document --management-client and --management-signal a bit better
+      Document that keep alive will double the second value in server mode and give a short explanation why the value is chosen.
+      Add checks for external-key-managements
+
 David Sommerseth (1):
-      Only warn about non-tackled IPv6 packets once
+      Fix reconnect issues when --push and UDP is used on the server
 
-Gert Doering (3):
-      add missing break between "case IPv4" and "case IPv6"
-      bump tap driver version from 9.8 to 9.9
-      log error message and exit for "win32, tun mode, tap driver version 9.8"
+Gert Doering (4):
+      Reduce --version string detail about IPv6 to just "[IPv6]".
+      Put actual OpenVPN command line on top of corresponding log file.
+      Keep pre-existing tun/tap devices around on *BSD
+      make "ipv6 ifconfig" on linux compatible with busybox ifconfig
+
+Heiko Hund (6):
+      fix regression with --http-proxy[-*] options
+      add x_msg_va() log function
+      add API for plug-ins to write to openvpn log
+      remove stale _openssl_get_subject() prototype
+      remove unused flag SSLF_NO_NAME_REMAPPING
+      Add --compat-names option
+
+2012.07.20 -- Version 2.3_alpha3
+Arne Schwabe (1):
+      Fix compiling with --disable-management
+
+Gert Doering (1):
+      Repair "tap server" mode brokenness caused by <stdbool.h> fallout
+
+Heiko Hund (4):
+      make non-blocking connect work on Windows
+      don't treat socket related errors special anymore
+      remove unused show_connection_list debug function
+      add option --management-query-proxy
+
+2012.06.29 -- Version 2.3_alpha2
+Adriaan de Jong (11):
+      Fixed off-by-one in serial length calculation
+      Migrated x509_get_subject to use of the garbage collector
+      Migrated x509_get_serial to use the garbage collector
+      Migrated x509_get_sha1_hash to use the garbage collector
+      Ensure sys/un.h autoconf detection includes sys/socket.h
+      Added support for new PolarSSL 1.1 RNG
+      Added a configuration option to enable prediction resistance in the PolarSSL random number generator.
+      Use POLARSSL_CFLAGS instead of POLARSSL_CRYPTO_CFLAGS in configure.ac
+      Removed support for PolarSSL < 1.1
+      Updated README.polarssl with build system changes.
+      Removed stray "Fox-IT hardening" string.
+
+Alon Bar-Lev (94):
+      build: version should not contain '-'
+      package: rpm: strip should be handled by package management
+      cleanup: options.c: remove redundant include
+      cleanup: remove C++ warnings
+      cleanup: win32.c: wrong printf format
+      cleanup: remove redundant ';'
+      cleanup: crypto_openssl.c: remove support for pre-openssl-0.9.6
+      cleanup: tun.c: fix incorrect option in message (ip-win32)
+      cleanup: memcmp.c: remove unused source
+      fixup: init.c: add missing conditional for ENABLE_CLIENT_CR
+      build: correct place to alter WINVER is at build system
+      Update .gitignore
+      build: handle printf style format in mingw
+      build: rename plugin directory to plugins
+      build: plugins: properly use CC, CFLAGS and LDFLAGS
+      build: we need the sample.ovpn in future
+      Remove install-win32
+      Remove easy-rsa
+      Remove tap-win32
+      cleanup: rename tap-windows function from win32 to win
+      build: remove windows specific build system
+      build: split acinclude.m4 into m4/*
+      build: m4/ax_varargs.m4: cleanup
+      build: m4/ax_emptyarray.m4: cleanup
+      build: m4/ax_socklen_t.m4: cleanup
+      build: autotools: first pass of trivial autotools changes
+      build: autoconf: remove OPENVPN_ADD_LIBS useless macro
+      build: remove awk and non-standard autoconf output processing
+      build: standard directory layout
+      build: add libtool + windows resources for executables
+      build: autoconf: commands as environment
+      build: libdl usage
+      build: properly detect and use socket libs
+      build: autoconf: minor cleanups
+      build: proper selinux detection and usage
+      build: distribute pkg.m4
+      build: proper pkcs11-helper detection and usage
+      build: properly process lzo-stub
+      build: proper lzo detection and usage
+      build: proper crypto detection and usage
+      build: autoconf: update defaults for options
+      build: win-msvc: msbuild format
+      build: move out config.h include from syshead
+      build: split out compat
+      build: move gettimeofday() emulation to compat
+      build: move daemon() emulation into compat
+      build: move inet_ntop(), inet_pton() emulation into compat
+      cleanup: move console related function into its own module
+      build: move wrappers into platform module
+      build: windows: install version.sh to allow installer read version
+      build: distribute samples in windows
+      build: use tap-windows.h as external dependency
+      build: ax_varargs.m4: fixups
+      build: autoconf: misc sockets fixups
+      build: enable lzo by default
+      build: windows: set vendor to openvpn project + cleanups
+      build: assume dlfcn is available on all supported platforms
+      build: openbsd: detect netinet/ip.h correctly
+      build: tap: search for tap header
+      build: msvc: upgrade to Visual Studio 2010 + fixups
+      Enable pedantic in windows compilation
+      cleanup: flags should not be bool
+      cleanup: avoid using ~0 - generic
+      cleanup: avoid using ~0 - ipv6
+      cleanup: avoid using ~0 - netmask
+      cleanup: avoid using ~0 - windows
+      cleanup: gc usage
+      build: fix some statement left from conversion
+      build: properly detect netinet/ip.h structs
+      build: properly detect TUNSETPERSIST
+      cleanup: plugin: support C++ plugin
+      cleanup: remove C++ comments
+      cleanup: add .gitattributes to control eol style explicitly
+      crash: packet_id_debug_print: sl may be null
+      build: use stdbool.h if available
+      build: fix typo in --enable-save-password
+      build: windows: convert resources to UTF-8
+      build: check minimum polarssl version
+      cleanup: update .gitignore
+      cleanup: spec: make space/tab consistent
+      build: spec: we support openssl >= 0.9.7
+      build: insall README* document using build system
+      build: detect sys/wait.h required for *bsd
+      build: add git revision to --version output if build from git repository
+      build: cleanup: yet another forgotten brackets
+      build: update INSTALL to recent changes
+      build: support platforms that does not need explicit tun headers
+      build: do not support <polarssl-1.1.0
+      build: add --with-special-build to provide special build string
+      cleanup: pkcs11.c: resolve wanings
+      build: integrate plugins build into core build
+      build: plugins: set defaults based on platform
+      cleanup: windows: convert argv (UCS-2 to UTF-8) at earliest
+      build: msvc: chdir with change drive to script location
+
+Arne Schwabe (7):
+      Add the query to the error message.
+      Explain that route-nopull also causes the client to ignore dhcp options.
+      Add the name of the context where option is not allowed to the error message.
+      Only use tmpdir if tmp_dir is really used.
+      Completely remove ancient IANA port warning.
+      Remove ENABLE_INLINE_FILES conditionals
+      Remove ENABLE_CONNECTIONS ifdefs
+
+David Sommerseth (5):
+      Clean-up: Presume that Linux is always IPv6 capable at build time
+      Simplify check_cmd_access() function
+      Change version to indicate the master branch is not a version
+      Some filesystems don't like ':', which is a path 'make dist' would use
+      Remove two unused functions
+
+Frank de Brabander (1):
+      Fix reported compile issues on OSX 10.6.8
+
+Gert Doering (10):
+      repair t_client.sh test after build system revolution
+      t_client.sh iproute2 script fixes
+      t_client.sh - fix for iproute2, print summary line
+      Implement search for "first free" tun/tap device on Solaris
+      cleanup and redefine metric handling for IPv6 routes
+      remove "*option" element in "struct route_ipv6"
+      Remove warning about explicit support for IPv6 support not provided MacOS X
+      Add missing pieces to IPv6 route gateway handling.
+      Update TODO.IPv6 list
+      Remove #include "config.h" from ssl_polarssl.h
+
+Heiko Hund (3):
+      remove wrapper code for Windows CryptoAPI function
+      fix warnings in event.c when building for win32-64
+      remove the --auto-proxy option from openvpn
+
+Igor Novgorodov (1):
+      Remove calls to OpenSSL when building with --disable-ssl
+
+Jonathan K. Bullard (2):
+      Fix file access checks on commands
+      Clarified the docs and help screen about what a 'cmd' is
 
 Samuli Seppänen (1):
-      Backported pkcs11-related parts of 7a8d707237bb18 to 2.2 branch
+      Added notes about upgrading from 2.3-alpha1 and earlier to INSTALL-win32.txt
 
-2011.07.01 -- Version 2.2.1
-David Sommerseth (4):
-	      Don't define ENABLE_PUSH_PEER_INFO if SSL is not available
-	      Fix compiling issues with pkcs11 when --disable-management is configured
-	      Remove support for Linux 2.2 configuration fallback
-	      Revert "Add new openssl.cnf to easy-rsa/Windows"
-	      Prepared for releasing OpenVPN 2.2.1
+2012.02.21 -- Version 2.3-alpha1
+Adriaan de Jong (127):
+      Added Doxygen doxyfile
+      Changed configure to accept --with-ssl-type=openssl
+      Refactored to rand_bytes for OpenSSL-independency
+      Refactored OpenSSL-specific constants
+      Refactored maximum cipher and hmac length constants
+      Refactored show_available_* functions
+      Refactored SSL_clear_error()
+      Refactored crypto initialisation functions
+      Refactored DES key manipulation functions
+      Refactored NTLM DES key generation
+      Refactored message digest type functions
+      Refactored message digest functions
+      Refactored HMAC functions
+      Refactored cipher key types
+      Refactored cipher functions
+      Added PRNG doxygen
+      Refactored: Moved crypto.h inline functions to end of file
+      Removed stale OpenSSL defines from crypto.h
+      Added a check for Openssl or PolarSSL defines
+      Refactored: Added stubs for new files
+      Refactored SSL initialisation functions
+      Refactored TLS_PRF to new hmac and md primitives
+      Refactored tls_show_available_ciphers
+      Refactored get_highest_preference_tls_cipher
+      Refactored root SSL context initialisation
+      Refactored new external key code
+      Refactored DH paramater loading
+      Refactored root TLS option settings
+      Refactored PKCS#12 key loading
+      Refactored PKCS#11 loading
+      Refactored windows cert loading
+      Refactored load certificate functions
+      Refactored private key loading code
+      Refactored external key loading from management
+      Refactored CA and extra certs code
+      Refactored cipher restriction code
+      Refactored tls_options, key_state, and key_source data structures
+      Refactored initalisation of key_states
+      Refactored key_state free code
+      Refactored print_details
+      Refactored key_state read code (including bio_read())
+      Refactored key_state write functions
+      Refactored: Moved BIO debug functions to OpenSSL backend
+      Refactored: removed ks and ks_lame macro for clarity
+      Refactored: moved write_empty_string function back
+      Refactored Doxygen for tls_multi functions
+      Migrated data structures needed by verification functions to ssl_common.h
+      Refactored client_config_dir_exclusive function
+      Refactored certificate hash lock checks
+      Refactored common name locking functions
+      Refactored username and password authentication code
+      Add some extra comments
+      Refactored: split verify_callback into two parts
+      Added function to extract and verify the subject from a certificate
+      Added function to verify and extract the username
+      Refactored: removed global x509_username_field
+      Refactored: separated environment setup during verification
+      Refactored: Netscape certificate type verification
+      Refactored key usage verification code
+      Refactored EKU verification
+      Refactored tls-remote checking
+      Refactored tls-verify-plugin code
+      Refactored tls-verify script code
+      Refactored CRL checks
+      Minor cleanup in verify_cert:
+      Refactored: Moved verify_cert to ssl_verify
+      Cleaned up ssl.h
+      Refactored: made M_SSL dependent on USE_OPENSSL
+      Refactored: renamed X509 functions from verify_*
+      Separated OpenSSL-specific parts of the PKCS#11 driver
+      Modified base64 code in preparation for PolarSSL merge
+      Final cleanup before PolarSSL addition:
+      Refactored X509 track feature to be contained within the openssl backend
+      Added PolarSSL support:
+      Fixed a missing include in ssl_backend.h
+      Fixed a bug in the hash generation in ssl_verify_openssl.c
+      Added SHA_DIGEST_SIZE definition
+      Changed PolarSSL crypto backend to support v0.99-pre5
+      Updated ssl_polarssl.c to work with 0.99-pre5
+      Fixed a compilation warning for size_t key sizes
+      Added a warning that the PolarSSL library does not support pkcs12 files.
+      Added warning that --capath is not available with PolarSSL
+      Disable CryptoAPI when not using OpenSSL, and document that fact.
+      Removed support for management external keys in PolarSSL
+      Removed stray X509_free from ssl.c
+      Refactored (and disabled for PolarSSL) support for writing external cert files in scripts
+      Added an extra define to allow building without PKCS#11
+      Added SSL library to title string
+      Disabled X.509 track and username selection for PolarSSL
+      Hardening: periodically reset the PRNG's nonce value
+      Fixes for the plugin system:
+      Further improvements to plugin support:
+      Fixed an unintentional change in the options calculated key size.
+      Moved print messages back to generic crypto.c from cipher backends
+      Moved HMAC prints back to main crypto module
+      Added back checks for ks->authenticated in verify_user_pass
+      Moved gc_new and gc_free to begin end of function
+      Fixed a bug in the return value of ssl_verify when pre_verify failed
+      Unified verification function return values:
+      Removed a stray Fox-IT tag
+      Fixed a typo: print the subject instead of the serial for verification errors
+      Made SSL_CIPHER const in print_details, to fix warning
+      Moved to PolarSSL 1.0.0:
+      Added missing #ifdef to allow --disable-managent to work again
+      Fixed disabling crypto and SSL
+      Got rid of a few magic numbers in ntlm.c
+      Removed obsolete des_cblock and des_keyschedule
+      Further removal of des_old.h based calls
+      Fixed missing comma in plugin.h
+      Moved prng_uninit out of crypto_uninit_lib
+      Moved CryptoAPI header include to the ssl_openssl.c
+      Reordered functions to ensure warning-free Windows build
+      Added options to switch between OpenSSL and PolarSSL and PKCS11...
+      Moved from strsep to strtok, for Windows compatibility
+      Minor cleanup to enable warning-free Windows build:
+      Fixed a typo when initialising cryptoapi certs
+      Minor code cleanup: cleaned up error handling in verify_cert.
+      Moved out of memory prototype to error.h, as the definition is in error.c
+      Removed support for calling gc_malloc with a NULL gc_arena struct
 
-Gustavo Zacarias (1):
-	      Fix compile issues when using --enable-small and --disable-ssl/--disable-crypto
+      (The follwing patches from Adriaan was mistakenly merged with
+       the wrong commit author in the git tree)
+      Doxygen: Added data channel crypto docs
+      Added control channel crypto docs
+      Added compression docs
+      Added reliability layer documentation
+      Added memory management documentation
+      Added data channel fragmentation docs
+      Added main/control docs
+      Moved doxygen-specific files to a separate directory
 
-Matthew L. Creech (1):
-	      Fix 2.2.0 build failure when management interface disabled
+Byron Ellacott (1):
+      autoconf fixes for building on OSX
 
-Robert Fischer (2):
-	      Added info about --show-proxy-settings
-	      Documented --x509-username-field option
-
-Samuli Seppänen (5):
-	      Fix a build-ca issue on Windows
-	      Add new openssl.cnf to easy-rsa/Windows
-	      Updated "easy-rsa" for OpenSSL 1.0.0
-	      Made domake-win builds to use easy-rsa/2.0/openssl-1.0.0.cnf
-	      Fixes to easy-rsa/2.0
-
-Simon Matter (1):
-	      Fix issues with some older GCC compilers
-
-2011.04.21 -- Version 2.2.0
-David Sommerseth (4):
+David Sommerseth (50):
+      Provide 'dev_type' environment variable to plug-ins and script hooks
+      Define the new openvpn_plugin_{open,func}_v3() API
+      Implement the core v3 plug-in function calls.
+      Extend the v3 plug-in API to send over X509 certificates
+      Added a simple plug-in demonstrating the v3 plug-in API.
+      Separate the general plug-in version constant and v3 plug-in structs version
+      Use a version-less version identifier on the master branch
       Fix the --client-cert-not-required feature
       Change the default --tmp-dir path to a more suitable path
       Improve the mysprintf() issue in openvpnserv.c
       Add a simple comment regarding openvpn_snprintf() is duplicated
+      Merge branch 'feat_ipv6_transport'
+      Merge branch 'feat_ipv6_payload'
+      Merge branch 'svn-branch-2.1' into merge
+      Solved hidden merge conflicts between master and svn-branch-2.1
+      Fix const declarations in plug-in v3 structs
+      Merge remote-tracking branch 'cron2/feat_ipv6_payload_2.3'
+      Don't define ENABLE_PUSH_PEER_INFO if SSL is not available
+      Fix compiling issues with pkcs11 when --disable-management is configured
+      Remove support for Linux 2.2 configuration fallback
+      Revert "Add new openssl.cnf to easy-rsa/Windows"
+      Merge remote branch SVN 2.1 into the git tree
+      Merge branch 'svn-merger'
+      Fix Microsoft Visual Studio incompatibility in plugin.c
+      Fixed compile issues on FreeBSD and Solaris
+      Fix PolarSSL and --pkcs12 option issues
+      Fix FreeBSD/OpenBSD/NetBSD compiler warnings in get_default_gateway()
+      Make '--win-sys env' default
+      Do some file/directory tests before really starting openvpn
+      Fix bug after removing Linux 2.2 support
+      Don't look for 'stdin' file when using --auth-user-pass
+      Fix compiling with --disable-crypto and/or --disable-ssl
+      Fix a couple of issues in openvpn_execve()
+      Move away from openvpn_basename() over to platform provided basename()
+      Enable access() when building in Visual Studio
+      New Windows build fixes
+      Fix compilation errors on Linux platforms without SO_MARK
+      autotools ./configure don't like compat.h
+      Fix pool logging when IPv6 is not enabled
+      Don't check for file presence on inline files
+      Add --route-pre-down/OPENVPN_PLUGIN_ROUTE_PREDOWN script/plug-in hook
+      Enhance the error handling in _openssl_get_subject()
+      Fix assert() situations where gc_malloc() is called without a gc_arena object
+      Fix compile issues when plug-ins are disabled.
+      Remove --show-gateway if debug info is not enabled (--disable-debug)
+      Fix compile issues with status.c
+      Connection entry {tun,link}_mtu_defined not set correctly
+      Makefile.am referenced a now non-existing config-win32.h
+      Makefile.am was missing ssl_common.h
+      Revamp check_file_access() checks in stdin scenarios
 
-Gert Doering (1):
+Davide Guerri (1):
+      New feauture: Add --stale-routes-check
+
+Frank de Brabander (1):
+      Fixed wrong return type of cipher_kt_mode
+
+Frederic Crozat (1):
+      Add support to forward console query to systemd
+
+Gert Doering (45):
       Add more detailed explanation regarding the function of "--rdns-internal"
+      Enable IPv6 Payload in OpenVPN p2mp tun server mode.  20100104-1 release.
+      remove NOTES file from commit - private scribbling
+      NetBSD fixes - on 4.0 and up, use multi-af mode.
+      new feature: "ifconfig-ipv6-push" (from ccd/ config)
+      add some TODOs to TODO.IPv6
+      undo accidential duplication of existing "--iroute" line in the help text
+      basic documentation of IPv6 related options and their syntax
+      Enable IPv6 Payload in OpenVPN p2mp tun server mode.
+      remove NOTES file from commit - private scribbling
+      env_block(): if PATH is not set, add standard PATH setting to env
+      add IPv6 route add / route delete code for windows (using "netsh")
+      - Win32 IPv6 ifconfig support, using "netsh" calls
+      drop "book ipv6" from open_tun() and tuncfg() prototypes
+      document recent changes and open TODOs, adapt --version info, tag release
+      Win32: set next-hop for IPv6 routes according to TUN/TAP mode
+      when deleting a route on win32, also add gateway address
+      WIN32: if IPv6 requested in TUN mode, check if TUN/TAP driver < 9.7
+      revert unconditionally-enabling of setenv_es() logging
+      implement IPv6 ifconfig + route setup/deletion on OpenBSD
+      full "VPN client connect" test framework for OpenVPN t_client.rc-sample
+      renamed t_client.sh to t_client.sh.in
+      2.2-beta3 has a signed TAP driver with the IPv6 code - test for 9.8
+      correct URL for "more information about IPv6 patch is *here*"
+      bugfix for linux/iproute2: IPv6 ifconfig code block was not called for "dev tun"+"topology subnet"
+      bump IPv6 version number (openvpn --version) to 20100922-1
+      Implement "ipv6 ifconfig" for TAP interfaces on Solaris interfaces
+      rebased to 2.2RC2 (beta 2.2 branch)
+      Windows IPv6 cleanup - properly remove IPv6 routes and interface config
+      For all accesses to "struct route_list * rl", check first that rl is non-NULL
+      Replace 32-bit-based add_in6_addr() implementation by an 8-bit based one
+      Platform cleanup for NetBSD
+      Move block for "stale-routes-check" config inside #ifdef P2MP_SERVER block
+      add missing break between "case IPv4" and "case IPv6"
+      bump tap driver version from 9.8 to 9.9
+      log error message and exit for "win32, tun mode, tap driver version 9.8"
+      work around inet_ntop/inet_pton problems for MSVC builds on WinXP
+      Fix build-up of duplicate IPv6 routes on reconnect.
+      Fix list-overrun checks in copy_route_[ipv6_]option_list()
+      add "print test titles" and "use sudo" functionality to t_client.rc
+      Platform cleanup for FreeBSD
+      Implement IPv6 interface config with non-/64 prefix lengths.
+      Fix RUN_SUDO functionality for t_client.sh
+      Document IPv6-related environment variables.
+      Platform cleanup for OpenBSD
 
 Gisle Vanem (1):
       Avoid re-defining uint32_t when using mingw compiler
 
-James Yonan (1):
-      Fixed bug in port-share that could cause port share process to crash with output like this:
+Gustavo Zacarias (1):
+      Fix compile issues when using --enable-small and --disable-ssl/--disable-crypto
 
-Robert Fischer / rf (4):
+Heiko Hund (16):
+      add .gitignore to official repository
+      remove function is_proto_tcp()
+      remove legacy code to query IE proxy information
+      lowercase include header name in syshead.h
+      define IN6_ARE_ADDR_EQUAL macro for WIN32
+      add --mark option to set SO_MARK sockopt
+      Windows UTF-8 input/output
+      UTF-8 X.509 distinguished names
+      set Windows environment variables as UCS-2
+      handle Windows unicode paths
+      replace check for TARGET_WIN32 with WIN32
+      do not use mode_t on Windows
+      use the underscore version of stat on Windows
+      make MSVC link against shell32 as well
+      move variable declaration to top of function
+      define access mode flag X_OK as 0 on Windows
+
+Igor Novgorodov (1):
+      The code blocks enabled by ENABLE_CLIENT_CR depends on management
+
+James Yonan (57):
+      Added "management-external-key" option.
+      Minor addition of logging info before and after execution of Windows net commands.
+      Misc fixes to r6708.
+      Added --x509-track option.
+      * added --management-up-down option to allow management interface to be notified of tunnel up/down events.
+      Fixed minor compile issue triggered on builds where MANAGEMENT_DEF_AUTH is not enabled.
+      Implemented get_default_gateway_mac_addr for Mac OS X
+      Fixes to r6925.
+      Properly handle certificate serial numbers > 32 bits.
+      Added "client-nat" option for stateless, one-to-one NAT on the client side.
+      Renamed branch to reflect that it is no longer beta.
+      env_filter_match now includes the serial number of all certs
+      Fixed issue where a client might receive multiple push replies from a server
+      Fixed bug introduced in r7031 that might cause this error message:
+      Extended "client-kill" management interface command (server-side)
+      Client will now try to reconnect if no push reply received within handshake-window seconds.
+      Version 2.1.3n
+      Fixed compiling issues when using --disable-crypto
+      Added "management-external-key" option.
+      Misc fixes to r6708.
+      win/sign.py now accepts an optional tap-dir argument.
+      Added "auth-token" client directive
+      Added ./configure --enable-osxipconfig option for Mac OS X
+      Added more packet ID debug info at debug level 3 for debugging false positive packet replays.
+      Fixed bug that incorrectly placed stricter TCP packet replay rules on UDP sessions
+      Fixed bug in port-share that could cause port share process to crash
+      For Mac OSX, when DARWIN_USE_IPCONFIG is defined, retry ipconfig command on failure
+      Version 2.1.3t
+      Revert r7092 and r7151, i.e. remove --enable-osxipconfig configure option.
+      Added 'dir' flag to "crl-verify" (see man page for info).
+      Added new "extra-certs" and "verify-hash" options
+      Fixed compile issues on Windows.
+      Added --enable-lzo-stub configure option to build an OpenVPN client without LZO
+      Added optional journal directory argument to "port-share" directive
+      Reduce log verbosity at level 3, with a focus on removing excessive log verbosity generated by port-share activity.
+      env_filter_match now includes the serial number of all certs in chain
+      Added support for static challenge/response protocol.
+      r7316 fixes.
+      Added redirect-gateway block-local flag, with support for Linux, Mac OS X
+      Extended x509-track to allow SHA1 certificate hash to be extracted
+      Added "management-query-remote" directive (client) to allow the management interface to override the "remote" directive.
+      Version 2.1.5.
+      Fixed MSVC compile error related to r7408.
+      Redact "echo" directive strings from log, since these strings (going forward) could conceivably contain security-sensitive data.
+      Modified sanitize_control_message to remove redacted data from control string rather than blotting it out with "_" chars.
+      Changed CC_PRINT character class to allow UTF-8 chars.
+      Increased the --verb threshold for "PID_ERR replay" messages to 4 from 3.
+      Fixed issue where redirect-gateway block-local code was not correctly calculating...
+      CC_PRINT character class now allows any 8-bit character value >= 32.
+      "status" management interface command (version >= 2) will now include the username for each connected user.
+      Minor fix to CC_PRINT char class
+      Fixed management interface bug where >FATAL notifications were not being output properly
+      Raised D_PID_DEBUG_LOW from level 3 to 4 to reduce replay error verbosity at level 3.
+      Added "memstats" option to maintain real-time operating stats in a memory-mapped file.
+      Fixed client issues with DHCP Router option extraction/deletion when using layer 2 with DHCP proxy:
+      Allow "tap-win32 dynamic <offset>" to be used in topology subnet mode.
+      Added support for "on-link" routes on Linux client
+
+Jan Just Keijser (1):
+      Made some options connection-entry specific
+
+Joe Patterson (1):
+      common_name passing in auth_pam plugin
+
+JuanJo Ciarlante (40):
+      * rebased openvpn-2.1_rc1b.jjo.20061206.d.patch
+      * created getaddr6(), use it from resolve_remote()
+      * migrated all getaddrinfo() to getaddr6
+      * socket.c: use USE_PF_INET6 in switch constructs to actually toss them out,
+      * support --disable-ipv6 build properly:
+      * important fix for tcp6 reconnection was incorrectly creating a PF_INET socket
+      * added README.ipv6.txt
+      * fixed win32 non-ipv6 build
+      * ipv6 on win32 "milestone": 1st snapshot that passes all unittests
+      * document ipv6 milestone status
+      * doc update w/unittests results
+      * make possible to x-compile openvpn/win32 in Linux
+      * correctly setup hints.ai_socktype for getaddrinfo(), althought sorta hacky, see TODO.ipv6.
+      * renamed README.ipv6{.txt,}
+      * updated {README,TODO}.ipv6 from feedback at openvpn-devel mlist
+      * init.c: document the ENABLE_MANAGEMENT place to work on
+      * init.c: small in-doc tweaks
+      * fix multi-tcp crash (corrected assertion)
+      * TODO.ipv6 update
+      * socket.c: better buf logic in print_sockaddr_ex
+      * fixed segfault for undef address family in print_sockaddr_ex (thanks Marcel!)
+      * doc updates
+      * openbsd: no IFF_MULTICAST, #ifdef around it
+      * no new funcionality, just small cleanups
+      * (prototype) fix for supporting "redirect-gateway" for tunneled ipv4 over ipv6 endpoints
+      * polished redirect-gateway (ipv4 on ipv6 endpoints) support
+      * updated doc
+      * fix --disable-ipv6 build
+      * doc updates
+      * rebased to v2.1.1 release
+      * undo mroute.c changes related to ipv6 payload
+      * fix --multihome for ipv4
+      * fix --multihome for ipv6
+      * ipv6-0.4.14: fix xinetd usage
+      * ipv6-0.4.15: add --multihome support to xBSD
+      * ipv6-0.4.15b: rebase over openvpn-testing-master
+      * ipv6-0.4.16: fix mingw32 build
+      * make ipv6_payload compile under windowze
+      USE_PF_INET6 by default for v2.3
+      fix ipv6 compilation under macosx >= 1070 - v3
+
+Markus Koetter (1):
+      Add extv3 X509 field support to --x509-username-field
+
+Matthew L. Creech (1):
+      Fix 2.2.0 build failure when management interface disabled
+
+Matthias Andree (1):
+      Skip rather than fail test in addressless FreeBSD jails.
+
+Robert Fischer (8):
       Update man page with info about --capath
       Update man page with info about --connect-timeout
+      Added info about --show-proxy-settings
+      Documented --x509-username-field option
+      Documented --errors-to-stderr option
+      Documented --push-peer-info option
       Update man page with info about --remote-random-hostname
       Added man page entry for --management-client
 
-Samuli Seppänen (6):
+Samuli Seppänen (19):
       Add man page entry for --redirect-private
       Change all CRLF linefeeds to LF linefeeds
       Fix a bug in devcon source code handling
       Removed Win2k from supported platforms list in INSTALL and win/openvpn.nsi
       Fixed copying of tapinstall.exe to dist/bin when using prebuilt TAP-drivers
       Fixed a bug with GUI icon deletion on upgrade from 2.2-RC or earlier
+      Fix a build-ca issue on Windows
+      Add new openssl.cnf to easy-rsa/Windows
+      Updated "easy-rsa" for OpenSSL 1.0.0
+      Made domake-win builds to use easy-rsa/2.0/openssl-1.0.0.cnf
+      Fixes to easy-rsa/2.0
+      Merged TODO.IPv6 with TODO.ipv6 and README.IPv6 with README.ipv6
+      Fixed a number of fatal build errors on Visual Studio 2008
+      Fix a Visual Studio 2008 build issue in socket.c
+      Additional Visual Studio 2008 build fixes to tun.c
+      Fixed a typo in win32.h that prevented building with Visual Studio
+      Fixed a regression causing VS2008/Python build failure
+      Fix a Visual Studio 2008 build error in tun.c
+      Fix a Visual Studio 2008 build error in options.c
+
+Simon Matter (1):
+      Fix issues with some older GCC compilers
+
+Stefan Hellermann (2):
+      plugin.h: update prototype of plugin_call dummy in !ENABLE_PLUGIN case
+      Fixed typo in plugin.h
 
 chantra (1):
       Clarify --tmp-dir option
+
+smos (1):
+      Change the netsh.exe command from "add" to "set".
+
+2011.12.25 -- Version 2.x-master
+James Yonan (1):
+      Added support for "on-link" routes on Linux client -- these are
+      routes where the gateway is specified as an interface rather than
+      an address.  This allows redirect-gateway to work on Linux clients
+      whose connection to the internet is via a point-to-point link
+      such as PPP.
+
+      Note that at the moment, this capability is incompatible with
+      the "redirect-gateway block-local" directive -- this is because
+      the block-local directive blocks all traffic from the local LAN
+      except for the local and gateway addresses.  Since a PPP link
+      is essentially a subnet of two addresses, local and remote (i.e.
+      gateway), the set of addresses that would be blocked by block-local
+      is empty.  Therefore, the "redirect-gateway block-local" directive
+      will be ignored on PPP links.
+
+      To view the OpenVPN client's current determination of the default
+      gateway, use this command:
+
+        ./openvpn --show-gateway
 
 2011.03.24 -- Version 2.2-RC2
 Alon Bar-Lev (1):

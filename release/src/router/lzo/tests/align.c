@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -56,7 +59,7 @@ int opt_verbose = 0;
 //
 **************************************************************************/
 
-long align_test(lzo_bytep block, lzo_uint len, lzo_uint step)
+unsigned long align_test(lzo_bytep block, lzo_uint len, lzo_uint step)
 {
     lzo_bytep b1 = block;
     lzo_bytep b2 = block;
@@ -65,7 +68,7 @@ long align_test(lzo_bytep block, lzo_uint len, lzo_uint step)
     lzo_bytep k;
     lzo_bytep x;
     lzo_uint offset = 0;
-    long i = 0;
+    unsigned long i = 0;
 
     assert(step > 0);
     assert(step <= 65536L);
@@ -77,20 +80,20 @@ long align_test(lzo_bytep block, lzo_uint len, lzo_uint step)
         k2 = b2 + offset;
         if (k1 != k2)
         {
-            printf("error 1: i %ld step %ld offset %ld: "
-                    "%p (%ld) %p (%ld)\n",
-                    i, (long) step, (long) offset,
-                    k1, (long) (k1 - block),
-                    k2, (long) (k2 - block));
+            printf("error 1: i %lu step %ld offset %ld: "
+                   "%p (%ld) %p (%ld)\n",
+                   i, (long) step, (long) offset,
+                   k1, (long) (k1 - block),
+                   k2, (long) (k2 - block));
             return 0;
         }
         if (k1 - step != b1)
         {
-            printf("error 2: i %ld step %ld offset %ld: "
-                    "%p (%ld) %p (%ld)\n",
-                    i, (long) step, (long) offset,
-                    b1, (long) (b1 - block),
-                    k1, (long) (k1 - block));
+            printf("error 2: i %lu step %ld offset %ld: "
+                   "%p (%ld) %p (%ld)\n",
+                   i, (long) step, (long) offset,
+                   b1, (long) (b1 - block),
+                   k1, (long) (k1 - block));
             return 0;
         }
 
@@ -124,13 +127,13 @@ long align_test(lzo_bytep block, lzo_uint len, lzo_uint step)
             x = LZO_PTR_ALIGN_UP(k,step);
             if (x != k1)
             {
-                printf("error 3: base: %p %p %p  i %ld step %ld offset %ld: "
-                        "%p (%ld) %p (%ld) %p (%ld)\n",
-                        block, b1, b2,
-                        i, (long) step, (long) offset,
-                        k1, (long) (k1 - block),
-                        k, (long) (k - block),
-                        x, (long) (x - block));
+                printf("error 3: base: %p %p %p  i %lu step %ld offset %ld: "
+                       "%p (%ld) %p (%ld) %p (%ld)\n",
+                       block, b1, b2,
+                       i, (long) step, (long) offset,
+                       k1, (long) (k1 - block),
+                       k, (long) (k - block),
+                       x, (long) (x - block));
                 return 0;
             }
         }
@@ -147,7 +150,7 @@ long align_test(lzo_bytep block, lzo_uint len, lzo_uint step)
 //
 **************************************************************************/
 
-#define BLOCK_LEN   (128*1024L)
+#define BLOCK_LEN   (128*1024ul)
 
 int main(int argc, char *argv[])
 {
@@ -169,26 +172,32 @@ int main(int argc, char *argv[])
         return 2;
     }
 
+#if defined(lzo_uintptr_t)
+    printf("Align init: %p ( 0x%lx )\n", buf, (unsigned long) (lzo_uintptr_t) buf);
+#elif defined(__LZO_MMODEL_HUGE)
     printf("Align init: %p ( 0x%lx )\n", buf, (unsigned long) buf);
+#else
+    printf("Align init: %p ( 0x%lx )\n", buf, (unsigned long) (size_t) buf);
+#endif
 
     for (step = 1; step <= 65536L; step *= 2)
     {
         lzo_bytep block = buf;
-        long n;
+        unsigned long n;
         unsigned gap;
 
         gap = __lzo_align_gap(block,step);
         block = LZO_PTR_ALIGN_UP(block,step);
         if (opt_verbose >= 1)
-            printf("STEP %5ld: GAP: %5lu  %p %p %5ld\n",
-                    (long) step, (long) gap, buf, block,
-                    (long) (block - buf));
+            printf("STEP %5lu: GAP: %5lu  %p %p %5lu\n",
+                   (unsigned long) step, (unsigned long) gap, buf, block,
+                   (unsigned long) (block - buf));
         n = align_test(block,BLOCK_LEN,step);
         if (n == 0)
             return 1;
         if ((n + 1) * step != BLOCK_LEN)
         {
-            printf("error 4: %ld %ld\n",(long)step,n);
+            printf("error 4: %ld %lu\n", (long)step, n);
             return 1;
         }
     }

@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -39,7 +42,7 @@
 
 
 #ifndef __LZO1Z_H_INCLUDED
-#define __LZO1Z_H_INCLUDED
+#define __LZO1Z_H_INCLUDED 1
 
 #ifndef __LZOCONF_H_INCLUDED
 #include "lzoconf.h"
@@ -106,22 +109,22 @@ lzo1z_999_compress      ( const lzo_bytep src, lzo_uint  src_len,
 ************************************************************************/
 
 LZO_EXTERN(int)
-lzo1z_999_compress_dict     ( const lzo_bytep in , lzo_uint  in_len,
-                                    lzo_bytep out, lzo_uintp out_len,
+lzo1z_999_compress_dict     ( const lzo_bytep src, lzo_uint  src_len,
+                                    lzo_bytep dst, lzo_uintp dst_len,
                                     lzo_voidp wrkmem,
                               const lzo_bytep dict, lzo_uint dict_len );
 
 LZO_EXTERN(int)
-lzo1z_999_compress_level    ( const lzo_bytep in , lzo_uint  in_len,
-                                    lzo_bytep out, lzo_uintp out_len,
+lzo1z_999_compress_level    ( const lzo_bytep src, lzo_uint  src_len,
+                                    lzo_bytep dst, lzo_uintp dst_len,
                                     lzo_voidp wrkmem,
                               const lzo_bytep dict, lzo_uint dict_len,
                                     lzo_callback_p cb,
                                     int compression_level );
 
 LZO_EXTERN(int)
-lzo1z_decompress_dict_safe ( const lzo_bytep in,  lzo_uint  in_len,
-                                   lzo_bytep out, lzo_uintp out_len,
+lzo1z_decompress_dict_safe ( const lzo_bytep src, lzo_uint  src_len,
+                                   lzo_bytep dst, lzo_uintp dst_len,
                                    lzo_voidp wrkmem /* NOT USED */,
                              const lzo_bytep dict, lzo_uint dict_len );
 
@@ -133,8 +136,8 @@ lzo1z_decompress_dict_safe ( const lzo_bytep in,  lzo_uint  in_len,
 #if 0
 /* not yet implemented */
 LZO_EXTERN(int)
-lzo1z_optimize          (       lzo_bytep in , lzo_uint  in_len,
-                                lzo_bytep out, lzo_uintp out_len,
+lzo1z_optimize          (       lzo_bytep src, lzo_uint  src_len,
+                                lzo_bytep dst, lzo_uintp dst_len,
                                 lzo_voidp wrkmem /* NOT USED */ );
 #endif
 

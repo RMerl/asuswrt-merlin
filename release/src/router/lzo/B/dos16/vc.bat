@@ -1,4 +1,4 @@
-@echo // Copyright (C) 1996-2008 Markus F.X.J. Oberhumer
+@echo // Copyright (C) 1996-2011 Markus F.X.J. Oberhumer
 @echo //
 @echo //   DOS 16-bit
 @echo //   Microsoft Visual C/C++

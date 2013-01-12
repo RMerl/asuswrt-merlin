@@ -6,8 +6,8 @@
  Author  : Markus Franz Xaver Johannes Oberhumer
            <markus@oberhumer.com>
            http://www.oberhumer.com/opensource/lzo/
- Version : 2.03
- Date    : 30 Apr 2008
+ Version : 2.06
+ Date    : 12 Aug 2011
 
 
  Abstract
@@ -40,12 +40,12 @@
  - Decompression is simple and *very* fast.
  - Requires no memory for decompression.
  - Compression is pretty fast.
- - Requires 64 kB of memory for compression.
+ - Requires 64 KiB of memory for compression.
  - Allows you to dial up extra compression at a speed cost in the
    compressor. The speed of the decompressor is not reduced.
  - Includes compression levels for generating pre-compressed
    data which achieve a quite competitive compression ratio.
- - There is also a compression level which needs only 8 kB for compression.
+ - There is also a compression level which needs only 8 KiB for compression.
  - Algorithm is thread safe.
  - Algorithm is lossless.
 
@@ -69,12 +69,12 @@
  -----------
  To keep you interested, here is an overview of the average results
  when compressing the Calgary Corpus test suite with a blocksize
- of 256 kB, originally done on an ancient Intel Pentium 133.
+ of 256 KiB, originally done on an ancient Intel Pentium 133.
 
  The naming convention of the various algorithms goes LZOxx-N, where N is
  the compression level. Range 1-9 indicates the fast standard levels using
- 64 kB memory for compression. Level 99 offers better compression at the
- cost of more memory (256 kB), and is still reasonably fast.
+ 64 KiB memory for compression. Level 99 offers better compression at the
+ cost of more memory (256 KiB), and is still reasonably fast.
  Level 999 achieves nearly optimal compression - but it is slow
  and uses much memory, and is mainly intended for generating
  pre-compressed data.
@@ -154,12 +154,12 @@
  and long literal runs so that it produces good results on highly
  redundant data and deals acceptably with non-compressible data.
 
- When dealing with uncompressible data, LZO expands the input
- block by a maximum of 16 bytes per 1024 bytes input.
+ When dealing with incompressible data, LZO expands the input
+ block by a maximum of 64 bytes per 1024 bytes input.
 
  I have verified LZO using such tools as valgrind and other memory checkers.
  And in addition to compressing gigabytes of files when tuning some parameters
- I have also consulted various `lint' programs to spot potential portability
+ I have also consulted various 'lint' programs to spot potential portability
  problems. LZO is free of any known bugs.
 
 
@@ -171,7 +171,7 @@
 
  As the many object files are mostly independent of each other, the
  size overhead for an executable statically linked with the LZO library
- is usually pretty low (just a few kB) because the linker will only add
+ is usually pretty low (just a few KiB) because the linker will only add
  the modules that you are actually using.
 
  I first published LZO1 and LZO1A in the Internet newsgroups
@@ -262,7 +262,7 @@
 
  Some comments about the source code
  -----------------------------------
- Be warned: the main source code in the `src' directory is a
+ Be warned: the main source code in the 'src' directory is a
  real pain to understand as I've experimented with hundreds of slightly
  different versions. It contains many #if and some gotos, and
  is *completely optimized for speed* and not for readability.
@@ -277,8 +277,9 @@
 
  Copyright
  ---------
- LZO is Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
- 2005, 2006, 2007, 2008 Markus Franz Xaver Johannes Oberhumer
+ LZO is Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+ 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
+ Markus Franz Xaver Oberhumer <markus@oberhumer.com>.
 
  LZO is distributed under the terms of the GNU General Public License (GPL).
  See the file COPYING.

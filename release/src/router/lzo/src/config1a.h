@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -45,7 +48,7 @@
 
 
 #ifndef __LZO_CONFIG1A_H
-#define __LZO_CONFIG1A_H
+#define __LZO_CONFIG1A_H 1
 
 #include "lzo_conf.h"
 #include "lzo/lzo1a.h"
@@ -120,7 +123,7 @@
 
 /* Collect statistics */
 #if 0 && !defined(LZO_COLLECT_STATS)
-#  define LZO_COLLECT_STATS
+#  define LZO_COLLECT_STATS 1
 #endif
 
 
@@ -132,7 +135,7 @@
 #define M3L_BITS        CHAR_BIT
 #define M3_MAX_LEN      (M3_MIN_LEN + LZO_SIZE(M3L_BITS) - 1)
 #define _MAX_OFFSET     _M2_MAX_OFFSET
-#define LZO_NO_M3
+#define LZO_NO_M3 1
 
 #include "lzo1b_de.h"
 #include "stats1b.h"

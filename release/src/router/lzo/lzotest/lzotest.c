@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -50,6 +53,7 @@
 #define WANT_LZO_FREAD 1
 #define WANT_LZO_WILDARGV 1
 #define WANT_LZO_UCLOCK 1
+#define ACC_WANT_ACCLIB_GETOPT 1
 #include "examples/portab.h"
 
 #if defined(HAVE_STRNICMP) && !defined(HAVE_STRNCASECMP)
@@ -64,9 +68,6 @@
 #  define is_digit(x)   ((unsigned)(x) - '0' <= 9)
 #  define is_space(x)   ((x)==' ' || (x)=='\t' || (x)=='\r' || (x)=='\n')
 #endif
-
-#include "mygetopt.h"
-#include "mygetopt.ch"
 
 
 /*************************************************************************
@@ -120,9 +121,15 @@
 #endif
 #if defined(HAVE_LZO1X_H)
 #  include "lzo/lzo1x.h"
+#  if defined(__LZO_PROFESSIONAL__)
+#    include "lzo/lzopro/lzo1x.h"
+#  endif
 #endif
 #if defined(HAVE_LZO1Y_H)
 #  include "lzo/lzo1y.h"
+#  if defined(__LZO_PROFESSIONAL__)
+#    include "lzo/lzopro/lzo1y.h"
+#  endif
 #endif
 #if defined(HAVE_LZO1Z_H)
 #  include "lzo/lzo1z.h"
@@ -133,18 +140,17 @@
 #if defined(HAVE_LZO2B_H)
 #  include "lzo/lzo2b.h"
 #endif
-
-/* other compressors */
 #if defined(__LZO_PROFESSIONAL__)
 #  include "lzopro/t_config.ch"
 #endif
+/* other compressors */
 #if defined(HAVE_ZLIB_H)
 #  include <zlib.h>
-#  define ALG_ZLIB
+#  define ALG_ZLIB 1
 #endif
 #if defined(HAVE_BZLIB_H)
 #  include <bzlib.h>
-#  define ALG_BZIP2
+#  define ALG_BZIP2 1
 #endif
 
 
@@ -216,6 +222,10 @@ enum {
     M_Z_CRC32     =  6012,
 #endif
 
+#if defined(__LZO_PROFESSIONAL__)
+#  include "lzopro/m_enum.ch"
+#endif
+
     M_UNUSED
 };
 
@@ -224,13 +234,10 @@ enum {
 // command line options
 **************************************************************************/
 
-struct corpus_entry_t;
-
 int opt_verbose = 2;
 
 long opt_c_loops = 0;
 long opt_d_loops = 0;
-const struct corpus_entry_t *opt_corpus = NULL;
 const char *opt_corpus_path = NULL;
 const char *opt_dump_compressed_data = NULL;
 
@@ -353,15 +360,17 @@ typedef struct {
     lzo_uint    saved_len;
 } mblock_t;
 
-static mblock_t file_data;
-static mblock_t block1;
-static mblock_t block2;
-static mblock_t wrkmem;
+static mblock_t file_data;      /* original uncompressed data */
+static mblock_t block_c;        /* compressed data */
+static mblock_t block_d;        /* decompressed data */
+static mblock_t block_w;        /* wrkmem */
 static mblock_t dict;
 
 
 static void mb_alloc_extra(mblock_t *mb, lzo_uint len, lzo_uint extra_bottom, lzo_uint extra_top)
 {
+    lzo_uint align = (lzo_uint) sizeof(lzo_align_t);
+
     mb->alloc_ptr = mb->ptr = NULL;
     mb->alloc_len = mb->len = 0;
 
@@ -371,6 +380,10 @@ static void mb_alloc_extra(mblock_t *mb, lzo_uint len, lzo_uint extra_bottom, lz
 
     if (mb->alloc_ptr == NULL) {
         fprintf(stderr, "%s: out of memory (wanted %lu bytes)\n", progname, (unsigned long)mb->alloc_len);
+        exit(EXIT_MEM);
+    }
+    if (mb->alloc_len >= align && __lzo_align_gap(mb->alloc_ptr, align) != 0) {
+        fprintf(stderr, "%s: C library problem: malloc() returned misaligned pointer!\n", progname);
         exit(EXIT_MEM);
     }
 
@@ -460,11 +473,11 @@ static void dict_load(const char *file_name)
     FILE *fp;
 
     dict.len = 0;
-    fp = fopen(file_name,"rb");
+    fp = fopen(file_name, "rb");
     if (fp)
     {
         dict.len = (lzo_uint) lzo_fread(fp, dict.ptr, dict.alloc_len);
-        fclose(fp);
+        (void) fclose(fp);
         dict.adler = lzo_adler32(1, dict.ptr, dict.len);
     }
 }
@@ -508,11 +521,6 @@ static const compress_t compress_database[] = {
 #include "db.h"
 { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
-
-
-#if defined(LZOTEST_USE_DYNLOAD)
-#  include "dynload/db.ch"
-#endif
 
 
 /*************************************************************************
@@ -575,10 +583,6 @@ const compress_t *find_method_by_id ( int method )
     size_t size = sizeof(compress_database) / sizeof(*(compress_database));
     size_t i;
 
-#if defined(LZOTEST_USE_DYNLOAD)
-#  include "dynload/find_id.ch"
-#endif
-
     db = compress_database;
     for (i = 0; i < size && db->name != NULL; i++, db++)
     {
@@ -595,10 +599,6 @@ const compress_t *find_method_by_name ( const char *name )
     const compress_t *db;
     size_t size = sizeof(compress_database) / sizeof(*(compress_database));
     size_t i;
-
-#if defined(LZOTEST_USE_DYNLOAD)
-#  include "dynload/find_name.ch"
-#endif
 
     db = compress_database;
     for (i = 0; i < size && db->name != NULL; i++, db++)
@@ -687,19 +687,19 @@ int call_compressor   ( const compress_t *c,
 {
     int r = -100;
 
-    if (c && c->compress && wrkmem.len >= c->mem_compress)
+    if (c && c->compress && block_w.len >= c->mem_compress)
     {
         unsigned char random_byte = (unsigned char) src_len;
-        memchecker_init(&wrkmem, c->mem_compress, random_byte);
+        memchecker_init(&block_w, c->mem_compress, random_byte);
         if (opt_clear_wrkmem)
-            lzo_memset(wrkmem.ptr, 0, c->mem_compress);
+            lzo_memset(block_w.ptr, 0, c->mem_compress);
 
         if (opt_dict && c->compress_dict)
-            r = c->compress_dict(src,src_len,dst,dst_len,wrkmem.ptr,dict.ptr,dict.len);
+            r = c->compress_dict(src,src_len,dst,dst_len,block_w.ptr,dict.ptr,dict.len);
         else
-            r = c->compress(src,src_len,dst,dst_len,wrkmem.ptr);
+            r = c->compress(src,src_len,dst,dst_len,block_w.ptr);
 
-        if (memchecker_check(&wrkmem, c->mem_compress, random_byte) != 0)
+        if (memchecker_check(&block_w, c->mem_compress, random_byte) != 0)
             printf("WARNING: wrkmem overwrite error (compress) !!!\n");
     }
 
@@ -733,19 +733,19 @@ int call_decompressor ( const compress_t *c, lzo_decompress_t d,
 {
     int r = -100;
 
-    if (c && d && wrkmem.len >= c->mem_decompress)
+    if (c && d && block_w.len >= c->mem_decompress)
     {
         unsigned char random_byte = (unsigned char) src_len;
-        memchecker_init(&wrkmem, c->mem_decompress, random_byte);
+        memchecker_init(&block_w, c->mem_decompress, random_byte);
         if (opt_clear_wrkmem)
-            lzo_memset(wrkmem.ptr, 0, c->mem_decompress);
+            lzo_memset(block_w.ptr, 0, c->mem_decompress);
 
         if (opt_dict && c->decompress_dict_safe)
-            r = c->decompress_dict_safe(src,src_len,dst,dst_len,wrkmem.ptr,dict.ptr,dict.len);
+            r = c->decompress_dict_safe(src,src_len,dst,dst_len,block_w.ptr,dict.ptr,dict.len);
         else
-            r = d(src,src_len,dst,dst_len,wrkmem.ptr);
+            r = d(src,src_len,dst,dst_len,block_w.ptr);
 
-        if (memchecker_check(&wrkmem, c->mem_decompress, random_byte) != 0)
+        if (memchecker_check(&block_w, c->mem_decompress, random_byte) != 0)
             printf("WARNING: wrkmem overwrite error (decompress) !!!\n");
     }
 
@@ -767,8 +767,8 @@ int call_optimizer   ( const compress_t *c,
                              lzo_bytep src, lzo_uint  src_len,
                              lzo_bytep dst, lzo_uintp dst_len )
 {
-    if (c && c->optimize && wrkmem.len >= c->mem_decompress)
-        return c->optimize(src,src_len,dst,dst_len,wrkmem.ptr);
+    if (c && c->optimize && block_w.len >= c->mem_decompress)
+        return c->optimize(src,src_len,dst,dst_len,block_w.ptr);
     return 0;
 }
 
@@ -777,51 +777,71 @@ int call_optimizer   ( const compress_t *c,
 // read a file
 ************************************************************************/
 
-static int load_file(const char *file_name, lzo_uint max_len)
+static int load_file(const char *file_name, lzo_uint max_data_len)
 {
     FILE *fp;
+#if (HAVE_FTELLO)
+    off_t ll = -1;
+#else
     long ll = -1;
+#endif
     lzo_uint l;
     int r;
     mblock_t *mb = &file_data;
 
     mb_free(mb);
 
-    fp = fopen(file_name,"rb");
+    fp = fopen(file_name, "rb");
     if (fp == NULL)
     {
-        fprintf(stderr,"%s: ",file_name);
-        perror("fopen");
+        fflush(stdout); fflush(stderr);
+        fprintf(stderr, "%s: ", file_name);
         fflush(stderr);
+        perror("fopen");
+        fflush(stdout); fflush(stderr);
         return EXIT_FILE;
     }
-    r = fseek(fp,(long)max_len,SEEK_SET);
-    if (r != 0)
-        r = fseek(fp,0,SEEK_END);
+    r = fseek(fp, 0, SEEK_END);
     if (r == 0)
     {
+#if (HAVE_FTELLO)
+        ll = ftello(fp);
+#else
         ll = ftell(fp);
-        r = fseek(fp,0,SEEK_SET);
+#endif
+        r = fseek(fp, 0, SEEK_SET);
     }
     if (r != 0 || ll < 0)
     {
-        fprintf(stderr,"%s: ",file_name);
-        perror("fseek");
+        fflush(stdout); fflush(stderr);
+        fprintf(stderr, "%s: ", file_name);
         fflush(stderr);
+        perror("fseek");
+        fflush(stdout); fflush(stderr);
+        (void) fclose(fp);
         return EXIT_FILE;
     }
 
     l = (lzo_uint) ll;
-    if (max_len > 0 && l > max_len)
-        l = max_len;
+    if (l > max_data_len) l = max_data_len;
+#if (HAVE_FTELLO)
+    if ((off_t) l != ll) l = max_data_len;
+#else
+    if ((long) l != ll) l = max_data_len;
+#endif
+
     mb_alloc(mb, l);
     mb->len = (lzo_uint) lzo_fread(fp, mb->ptr, mb->len);
-    if (fclose(fp) != 0)
+
+    r = ferror(fp);
+    if (fclose(fp) != 0 || r != 0)
     {
         mb_free(mb);
-        fprintf(stderr,"%s: ",file_name);
-        perror("fclose");
+        fflush(stdout); fflush(stderr);
+        fprintf(stderr, "%s: ", file_name);
         fflush(stderr);
+        perror("fclose");
+        fflush(stdout); fflush(stderr);
         return EXIT_FILE;
     }
 
@@ -840,7 +860,7 @@ static double t_div(double a, double b)
 
 static double set_perc_d(double perc, char *s)
 {
-    if (perc <= 0) {
+    if (perc <= 0.0) {
         strcpy(s, "0.0");
         return 0;
     }
@@ -969,24 +989,20 @@ void print_totals ( void )
         if (opt_uclock == 0) t1 = t2;
 #endif
 
-#if defined(LZOTEST_USE_DYNLOAD)
-#  include "dynload/print_totals.ch"
-#endif
-
 #if 1
         set_perc_d(total_perc / n, perc_str);
         printf("%-13s  %-12s %10lu %4.1f %9lu %4s %8.3f %8.3f\n",
-            t1, "***AVG***",
-            total_d_len / n, total_blocks * 1.0 / n, total_c_len / n, perc_str,
-            t_div(total_c_mbs_n, total_c_mbs_harmonic),
-            t_div(total_d_mbs_n, total_d_mbs_harmonic));
+               t1, "***AVG***",
+               total_d_len / n, total_blocks * 1.0 / n, total_c_len / n, perc_str,
+               t_div(total_c_mbs_n, total_c_mbs_harmonic),
+               t_div(total_d_mbs_n, total_d_mbs_harmonic));
 #endif
         set_perc(total_c_len, total_d_len, perc_str);
         printf("%-13s  %-12s %10lu %4lu %9lu %4s %s%8.3f %8.3f\n",
-            t2, "***TOTALS***",
-            total_d_len, total_blocks, total_c_len, perc_str, "",
-            t_div(total_c_mbs_n, total_c_mbs_harmonic),
-            t_div(total_d_mbs_n, total_d_mbs_harmonic));
+               t2, "***TOTALS***",
+               total_d_len, total_blocks, total_c_len, perc_str, "",
+               t_div(total_c_mbs_n, total_c_mbs_harmonic),
+               t_div(total_d_mbs_n, total_d_mbs_harmonic));
     }
 }
 
@@ -995,7 +1011,7 @@ void print_totals ( void )
 // compress and decompress a file
 **************************************************************************/
 
-static
+static __lzo_noinline
 int process_file ( const compress_t *c, lzo_decompress_t decompress,
                    const char *method_name,
                    const char *file_name,
@@ -1032,54 +1048,56 @@ int process_file ( const compress_t *c, lzo_decompress_t decompress,
             int r;
             unsigned char random_byte = (unsigned char) file_data.len;
 #if 1 && defined(CLOCKS_PER_SEC)
-            random_byte ^= (unsigned char) clock();
+            random_byte = (unsigned char) (random_byte ^ clock());
 #endif
             blocks++;
 
             bl = len > opt_block_size ? opt_block_size : len;
             /* update lengths for memchecker_xxx() */
-            block1.len = bl + get_max_compression_expansion(c->id, bl);
-            block2.len = bl + get_max_decompression_overrun(c->id, bl);
+            block_c.len = bl + get_max_compression_expansion(c->id, bl);
+            block_d.len = bl + get_max_decompression_overrun(c->id, bl);
 #if defined(__LZO_CHECKER)
             /* malloc a block of the exact size to detect any overrun */
-            assert(block1.alloc_ptr == NULL);
-            assert(block2.alloc_ptr == NULL);
-            mb_alloc(&block1, block1.len);
-            mb_alloc(&block2, block2.len);
+            assert(block_c.alloc_ptr == NULL);
+            assert(block_d.alloc_ptr == NULL);
+            mb_alloc(&block_c, block_c.len);
+            mb_alloc(&block_d, block_d.len);
 #endif
-            assert(block1.len <= block1.saved_len);
-            assert(block2.len <= block2.saved_len);
+            assert(block_c.len <= block_c.saved_len);
+            assert(block_d.len <= block_d.saved_len);
 
-            memchecker_init(&block1, block1.len, random_byte);
-            memchecker_init(&block2, block2.len, random_byte);
+            memchecker_init(&block_c, block_c.len, random_byte);
+            memchecker_init(&block_d, block_d.len, random_byte);
 
         /* compress the block */
             c_len = c_len_max = 0;
             lzo_uclock_flush_cpu_cache(&uch, 0);
             lzo_uclock_read(&uch, &x_start);
-            for (r = 0, c_i = 0; r == 0 && c_i < c_loops; c_i++)
+            for (r = 0, c_i = 0; c_i < c_loops; c_i++)
             {
-                c_len = block1.len;
-                r = call_compressor(c, d, bl, block1.ptr, &c_len);
-                if (r == 0 && c_len > c_len_max)
+                c_len = block_c.len;
+                r = call_compressor(c, d, bl, block_c.ptr, &c_len);
+                if (r != 0)
+                    break;
+                if (c_len > c_len_max)
                     c_len_max = c_len;
-                if (r == 0 && c_len > block1.len)
+                if (c_len > block_c.len)
                     goto compress_overrun;
             }
             lzo_uclock_read(&uch, &x_stop);
             c_time += lzo_uclock_get_elapsed(&uch, &x_start, &x_stop);
             if (r != 0)
             {
-                printf("  compression failed in block %ld (%d) (%lu %lu)\n",
-                    blocks, r, (long)c_len, (long)bl);
+                printf("  compression failed in block %lu (%d) (%lu %lu)\n",
+                       blocks, r, (unsigned long)c_len, (unsigned long)bl);
                 return EXIT_LZO_ERROR;
             }
-            if (memchecker_check(&block1, block1.len, random_byte) != 0)
+            if (memchecker_check(&block_c, block_c.len, random_byte) != 0)
             {
 compress_overrun:
                 printf("  compression overwrite error in block %lu "
-                    "(%lu %lu %lu %lu)\n",
-                    blocks, (long)c_len, (long)d_len, (long)bl, (long)block1.len);
+                       "(%lu %lu %lu %lu)\n",
+                       blocks, (unsigned long)c_len, (unsigned long)d_len, (unsigned long)bl, (unsigned long)block_c.len);
                 return EXIT_LZO_ERROR;
             }
 
@@ -1087,20 +1105,20 @@ compress_overrun:
             if (c_len < bl && opt_optimize_compressed_data)
             {
                 d_len = bl;
-                r = call_optimizer(c, block1.ptr, c_len, block2.ptr, &d_len);
+                r = call_optimizer(c, block_c.ptr, c_len, block_d.ptr, &d_len);
                 if (r != 0 || d_len != bl)
                 {
                     printf("  optimization failed in block %lu (%d) "
-                        "(%lu %lu %lu)\n", blocks, r,
-                        (long)c_len, (long)d_len, (long)bl);
+                           "(%lu %lu %lu)\n", blocks, r,
+                           (unsigned long)c_len, (unsigned long)d_len, (unsigned long)bl);
                     return EXIT_LZO_ERROR;
                 }
-                if (memchecker_check(&block1, block1.len, random_byte) != 0 ||
-                    memchecker_check(&block2, block2.len, random_byte) != 0)
+                if (memchecker_check(&block_c, block_c.len, random_byte) != 0 ||
+                    memchecker_check(&block_d, block_d.len, random_byte) != 0)
                 {
                     printf("  optimize overwrite error in block %lu "
-                        "(%lu %lu %lu %lu)\n",
-                        blocks, (long)c_len, (long)d_len, (long)bl, (long)block1.len);
+                           "(%lu %lu %lu %lu)\n",
+                           blocks, (unsigned long)c_len, (unsigned long)d_len, (unsigned long)bl, (unsigned long)block_c.len);
                     return EXIT_LZO_ERROR;
                 }
             }
@@ -1108,18 +1126,21 @@ compress_overrun:
             /* dump compressed data to disk */
             if (fp_dump)
             {
-                (void) lzo_fwrite(fp_dump, block1.ptr, c_len);
-                fflush(fp_dump);
+                lzo_uint l = (lzo_uint) lzo_fwrite(fp_dump, block_c.ptr, c_len);
+                if (l != c_len || fflush(fp_dump) != 0) {
+                    /* write error */
+                    (void) fclose(fp_dump); fp_dump = NULL;
+                }
             }
 
         /* decompress the block and verify */
             lzo_uclock_flush_cpu_cache(&uch, 0);
             lzo_uclock_read(&uch, &x_start);
-            for (r = 0, c_i = 0; r == 0 && c_i < d_loops; c_i++)
+            for (r = 0, c_i = 0; c_i < d_loops; c_i++)
             {
                 d_len = bl;
-                r = call_decompressor(c, decompress, block1.ptr, c_len, block2.ptr, &d_len);
-                if (d_len != bl)
+                r = call_decompressor(c, decompress, block_c.ptr, c_len, block_d.ptr, &d_len);
+                if (r != 0 || d_len != bl)
                     break;
             }
             lzo_uclock_read(&uch, &x_stop);
@@ -1127,29 +1148,29 @@ compress_overrun:
             if (r != 0)
             {
                 printf("  decompression failed in block %lu (%d) "
-                    "(%lu %lu %lu)\n", blocks, r,
-                    (long)c_len, (long)d_len, (long)bl);
+                       "(%lu %lu %lu)\n", blocks, r,
+                       (unsigned long)c_len, (unsigned long)d_len, (unsigned long)bl);
                 return EXIT_LZO_ERROR;
             }
             if (d_len != bl)
             {
                 printf("  decompression size error in block %lu (%lu %lu %lu)\n",
-                    blocks, (long)c_len, (long)d_len, (long)bl);
+                       blocks, (unsigned long)c_len, (unsigned long)d_len, (unsigned long)bl);
                 return EXIT_LZO_ERROR;
             }
             if (is_compressor(c))
             {
-                if (lzo_memcmp(d, block2.ptr, bl) != 0)
+                if (lzo_memcmp(d, block_d.ptr, bl) != 0)
                 {
                     lzo_uint x = 0;
-                    while (x < bl && block2.ptr[x] == d[x])
+                    while (x < bl && block_d.ptr[x] == d[x])
                         x++;
                     printf("  decompression data error in block %lu at offset "
-                        "%lu (%lu %lu)\n", blocks, (long)x,
-                        (long)c_len, (long)d_len);
+                           "%lu (%lu %lu)\n", blocks, (unsigned long)x,
+                           (unsigned long)c_len, (unsigned long)d_len);
                     if (opt_compute_adler32)
                         printf("      checksum: 0x%08lx 0x%08lx\n",
-                            (long)adler_in, (long)adler_out);
+                               (unsigned long)adler_in, (unsigned long)adler_out);
 #if 0
                     printf("Orig:  ");
                     r = (x >= 10) ? -10 : 0 - (int) x;
@@ -1157,7 +1178,7 @@ compress_overrun:
                         printf(" %02x", (int)d[x+j]);
                     printf("\nDecomp:");
                     for (j = r; j <= 10 && x + j < bl; j++)
-                        printf(" %02x", (int)block2.ptr[x+j]);
+                        printf(" %02x", (int)block_d.ptr[x+j]);
                     printf("\n");
 #endif
                     return EXIT_LZO_ERROR;
@@ -1166,27 +1187,28 @@ compress_overrun:
                     (opt_compute_crc32 && crc_in != crc_out))
                 {
                     printf("  checksum error in block %lu (%lu %lu)\n",
-                        blocks, (long)c_len, (long)d_len);
+                           blocks, (unsigned long)c_len, (unsigned long)d_len);
                     printf("      adler32: 0x%08lx 0x%08lx\n",
-                        (long)adler_in, (long)adler_out);
+                           (unsigned long)adler_in, (unsigned long)adler_out);
                     printf("      crc32: 0x%08lx 0x%08lx\n",
-                        (long)crc_in, (long)crc_out);
+                           (unsigned long)crc_in, (unsigned long)crc_out);
                     return EXIT_LZO_ERROR;
                 }
             }
 
-            if (memchecker_check(&block2, block2.len, random_byte) != 0)
+            if (memchecker_check(&block_d, block_d.len, random_byte) != 0)
             {
                 printf("  decompression overwrite error in block %lu "
-                    "(%lu %lu %lu %lu)\n",
-                    blocks, (long)c_len, (long)d_len, (long)bl, (long)block2.len);
+                       "(%lu %lu %lu %lu)\n",
+                       blocks, (unsigned long)c_len, (unsigned long)d_len,
+                       (unsigned long)bl, (unsigned long)block_d.len);
                 return EXIT_LZO_ERROR;
             }
 
 #if defined(__LZO_CHECKER)
             /* free in reverse order of allocations */
-            mb_free(&block2);
-            mb_free(&block1);
+            mb_free(&block_d);
+            mb_free(&block_c);
 #endif
 
             d += bl;
@@ -1198,8 +1220,9 @@ compress_overrun:
     lzo_uclock_read(&uch, &t_stop);
     t_time += lzo_uclock_get_elapsed(&uch, &t_start, &t_stop);
 
-    if (fp_dump)
-        fclose(fp_dump);
+    if (fp_dump) {
+        (void) fclose(fp_dump); fp_dump = NULL;
+    }
     opt_dump_compressed_data = NULL;    /* only dump the first file */
 
     print_stats(method_name, file_name,
@@ -1240,7 +1263,7 @@ int do_file ( int method, const char *file_name,
     if (c == NULL || c->name == NULL || c->compress == NULL)
         return EXIT_INTERNAL;
     decompress = get_decomp_info(c,&n);
-    if (!decompress || n == NULL || wrkmem.len < c->mem_decompress)
+    if (!decompress || n == NULL || block_w.len < c->mem_decompress)
         return EXIT_INTERNAL;
     strcpy(method_name,c->name);
     strcat(method_name,n);
@@ -1268,9 +1291,9 @@ int do_file ( int method, const char *file_name,
     if (opt_verbose >= 2)
     {
         printf("File %s: %lu bytes   (0x%08lx, 0x%08lx)\n",
-                file_name, (long) file_data.len, (long) adler, (long) crc);
+               file_name, (unsigned long) file_data.len, (unsigned long) adler, (unsigned long) crc);
         printf("  compressing %lu bytes (%ld/%ld/%ld loops, %lu block-size)\n",
-                (long) file_data.len, t_loops, c_loops, d_loops, (long) opt_block_size);
+               (unsigned long) file_data.len, t_loops, c_loops, d_loops, (unsigned long) opt_block_size);
         printf("  %s\n", method_name);
     }
 
@@ -1292,6 +1315,8 @@ struct corpus_entry_t
     lzo_uint32 adler;
     lzo_uint32 crc;
 };
+
+const struct corpus_entry_t *opt_corpus = NULL;
 
 static const struct corpus_entry_t calgary_corpus[] =
 {
@@ -1367,7 +1392,7 @@ int do_corpus ( const struct corpus_entry_t *corpus, int method, const char *pat
         if (corpus[i].crc && crc != corpus[i].crc)
         {
             printf("  internal checksum error !!  (0x%08lx 0x%08lx)\n",
-                    (long) crc, (long) corpus[i].crc);
+                    (unsigned long) crc, (unsigned long) corpus[i].crc);
             return EXIT_INTERNAL;
         }
     }
@@ -1382,32 +1407,32 @@ int do_corpus ( const struct corpus_entry_t *corpus, int method, const char *pat
 static
 void usage ( const char *name, int exit_code, lzo_bool show_methods )
 {
-    FILE *f;
+    FILE *fp;
     int i;
 
-    f = stdout;
+    fp = stdout;
 
     fflush(stdout); fflush(stderr);
 
-    fprintf(f,"Usage: %s [option..] file...\n", name);
-    fprintf(f,"\n");
-    fprintf(f,"Options:\n");
-    fprintf(f,"  -m#     compression method\n");
-    fprintf(f,"  -b#     set input block size (default %ld, max %ld)\n",
-        (long) opt_block_size, (long) opt_max_data_len);
-    fprintf(f,"  -n#     number of compression/decompression runs\n");
-    fprintf(f,"  -c#     number of compression runs\n");
-    fprintf(f,"  -d#     number of decompression runs\n");
-    fprintf(f,"  -S      use safe decompressor (if available)\n");
-    fprintf(f,"  -A      use assembler decompressor (if available)\n");
-    fprintf(f,"  -F      use fast assembler decompressor (if available)\n");
-    fprintf(f,"  -O      optimize compressed data (if available)\n");
-    fprintf(f,"  -s DIR  process Calgary Corpus test suite in directory `DIR'\n");
-    fprintf(f,"  -@      read list of files to compress from stdin\n");
-    fprintf(f,"  -q      be quiet\n");
-    fprintf(f,"  -Q      be very quiet\n");
-    fprintf(f,"  -v      be verbose\n");
-    fprintf(f,"  -L      display software license\n");
+    fprintf(fp,"Usage: %s [option..] file...\n", name);
+    fprintf(fp,"\n");
+    fprintf(fp,"Options:\n");
+    fprintf(fp,"  -m#     compression method\n");
+    fprintf(fp,"  -b#     set input block size (default %lu, max %lu)\n",
+            (unsigned long) opt_block_size, (unsigned long) opt_max_data_len);
+    fprintf(fp,"  -n#     number of compression/decompression runs\n");
+    fprintf(fp,"  -c#     number of compression runs\n");
+    fprintf(fp,"  -d#     number of decompression runs\n");
+    fprintf(fp,"  -S      use safe decompressor (if available)\n");
+    fprintf(fp,"  -A      use assembler decompressor (if available)\n");
+    fprintf(fp,"  -F      use fast assembler decompressor (if available)\n");
+    fprintf(fp,"  -O      optimize compressed data (if available)\n");
+    fprintf(fp,"  -s DIR  process Calgary Corpus test suite in directory `DIR'\n");
+    fprintf(fp,"  -@      read list of files to compress from stdin\n");
+    fprintf(fp,"  -q      be quiet\n");
+    fprintf(fp,"  -Q      be very quiet\n");
+    fprintf(fp,"  -v      be verbose\n");
+    fprintf(fp,"  -L      display software license\n");
 
     if (show_methods)
     {
@@ -1415,13 +1440,13 @@ void usage ( const char *name, int exit_code, lzo_bool show_methods )
         lzo_uclock_t t_dummy;
         lzo_uclock_read(&uch, &t_dummy);
         (void) lzo_uclock_get_elapsed(&uch, &t_dummy, &t_dummy);
-        fprintf(f,"\nAll timings are recorded using uclock mode %d %s.\n", uch.mode, uch.name);
+        fprintf(fp,"\nAll timings are recorded using uclock mode %d %s.\n", uch.mode, uch.name);
 #endif
-        fprintf(f,"\n\n");
-        fprintf(f,"The following compression methods are available:\n");
-        fprintf(f,"\n");
-        fprintf(f,"  usage   name           memory          available extras\n");
-        fprintf(f,"  -----   ----           ------          ----------------\n");
+        fprintf(fp,"\n\n");
+        fprintf(fp,"The following compression methods are available:\n");
+        fprintf(fp,"\n");
+        fprintf(fp,"  usage   name           memory          available extras\n");
+        fprintf(fp,"  -----   ----           ------          ----------------\n");
 
         for (i = 0; i <= M_LAST_COMPRESSOR; i++)
         {
@@ -1430,44 +1455,41 @@ void usage ( const char *name, int exit_code, lzo_bool show_methods )
             if (c)
             {
                 char n[16];
-                static const char * const s[3] = {"          ", ", ", ""};
-                int j = 0;
+                const char *sep = "          ";
                 unsigned long m = c->mem_compress;
 
                 sprintf(n,"-m%d",i);
-                fprintf(f,"  %-6s  %-13s",n,c->name);
+                fprintf(fp,"  %-6s  %-13s",n,c->name);
 #if 1
-                fprintf(f,"%9ld", m);
+                fprintf(fp,"%9lu", m);
 #else
                 m = (m + 1023) / 1024;
-                fprintf(f,"%6ld kB", m);
+                fprintf(fp,"%6lu KiB", m);
 #endif
 
                 if (c->decompress_safe)
-                    fprintf(f, "%s%s", j++ == 0 ? s[0] : s[1], "safe");
+                    { fprintf(fp, "%s%s", sep, "safe"); sep = ", "; }
                 if (c->decompress_asm)
-                    fprintf(f, "%s%s", j++ == 0 ? s[0] : s[1], "asm");
+                    { fprintf(fp, "%s%s", sep, "asm"); sep = ", "; }
                 if (c->decompress_asm_safe)
-                    fprintf(f, "%s%s", j++ == 0 ? s[0] : s[1], "asm+safe");
+                    { fprintf(fp, "%s%s", sep, "asm+safe"); sep = ", "; }
                 if (c->decompress_asm_fast)
-                    fprintf(f, "%s%s", j++ == 0 ? s[0] : s[1], "fastasm");
+                    { fprintf(fp, "%s%s", sep, "fastasm"); sep = ", "; }
                 if (c->decompress_asm_fast_safe)
-                    fprintf(f, "%s%s", j++ == 0 ? s[0] : s[1], "fastasm+safe");
+                    { fprintf(fp, "%s%s", sep, "fastasm+safe"); sep = ", "; }
                 if (c->optimize)
-                    fprintf(f, "%s%s", j++ == 0 ? s[0] : s[1], "optimize");
-                if (j > 0)
-                    fprintf(f, s[2]);
-                fprintf(f,"\n");
+                    { fprintf(fp, "%s%s", sep, "optimize"); sep = ", "; }
+                fprintf(fp, "\n");
             }
         }
     }
     else
     {
-        fprintf(f,"\n");
-        fprintf(f,"Type '%s -m' to list all available methods.\n", name);
+        fprintf(fp,"\n");
+        fprintf(fp,"Type '%s -m' to list all available methods.\n", name);
     }
 
-    fflush(f);
+    fflush(fp);
     if (exit_code < 0)
         exit_code = EXIT_USAGE;
     exit(exit_code);
@@ -1477,16 +1499,15 @@ void usage ( const char *name, int exit_code, lzo_bool show_methods )
 static
 void license(void)
 {
-    FILE *f;
+    FILE *fp;
 
-    f = stdout;
-
+    fp = stdout;
     fflush(stdout); fflush(stderr);
 
 #if defined(__LZO_PROFESSIONAL__)
 #  include "lzopro/license.ch"
 #else
-fprintf(f,
+fprintf(fp,
 "   The LZO library is free software; you can redistribute it and/or\n"
 "   modify it under the terms of the GNU General Public License as\n"
 "   published by the Free Software Foundation; either version 2 of\n"
@@ -1497,7 +1518,7 @@ fprintf(f,
 "   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
 "   GNU General Public License for more details.\n"
     );
-fprintf(f,
+fprintf(fp,
 "\n"
 "   You should have received a copy of the GNU General Public License\n"
 "   along with the LZO library; see the file COPYING.\n"
@@ -1511,7 +1532,7 @@ fprintf(f,
     );
 #endif
 
-    fflush(f);
+    fflush(fp);
     exit(EXIT_OK);
 }
 
@@ -1588,8 +1609,9 @@ static lzo_bool m_strisdigit(const char *s)
             return 0;
         s++;
         if (*s == 0 || *s == ',')
-            return 1;
+            break;
     }
+    return 1;
 }
 
 
@@ -1671,13 +1693,10 @@ enum {
     OPT_MAX_DICT_LEN,
     OPT_SILESIA_CORPUS,
     OPT_UCLOCK,
-#if defined(LZOTEST_USE_DYNLOAD)
-#  include "dynload/o_enum.ch"
-#endif
     OPT_UNUSED
 };
 
-static const struct mfx_option longopts[] =
+static const struct acc_getopt_longopt_t longopts[] =
 {
  /* { name  has_arg  *flag  val } */
     {"help",             0, 0, 'h'+256}, /* give help */
@@ -1701,16 +1720,14 @@ static const struct mfx_option longopts[] =
     {"uclock",           1, 0, OPT_UCLOCK},
     {"methods",          1, 0, 'm'},
     {"totals",           0, 0, 'T'},
-#if defined(LZOTEST_USE_DYNLOAD)
-#  include "dynload/o_longopts.ch"
-#endif
 
     { 0, 0, 0, 0 }
 };
 
 
-static int do_option(int optc)
+static int do_option(acc_getopt_p g, int optc)
 {
+#define mfx_optarg      g->optarg
     switch (optc)
     {
     case 'A':
@@ -1799,11 +1816,13 @@ static int do_option(int optc)
     case '1': case '2': case '3': case '4': case '5':
     case '6': case '7': case '8': case '9':
         /* this is a dirty hack... */
-        parse_methods(nextchar-1);
-        if (nextchar[0])
-        {
-            nextchar = NULL;
-            mfx_optind++;
+        if (g->shortpos == 0) {
+            char m[2]; m[0] = (char) optc; m[1] = 0;
+            parse_methods(m);
+        } else {
+            const char *m = &g->argv[g->optind][g->shortpos-1];
+            parse_methods(m);
+            ++g->optind; g->shortpos = 0;
         }
         break;
 
@@ -1846,10 +1865,6 @@ static int do_option(int optc)
 #endif
         break;
 
-#if defined(LZOTEST_USE_DYNLOAD)
-#  include "dynload/o_do_option.ch"
-#endif
-
     case '\0':
         return -1;
     case ':':
@@ -1859,27 +1874,40 @@ static int do_option(int optc)
         return -3;
     }
     return 0;
+#undef mfx_optarg
+}
+
+
+static void handle_opterr(acc_getopt_p g, const char *f, void *v)
+{
+    struct A { va_list ap; };
+    struct A *a = (struct A *) v;
+    fprintf( stderr, "%s: ", g->progname);
+    if (a)
+        vfprintf(stderr, f, a->ap);
+    else
+        fprintf( stderr, "UNKNOWN GETOPT ERROR");
+    fprintf( stderr, "\n");
 }
 
 
 static int get_options(int argc, char **argv)
 {
+    acc_getopt_t mfx_getopt;
     int optc;
+    static const char shortopts[] =
+        "Ab::c:C:d:D:FhHLm::n:OqQs:STvV@123456789";
 
-    mfx_optind = 0;
-    mfx_opterr = 1;
-    while ((optc = mfx_getopt_long (argc, argv,
-                      "Ab::c:C:d:D:FhHLm::n:OqQs:STvV@123456789"
-#if defined(LZOTEST_USE_DYNLOAD)
-#  include "dynload/o_shortopts.ch"
-#endif
-                      , longopts, (int *)0)) >= 0)
+    acc_getopt_init(&mfx_getopt, 1, argc, argv);
+    mfx_getopt.progname = progname;
+    mfx_getopt.opterr = handle_opterr;
+    while ((optc = acc_getopt(&mfx_getopt, shortopts, longopts, NULL)) >= 0)
     {
-        if (do_option(optc) != 0)
+        if (do_option(&mfx_getopt, optc) != 0)
             exit(EXIT_USAGE);
     }
 
-    return mfx_optind;
+    return mfx_getopt.optind;
 }
 
 
@@ -1906,13 +1934,11 @@ int __lzo_cdecl_main main(int argc, char *argv[])
 #if defined(__LZO_PROFESSIONAL__)
     printf("\nLZO Professional real-time data compression library (v%s, %s).\n",
            lzo_version_string(), lzo_version_date());
-    printf("Copyright (C) 1996-2008 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
-#elif defined(LZOTEST_USE_DYNLOAD)
-#  include "dynload/init.ch"
+    printf("Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
 #else
     printf("\nLZO real-time data compression library (v%s, %s).\n",
            lzo_version_string(), lzo_version_date());
-    printf("Copyright (C) 1996-2008 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
+    printf("Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
 #endif
 
 
@@ -1983,21 +2009,22 @@ int __lzo_cdecl_main main(int argc, char *argv[])
  * Step 4: start work
  */
 
-    wrkmem.len = 0;
+    block_w.len = 0;
     for (ii = 0; ii < methods_n; ii++) {
         const compress_t *c = find_method_by_id(methods[ii]);
         assert(c != NULL);
-        if (c->mem_compress > wrkmem.len)
-            wrkmem.len = c->mem_compress;
-        if (c->mem_decompress > wrkmem.len)
-            wrkmem.len = c->mem_decompress;
+        if (c->mem_compress > block_w.len)
+            block_w.len = c->mem_compress;
+        if (c->mem_decompress > block_w.len)
+            block_w.len = c->mem_decompress;
     }
 
-    mb_alloc(&wrkmem, wrkmem.len);
+    mb_alloc(&block_w, block_w.len);
+    lzo_memset(block_w.ptr, 0, block_w.len);
 
 #if !defined(__LZO_CHECKER)
-    mb_alloc_extra(&block1, opt_block_size + get_max_compression_expansion(-1, opt_block_size), 16, 16);
-    mb_alloc_extra(&block2, opt_block_size + get_max_decompression_overrun(-1, opt_block_size), 16, 16);
+    mb_alloc_extra(&block_c, opt_block_size + get_max_compression_expansion(-1, opt_block_size), 16, 16);
+    mb_alloc_extra(&block_d, opt_block_size + get_max_decompression_overrun(-1, opt_block_size), 16, 16);
 #endif
 
     if (opt_dict)
@@ -2008,15 +2035,15 @@ int __lzo_cdecl_main main(int argc, char *argv[])
         {
             dict_load(opt_dictionary_file);
             if (dict.len > 0)
-                printf("Using dictionary '%s', %ld bytes, ID 0x%08lx.\n",
-                        opt_dictionary_file,
-                        (long) dict.len, (long) dict.adler);
+                printf("Using dictionary '%s', %lu bytes, ID 0x%08lx.\n",
+                       opt_dictionary_file,
+                       (unsigned long) dict.len, (unsigned long) dict.adler);
         }
         if (dict.len == 0)
         {
             dict_set_default();
-            printf("Using default dictionary, %ld bytes, ID 0x%08lx.\n",
-                    (long) dict.len, (long) dict.adler);
+            printf("Using default dictionary, %lu bytes, ID 0x%08lx.\n",
+                   (unsigned long) dict.len, (unsigned long) dict.adler);
         }
     }
 
@@ -2030,7 +2057,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
         if (i >= argc && opt_corpus_path == NULL && !opt_read_from_stdin)
             usage(progname,-1,0);
         if (m == 0 && opt_verbose >= 1)
-            printf("%lu block-size\n\n", (long) opt_block_size);
+            printf("%lu block-size\n\n", (unsigned long) opt_block_size);
 
         assert(find_method_by_id(method) != NULL);
 
@@ -2067,16 +2094,12 @@ int __lzo_cdecl_main main(int argc, char *argv[])
             }
         }
     }
-
-#if defined(LZOTEST_USE_DYNLOAD)
-#  include "dynload/exit.ch"
-#endif
     t_total = time(NULL) - t_total;
 
     if (opt_totals)
         print_totals();
     if (opt_execution_time || (methods_n > 1 && opt_verbose >= 1))
-        printf("\n%s: execution time: %lu seconds\n", progname, (long) t_total);
+        printf("\n%s: execution time: %lu seconds\n", progname, (unsigned long) t_total);
     if (r != EXIT_OK)
         printf("\n%s: exit code: %d\n", progname, r);
 

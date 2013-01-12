@@ -2,6 +2,9 @@
 ;
 ;  This file is part of the LZO real-time data compression library.
 ;
+;  Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+;  Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+;  Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
 ;  Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
 ;  Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
 ;  Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -37,15 +40,37 @@
 ;  http://www.oberhumer.com/opensource/lzo/
 ;
 
-%define F(name) name
-%ifidni __OUTPUT_FORMAT__,elf
-%define globalf(x) global x:function
+%ifidni __OUTPUT_FORMAT__,macho
+%define NAME1(x)        _ %+ x
+%elifidni __OUTPUT_FORMAT__,macho32
+%define NAME1(x)        _ %+ x
+%elifidni __OUTPUT_FORMAT__,macho64
+%define NAME1(x)        _ %+ x
 %else
-%define globalf(x) global x
+%define NAME1(x)        _ %+ x
+%define NAME2(x)             x
+%endif
+
+%ifidni __OUTPUT_FORMAT__,elf
+%define globalf(x)      global x:function (x %+ _end - x)
+%define globalf_end(x)  x %+ _end:
+%elifidni __OUTPUT_FORMAT__,elf32
+%define globalf(x)      global x:function (x %+ _end - x)
+%define globalf_end(x)  x %+ _end:
+%elifidni __OUTPUT_FORMAT__,elf64
+%define globalf(x)      global x:function (x %+ _end - x)
+%define globalf_end(x)  x %+ _end:
+%else
+%define globalf(x)      global x
+%define globalf_end(x)
 %endif
 
 bits 32
 %ifidni __OUTPUT_FORMAT__,elf
+section .note.GNU-stack noalloc noexec nowrite progbits
+%elifidni __OUTPUT_FORMAT__,elf32
+section .note.GNU-stack noalloc noexec nowrite progbits
+%elifidni __OUTPUT_FORMAT__,elf64
 section .note.GNU-stack noalloc noexec nowrite progbits
 %endif
 %ifidni __OUTPUT_FORMAT__,obj
@@ -53,3 +78,4 @@ segment _TEXT class=CODE public use32 flat align=16
 %else
 section .text
 %endif
+align 16

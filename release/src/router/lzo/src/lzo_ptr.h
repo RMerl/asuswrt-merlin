@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -45,7 +48,7 @@
 
 
 #ifndef __LZO_PTR_H
-#define __LZO_PTR_H
+#define __LZO_PTR_H 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,7 +60,7 @@ extern "C" {
 ************************************************************************/
 
 #if !defined(lzo_uintptr_t)
-#  if defined(__LZO_MMODEL_HUGE)
+#  if (__LZO_MMODEL_HUGE)
 #    define lzo_uintptr_t   unsigned long
 #  else
 #    define lzo_uintptr_t   acc_uintptr_t
@@ -72,7 +75,7 @@ extern "C" {
 //
 ************************************************************************/
 
-/* Always use the safe (=integral) version for pointer-comparisions.
+/* Always use the safe (=integral) version for pointer-comparisons.
  * The compiler should optimize away the additional casts anyway.
  *
  * Note that this only works if the representation and ordering
@@ -125,6 +128,10 @@ typedef union
     lzo_uint        a_lzo_uint;
     lzo_int32       a_lzo_int32;
     lzo_uint32      a_lzo_uint32;
+#if defined(LZO_UINT64_MAX)
+    lzo_int64       a_lzo_int64;
+    lzo_uint64      a_lzo_uint64;
+#endif
     ptrdiff_t       a_ptrdiff_t;
     lzo_uintptr_t   a_lzo_uintptr_t;
     lzo_voidp       a_lzo_voidp;

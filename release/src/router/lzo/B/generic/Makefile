@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2008 Markus F.X.J. Oberhumer
+# Copyright (C) 1996-2011 Markus F.X.J. Oberhumer
 #
 # this is modelled after build.sh; needs GNU make 3.80 or better
 
@@ -14,7 +14,7 @@ AR ?= ar
 CC ?= cc
 CFLAGS ?= -O
 
-CFI = -I$(top_srcdir)/include -I$(top_srcdir)
+CFI = -I$(top_srcdir)/include -I$(top_srcdir) -I$(top_srcdir)/src
 BNAME = lzo2
 BLIB = lib$(BNAME).a
 

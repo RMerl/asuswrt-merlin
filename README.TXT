@@ -26,6 +26,7 @@ Set Up Environment (Tested in Fedora 8/9 and Ubuntu 10.04/12.04 LTS amd64)
 	zlib1g-dev
 	gperf
 	lib32z1-dev
+	libssl-dev
 
    2. prepare source to, ex, $HOME/asuswrt
 	cd $HOME

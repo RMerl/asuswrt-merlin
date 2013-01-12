@@ -4,4 +4,3 @@
 -Wcast-align
 -Wcast-qual
 -Wwrite-strings
--Wno-uninitialized

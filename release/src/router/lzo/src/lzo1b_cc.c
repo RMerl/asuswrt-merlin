@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -38,7 +41,7 @@
  */
 
 
-#define LZO_NEED_DICT_H
+#define LZO_NEED_DICT_H 1
 #include "config1b.h"
 
 
@@ -57,14 +60,14 @@ int _lzo1b_do_compress   ( const lzo_bytep in,  lzo_uint  in_len,
 #endif
 
 
-#if defined(LZO_COLLECT_STATS)
+#if (LZO_COLLECT_STATS)
     _lzo1b_stats_init(lzo_stats);
     lzo_stats->in_len = in_len;
 #endif
 
 
     /* don't try to compress a block that's too short */
-    if (in_len <= 0)
+    if (in_len == 0)
     {
         *out_len = 0;
         r = LZO_E_OK;
@@ -91,15 +94,15 @@ int _lzo1b_do_compress   ( const lzo_bytep in,  lzo_uint  in_len,
     if (r == LZO_E_OK)
     {
         lzo_bytep op = out + *out_len;
-        *op++ = M3_MARKER | 1;
-        *op++ = 0;
-        *op++ = 0;
+        op[0] = M3_MARKER | 1;
+        op[1] = 0;
+        op[2] = 0;
         *out_len += 3;
     }
 #endif
 
 
-#if defined(LZO_COLLECT_STATS)
+#if (LZO_COLLECT_STATS)
     lzo_stats->out_len = *out_len;
     lzo_stats->match_bytes =
        1 * lzo_stats->m1_matches + 2 * lzo_stats->m2_matches +
@@ -120,7 +123,7 @@ int _lzo1b_do_compress   ( const lzo_bytep in,  lzo_uint  in_len,
 /* lzo_stats_t is still defined */
 
 
-#if defined(LZO_COLLECT_STATS)
+#if (LZO_COLLECT_STATS)
 
 static lzo_stats_t lzo_statistics;
 lzo_stats_t * const lzo1b_stats = &lzo_statistics;

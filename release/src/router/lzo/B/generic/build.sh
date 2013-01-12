@@ -1,7 +1,7 @@
 #! /bin/sh
 # vi:ts=4:et
 set -e
-echo "// Copyright (C) 1996-2008 Markus F.X.J. Oberhumer"
+echo "// Copyright (C) 1996-2011 Markus F.X.J. Oberhumer"
 echo "//"
 echo "//   Generic Posix/Unix system"
 echo "//   Generic C compiler"
@@ -15,7 +15,7 @@ test "X${CFLAGS+set}" = Xset || CFLAGS="-O"
 # LZO_EXTRA_CPPFLAGS, LZO_EXTRA_CFLAGS, LZO_EXTRA_LDFLAGS
 # LZO_EXTRA_SOURCES, LZO_EXTRA_OBJECTS, LZO_EXTRA_LIBS
 
-CFI="-I${top_srcdir}/include -I${top_srcdir}"
+CFI="-I${top_srcdir}/include -I${top_srcdir} -I${top_srcdir}/src"
 BNAME=lzo2
 BLIB=lib${BNAME}.a
 

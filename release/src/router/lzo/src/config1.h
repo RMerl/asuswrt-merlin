@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -44,12 +47,12 @@
  */
 
 #ifndef __LZO_CONFIG1_H
-#define __LZO_CONFIG1_H
+#define __LZO_CONFIG1_H 1
 
 #include "lzo_conf.h"
 #include "lzo/lzo1.h"
 
-#define LZO_NO_R1
+#define LZO_NO_R1 1
 #include "config1a.h"
 
 #endif /* already included */
