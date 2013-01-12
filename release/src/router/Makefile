@@ -1749,10 +1749,10 @@ openvpn/.conf:
 	CPPFLAGS="-I$(TOP)/lzo/include -I$(TOP)/openssl/include -L$(TOP)/lzo -L$(TOP)/openssl -L$(TOP)/lzo/src/.libs" \
 	IPROUTE="/usr/sbin/ip" \
 	OPENSSL_CRYPTO_LIBS="-lcrypto" \
-	ac_cv_lib_resolv_gethostbyname=no \
 	$(CONFIGURE) --prefix= \
 	--disable-debug --disable-plugins --enable-management --enable-small \
-	--disable-selinux --disable-socks --enable-password-save
+	--disable-selinux --disable-socks --enable-password-save \
+	ac_cv_lib_resolv_gethostbyname=no \
 	touch openvpn/.conf
 
 openvpn-clean:
