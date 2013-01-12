@@ -4,7 +4,7 @@ linux-ntfs-2.0.0
 *.o
 *.lo
 .deps
-openvpn
+src/openvpn/.libs/*
 autom4te.cache
 service-win32/Makefile
 install-win32/Makefile
