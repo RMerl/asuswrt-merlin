@@ -66,9 +66,15 @@ export KEY_PROVINCE="CA"
 export KEY_CITY="SanFrancisco"
 export KEY_ORG="Fort-Funston"
 export KEY_EMAIL="me@myhost.mydomain"
-export KEY_EMAIL=mail@host.domain
-export KEY_CN=changeme
-export KEY_NAME=changeme
-export KEY_OU=changeme
-export PKCS11_MODULE_PATH=changeme
-export PKCS11_PIN=1234
+export KEY_OU="MyOrganizationalUnit"
+
+# X509 Subject Field
+export KEY_NAME="EasyRSA"
+
+# PKCS11 Smart Card
+# export PKCS11_MODULE_PATH="/usr/lib/changeme.so"
+# export PKCS11_PIN=1234
+
+# If you'd like to sign all keys with the same Common Name, uncomment the KEY_CN export below
+# You will also need to make sure your OpenVPN server config has the duplicate-cn option set
+# export KEY_CN="CommonName"
