@@ -19,7 +19,13 @@ mkdir -p $DEST/keys
 cp -a /rom/easy-rsa/* $DEST/
 chmod a+rx $DEST/*
 echo "easy-rsa scripts copied to $DEST."
+echo ""
 echo "Enter $DEST/, and edit the 'vars' file as needed."
-echo "Then, execute it to setup your environment, and execute "./clean-all" to initialize things."
+echo "Then, execute it to setup your environment:"
+echo " source vars"
+echo ""
+echo "Finally, initialize things with the following command:"
+echo " ./clean-all"
+echo ""
 echo "Read the easy-rsa documentation on how to use it to generate your certs/keys."
 
