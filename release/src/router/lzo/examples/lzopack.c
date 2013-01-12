@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -52,13 +55,13 @@
 #include "lzo/lzo1x.h"
 
 /* portability layer */
+static const char *progname = NULL;
 #define WANT_LZO_MALLOC 1
 #define WANT_LZO_FREAD 1
 #define WANT_LZO_WILDARGV 1
+#define WANT_XMALLOC 1
 #include "examples/portab.h"
 
-
-static const char *progname = NULL;
 
 static unsigned long total_in = 0;
 static unsigned long total_out = 0;
@@ -156,12 +159,12 @@ void xwrite32(FILE *fp, lzo_xint v)
 //   compression.
 **************************************************************************/
 
-int do_compress(FILE *fi, FILE *fo, int level, lzo_uint block_size)
+int do_compress(FILE *fi, FILE *fo, int compression_level, lzo_uint block_size)
 {
     int r = 0;
     lzo_bytep in = NULL;
     lzo_bytep out = NULL;
-    lzo_bytep wrkmem = NULL;
+    lzo_voidp wrkmem = NULL;
     lzo_uint in_len;
     lzo_uint out_len;
     lzo_uint32 wrk_len = 0;
@@ -176,21 +179,21 @@ int do_compress(FILE *fi, FILE *fo, int level, lzo_uint block_size)
  */
     xwrite(fo, magic, sizeof(magic));
     xwrite32(fo, flags);
-    xputc(fo, method);          /* compression method */
-    xputc(fo, level);           /* compression level */
+    xputc(fo, method);              /* compression method */
+    xputc(fo, compression_level);   /* compression level */
     xwrite32(fo, block_size);
     checksum = lzo_adler32(0, NULL, 0);
 
 /*
  * Step 2: allocate compression buffers and work-memory
  */
-    in = (lzo_bytep) lzo_malloc(block_size);
-    out = (lzo_bytep) lzo_malloc(block_size + block_size / 16 + 64 + 3);
-    if (level == 9)
+    in = (lzo_bytep) xmalloc(block_size);
+    out = (lzo_bytep) xmalloc(block_size + block_size / 16 + 64 + 3);
+    if (compression_level == 9)
         wrk_len = LZO1X_999_MEM_COMPRESS;
     else
         wrk_len = LZO1X_1_MEM_COMPRESS;
-    wrkmem = (lzo_bytep) lzo_malloc(wrk_len);
+    wrkmem = (lzo_voidp) xmalloc(wrk_len);
     if (in == NULL || out == NULL || wrkmem == NULL)
     {
         printf("%s: out of memory\n", progname);
@@ -205,7 +208,7 @@ int do_compress(FILE *fi, FILE *fo, int level, lzo_uint block_size)
     {
         /* read block */
         in_len = xread(fi, in, block_size, 1);
-        if (in_len <= 0)
+        if (in_len == 0)
             break;
 
         /* update checksum */
@@ -217,7 +220,7 @@ int do_compress(FILE *fi, FILE *fo, int level, lzo_uint block_size)
             lzo_memset(wrkmem, 0xff, wrk_len);
 
         /* compress block */
-        if (level == 9)
+        if (compression_level == 9)
             r = lzo1x_999_compress(in, in_len, out, &out_len, wrkmem);
         else
             r = lzo1x_1_compress(in, in_len, out, &out_len, wrkmem);
@@ -277,7 +280,7 @@ int do_decompress(FILE *fi, FILE *fo)
     unsigned char m [ sizeof(magic) ];
     lzo_uint32 flags;
     int method;
-    int level;
+    int compression_level;
     lzo_uint block_size;
     lzo_uint32 checksum;
 
@@ -295,11 +298,11 @@ int do_decompress(FILE *fi, FILE *fo)
     }
     flags = xread32(fi);
     method = xgetc(fi);
-    level = xgetc(fi);
+    compression_level = xgetc(fi);
     if (method != 1)
     {
         printf("%s: header error - invalid method %d (level %d)\n",
-                progname, method, level);
+                progname, method, compression_level);
         r = 2;
         goto err;
     }
@@ -317,7 +320,7 @@ int do_decompress(FILE *fi, FILE *fo)
  * Step 2: allocate buffer for in-place decompression
  */
     buf_len = block_size + block_size / 16 + 64 + 3;
-    buf = (lzo_bytep) lzo_malloc(buf_len);
+    buf = (lzo_bytep) xmalloc(buf_len);
     if (buf == NULL)
     {
         printf("%s: out of memory\n", progname);
@@ -506,9 +509,9 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     FILE *fo = NULL;
     const char *in_name = NULL;
     const char *out_name = NULL;
-    lzo_bool opt_decompress = 0;
-    lzo_bool opt_test = 0;
-    int opt_level = 1;
+    unsigned opt_decompress = 0;
+    unsigned opt_test = 0;
+    int opt_compression_level = 1;
     lzo_uint opt_block_size;
     const char *s;
 
@@ -521,7 +524,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
 
     printf("\nLZO real-time data compression library (v%s, %s).\n",
            lzo_version_string(), lzo_version_date());
-    printf("Copyright (C) 1996-2008 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
+    printf("Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
 
 #if 0
     printf(
@@ -539,7 +542,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     if (lzo_init() != LZO_E_OK)
     {
         printf("internal error - lzo_init() failed !!!\n");
-        printf("(this usually indicates a compiler bug - try recompiling\nwithout optimizations, and enable `-DLZO_DEBUG' for diagnostics)\n");
+        printf("(this usually indicates a compiler bug - try recompiling\nwithout optimizations, and enable '-DLZO_DEBUG' for diagnostics)\n");
         exit(1);
     }
 
@@ -567,7 +570,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
         else if (strcmp(argv[i],"-t") == 0)
             opt_test = 1;
         else if (strcmp(argv[i],"-9") == 0)
-            opt_level = 9;
+            opt_compression_level = 9;
         else if (argv[i][1] == 'b' && argv[i][2])
         {
             long b = atol(&argv[i][2]);
@@ -575,7 +578,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
                 opt_block_size = (lzo_uint) b;
             else
             {
-                printf("%s: invalid block_size in option `%s'.\n", progname, argv[i]);
+                printf("%s: invalid block_size in option '%s'.\n", progname, argv[i]);
                 usage();
             }
         }
@@ -625,7 +628,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
         out_name = argv[i++];
         fi = xopen_fi(in_name);
         fo = xopen_fo(out_name);
-        r = do_compress(fi, fo, opt_level, opt_block_size);
+        r = do_compress(fi, fo, opt_compression_level, opt_block_size);
         if (r == 0)
             printf("%s: compressed %lu into %lu bytes\n",
                     progname, total_in, total_out);

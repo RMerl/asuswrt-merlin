@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -41,21 +44,17 @@
 #if (LZO_UINT_MAX < LZO_0xffffffffL)
 #  error "LZO_UINT_MAX"
 #endif
+#if defined(LZO_DEBUG)
+#  include <stdio.h>
+#endif
+#if defined(__LZO_CHECKER)
+#  include <stdlib.h>
+#endif
 
 
 /***********************************************************************
 //
 ************************************************************************/
-
-#ifndef SWD_N
-#  define SWD_N             N
-#endif
-#ifndef SWD_F
-#  define SWD_F             F
-#endif
-#ifndef SWD_THRESHOLD
-#  define SWD_THRESHOLD     THRESHOLD
-#endif
 
 /* unsigned type for dictionary access - don't waste memory here */
 #if (0UL + SWD_N + SWD_F + SWD_F < 0UL + USHRT_MAX)
@@ -89,22 +88,25 @@
 #endif
 #endif
 
-#if (SWD_THRESHOLD == 1) && !defined(HEAD2)
+#if !(SWD_NO_HEAD2) && (SWD_THRESHOLD == 1) && !defined(HEAD2)
 #  if 1 && defined(LZO_UNALIGNED_OK_2)
-#    define HEAD2(b,p)      (* (lzo_ushortp) &(b[p]))
+#    define HEAD2(b,p)      UA_GET16((b)+(p))
 #  else
 #    define HEAD2(b,p)      (b[p] ^ ((unsigned)b[p+1]<<8))
 #  endif
 #  define NIL2              SWD_UINT_MAX
+#endif
+#ifndef IF_HEAD2
+#define IF_HEAD2(s)         /*empty*/
 #endif
 
 
 typedef struct
 {
 /* public - "built-in" */
-    lzo_uint n;
-    lzo_uint f;
-    lzo_uint threshold;
+    lzo_uint swd_n;
+    lzo_uint swd_f;
+    lzo_uint swd_threshold;
 
 /* public - configuration */
     lzo_uint max_chain;
@@ -211,11 +213,12 @@ lzo_swd_t;
 
 
 /* Access macro for head3.
- * head3[key] may be uninitialized, but then its value will never be used.
+ * head3[key] may be uninitialized if the list is emtpy,
+ * but then its value will never be used.
  */
 #if defined(__LZO_CHECKER)
 #  define s_get_head3(s,key) \
-        ((s->llen3[key] == 0) ? SWD_UINT_MAX : s_head3(s)[key])
+        ((s_llen3(s)[key] == 0) ? SWD_UINT_MAX : s_head3(s)[key])
 #else
 #  define s_get_head3(s,key)    s_head3(s)[key]
 #endif
@@ -231,12 +234,12 @@ void swd_initdict(lzo_swd_p s, const lzo_bytep dict, lzo_uint dict_len)
     s->dict = s->dict_end = NULL;
     s->dict_len = 0;
 
-    if (!dict || dict_len <= 0)
+    if (!dict || dict_len == 0)
         return;
-    if (dict_len > s->n)
+    if (dict_len > s->swd_n)
     {
-        dict += dict_len - s->n;
-        dict_len = s->n;
+        dict += dict_len - s->swd_n;
+        dict_len = s->swd_n;
     }
 
     s->dict = dict;
@@ -252,25 +255,28 @@ void swd_insertdict(lzo_swd_p s, lzo_uint node, lzo_uint len)
 {
     lzo_uint key;
 
-    s->node_count = s->n - len;
+    s->node_count = s->swd_n - len;
     s->first_rp = node;
 
-    while (len-- > 0)
+    if (len) do
     {
         key = HEAD3(s_b(s),node);
         s_succ3(s)[node] = s_get_head3(s,key);
         s_head3(s)[key] = SWD_UINT(node);
-        s_best3(s)[node] = SWD_UINT(s->f + 1);
+        s_best3(s)[node] = SWD_UINT(s->swd_f + 1);
         s_llen3(s)[key]++;
-        assert(s_llen3(s)[key] <= SWD_N);
+        assert(s_llen3(s)[key] <= s->swd_n);
 
 #ifdef HEAD2
-        key = HEAD2(s_b(s),node);
-        s_head2(s)[key] = SWD_UINT(node);
+        IF_HEAD2(s) {
+            key = HEAD2(s_b(s),node);
+            s_head2(s)[key] = SWD_UINT(node);
+        }
 #endif
 
         node++;
     }
+    while (--len != 0);
 }
 
 
@@ -281,50 +287,62 @@ void swd_insertdict(lzo_swd_p s, lzo_uint node, lzo_uint len)
 static
 int swd_init(lzo_swd_p s, const lzo_bytep dict, lzo_uint dict_len)
 {
-    lzo_uint i = 0;
-    int c = 0;
-
 #if defined(__LZO_CHECKER)
-    s->b = malloc(SWD_N + SWD_F + SWD_F);
-    s->head3 = malloc(sizeof(swd_uint) * SWD_HSIZE);
-    s->succ3 = malloc(sizeof(swd_uint) * (SWD_N + SWD_F));
-    s->best3 = malloc(sizeof(swd_uint) * (SWD_N + SWD_F));
-    s->llen3 = malloc(sizeof(swd_uint) * SWD_HSIZE);
+    s->b = (lzo_bytep) malloc(SWD_N + SWD_F + SWD_F);
+    s->head3 = (swd_uintp) malloc(sizeof(swd_uint) * SWD_HSIZE);
+    s->succ3 = (swd_uintp) malloc(sizeof(swd_uint) * (SWD_N + SWD_F));
+    s->best3 = (swd_uintp) malloc(sizeof(swd_uint) * (SWD_N + SWD_F));
+    s->llen3 = (swd_uintp) malloc(sizeof(swd_uint) * SWD_HSIZE);
 #ifdef HEAD2
-    s->head2 = malloc(sizeof(swd_uint) * 65536L);
+    IF_HEAD2(s) {
+        s->head2 = (swd_uintp) malloc(sizeof(swd_uint) * 65536L);
+    }
 #endif
 #endif
 
-    s->n = SWD_N;
-    s->f = SWD_F;
-    s->threshold = SWD_THRESHOLD;
+    s->m_len = 0;
+    s->m_off = 0;
+#if defined(SWD_BEST_OFF)
+    {
+        unsigned i;
+        for (i = 0; i < SWD_BEST_OFF; i++)
+            s->best_off[i] = s->best_pos[i] = 0;
+    }
+#endif
+
+    s->swd_n = SWD_N;
+    s->swd_f = SWD_F;
+    s->swd_threshold = SWD_THRESHOLD;
 
     /* defaults */
     s->max_chain = SWD_MAX_CHAIN;
-    s->nice_length = SWD_F;
+    s->nice_length = s->swd_f;
     s->use_best_off = 0;
     s->lazy_insert = 0;
 
-    s->b_size = s->n + s->f;
+    s->b_size = s->swd_n + s->swd_f;
 #if 0
-    if (2 * s->f >= s->n || s->b_size + s->f >= SWD_UINT_MAX)
+    if (2 * s->swd_f >= s->swd_n || s->b_size + s->swd_f >= SWD_UINT_MAX)
         return LZO_E_ERROR;
 #else
     LZO_COMPILE_TIME_ASSERT(!(0ul + 2 * SWD_F >= SWD_N))
     LZO_COMPILE_TIME_ASSERT(!(0ul + SWD_N + SWD_F + SWD_F >= SWD_UINT_MAX))
 #endif
     s->b_wrap = s_b(s) + s->b_size;
-    s->node_count = s->n;
+    s->node_count = s->swd_n;
 
-    lzo_memset(s_llen3(s), 0, sizeof(s_llen3(s)[0]) * (lzo_uint)SWD_HSIZE);
+    lzo_memset(s_llen3(s), 0, (lzo_uint)sizeof(s_llen3(s)[0]) * (lzo_uint)SWD_HSIZE);
 #ifdef HEAD2
+    IF_HEAD2(s) {
 #if 1
-    lzo_memset(s_head2(s), 0xff, sizeof(s_head2(s)[0]) * 65536L);
-    assert(s_head2(s)[0] == NIL2);
+        lzo_memset(s_head2(s), 0xff, (lzo_uint)sizeof(s_head2(s)[0]) * 65536L);
+        assert(s_head2(s)[0] == NIL2);
 #else
-    for (i = 0; i < 65536L; i++)
-        s_head2(s)[i] = NIL2;
+        lzo_uint32 i;
+        for (i = 0; i < 65536L; i++)
+            s_head2(s)[i] = NIL2;
 #endif
+    }
 #endif
 
     s->ip = 0;
@@ -332,21 +350,22 @@ int swd_init(lzo_swd_p s, const lzo_bytep dict, lzo_uint dict_len)
     s->bp = s->ip;
     s->first_rp = s->ip;
 
-    assert(s->ip + s->f <= s->b_size);
+    assert(s->ip + s->swd_f <= s->b_size);
 #if 1
     s->look = (lzo_uint) (s->c->in_end - s->c->ip);
     if (s->look > 0)
     {
-        if (s->look > s->f)
-            s->look = s->f;
+        if (s->look > s->swd_f)
+            s->look = s->swd_f;
         lzo_memcpy(&s_b(s)[s->ip],s->c->ip,s->look);
         s->c->ip += s->look;
         s->ip += s->look;
     }
 #else
     s->look = 0;
-    while (s->look < s->f)
+    while (s->look < s->swd_f)
     {
+        int c;
         if ((c = getbyte(*(s->c))) < 0)
             break;
         s_b(s)[s->ip] = LZO_BYTE(c);
@@ -366,15 +385,15 @@ int swd_init(lzo_swd_p s, const lzo_bytep dict, lzo_uint dict_len)
     else
         s->rp += s->b_size - s->node_count;
 
-#if defined(__LZO_CHECKER)
+#if 1 || defined(__LZO_CHECKER)
     /* initialize memory for the first few HEAD3 (if s->ip is not far
      * enough ahead to do this job for us). The value doesn't matter. */
-    if (s->look < 3)
-        lzo_memset(&s_b(s)[s->bp+s->look],0,3);
+    if (s->look < 3) {
+        lzo_bytep p = &s_b(s)[s->bp+s->look];
+        p[0] = p[1] = p[2] = 0;
+    }
 #endif
 
-    LZO_UNUSED(i);
-    LZO_UNUSED(c);
     return LZO_E_OK;
 }
 
@@ -418,14 +437,14 @@ void swd_getbyte(lzo_swd_p s)
 #if defined(__LZO_CHECKER)
         /* initialize memory - value doesn't matter */
         s_b(s)[s->ip] = 0;
-        if (s->ip < s->f)
+        if (s->ip < s->swd_f)
             s->b_wrap[s->ip] = 0;
 #endif
     }
     else
     {
         s_b(s)[s->ip] = LZO_BYTE(c);
-        if (s->ip < s->f)
+        if (s->ip < s->swd_f)
             s->b_wrap[s->ip] = LZO_BYTE(c);
     }
     if (++s->ip == s->b_size)
@@ -452,9 +471,10 @@ void swd_remove_node(lzo_swd_p s, lzo_uint node)
         if (s->first_rp != LZO_UINT_MAX)
         {
             if (node != s->first_rp)
-                printf("Remove %5u: %5u %5u %5u %5u  %6u %6u\n",
-                        node, s->rp, s->ip, s->bp, s->first_rp,
-                        s->ip - node, s->ip - s->bp);
+                printf("Remove %5ld: %5ld %5ld %5ld %5ld  %6ld %6ld\n",
+                        (long)node, (long)s->rp, (long)s->ip, (long)s->bp,
+                        (long)s->first_rp, (long)(s->ip - node),
+                        (long)(s->ip - s->bp));
             assert(node == s->first_rp);
             s->first_rp = LZO_UINT_MAX;
         }
@@ -465,10 +485,12 @@ void swd_remove_node(lzo_swd_p s, lzo_uint node)
         --s_llen3(s)[key];
 
 #ifdef HEAD2
-        key = HEAD2(s_b(s),node);
-        assert(s_head2(s)[key] != NIL2);
-        if ((lzo_uint) s_head2(s)[key] == node)
-            s_head2(s)[key] = NIL2;
+        IF_HEAD2(s) {
+            key = HEAD2(s_b(s),node);
+            assert(s_head2(s)[key] != NIL2);
+            if ((lzo_uint) s_head2(s)[key] == node)
+                s_head2(s)[key] = NIL2;
+        }
 #endif
     }
     else
@@ -485,7 +507,7 @@ void swd_accept(lzo_swd_p s, lzo_uint n)
 {
     assert(n <= s->look);
 
-    while (n--)
+    if (n) do
     {
         lzo_uint key;
 
@@ -495,18 +517,20 @@ void swd_accept(lzo_swd_p s, lzo_uint n)
         key = HEAD3(s_b(s),s->bp);
         s_succ3(s)[s->bp] = s_get_head3(s,key);
         s_head3(s)[key] = SWD_UINT(s->bp);
-        s_best3(s)[s->bp] = SWD_UINT(s->f + 1);
+        s_best3(s)[s->bp] = SWD_UINT(s->swd_f + 1);
         s_llen3(s)[key]++;
-        assert(s_llen3(s)[key] <= SWD_N);
+        assert(s_llen3(s)[key] <= s->swd_n);
 
 #ifdef HEAD2
         /* add bp into HEAD2 */
-        key = HEAD2(s_b(s),s->bp);
-        s_head2(s)[key] = SWD_UINT(s->bp);
+        IF_HEAD2(s) {
+            key = HEAD2(s_b(s),s->bp);
+            s_head2(s)[key] = SWD_UINT(s->bp);
+        }
 #endif
 
         swd_getbyte(s);
-    }
+    } while (--n != 0);
 }
 
 
@@ -550,7 +574,7 @@ void swd_search(lzo_swd_p s, lzo_uint node, lzo_uint cnt)
 
 #if 0 && defined(LZO_UNALIGNED_OK_4)
             p1 += 3; p2 += 3;
-            while (p1 < px && * (const lzo_uint32p) p1 == * (const lzo_uint32p) p2)
+            while (p1 + 4 <= px && UA_GET32(p1) == UA_GET32(p2))
                 p1 += 4, p2 += 4;
             while (p1 < px && *p1 == *p2)
                 p1 += 1, p2 += 1;
@@ -562,8 +586,8 @@ void swd_search(lzo_swd_p s, lzo_uint node, lzo_uint cnt)
 
 #ifdef LZO_DEBUG
             if (lzo_memcmp(bp,&b[node],i) != 0)
-                printf("%5ld %5ld %02x%02x %02x%02x\n",
-                        (long)s->bp, (long) node,
+                printf("%5ld %5ld %5ld %02x/%02x %02x/%02x\n",
+                        (long)s->bp, (long) node, (long) i,
                         bp[0], bp[1], b[node], b[node+1]);
 #endif
             assert(lzo_memcmp(bp,&b[node],i) == 0);
@@ -611,7 +635,7 @@ lzo_bool swd_search2(lzo_swd_p s)
         return 0;
 #ifdef LZO_DEBUG
     if (lzo_memcmp(&s_b(s)[s->bp],&s_b(s)[key],2) != 0)
-        printf("%5ld %5ld %02x%02x %02x%02x\n", (long)s->bp, (long)key,
+        printf("%5ld %5ld %02x/%02x %02x/%02x\n", (long)s->bp, (long)key,
                 s_b(s)[s->bp], s_b(s)[s->bp+1], s_b(s)[key], s_b(s)[key+1]);
 #endif
     assert(lzo_memcmp(&s_b(s)[s->bp],&s_b(s)[key],2) == 0);
@@ -648,7 +672,7 @@ void swd_findbest(lzo_swd_p s)
     key = HEAD3(s_b(s),s->bp);
     node = s_succ3(s)[s->bp] = s_get_head3(s,key);
     cnt = s_llen3(s)[key]++;
-    assert(s_llen3(s)[key] <= SWD_N + SWD_F);
+    assert(s_llen3(s)[key] <= s->swd_n + s->swd_f);
     if (cnt > s->max_chain && s->max_chain > 0)
         cnt = s->max_chain;
     s_head3(s)[key] = SWD_UINT(s->bp);
@@ -660,15 +684,17 @@ void swd_findbest(lzo_swd_p s)
         if (s->look == 0)
             s->b_char = -1;
         s->m_off = 0;
-        s_best3(s)[s->bp] = SWD_UINT(s->f + 1);
+        s_best3(s)[s->bp] = SWD_UINT(s->swd_f + 1);
     }
     else
     {
-#ifdef HEAD2
-        if (swd_search2(s))
+#if defined(HEAD2)
+        if (swd_search2(s) && s->look >= 3)
+            swd_search(s,node,cnt);
+#else
+        if (s->look >= 3)
+            swd_search(s,node,cnt);
 #endif
-            if (s->look >= 3)
-                swd_search(s,node,cnt);
         if (s->m_len > len)
             s->m_off = swd_pos2off(s,s->m_pos);
         s_best3(s)[s->bp] = SWD_UINT(s->m_len);
@@ -676,7 +702,7 @@ void swd_findbest(lzo_swd_p s)
 #if defined(SWD_BEST_OFF)
         if (s->use_best_off)
         {
-            int i;
+            unsigned i;
             for (i = 2; i < SWD_BEST_OFF; i++)
                 if (s->best_pos[i] > 0)
                     s->best_off[i] = swd_pos2off(s,s->best_pos[i]-1);
@@ -690,14 +716,17 @@ void swd_findbest(lzo_swd_p s)
 
 #ifdef HEAD2
     /* add bp into HEAD2 */
-    key = HEAD2(s_b(s),s->bp);
-    s_head2(s)[key] = SWD_UINT(s->bp);
+    IF_HEAD2(s) {
+        key = HEAD2(s_b(s),s->bp);
+        s_head2(s)[key] = SWD_UINT(s->bp);
+    }
 #endif
 }
 
 
 #undef HEAD3
 #undef HEAD2
+#undef IF_HEAD2
 #undef s_get_head3
 
 

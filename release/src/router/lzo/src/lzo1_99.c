@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -49,7 +52,7 @@
 //
 ************************************************************************/
 
-#define LZO_NEED_DICT_H
+#define LZO_NEED_DICT_H 1
 #include "config1.h"
 
 
@@ -66,7 +69,7 @@ _lzo1_do_compress ( const lzo_bytep in,  lzo_uint  in_len,
     int r;
 
     /* don't try to compress a block that's too short */
-    if (in_len <= 0)
+    if (in_len == 0)
     {
         *out_len = 0;
         r = LZO_E_OK;

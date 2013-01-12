@@ -1,16 +1,16 @@
 #! /bin/sh
 # ylwrap - wrapper for lex/yacc invocations.
 
-scriptversion=2007-11-22.22
+scriptversion=2010-02-06.18; # UTC
 
 # Copyright (C) 1996, 1997, 1998, 1999, 2001, 2002, 2003, 2004, 2005,
-# 2007  Free Software Foundation, Inc.
+# 2007, 2009, 2010 Free Software Foundation, Inc.
 #
 # Written by Tom Tromey <tromey@cygnus.com>.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3, or (at your option)
+# the Free Software Foundation; either version 2, or (at your option)
 # any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -99,7 +99,11 @@ esac
 # FIXME: add hostname here for parallel makes that run commands on
 # other machines.  But that might take us over the 14-char limit.
 dirname=ylwrap$$
-trap "cd '`pwd`'; rm -rf $dirname > /dev/null 2>&1" 1 2 3 15
+do_exit="cd '`pwd`' && rm -rf $dirname > /dev/null 2>&1;"' (exit $ret); exit $ret'
+trap "ret=129; $do_exit" 1
+trap "ret=130; $do_exit" 2
+trap "ret=141; $do_exit" 13
+trap "ret=143; $do_exit" 15
 mkdir $dirname || exit 1
 
 cd $dirname
@@ -217,5 +221,6 @@ exit $ret
 # eval: (add-hook 'write-file-hooks 'time-stamp)
 # time-stamp-start: "scriptversion="
 # time-stamp-format: "%:y-%02m-%02d.%02H"
-# time-stamp-end: "$"
+# time-stamp-time-zone: "UTC"
+# time-stamp-end: "; # UTC"
 # End:

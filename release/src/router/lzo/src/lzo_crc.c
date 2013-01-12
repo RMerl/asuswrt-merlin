@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -112,7 +115,7 @@ lzo_get_crc32_table(void)
 
 #if 1
 #define LZO_DO1(buf,i) \
-    crc = table[((int)crc ^ buf[i]) & 0xff] ^ (crc >> 8)
+    crc = table[((unsigned)crc ^ buf[i]) & 0xff] ^ (crc >> 8)
 #else
 #define LZO_DO1(buf,i) \
     crc = table[(unsigned char)((unsigned char)crc ^ buf[i])] ^ (crc >> 8)

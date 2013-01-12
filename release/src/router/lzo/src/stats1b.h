@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -45,7 +48,7 @@
 
 
 #ifndef __LZO_STATS1B_H
-#define __LZO_STATS1B_H
+#define __LZO_STATS1B_H 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,14 +61,14 @@ extern "C" {
 // Examine the symbol 'lzo1b_stats' with a debugger.
 ************************************************************************/
 
-#if defined(LZO_COLLECT_STATS)
+#if (LZO_COLLECT_STATS)
 #  define LZO_STATS(expr)   expr
 #else
 #  define LZO_STATS(expr)   ((void) 0)
 #endif
 
 
-#if defined(LZO_COLLECT_STATS)
+#if (LZO_COLLECT_STATS)
 
 typedef struct
 {

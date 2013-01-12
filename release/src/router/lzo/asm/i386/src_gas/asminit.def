@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -35,26 +38,33 @@
    Markus F.X.J. Oberhumer
    <markus@oberhumer.com>
    http://www.oberhumer.com/opensource/lzo/
-*/
+ */
 
-#ifndef F
-#  define F(name)       name
+#if defined(__MACH__) && defined(__APPLE__)
+#  define NAME1(x)      _ ## x
+#else
+#  define NAME1(x)      _ ## x
+#  define NAME2(x)           x
 #endif
-#ifndef global
-#  define global(x)     .globl x
+
+#ifndef p2align
+#  define p2align(x)    .p2align x
+#endif
+#ifndef globalf
+#  define globalf(x)    .globl x
 #endif
 #ifndef typef
-#  ifdef __ELF__
+#  if defined(__ELF__)
 #    define typef(x)    .type x,@function
 #  else
 #    define typef(x)
 #  endif
 #endif
-#ifndef size
-#  ifdef __ELF__
-#    define size(x,s)   .size x,s
+#ifndef sizef
+#  if defined(__ELF__)
+#    define sizef(x,s)  .size x,s
 #  else
-#    define size(x,s)
+#    define sizef(x,s)
 #  endif
 #endif
 #ifndef db
@@ -65,3 +75,4 @@
 .section .note.GNU-stack,"",@progbits
 #endif
 .text
+p2align(4)

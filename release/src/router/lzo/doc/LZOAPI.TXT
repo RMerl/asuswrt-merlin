@@ -37,7 +37,7 @@ Table of Contents
 1.1 Preliminary notes
 ---------------------
 
-- `C90' is short for ISO 9899-1990, the ANSI/ISO standard for the C
+- 'C90' is short for ISO 9899-1990, the ANSI/ISO standard for the C
   programming language
 
 
@@ -83,7 +83,7 @@ old Atari ST, which has 16 bit integers and a flat 32-bit memory model.
 Using 'huge' 32-bit pointers under 16-bit DOS is a workaround for this.
 
 While LZO also works with a strict 16-bit memory model, I don't officially
-support this because this limits the maximum block size to 64 kB - and this
+support this because this limits the maximum block size to 64 KiB - and this
 makes the library incompatible with other platforms, i.e. you cannot
 decompress larger blocks compressed on those platforms.
 
@@ -162,10 +162,10 @@ int lzo_init ( void );
 3.2 Compression
 ---------------
 
-All compressors compress the memory block at `src' with the uncompressed
-length `src_len' to the address given by `dst'.
+All compressors compress the memory block at 'src' with the uncompressed
+length 'src_len' to the address given by 'dst'.
 The length of the compressed blocked will be returned in the variable
-pointed by `dst_len'.
+pointed by 'dst_len'.
 
 The two blocks may overlap under certain conditions (see examples/overlap.c),
 thereby allowing "in-place" compression.
@@ -180,7 +180,7 @@ int lzo1x_1_compress ( const lzo_bytep src, lzo_uint  src_len,
 
   Algorithm:            LZO1X
   Compression level:    LZO1X-1
-  Memory requirements:  LZO1X_1_MEM_COMPRESS    (64 kB on 32-bit machines)
+  Memory requirements:  LZO1X_1_MEM_COMPRESS    (64 KiB on 32-bit machines)
 
   This compressor is pretty fast.
 
@@ -196,7 +196,7 @@ int lzo1x_999_compress ( const lzo_bytep src, lzo_uint  src_len,
 
   Algorithm:            LZO1X
   Compression level:    LZO1X-999
-  Memory requirements:  LZO1X_999_MEM_COMPRESS  (448 kB on 32-bit machines)
+  Memory requirements:  LZO1X_999_MEM_COMPRESS  (448 KiB on 32-bit machines)
 
   This compressor is quite slow but achieves a good compression
   ratio. It is mainly intended for generating pre-compressed data.
@@ -212,14 +212,14 @@ int lzo1x_999_compress ( const lzo_bytep src, lzo_uint  src_len,
 3.3 Decompression
 -----------------
 
-All decompressors decompress the memory block at `src' with the compressed
-length `src_len' to the address given by `dst'.
+All decompressors decompress the memory block at 'src' with the compressed
+length 'src_len' to the address given by 'dst'.
 The length of the decompressed block will be returned in the variable
-pointed by `dst_len' - on error the number of bytes that have
+pointed by 'dst_len' - on error the number of bytes that have
 been decompressed so far will be returned.
 
 The safe decompressors expect that the number of bytes available in
-the `dst' block is passed via the variable pointed by `dst_len'.
+the 'dst' block is passed via the variable pointed by 'dst_len'.
 
 The two blocks may overlap under certain conditions (see examples/overlap.c),
 thereby allowing "in-place" decompression.
@@ -233,25 +233,25 @@ Description of return values:
   LZO_E_INPUT_NOT_CONSUMED
     The end of the compressed block has been detected before all
     bytes in the compressed block have been used.
-    This may actually not be an error (if `src_len' is too large).
+    This may actually not be an error (if 'src_len' is too large).
 
   LZO_E_INPUT_OVERRUN
     The decompressor requested more bytes from the compressed
     block than available.
-    Your data is corrupted (or `src_len' is too small).
+    Your data is corrupted (or 'src_len' is too small).
 
   LZO_E_OUTPUT_OVERRUN
     The decompressor requested to write more bytes to the uncompressed
     block than available.
     Either your data is corrupted, or you should increase the number of
-    available bytes passed in the variable pointed by `dst_len'.
+    available bytes passed in the variable pointed by 'dst_len'.
 
   LZO_E_LOOKBEHIND_OVERRUN
     Your data is corrupted.
 
   LZO_E_EOF_NOT_FOUND
     No EOF code was found in the compressed block.
-    Your data is corrupted (or `src_len' is too small).
+    Your data is corrupted (or 'src_len' is too small).
 
   LZO_E_ERROR
     Any other error (data corrupted).

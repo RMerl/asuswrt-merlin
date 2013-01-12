@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -39,7 +42,7 @@
 
 
 #ifndef __LZO_ASM_H_INCLUDED
-#define __LZO_ASM_H_INCLUDED
+#define __LZO_ASM_H_INCLUDED 1
 
 #ifndef __LZOCONF_H_INCLUDED
 #include "lzoconf.h"
@@ -51,7 +54,20 @@ extern "C" {
 
 
 /***********************************************************************
-// assembly decompressors
+// i386 assembly decompressors
+//
+// NOTE:
+// ====
+//
+// - For reasons of speed all fast assembler decompressors (having '_fast'
+//   in their name) can access (write to) up to 3 bytes past the end of
+//   the decompressed ("dst") block. Data past the end of the compressed
+//   ("src") block is never accessed (read from).
+//   [ technical note: because data is transferred in 32-bit units ]
+//
+// - Please also see asm/i386/00README.TXT and doc/LZO.FAQ for more
+//   important details about the assembler versions.
+//
 ************************************************************************/
 
 LZO_EXTERN(int) lzo1c_decompress_asm
@@ -114,11 +130,11 @@ LZO_EXTERN(int) lzo1y_decompress_asm_fast_safe
 #if 0
 
 LZO_EXTERN(lzo_uint32)
-lzo_crc32_asm(lzo_uint32 _c, const lzo_bytep _buf, lzo_uint _len,
-              const lzo_uint32p _crc_table);
+lzo_crc32_asm(lzo_uint32 c, const lzo_bytep buf, lzo_uint len,
+              const lzo_uint32p tab);
 
 LZO_EXTERN(lzo_uint32)
-lzo_crc32_asm_small(lzo_uint32 _c, const lzo_bytep _buf, lzo_uint _len);
+lzo_crc32_asm_small(lzo_uint32 c, const lzo_bytep buf, lzo_uint len);
 
 LZO_EXTERN(int)
 lzo_cpuid_asm(lzo_uint32p /* lzo_uint32 info[16] */ );

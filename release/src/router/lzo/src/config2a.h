@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -45,7 +48,7 @@
 
 
 #ifndef __LZO_CONFIG2A_H
-#define __LZO_CONFIG2A_H
+#define __LZO_CONFIG2A_H 1
 
 #include "lzo_conf.h"
 #include "lzo/lzo2a.h"
@@ -82,9 +85,9 @@
 ************************************************************************/
 
 #if 1
-#define N            8191           /* size of ring buffer */
+#define SWD_N        8191           /* size of ring buffer */
 #else
-#define N           16383           /* size of ring buffer */
+#define SWD_N       16383           /* size of ring buffer */
 #endif
 
 #define M1_MIN_LEN  2
@@ -95,7 +98,7 @@
 
 /* add a special code so that the decompressor can detect the
  * end of the compressed data block (overhead is 3 bytes per block) */
-#define LZO_EOF_CODE
+#define LZO_EOF_CODE 1
 
 #undef LZO_DETERMINISTIC
 
@@ -123,7 +126,7 @@
 
 /* Collect statistics */
 #if 0 && !defined(LZO_COLLECT_STATS)
-#  define LZO_COLLECT_STATS
+#  define LZO_COLLECT_STATS 1
 #endif
 
 

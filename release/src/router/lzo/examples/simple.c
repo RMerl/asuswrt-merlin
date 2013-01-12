@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -53,12 +56,14 @@
 #include "lzo/lzo1x.h"
 
 /* portability layer */
+static const char *progname = NULL;
 #define WANT_LZO_MALLOC 1
+#define WANT_XMALLOC 1
 #include "examples/portab.h"
 
 
-/* We want to compress the data block at `in' with length `IN_LEN' to
- * the block at `out'. Because the input block may be incompressible,
+/* We want to compress the data block at 'in' with length 'IN_LEN' to
+ * the block at 'out'. Because the input block may be incompressible,
  * we must provide a little more output space in case that compression
  * is not possible.
  */
@@ -78,7 +83,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     int r;
     lzo_bytep in;
     lzo_bytep out;
-    lzo_bytep wrkmem;
+    lzo_voidp wrkmem;
     lzo_uint in_len;
     lzo_uint out_len;
     lzo_uint new_len;
@@ -88,7 +93,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
 
     printf("\nLZO real-time data compression library (v%s, %s).\n",
            lzo_version_string(), lzo_version_date());
-    printf("Copyright (C) 1996-2008 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
+    printf("Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
 
 /*
  * Step 1: initialize the LZO library
@@ -96,16 +101,16 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     if (lzo_init() != LZO_E_OK)
     {
         printf("internal error - lzo_init() failed !!!\n");
-        printf("(this usually indicates a compiler bug - try recompiling\nwithout optimizations, and enable `-DLZO_DEBUG' for diagnostics)\n");
+        printf("(this usually indicates a compiler bug - try recompiling\nwithout optimizations, and enable '-DLZO_DEBUG' for diagnostics)\n");
         return 4;
     }
 
 /*
  * Step 2: allocate blocks and the work-memory
  */
-    in = (lzo_bytep) lzo_malloc(IN_LEN);
-    out = (lzo_bytep) lzo_malloc(OUT_LEN);
-    wrkmem = (lzo_bytep) lzo_malloc(LZO1X_1_MEM_COMPRESS);
+    in = (lzo_bytep) xmalloc(IN_LEN);
+    out = (lzo_bytep) xmalloc(OUT_LEN);
+    wrkmem = (lzo_voidp) xmalloc(LZO1X_1_MEM_COMPRESS);
     if (in == NULL || out == NULL || wrkmem == NULL)
     {
         printf("out of memory\n");
@@ -121,7 +126,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     lzo_memset(in,0,in_len);
 
 /*
- * Step 4: compress from `in' to `out' with LZO1X-1
+ * Step 4: compress from 'in' to 'out' with LZO1X-1
  */
     r = lzo1x_1_compress(in,in_len,out,&out_len,wrkmem);
     if (r == LZO_E_OK)
@@ -141,7 +146,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     }
 
 /*
- * Step 5: decompress again, now going from `out' to `in'
+ * Step 5: decompress again, now going from 'out' to 'in'
  */
     new_len = in_len;
     r = lzo1x_decompress(out,out_len,in,&new_len,NULL);

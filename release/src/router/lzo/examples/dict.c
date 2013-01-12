@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -48,13 +51,13 @@
 #include "lzo/lzo1x.h"
 
 /* portability layer */
+static const char *progname = NULL;
 #define WANT_LZO_MALLOC 1
 #define WANT_LZO_FREAD 1
 #define WANT_LZO_WILDARGV 1
+#define WANT_XMALLOC 1
 #include "examples/portab.h"
 
-
-static const char *progname = NULL;
 
 #define DICT_LEN    0xbfff
 static lzo_bytep    dict;
@@ -88,35 +91,35 @@ static void print_file ( const char *name, lzo_uint d_len, lzo_uint c_len )
 //
 **************************************************************************/
 
-int do_file ( const char *in_name, int level )
+int do_file ( const char *in_name, int compression_level )
 {
     int r;
     lzo_bytep in;
     lzo_bytep out;
     lzo_bytep newb;
-    lzo_bytep wrkmem;
+    lzo_voidp wrkmem;
     lzo_uint in_len;
     lzo_uint out_len;
     lzo_uint new_len;
     long l;
-    FILE *f;
+    FILE *fp;
 
 /*
  * Step 1: open the input file
  */
-    f = fopen(in_name,"rb");
-    if (f == 0)
+    fp = fopen(in_name,"rb");
+    if (fp == 0)
     {
         printf("%s: cannot open file %s\n", progname, in_name);
         return 0;   /* no error */
     }
-    fseek(f,0,SEEK_END);
-    l = ftell(f);
-    fseek(f,0,SEEK_SET);
+    fseek(fp, 0, SEEK_END);
+    l = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
     if (l <= 0)
     {
         printf("%s: %s: empty file -- skipping\n", progname, in_name);
-        fclose(f);
+        fclose(fp); fp = NULL;
         return 0;
     }
     in_len = (lzo_uint) l;
@@ -124,23 +127,23 @@ int do_file ( const char *in_name, int level )
 /*
  * Step 2: allocate compression buffers and read the file
  */
-    in = (lzo_bytep) lzo_malloc(in_len);
-    out = (lzo_bytep) lzo_malloc(in_len + in_len / 16 + 64 + 3);
-    newb = (lzo_bytep) lzo_malloc(in_len);
-    wrkmem = (lzo_bytep) lzo_malloc(LZO1X_999_MEM_COMPRESS);
+    in = (lzo_bytep) xmalloc(in_len);
+    out = (lzo_bytep) xmalloc(in_len + in_len / 16 + 64 + 3);
+    newb = (lzo_bytep) xmalloc(in_len);
+    wrkmem = (lzo_voidp) xmalloc(LZO1X_999_MEM_COMPRESS);
     if (in == NULL || out == NULL || newb == NULL || wrkmem == NULL)
     {
         printf("%s: out of memory\n", progname);
         exit(1);
     }
-    in_len = (lzo_uint) lzo_fread(f,in,in_len);
-    fclose(f);
+    in_len = (lzo_uint) lzo_fread(fp, in, in_len);
+    fclose(fp); fp = NULL;
 
 /*
- * Step 3: compress from `in' to `out' with LZO1X-999
+ * Step 3: compress from 'in' to 'out' with LZO1X-999
  */
     r = lzo1x_999_compress_level(in,in_len,out,&out_len,wrkmem,
-                                 dict, dict_len, 0, level);
+                                 dict, dict_len, 0, compression_level);
     if (r != LZO_E_OK)
     {
         /* this should NEVER happen */
@@ -151,7 +154,7 @@ int do_file ( const char *in_name, int level )
     print_file(in_name,in_len,out_len);
 
 /*
- * Step 4: decompress again, now going from `out' to `newb'
+ * Step 4: decompress again, now going from 'out' to 'newb'
  */
     new_len = in_len;
     r = lzo1x_decompress_dict_safe(out,out_len,newb,&new_len,NULL,dict,dict_len);
@@ -190,27 +193,27 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     int i = 1;
     int r;
     const char *dict_name;
-    FILE *f;
+    FILE *fp;
     time_t t_total;
-    int level = 7;
+    int compression_level = 7;
 
     lzo_wildargv(&argc, &argv);
 
     printf("\nLZO real-time data compression library (v%s, %s).\n",
            lzo_version_string(), lzo_version_date());
-    printf("Copyright (C) 1996-2008 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
+    printf("Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
 
     progname = argv[0];
 
     if (i < argc && argv[i][0] == '-' && isdigit(argv[i][1]))
-        level = atoi(&argv[i++][1]);
+        compression_level = atoi(&argv[i++][1]);
 
-    if (i + 1 >= argc || level < 1 || level > 9)
+    if (i + 1 >= argc || compression_level < 1 || compression_level > 9)
     {
         printf("usage: %s [-level] [ dictionary-file | -n ]  file...\n", progname);
         exit(1);
     }
-    printf("Compression level is LZO1X-999/%d\n", level);
+    printf("Compression level is LZO1X-999/%d\n", compression_level);
 
 /*
  * Step 1: initialize the LZO library
@@ -218,14 +221,14 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     if (lzo_init() != LZO_E_OK)
     {
         printf("internal error - lzo_init() failed !!!\n");
-        printf("(this usually indicates a compiler bug - try recompiling\nwithout optimizations, and enable `-DLZO_DEBUG' for diagnostics)\n");
+        printf("(this usually indicates a compiler bug - try recompiling\nwithout optimizations, and enable '-DLZO_DEBUG' for diagnostics)\n");
         exit(1);
     }
 
 /*
  * Step 2: prepare the dictionary
  */
-    dict = (lzo_bytep) lzo_malloc(DICT_LEN);
+    dict = (lzo_bytep) xmalloc(DICT_LEN);
     if (dict == NULL)
     {
         printf("%s: out of memory\n", progname);
@@ -239,14 +242,14 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     }
     else
     {
-        f = fopen(dict_name,"rb");
-        if (!f)
+        fp = fopen(dict_name,"rb");
+        if (!fp)
         {
             printf("%s: cannot open dictionary file %s\n", progname, dict_name);
             exit(1);
         }
-        dict_len = (lzo_uint) lzo_fread(f,dict,DICT_LEN);
-        fclose(f);
+        dict_len = (lzo_uint) lzo_fread(fp, dict, DICT_LEN);
+        fclose(fp); fp = NULL;
     }
 
     dict_adler32 = lzo_adler32(0,NULL,0);
@@ -259,7 +262,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
  */
     t_total = time(NULL);
     for (r = 0; r == 0 && i < argc; i++)
-        r = do_file(argv[i], level);
+        r = do_file(argv[i], compression_level);
     t_total = time(NULL) - t_total;
 
     lzo_free(dict);

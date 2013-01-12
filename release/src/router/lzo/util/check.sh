@@ -7,7 +7,7 @@ set -e
 # This script runs lzotest with all algorithms on a complete directory tree.
 # It is not suitable for accurate timings.
 #
-# Copyright (C) 1996-2008 Markus Franz Xaver Johannes Oberhumer
+# Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer
 #
 
 LZOTEST="lzotest"

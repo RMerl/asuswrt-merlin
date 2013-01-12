@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -39,17 +42,6 @@
 
 
 #include "lzo1_d.ch"
-
-
-#undef __COPY4
-#define __COPY4(dst,src)    * (lzo_uint32p)(dst) = * (const lzo_uint32p)(src)
-
-#undef COPY4
-#if defined(LZO_UNALIGNED_OK_4)
-#  define COPY4(dst,src)    __COPY4(dst,src)
-#elif defined(LZO_ALIGNED_OK_4)
-#  define COPY4(dst,src)    __COPY4((lzo_uintptr_t)(dst),(lzo_uintptr_t)(src))
-#endif
 
 
 /***********************************************************************
@@ -134,19 +126,36 @@ DO_DECOMPRESS  ( const lzo_bytep in , lzo_uint  in_len,
         }
         /* copy literals */
         assert(t > 0); NEED_OP(t+3); NEED_IP(t+4);
-#if defined(LZO_UNALIGNED_OK_4) || defined(LZO_ALIGNED_OK_4)
+#if defined(LZO_UNALIGNED_OK_8) && defined(LZO_UNALIGNED_OK_4)
+        t += 3;
+        if (t >= 8) do
+        {
+            UA_COPY64(op,ip);
+            op += 8; ip += 8; t -= 8;
+        } while (t >= 8);
+        if (t >= 4)
+        {
+            UA_COPY32(op,ip);
+            op += 4; ip += 4; t -= 4;
+        }
+        if (t > 0)
+        {
+            *op++ = *ip++;
+            if (t > 1) { *op++ = *ip++; if (t > 2) { *op++ = *ip++; } }
+        }
+#elif defined(LZO_UNALIGNED_OK_4) || defined(LZO_ALIGNED_OK_4)
 #if !defined(LZO_UNALIGNED_OK_4)
         if (PTR_ALIGNED2_4(op,ip))
         {
 #endif
-        COPY4(op,ip);
+        UA_COPY32(op,ip);
         op += 4; ip += 4;
         if (--t > 0)
         {
             if (t >= 4)
             {
                 do {
-                    COPY4(op,ip);
+                    UA_COPY32(op,ip);
                     op += 4; ip += 4; t -= 4;
                 } while (t >= 4);
                 if (t > 0) do *op++ = *ip++; while (--t > 0);
@@ -159,7 +168,7 @@ DO_DECOMPRESS  ( const lzo_bytep in , lzo_uint  in_len,
         else
 #endif
 #endif
-#if !defined(LZO_UNALIGNED_OK_4)
+#if !defined(LZO_UNALIGNED_OK_4) && !defined(LZO_UNALIGNED_OK_8)
         {
             *op++ = *ip++; *op++ = *ip++; *op++ = *ip++;
             do *op++ = *ip++; while (--t > 0);
@@ -284,7 +293,7 @@ match:
                 }
 #elif defined(LZO_UNALIGNED_OK_2) && defined(LZO_ABI_LITTLE_ENDIAN)
                 m_pos = op - 1;
-                m_pos -= (* (const lzo_ushortp) ip) >> 2;
+                m_pos -= UA_GET16(ip) >> 2;
 #else
                 m_pos = op - 1;
                 m_pos -= (ip[0] >> 2) + (ip[1] << 6);
@@ -329,7 +338,7 @@ match:
 #if defined(LZO1Z)
                 m_pos -= (ip[0] << 6) + (ip[1] >> 2);
 #elif defined(LZO_UNALIGNED_OK_2) && defined(LZO_ABI_LITTLE_ENDIAN)
-                m_pos -= (* (const lzo_ushortp) ip) >> 2;
+                m_pos -= UA_GET16(ip) >> 2;
 #else
                 m_pos -= (ip[0] >> 2) + (ip[1] << 6);
 #endif
@@ -378,7 +387,28 @@ match:
 #else /* !COPY_DICT */
 
             TEST_LB(m_pos); assert(t > 0); NEED_OP(t+3-1);
-#if defined(LZO_UNALIGNED_OK_4) || defined(LZO_ALIGNED_OK_4)
+#if defined(LZO_UNALIGNED_OK_8) && defined(LZO_UNALIGNED_OK_4)
+            if (op - m_pos >= 8)
+            {
+                t += (3 - 1);
+                if (t >= 8) do
+                {
+                    UA_COPY64(op,m_pos);
+                    op += 8; m_pos += 8; t -= 8;
+                } while (t >= 8);
+                if (t >= 4)
+                {
+                    UA_COPY32(op,m_pos);
+                    op += 4; m_pos += 4; t -= 4;
+                }
+                if (t > 0)
+                {
+                    *op++ = m_pos[0];
+                    if (t > 1) { *op++ = m_pos[1]; if (t > 2) { *op++ = m_pos[2]; } }
+                }
+            }
+            else
+#elif defined(LZO_UNALIGNED_OK_4) || defined(LZO_ALIGNED_OK_4)
 #if !defined(LZO_UNALIGNED_OK_4)
             if (t >= 2 * 4 - (3 - 1) && PTR_ALIGNED2_4(op,m_pos))
             {
@@ -387,10 +417,10 @@ match:
             if (t >= 2 * 4 - (3 - 1) && (op - m_pos) >= 4)
             {
 #endif
-                COPY4(op,m_pos);
+                UA_COPY32(op,m_pos);
                 op += 4; m_pos += 4; t -= 4 - (3 - 1);
                 do {
-                    COPY4(op,m_pos);
+                    UA_COPY32(op,m_pos);
                     op += 4; m_pos += 4; t -= 4;
                 } while (t >= 4);
                 if (t > 0) do *op++ = *m_pos++; while (--t > 0);

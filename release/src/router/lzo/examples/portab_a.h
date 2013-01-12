@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -48,7 +51,7 @@
 
 #define ACC_WANT_ACC_INCD_H 1
 #define ACC_WANT_ACC_INCE_H 1
-#if defined(__LZO_MMODEL_HUGE) || defined(WANT_LZO_UCLOCK) || defined(WANT_LZO_WILDARGV)
+#if defined(__LZO_MMODEL_HUGE) || defined(ACC_WANT_ACCLIB_GETOPT) || defined(WANT_LZO_UCLOCK) || defined(WANT_LZO_WILDARGV)
 #  define ACC_WANT_ACC_INCI_H 1
 #  define ACC_WANT_ACC_LIB_H 1
 #endif
@@ -80,17 +83,10 @@
 #if defined(WANT_LZO_WILDARGV)
 #  define ACC_WANT_ACCLIB_WILDARGV 1
 #endif
-#if defined(__ACCLIB_PCLOCK_USE_PERFCTR)
-#  include "src/fullacc.h"
-#  define lzo_uclock_flush_cpu_cache(h,flags) acc_pclock_flush_cpu_cache(h,flags)
-#else
-#  include "src/miniacc.h"
-#endif
-
 #if (__ACCLIB_REQUIRE_HMEMCPY_CH) && !defined(__ACCLIB_HMEMCPY_CH_INCLUDED)
 #  define ACC_WANT_ACCLIB_HMEMCPY 1
-#  include "src/miniacc.h"
 #endif
+#include "src/miniacc.h"
 
 
 /*************************************************************************
@@ -102,23 +98,39 @@
 #undef lzo_fread
 #undef lzo_fwrite
 #if defined(WANT_LZO_MALLOC)
-#  define lzo_malloc(a)         acc_halloc(a)
-#  define lzo_free(a)           acc_hfree(a)
+#  if defined(acc_halloc)
+#    define lzo_malloc(a)       acc_halloc(a)
+#  else
+#    define lzo_malloc(a)       __ACCLIB_FUNCNAME(acc_halloc)(a)
+#  endif
+#  if defined(acc_hfree)
+#    define lzo_free(a)         acc_hfree(a)
+#  else
+#    define lzo_free(a)         __ACCLIB_FUNCNAME(acc_hfree)(a)
+#  endif
 #endif
 #if defined(WANT_LZO_FREAD)
-#  define lzo_fread(f,b,s)      acc_hfread(f,b,s)
-#  define lzo_fwrite(f,b,s)     acc_hfwrite(f,b,s)
+#  if defined(acc_hfread)
+#    define lzo_fread(f,b,s)    acc_hfread(f,b,s)
+#  else
+#    define lzo_fread(f,b,s)    __ACCLIB_FUNCNAME(acc_hfread)(f,b,s)
+#  endif
+#  if defined(acc_hfwrite)
+#    define lzo_fwrite(f,b,s)   acc_hfwrite(f,b,s)
+#  else
+#    define lzo_fwrite(f,b,s)   __ACCLIB_FUNCNAME(acc_hfwrite)(f,b,s)
+#  endif
 #endif
 #if defined(WANT_LZO_UCLOCK)
 #  define lzo_uclock_handle_t   acc_pclock_handle_t
 #  define lzo_uclock_t          acc_pclock_t
-#  define lzo_uclock_open(a)    acc_pclock_open_default(a)
-#  define lzo_uclock_close(a)   acc_pclock_close(a)
-#  define lzo_uclock_read(a,b)  acc_pclock_read(a,b)
-#  define lzo_uclock_get_elapsed(a,b,c) acc_pclock_get_elapsed(a,b,c)
+#  define lzo_uclock_open(a)    __ACCLIB_FUNCNAME(acc_pclock_open_default)(a)
+#  define lzo_uclock_close(a)   __ACCLIB_FUNCNAME(acc_pclock_close)(a)
+#  define lzo_uclock_read(a,b)  __ACCLIB_FUNCNAME(acc_pclock_read)(a,b)
+#  define lzo_uclock_get_elapsed(a,b,c) __ACCLIB_FUNCNAME(acc_pclock_get_elapsed)(a,b,c)
 #endif
 #if defined(WANT_LZO_WILDARGV)
-#  define lzo_wildargv(a,b)     acc_wildargv(a,b)
+#  define lzo_wildargv(a,b)     __ACCLIB_FUNCNAME(acc_wildargv)(a,b)
 #endif
 
 

@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -40,7 +43,7 @@
 
 #include "config1x.h"
 
-#define LZO_TEST_OVERRUN
+#define LZO_TEST_OVERRUN 1
 #define DO_DECOMPRESS       lzo1x_decompress_safe
 
 #include "lzo1x_d.ch"

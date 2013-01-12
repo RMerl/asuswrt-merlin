@@ -2,6 +2,20 @@
 User visible changes for LZO -- a real-time data compression library
 ============================================================================
 
+Changes in 2.06 (12 Aug 2011)
+  * Some minor optimizations for big-endian architectures.
+  * Fixed overly strict malloc() misalignment check in examples.
+
+Changes in 2.05 (23 Apr 2011)
+  * Converted the configure system to non-recursive Automake.
+  * Applied some overdue speed optimizations for modern x86/x64 architectures
+    and current compilers like gcc 4.6 and MSVC 2010.
+
+Changes in 2.04 (31 Oct 2010)
+  * Fixed a gcc-4.5 aliasing issue in lzo_init().
+  * Updated the configure system.
+  * Assorted cleanups.
+
 Changes in 2.03 (30 Apr 2008)
   * Updated the ELF assembler sources to mark the stack as non-executable.
   * Fixed a HP-UX 11 build issue with Itanium in ILP32 mode.
@@ -53,7 +67,7 @@ Changes in 2.00 (30 May 2005)
     built and installed. See also asm/i386/00README.TXT.
   * Added include file <lzo/lzo_asm.h> that provides prototypes for all
     assembler functions.
-  * Under MacOS X, the configure script now will use the `-no-cpp-precomp'
+  * Under MacOS X, the configure script now will use the '-no-cpp-precomp'
     compiler option in order to work around bugs in some versions of
     Apple's native "smart" preprocessor.
   * Worked around a preprocessor bug that is present in all compilers which
@@ -85,7 +99,7 @@ Changes in 1.08 (12 Jul 2002)
     and Libtool versions.
 
 Changes in 1.07 (18 Oct 2000)
-  * Default to `--disable-shared' (I'm getting tired of Libtool's
+  * Default to '--disable-shared' (I'm getting tired of Libtool's
     shared library build problems, this time AIX was the culprit).
   * Avoid some harmless compiler warnings.
 
@@ -114,7 +128,7 @@ Changes in 1.02 (07 Dec 1997)
   * improved LZO1X-999 and LZO1Y-999 compression ratio a little bit again
   * introduced compression levels for LZO1X-999 and LZO1Y-999
   * added support for preset dictionaries
-  * implemented LZO1X-1(12): needs 16 kB for compression
+  * implemented LZO1X-1(12): needs 16 KiB for compression
   * new algorithm LZO1Z: this is another variant of LZO1X
   * added example program: how to use preset dictionaries
   * added example program: how to do in-place decompression
@@ -140,7 +154,7 @@ Changes in 1.00 (13 Jul 1997)
 
 Changes in 0.90 (27 Jun 1997): never released
   * LZO now uses GNU Automake 1.0 - lots of configuration changes
-  * added LZO1X-1(11): this version needs only 8 kB for compression
+  * added LZO1X-1(11): this version needs only 8 KiB for compression
   * implemented LZO1Y-1
   * added i386 assembler decompressors for MASM/TASM/WASM
   * the name of some assembler functions changed
@@ -179,7 +193,7 @@ Changes in 0.23 (23 Nov 1996)
   * added corresponding LZO_PUBLIC to all LZO_EXTERN functions
   * added support for Microsoft C 7.0 (16-bit DOS)
   * introduced lzo_uint32. This could prove useful for a strict 16-bit
-    version that doesn't use `huge' pointers.
+    version that doesn't use 'huge' pointers.
   * all algorithms use incremental hashing now
   * some cleanups and portability fixes
 

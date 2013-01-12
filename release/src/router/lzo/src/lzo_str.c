@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -50,17 +53,20 @@
 // slow but portable <string.h> stuff, only used in assertions
 ************************************************************************/
 
-#if !defined(__LZO_MMODEL_HUGE)
+#if !(__LZO_MMODEL_HUGE)
 #  undef ACC_HAVE_MM_HUGE_PTR
 #endif
 #define acc_hsize_t             lzo_uint
 #define acc_hvoid_p             lzo_voidp
 #define acc_hbyte_p             lzo_bytep
 #define ACCLIB_PUBLIC(r,f)      LZO_PUBLIC(r) f
-#define acc_hmemcmp             lzo_memcmp
-#define acc_hmemcpy             lzo_memcpy
-#define acc_hmemmove            lzo_memmove
-#define acc_hmemset             lzo_memset
+#ifndef __ACCLIB_FUNCNAME
+#define __ACCLIB_FUNCNAME(f)    f
+#endif
+#define acc_hmemcmp             __ACCLIB_FUNCNAME(lzo_memcmp)
+#define acc_hmemcpy             __ACCLIB_FUNCNAME(lzo_memcpy)
+#define acc_hmemmove            __ACCLIB_FUNCNAME(lzo_memmove)
+#define acc_hmemset             __ACCLIB_FUNCNAME(lzo_memset)
 #define ACC_WANT_ACCLIB_HMEMCPY 1
 #include "miniacc.h"
 #undef ACCLIB_PUBLIC

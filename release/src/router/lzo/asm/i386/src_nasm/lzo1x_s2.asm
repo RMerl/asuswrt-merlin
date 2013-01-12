@@ -2,6 +2,9 @@
 ;
 ;  This file is part of the LZO real-time data compression library.
 ;
+;  Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+;  Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+;  Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
 ;  Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
 ;  Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
 ;  Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -40,10 +43,18 @@
 ; /***** DO NOT EDIT - GENERATED AUTOMATICALLY *****/
 
 %include "asminit.def"
-globalf(_lzo1x_decompress_asm_safe)
-globalf(F(lzo1x_decompress_asm_safe))
-_lzo1x_decompress_asm_safe:
-F(lzo1x_decompress_asm_safe):
+%ifdef NAME1
+globalf(NAME1(lzo1x_decompress_asm_safe))
+%endif
+%ifdef NAME2
+globalf(NAME2(lzo1x_decompress_asm_safe))
+%endif
+%ifdef NAME1
+NAME1(lzo1x_decompress_asm_safe):
+%endif
+%ifdef NAME2
+NAME2(lzo1x_decompress_asm_safe):
+%endif
 db 85,87,86,83,81,82,131,236,12,252,139,116,36,40,139,124
 db 36,48,189,3,0,0,0,141,70,253,3,68,36,44,137,68
 db 36,4,137,248,139,84,36,52,3,2,137,4,36,49,192,49
@@ -90,3 +101,9 @@ db 124,36,48,139,84,36,52,137,58,247,216,131,196,12,90,89
 db 91,94,95,93,195,184,1,0,0,0,235,227,184,8,0,0
 db 0,235,220,184,4,0,0,0,235,213,184,5,0,0,0,235
 db 206,184,6,0,0,0,235,199,144,141,180,38,0,0,0,0
+%ifdef NAME1
+globalf_end(NAME1(lzo1x_decompress_asm_safe))
+%endif
+%ifdef NAME2
+globalf_end(NAME2(lzo1x_decompress_asm_safe))
+%endif

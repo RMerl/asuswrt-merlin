@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -41,11 +44,11 @@
 #include "lzo/lzoconf.h"
 
 #if (LZO_CC_MSC && (_MSC_VER >= 1000 && _MSC_VER < 1200))
-   /* avoid `-W4' warnings in system header files */
+   /* avoid '-W4' warnings in system header files */
 #  pragma warning(disable: 4201 4214 4514)
 #endif
 #if (LZO_CC_MSC && (_MSC_VER >= 1300))
-   /* avoid `-Wall' warnings in system header files */
+   /* avoid '-Wall' warnings in system header files */
 #  pragma warning(disable: 4163 4255 4820)
    /* avoid warnings about inlining */
 #  pragma warning(disable: 4710 4711)
@@ -63,7 +66,7 @@
 //
 **************************************************************************/
 
-#if defined(__LZO_MMODEL_HUGE) || !(defined(LZO_LIBC_ISOC90) || defined(LZO_LIBC_ISOC99))
+#if defined(__LZO_MMODEL_HUGE) || defined(ACC_WANT_ACCLIB_GETOPT) || !(defined(LZO_LIBC_ISOC90) || defined(LZO_LIBC_ISOC99))
 
 #include "examples/portab_a.h"
 
@@ -127,6 +130,28 @@
 #undef xgetc
 #undef xread32
 #undef xwrite32
+
+
+#if defined(WANT_XMALLOC)
+static lzo_voidp xmalloc(lzo_uint len)
+{
+    lzo_voidp p;
+    lzo_uint align = (lzo_uint) sizeof(lzo_align_t);
+
+    p = (lzo_voidp) lzo_malloc(len > 0 ? len : 1);
+    if (p == NULL)
+    {
+        printf("%s: out of memory\n", progname);
+        exit(1);
+    }
+    if (len >= align && __lzo_align_gap(p, align) != 0)
+    {
+        printf("%s: C library problem: malloc() returned misaligned pointer!\n", progname);
+        exit(1);
+    }
+    return p;
+}
+#endif
 
 
 #if defined(WANT_LZO_UCLOCK)

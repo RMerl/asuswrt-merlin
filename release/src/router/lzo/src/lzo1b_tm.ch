@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -53,8 +56,8 @@
 #if (DD_BITS == 0)
 
 try_match:
-#if !defined(NDEBUG) && defined(LZO_DICT_USE_PTR)
-#if defined(LZO_DETERMINISTIC)
+#if !defined(NDEBUG) && (LZO_DICT_USE_PTR)
+#if (LZO_DETERMINISTIC)
         assert(m_pos == NULL || m_pos >= in);
         assert(m_pos == NULL || m_pos < ip);
 #endif

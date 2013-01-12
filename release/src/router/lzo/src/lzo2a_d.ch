@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -108,7 +111,7 @@ DO_DECOMPRESS    ( const lzo_bytep in , lzo_uint  in_len,
         t >>= 5;
         if (t == 0)
         {
-#if (N >= 8192)
+#if (SWD_N >= 8192)
             NEEDBITS(1);
             t = MASKBITS(1);
             DUMPBITS(1);

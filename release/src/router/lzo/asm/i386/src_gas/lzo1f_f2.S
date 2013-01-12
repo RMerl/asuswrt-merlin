@@ -2,6 +2,9 @@
 
    This file is part of the LZO real-time data compression library.
 
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -35,17 +38,29 @@
    Markus F.X.J. Oberhumer
    <markus@oberhumer.com>
    http://www.oberhumer.com/opensource/lzo/
-*/
+ */
 
 /***** DO NOT EDIT - GENERATED AUTOMATICALLY *****/
 
 #include "asminit.def"
-typef(_lzo1f_decompress_asm_fast_safe)
-typef(F(lzo1f_decompress_asm_fast_safe))
-global(_lzo1f_decompress_asm_fast_safe)
-global(F(lzo1f_decompress_asm_fast_safe))
-_lzo1f_decompress_asm_fast_safe:
-F(lzo1f_decompress_asm_fast_safe):
+#ifdef NAME1
+typef(NAME1(lzo1f_decompress_asm_fast_safe))
+#endif
+#ifdef NAME2
+typef(NAME2(lzo1f_decompress_asm_fast_safe))
+#endif
+#ifdef NAME1
+globalf(NAME1(lzo1f_decompress_asm_fast_safe))
+#endif
+#ifdef NAME2
+globalf(NAME2(lzo1f_decompress_asm_fast_safe))
+#endif
+#ifdef NAME1
+NAME1(lzo1f_decompress_asm_fast_safe):
+#endif
+#ifdef NAME2
+NAME2(lzo1f_decompress_asm_fast_safe):
+#endif
 db 85,87,86,83,81,82,131,236,12,252,139,116,36,40,139,124
 db 36,48,189,3,0,0,0,141,70,253,3,68,36,44,137,68
 db 36,4,137,248,139,84,36,52,3,2,137,4,36,141,118,0
@@ -73,5 +88,9 @@ db 43,124,36,48,139,84,36,52,137,58,247,216,131,196,12,90
 db 89,91,94,95,93,195,184,1,0,0,0,235,227,184,8,0
 db 0,0,235,220,184,4,0,0,0,235,213,184,5,0,0,0
 db 235,206,184,6,0,0,0,235,199,141,180,38,0,0,0,0
-size(_lzo1f_decompress_asm_fast_safe,.-_lzo1f_decompress_asm_fast_safe)
-size(F(lzo1f_decompress_asm_fast_safe),.-F(lzo1f_decompress_asm_fast_safe))
+#ifdef NAME1
+sizef(NAME1(lzo1f_decompress_asm_fast_safe),.-NAME1(lzo1f_decompress_asm_fast_safe))
+#endif
+#ifdef NAME2
+sizef(NAME2(lzo1f_decompress_asm_fast_safe),.-NAME2(lzo1f_decompress_asm_fast_safe))
+#endif
