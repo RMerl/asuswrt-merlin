@@ -165,7 +165,7 @@ function switchPage(page){
 	else if(page == "6")
 		location.href = "/Main_TrafficMonitor_devdaily.asp";
 	else if(page == "7")
-		location.href = "/Main_TrafficMOnitor_devmonthly.asp";
+		location.href = "/Main_TrafficMonitor_devmonthly.asp";
 	else
 		return false;
 }
