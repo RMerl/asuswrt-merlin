@@ -282,7 +282,23 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					}
 				}
 			}
+		} else if(strcmp(type,"ethernet") == 0 ) {
+			int len, j;
 
+			system("/usr/sbin/robocfg show >/tmp/output.txt");
+
+			char *buffer = read_whole_file("/tmp/output.txt");
+			if (buffer) {
+				len = strlen(buffer);
+
+				for (j=0; (j < len); j++) {
+					if (buffer[j] == '\n') buffer[j] = '>';
+				}
+				strncpy(result, buffer, sizeof result);
+
+				free(buffer);
+				unlink("/tmp/output.txt");
+			}
 		} else {
 			strcpy(result,"Not implemented");
 		}
