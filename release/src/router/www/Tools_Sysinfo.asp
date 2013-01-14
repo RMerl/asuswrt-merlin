@@ -16,7 +16,9 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" language="JavaScript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="tmmenu.js"></script>
+<script language="JavaScript" type="text/javascript" src="/nameresolv.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
@@ -24,10 +26,13 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 
 hwacc = "<% nvram_get("ctf_disable"); %>";
 
+etherstate = "<% sysinfo("ethernet"); %>";
+
 function initial(){
 	show_menu();
 	showbootTime();
 	hwaccel_state();
+	show_etherstate();
 }
 
 
@@ -52,6 +57,45 @@ function showbootTime(){
         $("boot_seconds").innerHTML = Seconds;
         boottime += 1;
         setTimeout("showbootTime()", 1000);
+}
+
+function show_etherstate(){
+	var state, state2;
+	var hostname, devicename, overlib_str, port;
+	var tmpPort;
+	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th>Port</th><th>Link State</th><th>Device</th></tr>';
+	var t = etherstate.split('>');
+
+	for (var i = 0; i < t.length; ++i) {
+		var line = t[i].split(/[\s]+/);
+		if (line[0] == "Port") {
+			if (line[2] == "DOWN")
+				state2 = "Down";
+			else {
+				state = line[2].replace("FD"," Full Duplex");
+				state2 = state.replace("HD"," Half Duplex");
+			}
+			hostname = retHostName(line[11]);
+			overlib_str = "<p><#MAC_Address#></p>" + line[11];
+
+			if (hostname != "") {
+				devicename = '<span class="ClientName" onmouseover="return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ hostname +'</span>';
+			} else {
+				devicename = '<span class="ClientName" onclick="getOUIFromMAC(\'' + line[11] +'\');" style="cursor:pointer; text-decoration:underline;">'+ line[11] +'</span>'; 
+			}
+			tmpPort = line[1].replace(":","");
+			if (tmpPort == "0") {
+				port = "WAN";
+			} else if (tmpPort == "8") {
+				break;
+			} else {
+				port = "LAN "+tmpPort;
+			}
+			code += '<tr><td width="15%">'+port+'</td><td width="30%"><span>' + state2 + '</span></td><td width="55%">'+ devicename +'</td></tr>';
+		}
+	}
+	code += '</table>';
+	E("etherstate").innerHTML = code;
 }
 
 </script>
@@ -222,6 +266,12 @@ function showbootTime(){
 						<th>Connections</th>
 						<td><% sysinfo("conn.total"); %>&nbsp;/ <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;<% sysinfo("conn.active"); %> active</td>
 					</tr>
+
+					<tr>
+						<th>Ethernet Ports</th>
+						<td id="etherstate"></td>
+					</tr>
+					
 					<tr>
 						<th>Wireless clients (2.4 GHz)</th>
 						<td>
