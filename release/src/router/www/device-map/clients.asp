@@ -369,25 +369,6 @@ function networkmap_update(){
 	document.form.target = "";
 	document.form.submit();
 }
-
-// Botho 06/04/2006 : Function to resolve OUI names
-
-function getOUIFromMAC(mac) {
-
-        var top = 30;
-        var left = Math.floor(screen.availWidth * .66) - 10;
-        var width = 700
-        var height = 400
-        var tab = new Array();
-
-        tab = mac.split(mac.substr(2,1));
-
-        var win = window.open("http://standards.ieee.org/cgi-bin/ouisearch?" + tab[0] + '-' + tab[1] + '-' + tab[2], 'OUI_Search', 'top=' + top + ',left=' + left + ',width=' + width + ',height=' + height + ",resizable=yes,scrollbars=yes,statusbar=no");
-        addEvent(window, "unload", function() { if(!win.closed) win.close(); });
-        win.focus();
-}
-
-
 </script>
 </head>
 
