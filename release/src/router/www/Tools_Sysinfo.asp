@@ -179,7 +179,7 @@ function show_etherstate(){
 
 					<tr>
 						<th>Radios temperature</th>
-						<td><b>2.4 GHz</b><span> <% sysinfo("temperature.2"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz</b> <span><% sysinfo("temperature.5"); %></span></td>
+						<td><b>2.4 GHz:</b><span> <% sysinfo("temperature.2"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span><% sysinfo("temperature.5"); %></span></td>
 					</tr>
 				</table>
 
