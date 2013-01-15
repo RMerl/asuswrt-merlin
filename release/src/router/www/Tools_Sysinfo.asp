@@ -17,6 +17,7 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="/tmhist.js"></script>
 <script language="JavaScript" type="text/javascript" src="tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/nameresolv.js"></script>
 <script>
@@ -25,6 +26,7 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
 hwacc = "<% nvram_get("ctf_disable"); %>";
+arplist = [<% get_arp_table(); %>];
 
 etherstate = "<% sysinfo("ethernet"); %>";
 
@@ -32,6 +34,7 @@ function initial(){
 	show_menu();
 	showbootTime();
 	hwaccel_state();
+	populateCache();
 	show_etherstate();
 }
 
@@ -63,7 +66,7 @@ function show_etherstate(){
 	var state, state2;
 	var hostname, devicename, overlib_str, port;
 	var tmpPort;
-	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th>Port</th><th>Link State</th><th>Device</th></tr>';
+	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th>Port</th><th>Link State</th><th>Last Device Seen</th></tr>';
 	var t = etherstate.split('>');
 
 	for (var i = 0; i < t.length; ++i) {
@@ -75,13 +78,29 @@ function show_etherstate(){
 				state = line[2].replace("FD"," Full Duplex");
 				state2 = state.replace("HD"," Half Duplex");
 			}
-			hostname = retHostName(line[11]);
-			overlib_str = "<p><#MAC_Address#></p>" + line[11];
 
-			if (hostname != "") {
-				devicename = '<span class="ClientName" onmouseover="return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ hostname +'</span>';
+			hostname = "";
+
+			if (line[11] == "00:00:00:00:00:00") {
+				devicename = '<span class="ClientName">&lt;none&gt;</span>';
 			} else {
-				devicename = '<span class="ClientName" onclick="getOUIFromMAC(\'' + line[11] +'\');" style="cursor:pointer; text-decoration:underline;">'+ line[11] +'</span>'; 
+				overlib_str = "<p><#MAC_Address#></p>" + line[11];
+
+				// Retrieve through lease list, else walk down arp cache and retrieve from hostname cache
+				for (var j = 0; j < arplist.length; ++j) {
+					if (arplist[j][3] == line[11].toUpperCase()) {
+						hostname = hostnamecache[arplist[j][0]];
+						break;
+					}
+				}
+
+//				if (hostname == "") hostname = retHostName(line[11]);
+
+				if (hostname != "") {
+					devicename = '<span class="ClientName" onmouseover="return overlib(\''+overlib_str +'\');" onmouseout="nd();">'+ hostname +'</span>';
+				} else {
+					devicename = '<span class="ClientName" onclick="getOUIFromMAC(\'' + line[11] +'\');" style="cursor:pointer; text-decoration:underline;">'+ line[11] +'</span>'; 
+				}
 			}
 			tmpPort = line[1].replace(":","");
 			if (tmpPort == "0") {
