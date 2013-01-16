@@ -32,12 +32,26 @@ etherstate = "<% sysinfo("ethernet"); %>";
 
 function initial(){
 	show_menu();
+	model_customize();
 	showbootTime();
 	hwaccel_state();
 	populateCache();
 	show_etherstate();
 }
 
+
+function model_customize(){
+
+	code = "<b>2.4 GHz:</b><span> <% sysinfo("temperature.2"); %></span>";
+
+	if (rc_support.search("5G")) {
+		code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span><% sysinfo("temperature.5"); %></span>";
+	} else {
+		E("wifi5_clients_tr").style.display = "none";
+	}
+
+	E("temp_td").innerHTML = code;
+}
 
 function hwaccel_state(){
 	if (hwacc == "1")
@@ -198,7 +212,7 @@ function show_etherstate(){
 
 					<tr>
 						<th>Radios temperature</th>
-						<td><b>2.4 GHz:</b><span> <% sysinfo("temperature.2"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span><% sysinfo("temperature.5"); %></span></td>
+						<td id="temp_td"></td>
 					</tr>
 				</table>
 
@@ -299,7 +313,7 @@ function show_etherstate(){
 							Authenticated: <span><% sysinfo("conn.wifi.2.authe"); %></span>
 						</td>
 					</tr>
-					<tr>
+					<tr id="wifi5_clients_tr">
 						<th>Wireless clients (5 GHz)</th>
 						<td>
 							Associated: <span><% sysinfo("conn.wifi.5.assoc"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
