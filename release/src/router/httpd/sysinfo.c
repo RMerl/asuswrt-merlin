@@ -244,7 +244,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
 				if (tmp)
 					sscanf(tmp, "bl_version=%s", result);
-
+				else
+					strcpy(result,"Unknown");
 				free(buffer);
 
 				unlink("/tmp/output.txt");
