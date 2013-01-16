@@ -353,6 +353,7 @@ History
 -------
 3.0.0.4.266.24:
    - NEW: Report CTF (HW Acceleration) state on Sysinfo page.
+   - NEW: Display Ethernet port states on the Sysinfo page.
    - CHANGED: Improved name resolution on traffic monitor page, now uses
               a device's hostname if it reported one.
    - CHANGED: Client List now uses our improved name resolution code,
@@ -361,6 +362,7 @@ History
    - CHANGED: Updated to OpenVPN 2.3.0 and lzo 2.06.
    - FIXED: ebtables were still broken, fixed by a complete rebuild.
    - FIXED: Some OpenVPN fields rejected -1 as being valid.
+   - FIXED: Hide 5G radio info from Sysinfo page if router is single band (RT-N16)
 
 
 3.0.0.4.266.23b:
