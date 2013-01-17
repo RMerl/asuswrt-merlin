@@ -277,7 +277,7 @@ int dhcprelay_main(int argc, char **argv)
 	max_socket = init_sockets(iface_list, num_sockets, fds);
 
 	/* Get our IP on server_iface */
-	if (udhcp_read_interface(argv[2], NULL, &our_nip, NULL))
+	if (udhcp_read_interface(argv[2], NULL, &our_nip, NULL, NULL))
 		return 1;
 
 	/* Main loop */
@@ -357,7 +357,7 @@ int dhcprelay_main(int argc, char **argv)
 //   of the 'giaddr' field does not match one of the relay agent's
 //   directly-connected logical interfaces, the BOOTREPLY messsage MUST be
 //   silently discarded.
-				if (udhcp_read_interface(iface_list[i], NULL, &dhcp_msg.gateway_nip, NULL)) {
+				if (udhcp_read_interface(iface_list[i], NULL, &dhcp_msg.gateway_nip, NULL, NULL)) {
 					/* Fall back to our IP on server iface */
 // this makes more sense!
 					dhcp_msg.gateway_nip = our_nip;

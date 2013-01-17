@@ -25,7 +25,7 @@
 #include "common.h"
 #include <net/if.h>
 
-int FAST_FUNC udhcp_read_interface(const char *interface, int *ifindex, uint32_t *nip, uint8_t *mac)
+int FAST_FUNC udhcp_read_interface(const char *interface, int *ifindex, uint32_t *nip, uint8_t *mac, uint16_t *mtu)
 {
 	/* char buffer instead of bona-fide struct avoids aliasing warning */
 	char ifr_buf[sizeof(struct ifreq)];
@@ -68,6 +68,15 @@ int FAST_FUNC udhcp_read_interface(const char *interface, int *ifindex, uint32_t
 		memcpy(mac, ifr->ifr_hwaddr.sa_data, 6);
 		log1("MAC %02x:%02x:%02x:%02x:%02x:%02x",
 			mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	}
+
+	if (mtu) {
+		if (ioctl_or_warn(fd, SIOCGIFMTU, ifr) != 0) {
+			close(fd);
+			return -1;
+		}
+		log1("Adapter mtu %d", ifr->ifr_mtu);
+		*mtu = ifr->ifr_mtu;
 	}
 
 	close(fd);

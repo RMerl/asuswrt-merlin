@@ -368,7 +368,8 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 	if (udhcp_read_interface(server_config.interface,
 			&server_config.ifindex,
 			&server_config.server_nip,
-			server_config.server_mac)
+			server_config.server_mac,
+			NULL)
 	) {
 		retval = 1;
 		goto ret;
