@@ -11,6 +11,8 @@
 
 #include "libbb.h"
 #include "modutils.h"
+#include <sys/utsname.h>
+#include <fnmatch.h>
 
 /* 2.6 style insmod has no options and required filename
  * (not module name - .ko can't be omitted) */
@@ -38,8 +40,11 @@
 int insmod_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int insmod_main(int argc UNUSED_PARAM, char **argv)
 {
+	struct utsname uts;
+	struct stat st;
 	char *filename;
-	int rc;
+	FILE *fp = NULL;
+	int rc, pos;
 
 	/* Compat note:
 	 * 2.6 style insmod has no options and required filename
@@ -57,6 +62,28 @@ int insmod_main(int argc UNUSED_PARAM, char **argv)
 	filename = *++argv;
 	if (!filename)
 		bb_show_usage();
+
+	/* Get a filedesc for the module.  Check we we have a complete path */
+	if (stat(filename, &st) < 0 || !S_ISREG(st.st_mode) ||
+		(fp = fopen(filename, "r")) == NULL) {
+                /* Hmm.  Could not open it.  First search under /lib/modules/`uname -r` */
+    		xchdir("/lib/modules");
+	        uname(&uts);
+    		xchdir(uts.release);
+
+		pos = strlen(filename) - 2;
+		if (get_linux_version_code() < KERNEL_VERSION(2,6,0)) {
+			if (pos < 0) pos = 0;
+			if (strncmp(&filename[pos], ".o", 2) !=0 )
+				filename = xasprintf("%s.o", filename);
+		} else {
+			if (--pos < 0) pos = 0;
+			if (strncmp(&filename[pos], ".ko", 3) !=0 )
+				filename = xasprintf("%s.ko", filename);
+		}
+	}
+	if (fp != NULL)
+		fclose(fp);
 
 	rc = bb_init_module(filename, parse_cmdline_module_options(argv, /*quote_spaces:*/ 0));
 	if (rc)
