@@ -348,6 +348,15 @@ static char *gethdr(FILE *fp)
 	return hdrval;
 }
 
+static void reset_beg_range_to_zero(void)
+{
+	bb_error_msg("restart failed");
+	G.beg_range = 0;
+	xlseek(G.output_fd, 0, SEEK_SET);
+	/* Done at the end instead: */
+	/* ftruncate(G.output_fd, 0); */
+}
+
 static FILE* prepare_ftp_session(FILE **dfpp, struct host_info *target, len_and_sockaddr *lsa)
 {
 	FILE *sfp;
@@ -415,10 +424,12 @@ static FILE* prepare_ftp_session(FILE **dfpp, struct host_info *target, len_and_
 
 	*dfpp = open_socket(lsa);
 
-	if (G.beg_range) {
+	if (G.beg_range != 0) {
 		sprintf(G.wget_buf, "REST %"OFF_FMT"u", G.beg_range);
 		if (ftpcmd(G.wget_buf, NULL, sfp) == 350)
 			G.content_len -= G.beg_range;
+		else
+			reset_beg_range_to_zero();
 	}
 
 	if (ftpcmd("RETR ", target->path, sfp) > 150)
@@ -431,7 +442,7 @@ static void NOINLINE retrieve_file_data(FILE *dfp)
 {
 #if ENABLE_FEATURE_WGET_STATUSBAR || ENABLE_FEATURE_WGET_TIMEOUT
 # if ENABLE_FEATURE_WGET_TIMEOUT
-	unsigned second_cnt;
+	unsigned second_cnt = G.timeout_seconds;
 # endif
 	struct pollfd polldata;
 
@@ -452,7 +463,7 @@ static void NOINLINE retrieve_file_data(FILE *dfp)
 		 * which messes up progress bar and/or timeout logic.
 		 * Because of nonblocking I/O, we need to dance
 		 * very carefully around EAGAIN. See explanation at
-		 * clearerr() call.
+		 * clearerr() calls.
 		 */
 		ndelay_on(polldata.fd);
 #endif
@@ -460,32 +471,7 @@ static void NOINLINE retrieve_file_data(FILE *dfp)
 			int n;
 			unsigned rdsz;
 
-			rdsz = sizeof(G.wget_buf);
-			if (G.got_clen) {
-				if (G.content_len < (off_t)sizeof(G.wget_buf)) {
-					if ((int)G.content_len <= 0)
-						break;
-					rdsz = (unsigned)G.content_len;
-				}
-			}
-
 #if ENABLE_FEATURE_WGET_STATUSBAR || ENABLE_FEATURE_WGET_TIMEOUT
-# if ENABLE_FEATURE_WGET_TIMEOUT
-			second_cnt = G.timeout_seconds;
-# endif
-			while (1) {
-				if (safe_poll(&polldata, 1, 1000) != 0)
-					break; /* error, EOF, or data is available */
-# if ENABLE_FEATURE_WGET_TIMEOUT
-				if (second_cnt != 0 && --second_cnt == 0) {
-					progress_meter(PROGRESS_END);
-					bb_error_msg_and_die("download timed out");
-				}
-# endif
-				/* Needed for "stalled" indicator */
-				progress_meter(PROGRESS_BUMP);
-			}
-
 			/* fread internally uses read loop, which in our case
 			 * is usually exited when we get EAGAIN.
 			 * In this case, libc sets error marker on the stream.
@@ -495,36 +481,71 @@ static void NOINLINE retrieve_file_data(FILE *dfp)
 			 * into if (n <= 0) ...
 			 */
 			clearerr(dfp);
-			errno = 0;
 #endif
+			errno = 0;
+			rdsz = sizeof(G.wget_buf);
+			if (G.got_clen) {
+				if (G.content_len < (off_t)sizeof(G.wget_buf)) {
+					if ((int)G.content_len <= 0)
+						break;
+					rdsz = (unsigned)G.content_len;
+				}
+			}
 			n = fread(G.wget_buf, 1, rdsz, dfp);
-			/* man fread:
+
+			if (n > 0) {
+				xwrite(G.output_fd, G.wget_buf, n);
+#if ENABLE_FEATURE_WGET_STATUSBAR
+				G.transferred += n;
+#endif
+				if (G.got_clen) {
+					G.content_len -= n;
+					if (G.content_len == 0)
+						break;
+				}
+#if ENABLE_FEATURE_WGET_TIMEOUT
+				second_cnt = G.timeout_seconds;
+#endif
+				continue;
+			}
+
+			/* n <= 0.
+			 * man fread:
 			 * If error occurs, or EOF is reached, the return value
 			 * is a short item count (or zero).
 			 * fread does not distinguish between EOF and error.
 			 */
-			if (n <= 0) {
-#if ENABLE_FEATURE_WGET_STATUSBAR || ENABLE_FEATURE_WGET_TIMEOUT
-				if (errno == EAGAIN) /* poll lied, there is no data? */
-					continue; /* yes */
-#endif
-				if (ferror(dfp))
+			if (errno != EAGAIN) {
+				if (ferror(dfp)) {
+					progress_meter(PROGRESS_END);
 					bb_perror_msg_and_die(bb_msg_read_error);
+				}
 				break; /* EOF, not error */
 			}
 
-			xwrite(G.output_fd, G.wget_buf, n);
-
-#if ENABLE_FEATURE_WGET_STATUSBAR
-			G.transferred += n;
+#if ENABLE_FEATURE_WGET_STATUSBAR || ENABLE_FEATURE_WGET_TIMEOUT
+			/* It was EAGAIN. There is no data. Wait up to one second
+			 * then abort if timed out, or update the bar and try reading again.
+			 */
+			if (safe_poll(&polldata, 1, 1000) == 0) {
+# if ENABLE_FEATURE_WGET_TIMEOUT
+				if (second_cnt != 0 && --second_cnt == 0) {
+					progress_meter(PROGRESS_END);
+					bb_error_msg_and_die("download timed out");
+				}
+# endif
+				/* We used to loop back to poll here,
+				 * but there is no great harm in letting fread
+				 * to try reading anyway.
+				 */
+			}
+			/* Need to do it _every_ second for "stalled" indicator
+			 * to be shown properly.
+			 */
 			progress_meter(PROGRESS_BUMP);
 #endif
-			if (G.got_clen) {
-				G.content_len -= n;
-				if (G.content_len == 0)
-					break;
-			}
-		}
+		} /* while (reading data) */
+
 #if ENABLE_FEATURE_WGET_STATUSBAR || ENABLE_FEATURE_WGET_TIMEOUT
 		clearerr(dfp);
 		ndelay_off(polldata.fd); /* else fgets can get very unhappy */
@@ -540,6 +561,24 @@ static void NOINLINE retrieve_file_data(FILE *dfp)
 		if (G.content_len == 0)
 			break; /* all done! */
 		G.got_clen = 1;
+		/*
+		 * Note that fgets may result in some data being buffered in dfp.
+		 * We loop back to fread, which will retrieve this data.
+		 * Also note that code has to be arranged so that fread
+		 * is done _before_ one-second poll wait - poll doesn't know
+		 * about stdio buffering and can result in spurious one second waits!
+		 */
+	}
+
+	/* If -c failed, we restart from the beginning,
+	 * but we do not truncate file then, we do it only now, at the end.
+	 * This lets user to ^C if his 99% complete 10 GB file download
+	 * failed to restart *without* losing the almost complete file.
+	 */
+	{
+		off_t pos = lseek(G.output_fd, 0, SEEK_CUR);
+		if (pos != (off_t)-1)
+			ftruncate(G.output_fd, pos);
 	}
 
 	/* Draw full bar and free its resources */
@@ -597,13 +636,11 @@ static void download_one_url(const char *url)
 		if (G.fname_out[0] == '/' || !G.fname_out[0])
 			G.fname_out = (char*)"index.html";
 		/* -P DIR is considered only if there was no -O FILE */
+		if (G.dir_prefix)
+			G.fname_out = fname_out_alloc = concat_path_file(G.dir_prefix, G.fname_out);
 		else {
-			if (G.dir_prefix)
-				G.fname_out = fname_out_alloc = concat_path_file(G.dir_prefix, G.fname_out);
-			else {
-				/* redirects may free target.path later, need to make a copy */
-				G.fname_out = fname_out_alloc = xstrdup(G.fname_out);
-			}
+			/* redirects may free target.path later, need to make a copy */
+			G.fname_out = fname_out_alloc = xstrdup(G.fname_out);
 		}
 	}
 #if ENABLE_FEATURE_WGET_STATUSBAR
@@ -675,7 +712,7 @@ static void download_one_url(const char *url)
 		}
 #endif
 
-		if (G.beg_range)
+		if (G.beg_range != 0)
 			fprintf(sfp, "Range: bytes=%"OFF_FMT"u-\r\n", G.beg_range);
 
 #if ENABLE_FEATURE_WGET_LONG_OPTIONS
@@ -742,15 +779,23 @@ However, in real world it was observed that some web servers
 (e.g. Boa/0.94.14rc21) simply use code 204 when file size is zero.
 */
 		case 204:
+			if (G.beg_range != 0) {
+				/* "Range:..." was not honored by the server.
+				 * Restart download from the beginning.
+				 */
+				reset_beg_range_to_zero();
+			}
 			break;
 		case 300:  /* redirection */
 		case 301:
 		case 302:
 		case 303:
 			break;
-		case 206:
-			if (G.beg_range)
+		case 206: /* Partial Content */
+			if (G.beg_range != 0)
+				/* "Range:..." worked. Good. */
 				break;
+			/* Partial Content even though we did not ask for it??? */
 			/* fall through */
 		default:
 			bb_error_msg_and_die("server returned error: %s", sanitize_string(G.wget_buf));
