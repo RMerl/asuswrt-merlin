@@ -31,6 +31,7 @@
 //usage:     "\n	-q		Quit after obtaining address"
 //usage:     "\n	-r 169.254.x.x	Request this address first"
 //usage:     "\n	-v		Verbose"
+//usage:     "\n	-S		Log to syslog too"
 //usage:     "\n"
 //usage:     "\nWith no -q, runs continuously monitoring for ARP conflicts,"
 //usage:     "\nexits only on I/O errors (link down etc)"
@@ -228,10 +229,11 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 
 #define FOREGROUND (opts & 1)
 #define QUIT       (opts & 2)
+#define SYSLOG     (opts & 4)
 	// parse commandline: prog [options] ifname script
 	// exactly 2 args; -v accumulates and implies -f
 	opt_complementary = "=2:vv:vf";
-	opts = getopt32(argv, "fqr:v", &r_opt, &verbose);
+	opts = getopt32(argv, "fqr:vS", &r_opt, &verbose);
 #if !BB_MMU
 	// on NOMMU reexec early (or else we will rerun things twice)
 	if (!FOREGROUND)
@@ -241,7 +243,7 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 	// (need to do it before openlog to prevent openlog from taking
 	// fd 3 (sock_fd==3))
 	xmove_fd(xsocket(AF_PACKET, SOCK_PACKET, htons(ETH_P_ARP)), sock_fd);
-	if (!FOREGROUND) {
+	if (!FOREGROUND && SYSLOG) {
 		// do it before all bb_xx_msg calls
 		openlog(applet_name, 0, LOG_DAEMON);
 		logmode |= LOGMODE_SYSLOG;
