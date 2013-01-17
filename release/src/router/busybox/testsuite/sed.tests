@@ -51,10 +51,8 @@ testing "sed -n" "sed -n -e s/foo/bar/ -e s/bar/baz/" "" "" "foo\n"
 testing "sed s//p" "sed -e s/foo/bar/p -e s/bar/baz/p" "bar\nbaz\nbaz\n" \
 	"" "foo\n"
 testing "sed -n s//p" "sed -ne s/abc/def/p" "def\n" "" "abc\n"
-test x"$SKIP_KNOWN_BUGS" = x"" && {
 testing "sed s//g (exhaustive)" "sed -e 's/[[:space:]]*/,/g'" ",1,2,3,4,5,\n" \
 	"" "12345\n"
-}
 testing "sed s arbitrary delimiter" "sed -e 's woo boing '" "boing\n" "" "woo\n"
 testing "sed s chains" "sed -e s/foo/bar/ -e s/bar/baz/" "baz\n" "" "foo\n"
 testing "sed s chains2" "sed -e s/foo/bar/ -e s/baz/nee/" "bar\n" "" "foo\n"
@@ -294,6 +292,22 @@ testing "sed understands \r" \
 testing "sed -i finishes ranges correctly" \
 	"sed '1,2d' -i input; echo \$?; cat input" \
 	"0\n3\n4\n" "1\n2\n3\n4\n" ""
+
+testing "sed zero chars match/replace advances correctly 1" \
+	"sed 's/l*/@/g'" \
+	"@h@e@o@\n" "" "helllo\n"
+
+testing "sed zero chars match/replace advances correctly 2" \
+	"sed 's [^ .]* x g'" \
+	"x x.x\n" "" " a.b\n"
+
+testing "sed zero chars match/replace logic must not falsely trigger here 1" \
+	"sed 's/a/A/g'" \
+	"_AAA1AA\n" "" "_aaa1aa\n"
+
+testing "sed zero chars match/replace logic must not falsely trigger here 2" \
+	"sed 's/ *$/_/g'" \
+	"qwerty_\n" "" "qwerty\n"
 
 # testing "description" "commands" "result" "infile" "stdin"
 
