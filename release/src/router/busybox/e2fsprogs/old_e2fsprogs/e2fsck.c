@@ -12704,7 +12704,8 @@ static void check_if_skip(e2fsck_t ctx)
 		if (batt && (fs->super->s_mnt_count <
 			     (unsigned) fs->super->s_max_mnt_count*2))
 			reason = 0;
-	} else if (fs->super->s_checkinterval &&
+	} else if (!(ctx->options & E2F_OPT_PREEN) &&
+		   fs->super->s_checkinterval &&
 		   ((now - fs->super->s_lastcheck) >=
 		    fs->super->s_checkinterval)) {
 		reason = _(" has gone %u days without being checked");
