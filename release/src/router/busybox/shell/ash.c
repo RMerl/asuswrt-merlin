@@ -12622,8 +12622,17 @@ exportcmd(int argc UNUSED_PARAM, char **argv)
 	const char *p;
 	char **aptr;
 	int flag = argv[0][0] == 'r' ? VREADONLY : VEXPORT;
+	int mask = ~0;
+	int nopt;
+	while ((nopt = nextopt("np"))) {
+		if (nopt == 'n') {
+				mask = ~flag;
+		} else { /* p */
+			break;
+		}
+	}
 
-	if (nextopt("p") != 'p') {
+	if (nopt != 'p') {
 		aptr = argptr;
 		name = *aptr;
 		if (name) {
@@ -12635,10 +12644,12 @@ exportcmd(int argc UNUSED_PARAM, char **argv)
 					vp = *findvar(hashvar(name), name);
 					if (vp) {
 						vp->flags |= flag;
+						vp->flags &= mask;
 						continue;
 					}
 				}
 				setvar(name, p, flag);
+				setvar(name, p, flag & mask);
 			} while ((name = *++aptr) != NULL);
 			return 0;
 		}
