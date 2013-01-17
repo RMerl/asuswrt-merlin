@@ -96,7 +96,7 @@ config UDHCP_DEBUG
 	int "Maximum verbosity level for udhcp applets (0..9)"
 	default 9
 	range 0 9
-	depends on UDHCPD || UDHCPC || DHCPRELAY || DHCP6C
+	depends on UDHCPD || UDHCPC || DHCPRELAY || DHCP6C || DHCP6RELAY
 	help
 	  Verbosity can be increased with multiple -v options.
 	  This option controls how high it can be cranked up.
@@ -175,3 +175,11 @@ config FEATURE_DHCP6_AUTH
 	help
 	  If selected, client will support DHCPv6 messages authentication,
 	  currently HMAC-MD5 only.
+
+config DHCP6RELAY
+	bool "dhcp6relay"
+	default n
+	depends on FEATURE_IPV6 && DHCP6C
+	help
+	  dhcp6relay listens for DHCPv6 requests on one or more interfaces
+	  and forwards these requests to a different interface.
