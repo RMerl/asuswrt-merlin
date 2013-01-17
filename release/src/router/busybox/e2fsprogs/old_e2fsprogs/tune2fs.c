@@ -11,6 +11,21 @@
  * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
+//usage:#define tune2fs_trivial_usage
+//usage:       "[-c MOUNT_CNT] "
+//usage:       "[-e errors-behavior] [-g group] "
+//usage:       "[-i DAYS] "
+//usage:       "[-j] [-J journal-options] [-l] [-s sparse-flag] "
+//usage:       "[-m reserved-blocks-percent] [-o [^]mount-options[,...]] "
+//usage:       "[-r reserved-blocks-count] [-u user] [-C mount-count] "
+//usage:       "[-L LABEL] "
+//usage:       "[-M last-mounted-dir] [-O [^]feature[,...]] "
+//usage:       "[-T last-check-time] [-U UUID] "
+//usage:       "BLOCKDEV"
+//usage:
+//usage:#define tune2fs_full_usage "\n\n"
+//usage:       "Adjust filesystem options on ext[23] filesystems"
+
 /*
  * History:
  * 93/06/01	- Creation
@@ -35,11 +50,11 @@
 #include "e2fsbb.h"
 #include "ext2fs/ext2_fs.h"
 #include "ext2fs/ext2fs.h"
-#include "uuid/uuid.h"
+#include "e2fs_lib.h"
 #include "e2p/e2p.h"
 #include "ext2fs/kernel-jbd.h"
 #include "util.h"
-#include "blkid/blkid.h"
+#include "volume_id.h"
 
 #include "libbb.h"
 
@@ -87,8 +102,8 @@ static void remove_journal_device(ext2_filsys fs)
 	if (f_flag)
 		commit_remove_journal = 1; /* force removal even if error */
 
-	uuid_unparse(fs->super->s_journal_uuid, buf);
-	journal_path = blkid_get_devname(NULL, "UUID", buf);
+	unparse_uuid(fs->super->s_journal_uuid, buf);
+	journal_path = get_devname_from_uuid(buf);
 
 	if (!journal_path) {
 		journal_path =
@@ -182,8 +197,8 @@ static void remove_journal_inode(ext2_filsys fs)
 	struct ext2_inode	inode;
 	errcode_t		retval;
 	ino_t			ino = fs->super->s_journal_inum;
-	char *msg = "to read";
-	char *s = "journal inode";
+	const char *msg = "to read";
+	const char *s = "journal inode";
 
 	retval = ext2fs_read_inode(fs, ino,  &inode);
 	if (retval)
@@ -298,7 +313,7 @@ static void update_feature_set(ext2_filsys fs, char *features)
 		if (!sb->s_def_hash_version)
 			sb->s_def_hash_version = EXT2_HASH_TEA;
 		if (uuid_is_null((unsigned char *) sb->s_hash_seed))
-			uuid_generate((unsigned char *) sb->s_hash_seed);
+			generate_uuid((unsigned char *) sb->s_hash_seed);
 	}
 
 	if (sb->s_rev_level == EXT2_GOOD_OLD_REV &&
@@ -344,9 +359,9 @@ static void add_journal(ext2_filsys fs)
  */
 static char * x_blkid_get_devname(const char *token)
 {
-	char * dev_name;
+	char *dev_name = (char *)token;
 
-	if (!(dev_name = blkid_get_devname(NULL, token, NULL)))
+	if (resolve_mount_spec(&dev_name) != 1 || !dev_name)
 		bb_error_msg_and_die("Unable to resolve '%s'", token);
 	return dev_name;
 }
@@ -694,11 +709,13 @@ int tune2fs_main(int argc, char **argv)
 		if ((strcasecmp(new_UUID, "null") == 0) ||
 		    (strcasecmp(new_UUID, "clear") == 0)) {
 			uuid_clear(sb->s_uuid);
+/*
 		} else if (strcasecmp(new_UUID, "time") == 0) {
 			uuid_generate_time(sb->s_uuid);
+*/
 		} else if (strcasecmp(new_UUID, "random") == 0) {
-			uuid_generate(sb->s_uuid);
-		} else if (uuid_parse(new_UUID, sb->s_uuid)) {
+			generate_uuid(sb->s_uuid);
+		} else if (parse_uuid(new_UUID, sb->s_uuid)) {
 			bb_error_msg_and_die("Invalid UUID format");
 		}
 		ext2fs_mark_super_dirty(fs);

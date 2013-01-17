@@ -17,7 +17,7 @@
 #include "e2p/e2p.h"
 #include "ext2fs/ext2_fs.h"
 #include "ext2fs/ext2fs.h"
-#include "blkid/blkid.h"
+#include "volume_id.h"
 #include "util.h"
 
 void proceed_question(void)
@@ -72,7 +72,7 @@ void check_plausibility(const char *device, int force)
 #endif
 }
 
-void check_mount(const char *device, int force, const char *type)
+void check_mount(const char *device, int force, const char *type UNUSED_PARAM)
 {
 	errcode_t retval;
 	int mount_flags;
@@ -116,8 +116,9 @@ void parse_journal_opts(char **journal_device, int *journal_flags,
 			arg++;
 		}
 		if (strcmp(token, "device") == 0) {
-			*journal_device = blkid_get_devname(NULL, arg, NULL);
-			if (!journal_device) {
+			*journal_device = arg;
+			if (resolve_mount_spec(journal_device) < 0 ||
+			    !(*journal_device)) {
 				journal_usage++;
 				continue;
 			}
@@ -257,7 +258,7 @@ char *e2fs_set_sbin_path(void)
 	if (oldpath)
 		oldpath = xasprintf("%s:%s", PATH_SET, oldpath);
 	 else
-		oldpath = PATH_SET;
+		oldpath = (char *)PATH_SET;
 	putenv(oldpath);
 	return oldpath;
 }

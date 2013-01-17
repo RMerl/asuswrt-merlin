@@ -13,6 +13,6 @@ lib-y:=
 
 INSERT
 
-lib-$(NEEDED-y) += fgetsetflags.o fgetsetversion.o pf.o iod.o mntopts.o \
-           feature.o ls.o uuid.o pe.o ostype.o ps.o hashstr.o \
+lib-$(NEEDED-y) += mntopts.o \
+           feature.o ls.o pe.o ostype.o ps.o hashstr.o \
            parse_num.o

@@ -67,7 +67,8 @@ int ext2fs_test_bit(unsigned int nr, const void * addr)
 
 #endif  /* !_EXT2_HAVE_ASM_BITOPS_ */
 
-void ext2fs_warn_bitmap(errcode_t errcode, unsigned long arg,
+void ext2fs_warn_bitmap(errcode_t errcode EXT2FS_ATTR((unused)),
+			unsigned long arg,
 			const char *description)
 {
 #ifndef OMIT_COM_ERR
@@ -79,7 +80,7 @@ void ext2fs_warn_bitmap(errcode_t errcode, unsigned long arg,
 }
 
 void ext2fs_warn_bitmap2(ext2fs_generic_bitmap bitmap,
-			    int code, unsigned long arg)
+			    int code EXT2FS_ATTR((unused)), unsigned long arg)
 {
 #ifndef OMIT_COM_ERR
 	if (bitmap->description)

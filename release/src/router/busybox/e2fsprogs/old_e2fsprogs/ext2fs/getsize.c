@@ -212,6 +212,7 @@ errcode_t ext2fs_get_device_size(const char *file, int blocksize,
 	    off_t ms;
 	    u_int bs;
 	    if (ioctl(fd, DIOCGMEDIASIZE, &ms) >= 0) {
+		close(fd);
 		*retblocks = ms / blocksize;
 		return 0;
 	    }

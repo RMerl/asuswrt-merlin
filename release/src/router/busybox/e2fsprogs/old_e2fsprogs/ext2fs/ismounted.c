@@ -176,8 +176,7 @@ static errcode_t check_mntent(const char *file, int *mount_flags,
 #ifdef __linux__
 	retval = check_mntent_file("/proc/mounts", file, mount_flags,
 				   mtpt, mtlen);
-	if (retval == 0 && (*mount_flags != 0))
-		return 0;
+	return retval;
 #endif /* __linux__ */
 #if defined(MOUNTED) || defined(_PATH_MOUNTED)
 #ifndef MOUNTED

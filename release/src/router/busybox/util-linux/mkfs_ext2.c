@@ -8,7 +8,7 @@
  * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
-//usage:#define mkfs_ext2_trivial_usage
+//usage:#define mkfs_ext2_trivial_usage_NO
 //usage:       "[-Fn] "
 /* //usage:    "[-c|-l filename] " */
 //usage:       "[-b BLK_SIZE] "
@@ -21,7 +21,7 @@
 //usage:       "[-L LABEL] "
 /* //usage:    "[-M last-mounted-directory] [-S] [-T filesystem-type] " */
 //usage:       "BLOCKDEV [KBYTES]"
-//usage:#define mkfs_ext2_full_usage "\n\n"
+//usage:#define mkfs_ext2_full_usage_NO "\n\n"
 //usage:       "	-b BLK_SIZE	Block size, bytes"
 /* //usage:  "\n	-c		Check device for bad blocks" */
 /* //usage:  "\n	-E opts		Set extended options" */

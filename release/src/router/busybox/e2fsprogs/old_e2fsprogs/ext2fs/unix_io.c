@@ -419,7 +419,7 @@ static errcode_t unix_open(const char *name, int flags, io_channel *channel)
 
 #ifdef __linux__
 #undef RLIM_INFINITY
-#if (defined(__alpha__) || ((defined(__sparc__) || defined(__mips__)) && (SIZEOF_LONG == 4)))
+#if (defined(__alpha__) || (defined(__sparc__) && (__WORDSIZE == 32)) || (defined(__mips__) && (_MIPS_SZLONG == 32)))
 #define RLIM_INFINITY	((unsigned long)(~0UL>>1))
 #else
 #define RLIM_INFINITY  (~0UL)

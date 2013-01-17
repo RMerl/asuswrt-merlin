@@ -308,3 +308,49 @@ int FAST_FUNC wait4pid(pid_t pid)
 		return WTERMSIG(status) + 0x180;
 	return 0;
 }
+
+char * FAST_FUNC unparse_uuid(const uint8_t *uu, char *out)
+{
+        char uuid_string[32];
+
+        bin2hex(uuid_string, (char*)uu, 16);
+	/* f.e. UUID=dfd9c173-be52-4d27-99a5-c34c6c2ff55f */
+        sprintf(out, "%.8s-%.4s-%.4s-%.4s-%.12s",
+                uuid_string,
+                uuid_string+8,
+                uuid_string+8+4,
+                uuid_string+8+4+4,
+                uuid_string+8+4+4+4
+        );
+        return out;
+}
+
+static unsigned char fromhex(char c)
+{
+        if (isdigit(c))
+                return (c - '0');
+        return ((c|0x20) - 'a' + 10);
+}
+
+/* Parse & verify UUID string */
+int FAST_FUNC parse_uuid(const char *s, uint8_t *uuid)
+{
+	int i;
+
+	if (strlen(s) != 36 || s[8] != '-' || s[13] != '-'
+	 || s[18] != '-' || s[23] != '-'
+	) {
+		return -1;
+	}
+	for (i = 0; i < 16; i++) {
+		if (*s == '-')
+			s++;
+		if (!isxdigit(s[0]) || !isxdigit(s[1]))
+			return -2;
+		uuid[i] = ((fromhex(s[0]) << 4) | fromhex(s[1]));
+		s += 2;
+	}
+
+	return 0;
+}
+

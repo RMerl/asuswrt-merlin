@@ -21,6 +21,7 @@
 #include <time.h>
 
 #include "e2p.h"
+#include "../e2fs_lib.h"
 
 static void print_user(unsigned short uid, FILE *f)
 {
@@ -141,7 +142,7 @@ static void print_mntopts(struct ext2_super_block * s, FILE *f)
 void list_super2(struct ext2_super_block * sb, FILE *f)
 {
 	int inode_blocks_per_group;
-	char buf[80], *str;
+	char buf[80], uuid_buf[37], *str;
 	time_t	tm;
 
 	inode_blocks_per_group = (((sb->s_inodes_per_group *
@@ -164,7 +165,7 @@ void list_super2(struct ext2_super_block * sb, FILE *f)
 		"Filesystem UUID:          %s\n"
 		"Filesystem magic number:  0x%04X\n"
 		"Filesystem revision #:    %d",
-		buf, e2p_uuid2str(sb->s_uuid), sb->s_magic, sb->s_rev_level);
+		buf, unparse_uuid(sb->s_uuid, uuid_buf), sb->s_magic, sb->s_rev_level);
 	if (sb->s_rev_level == EXT2_GOOD_OLD_REV) {
 		fprintf(f, " (original)\n");
 #ifdef EXT2_DYNAMIC_REV
@@ -244,9 +245,9 @@ void list_super2(struct ext2_super_block * sb, FILE *f)
 			"Inode size:		  %d\n",
 			sb->s_first_ino, sb->s_inode_size);
 	}
-	if (!e2p_is_null_uuid(sb->s_journal_uuid))
+	if (!uuid_is_null(sb->s_journal_uuid))
 		fprintf(f, "Journal UUID:             %s\n",
-			e2p_uuid2str(sb->s_journal_uuid));
+			unparse_uuid(sb->s_journal_uuid, uuid_buf));
 	if (sb->s_journal_inum)
 		fprintf(f, "Journal inode:            %u\n",
 			sb->s_journal_inum);
@@ -260,9 +261,9 @@ void list_super2(struct ext2_super_block * sb, FILE *f)
 	    sb->s_def_hash_version)
 		fprintf(f, "Default directory hash:   %s\n",
 			e2p_hash2string(sb->s_def_hash_version));
-	if (!e2p_is_null_uuid(sb->s_hash_seed))
+	if (!uuid_is_null(sb->s_hash_seed))
 		fprintf(f, "Directory Hash Seed:      %s\n",
-			e2p_uuid2str(sb->s_hash_seed));
+			unparse_uuid((unsigned char *)sb->s_hash_seed, uuid_buf));
 	if (sb->s_jnl_backup_type) {
 		fprintf(f, "Journal backup:           ");
 		if (sb->s_jnl_backup_type == 1)

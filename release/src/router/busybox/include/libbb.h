@@ -824,6 +824,10 @@ char* hex2bin(char *dst, const char *src, int count) FAST_FUNC;
 
 /* Generate a UUID */
 void generate_uuid(uint8_t *buf) FAST_FUNC;
+/* expand UUID to human readable format */
+char *unparse_uuid(const uint8_t *uu, char *out) FAST_FUNC;
+/* parse UUID */
+int parse_uuid(const char *in, uint8_t *uuid) FAST_FUNC;
 
 /* Last element is marked by mult == 0 */
 struct suffix_mult {

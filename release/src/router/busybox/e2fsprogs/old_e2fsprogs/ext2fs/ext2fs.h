@@ -13,7 +13,11 @@
 #define EXT2FS_EXT2FS_H 1
 
 
-#define EXT2FS_ATTR(x)
+#ifdef __GNUC__
+# define EXT2FS_ATTR(x) __attribute__(x)
+#else
+# define EXT2FS_ATTR(x)
+#endif
 
 #ifdef __cplusplus
 extern "C" {
