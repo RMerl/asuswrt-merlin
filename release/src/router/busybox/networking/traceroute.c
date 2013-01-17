@@ -902,15 +902,7 @@ common_traceroute_main(int op, char **argv)
 #if ENABLE_TRACEROUTE6
 	if (af == AF_INET6) {
 		xmove_fd(xsocket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6), rcvsock);
-# ifdef IPV6_RECVPKTINFO
-		setsockopt(rcvsock, SOL_IPV6, IPV6_RECVPKTINFO,
-				&const_int_1, sizeof(const_int_1));
-		setsockopt(rcvsock, SOL_IPV6, IPV6_2292PKTINFO,
-				&const_int_1, sizeof(const_int_1));
-# else
-		setsockopt(rcvsock, SOL_IPV6, IPV6_PKTINFO,
-				&const_int_1, sizeof(const_int_1));
-# endif
+		socket_want_pktinfo(rcvsock);
 	} else
 #endif
 	{
