@@ -29,7 +29,7 @@
  */
 
 //usage:#define ntpd_trivial_usage
-//usage:	"[-dnqNw"IF_FEATURE_NTPD_SERVER("l")"] [-S PROG] [-p PEER]..."
+//usage:	"[-dnqNwt"IF_FEATURE_NTPD_SERVER("l")"] [-S PROG] [-p PEER]..."
 //usage:#define ntpd_full_usage "\n\n"
 //usage:       "NTP client/server\n"
 //usage:     "\n	-d	Verbose"
@@ -37,6 +37,7 @@
 //usage:     "\n	-q	Quit after clock is set"
 //usage:     "\n	-N	Run at high priority"
 //usage:     "\n	-w	Do not set time (only query peers), implies -n"
+//usage:     "\n	-t	Trust network and server, no RFC-4330 cross-checks"
 //usage:	IF_FEATURE_NTPD_SERVER(
 //usage:     "\n	-l	Run as server on port 123"
 //usage:	)
@@ -257,7 +258,8 @@ enum {
 	OPT_w = (1 << 4),
 	OPT_p = (1 << 5),
 	OPT_S = (1 << 6),
-	OPT_l = (1 << 7) * ENABLE_FEATURE_NTPD_SERVER,
+	OPT_t = (1 << 7),
+	OPT_l = (1 << 8) * ENABLE_FEATURE_NTPD_SERVER,
 	/* We hijack some bits for other purposes */
 	OPT_qq = (1 << 31),
 };
@@ -951,6 +953,9 @@ fit(peer_t *p, double rd)
 		VERB3 bb_error_msg("peer %s unfit for selection: unreachable", p->p_dotted);
 		return 0;
 	}
+	if (option_mask32 & OPT_t) /* RFC-4330 check disabled */
+		return 1;
+
 #if 0 /* we filter out such packets earlier */
 	if ((p->lastpkt_status & LI_ALARM) == LI_ALARM
 	 || p->lastpkt_stratum >= MAXSTRAT
@@ -1639,9 +1644,10 @@ recv_and_process_peer_pkt(peer_t *p)
 		goto bail;
 	}
 
-	if ((msg.m_status & LI_ALARM) == LI_ALARM
+	if (!(option_mask32 & OPT_t) /* RFC-4330 check enabled by default */
+	 && ((msg.m_status & LI_ALARM) == LI_ALARM
 	 || msg.m_stratum == 0
-	 || msg.m_stratum > NTP_MAXSTRATUM
+	 || msg.m_stratum > NTP_MAXSTRATUM)
 	) {
 // TODO: stratum 0 responses may have commands in 32-bit m_refid field:
 // "DENY", "RSTR" - peer does not like us at all
@@ -1983,7 +1989,7 @@ static NOINLINE void ntp_init(char **argv)
 	opt_complementary = "dd:p::wn"; /* d: counter; p: list; -w implies -n */
 	opts = getopt32(argv,
 			"nqNx" /* compat */
-			"wp:S:"IF_FEATURE_NTPD_SERVER("l") /* NOT compat */
+			"wp:S:t"IF_FEATURE_NTPD_SERVER("l") /* NOT compat */
 			"d" /* compat */
 			"46aAbgL", /* compat, ignored */
 			&peers, &G.script_name, &G.verbose);
