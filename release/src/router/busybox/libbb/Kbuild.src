@@ -134,6 +134,7 @@ lib-$(CONFIG_TFTPD) += udp_io.o
 lib-$(CONFIG_TCPSVD) += udp_io.o
 lib-$(CONFIG_UDPSVD) += udp_io.o
 lib-$(CONFIG_TRACEROUTE) += udp_io.o
+lib-$(CONFIG_DHCP6C) += udp_io.o
 
 lib-$(CONFIG_LOSETUP) += loop.o
 lib-$(CONFIG_FEATURE_MOUNT_LOOP) += loop.o
