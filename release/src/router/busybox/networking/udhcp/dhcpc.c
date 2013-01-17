@@ -1237,8 +1237,6 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 		IF_UDHCP_VERBOSE(, &dhcp_verbose)
 	);
 	if (opt & (OPT_h|OPT_H)) {
-		//msg added 2011-11
-		bb_error_msg("option -h NAME is deprecated, use -x hostname:NAME");
 		client_config.hostname = alloc_dhcp_option(DHCP_HOST_NAME, str_h, 0);
 	}
 	if (opt & OPT_F) {
