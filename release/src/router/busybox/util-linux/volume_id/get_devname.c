@@ -291,17 +291,20 @@ char *get_devname_from_uuid(const char *spec)
 
 int resolve_mount_spec(char **fsname)
 {
-	char *tmp = *fsname;
+	char *tmp = NULL;
 
 	if (strncmp(*fsname, "UUID=", 5) == 0)
 		tmp = get_devname_from_uuid(*fsname + 5);
 	else if (strncmp(*fsname, "LABEL=", 6) == 0)
 		tmp = get_devname_from_label(*fsname + 6);
-
-	if (tmp == *fsname)
+	else {
+		*fsname = xstrdup(*fsname);
 		return 0; /* no UUID= or LABEL= prefix found */
+	}
 
-	if (tmp)
-		*fsname = tmp;
+	if (!tmp)
+		return -2; /* device defined by UUID= or LABEL= wasn't found */
+
+	*fsname = tmp;
 	return 1;
 }

@@ -23,9 +23,10 @@ char *get_devname_from_uuid(const char *spec);
 void display_uuid_cache(int scan_devices);
 
 /* Returns:
- * 0: no UUID= or LABEL= prefix found
- * 1: UUID= or LABEL= prefix found. In this case,
- *    *fsname is replaced if device with such UUID or LABEL is found
+ * 0 : no UUID= or LABEL= prefix found
+ * 1 : UUID= or LABEL= prefix found. In this case,
+ *     *fsname is replaced if device with such UUID or LABEL is found
+ * -2: UUID= or LABEL= prefixes cannot be resolved
  */
 int resolve_mount_spec(char **fsname);
 int add_to_uuid_cache(const char *device);
