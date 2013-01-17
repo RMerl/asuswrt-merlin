@@ -5,7 +5,7 @@
  * Copyright (C) 2001 by Matt Kraai <kraai@alumni.carnegiemellon.edu>
  * SELinux support by Yuichi Nakamura <ynakam@hitachisoft.jp>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 #include "libbb.h"
 
@@ -78,9 +78,9 @@ int FAST_FUNC copy_file(const char *source, const char *dest, int flags)
 	/* NB: each struct stat is ~100 bytes */
 	struct stat source_stat;
 	struct stat dest_stat;
-	signed char retval = 0;
-	signed char dest_exists = 0;
-	signed char ovr;
+	smallint retval = 0;
+	smallint dest_exists = 0;
+	smallint ovr;
 
 /* Inverse of cp -d ("cp without -d") */
 #define FLAGS_DEREF (flags & (FILEUTILS_DEREFERENCE + FILEUTILS_DEREFERENCE_L0))
@@ -147,7 +147,6 @@ int FAST_FUNC copy_file(const char *source, const char *dest, int flags)
 			return -1;
 		}
 
-		/* Create DEST */
 		if (dest_exists) {
 			if (!S_ISDIR(dest_stat.st_mode)) {
 				bb_error_msg("target '%s' is not a directory", dest);
@@ -156,6 +155,7 @@ int FAST_FUNC copy_file(const char *source, const char *dest, int flags)
 			/* race here: user can substitute a symlink between
 			 * this check and actual creation of files inside dest */
 		} else {
+			/* Create DEST */
 			mode_t mode;
 			saved_umask = umask(0);
 

@@ -26,8 +26,6 @@
 #include <sys/types.h>
 #include <linux/types.h>
 
-#include "e2fsbb.h"
-
 /*
  * Now pull in the real linux/jfs.h definitions.
  */
@@ -38,9 +36,9 @@
 #include "fsck.h"
 
 #include "ext2fs/ext2_fs.h"
-#include "volume_id.h"
+#include "blkid/blkid.h"
 #include "ext2fs/ext2_ext_attr.h"
-#include "../e2fs_lib.h"
+#include "uuid/uuid.h"
 #include "libbb.h"
 
 #ifdef HAVE_CONIO_H
@@ -260,7 +258,7 @@ The following defines are used in the 'flags' field of a dx_dirblock_info
 #define PR_1_SET_IMAGIC    0x01002F  /* Imagic flag set on an inode when filesystem doesn't support it */
 #define PR_1_SET_IMMUTABLE            0x010030  /* Immutable flag set on a device or socket inode */
 #define PR_1_COMPR_SET                0x010031  /* Compression flag set on a non-compressed filesystem */
-#define PR_1_SET_NONZSIZE             0x010032  /* Non-zero size on on device, fifo or socket inode */
+#define PR_1_SET_NONZSIZE             0x010032  /* Non-zero size on device, fifo or socket inode */
 #define PR_1_FS_REV_LEVEL             0x010033  /* Filesystem revision is 0, but feature flags are set */
 #define PR_1_JOURNAL_INODE_NOT_CLEAR  0x010034  /* Journal inode not in use, needs clearing */
 #define PR_1_JOURNAL_BAD_MODE         0x010035  /* Journal inode has wrong mode */
@@ -507,6 +505,7 @@ struct e2fsck_struct {
 	int     blocksize;      /* blocksize */
 	blk_t   num_blocks;     /* Total number of blocks */
 	int     mount_flags;
+	blkid_cache blkid;      /* blkid cache */
 
 	jmp_buf abort_loc;
 
@@ -630,12 +629,10 @@ struct e2fsck_struct {
 };
 
 
-#define tid_gt(x, y)		((x - y) > 0)
+#define tid_gt(x, y)  ((x - y) > 0)
 
 static inline int tid_geq(tid_t x, tid_t y)
 {
 	int difference = (x - y);
 	return (difference >= 0);
 }
-
-

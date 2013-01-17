@@ -1,5 +1,7 @@
 #!/bin/sh
 
+FAILCOUNT=0
+
 ext=bz2
 
 bb="busybox "
@@ -35,6 +37,7 @@ check() {
 	echo "PASS: $1"
     else
 	echo "FAIL: $1"
+	FAILCOUNT=$((FAILCOUNT + 1))
     fi
 }
 
@@ -47,3 +50,35 @@ prep; check "bzcat: dont delete src" "${bb}bzcat t2.bz2; test -f t2.bz2 && echo 
 
 )
 rm -rf testdir
+
+
+
+# Copyright 2011 by Denys Vlasenko
+# Licensed under GPLv2, see file LICENSE in this source tree.
+
+. ./testing.sh
+
+# testing "test name" "command" "expected result" "file input" "stdin"
+
+# "input" file is bzipped file with "a\n" data
+testing "bzcat can print many files" \
+"$ECHO -ne '$hexdump' | bzcat input input; echo \$?" \
+"\
+a
+a
+0
+" "\
+\x42\x5a\x68\x39\x31\x41\x59\x26\x53\x59\x63\x3e\xd6\xe2\x00\x00\
+\x00\xc1\x00\x00\x10\x20\x00\x20\x00\x21\x00\x82\xb1\x77\x24\x53\
+\x85\x09\x06\x33\xed\x6e\x20\
+" ""
+
+# "input" file is bzipped zero byte file
+testing "bzcat can handle compressed zero-length bzip2 files" \
+"$ECHO -ne '$hexdump' | bzcat input input; echo \$?" \
+"0\n" \
+"\x42\x5a\x68\x39\x17\x72\x45\x38\x50\x90\x00\x00\x00\x00" ""
+
+
+
+exit $((FAILCOUNT <= 255 ? FAILCOUNT : 255))

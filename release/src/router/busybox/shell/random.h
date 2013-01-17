@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2009 Denys Vlasenko
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #ifndef SHELL_RANDOM_H
 #define SHELL_RANDOM_H 1

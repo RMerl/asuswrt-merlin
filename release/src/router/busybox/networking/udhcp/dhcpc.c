@@ -99,9 +99,7 @@ static const uint8_t len_of_option_as_string[] = {
 	[OPTION_IP              ] = sizeof("255.255.255.255 "),
 	[OPTION_IP_PAIR         ] = sizeof("255.255.255.255 ") * 2,
 	[OPTION_STATIC_ROUTES   ] = sizeof("255.255.255.255/32 255.255.255.255 "),
-#if ENABLE_FEATURE_UDHCP_RFC5969
 	[OPTION_6RD             ] = sizeof("32 128 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff 255.255.255.255 "),
-#endif
 	[OPTION_STRING          ] = 1,
 	[OPTION_STRING_HOST     ] = 1,
 #if ENABLE_FEATURE_UDHCP_RFC3397
@@ -297,7 +295,6 @@ static NOINLINE char *xmalloc_optname_optval(uint8_t *option, const struct dhcp_
 
 			return ret;
 		}
-#if ENABLE_FEATURE_UDHCP_RFC5969
 		case OPTION_6RD:
 			/* Option binary format (see RFC 5969):
 			 *  0                   1                   2                   3
@@ -345,7 +342,6 @@ static NOINLINE char *xmalloc_optname_optval(uint8_t *option, const struct dhcp_
 			}
 
 			return ret;
-#endif
 #if ENABLE_FEATURE_UDHCP_RFC3397
 		case OPTION_DNS_STRING:
 			/* unpack option into dest; use ret for prefix (i.e., "optname=") */
@@ -596,10 +592,7 @@ static void add_client_options(struct dhcp_packet *packet)
 	uint8_t c;
 	int i, end, len;
 
-	len = sizeof(struct ip_udp_dhcp_packet);
-	if (client_config.client_mtu == 0 ||
-	    client_config.client_mtu > len)
-		udhcp_add_simple_option(packet, DHCP_MAX_SIZE, htons(len));
+	udhcp_add_simple_option(packet, DHCP_MAX_SIZE, htons(IP_UDP_DHCP_SIZE));
 
 	/* Add a "param req" option with the list of options we'd like to have
 	 * from stubborn DHCP servers. Pull the data from the struct in common.c.
@@ -1237,6 +1230,8 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 		IF_UDHCP_VERBOSE(, &dhcp_verbose)
 	);
 	if (opt & (OPT_h|OPT_H)) {
+		//msg added 2011-11
+		bb_error_msg("option -h NAME is deprecated, use -x hostname:NAME");
 		client_config.hostname = alloc_dhcp_option(DHCP_HOST_NAME, str_h, 0);
 	}
 	if (opt & OPT_F) {
@@ -1286,8 +1281,7 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 	if (udhcp_read_interface(client_config.interface,
 			&client_config.ifindex,
 			NULL,
-			client_config.client_mac,
-			&client_config.client_mtu)
+			client_config.client_mac)
 	) {
 		return 1;
 	}
@@ -1394,8 +1388,7 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 			if (udhcp_read_interface(client_config.interface,
 					&client_config.ifindex,
 					NULL,
-					client_config.client_mac,
-					&client_config.client_mtu)
+					client_config.client_mac)
 			) {
 				goto ret0; /* iface is gone? */
 			}

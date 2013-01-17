@@ -4,6 +4,8 @@
 
 . ./testing.sh
 
+total_failed=0
+
 # Run one old-style test.
 # Tests are stored in applet/testcase shell scripts.
 # They are run using "sh -x -e applet/testcase".
@@ -72,7 +74,10 @@ run_oldstyle_applet_tests()
 			*.mine) continue ;;    # svn-produced junk
 			*.r[0-9]*) continue ;; # svn-produced junk
 		esac
-		run_applet_testcase "$applet" "$testcase" || status=1
+		run_applet_testcase "$applet" "$testcase" || {
+			status=1
+			total_failed=$((total_failed + 1))
+		}
 	done
 	return $status
 }
@@ -150,7 +155,10 @@ for applet in $applets; do
 		fi
 #		echo "Running test $tsdir/$applet.tests"
 		PATH="$LINKSDIR:$tsdir:$bindir:$PATH" \
-			"$tsdir/$applet.tests" || status=1
+			"$tsdir/$applet.tests"
+		rc=$?
+		total_failed=$((total_failed + rc))
+		test $rc -ne 0 && status=1
 	fi
 done
 
@@ -158,6 +166,6 @@ done
 #rm -rf "$LINKSDIR"
 
 if [ $status -ne 0 ] && [ x"$VERBOSE" = x ]; then
-	echo "Failures detected, running with -v (verbose) will give more info"
+	echo "$total_failed failure(s) detected; running with -v (verbose) will give more info"
 fi
 exit $status

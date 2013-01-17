@@ -3,12 +3,24 @@
  * split - split a file into pieces
  * Copyright (c) 2007 Bernhard Reutner-Fischer
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 /* BB_AUDIT: SUSv3 compliant
  * SUSv3 requirements:
  * http://www.opengroup.org/onlinepubs/009695399/utilities/split.html
  */
+
+//usage:#define split_trivial_usage
+//usage:       "[OPTIONS] [INPUT [PREFIX]]"
+//usage:#define split_full_usage "\n\n"
+//usage:       "	-b N[k|m]	Split by N (kilo|mega)bytes"
+//usage:     "\n	-l N		Split by N lines"
+//usage:     "\n	-a N		Use N letters as suffix"
+//usage:
+//usage:#define split_example_usage
+//usage:       "$ split TODO foo\n"
+//usage:       "$ cat TODO | split -a 2 -l 2 TODO_\n"
+
 #include "libbb.h"
 
 static const struct suffix_mult split_suffices[] = {
@@ -32,7 +44,7 @@ static char *next_file(char *old, unsigned suffix_len)
 	unsigned i = 1;
 	char *curr;
 
-	do {
+	while (1) {
 		curr = old + end - i;
 		if (*curr < 'z') {
 			*curr += 1;
@@ -43,7 +55,7 @@ static char *next_file(char *old, unsigned suffix_len)
 			return NULL;
 		}
 		*curr = 'a';
-	} while (1);
+	}
 
 	return old;
 }

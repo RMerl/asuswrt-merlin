@@ -4,8 +4,13 @@
  *
  * Copyright (C) 2010 by Grigory Batalov <bga@altlinux.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define fgconsole_trivial_usage
+//usage:	""
+//usage:#define fgconsole_full_usage "\n\n"
+//usage:	"Get active console"
 
 #include "libbb.h"
 

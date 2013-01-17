@@ -4,7 +4,7 @@
  *
  * (C) 1991, 1992 Linus Torvalds.
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 /*
@@ -86,6 +86,18 @@
  * The device may be a block device or a image of one, but this isn't
  * enforced (but it's not much fun on a character device :-).
  */
+
+//usage:#define fsck_minix_trivial_usage
+//usage:       "[-larvsmf] BLOCKDEV"
+//usage:#define fsck_minix_full_usage "\n\n"
+//usage:       "Check MINIX filesystem\n"
+//usage:     "\n	-l	List all filenames"
+//usage:     "\n	-r	Perform interactive repairs"
+//usage:     "\n	-a	Perform automatic repairs"
+//usage:     "\n	-v	Verbose"
+//usage:     "\n	-s	Output superblock information"
+//usage:     "\n	-m	Show \"mode not cleared\" warnings"
+//usage:     "\n	-f	Force file system check"
 
 #include <mntent.h>
 #include "libbb.h"

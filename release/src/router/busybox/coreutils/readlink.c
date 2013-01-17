@@ -4,8 +4,19 @@
  *
  * Copyright (C) 2000,2001 Matt Kraai <kraai@alumni.carnegiemellon.edu>
  *
- * Licensed under GPL v2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define readlink_trivial_usage
+//usage:	IF_FEATURE_READLINK_FOLLOW("[-fnv] ") "FILE"
+//usage:#define readlink_full_usage "\n\n"
+//usage:       "Display the value of a symlink"
+//usage:	IF_FEATURE_READLINK_FOLLOW( "\n"
+//usage:     "\n	-f	Canonicalize by following all symlinks"
+//usage:     "\n	-n	Don't add newline"
+//usage:     "\n	-v	Verbose"
+//usage:	)
+
 #include "libbb.h"
 
 /*
@@ -36,7 +47,6 @@ int readlink_main(int argc UNUSED_PARAM, char **argv)
 {
 	char *buf;
 	char *fname;
-	char pathbuf[PATH_MAX];
 
 	IF_FEATURE_READLINK_FOLLOW(
 		unsigned opt;
@@ -56,7 +66,7 @@ int readlink_main(int argc UNUSED_PARAM, char **argv)
 		logmode = LOGMODE_NONE;
 
 	if (opt & 1) { /* -f */
-		buf = realpath(fname, pathbuf);
+		buf = xmalloc_realpath(fname);
 	} else {
 		buf = xmalloc_readlink_or_warn(fname);
 	}
@@ -65,7 +75,7 @@ int readlink_main(int argc UNUSED_PARAM, char **argv)
 		return EXIT_FAILURE;
 	printf((opt & 2) ? "%s" : "%s\n", buf);
 
-	if (ENABLE_FEATURE_CLEAN_UP && !opt)
+	if (ENABLE_FEATURE_CLEAN_UP)
 		free(buf);
 
 	fflush_stdout_and_exit(EXIT_SUCCESS);

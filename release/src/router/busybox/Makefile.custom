@@ -107,7 +107,7 @@ bigdata: busybox_unstripped
 
 # Documentation Targets
 .PHONY: doc
-doc: docs/busybox.pod docs/BusyBox.txt docs/BusyBox.1 docs/BusyBox.html
+doc: docs/busybox.pod docs/BusyBox.txt docs/busybox.1 docs/BusyBox.html
 
 # FIXME: Doesn't belong here
        cmd_doc =
@@ -125,6 +125,7 @@ docs/busybox.pod: $(srctree)/docs/busybox_header.pod \
 	$(Q)-mkdir -p docs
 	$(Q)-( \
 	    cat $(srctree)/docs/busybox_header.pod; \
+	    echo; \
 	    applets/usage_pod | sed 's/^[A-Za-z][A-Za-z ]*[a-z]:$$/&\n/'; \
 	    cat $(srctree)/docs/busybox_footer.pod; \
 	    ) > docs/busybox.pod
@@ -134,10 +135,10 @@ docs/BusyBox.txt: docs/busybox.pod
 	$(Q)-mkdir -p docs
 	$(Q)-pod2text $< > $@
 
-docs/BusyBox.1: docs/busybox.pod
+docs/busybox.1: docs/busybox.pod
 	$(disp_doc)
 	$(Q)-mkdir -p docs
-	$(Q)-pod2man --center=BusyBox --release="version $(KERNELVERSION)" $< > $@
+	$(Q)-pod2man --center=busybox --release="version $(KERNELVERSION)" $< > $@
 
 docs/BusyBox.html: docs/busybox.net/BusyBox.html
 	$(disp_doc)

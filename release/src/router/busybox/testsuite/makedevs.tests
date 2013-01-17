@@ -1,8 +1,17 @@
 #!/bin/sh
 # Copyright 2008 by Denys Vlasenko
-# Licensed under GPL v2, see file LICENSE for details.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 . ./testing.sh
+
+test x"`id -u`" = x"0" || {
+	echo "SKIPPED: makedevs (must be root to test this)"
+	exit 0
+}
+
+unset LANG
+unset LC_COLLATE
+unset LC_ALL
 
 # ls -ln is showing date. Need to remove that, it's variable
 # sed: (1) "maj, min" -> "maj,min" (2) coalesce spaces

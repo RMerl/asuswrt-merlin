@@ -10,6 +10,7 @@ INSERT
 config FREE
 	bool "free"
 	default y
+	select PLATFORM_LINUX #sysinfo()
 	help
 	  free displays the total amount of free and used physical and swap
 	  memory in the system, as well as the buffers used by the kernel.
@@ -44,12 +45,6 @@ config KILLALL5
 	bool "killall5"
 	default y
 	depends on KILL
-
-config NMETER
-	bool "nmeter"
-	default y
-	help
-	  Prints selected system stats continuously, one line per update.
 
 config PGREP
 	bool "pgrep"
@@ -95,16 +90,25 @@ config PS
 config FEATURE_PS_WIDE
 	bool "Enable wide output option (-w)"
 	default y
-	depends on PS
+	depends on PS && !DESKTOP
 	help
 	  Support argument 'w' for wide output.
 	  If given once, 132 chars are printed, and if given more
 	  than once, the length is unlimited.
 
+config FEATURE_PS_LONG
+	bool "Enable long output option (-l)"
+	default y
+	depends on PS && !DESKTOP
+	help
+	  Support argument 'l' for long output.
+	  Adds fields PPID, RSS, START, TIME & TTY
+
 config FEATURE_PS_TIME
 	bool "Enable time and elapsed time output"
 	default y
 	depends on PS && DESKTOP
+	select PLATFORM_LINUX
 	help
 	  Support -o time and -o etime output specifiers.
 
@@ -191,19 +195,12 @@ config FEATURE_TOPMEM
 	  Enable 's' in top (gives lots of memory info).
 
 config FEATURE_SHOW_THREADS
-	bool "Support for showing threads in ps/top"
+	bool "Support for showing threads in ps/pstree/top"
 	default y
-	depends on PS || TOP
+	depends on PS || TOP || PSTREE
 	help
-	  Enables ps -T option and 'h' command in top
-
-config UPTIME
-	bool "uptime"
-	default y
-	help
-	  uptime gives a one line display of the current time, how long
-	  the system has been running, how many users are currently logged
-	  on, and the system load averages for the past 1, 5, and 15 minutes.
+	  Enables the ps -T option, showing of threads in pstree,
+	  and 'h' command in top.
 
 config WATCH
 	bool "watch"

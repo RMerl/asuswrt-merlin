@@ -2,7 +2,7 @@
 
 # SUSv3 compliant mount and umount tests.
 # Copyright 2005 by Rob Landley <rob@landley.net>
-# Licensed under GPL v2, see file LICENSE for details.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 if [ -z "$TESTDIR" ]
 then

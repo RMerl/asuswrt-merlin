@@ -5,7 +5,7 @@
  * Copyright (C) 2008 Rob Landley <rob@landley.net>
  * Copyright (C) 2008 Denys Vlasenko <vda.linux@googlemail.com>
  *
- * Licensed under GPL version 2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #include "libbb.h"
 
@@ -40,13 +40,14 @@ int64_t FAST_FUNC read_key(int fd, char *buffer, int timeout)
 		'[','C'        |0x80,KEYCODE_RIGHT   ,
 		'[','D'        |0x80,KEYCODE_LEFT    ,
 		/* ESC [ 1 ; 2 x, where x = A/B/C/D: Shift-<arrow> */
-		/* ESC [ 1 ; 3 x, where x = A/B/C/D: Alt-<arrow> */
+		/* ESC [ 1 ; 3 x, where x = A/B/C/D: Alt-<arrow> - implemented below */
 		/* ESC [ 1 ; 4 x, where x = A/B/C/D: Alt-Shift-<arrow> */
 		/* ESC [ 1 ; 5 x, where x = A/B/C/D: Ctrl-<arrow> - implemented below */
 		/* ESC [ 1 ; 6 x, where x = A/B/C/D: Ctrl-Shift-<arrow> */
 		'[','H'        |0x80,KEYCODE_HOME    , /* xterm */
-		/* [ESC] ESC [ [2] H - [Alt-][Shift-]Home */
 		'[','F'        |0x80,KEYCODE_END     , /* xterm */
+		/* [ESC] ESC [ [2] H - [Alt-][Shift-]Home (End similarly?) */
+		/* '[','Z'        |0x80,KEYCODE_SHIFT_TAB, */
 		'[','1','~'    |0x80,KEYCODE_HOME    , /* vt100? linux vt? or what? */
 		'[','2','~'    |0x80,KEYCODE_INSERT  ,
 		/* ESC [ 2 ; 3 ~ - Alt-Insert */
@@ -86,8 +87,12 @@ int64_t FAST_FUNC read_key(int fd, char *buffer, int timeout)
 		/* '[','1',';','5','B' |0x80,KEYCODE_CTRL_DOWN , - unused */
 		'[','1',';','5','C' |0x80,KEYCODE_CTRL_RIGHT,
 		'[','1',';','5','D' |0x80,KEYCODE_CTRL_LEFT ,
+		/* '[','1',';','3','A' |0x80,KEYCODE_ALT_UP    , - unused */
+		/* '[','1',';','3','B' |0x80,KEYCODE_ALT_DOWN  , - unused */
+		'[','1',';','3','C' |0x80,KEYCODE_ALT_RIGHT,
+		'[','1',';','3','D' |0x80,KEYCODE_ALT_LEFT ,
+		/* '[','3',';','3','~' |0x80,KEYCODE_ALT_DELETE, - unused */
 		0
-		/* ESC [ Z - Shift-Tab */
 	};
 
 	pfd.fd = fd;
@@ -214,7 +219,10 @@ int64_t FAST_FUNC read_key(int fd, char *buffer, int timeout)
 		}
 		n++;
 		/* Try to decipher "ESC [ NNN ; NNN R" sequence */
-		if ((ENABLE_FEATURE_EDITING_ASK_TERMINAL || ENABLE_FEATURE_VI_ASK_TERMINAL)
+		if ((ENABLE_FEATURE_EDITING_ASK_TERMINAL
+		    || ENABLE_FEATURE_VI_ASK_TERMINAL
+		    || ENABLE_FEATURE_LESS_ASK_TERMINAL
+		    )
 		 && n >= 5
 		 && buffer[0] == '['
 		 && buffer[n-1] == 'R'

@@ -4,13 +4,19 @@
  * Based on code from util-linux v 2.11l
  *
  * Copyright (c) 1990
- *	The Regents of the University of California.  All rights reserved.
+ * The Regents of the University of California.  All rights reserved.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Original copyright notice is retained at the end of this file.
  */
 
+//usage:#if !ENABLE_DESKTOP
+//usage:#define od_trivial_usage
+//usage:       "[-aBbcDdeFfHhIiLlOovXx] [FILE]"
+//usage:#define od_full_usage "\n\n"
+//usage:       "Print FILE (or stdin) unambiguously, as octal bytes by default"
+//usage:#endif
 
 #include "libbb.h"
 #if ENABLE_DESKTOP
@@ -110,7 +116,7 @@ odoffset(dumper_t *dumper, int argc, char ***argvp)
 			 * the offset is changed as well.  This isn't pretty,
 			 * but it's easy.
 			 */
-#define	TYPE_OFFSET	7
+#define TYPE_OFFSET 7
 			{
 				char x_or_d;
 				if (base == 16) {
@@ -130,19 +136,19 @@ odoffset(dumper_t *dumper, int argc, char ***argvp)
 }
 
 static const char *const add_strings[] = {
-	"16/1 \"%3_u \" \"\\n\"",				/* a */
-	"8/2 \" %06o \" \"\\n\"",				/* B, o */
-	"16/1 \"%03o \" \"\\n\"",				/* b */
-	"16/1 \"%3_c \" \"\\n\"",				/* c */
-	"8/2 \"  %05u \" \"\\n\"",				/* d */
-	"4/4 \"     %010u \" \"\\n\"",			/* D */
-	"2/8 \"          %21.14e \" \"\\n\"",	/* e (undocumented in od), F */
-	"4/4 \" %14.7e \" \"\\n\"",				/* f */
-	"4/4 \"       %08x \" \"\\n\"",			/* H, X */
-	"8/2 \"   %04x \" \"\\n\"",				/* h, x */
-	"4/4 \"    %11d \" \"\\n\"",			/* I, L, l */
-	"8/2 \" %6d \" \"\\n\"",				/* i */
-	"4/4 \"    %011o \" \"\\n\"",			/* O */
+	"16/1 \"%3_u \" \"\\n\"",              /* a */
+	"8/2 \" %06o \" \"\\n\"",              /* B, o */
+	"16/1 \"%03o \" \"\\n\"",              /* b */
+	"16/1 \"%3_c \" \"\\n\"",              /* c */
+	"8/2 \"  %05u \" \"\\n\"",             /* d */
+	"4/4 \"     %010u \" \"\\n\"",         /* D */
+	"2/8 \"          %21.14e \" \"\\n\"",  /* e (undocumented in od), F */
+	"4/4 \" %14.7e \" \"\\n\"",            /* f */
+	"4/4 \"       %08x \" \"\\n\"",        /* H, X */
+	"8/2 \"   %04x \" \"\\n\"",            /* h, x */
+	"4/4 \"    %11d \" \"\\n\"",           /* I, L, l */
+	"8/2 \" %6d \" \"\\n\"",               /* i */
+	"4/4 \"    %011o \" \"\\n\"",          /* O */
 };
 
 static const char od_opts[] ALIGN1 = "aBbcDdeFfHhIiLlOoXxv";
@@ -174,7 +180,7 @@ int od_main(int argc, char **argv)
 				bb_dump_add(dumper, "\"         \"");
 			}
 			bb_dump_add(dumper, add_strings[(int)od_o2si[(p - od_opts)]]);
-		} else {	/* P, p, s, w, or other unhandled */
+		} else {  /* P, p, s, w, or other unhandled */
 			bb_show_usage();
 		}
 	}

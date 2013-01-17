@@ -1,0 +1,69 @@
+# Makefile for busybox
+#
+# Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
+#
+# Licensed under GPLv2 or later, see file LICENSE in this source tree.
+
+lib-y:=
+
+COMMON_FILES:= \
+\
+	data_skip.o \
+	data_extract_all.o \
+	data_extract_to_stdout.o \
+\
+	filter_accept_all.o \
+	filter_accept_list.o \
+	filter_accept_reject_list.o \
+\
+	header_skip.o \
+	header_list.o \
+	header_verbose_list.o \
+\
+	seek_by_read.o \
+	seek_by_jump.o \
+\
+	data_align.o \
+	find_list_entry.o \
+	init_handle.o
+
+DPKG_FILES:= \
+	unpack_ar_archive.o \
+	filter_accept_list_reassign.o \
+	get_header_ar.o \
+	get_header_tar.o \
+	get_header_tar_gz.o \
+	get_header_tar_bz2.o \
+	get_header_tar_lzma.o \
+
+INSERT
+
+lib-$(CONFIG_AR)                        += get_header_ar.o unpack_ar_archive.o
+lib-$(CONFIG_BUNZIP2)                   += decompress_bunzip2.o
+lib-$(CONFIG_UNLZMA)                    += decompress_unlzma.o
+lib-$(CONFIG_UNXZ)                      += decompress_unxz.o
+lib-$(CONFIG_CPIO)                      += get_header_cpio.o
+lib-$(CONFIG_DPKG)                      += $(DPKG_FILES)
+lib-$(CONFIG_DPKG_DEB)                  += $(DPKG_FILES)
+lib-$(CONFIG_GUNZIP)                    += open_transformer.o decompress_gunzip.o
+lib-$(CONFIG_RPM2CPIO)                  += decompress_gunzip.o get_header_cpio.o
+lib-$(CONFIG_RPM)                       += open_transformer.o decompress_gunzip.o get_header_cpio.o
+lib-$(CONFIG_TAR)                       += get_header_tar.o
+lib-$(CONFIG_UNCOMPRESS)                += decompress_uncompress.o
+lib-$(CONFIG_UNZIP)                     += decompress_gunzip.o
+lib-$(CONFIG_LZOP)                      += lzo1x_1.o lzo1x_1o.o lzo1x_d.o
+lib-$(CONFIG_LZOP_COMPR_HIGH)           += lzo1x_9x.o
+lib-$(CONFIG_MODINFO)                   += open_transformer.o
+lib-$(CONFIG_INSMOD)                    += open_transformer.o
+lib-$(CONFIG_FEATURE_SEAMLESS_Z)        += open_transformer.o decompress_uncompress.o
+lib-$(CONFIG_FEATURE_SEAMLESS_GZ)       += open_transformer.o decompress_gunzip.o
+lib-$(CONFIG_FEATURE_SEAMLESS_BZ2)      += open_transformer.o decompress_bunzip2.o
+lib-$(CONFIG_FEATURE_SEAMLESS_LZMA)     += open_transformer.o decompress_unlzma.o
+lib-$(CONFIG_FEATURE_SEAMLESS_XZ)       += open_transformer.o decompress_unxz.o
+lib-$(CONFIG_FEATURE_COMPRESS_USAGE)    += open_transformer.o decompress_bunzip2.o
+lib-$(CONFIG_FEATURE_COMPRESS_BBCONFIG) += decompress_bunzip2.o
+lib-$(CONFIG_FEATURE_TAR_TO_COMMAND)    += data_extract_to_command.o
+
+ifneq ($(lib-y),)
+lib-y += $(COMMON_FILES)
+endif

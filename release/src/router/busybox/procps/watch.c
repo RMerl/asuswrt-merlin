@@ -5,11 +5,24 @@
  * Copyright (C) 2001 by Michael Habermann <mhabermann@gmx.de>
  * Copyrigjt (C) Mar 16, 2003 Manuel Novoa III   (mjn3@codepoet.org)
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* BB_AUDIT SUSv3 N/A */
 /* BB_AUDIT GNU defects -- only option -n is supported. */
+
+//usage:#define watch_trivial_usage
+//usage:       "[-n SEC] [-t] PROG ARGS"
+//usage:#define watch_full_usage "\n\n"
+//usage:       "Run PROG periodically\n"
+//usage:     "\n	-n	Loop period in seconds (default 2)"
+//usage:     "\n	-t	Don't print header"
+//usage:
+//usage:#define watch_example_usage
+//usage:       "$ watch date\n"
+//usage:       "Mon Dec 17 10:31:40 GMT 2000\n"
+//usage:       "Mon Dec 17 10:31:42 GMT 2000\n"
+//usage:       "Mon Dec 17 10:31:44 GMT 2000"
 
 #include "libbb.h"
 

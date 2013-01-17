@@ -27,6 +27,12 @@
  * mods from distributed source (eject-2.0.13) are by
  * Matthew Stoltenberg <d3matt@gmail.com>
  */
+
+//usage:#define volname_trivial_usage
+//usage:       "[DEVICE]"
+//usage:#define volname_full_usage "\n\n"
+//usage:       "Show CD volume name of the DEVICE (default /dev/cdrom)"
+
 #include "libbb.h"
 
 int volname_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;

@@ -4,12 +4,27 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* BB_AUDIT SUSv3 compliant */
 /* BB_AUDIT GNU options missing: -d, -F, -i, and -v. */
 /* http://www.opengroup.org/onlinepubs/007904975/utilities/ln.html */
+
+//usage:#define ln_trivial_usage
+//usage:       "[OPTIONS] TARGET... LINK|DIR"
+//usage:#define ln_full_usage "\n\n"
+//usage:       "Create a link LINK or DIR/TARGET to the specified TARGET(s)\n"
+//usage:     "\n	-s	Make symlinks instead of hardlinks"
+//usage:     "\n	-f	Remove existing destinations"
+//usage:     "\n	-n	Don't dereference symlinks - treat like normal file"
+//usage:     "\n	-b	Make a backup of the target (if exists) before link operation"
+//usage:     "\n	-S suf	Use suffix instead of ~ when making backup files"
+//usage:
+//usage:#define ln_example_usage
+//usage:       "$ ln -s BusyBox /tmp/ls\n"
+//usage:       "$ ls -l /tmp/ls\n"
+//usage:       "lrwxrwxrwx    1 root     root            7 Apr 12 18:39 ls -> BusyBox*\n"
 
 #include "libbb.h"
 
@@ -40,8 +55,12 @@ int ln_main(int argc, char **argv)
 	last = argv[argc - 1];
 	argv += optind;
 
-	if (argc == optind + 1) {
+	if (!argv[1]) {
+		/* "ln PATH/TO/FILE" -> "ln PATH/TO/FILE FILE" */
 		*--argv = last;
+		/* xstrdup is needed: "ln -s PATH/TO/FILE/" is equivalent to
+		 * "ln -s PATH/TO/FILE/ FILE", not "ln -s PATH/TO/FILE FILE"
+		 */
 		last = bb_get_last_path_component_strip(xstrdup(last));
 	}
 
@@ -50,8 +69,8 @@ int ln_main(int argc, char **argv)
 		src = last;
 
 		if (is_directory(src,
-		                (opts & LN_NODEREFERENCE) ^ LN_NODEREFERENCE,
-		                NULL)
+		                (opts & LN_NODEREFERENCE) ^ LN_NODEREFERENCE
+		                )
 		) {
 			src_name = xstrdup(*argv);
 			src = concat_path_file(src, bb_get_last_path_component_strip(src_name));

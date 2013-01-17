@@ -210,6 +210,49 @@
  *     Tue Dec 20 03:50:13 PST 1988
  */
 
+//usage:#define traceroute_trivial_usage
+//usage:       "[-"IF_TRACEROUTE6("46")"FIldnrv] [-f 1ST_TTL] [-m MAXTTL] [-p PORT] [-q PROBES]\n"
+//usage:       "	[-s SRC_IP] [-t TOS] [-w WAIT_SEC] [-g GATEWAY] [-i IFACE]\n"
+//usage:       "	[-z PAUSE_MSEC] HOST [BYTES]"
+//usage:#define traceroute_full_usage "\n\n"
+//usage:       "Trace the route to HOST\n"
+//usage:	IF_TRACEROUTE6(
+//usage:     "\n	-4,-6	Force IP or IPv6 name resolution"
+//usage:	)
+//usage:     "\n	-F	Set the don't fragment bit"
+//usage:     "\n	-I	Use ICMP ECHO instead of UDP datagrams"
+//usage:     "\n	-l	Display the TTL value of the returned packet"
+//usage:     "\n	-d	Set SO_DEBUG options to socket"
+//usage:     "\n	-n	Print numeric addresses"
+//usage:     "\n	-r	Bypass routing tables, send directly to HOST"
+//usage:     "\n	-v	Verbose"
+//usage:     "\n	-m	Max time-to-live (max number of hops)"
+//usage:     "\n	-p	Base UDP port number used in probes"
+//usage:     "\n		(default 33434)"
+//usage:     "\n	-q	Number of probes per TTL (default 3)"
+//usage:     "\n	-s	IP address to use as the source address"
+//usage:     "\n	-t	Type-of-service in probe packets (default 0)"
+//usage:     "\n	-w	Time in seconds to wait for a response (default 3)"
+//usage:     "\n	-g	Loose source route gateway (8 max)"
+//usage:
+//usage:#define traceroute6_trivial_usage
+//usage:       "[-dnrv] [-m MAXTTL] [-p PORT] [-q PROBES]\n"
+//usage:       "	[-s SRC_IP] [-t TOS] [-w WAIT_SEC] [-i IFACE]\n"
+//usage:       "	HOST [BYTES]"
+//usage:#define traceroute6_full_usage "\n\n"
+//usage:       "Trace the route to HOST\n"
+//usage:     "\n	-d	Set SO_DEBUG options to socket"
+//usage:     "\n	-n	Print numeric addresses"
+//usage:     "\n	-r	Bypass routing tables, send directly to HOST"
+//usage:     "\n	-v	Verbose"
+//usage:     "\n	-m	Max time-to-live (max number of hops)"
+//usage:     "\n	-p	Base UDP port number used in probes"
+//usage:     "\n		(default is 33434)"
+//usage:     "\n	-q	Number of probes per TTL (default 3)"
+//usage:     "\n	-s	IP address to use as the source address"
+//usage:     "\n	-t	Type-of-service in probe packets (default 0)"
+//usage:     "\n	-w	Time in seconds to wait for a response (default 3)"
+
 #define TRACEROUTE_SO_DEBUG 0
 
 /* TODO: undefs were uncommented - ??! we have config system for that! */
@@ -353,54 +396,26 @@ static len_and_sockaddr* dup_sockaddr(const len_and_sockaddr *lsa)
 
 
 static int
-wait_for_reply(len_and_sockaddr *from_lsa, struct sockaddr *to)
+wait_for_reply(len_and_sockaddr *from_lsa, struct sockaddr *to, unsigned *timestamp_us, int *left_ms)
 {
 	struct pollfd pfd[1];
 	int read_len = 0;
 
 	pfd[0].fd = rcvsock;
 	pfd[0].events = POLLIN;
-	if (safe_poll(pfd, 1, waittime * 1000) > 0) {
+	if (*left_ms >= 0 && safe_poll(pfd, 1, *left_ms) > 0) {
+		unsigned t;
+
 		read_len = recv_from_to(rcvsock,
 				recv_pkt, sizeof(recv_pkt),
-				/*flags:*/ 0,
+				/*flags:*/ MSG_DONTWAIT,
 				&from_lsa->u.sa, to, from_lsa->len);
+		t = monotonic_us();
+		*left_ms -= (t - *timestamp_us) / 1000;
+		*timestamp_us = t;
 	}
 
 	return read_len;
-}
-
-/*
- * Checksum routine for Internet Protocol family headers (C Version)
- */
-static uint16_t
-in_cksum(uint16_t *addr, int len)
-{
-	int nleft = len;
-	uint16_t *w = addr;
-	uint16_t answer;
-	int sum = 0;
-
-	/*
-	 * Our algorithm is simple, using a 32 bit accumulator (sum),
-	 * we add sequential 16 bit words to it, and at the end, fold
-	 * back all the carry bits from the top 16 bits into the lower
-	 * 16 bits.
-	 */
-	while (nleft > 1) {
-		sum += *w++;
-		nleft -= 2;
-	}
-
-	/* mop up an odd byte, if necessary */
-	if (nleft == 1)
-		sum += *(unsigned char *)w;
-
-	/* add back carry outs from top 16 bits to low 16 bits */
-	sum = (sum >> 16) + (sum & 0xffff);     /* add hi 16 to low 16 */
-	sum += (sum >> 16);                     /* add carry */
-	answer = ~sum;                          /* truncate to 16 bits */
-	return answer;
 }
 
 static void
@@ -429,7 +444,7 @@ send_probe(int seq, int ttl)
 
 			/* Always calculate checksum for icmp packets */
 			outicmp->icmp_cksum = 0;
-			outicmp->icmp_cksum = in_cksum((uint16_t *)outicmp,
+			outicmp->icmp_cksum = inet_cksum((uint16_t *)outicmp,
 						packlen - (sizeof(*outip) + optlen));
 			if (outicmp->icmp_cksum == 0)
 				outicmp->icmp_cksum = 0xffff;
@@ -482,7 +497,7 @@ send_probe(int seq, int ttl)
 		if (!(option_mask32 & OPT_USE_ICMP)) {
 			out = outdata;
 			len -= sizeof(*outudp);
-			set_nport(dest_lsa, htons(port + seq));
+			set_nport(&dest_lsa->u.sa, htons(port + seq));
 		}
 	}
 
@@ -666,7 +681,6 @@ packet_ok(int read_len, len_and_sockaddr *from_lsa,
 				return (type == ICMP6_TIME_EXCEEDED ? -1 : (code<<8)+1);
 			}
 		}
-
 	}
 
 # if ENABLE_FEATURE_TRACEROUTE_VERBOSE
@@ -686,7 +700,7 @@ packet_ok(int read_len, len_and_sockaddr *from_lsa,
 			type, pr_type(type), icp->icmp6_code);
 
 		read_len -= sizeof(struct icmp6_hdr);
-		for (i = 0; i < read_len ; i++) {
+		for (i = 0; i < read_len; i++) {
 			if (i % 16 == 0)
 				printf("%04x:", i);
 			if (i % 4 == 0)
@@ -752,7 +766,8 @@ print(int read_len, const struct sockaddr *from, const struct sockaddr *to)
 		} else
 #endif
 		{
-			read_len -= ((struct ip*)recv_pkt)->ip_hl << 2;
+			struct ip *ip4packet = (struct ip*)recv_pkt;
+			read_len -= ip4packet->ip_hl << 2;
 		}
 		printf(" %d bytes to %s", read_len, ina);
 		free(ina);
@@ -774,7 +789,6 @@ print_delta_ms(unsigned t1p, unsigned t2p)
 static int
 common_traceroute_main(int op, char **argv)
 {
-	int i;
 	int minpacket;
 	int tos = 0;
 	int max_ttl = 30;
@@ -928,6 +942,7 @@ common_traceroute_main(int op, char **argv)
 #if ENABLE_FEATURE_TRACEROUTE_SOURCE_ROUTE && defined IP_OPTIONS
 		if (lsrr > 0) {
 			unsigned char optlist[MAX_IPOPTLEN];
+			unsigned size;
 
 			/* final hop */
 			gwlist[lsrr] = dest_lsa->u.sin.sin_addr.s_addr;
@@ -937,14 +952,14 @@ common_traceroute_main(int op, char **argv)
 			optlist[0] = IPOPT_NOP;
 			/* loose source route option */
 			optlist[1] = IPOPT_LSRR;
-			i = lsrr * sizeof(gwlist[0]);
-			optlist[2] = i + 3;
+			size = lsrr * sizeof(gwlist[0]);
+			optlist[2] = size + 3;
 			/* pointer to LSRR addresses */
 			optlist[3] = IPOPT_MINOFF;
-			memcpy(optlist + 4, gwlist, i);
+			memcpy(optlist + 4, gwlist, size);
 
 			if (setsockopt(sndsock, IPPROTO_IP, IP_OPTIONS,
-					(char *)optlist, i + sizeof(gwlist[0])) < 0) {
+					(char *)optlist, size + sizeof(gwlist[0])) < 0) {
 				bb_perror_msg_and_die("IP_OPTIONS");
 			}
 		}
@@ -1018,10 +1033,10 @@ common_traceroute_main(int op, char **argv)
 		int probe_fd = xsocket(af, SOCK_DGRAM, 0);
 		if (op & OPT_DEVICE)
 			setsockopt_bindtodevice(probe_fd, device);
-		set_nport(dest_lsa, htons(1025));
+		set_nport(&dest_lsa->u.sa, htons(1025));
 		/* dummy connect. makes kernel pick source IP (and port) */
 		xconnect(probe_fd, &dest_lsa->u.sa, dest_lsa->len);
-		set_nport(dest_lsa, htons(port));
+		set_nport(&dest_lsa->u.sa, htons(port));
 
 		/* read IP and port */
 		source_lsa = get_sock_lsa(probe_fd);
@@ -1031,7 +1046,7 @@ common_traceroute_main(int op, char **argv)
 		close(probe_fd);
 
 		/* bind our sockets to this IP (but not port) */
-		set_nport(source_lsa, 0);
+		set_nport(&source_lsa->u.sa, 0);
 		xbind(sndsock, &source_lsa->u.sa, source_lsa->len);
 		xbind(rcvsock, &source_lsa->u.sa, source_lsa->len);
 
@@ -1058,28 +1073,34 @@ common_traceroute_main(int op, char **argv)
 		int unreachable = 0; /* counter */
 		int gotlastaddr = 0; /* flags */
 		int got_there = 0;
-		int first = 1;
 
 		printf("%2d", ttl);
 		for (probe = 0; probe < nprobes; ++probe) {
 			int read_len;
 			unsigned t1;
 			unsigned t2;
+			int left_ms;
 			struct ip *ip;
 
-			if (!first && pausemsecs > 0)
-				usleep(pausemsecs * 1000);
 			fflush_all();
+			if (probe != 0 && pausemsecs > 0)
+				usleep(pausemsecs * 1000);
 
-			t1 = monotonic_us();
 			send_probe(++seq, ttl);
+			t2 = t1 = monotonic_us();
 
-			first = 0;
-			while ((read_len = wait_for_reply(from_lsa, to)) != 0) {
-				t2 = monotonic_us();
-				i = packet_ok(read_len, from_lsa, to, seq);
+			left_ms = waittime * 1000;
+			while ((read_len = wait_for_reply(from_lsa, to, &t2, &left_ms)) != 0) {
+				int icmp_code;
+
+				/* Recv'ed a packet, or read error */
+				/* t2 = monotonic_us() - set by wait_for_reply */
+
+				if (read_len < 0)
+					continue;
+				icmp_code = packet_ok(read_len, from_lsa, to, seq);
 				/* Skip short packet */
-				if (i == 0)
+				if (icmp_code == 0)
 					continue;
 
 				if (!gotlastaddr
@@ -1098,10 +1119,10 @@ common_traceroute_main(int op, char **argv)
 						printf(" (%d)", ip->ip_ttl);
 
 				/* time exceeded in transit */
-				if (i == -1)
+				if (icmp_code == -1)
 					break;
-				i--;
-				switch (i) {
+				icmp_code--;
+				switch (icmp_code) {
 #if ENABLE_TRACEROUTE6
 				case ICMP6_DST_UNREACH_NOPORT << 8:
 					got_there = 1;
@@ -1174,16 +1195,18 @@ common_traceroute_main(int op, char **argv)
 					++unreachable;
 					break;
 				default:
-					printf(" !<%d>", i);
+					printf(" !<%d>", icmp_code);
 					++unreachable;
 					break;
 				}
 				break;
-			}
+			} /* while (wait and read a packet) */
+
 			/* there was no packet at all? */
 			if (read_len == 0)
 				printf("  *");
-		}
+		} /* for (nprobes) */
+
 		bb_putchar('\n');
 		if (got_there
 		 || (unreachable > 0 && unreachable >= nprobes - 1)

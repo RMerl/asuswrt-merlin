@@ -15,22 +15,21 @@
 
 PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
 
-extern char **ip_parse_common_args(char **argv);
-extern int print_neigh(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg);
-extern int ipaddr_list_or_flush(char **argv, int flush);
-extern int iproute_monitor(char **argv);
-extern void iplink_usage(void) NORETURN;
-extern void ipneigh_reset_filter(void);
+char FAST_FUNC **ip_parse_common_args(char **argv);
+//int FAST_FUNC print_neigh(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg);
+int FAST_FUNC ipaddr_list_or_flush(char **argv, int flush);
+//int FAST_FUNC iproute_monitor(char **argv);
+//void FAST_FUNC ipneigh_reset_filter(void);
 
-extern int do_ipaddr(char **argv);
-extern int do_iproute(char **argv);
-extern int do_iprule(char **argv);
-extern int do_ipneigh(char **argv);
-extern int do_iptunnel(char **argv);
-extern int do_iplink(char **argv);
-extern int do_ipmonitor(char **argv);
-extern int do_multiaddr(char **argv);
-extern int do_multiroute(char **argv);
+int FAST_FUNC do_ipaddr(char **argv);
+int FAST_FUNC do_iproute(char **argv);
+int FAST_FUNC do_iprule(char **argv);
+//int FAST_FUNC do_ipneigh(char **argv);
+int FAST_FUNC do_iptunnel(char **argv);
+int FAST_FUNC do_iplink(char **argv);
+//int FAST_FUNC do_ipmonitor(char **argv);
+//int FAST_FUNC do_multiaddr(char **argv);
+//int FAST_FUNC do_multiroute(char **argv);
 
 POP_SAVED_FUNCTION_VISIBILITY
 

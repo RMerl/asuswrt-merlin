@@ -59,7 +59,7 @@ wait
 		Example 1
 
 One example how to reduce global data usage is in
-archival/libunarchive/decompress_unzip.c:
+archival/libarchive/decompress_unzip.c:
 
 /* This is somewhat complex-looking arrangement, but it allows
  * to place decompressor state either in bss or in

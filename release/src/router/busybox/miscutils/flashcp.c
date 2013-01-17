@@ -4,8 +4,14 @@
  *
  * (C) 2009 Stefan Seyfried <seife@sphairon.com>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define flashcp_trivial_usage
+//usage:       "-v FILE MTD_DEVICE"
+//usage:#define flashcp_full_usage "\n\n"
+//usage:       "Copy an image to MTD device\n"
+//usage:     "\n	-v	Verbose"
 
 #include "libbb.h"
 #include <mtd/mtd-user.h>

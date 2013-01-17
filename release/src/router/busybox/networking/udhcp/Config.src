@@ -8,6 +8,7 @@ INSERT
 config UDHCPD
 	bool "udhcp server (udhcpd)"
 	default y
+	select PLATFORM_LINUX
 	help
 	  udhcpd is a DHCP server geared primarily toward embedded systems,
 	  while striving to be fully functional and RFC compliant.
@@ -65,6 +66,7 @@ config DHCPD_LEASES_FILE
 config UDHCPC
 	bool "udhcp client (udhcpc)"
 	default y
+	select PLATFORM_LINUX
 	help
 	  udhcpc is a DHCP client geared primarily toward embedded systems,
 	  while striving to be fully functional and RFC compliant.
@@ -118,13 +120,6 @@ config FEATURE_UDHCP_8021Q
 	help
 	  If selected, both client and server will support passing of VLAN
 	  ID and priority via options 132 and 133 as per 802.1Q.
-
-config FEATURE_UDHCP_RFC5969
-	bool "Support for RFC5969 IPv6 Rapid Deployment (6RD)"
-	default y
-	depends on FEATURE_IPV6 && UDHCPC
-	help
-	  None.
 
 config UDHCPC_DEFAULT_SCRIPT
 	string "Absolute path to config script"

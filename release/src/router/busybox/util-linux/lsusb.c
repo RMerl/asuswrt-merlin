@@ -4,8 +4,12 @@
  *
  * Copyright (C) 2009  Malek Degachi <malek-degachi@laposte.net>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define lsusb_trivial_usage NOUSAGE_STR
+//usage:#define lsusb_full_usage ""
+
 #include "libbb.h"
 
 static int FAST_FUNC fileAction(

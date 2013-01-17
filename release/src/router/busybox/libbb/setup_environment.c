@@ -32,6 +32,9 @@
 
 void FAST_FUNC setup_environment(const char *shell, int flags, const struct passwd *pw)
 {
+	if (!shell || !shell[0])
+		shell = DEFAULT_SHELL;
+
 	/* Change the current working directory to be the home directory
 	 * of the user */
 	if (chdir(pw->pw_dir)) {

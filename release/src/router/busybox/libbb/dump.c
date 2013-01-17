@@ -4,9 +4,9 @@
  * based on code from util-linux v 2.11l
  *
  * Copyright (c) 1989
- *	The Regents of the University of California.  All rights reserved.
+ * The Regents of the University of California.  All rights reserved.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Original copyright notice is retained at the end of this file.
  */
@@ -71,7 +71,8 @@ static NOINLINE int bb_dump_size(FS *fs)
 			 * skip any special chars -- save precision in
 			 * case it's a %s format.
 			 */
-			while (strchr(index_str + 1, *++fmt));
+			while (strchr(index_str + 1, *++fmt))
+				continue;
 			if (*fmt == '.' && isdigit(*++fmt)) {
 				prec = atoi(fmt);
 				while (isdigit(*++fmt))
@@ -99,8 +100,8 @@ static NOINLINE int bb_dump_size(FS *fs)
 static NOINLINE void rewrite(priv_dumper_t *dumper, FS *fs)
 {
 	enum { NOTOKAY, USEBCNT, USEPREC } sokay;
-	PR *pr, **nextpr = NULL;
 	FU *fu;
+	PR *pr;
 	char *p1, *p2, *p3;
 	char savech, *fmtp;
 	const char *byte_count_str;
@@ -111,15 +112,12 @@ static NOINLINE void rewrite(priv_dumper_t *dumper, FS *fs)
 		 * break each format unit into print units; each
 		 * conversion character gets its own.
 		 */
-		for (nconv = 0, fmtp = fu->fmt; *fmtp; nextpr = &pr->nextpr) {
+		for (nconv = 0, fmtp = fu->fmt; *fmtp; ) {
 			/* NOSTRICT */
 			/* DBU:[dvae@cray.com] zalloc so that forward ptrs start out NULL*/
 			pr = xzalloc(sizeof(PR));
 			if (!fu->nextpr)
 				fu->nextpr = pr;
-			/* ignore nextpr -- its unused inside the loop and is
-			 * uninitialized 1st time through.
-			 */
 
 			/* skip preceding text and up to the next % sign */
 			for (p1 = fmtp; *p1 && *p1 != '%'; ++p1)
@@ -208,7 +206,7 @@ static NOINLINE void rewrite(priv_dumper_t *dumper, FS *fs)
 					pr->bcnt = fu->bcnt;
 				} else if (sokay == USEPREC) {
 					pr->bcnt = prec;
-				} else {	/* NOTOKAY */
+				} else {   /* NOTOKAY */
 					bb_error_msg_and_die("%%s requires a precision or a byte count");
 				}
 			} else if (*p1 == '_') {
@@ -295,16 +293,18 @@ static NOINLINE void rewrite(priv_dumper_t *dumper, FS *fs)
 	 * interprets any data at all, and has no iteration count,
 	 * repeat it as necessary.
 	 *
-	 * if, rep count is greater than 1, no trailing whitespace
+	 * if rep count is greater than 1, no trailing whitespace
 	 * gets output from the last iteration of the format unit.
 	 */
 	for (fu = fs->nextfu; fu; fu = fu->nextfu) {
-		if (!fu->nextfu && fs->bcnt < dumper->blocksize
-		 && !(fu->flags & F_SETREP) && fu->bcnt
+		if (!fu->nextfu
+		 && fs->bcnt < dumper->blocksize
+		 && !(fu->flags & F_SETREP)
+		 && fu->bcnt
 		) {
 			fu->reps += (dumper->blocksize - fs->bcnt) / fu->bcnt;
 		}
-		if (fu->reps > 1) {
+		if (fu->reps > 1 && fu->nextpr) {
 			for (pr = fu->nextpr;; pr = pr->nextpr)
 				if (!pr->nextpr)
 					break;
@@ -323,9 +323,7 @@ static void do_skip(priv_dumper_t *dumper, const char *fname, int statok)
 	struct stat sbuf;
 
 	if (statok) {
-		if (fstat(STDIN_FILENO, &sbuf)) {
-			bb_simple_perror_msg_and_die(fname);
-		}
+		xfstat(STDIN_FILENO, &sbuf, fname);
 		if (!(S_ISCHR(sbuf.st_mode) || S_ISBLK(sbuf.st_mode) || S_ISFIFO(sbuf.st_mode))
 		 && dumper->pub.dump_skip >= sbuf.st_size
 		) {
@@ -469,7 +467,7 @@ static void bpad(PR *pr)
 
 static const char conv_str[] ALIGN1 =
 	"\0\\0\0"
-	"\007\\a\0"				/* \a */
+	"\007\\a\0"  /* \a */
 	"\b\\b\0"
 	"\f\\b\0"
 	"\n\\n\0"
@@ -726,7 +724,7 @@ void FAST_FUNC bb_dump_add(dumper_t* pub_dumper, const char *fmt)
 	p = fmt;
 	for (;;) {
 		p = skip_whitespace(p);
-		if (!*p) {
+		if (*p == '\0') {
 			break;
 		}
 
@@ -754,7 +752,7 @@ void FAST_FUNC bb_dump_add(dumper_t* pub_dumper, const char *fmt)
 
 		/* skip slash and trailing white space */
 		if (*p == '/') {
-			p = skip_whitespace(++p);
+			p = skip_whitespace(p + 1);
 		}
 
 		/* byte count */
@@ -768,7 +766,7 @@ void FAST_FUNC bb_dump_add(dumper_t* pub_dumper, const char *fmt)
 			}
 			tfu->bcnt = atoi(savep);
 			/* skip trailing white space */
-			p = skip_whitespace(++p);
+			p = skip_whitespace(p + 1);
 		}
 
 		/* format */
@@ -776,7 +774,7 @@ void FAST_FUNC bb_dump_add(dumper_t* pub_dumper, const char *fmt)
 			bb_error_msg_and_die("bad format {%s}", fmt);
 		}
 		for (savep = ++p; *p != '"';) {
-			if (*p++ == 0) {
+			if (*p++ == '\0') {
 				bb_error_msg_and_die("bad format {%s}", fmt);
 			}
 		}
@@ -787,7 +785,7 @@ void FAST_FUNC bb_dump_add(dumper_t* pub_dumper, const char *fmt)
 
 		/* alphabetic escape sequences have to be done in place */
 		for (p2 = p1;; ++p1, ++p2) {
-			if (!*p1) {
+			if (*p1 == '\0') {
 				*p2 = *p1;
 				break;
 			}

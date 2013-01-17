@@ -14,7 +14,7 @@
  *     in busybox.
  *     modified by Bernhard Reutner-Fischer to be useable (i.e. a bit less bloaty).
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Original copyright notice states:
  *     "This program is in the Public Domain."
@@ -39,19 +39,42 @@
 //config:	help
 //config:	  Enable 64-bit support in test.
 
+/* "test --help" does not print help (POSIX compat), only "[ --help" does.
+ * We display "<applet> EXPRESSION ]" here (not "<applet> EXPRESSION")
+ * Unfortunately, it screws up generated BusyBox.html. TODO. */
+//usage:#define test_trivial_usage
+//usage:       "EXPRESSION ]"
+//usage:#define test_full_usage "\n\n"
+//usage:       "Check file types, compare values etc. Return a 0/1 exit code\n"
+//usage:       "depending on logical value of EXPRESSION"
+//usage:
+//usage:#define test_example_usage
+//usage:       "$ test 1 -eq 2\n"
+//usage:       "$ echo $?\n"
+//usage:       "1\n"
+//usage:       "$ test 1 -eq 1\n"
+//usage:       "$ echo $?\n"
+//usage:       "0\n"
+//usage:       "$ [ -d /etc ]\n"
+//usage:       "$ echo $?\n"
+//usage:       "0\n"
+//usage:       "$ [ -d /junk ]\n"
+//usage:       "$ echo $?\n"
+//usage:       "1\n"
+
 #include "libbb.h"
 #include <setjmp.h>
 
 /* This is a NOFORK applet. Be very careful! */
 
 /* test_main() is called from shells, and we need to be extra careful here.
- * This is true regardless of PREFER_APPLETS and STANDALONE_SHELL
+ * This is true regardless of PREFER_APPLETS and SH_STANDALONE
  * state. */
 
 /* test(1) accepts the following grammar:
-	oexpr	::= aexpr | aexpr "-o" oexpr ;
-	aexpr	::= nexpr | nexpr "-a" aexpr ;
-	nexpr	::= primary | "!" primary
+	oexpr   ::= aexpr | aexpr "-o" oexpr ;
+	aexpr   ::= nexpr | nexpr "-a" aexpr ;
+	nexpr   ::= primary | "!" primary
 	primary ::= unary-operator operand
 		| operand binary-operator operand
 		| operand
@@ -687,7 +710,8 @@ static number_t nexpr(enum token n)
 		if (n == EOI) {
 			/* special case: [ ! ], [ a -a ! ] are valid */
 			/* IOW, "! ARG" may miss ARG */
-			unnest_msg("<nexpr:1 (!EOI)\n");
+			args--;
+			unnest_msg("<nexpr:1 (!EOI), args:%s(%p)\n", args[0], &args[0]);
 			return 1;
 		}
 		res = !nexpr(n);
@@ -706,15 +730,15 @@ static number_t aexpr(enum token n)
 
 	nest_msg(">aexpr(%s)\n", TOKSTR[n]);
 	res = nexpr(n);
-	dbg_msg("aexpr: nexpr:%lld, next args:%s\n", res, args[1]);
+	dbg_msg("aexpr: nexpr:%lld, next args:%s(%p)\n", res, args[1], &args[1]);
 	if (check_operator(*++args) == BAND) {
-		dbg_msg("aexpr: arg is AND, next args:%s\n", args[1]);
+		dbg_msg("aexpr: arg is AND, next args:%s(%p)\n", args[1], &args[1]);
 		res = aexpr(check_operator(*++args)) && res;
 		unnest_msg("<aexpr:%lld\n", res);
 		return res;
 	}
 	args--;
-	unnest_msg("<aexpr:%lld, args:%s\n", res, args[0]);
+	unnest_msg("<aexpr:%lld, args:%s(%p)\n", res, args[0], &args[0]);
 	return res;
 }
 
@@ -725,15 +749,15 @@ static number_t oexpr(enum token n)
 
 	nest_msg(">oexpr(%s)\n", TOKSTR[n]);
 	res = aexpr(n);
-	dbg_msg("oexpr: aexpr:%lld, next args:%s\n", res, args[1]);
+	dbg_msg("oexpr: aexpr:%lld, next args:%s(%p)\n", res, args[1], &args[1]);
 	if (check_operator(*++args) == BOR) {
-		dbg_msg("oexpr: next arg is OR, next args:%s\n", args[1]);
+		dbg_msg("oexpr: next arg is OR, next args:%s(%p)\n", args[1], &args[1]);
 		res = oexpr(check_operator(*++args)) || res;
 		unnest_msg("<oexpr:%lld\n", res);
 		return res;
 	}
 	args--;
-	unnest_msg("<oexpr:%lld, args:%s\n", res, args[0]);
+	unnest_msg("<oexpr:%lld, args:%s(%p)\n", res, args[0], &args[0]);
 	return res;
 }
 
@@ -878,7 +902,10 @@ int test_main(int argc, char **argv)
 	res = !oexpr(check_operator(*args));
 
 	if (*args != NULL && *++args != NULL) {
-		/* TODO: example when this happens? */
+		/* Examples:
+		 * test 3 -lt 5 6
+		 * test -t 1 2
+		 */
 		bb_error_msg("%s: unknown operand", *args);
 		res = 2;
 	}

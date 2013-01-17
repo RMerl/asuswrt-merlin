@@ -98,6 +98,32 @@
  *         set version to 1.1.0
  */
 
+//usage:#define ifenslave_trivial_usage
+//usage:       "[-cdf] MASTER_IFACE SLAVE_IFACE..."
+//usage:#define ifenslave_full_usage "\n\n"
+//usage:       "Configure network interfaces for parallel routing\n"
+//usage:     "\n	-c,--change-active	Change active slave"
+//usage:     "\n	-d,--detach		Remove slave interface from bonding device"
+//usage:     "\n	-f,--force		Force, even if interface is not Ethernet"
+/* //usage:  "\n	-r,--receive-slave	Create a receive-only slave" */
+//usage:
+//usage:#define ifenslave_example_usage
+//usage:       "To create a bond device, simply follow these three steps:\n"
+//usage:       "- ensure that the required drivers are properly loaded:\n"
+//usage:       "  # modprobe bonding ; modprobe <3c59x|eepro100|pcnet32|tulip|...>\n"
+//usage:       "- assign an IP address to the bond device:\n"
+//usage:       "  # ifconfig bond0 <addr> netmask <mask> broadcast <bcast>\n"
+//usage:       "- attach all the interfaces you need to the bond device:\n"
+//usage:       "  # ifenslave bond0 eth0 eth1 eth2\n"
+//usage:       "  If bond0 didn't have a MAC address, it will take eth0's. Then, all\n"
+//usage:       "  interfaces attached AFTER this assignment will get the same MAC addr.\n\n"
+//usage:       "  To detach a dead interface without setting the bond device down:\n"
+//usage:       "  # ifenslave -d bond0 eth1\n\n"
+//usage:       "  To set the bond device down and automatically release all the slaves:\n"
+//usage:       "  # ifconfig bond0 down\n\n"
+//usage:       "  To change active slave:\n"
+//usage:       "  # ifenslave -c bond0 eth0\n"
+
 #include "libbb.h"
 
 /* #include <net/if.h> - no. linux/if_bonding.h pulls in linux/if.h */

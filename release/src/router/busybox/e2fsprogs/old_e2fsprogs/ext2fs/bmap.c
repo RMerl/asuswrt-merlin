@@ -259,6 +259,3 @@ done:
 	}
 	return retval;
 }
-
-
-

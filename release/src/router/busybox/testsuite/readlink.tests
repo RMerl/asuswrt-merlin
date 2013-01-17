@@ -2,7 +2,7 @@
 
 # Readlink tests.
 # Copyright 2006 by Natanael Copa <n@tanael.org>
-# Licensed under GPL v2, see file LICENSE for details.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 . ./testing.sh
 
@@ -30,3 +30,4 @@ testing "readlink -f on a wierd dir" "readlink -f $TESTDIR/../$TESTFILE" "$PWD/$
 # clean up
 rm -r "$TESTLINK" "$TESTDIR"
 
+exit $((FAILCOUNT <= 255 ? FAILCOUNT : 255))

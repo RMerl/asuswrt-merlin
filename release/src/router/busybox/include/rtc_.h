@@ -1,7 +1,7 @@
 /*
  * Common defines/structures/etc... for applets that need to work with the RTC.
  *
- * Licensed under the GPL-2 or later.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #ifndef BB_RTC_H
@@ -35,9 +35,9 @@ struct linux_rtc_time {
 };
 
 struct linux_rtc_wkalrm {
-	unsigned char enabled;	/* 0 = alarm disabled, 1 = alarm enabled */
+	unsigned char enabled;  /* 0 = alarm disabled, 1 = alarm enabled */
 	unsigned char pending;  /* 0 = alarm not pending, 1 = alarm pending */
-	struct linux_rtc_time time;	/* time the alarm is set to */
+	struct linux_rtc_time time;  /* time the alarm is set to */
 };
 
 /*

@@ -11,15 +11,15 @@
 PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
 
 struct rtnl_handle {
-	int			fd;
-	struct sockaddr_nl	local;
-	struct sockaddr_nl	peer;
-	uint32_t		seq;
-	uint32_t		dump;
+	int                fd;
+	struct sockaddr_nl local;
+	struct sockaddr_nl peer;
+	uint32_t           seq;
+	uint32_t           dump;
 };
 
-extern int xrtnl_open(struct rtnl_handle *rth) FAST_FUNC;
-extern void rtnl_close(struct rtnl_handle *rth) FAST_FUNC;
+extern void xrtnl_open(struct rtnl_handle *rth) FAST_FUNC;
+#define rtnl_close(rth) (close((rth)->fd))
 extern int xrtnl_wilddump_request(struct rtnl_handle *rth, int fam, int type) FAST_FUNC;
 extern int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len) FAST_FUNC;
 extern int xrtnl_dump_filter(struct rtnl_handle *rth,
@@ -42,7 +42,7 @@ extern int addattr_l(struct nlmsghdr *n, int maxlen, int type, void *data, int a
 extern int rta_addattr32(struct rtattr *rta, int maxlen, int type, uint32_t data) FAST_FUNC;
 extern int rta_addattr_l(struct rtattr *rta, int maxlen, int type, void *data, int alen) FAST_FUNC;
 
-extern int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len) FAST_FUNC;
+extern void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len) FAST_FUNC;
 
 POP_SAVED_FUNCTION_VISIBILITY
 

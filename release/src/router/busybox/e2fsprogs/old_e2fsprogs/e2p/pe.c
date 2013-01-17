@@ -21,7 +21,7 @@
 
 void print_fs_errors(FILE *f, unsigned short errors)
 {
-	const char *disp = NULL;
+	char *disp = NULL;
 	switch (errors) {
 	case EXT2_ERRORS_CONTINUE: disp = "Continue"; break;
 	case EXT2_ERRORS_RO:       disp = "Remount read-only"; break;

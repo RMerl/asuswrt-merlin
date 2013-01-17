@@ -97,4 +97,3 @@ errcode_t ext2fs_unlink(ext2_filsys fs, ext2_ino_t dir,
 
 	return (ls.done) ? 0 : EXT2_ET_DIR_NO_SPACE;
 }
-

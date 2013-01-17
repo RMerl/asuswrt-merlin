@@ -94,5 +94,3 @@ errcode_t ext2fs_read_bb_inode(ext2_filsys fs, ext2_badblocks_list *bb_list)
 
 	return rb.err;
 }
-
-

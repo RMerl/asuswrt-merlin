@@ -10,7 +10,7 @@
  * Authors of the original ifconfig was:
  *              Fred N. van Kempen, <waltje@uwalt.nl.mugnet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /*
@@ -26,18 +26,34 @@
  * IPV6 support added by Bart Visscher <magick@linux-fan.com>
  */
 
+//usage:#define ifconfig_trivial_usage
+//usage:	IF_FEATURE_IFCONFIG_STATUS("[-a]") " interface [address]"
+//usage:#define ifconfig_full_usage "\n\n"
+//usage:       "Configure a network interface\n"
+//usage:     "\n"
+//usage:	IF_FEATURE_IPV6(
+//usage:       "	[add ADDRESS[/PREFIXLEN]]\n")
+//usage:	IF_FEATURE_IPV6(
+//usage:       "	[del ADDRESS[/PREFIXLEN]]\n")
+//usage:       "	[[-]broadcast [ADDRESS]] [[-]pointopoint [ADDRESS]]\n"
+//usage:       "	[netmask ADDRESS] [dstaddr ADDRESS]\n"
+//usage:	IF_FEATURE_IFCONFIG_SLIP(
+//usage:       "	[outfill NN] [keepalive NN]\n")
+//usage:       "	" IF_FEATURE_IFCONFIG_HW("[hw ether" IF_FEATURE_HWIB("|infiniband")" ADDRESS] ") "[metric NN] [mtu NN]\n"
+//usage:       "	[[-]trailers] [[-]arp] [[-]allmulti]\n"
+//usage:       "	[multicast] [[-]promisc] [txqueuelen NN] [[-]dynamic]\n"
+//usage:	IF_FEATURE_IFCONFIG_MEMSTART_IOADDR_IRQ(
+//usage:       "	[mem_start NN] [io_addr NN] [irq NN]\n")
+//usage:       "	[up|down] ..."
+
+#include "libbb.h"
+#include "inet_common.h"
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <netinet/in.h>
-#if defined(__GLIBC__) && __GLIBC__ >=2 && __GLIBC_MINOR__ >= 1
-#include <netpacket/packet.h>
-#include <net/ethernet.h>
-#else
-#include <sys/types.h>
-#include <netinet/if_ether.h>
+#ifdef HAVE_NET_ETHERNET_H
+# include <net/ethernet.h>
 #endif
-#include "libbb.h"
-#include "inet_common.h"
 
 #if ENABLE_FEATURE_IFCONFIG_SLIP
 # include <net/if_slip.h>
@@ -370,7 +386,7 @@ int ifconfig_main(int argc UNUSED_PARAM, char **argv)
 #endif
 						sai.sin_family = AF_INET;
 						sai.sin_port = 0;
-						if (!strcmp(host, bb_str_default)) {
+						if (strcmp(host, "default") == 0) {
 							/* Default is special, meaning 0.0.0.0. */
 							sai.sin_addr.s_addr = INADDR_ANY;
 						}

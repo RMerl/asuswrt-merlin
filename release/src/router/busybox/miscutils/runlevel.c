@@ -1,18 +1,30 @@
 /* vi: set sw=4 ts=4: */
 /*
- * runlevel	Prints out the previous and the current runlevel.
+ * Prints out the previous and the current runlevel.
  *
- * Version:	@(#)runlevel  1.20  16-Apr-1997  MvS
+ * Version: @(#)runlevel  1.20  16-Apr-1997  MvS
  *
- *		This file is part of the sysvinit suite,
- *		Copyright 1991-1997 Miquel van Smoorenburg.
+ * This file is part of the sysvinit suite,
+ * Copyright 1991-1997 Miquel van Smoorenburg.
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * initially busyboxified by Bernhard Reutner-Fischer
  */
+
+//usage:#define runlevel_trivial_usage
+//usage:       "[FILE]"
+//usage:#define runlevel_full_usage "\n\n"
+//usage:       "Find the current and previous system runlevel\n"
+//usage:       "\n"
+//usage:       "If no utmp FILE exists or if no runlevel record can be found,\n"
+//usage:       "print \"unknown\""
+//usage:
+//usage:#define runlevel_example_usage
+//usage:       "$ runlevel /var/run/utmp\n"
+//usage:       "N 2"
+
 #include "libbb.h"
-#include <utmp.h>
 
 int runlevel_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int runlevel_main(int argc UNUSED_PARAM, char **argv)

@@ -1,7 +1,11 @@
 /* vi: set sw=4 ts=4: */
 /*
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//applet:IF_BOOTCHARTD(APPLET(bootchartd, BB_DIR_SBIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_BOOTCHARTD) += bootchartd.o
 
 //config:config BOOTCHARTD
 //config:	bool "bootchartd"
@@ -45,12 +49,15 @@
 #include "libbb.h"
 /* After libbb.h, since it needs sys/types.h on some systems */
 #include <sys/utsname.h>
-#include <sys/mount.h>
-#ifndef MS_SILENT
-# define MS_SILENT      (1 << 15)
-#endif
-#ifndef MNT_DETACH
-# define MNT_DETACH 0x00000002
+
+#ifdef __linux__
+# include <sys/mount.h>
+# ifndef MS_SILENT
+#  define MS_SILENT      (1 << 15)
+# endif
+# ifndef MNT_DETACH
+#  define MNT_DETACH 0x00000002
+# endif
 #endif
 
 #define BC_VERSION_STR "0.8"
@@ -174,6 +181,7 @@ static char *make_tempdir(void)
 	char template[] = "/tmp/bootchart.XXXXXX";
 	char *tempdir = xstrdup(mkdtemp(template));
 	if (!tempdir) {
+#ifdef __linux__
 		/* /tmp is not writable (happens when we are used as init).
 		 * Try to mount a tmpfs, them cd and lazily unmount it.
 		 * Since we unmount it at once, we can mount it anywhere.
@@ -191,26 +199,28 @@ static char *make_tempdir(void)
 		if (umount2(try_dir, MNT_DETACH) != 0) {
 			bb_perror_msg_and_die("can't %smount tmpfs", "un");
 		}
+#else
+		bb_perror_msg_and_die("can't create temporary directory");
+#endif
 	} else {
 		xchdir(tempdir);
 	}
 	return tempdir;
 }
 
-static void do_logging(unsigned sample_period_us)
+static void do_logging(unsigned sample_period_us, int process_accounting)
 {
-	//# Enable process accounting if configured
-	//if [ "$PROCESS_ACCOUNTING" = "yes" ]; then
-	//	[ -e kernel_pacct ] || : > kernel_pacct
-	//	accton kernel_pacct
-	//fi
-
 	FILE *proc_stat = xfopen("proc_stat.log", "w");
 	FILE *proc_diskstats = xfopen("proc_diskstats.log", "w");
 	//FILE *proc_netdev = xfopen("proc_netdev.log", "w");
 	FILE *proc_ps = xfopen("proc_ps.log", "w");
 	int look_for_login_process = (getppid() == 1);
 	unsigned count = 60*1000*1000 / sample_period_us; /* ~1 minute */
+
+	if (process_accounting) {
+		close(xopen("kernel_pacct", O_WRONLY | O_CREAT | O_TRUNC));
+		acct("kernel_pacct");
+	}
 
 	while (--count && !bb_got_signal) {
 		char *p;
@@ -242,17 +252,18 @@ static void do_logging(unsigned sample_period_us)
  wait_more:
 		usleep(sample_period_us);
 	}
-
-	// [ -e kernel_pacct ] && accton off
 }
 
-static void finalize(char *tempdir, const char *prog)
+static void finalize(char *tempdir, const char *prog, int process_accounting)
 {
 	//# Stop process accounting if configured
 	//local pacct=
 	//[ -e kernel_pacct ] && pacct=kernel_pacct
 
 	FILE *header_fp = xfopen("header", "w");
+
+	if (process_accounting)
+		acct(NULL);
 
 	if (prog)
 		fprintf(header_fp, "profile.process = %s\n", prog);
@@ -296,7 +307,7 @@ static void finalize(char *tempdir, const char *prog)
 	fclose(header_fp);
 
 	/* Package log files */
-	system("tar -zcf /var/log/bootchart.tgz header *.log"); // + $pacct
+	system(xasprintf("tar -zcf /var/log/bootlog.tgz header %s *.log", process_accounting ? "kernel_pacct" : ""));
 	/* Clean up (if we are not in detached tmpfs) */
 	if (tempdir) {
 		unlink("header");
@@ -304,6 +315,8 @@ static void finalize(char *tempdir, const char *prog)
 		unlink("proc_diskstats.log");
 		//unlink("proc_netdev.log");
 		unlink("proc_ps.log");
+		if (process_accounting)
+			unlink("kernel_pacct");
 		rmdir(tempdir);
 	}
 
@@ -316,7 +329,6 @@ static void finalize(char *tempdir, const char *prog)
 //usage:       "start [PROG ARGS]|stop|init"
 //usage:#define bootchartd_full_usage "\n\n"
 //usage:       "Create /var/log/bootchart.tgz with boot chart data\n"
-//usage:     "\nOptions:"
 //usage:     "\nstart: start background logging; with PROG, run PROG, then kill logging with USR1"
 //usage:     "\nstop: send USR1 to all bootchartd processes"
 //usage:     "\ninit: start background logging; stop when getty/xdm is seen (for init scripts)"
@@ -328,6 +340,7 @@ int bootchartd_main(int argc UNUSED_PARAM, char **argv)
 	unsigned sample_period_us;
 	pid_t parent_pid, logger_pid;
 	smallint cmd;
+	int process_accounting;
 	enum {
 		CMD_STOP = 0,
 		CMD_START,
@@ -361,6 +374,7 @@ int bootchartd_main(int argc UNUSED_PARAM, char **argv)
 
 	/* Read config file: */
 	sample_period_us = 200 * 1000;
+	process_accounting = 0;
 	if (ENABLE_FEATURE_BOOTCHARTD_CONFIG_FILE) {
 		char* token[2];
 		parser_t *parser = config_open2("/etc/bootchartd.conf" + 5, fopen_for_read);
@@ -369,11 +383,16 @@ int bootchartd_main(int argc UNUSED_PARAM, char **argv)
 		while (config_read(parser, token, 2, 0, "#=", PARSE_NORMAL & ~PARSE_COLLAPSE)) {
 			if (strcmp(token[0], "SAMPLE_PERIOD") == 0 && token[1])
 				sample_period_us = atof(token[1]) * 1000000;
+			if (strcmp(token[0], "PROCESS_ACCOUNTING") == 0 && token[1]
+			 && (strcmp(token[1], "on") == 0 || strcmp(token[1], "yes") == 0)
+			) {
+				process_accounting = 1;
+			}
 		}
 		config_close(parser);
+		if ((int)sample_period_us <= 0)
+			sample_period_us = 1; /* prevent division by 0 */
 	}
-	if ((int)sample_period_us <= 0)
-		sample_period_us = 1; /* prevent division by 0 */
 
 	/* Create logger child: */
 	logger_pid = fork_or_rexec(argv);
@@ -401,12 +420,14 @@ int bootchartd_main(int argc UNUSED_PARAM, char **argv)
 			putenv((char*)bb_PATH_root_path);
 
 		tempdir = make_tempdir();
-		do_logging(sample_period_us);
-		finalize(tempdir, cmd == CMD_START ? argv[2] : NULL);
+		do_logging(sample_period_us, process_accounting);
+		finalize(tempdir, cmd == CMD_START ? argv[2] : NULL, process_accounting);
 		return EXIT_SUCCESS;
 	}
 
 	/* parent */
+
+	USE_FOR_NOMMU(argv[0][0] &= 0x7f); /* undo fork_or_rexec() damage */
 
 	if (DO_SIGNAL_SYNC) {
 		/* Wait for logger child to set handlers, then unpause it.
@@ -430,8 +451,7 @@ int bootchartd_main(int argc UNUSED_PARAM, char **argv)
 		pid_t pid = xvfork();
 		if (pid == 0) { /* child */
 			argv += 2;
-			execvp(argv[0], argv);
-			bb_perror_msg_and_die("can't execute '%s'", argv[0]);
+			BB_EXECVP_or_die(argv);
 		}
 		/* parent */
 		waitpid(pid, NULL, 0);

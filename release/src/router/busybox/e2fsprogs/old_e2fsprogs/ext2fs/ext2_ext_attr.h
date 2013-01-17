@@ -50,4 +50,3 @@ struct ext2_ext_attr_entry {
 	sizeof(struct ext2_xattr_entry)) & ~EXT2_EXT_ATTR_ROUND)
 #define EXT2_XATTR_SIZE(size) \
 	(((size) + EXT2_EXT_ATTR_ROUND) & ~EXT2_EXT_ATTR_ROUND)
-

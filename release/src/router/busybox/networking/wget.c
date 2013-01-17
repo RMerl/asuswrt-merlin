@@ -27,7 +27,7 @@
 //usage:     "\n	-q	Quiet"
 //usage:     "\n	-P DIR	Save to DIR (default .)"
 //usage:	IF_FEATURE_WGET_TIMEOUT(
-//usage:     "\n	-T SEC	Network timeout is SEC seconds"
+//usage:     "\n	-T SEC	Network read timeout is SEC seconds"
 //usage:	)
 //usage:     "\n	-O FILE	Save to FILE ('-' for stdout)"
 //usage:     "\n	-U STR	Use STR for User-Agent header"
@@ -83,6 +83,7 @@ struct globals {
 #define G (*ptr_to_globals)
 #define INIT_G() do { \
         SET_PTR_TO_GLOBALS(xzalloc(sizeof(G))); \
+	IF_FEATURE_WGET_TIMEOUT(G.timeout_seconds = 900;) \
 } while (0)
 
 
@@ -95,7 +96,7 @@ enum {
 	WGET_OPT_PREFIX     = (1 << 4),
 	WGET_OPT_PROXY      = (1 << 5),
 	WGET_OPT_USER_AGENT = (1 << 6),
-	WGET_OPT_TIMEOUT    = (1 << 7),
+	WGET_OPT_NETWORK_READ_TIMEOUT = (1 << 7),
 	WGET_OPT_RETRIES    = (1 << 8),
 	WGET_OPT_PASSIVE    = (1 << 9),
 	WGET_OPT_HEADER     = (1 << 10) * ENABLE_FEATURE_WGET_LONG_OPTIONS,
@@ -114,16 +115,16 @@ static void progress_meter(int flag)
 		return;
 
 	if (flag == PROGRESS_START)
-		bb_progress_init(&G.pmt);
+		bb_progress_init(&G.pmt, G.curfile);
 
 	bb_progress_update(&G.pmt,
-			G.curfile,
 			G.beg_range,
 			G.transferred,
 			(G.chunked || !G.got_clen) ? 0 : G.beg_range + G.transferred + G.content_len
 	);
 
 	if (flag == PROGRESS_END) {
+		bb_progress_free(&G.pmt);
 		bb_putchar_stderr('\n');
 		G.transferred = 0;
 	}
@@ -190,33 +191,15 @@ static char* sanitize_string(char *s)
 	return s;
 }
 
-#if ENABLE_FEATURE_WGET_TIMEOUT
-static void socket_timeout(int sig UNUSED_PARAM)
-{
-	bb_error_msg_and_die("connect timed out");
-}
-#endif
-
 static FILE *open_socket(len_and_sockaddr *lsa)
 {
 	FILE *fp;
 
-#if ENABLE_FEATURE_WGET_TIMEOUT
-	/* Add a timeout for dead or inaccessible servers */
-	if (option_mask32 & WGET_OPT_TIMEOUT) {
-		alarm(G.timeout_seconds);
-		signal(SIGALRM, socket_timeout);
-	}
-#endif
 	/* glibc 2.4 seems to try seeking on it - ??! */
 	/* hopefully it understands what ESPIPE means... */
 	fp = fdopen(xconnect_stream(lsa), "r+");
 	if (fp == NULL)
 		bb_perror_msg_and_die(bb_msg_memory_exhausted);
-#if ENABLE_FEATURE_WGET_TIMEOUT
-	if (option_mask32 & WGET_OPT_TIMEOUT)
-		alarm(0);
-#endif
 
 	return fp;
 }
@@ -257,7 +240,7 @@ static int ftpcmd(const char *s1, const char *s2, FILE *fp)
 	} while (!isdigit(G.wget_buf[0]) || G.wget_buf[3] != ' ');
 
 	G.wget_buf[3] = '\0';
-	result = xatoi_u(G.wget_buf);
+	result = xatoi_positive(G.wget_buf);
 	G.wget_buf[3] = ' ';
 	return result;
 }
@@ -315,8 +298,13 @@ static void parse_url(const char *src_url, struct host_info *h)
 
 	sp = strrchr(h->host, '@');
 	if (sp != NULL) {
+		// URL-decode "user:password" string before base64-encoding:
+		// wget http://test:my%20pass@example.com should send
+		// Authorization: Basic dGVzdDpteSBwYXNz
+		// which decodes to "test:my pass".
+		// Standard wget and curl do this too.
 		*sp = '\0';
-		h->user = h->host;
+		h->user = percent_decode_in_place(h->host, /*strict:*/ 0);
 		h->host = sp + 1;
 	}
 
@@ -423,7 +411,7 @@ static FILE* prepare_ftp_session(FILE **dfpp, struct host_info *target, len_and_
 	str = strrchr(G.wget_buf, ',');
 	if (!str) goto pasv_error;
 	port += xatou_range(str+1, 0, 255) * 256;
-	set_nport(lsa, htons(port));
+	set_nport(&lsa->u.sa, htons(port));
 
 	*dfpp = open_socket(lsa);
 
@@ -474,7 +462,7 @@ static void NOINLINE retrieve_file_data(FILE *dfp)
 
 			rdsz = sizeof(G.wget_buf);
 			if (G.got_clen) {
-				if (G.content_len < (off_t)rdsz) {
+				if (G.content_len < (off_t)sizeof(G.wget_buf)) {
 					if ((int)G.content_len <= 0)
 						break;
 					rdsz = (unsigned)G.content_len;
@@ -569,6 +557,7 @@ static void download_one_url(const char *url)
 	FILE *dfp;                      /* socket to ftp server (data)      */
 	char *proxy = NULL;
 	char *fname_out_alloc;
+	char *redirected_path = NULL;
 	struct host_info server;
 	struct host_info target;
 
@@ -651,100 +640,9 @@ static void download_one_url(const char *url)
 		char *str;
 		int status;
 
+
 		/* Open socket to http server */
 		sfp = open_socket(lsa);
-
-#ifdef CHECK_FULL_CONTENT_LEN
-		/* First, Send HTTP request to get the full size of the target file. */
-		if(use_proxy){
-			fprintf(sfp, "GET %stp://%s/%s HTTP/1.1\r\n",
-					target.is_ftp?"f":"ht",
-					target.host,
-					target.path);
-		}
-		else{
-			if(option_mask32 & WGET_OPT_POST_DATA)
-				fprintf(sfp, "POST /%s HTTP/1.1\r\n", target.path);
-			else
-				fprintf(sfp, "GET /%s HTTP/1.1\r\n", target.path);
-		}
-		fprintf(sfp, "Host: %s\r\nUser-Agent: %s\r\n", target.host, G.user_agent);
-		fprintf(sfp, "Connection: close\r\n");
-
-#if ENABLE_FEATURE_WGET_AUTHENTICATION
-		if(target.user)
-			fprintf(sfp, "Proxy-Authorization: Basic %s\r\n"+6, base64enc(target.user));
-		if(use_proxy && server.user)
-			fprintf(sfp, "Proxy-Authorization: Basic %s\r\n", base64enc(server.user));
-#endif
-		fprintf(sfp, "\r\n");
-
-		fflush(sfp);
-
-first_response:
-		fgets_and_trim(sfp);
-
-		str = G.wget_buf;
-		str = skip_non_whitespace(str);
-		str = skip_whitespace(str);
-
-		status = atoi(str);
-		switch(status){
-			case 0:
-			case 100:
-				while(gethdr(sfp) != NULL)
-					/* eat all remaining headers */;
-					goto first_response;
-			case 200:
-			case 204:
-				break;
-			case 300:  /* redirection */
-			case 301:
-			case 302:
-			case 303:
-				break;
-			case 206:
-				if(G.beg_range)
-					break;
-			/* fall through */
-			default:
-				bb_error_msg_and_die("server returned error: %s", sanitize_string(G.wget_buf));
-		}
-
-		while((str = gethdr(sfp)) != NULL){
-			static const char keywords[] ALIGN1 = "content-length\0";
-			enum{
-				KEY_content_length = 1
-			};
-			smalluint key;
-
-			/* strip trailing whitespace */
-			char *s = strchrnul(str, '\0')-1;
-			while(s >= str && (*s == ' ' || *s == '\t')){
-				*s = '\0';
-				s--;
-			}
-			key = index_in_strings(keywords, G.wget_buf)+1;
-			if(key == KEY_content_length){
-				G.content_len = BB_STRTOOFF(str, NULL, 10);
-				if(G.content_len < 0 || errno)
-					bb_error_msg_and_die("content-length %s is garbage", sanitize_string(str));
-
-				G.got_clen = 1;
-				break;
-			}
-		}
-
-		// Had already downloaded the full content.
-		if(G.beg_range == G.content_len){
-			dfp = sfp;
-			free(lsa);
-			goto END_OF_DOWNLOAD;
-		}
-
-		fclose(sfp);
-		sfp = open_socket(lsa);
-#endif
 
 		/* Send HTTP request */
 		if (use_proxy) {
@@ -896,8 +794,8 @@ However, in real world it was observed that some web servers
 					bb_error_msg_and_die("too many redirections");
 				fclose(sfp);
 				if (str[0] == '/') {
-					free(target.allocated);
-					target.path = target.allocated = xstrdup(str+1);
+					free(redirected_path);
+					target.path = redirected_path = xstrdup(str+1);
 					/* lsa stays the same: it's on the same server */
 				} else {
 					parse_url(str, &target);
@@ -940,9 +838,6 @@ However, in real world it was observed that some web servers
 		}
 	}
 
-#ifdef CHECK_FULL_CONTENT_LEN
-END_OF_DOWNLOAD:
-#endif
 	if (dfp != sfp) {
 		/* It's ftp. Close data connection properly */
 		fclose(dfp);
@@ -955,6 +850,7 @@ END_OF_DOWNLOAD:
 	free(server.allocated);
 	free(target.allocated);
 	free(fname_out_alloc);
+	free(redirected_path);
 }
 
 int wget_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;

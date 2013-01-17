@@ -4,7 +4,7 @@
  *
  * Copyright 1995, 1996, 1997, 1998, 1999, 2000 by Theodore Ts'o.
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 #include <stdio.h>
@@ -17,7 +17,7 @@
 #include "e2p/e2p.h"
 #include "ext2fs/ext2_fs.h"
 #include "ext2fs/ext2fs.h"
-#include "volume_id.h"
+#include "blkid/blkid.h"
 #include "util.h"
 
 void proceed_question(void)
@@ -72,7 +72,7 @@ void check_plausibility(const char *device, int force)
 #endif
 }
 
-void check_mount(const char *device, int force, const char *type UNUSED_PARAM)
+void check_mount(const char *device, int force, const char *type)
 {
 	errcode_t retval;
 	int mount_flags;
@@ -95,7 +95,6 @@ force_check:
 		bb_error_msg("%s is apparently in use by the system", device);
 		goto force_check;
 	}
-
 }
 
 void parse_journal_opts(char **journal_device, int *journal_flags,
@@ -117,9 +116,8 @@ void parse_journal_opts(char **journal_device, int *journal_flags,
 			arg++;
 		}
 		if (strcmp(token, "device") == 0) {
-			*journal_device = arg;
-			if (resolve_mount_spec(journal_device) < 0 ||
-			    !(*journal_device)) {
+			*journal_device = blkid_get_devname(NULL, arg, NULL);
+			if (!journal_device) {
 				journal_usage++;
 				continue;
 			}
@@ -259,7 +257,7 @@ char *e2fs_set_sbin_path(void)
 	if (oldpath)
 		oldpath = xasprintf("%s:%s", PATH_SET, oldpath);
 	 else
-		oldpath = (char *)PATH_SET;
+		oldpath = PATH_SET;
 	putenv(oldpath);
 	return oldpath;
 }

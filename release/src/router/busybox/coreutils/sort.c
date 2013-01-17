@@ -6,11 +6,58 @@
  *
  * MAINTAINER: Rob Landley <rob@landley.net>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * See SuS3 sort standard at:
  * http://www.opengroup.org/onlinepubs/007904975/utilities/sort.html
  */
+
+//usage:#define sort_trivial_usage
+//usage:       "[-nru"
+//usage:	IF_FEATURE_SORT_BIG("gMcszbdfimSTokt] [-o FILE] [-k start[.offset][opts][,end[.offset][opts]] [-t CHAR")
+//usage:       "] [FILE]..."
+//usage:#define sort_full_usage "\n\n"
+//usage:       "Sort lines of text\n"
+//usage:	IF_FEATURE_SORT_BIG(
+//usage:     "\n	-b	Ignore leading blanks"
+//usage:     "\n	-c	Check whether input is sorted"
+//usage:     "\n	-d	Dictionary order (blank or alphanumeric only)"
+//usage:     "\n	-f	Ignore case"
+//usage:     "\n	-g	General numerical sort"
+//usage:     "\n	-i	Ignore unprintable characters"
+//usage:     "\n	-k	Sort key"
+//usage:     "\n	-M	Sort month"
+//usage:	)
+//usage:     "\n	-n	Sort numbers"
+//usage:	IF_FEATURE_SORT_BIG(
+//usage:     "\n	-o	Output to file"
+//usage:     "\n	-k	Sort by key"
+//usage:     "\n	-t CHAR	Key separator"
+//usage:	)
+//usage:     "\n	-r	Reverse sort order"
+//usage:	IF_FEATURE_SORT_BIG(
+//usage:     "\n	-s	Stable (don't sort ties alphabetically)"
+//usage:	)
+//usage:     "\n	-u	Suppress duplicate lines"
+//usage:	IF_FEATURE_SORT_BIG(
+//usage:     "\n	-z	Lines are terminated by NUL, not newline"
+//usage:     "\n	-mST	Ignored for GNU compatibility")
+//usage:
+//usage:#define sort_example_usage
+//usage:       "$ echo -e \"e\\nf\\nb\\nd\\nc\\na\" | sort\n"
+//usage:       "a\n"
+//usage:       "b\n"
+//usage:       "c\n"
+//usage:       "d\n"
+//usage:       "e\n"
+//usage:       "f\n"
+//usage:	IF_FEATURE_SORT_BIG(
+//usage:		"$ echo -e \"c 3\\nb 2\\nd 2\" | $SORT -k 2,2n -k 1,1r\n"
+//usage:		"d 2\n"
+//usage:		"b 2\n"
+//usage:		"c 3\n"
+//usage:	)
+//usage:       ""
 
 #include "libbb.h"
 
@@ -52,8 +99,8 @@ enum {
 static char key_separator;
 
 static struct sort_key {
-	struct sort_key *next_key;	/* linked list */
-	unsigned range[4];	/* start word, start char, end word, end char */
+	struct sort_key *next_key;  /* linked list */
+	unsigned range[4];          /* start word, start char, end word, end char */
 	unsigned flags;
 } *key_list;
 
@@ -412,7 +459,7 @@ int sort_main(int argc UNUSED_PARAM, char **argv)
 #if ENABLE_FEATURE_SORT_BIG
 	/* Open output file _after_ we read all input ones */
 	if (option_mask32 & FLAG_o)
-		xmove_fd(xopen3(str_o, O_WRONLY|O_CREAT|O_TRUNC, 0666), STDOUT_FILENO);
+		xmove_fd(xopen(str_o, O_WRONLY|O_CREAT|O_TRUNC), STDOUT_FILENO);
 #endif
 	flag = (option_mask32 & FLAG_z) ? '\0' : '\n';
 	for (i = 0; i < linecount; i++)

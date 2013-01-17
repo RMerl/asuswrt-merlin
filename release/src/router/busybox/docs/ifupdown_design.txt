@@ -10,27 +10,27 @@ for that.
 We are doomed to have problems with ifup/ifdown. Just look as this code:
 
 static const struct dhcp_client_t ext_dhcp_clients[] = {
-       { "dhcpcd", "<up cmd>", "<down cmd>" },
-       { "dhclient", ........ },
-       { "pump", ........ },
-       { "udhcpc", ........ },
+	{ "dhcpcd", "<up cmd>", "<down cmd>" },
+	{ "dhclient", ........ },
+	{ "pump", ........ },
+	{ "udhcpc", ........ },
 };
 
 static int dhcp_down(struct interface_defn_t *ifd, execfn *exec)
 {
 #if ENABLE_FEATURE_IFUPDOWN_EXTERNAL_DHCP
-       int i ;
-       for (i = 0; i < ARRAY_SIZE(ext_dhcp_clients); i++) {
-               if (exists_execable(ext_dhcp_clients[i].name))
-                       return execute(ext_dhcp_clients[i].stopcmd, ifd, exec);
-       }
-       bb_error_msg("no dhcp clients found, using static interface shutdown");
-       return static_down(ifd, exec);
+	int i ;
+	for (i = 0; i < ARRAY_SIZE(ext_dhcp_clients); i++) {
+		if (exists_execable(ext_dhcp_clients[i].name))
+			return execute(ext_dhcp_clients[i].stopcmd, ifd, exec);
+	}
+	bb_error_msg("no dhcp clients found, using static interface shutdown");
+	return static_down(ifd, exec);
 #elif ENABLE_UDHCPC
-       return execute("kill "
-                      "`cat /var/run/udhcpc.%iface%.pid` 2>/dev/null", ifd, exec);
+	return execute("kill "
+			"`cat /var/run/udhcpc.%iface%.pid` 2>/dev/null", ifd, exec);
 #else
-       return 0; /* no dhcp support */
+	return 0; /* no dhcp support */
 #endif
 }
 

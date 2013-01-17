@@ -7,7 +7,7 @@
  */
 
 /* Constants and structures */
-#include "e2fs_defs.h"
+#include "bb_e2fs_defs.h"
 
 PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
 
@@ -43,10 +43,5 @@ extern const char e2attr_flags_sname[];
 #define e2attr_flags_value_chattr (&e2attr_flags_value[1])
 #define e2attr_flags_sname_chattr (&e2attr_flags_sname[1])
 #endif
-
-/* uuid helpers */
-#define uuid_clear(uu) memset(uu, 0, sizeof(uu))
-#define uuid_copy(dst,src) memcpy(dst, src, sizeof(dst))
-#define uuid_is_null(uu) (!memcmp(uu, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", sizeof(uu)))
 
 POP_SAVED_FUNCTION_VISIBILITY

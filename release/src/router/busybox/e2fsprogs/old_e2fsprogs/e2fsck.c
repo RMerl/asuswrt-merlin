@@ -26,18 +26,17 @@
  * Journal recovery routines for the generic filesystem journaling code;
  * part of the ext2fs journaling system.
  *
- * Licensed under GPLv2 or later, see file License in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
+/*
 //usage:#define e2fsck_trivial_usage
 //usage:       "[-panyrcdfvstDFSV] [-b superblock] [-B blocksize] "
 //usage:       "[-I inode_buffer_blocks] [-P process_inode_size] "
 //usage:       "[-l|-L bad_blocks_file] [-C fd] [-j external_journal] "
 //usage:       "[-E extended-options] device"
-//usage:
 //usage:#define e2fsck_full_usage "\n\n"
 //usage:       "Check ext2/ext3 file system\n"
-//usage:     "\nOptions:"
 //usage:     "\n	-p		Automatic repair (no questions)"
 //usage:     "\n	-n		Make no changes to the filesystem"
 //usage:     "\n	-y		Assume 'yes' to all questions"
@@ -49,10 +48,7 @@
 //usage:     "\n	-j journal	Set location of the external journal"
 //usage:     "\n	-l file		Add to badblocks list"
 //usage:     "\n	-L file		Set badblocks list"
-//usage:
-//applet:IF_E2FSCK(APPLET(e2fsck, _BB_DIR_SBIN, _BB_SUID_DROP))
-//applet:IF_E2FSCK(APPLET_ODDNAME(fsck.ext2, e2fsck, _BB_DIR_SBIN, _BB_SUID_DROP, e2fsck))
-//applet:IF_E2FSCK(APPLET_ODDNAME(fsck.ext3, e2fsck, _BB_DIR_SBIN, _BB_SUID_DROP, e2fsck))
+*/
 
 #include "e2fsck.h"	/*Put all of our defines here to clean things up*/
 
@@ -66,7 +62,7 @@
 static void e2fsck_pass1_dupblocks(e2fsck_t ctx, char *block_buf);
 
 /* pass1.c */
-static void e2fsck_use_inode_shortcuts(e2fsck_t ctx, int fl_bool);
+static void e2fsck_use_inode_shortcuts(e2fsck_t ctx, int bool);
 
 /* pass2.c */
 static int e2fsck_process_bad_inode(e2fsck_t ctx, ext2_ino_t dir,
@@ -351,7 +347,6 @@ static void free_nodes(dict_t *dict, dnode_t *node, dnode_t *nil)
 	dict->dict_freenode(node);
 }
 
-#if 0
 /*
  * Verify that the tree contains the given node. This is done by
  * traversing all of the nodes and comparing their pointers to the
@@ -368,7 +363,7 @@ static int verify_dict_has_node(dnode_t *nil, dnode_t *root, dnode_t *node)
 	}
 	return 0;
 }
-#endif
+
 
 /*
  * Select a different set of node allocator routines.
@@ -543,7 +538,6 @@ static void dict_insert(dict_t *dict, dnode_t *node, const void *key)
 	}
 
 	dict_root(dict)->color = dnode_black;
-
 }
 
 /*
@@ -587,7 +581,7 @@ static dnode_t *dict_first(dict_t *dict)
 
 /*
  * Return the given node's successor node---the node which has the
- * next key in the the left to right ordering. If the node has
+ * next key in the left to right ordering. If the node has
  * no successor, a null pointer is returned rather than a pointer to
  * the nil node.
  */
@@ -827,7 +821,6 @@ static void e2fsck_add_dx_dir(e2fsck_t ctx, ext2_ino_t ino, int num_blocks)
 	dir->dx_block = e2fsck_allocate_memory(ctx, num_blocks
 				       * sizeof (struct dx_dirblock_info),
 				       "dx_block info array");
-
 }
 
 /*
@@ -1022,6 +1015,8 @@ static void e2fsck_free_context(e2fsck_t ctx)
 		return;
 
 	e2fsck_reset_context(ctx);
+	if (ctx->blkid)
+		blkid_put_cache(ctx->blkid);
 
 	ext2fs_free_mem(&ctx);
 }
@@ -1666,10 +1661,11 @@ static errcode_t e2fsck_get_journal(e2fsck_t ctx, journal_t **ret_journal)
 		if (!ctx->journal_name) {
 			char uuid[37];
 
-			unparse_uuid(sb->s_journal_uuid, uuid);
-			ctx->journal_name = get_devname_from_uuid(uuid);
+			uuid_unparse(sb->s_journal_uuid, uuid);
+			ctx->journal_name = blkid_get_devname(ctx->blkid,
+							      "UUID", uuid);
 			if (!ctx->journal_name)
-				ctx->journal_name = get_devname_from_device(sb->s_journal_dev);
+				ctx->journal_name = blkid_devno_to_devname(sb->s_journal_dev);
 		}
 		journal_name = ctx->journal_name;
 
@@ -1747,7 +1743,6 @@ errout:
 	ext2fs_free_mem(&j_inode);
 	ext2fs_free_mem(&journal);
 	return retval;
-
 }
 
 static errcode_t e2fsck_journal_fix_bad_inode(e2fsck_t ctx,
@@ -1894,7 +1889,7 @@ static void e2fsck_journal_reset_super(e2fsck_t ctx, journal_superblock_t *jsb,
 {
 	char *p;
 	union {
-		__u8  uuid[16];
+		uuid_t uuid;
 		__u32 val[4];
 	} u;
 	__u32 new_seq = 0;
@@ -1924,7 +1919,7 @@ static void e2fsck_journal_reset_super(e2fsck_t ctx, journal_superblock_t *jsb,
 	 * This avoids the need to zero the whole journal (slow to do,
 	 * and risky when we are just recovering the filesystem).
 	 */
-	generate_uuid(u.uuid);
+	uuid_generate(u.uuid);
 	for (i = 0; i < 4; i ++)
 		new_seq ^= u.val[i];
 	jsb->s_sequence = htonl(new_seq);
@@ -2168,8 +2163,9 @@ static int e2fsck_run_ext3_journal(e2fsck_t ctx)
 			     &ctx->fs);
 
 	if (retval) {
-		bb_error_msg_and_die(_("while trying to re-open %s"),
+		bb_error_msg(_("while trying to re-open %s"),
 			ctx->device_name);
+		bb_error_msg_and_die(0);
 	}
 	ctx->fs->priv_data = ctx;
 
@@ -2562,7 +2558,7 @@ static void expand_inode_expression(char ch,
 		if (do_gmt == -1) {
 			time_str = getenv("TZ");
 			if (!time_str)
-				time_str = (char *)"";
+				time_str = "";
 			do_gmt = !strcmp(time_str, "GMT");
 		}
 		t = inode->i_mtime;
@@ -3397,7 +3393,6 @@ static void e2fsck_pass1(e2fsck_t ctx)
 					e2fsck_write_inode(ctx, ino, inode,
 							   "pass1");
 				}
-
 			}
 			/*
 			 * If dtime is set, offer to clear it.  mke2fs
@@ -3700,7 +3695,6 @@ endit:
 
 	ext2fs_free_mem(&block_buf);
 	ext2fs_free_mem(&inode);
-
 }
 
 /*
@@ -4431,7 +4425,7 @@ static int process_bad_block(ext2_filsys fs FSCK_ATTR((unused)),
  * out, so we can try to allocate new block(s) to replace the bad
  * blocks.
  */
-static void handle_fs_bad_blocks(e2fsck_t ctx EXT2FS_ATTR((unused)))
+static void handle_fs_bad_blocks(e2fsck_t ctx)
 {
 	printf("Bad blocks detected on your filesystem\n"
 		"You should get your data off as the device will soon die\n");
@@ -4473,8 +4467,7 @@ static void mark_table_blocks(e2fsck_t ctx)
 						ctx->invalid_bitmaps++;
 					}
 				} else {
-				    ext2fs_mark_block_bitmap(ctx->block_found_map,
-							     b);
+					ext2fs_mark_block_bitmap(ctx->block_found_map, b);
 				}
 			}
 		}
@@ -4491,10 +4484,9 @@ static void mark_table_blocks(e2fsck_t ctx)
 					ctx->invalid_bitmaps++;
 				}
 			} else {
-			    ext2fs_mark_block_bitmap(ctx->block_found_map,
-				     fs->group_desc[i].bg_block_bitmap);
-		    }
-
+				ext2fs_mark_block_bitmap(ctx->block_found_map,
+					fs->group_desc[i].bg_block_bitmap);
+			}
 		}
 		/*
 		 * Mark block used for the inode bitmap
@@ -4508,8 +4500,8 @@ static void mark_table_blocks(e2fsck_t ctx)
 					ctx->invalid_bitmaps++;
 				}
 			} else {
-			    ext2fs_mark_block_bitmap(ctx->block_found_map,
-				     fs->group_desc[i].bg_inode_bitmap);
+				ext2fs_mark_block_bitmap(ctx->block_found_map,
+					fs->group_desc[i].bg_inode_bitmap);
 			}
 		}
 		block += fs->super->s_blocks_per_group;
@@ -4569,11 +4561,11 @@ static errcode_t pass1_check_directory(ext2_filsys fs, ext2_ino_t ino)
 	return 0;
 }
 
-void e2fsck_use_inode_shortcuts(e2fsck_t ctx, int fl_bool)
+void e2fsck_use_inode_shortcuts(e2fsck_t ctx, int bool)
 {
 	ext2_filsys fs = ctx->fs;
 
-	if (fl_bool) {
+	if (bool) {
 		fs->get_blocks = pass1_get_blocks;
 		fs->check_directory = pass1_check_directory;
 		fs->read_inode = pass1_read_inode;
@@ -5610,7 +5602,6 @@ static void e2fsck_pass2(e2fsck_t ctx)
 			ext2fs_mark_super_dirty(fs);
 		}
 	}
-
 }
 
 #define MAX_DEPTH 32000
@@ -9770,7 +9761,6 @@ int fix_problem(e2fsck_t ctx, problem_t code, struct problem_context *pctx)
 		if (print_answer)
 			printf("%s.\n", answer ?
 			       _(preen_msg[(int) ptr->prompt]) : _("IGNORED"));
-
 	}
 
 	if ((ptr->prompt == PROMPT_ABORT) && answer)
@@ -11346,7 +11336,7 @@ static int release_inode_block(ext2_filsys fs, blk_t *block_nr,
 	if ((blk < fs->super->s_first_data_block) ||
 	    (blk >= fs->super->s_blocks_count)) {
 		fix_problem(ctx, PR_0_ORPHAN_ILLEGAL_BLOCK_NUM, pctx);
-	return_abort:
+ return_abort:
 		pb->abort = 1;
 		return BLOCK_ABORT;
 	}
@@ -11559,7 +11549,7 @@ static int release_orphan_inodes(e2fsck_t ctx)
 	}
 	ext2fs_free_mem(&block_buf);
 	return 0;
-return_abort:
+ return_abort:
 	ext2fs_free_mem(&block_buf);
 	return 1;
 }
@@ -11587,7 +11577,7 @@ static void check_resize_inode(e2fsck_t ctx)
 	 * s_reserved_gdt_blocks must be zero.
 	 */
 	if (!(fs->super->s_feature_compat &
-	      EXT2_FEATURE_COMPAT_RESIZE_INODE)) {
+	      EXT2_FEATURE_COMPAT_RESIZE_INO)) {
 		if (fs->super->s_reserved_gdt_blocks) {
 			pctx.num = fs->super->s_reserved_gdt_blocks;
 			if (fix_problem(ctx, PR_0_NONZERO_RESERVED_GDT_BLOCKS,
@@ -11603,7 +11593,7 @@ static void check_resize_inode(e2fsck_t ctx)
 	retval = ext2fs_read_inode(fs, EXT2_RESIZE_INO, &inode);
 	if (retval) {
 		if (fs->super->s_feature_compat &
-		    EXT2_FEATURE_COMPAT_RESIZE_INODE)
+		    EXT2_FEATURE_COMPAT_RESIZE_INO)
 			ctx->flags |= E2F_FLAG_RESIZE_INODE;
 		return;
 	}
@@ -11613,7 +11603,7 @@ static void check_resize_inode(e2fsck_t ctx)
 	 * the resize inode is cleared; then we're done.
 	 */
 	if (!(fs->super->s_feature_compat &
-	      EXT2_FEATURE_COMPAT_RESIZE_INODE)) {
+	      EXT2_FEATURE_COMPAT_RESIZE_INO)) {
 		for (i=0; i < EXT2_N_BLOCKS; i++) {
 			if (inode.i_block[i])
 				break;
@@ -11640,7 +11630,7 @@ static void check_resize_inode(e2fsck_t ctx)
 	    !(inode.i_mode & LINUX_S_IFREG) ||
 	    (blk < fs->super->s_first_data_block ||
 	     blk >= fs->super->s_blocks_count)) {
-	resize_inode_invalid:
+ resize_inode_invalid:
 		if (fix_problem(ctx, PR_0_RESIZE_INODE_INVALID, &pctx)) {
 			memset(&inode, 0, sizeof(inode));
 			e2fsck_write_inode(ctx, EXT2_RESIZE_INO, &inode,
@@ -11682,10 +11672,9 @@ static void check_resize_inode(e2fsck_t ctx)
 		}
 	}
 
-cleanup:
+ cleanup:
 	ext2fs_free_mem(&dind_buf);
-
- }
+}
 
 static void check_super_block(e2fsck_t ctx)
 {
@@ -11864,7 +11853,6 @@ static void check_super_block(e2fsck_t ctx)
 		    (gd->bg_free_inodes_count > sb->s_inodes_per_group) ||
 		    (gd->bg_used_dirs_count > sb->s_inodes_per_group))
 			ext2fs_unmark_valid(fs);
-
 	}
 
 	/*
@@ -11906,7 +11894,7 @@ static void check_super_block(e2fsck_t ctx)
 	 */
 	if (!(ctx->options & E2F_OPT_READONLY) && uuid_is_null(sb->s_uuid)) {
 		if (fix_problem(ctx, PR_0_ADD_UUID, &pctx)) {
-			generate_uuid(sb->s_uuid);
+			uuid_generate(sb->s_uuid);
 			ext2fs_mark_super_dirty(fs);
 			fs->flags &= ~EXT2_FLAG_MASTER_SB_ONLY;
 		}
@@ -11924,7 +11912,6 @@ static void check_super_block(e2fsck_t ctx)
 			fs->super->s_feature_incompat &=
 				~EXT2_FEATURE_INCOMPAT_FILETYPE;
 			ext2fs_mark_super_dirty(fs);
-
 		}
 	}
 
@@ -12205,10 +12192,11 @@ static void swap_filesys(e2fsck_t ctx)
  */
 
 
-void *e2fsck_allocate_memory(e2fsck_t ctx EXT2FS_ATTR((unused)), unsigned int size,
-			     const char *description EXT2FS_ATTR((unused)))
+void *e2fsck_allocate_memory(e2fsck_t ctx, unsigned int size,
+			     const char *description)
 {
 	void *ret;
+	char buf[256];
 
 	ret = xzalloc(size);
 	return ret;
@@ -12335,16 +12323,18 @@ void e2fsck_read_bitmaps(e2fsck_t ctx)
 	errcode_t       retval;
 
 	if (ctx->invalid_bitmaps) {
-		bb_error_msg_and_die(_("e2fsck_read_bitmaps: illegal bitmap block(s) for %s"),
+		bb_error_msg(_("e2fsck_read_bitmaps: illegal bitmap block(s) for %s"),
 			ctx->device_name);
+		bb_error_msg_and_die(0);
 	}
 
 	ehandler_operation(_("reading inode and block bitmaps"));
 	retval = ext2fs_read_bitmaps(fs);
 	ehandler_operation(0);
 	if (retval) {
-		bb_error_msg_and_die(_("while retrying to read bitmaps for %s"),
+		bb_error_msg(_("while retrying to read bitmaps for %s"),
 			ctx->device_name);
+		bb_error_msg_and_die(0);
 	}
 }
 
@@ -12358,8 +12348,9 @@ static void e2fsck_write_bitmaps(e2fsck_t ctx)
 		retval = ext2fs_write_block_bitmap(fs);
 		ehandler_operation(0);
 		if (retval) {
-			bb_error_msg_and_die(_("while retrying to write block bitmaps for %s"),
+			bb_error_msg(_("while retrying to write block bitmaps for %s"),
 				ctx->device_name);
+			bb_error_msg_and_die(0);
 		}
 	}
 
@@ -12368,8 +12359,9 @@ static void e2fsck_write_bitmaps(e2fsck_t ctx)
 		retval = ext2fs_write_inode_bitmap(fs);
 		ehandler_operation(0);
 		if (retval) {
-			bb_error_msg_and_die(_("while retrying to write inode bitmaps for %s"),
+			bb_error_msg(_("while retrying to write inode bitmaps for %s"),
 				ctx->device_name);
+			bb_error_msg_and_die(0);
 		}
 	}
 }
@@ -12398,7 +12390,8 @@ void e2fsck_read_inode(e2fsck_t ctx, unsigned long ino,
 
 	retval = ext2fs_read_inode(ctx->fs, ino, inode);
 	if (retval) {
-		bb_error_msg_and_die(_("while reading inode %ld in %s"), ino, proc);
+		bb_error_msg(_("while reading inode %ld in %s"), ino, proc);
+		bb_error_msg_and_die(0);
 	}
 }
 
@@ -12410,7 +12403,8 @@ extern void e2fsck_write_inode_full(e2fsck_t ctx, unsigned long ino,
 
 	retval = ext2fs_write_inode_full(ctx->fs, ino, inode, bufsize);
 	if (retval) {
-		bb_error_msg_and_die(_("while writing inode %ld in %s"), ino, proc);
+		bb_error_msg(_("while writing inode %ld in %s"), ino, proc);
+		bb_error_msg_and_die(0);
 	}
 }
 
@@ -12421,7 +12415,8 @@ extern void e2fsck_write_inode(e2fsck_t ctx, unsigned long ino,
 
 	retval = ext2fs_write_inode(ctx->fs, ino, inode);
 	if (retval) {
-		bb_error_msg_and_die(_("while writing inode %ld in %s"), ino, proc);
+		bb_error_msg(_("while writing inode %ld in %s"), ino, proc);
+		bb_error_msg_and_die(0);
 	}
 }
 
@@ -12709,8 +12704,7 @@ static void check_if_skip(e2fsck_t ctx)
 		if (batt && (fs->super->s_mnt_count <
 			     (unsigned) fs->super->s_max_mnt_count*2))
 			reason = 0;
-	} else if (!(ctx->options & E2F_OPT_PREEN) &&
-		   fs->super->s_checkinterval &&
+	} else if (fs->super->s_checkinterval &&
 		   ((now - fs->super->s_lastcheck) >=
 		    fs->super->s_checkinterval)) {
 		reason = _(" has gone %u days without being checked");
@@ -13004,6 +12998,7 @@ static errcode_t PRS(int argc, char **argv, e2fsck_t *ret_ctx)
 	}
 	memset(bar, '=', sizeof(bar)-1);
 	memset(spaces, ' ', sizeof(spaces)-1);
+	blkid_get_cache(&ctx->blkid, NULL);
 
 	if (argc && *argv)
 		ctx->program_name = *argv;
@@ -13125,10 +13120,10 @@ static errcode_t PRS(int argc, char **argv, e2fsck_t *ret_ctx)
 	ctx->io_options = strchr(argv[optind], '?');
 	if (ctx->io_options)
 		*ctx->io_options++ = 0;
-	ctx->filesystem_name = argv[optind];
-	if (resolve_mount_spec(&ctx->filesystem_name) < 0 ||
-	    !ctx->filesystem_name) {
-		bb_error_msg_and_die(_("Unable to resolve '%s'"), argv[optind]);
+	ctx->filesystem_name = blkid_get_devname(ctx->blkid, argv[optind], 0);
+	if (!ctx->filesystem_name) {
+		bb_error_msg(_("Unable to resolve '%s'"), argv[optind]);
+		bb_error_msg_and_die(0);
 	}
 	if (extended_opts)
 		parse_extended_opts(ctx, extended_opts);
@@ -13136,12 +13131,14 @@ static errcode_t PRS(int argc, char **argv, e2fsck_t *ret_ctx)
 	if (flush) {
 		fd = open(ctx->filesystem_name, O_RDONLY, 0);
 		if (fd < 0) {
-			bb_error_msg_and_die(_("while opening %s for flushing"),
+			bb_error_msg(_("while opening %s for flushing"),
 				ctx->filesystem_name);
+			bb_error_msg_and_die(0);
 		}
 		if ((retval = ext2fs_sync_device(fd, 1))) {
-			bb_error_msg_and_die(_("while trying to flush %s"),
+			bb_error_msg(_("while trying to flush %s"),
 				ctx->filesystem_name);
+			bb_error_msg_and_die(0);
 		}
 		close(fd);
 	}
@@ -13177,7 +13174,7 @@ static errcode_t PRS(int argc, char **argv, e2fsck_t *ret_ctx)
 static const char my_ver_string[] = E2FSPROGS_VERSION;
 static const char my_ver_date[] = E2FSPROGS_DATE;
 
-int e2fsck_main (int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+int e2fsck_main (int argc, char **argv);
 int e2fsck_main (int argc, char **argv)
 {
 	errcode_t       retval;
@@ -13325,8 +13322,9 @@ restart:
 	 */
 	retval = e2fsck_check_ext3_journal(ctx);
 	if (retval) {
-		bb_error_msg_and_die(_("while checking ext3 journal for %s"),
+		bb_error_msg(_("while checking ext3 journal for %s"),
 			ctx->device_name);
+		bb_error_msg_and_die(0);
 	}
 
 	/*
@@ -13347,12 +13345,14 @@ restart:
 				 * happen, unless the hardware or
 				 * device driver is being bogus.
 				 */
-				bb_error_msg_and_die(_("can't set superblock flags on %s"), ctx->device_name);
+				bb_error_msg(_("can't set superblock flags on %s"), ctx->device_name);
+				bb_error_msg_and_die(0);
 			}
 			retval = e2fsck_run_ext3_journal(ctx);
 			if (retval) {
-				bb_error_msg_and_die(_("while recovering ext3 journal of %s"),
+				bb_error_msg(_("while recovering ext3 journal of %s"),
 					ctx->device_name);
+				bb_error_msg_and_die(0);
 			}
 			ext2fs_close(ctx->fs);
 			ctx->fs = 0;
@@ -13459,7 +13459,8 @@ restart:
 		printf(_("Restarting e2fsck from the beginning...\n"));
 		retval = e2fsck_reset_context(ctx);
 		if (retval) {
-			bb_error_msg_and_die(_("while resetting context"));
+			bb_error_msg(_("while resetting context"));
+			bb_error_msg_and_die(0);
 		}
 		ext2fs_close(fs);
 		goto restart;
@@ -13511,10 +13512,8 @@ restart:
 
 	ext2fs_close(fs);
 	ctx->fs = NULL;
-	if (ENABLE_FEATURE_CLEAN_UP) {
-		free(ctx->filesystem_name);
-		free(ctx->journal_name);
-	}
+	free(ctx->filesystem_name);
+	free(ctx->journal_name);
 	e2fsck_free_context(ctx);
 
 	return exit_value;

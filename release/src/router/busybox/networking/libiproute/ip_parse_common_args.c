@@ -1,18 +1,15 @@
 /* vi: set sw=4 ts=4: */
 /*
- * ip.c		"ip" utility frontend.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version
+ * 2 of the License, or (at your option) any later version.
  *
- *		This program is free software; you can redistribute it and/or
- *		modify it under the terms of the GNU General Public License
- *		as published by the Free Software Foundation; either version
- *		2 of the License, or (at your option) any later version.
- *
- * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
- *
+ * Authors: Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
  * Changes:
  *
- * Rani Assaf <rani@magic.metawire.com> 980929:	resolve addresses
+ * Rani Assaf <rani@magic.metawire.com> 980929: resolve addresses
  */
 
 #include "ip_common.h"  /* #include "libbb.h" is inside */
@@ -22,7 +19,7 @@ family_t preferred_family = AF_UNSPEC;
 smallint oneline;
 char _SL_;
 
-char **ip_parse_common_args(char **argv)
+char** FAST_FUNC ip_parse_common_args(char **argv)
 {
 	static const char ip_common_commands[] ALIGN1 =
 		"oneline" "\0"

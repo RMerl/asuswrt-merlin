@@ -28,6 +28,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Busyboxed by Denys Vlasenko <vda.linux@googlemail.com> */
 /* TODO: depends on runit_lib.c - review and reduce/eliminate */
 
+//usage:#define runsv_trivial_usage
+//usage:       "DIR"
+//usage:#define runsv_full_usage "\n\n"
+//usage:       "Start and monitor a service and optionally an appendant log service"
+
 #include <sys/poll.h>
 #include <sys/file.h>
 #include "libbb.h"
@@ -139,19 +144,10 @@ static void s_term(int sig_no UNUSED_PARAM)
 	write(selfpipe.wr, "", 1); /* XXX */
 }
 
-/* libbb candidate */
-static char *bb_stpcpy(char *p, const char *to_add)
-{
-	while ((*p = *to_add) != '\0') {
-		p++;
-		to_add++;
-	}
-	return p;
-}
-
 static int open_trunc_or_warn(const char *name)
 {
-	int fd = open_trunc(name);
+	/* Why O_NDELAY? */
+	int fd = open(name, O_WRONLY | O_NDELAY | O_TRUNC | O_CREAT, 0644);
 	if (fd < 0)
 		bb_perror_msg("%s: warning: cannot open %s",
 				dir, name);
@@ -191,26 +187,26 @@ static void update_status(struct svdir *s)
 		char *p = stat_buf;
 		switch (s->state) {
 		case S_DOWN:
-			p = bb_stpcpy(p, "down");
+			p = stpcpy(p, "down");
 			break;
 		case S_RUN:
-			p = bb_stpcpy(p, "run");
+			p = stpcpy(p, "run");
 			break;
 		case S_FINISH:
-			p = bb_stpcpy(p, "finish");
+			p = stpcpy(p, "finish");
 			break;
 		}
 		if (s->ctrl & C_PAUSE)
-			p = bb_stpcpy(p, ", paused");
+			p = stpcpy(p, ", paused");
 		if (s->ctrl & C_TERM)
-			p = bb_stpcpy(p, ", got TERM");
+			p = stpcpy(p, ", got TERM");
 		if (s->state != S_DOWN)
 			switch (s->sd_want) {
 			case W_DOWN:
-				p = bb_stpcpy(p, ", want down");
+				p = stpcpy(p, ", want down");
 				break;
 			case W_EXIT:
-				p = bb_stpcpy(p, ", want exit");
+				p = stpcpy(p, ", want exit");
 				break;
 			}
 		*p++ = '\n';
@@ -523,7 +519,7 @@ int runsv_main(int argc UNUSED_PARAM, char **argv)
 	}
 	svd[0].fdlock = xopen3("log/supervise/lock"+4,
 			O_WRONLY|O_NDELAY|O_APPEND|O_CREAT, 0600);
-	if (lock_exnb(svd[0].fdlock) == -1)
+	if (flock(svd[0].fdlock, LOCK_EX | LOCK_NB) == -1)
 		fatal_cannot("lock supervise/lock");
 	close_on_exec_on(svd[0].fdlock);
 	if (haslog) {
@@ -547,7 +543,7 @@ int runsv_main(int argc UNUSED_PARAM, char **argv)
 		}
 		svd[1].fdlock = xopen3("log/supervise/lock",
 				O_WRONLY|O_NDELAY|O_APPEND|O_CREAT, 0600);
-		if (lock_ex(svd[1].fdlock) == -1)
+		if (flock(svd[1].fdlock, LOCK_EX) == -1)
 			fatal_cannot("lock log/supervise/lock");
 		close_on_exec_on(svd[1].fdlock);
 	}
@@ -617,7 +613,7 @@ int runsv_main(int argc UNUSED_PARAM, char **argv)
 				pidchanged = 1;
 				svd[0].ctrl &= ~C_TERM;
 				if (svd[0].state != S_FINISH) {
-					fd = open_read("finish");
+					fd = open("finish", O_RDONLY|O_NDELAY);
 					if (fd != -1) {
 						close(fd);
 						svd[0].state = S_FINISH;

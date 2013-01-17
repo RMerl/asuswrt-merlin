@@ -6,8 +6,17 @@
  * Copyright 2006 Rob Landley <rob@landley.net>
  * Copyright 2006 Bernhard Reutner-Fischer <rep.nop@aon.at>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define dmesg_trivial_usage
+//usage:       "[-c] [-n LEVEL] [-s SIZE]"
+//usage:#define dmesg_full_usage "\n\n"
+//usage:       "Print or control the kernel ring buffer\n"
+//usage:     "\n	-c		Clear ring buffer after printing"
+//usage:     "\n	-n LEVEL	Set console logging level"
+//usage:     "\n	-s SIZE		Buffer size"
+
 #include <sys/klog.h>
 #include "libbb.h"
 

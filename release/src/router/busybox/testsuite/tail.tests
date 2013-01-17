@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Copyright 2009 by Denys Vlasenko <vda.linux@googlemail.com>
-# Licensed under GPL v2, see file LICENSE for details.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 . ./testing.sh
 
@@ -13,5 +13,13 @@ testing "tail: +N with N > file length" \
 	"tail -c +55 2>&1; echo \$?" \
 	"0\n" \
 	"" "qw"
+
+testing "tail: -c +N with largish N" \
+	"
+	dd if=/dev/zero bs=16k count=1 2>/dev/null | tail -c +8200 | wc -c;
+	dd if=/dev/zero bs=16k count=1 2>/dev/null | tail -c +8208 | wc -c;
+	" \
+	"8185\n8177\n" \
+	"" ""
 
 exit $FAILCOUNT

@@ -10,8 +10,44 @@
  * Based on wget.c by Chip Rosenthal Covad Communications
  * <chip@laserlink.net>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define ftpget_trivial_usage
+//usage:       "[OPTIONS] HOST [LOCAL_FILE] REMOTE_FILE"
+//usage:#define ftpget_full_usage "\n\n"
+//usage:       "Download a file via FTP\n"
+//usage:	IF_FEATURE_FTPGETPUT_LONG_OPTIONS(
+//usage:     "\n	-c,--continue		Continue previous transfer"
+//usage:     "\n	-v,--verbose		Verbose"
+//usage:     "\n	-u,--username USER	Username"
+//usage:     "\n	-p,--password PASS	Password"
+//usage:     "\n	-P,--port NUM		Port"
+//usage:	)
+//usage:	IF_NOT_FEATURE_FTPGETPUT_LONG_OPTIONS(
+//usage:     "\n	-c	Continue previous transfer"
+//usage:     "\n	-v	Verbose"
+//usage:     "\n	-u USER	Username"
+//usage:     "\n	-p PASS	Password"
+//usage:     "\n	-P NUM	Port"
+//usage:	)
+//usage:
+//usage:#define ftpput_trivial_usage
+//usage:       "[OPTIONS] HOST [REMOTE_FILE] LOCAL_FILE"
+//usage:#define ftpput_full_usage "\n\n"
+//usage:       "Upload a file to a FTP server\n"
+//usage:	IF_FEATURE_FTPGETPUT_LONG_OPTIONS(
+//usage:     "\n	-v,--verbose		Verbose"
+//usage:     "\n	-u,--username USER	Username"
+//usage:     "\n	-p,--password PASS	Password"
+//usage:     "\n	-P,--port NUM		Port"
+//usage:	)
+//usage:	IF_NOT_FEATURE_FTPGETPUT_LONG_OPTIONS(
+//usage:     "\n	-v	Verbose"
+//usage:     "\n	-u USER	Username"
+//usage:     "\n	-p PASS	Password"
+//usage:     "\n	-P NUM	Port number"
+//usage:	)
 
 #include "libbb.h"
 
@@ -22,7 +58,7 @@ struct globals {
 	FILE *control_stream;
 	int verbose_flag;
 	int do_continue;
-	char buf[1]; /* actually [BUFSZ] */
+	char buf[4]; /* actually [BUFSZ] */
 } FIX_ALIASING;
 #define G (*(struct globals*)&bb_common_bufsiz1)
 enum { BUFSZ = COMMON_BUFSIZE - offsetof(struct globals, buf) };
@@ -67,7 +103,7 @@ static int ftpcmd(const char *s1, const char *s2)
 	}
 
 	do {
-		strcpy(buf, "EOF");
+		strcpy(buf, "EOF"); /* for ftp_die */
 		if (fgets(buf, BUFSZ - 2, control_stream) == NULL) {
 			ftp_die(NULL);
 		}
@@ -151,7 +187,7 @@ TODO2: need to stop ignoring IP address in PASV response.
 	*buf_ptr = '\0';
 	port_num += xatoul_range(buf_ptr + 1, 0, 255) * 256;
 
-	set_nport(lsa, htons(port_num));
+	set_nport(&lsa->u.sa, htons(port_num));
 	return xconnect_stream(lsa);
 }
 
@@ -278,7 +314,6 @@ static const char ftpgetput_longopts[] ALIGN1 =
 int ftpgetput_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int ftpgetput_main(int argc UNUSED_PARAM, char **argv)
 {
-	unsigned opt;
 	const char *port = "ftp";
 	/* socket to ftp server */
 
@@ -307,7 +342,7 @@ int ftpgetput_main(int argc UNUSED_PARAM, char **argv)
 	applet_long_options = ftpgetput_longopts;
 #endif
 	opt_complementary = "-2:vv:cc"; /* must have 2 to 3 params; -v and -c count */
-	opt = getopt32(argv, "cvu:p:P:", &user, &password, &port,
+	getopt32(argv, "cvu:p:P:", &user, &password, &port,
 					&verbose_flag, &do_continue);
 	argv += optind;
 

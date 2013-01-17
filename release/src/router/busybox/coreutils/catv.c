@@ -4,11 +4,19 @@
  *
  * Copyright (C) 2006 Rob Landley <rob@landley.net>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* See "Cat -v considered harmful" at
  * http://cm.bell-labs.com/cm/cs/doc/84/kp.ps.gz */
+
+//usage:#define catv_trivial_usage
+//usage:       "[-etv] [FILE]..."
+//usage:#define catv_full_usage "\n\n"
+//usage:       "Display nonprinting characters as ^x or M-x\n"
+//usage:     "\n	-e	End each line with $"
+//usage:     "\n	-t	Show tabs as ^I"
+//usage:     "\n	-v	Don't use ^x or M-x escapes"
 
 #include "libbb.h"
 

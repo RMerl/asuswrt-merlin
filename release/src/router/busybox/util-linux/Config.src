@@ -10,6 +10,7 @@ INSERT
 config ACPID
 	bool "acpid"
 	default y
+	select PLATFORM_LINUX
 	help
 	  acpid listens to ACPI events coming either in textual form from
 	  /proc/acpi/event (though it is marked deprecated it is still widely
@@ -32,15 +33,24 @@ config FEATURE_ACPID_COMPAT
 config BLKID
 	bool "blkid"
 	default y
+	select PLATFORM_LINUX
 	select VOLUMEID
 	help
 	  Lists labels and UUIDs of all filesystems.
 	  WARNING:
 	  With all submodules selected, it will add ~8k to busybox.
 
+config FEATURE_BLKID_TYPE
+	bool "Print filesystem type"
+	default n
+	depends on BLKID
+	help
+	  Show TYPE="filesystem type"
+
 config DMESG
 	bool "dmesg"
 	default y
+	select PLATFORM_LINUX
 	help
 	  dmesg is used to examine or control the kernel ring buffer. When the
 	  Linux kernel prints messages to the system log, they are stored in
@@ -74,6 +84,7 @@ config FEATURE_DMESG_PRETTY
 config FBSET
 	bool "fbset"
 	default y
+	select PLATFORM_LINUX
 	help
 	  fbset is used to show or change the settings of a Linux frame buffer
 	  device. The frame buffer device provides a simple and unique
@@ -102,6 +113,7 @@ config FEATURE_FBSET_READMODE
 config FDFLUSH
 	bool "fdflush"
 	default y
+	select PLATFORM_LINUX
 	help
 	  fdflush is only needed when changing media on slightly-broken
 	  removable media drives. It is used to make Linux believe that a
@@ -114,12 +126,14 @@ config FDFLUSH
 config FDFORMAT
 	bool "fdformat"
 	default y
+	select PLATFORM_LINUX
 	help
 	  fdformat is used to low-level format a floppy disk.
 
 config FDISK
 	bool "fdisk"
 	default y
+	select PLATFORM_LINUX
 	help
 	  The fdisk utility is used to divide hard disks into one or more
 	  logical disks, which are generally called partitions. This utility
@@ -130,6 +144,7 @@ config FDISK_SUPPORT_LARGE_DISKS
 	bool "Support over 4GB disks"
 	default y
 	depends on FDISK
+	depends on !LFS   # with LFS no special code is needed
 	help
 	  Enable this option to support large disks > 4GB.
 
@@ -174,6 +189,14 @@ config FEATURE_OSF_LABEL
 	  Enabling this option allows you to create or change BSD disklabels
 	  and define and edit BSD disk slices.
 
+config FEATURE_GPT_LABEL
+	bool "Support GPT disklabels"
+	default n
+	depends on FDISK && FEATURE_FDISK_WRITABLE
+	help
+	  Enabling this option allows you to view GUID Partition Table
+	  disklabels.
+
 config FEATURE_FDISK_ADVANCED
 	bool "Support expert mode"
 	default y
@@ -187,6 +210,7 @@ config FEATURE_FDISK_ADVANCED
 config FINDFS
 	bool "findfs"
 	default y
+	select PLATFORM_LINUX
 	select VOLUMEID
 	help
 	  Prints the name of a filesystem with given label or UUID.
@@ -202,6 +226,7 @@ config FLOCK
 config FREERAMDISK
 	bool "freeramdisk"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Linux allows you to create ramdisks. This utility allows you to
 	  delete them and completely free all memory that was used for the
@@ -224,12 +249,14 @@ config FSCK_MINIX
 config MKFS_EXT2
 	bool "mkfs_ext2"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Utility to create EXT2 filesystems.
 
 config MKFS_MINIX
 	bool "mkfs_minix"
 	default y
+	select PLATFORM_LINUX
 	help
 	  The minix filesystem is a nice, small, compact, read-write filesystem
 	  with little overhead. If you wish to be able to create minix
@@ -247,6 +274,7 @@ config FEATURE_MINIX2
 config MKFS_REISER
 	bool "mkfs_reiser"
 	default n
+	select PLATFORM_LINUX
 	help
 	  Utility to create ReiserFS filesystems.
 	  Note: this applet needs a lot of testing and polishing.
@@ -254,6 +282,7 @@ config MKFS_REISER
 config MKFS_VFAT
 	bool "mkfs_vfat"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Utility to create FAT32 filesystems.
 
@@ -302,6 +331,7 @@ config HD
 config HWCLOCK
 	bool "hwclock"
 	default y
+	select PLATFORM_LINUX
 	help
 	  The hwclock utility is used to read and set the hardware clock
 	  on a system. This is primarily used to set the current time on
@@ -319,7 +349,7 @@ config FEATURE_HWCLOCK_LONG_OPTIONS
 
 config FEATURE_HWCLOCK_ADJTIME_FHS
 	bool "Use FHS /var/lib/hwclock/adjtime"
-	default y
+	default n  # util-linux-ng in Fedora 13 still uses /etc/adjtime
 	depends on HWCLOCK
 	help
 	  Starting with FHS 2.3, the adjtime state file is supposed to exist
@@ -332,7 +362,6 @@ config FEATURE_HWCLOCK_ADJTIME_FHS
 config IPCRM
 	bool "ipcrm"
 	default y
-	select FEATURE_SUID
 	help
 	  The ipcrm utility allows the removal of System V interprocess
 	  communication (IPC) objects and the associated data structures
@@ -341,7 +370,7 @@ config IPCRM
 config IPCS
 	bool "ipcs"
 	default y
-	select FEATURE_SUID
+	select PLATFORM_LINUX
 	help
 	  The ipcs utility is used to provide information on the currently
 	  allocated System V interprocess (IPC) objects in the system.
@@ -349,6 +378,7 @@ config IPCS
 config LOSETUP
 	bool "losetup"
 	default y
+	select PLATFORM_LINUX
 	help
 	  losetup is used to associate or detach a loop device with a regular
 	  file or block device, and to query the status of a loop device. This
@@ -357,6 +387,7 @@ config LOSETUP
 config LSPCI
 	bool "lspci"
 	default y
+	#select PLATFORM_LINUX
 	help
 	  lspci is a utility for displaying information about PCI buses in the
 	  system and devices connected to them.
@@ -366,68 +397,12 @@ config LSPCI
 config LSUSB
 	bool "lsusb"
 	default y
+	#select PLATFORM_LINUX
 	help
 	  lsusb is a utility for displaying information about USB buses in the
 	  system and devices connected to them.
 
 	  This version uses sysfs (/sys/bus/usb/devices) only.
-
-config MDEV
-	bool "mdev"
-	default y
-	help
-	  mdev is a mini-udev implementation for dynamically creating device
-	  nodes in the /dev directory.
-
-	  For more information, please see docs/mdev.txt
-
-config FEATURE_MDEV_CONF
-	bool "Support /etc/mdev.conf"
-	default y
-	depends on MDEV
-	help
-	  Add support for the mdev config file to control ownership and
-	  permissions of the device nodes.
-
-	  For more information, please see docs/mdev.txt
-
-config FEATURE_MDEV_RENAME
-	bool "Support subdirs/symlinks"
-	default y
-	depends on FEATURE_MDEV_CONF
-	help
-	  Add support for renaming devices and creating symlinks.
-
-	  For more information, please see docs/mdev.txt
-
-config FEATURE_MDEV_RENAME_REGEXP
-	bool "Support regular expressions substitutions when renaming device"
-	default y
-	depends on FEATURE_MDEV_RENAME
-	help
-	  Add support for regular expressions substitutions when renaming
-	  device.
-
-config FEATURE_MDEV_EXEC
-	bool "Support command execution at device addition/removal"
-	default y
-	depends on FEATURE_MDEV_CONF
-	help
-	  This adds support for an optional field to /etc/mdev.conf for
-	  executing commands when devices are created/removed.
-
-	  For more information, please see docs/mdev.txt
-
-config FEATURE_MDEV_LOAD_FIRMWARE
-	bool "Support loading of firmwares"
-	default y
-	depends on MDEV
-	help
-	  Some devices need to load firmware before they can be usable.
-
-	  These devices will request userspace look up the files in
-	  /lib/firmware/ and if it exists, send it to the kernel for
-	  loading into the hardware.
 
 config MKSWAP
 	bool "mkswap"
@@ -459,20 +434,10 @@ config MORE
 	  you will probably find this utility very helpful. If you don't have
 	  any need to reading text files, you can leave this disabled.
 
-config FEATURE_USE_TERMIOS
-	bool "Use termios to manipulate the screen"
-	default y
-	depends on MORE || TOP
-	help
-	  This option allows utilities such as 'more' and 'top' to determine
-	  the size of the screen. If you leave this disabled, your utilities
-	  that display things on the screen will be especially primitive and
-	  will be unable to determine the current screen size, and will be
-	  unable to move the cursor.
-
 config MOUNT
 	bool "mount"
 	default y
+	select PLATFORM_LINUX
 	help
 	  All files and filesystems in Unix are arranged into one big directory
 	  tree. The 'mount' utility is used to graft a filesystem onto a
@@ -520,13 +485,18 @@ config FEATURE_MOUNT_LABEL
 	  This also enables label or uuid support for swapon.
 
 config FEATURE_MOUNT_NFS
-	bool "Support mounting NFS file systems"
-	default y
+	bool "Support mounting NFS file systems on Linux < 2.6.23"
+	default n
 	depends on MOUNT
 	select FEATURE_HAVE_RPC
 	select FEATURE_SYSLOG
 	help
-	  Enable mounting of NFS file systems.
+	  Enable mounting of NFS file systems on Linux kernels prior
+	  to version 2.6.23. Note that in this case mounting of NFS
+	  over IPv6 will not be possible.
+
+	  Note that this option links in RPC support from libc,
+	  which is rather large (~10 kbytes on uclibc).
 
 config FEATURE_MOUNT_CIFS
 	bool "Support mounting CIFS/SMB file systems"
@@ -555,6 +525,7 @@ config FEATURE_MOUNT_FSTAB
 config PIVOT_ROOT
 	bool "pivot_root"
 	default y
+	select PLATFORM_LINUX
 	help
 	  The pivot_root utility swaps the mount points for the root filesystem
 	  with some other mounted filesystem. This allows you to do all sorts
@@ -582,12 +553,14 @@ config RDEV
 config READPROFILE
 	bool "readprofile"
 	default y
+	#select PLATFORM_LINUX
 	help
 	  This allows you to parse /proc/profile for basic profiling.
 
 config RTCWAKE
 	bool "rtcwake"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Enter a system sleep state until specified wakeup time.
 
@@ -607,6 +580,7 @@ config SCRIPTREPLAY
 config SETARCH
 	bool "setarch"
 	default y
+	select PLATFORM_LINUX
 	help
 	  The linux32 utility is used to create a 32bit environment for the
 	  specified program (usually a shell). It only makes sense to have
@@ -616,6 +590,7 @@ config SETARCH
 config SWAPONOFF
 	bool "swaponoff"
 	default y
+	select PLATFORM_LINUX
 	help
 	  This option enables both the 'swapon' and the 'swapoff' utilities.
 	  Once you have created some swap space using 'mkswap', you also need
@@ -634,6 +609,7 @@ config FEATURE_SWAPON_PRI
 config SWITCH_ROOT
 	bool "switch_root"
 	default y
+	select PLATFORM_LINUX
 	help
 	  The switch_root utility is used from initramfs to select a new
 	  root device. Under initramfs, you have to use this instead of
@@ -653,6 +629,7 @@ config SWITCH_ROOT
 config UMOUNT
 	bool "umount"
 	default y
+	select PLATFORM_LINUX
 	help
 	  When you want to remove a mounted filesystem from its current mount
 	  point, for example when you are shutting down the system, the

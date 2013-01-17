@@ -23,7 +23,7 @@
 #endif
 #if HAVE_SYS_MOUNT_H
 #include <sys/param.h>
-#include <sys/mount.h>		/* This may define BLKFLSBUF */
+#include <sys/mount.h>  /* This may define BLKFLSBUF */
 #endif
 
 #include "ext2_fs.h"
@@ -38,10 +38,10 @@
  */
 #ifdef __linux__
 #ifndef BLKFLSBUF
-#define BLKFLSBUF	_IO(0x12,97)	/* flush buffer cache */
+#define BLKFLSBUF  _IO(0x12,97)  /* flush buffer cache */
 #endif
 #ifndef FDFLUSH
-#define FDFLUSH		_IO(2,0x4b)	/* flush floppy disk */
+#define FDFLUSH    _IO(2,0x4b)  /* flush floppy disk */
 #endif
 #endif
 

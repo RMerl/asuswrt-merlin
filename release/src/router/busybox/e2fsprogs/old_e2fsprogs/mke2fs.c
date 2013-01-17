@@ -5,7 +5,7 @@
  * Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
  *	2003, 2004, 2005 by Theodore Ts'o.
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 /* Usage: mke2fs [options] device
@@ -13,43 +13,6 @@
  * The device may be a block device or a image of one, but this isn't
  * enforced (but it's not much fun on a character device :-).
  */
-
-//usage:#define mke2fs_trivial_usage
-//usage:       "[-c|-l filename] [-b block-size] [-f fragment-size] [-g blocks-per-group] "
-//usage:       "[-i bytes-per-inode] [-j] [-J journal-options] [-N number-of-inodes] [-n] "
-//usage:       "[-m reserved-blocks-percentage] [-o creator-os] [-O feature[,...]] [-q] "
-//usage:       "[r fs-revision-level] [-E extended-options] [-v] [-F] [-L volume-label] "
-//usage:       "[-M last-mounted-directory] [-S] [-T filesystem-type] "
-//usage:       "device [blocks-count]"
-//usage:
-//usage:#define mke2fs_full_usage "\n\n"
-//usage:       "	-b size		Block size in bytes"
-//usage:     "\n	-c		Check for bad blocks before creating"
-//usage:     "\n	-E opts		Set extended options"
-//usage:     "\n	-f size		Fragment size in bytes"
-//usage:     "\n	-F		Force (ignore sanity checks)"
-//usage:     "\n	-g num		Number of blocks in a block group"
-//usage:     "\n	-i ratio	The bytes/inode ratio"
-//usage:     "\n	-j		Create a journal (ext3)"
-//usage:     "\n	-J opts		Set journal options (size/device)"
-//usage:     "\n	-l file		Read bad blocks list from file"
-//usage:     "\n	-L lbl		Set the volume label"
-//usage:     "\n	-m percent	Percent of fs blocks to reserve for admin"
-//usage:     "\n	-M dir		Set last mounted directory"
-//usage:     "\n	-n		Do not actually create anything"
-//usage:     "\n	-N num		Number of inodes to create"
-//usage:     "\n	-o os		Set the 'creator os' field"
-//usage:     "\n	-O features	Dir_index/filetype/has_journal/journal_dev/sparse_super"
-//usage:     "\n	-q		Quiet"
-//usage:     "\n	-r rev		Set filesystem revision"
-//usage:     "\n	-S		Write superblock and group descriptors only"
-//usage:     "\n	-T fs-type	Set usage type (news/largefile/largefile4)"
-//usage:     "\n	-v		Verbose"
-//usage:
-//applet:IF_MKE2FS(APPLET(mke2fs, _BB_DIR_SBIN, _BB_SUID_DROP))
-//applet:IF_MKE2FS(APPLET_ODDNAME(mkfs.ext2, mke2fs, _BB_DIR_SBIN, _BB_SUID_DROP, mke2fs))
-//applet:IF_MKE2FS(APPLET_ODDNAME(mkfs.ext3, mke2fs, _BB_DIR_SBIN, _BB_SUID_DROP, mke2fs))
-//applet:IF_MKE2FS(APPLET(tune2fs, _BB_DIR_SBIN, _BB_SUID_DROP))
 
 #include <stdio.h>
 #include <string.h>
@@ -66,7 +29,7 @@
 
 #include "e2fsbb.h"
 #include "ext2fs/ext2_fs.h"
-#include "../e2fs_lib.h"
+#include "uuid/uuid.h"
 #include "e2p/e2p.h"
 #include "ext2fs/ext2fs.h"
 #include "util.h"
@@ -238,8 +201,8 @@ static void mke2fs_verbose_done(void)
 	mke2fs_verbose("done\n");
 }
 
-static void mke2fs_warning_msg(int retval, const char *fmt, ... ) __attribute__ ((format (printf, 2, 3)));
-static void mke2fs_warning_msg(int retval, const char *fmt, ... )
+static void mke2fs_warning_msg(int retval, char *fmt, ... ) __attribute__ ((format (printf, 2, 3)));
+static void mke2fs_warning_msg(int retval, char *fmt, ... )
 {
 	va_list ap;
 
@@ -522,7 +485,7 @@ static void create_lost_and_found(ext2_filsys fs)
 	ext2_ino_t		ino;
 	const char		*name = "lost+found";
 	int			i = 1;
-	const char		*msg = "create";
+	char			*msg = "create";
 	int			lpf_size = 0;
 
 	fs->umask = 077;
@@ -579,7 +542,7 @@ static void reserve_inodes(ext2_filsys fs)
 static void zap_sector(ext2_filsys fs, int sect, int nsect)
 {
 	char *buf;
-	const char *fmt = "could not %s %d";
+	char *fmt = "could not %s %d";
 	int retval;
 	unsigned int *magic;
 
@@ -611,7 +574,7 @@ static void create_journal_dev(ext2_filsys fs)
 	struct progress_struct	progress;
 	errcode_t		retval;
 	char			*buf;
-	const char		*fmt = "%s journal superblock";
+	char			*fmt = "%s journal superblock";
 	blk_t			blk;
 	int			count;
 
@@ -794,7 +757,7 @@ static void parse_extended_opts(struct ext2_super_block *sb_param,
 
 			if (rsv_gdb > 0) {
 				sb_param->s_feature_compat |=
-					EXT2_FEATURE_COMPAT_RESIZE_INODE;
+					EXT2_FEATURE_COMPAT_RESIZE_INO;
 
 				sb_param->s_reserved_gdt_blocks = rsv_gdb;
 			}
@@ -815,7 +778,7 @@ static void parse_extended_opts(struct ext2_super_block *sb_param,
 
 static __u32 ok_features[3] = {
 	EXT3_FEATURE_COMPAT_HAS_JOURNAL |
-		EXT2_FEATURE_COMPAT_RESIZE_INODE |
+		EXT2_FEATURE_COMPAT_RESIZE_INO |
 		EXT2_FEATURE_COMPAT_DIR_INDEX,  /* Compat */
 	EXT2_FEATURE_INCOMPAT_FILETYPE|         /* Incompat */
 		EXT3_FEATURE_INCOMPAT_JOURNAL_DEV|
@@ -932,7 +895,7 @@ static int PRS(int argc, char **argv)
 			creator_os = optarg;
 			break;
 		case 'r':
-			param.s_rev_level = xatoi_u(optarg);
+			param.s_rev_level = xatoi_positive(optarg);
 			if (param.s_rev_level == EXT2_GOOD_OLD_REV) {
 				param.s_feature_incompat = 0;
 				param.s_feature_compat = 0;
@@ -949,11 +912,11 @@ static int PRS(int argc, char **argv)
 			break;
 #ifdef EXT2_DYNAMIC_REV
 		case 'I':
-			inode_size = xatoi_u(optarg);
+			inode_size = xatoi_positive(optarg);
 			break;
 #endif
 		case 'N':
-			num_inodes = xatoi_u(optarg);
+			num_inodes = xatoi_positive(optarg);
 			break;
 		case 'v':
 			quiet = 0;
@@ -1160,7 +1123,7 @@ static int PRS(int argc, char **argv)
 	/* Since sparse_super is the default, we would only have a problem
 	 * here if it was explicitly disabled.
 	 */
-	if ((param.s_feature_compat & EXT2_FEATURE_COMPAT_RESIZE_INODE) &&
+	if ((param.s_feature_compat & EXT2_FEATURE_COMPAT_RESIZE_INO) &&
 	    !(param.s_feature_ro_compat&EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER)) {
 		bb_error_msg_and_die("reserved online resize blocks not supported "
 			  "on non-sparse filesystem");
@@ -1211,7 +1174,7 @@ static void mke2fs_clean_up(void)
 	if (ENABLE_FEATURE_CLEAN_UP && journal_device) free(journal_device);
 }
 
-int mke2fs_main (int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+int mke2fs_main (int argc, char **argv);
 int mke2fs_main (int argc, char **argv)
 {
 	errcode_t	retval;
@@ -1249,13 +1212,13 @@ int mke2fs_main (int argc, char **argv)
 	/*
 	 * Generate a UUID for it...
 	 */
-	generate_uuid(fs->super->s_uuid);
+	uuid_generate(fs->super->s_uuid);
 
 	/*
 	 * Initialize the directory index variables
 	 */
 	fs->super->s_def_hash_version = EXT2_HASH_TEA;
-	generate_uuid((uint8_t *) fs->super->s_hash_seed);
+	uuid_generate((unsigned char *) fs->super->s_hash_seed);
 
 	/*
 	 * Add "jitter" to the superblock's check interval so that we
@@ -1349,7 +1312,7 @@ int mke2fs_main (int argc, char **argv)
 		reserve_inodes(fs);
 		create_bad_block_inode(fs, bb_list);
 		if (fs->super->s_feature_compat &
-		    EXT2_FEATURE_COMPAT_RESIZE_INODE) {
+		    EXT2_FEATURE_COMPAT_RESIZE_INO) {
 			retval = ext2fs_create_resize_inode(fs);
 			mke2fs_error_msg_and_die(retval, "reserve blocks for online resize");
 		}

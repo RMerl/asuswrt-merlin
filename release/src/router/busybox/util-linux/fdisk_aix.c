@@ -2,7 +2,7 @@
 /*
  * Copyright (C) Andreas Neuper, Sep 1998.
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 typedef struct {

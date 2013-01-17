@@ -1,24 +1,18 @@
 /* vi: set sw=4 ts=4: */
 /*
- * ll_proto.c
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version
+ * 2 of the License, or (at your option) any later version.
  *
- *		This program is free software; you can redistribute it and/or
- *		modify it under the terms of the GNU General Public License
- *		as published by the Free Software Foundation; either version
- *		2 of the License, or (at your option) any later version.
- *
- * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
+ * Authors: Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
 #include "libbb.h"
 #include "rt_names.h"
 #include "utils.h"
 
-#if defined(__GLIBC__) && __GLIBC__ >=2 && __GLIBC_MINOR__ >= 1
-#include <net/ethernet.h>
-#else
-#include <linux/if_ether.h>
-#endif
+#include <netinet/if_ether.h>
 
 #if !ENABLE_WERROR
 #warning de-bloat
@@ -126,4 +120,3 @@ int FAST_FUNC ll_proto_a2n(unsigned short *id, char *buf)
 	*id = htons(i);
 	return 0;
 }
-

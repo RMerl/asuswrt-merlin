@@ -188,7 +188,7 @@ int FAST_FUNC volume_id_probe_ntfs(struct volume_id *id /*,uint64_t off*/)
 
  found:
 //	volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
-//	id->type = "ntfs";
+	IF_FEATURE_BLKID_TYPE(id->type = "ntfs";)
 
 	return 0;
 }

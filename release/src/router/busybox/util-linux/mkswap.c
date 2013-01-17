@@ -3,8 +3,15 @@
  *
  * Copyright 2006 Rob Landley <rob@landley.net>
  *
- * Licensed under GPL version 2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define mkswap_trivial_usage
+//usage:       "[-L LBL] BLOCKDEV [KBYTES]"
+//usage:#define mkswap_full_usage "\n\n"
+//usage:       "Prepare BLOCKDEV to be used as swap partition\n"
+//usage:     "\n	-L LBL	Label"
+
 #include "libbb.h"
 
 #if ENABLE_SELINUX
@@ -15,8 +22,7 @@ static void mkswap_selinux_setcontext(int fd, const char *path)
 	if (!is_selinux_enabled())
 		return;
 
-	if (fstat(fd, &stbuf) < 0)
-		bb_perror_msg_and_die("fstat failed");
+	xfstat(fd, &stbuf, path);
 	if (S_ISREG(stbuf.st_mode)) {
 		security_context_t newcon;
 		security_context_t oldcon = NULL;
@@ -115,9 +121,17 @@ int mkswap_main(int argc UNUSED_PARAM, char **argv)
 	hdr->last_page = (uoff_t)len / pagesize;
 
 	if (ENABLE_FEATURE_MKSWAP_UUID) {
-		char uuid_string[37];
+		char uuid_string[32];
 		generate_uuid((void*)hdr->sws_uuid);
-		printf("UUID=%s\n", unparse_uuid((uint8_t *)hdr->sws_uuid, uuid_string));
+		bin2hex(uuid_string, hdr->sws_uuid, 16);
+		/* f.e. UUID=dfd9c173-be52-4d27-99a5-c34c6c2ff55f */
+		printf("UUID=%.8s"  "-%.4s-%.4s-%.4s-%.12s\n",
+			uuid_string,
+			uuid_string+8,
+			uuid_string+8+4,
+			uuid_string+8+4+4,
+			uuid_string+8+4+4+4
+		);
 	}
 	safe_strncpy(hdr->sws_volume, label, 16);
 

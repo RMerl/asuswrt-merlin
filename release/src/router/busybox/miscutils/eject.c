@@ -5,13 +5,23 @@
  * Copyright (C) 2004  Peter Willis <psyphreak@phreaker.net>
  * Copyright (C) 2005  Tito Ragusa <farmatito@tiscali.it>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /*
  * This is a simple hack of eject based on something Erik posted in #uclibc.
  * Most of the dirty work blatantly ripped off from cat.c =)
  */
+
+//usage:#define eject_trivial_usage
+//usage:       "[-t] [-T] [DEVICE]"
+//usage:#define eject_full_usage "\n\n"
+//usage:       "Eject DEVICE or default /dev/cdrom\n"
+//usage:	IF_FEATURE_EJECT_SCSI(
+//usage:     "\n	-s	SCSI device"
+//usage:	)
+//usage:     "\n	-t	Close tray"
+//usage:     "\n	-T	Open/close tray (toggle)"
 
 #include <sys/mount.h>
 #include "libbb.h"

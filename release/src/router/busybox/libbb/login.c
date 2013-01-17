@@ -6,7 +6,7 @@
  *
  * Optimize and correcting OCRNL by Vladimir Oleynik <dzo@simtreas.ru>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
@@ -30,7 +30,7 @@ void FAST_FUNC print_login_issue(const char *issue_file, const char *tty)
 	time(&t);
 	uname(&uts);
 
-	puts("\r");	/* start a new line */
+	puts("\r");  /* start a new line */
 
 	fp = fopen_for_read(issue_file);
 	if (!fp)

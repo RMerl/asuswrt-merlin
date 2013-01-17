@@ -6,43 +6,26 @@
  * Copyright (C) 2004 Erik Andersen <andersen@codepoet.org>
  * Copyright (C) 2001 Matt Krai
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
 
-/* This function reads an entire line from a text file, up to a newline
- * or NUL byte, inclusive.  It returns a malloc'ed char * which
- * must be free'ed by the caller.  If end is NULL '\n' isn't considered
- * end of line.  If end isn't NULL, length of the chunk is stored in it.
- * If lineno is not NULL, *lineno is incremented for each line,
- * and also trailing '\' is recognized as line continuation.
- *
- * Returns NULL if EOF/error. */
-char* FAST_FUNC bb_get_chunk_with_continuation(FILE *file, int *end, int *lineno)
+char* FAST_FUNC bb_get_chunk_from_file(FILE *file, int *end)
 {
 	int ch;
-	int idx = 0;
+	unsigned idx = 0;
 	char *linebuf = NULL;
-	int linebufsz = 0;
 
 	while ((ch = getc(file)) != EOF) {
 		/* grow the line buffer as necessary */
-		if (idx >= linebufsz) {
-			linebufsz += 256;
-			linebuf = xrealloc(linebuf, linebufsz);
-		}
+		if (!(idx & 0xff))
+			linebuf = xrealloc(linebuf, idx + 0x100);
 		linebuf[idx++] = (char) ch;
-		if (!ch)
+		if (ch == '\0')
 			break;
-		if (end && ch == '\n') {
-			if (lineno == NULL)
-				break;
-			(*lineno)++;
-			if (idx < 2 || linebuf[idx-2] != '\\')
-				break;
-			idx -= 2;
-		}
+		if (end && ch == '\n')
+			break;
 	}
 	if (end)
 		*end = idx;
@@ -57,11 +40,6 @@ char* FAST_FUNC bb_get_chunk_with_continuation(FILE *file, int *end, int *lineno
 		linebuf[idx] = '\0';
 	}
 	return linebuf;
-}
-
-char* FAST_FUNC bb_get_chunk_from_file(FILE *file, int *end)
-{
-	return bb_get_chunk_with_continuation(file, end, NULL);
 }
 
 /* Get line, including trailing \n if any */

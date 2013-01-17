@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2005 by Rob Sullivan <cogito.ergo.cogito@gmail.com>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /*
@@ -21,20 +21,111 @@
  *   redirected input has been read from stdin
  */
 
-#include <sched.h>	/* sched_yield() */
+//config:config LESS
+//config:	bool "less"
+//config:	default y
+//config:	help
+//config:	  'less' is a pager, meaning that it displays text files. It possesses
+//config:	  a wide array of features, and is an improvement over 'more'.
+//config:
+//config:config FEATURE_LESS_MAXLINES
+//config:	int "Max number of input lines less will try to eat"
+//config:	default 9999999
+//config:	depends on LESS
+//config:
+//config:config FEATURE_LESS_BRACKETS
+//config:	bool "Enable bracket searching"
+//config:	default y
+//config:	depends on LESS
+//config:	help
+//config:	  This option adds the capability to search for matching left and right
+//config:	  brackets, facilitating programming.
+//config:
+//config:config FEATURE_LESS_FLAGS
+//config:	bool "Enable -m/-M"
+//config:	default y
+//config:	depends on LESS
+//config:	help
+//config:	  The -M/-m flag enables a more sophisticated status line.
+//config:
+//config:config FEATURE_LESS_MARKS
+//config:	bool "Enable marks"
+//config:	default y
+//config:	depends on LESS
+//config:	help
+//config:	  Marks enable positions in a file to be stored for easy reference.
+//config:
+//config:config FEATURE_LESS_REGEXP
+//config:	bool "Enable regular expressions"
+//config:	default y
+//config:	depends on LESS
+//config:	help
+//config:	  Enable regular expressions, allowing complex file searches.
+//config:
+//config:config FEATURE_LESS_WINCH
+//config:	bool "Enable automatic resizing on window size changes"
+//config:	default y
+//config:	depends on LESS
+//config:	help
+//config:	  Makes less track window size changes.
+//config:
+//config:config FEATURE_LESS_ASK_TERMINAL
+//config:	bool "Use 'tell me cursor position' ESC sequence to measure window"
+//config:	default y
+//config:	depends on FEATURE_LESS_WINCH
+//config:	help
+//config:	  Makes less track window size changes.
+//config:	  If terminal size can't be retrieved and $LINES/$COLUMNS are not set,
+//config:	  this option makes less perform a last-ditch effort to find it:
+//config:	  position cursor to 999,999 and ask terminal to report real
+//config:	  cursor position using "ESC [ 6 n" escape sequence, then read stdin.
+//config:
+//config:	  This is not clean but helps a lot on serial lines and such.
+//config:
+//config:config FEATURE_LESS_DASHCMD
+//config:	bool "Enable flag changes ('-' command)"
+//config:	default y
+//config:	depends on LESS
+//config:	help
+//config:	  This enables the ability to change command-line flags within
+//config:	  less itself ('-' keyboard command).
+//config:
+//config:config FEATURE_LESS_LINENUMS
+//config:	bool "Enable dynamic switching of line numbers"
+//config:	default y
+//config:	depends on FEATURE_LESS_DASHCMD
+//config:	help
+//config:	  Enables "-N" command.
+
+//usage:#define less_trivial_usage
+//usage:       "[-E" IF_FEATURE_LESS_FLAGS("Mm") "Nh~I?] [FILE]..."
+//usage:#define less_full_usage "\n\n"
+//usage:       "View FILE (or stdin) one screenful at a time\n"
+//usage:     "\n	-E	Quit once the end of a file is reached"
+//usage:	IF_FEATURE_LESS_FLAGS(
+//usage:     "\n	-M,-m	Display status line with line numbers"
+//usage:     "\n		and percentage through the file"
+//usage:	)
+//usage:     "\n	-N	Prefix line number to each line"
+//usage:     "\n	-I	Ignore case in all searches"
+//usage:     "\n	-~	Suppress ~s displayed past EOF"
+
+#include <sched.h>  /* sched_yield() */
 
 #include "libbb.h"
 #if ENABLE_FEATURE_LESS_REGEXP
 #include "xregex.h"
 #endif
 
+
+#define ESC "\033"
 /* The escape codes for highlighted and normal text */
-#define HIGHLIGHT   "\033[7m"
-#define NORMAL      "\033[0m"
+#define HIGHLIGHT   ESC"[7m"
+#define NORMAL      ESC"[0m"
 /* The escape code to home and clear to the end of screen */
-#define CLEAR       "\033[H\033[J"
+#define CLEAR       ESC"[H\033[J"
 /* The escape code to clear to the end of line */
-#define CLEAR_2_EOL "\033[K"
+#define CLEAR_2_EOL ESC"[K"
 
 enum {
 /* Absolute max of lines eaten */
@@ -94,6 +185,9 @@ struct globals {
 	int num_matches;
 	regex_t pattern;
 	smallint pattern_valid;
+#endif
+#if ENABLE_FEATURE_LESS_ASK_TERMINAL
+	smallint winsize_err;
 #endif
 	smallint terminated;
 	struct termios term_orig, term_less;
@@ -165,12 +259,12 @@ static void set_tty_cooked(void)
    top-left corner of the console */
 static void move_cursor(int line, int row)
 {
-	printf("\033[%u;%uH", line, row);
+	printf(ESC"[%u;%uH", line, row);
 }
 
 static void clear_line(void)
 {
-	printf("\033[%u;0H" CLEAR_2_EOL, max_displayed_line + 2);
+	printf(ESC"[%u;0H" CLEAR_2_EOL, max_displayed_line + 2);
 }
 
 static void print_hilite(const char *str)
@@ -477,7 +571,7 @@ static void m_status_print(void)
 {
 	int percentage;
 
-	if (less_gets_pos >= 0)	/* don't touch statusline while input is done! */
+	if (less_gets_pos >= 0) /* don't touch statusline while input is done! */
 		return;
 
 	clear_line();
@@ -503,7 +597,7 @@ static void status_print(void)
 {
 	const char *p;
 
-	if (less_gets_pos >= 0)	/* don't touch statusline while input is done! */
+	if (less_gets_pos >= 0) /* don't touch statusline while input is done! */
 		return;
 
 	/* Change the status if flags have been set */
@@ -626,8 +720,8 @@ static void print_found(const char *line)
 	while (match_status == 0) {
 		char *new = xasprintf("%s%.*s"HIGHLIGHT"%.*s"NORMAL,
 				growline ? growline : "",
-				match_structs.rm_so, str,
-				match_structs.rm_eo - match_structs.rm_so,
+				(int)match_structs.rm_so, str,
+				(int)(match_structs.rm_eo - match_structs.rm_so),
 						str + match_structs.rm_so);
 		free(growline);
 		growline = new;
@@ -802,12 +896,17 @@ static void reinitialize(void)
 	cur_fline = 0;
 	max_lineno = 0;
 	open_file_and_read_lines();
+#if ENABLE_FEATURE_LESS_ASK_TERMINAL
+	if (G.winsize_err)
+		printf("\033[999;999H" "\033[6n");
+#endif
 	buffer_fill_and_print();
 }
 
-static int getch_nowait(void)
+static int64_t getch_nowait(void)
 {
 	int rd;
+	int64_t key64;
 	struct pollfd pfd[2];
 
 	pfd[0].fd = STDIN_FILENO;
@@ -855,8 +954,8 @@ static int getch_nowait(void)
 
 	/* We have kbd_fd in O_NONBLOCK mode, read inside read_key()
 	 * would not block even if there is no input available */
-	rd = read_key(kbd_fd, kbd_input, /*timeout off:*/ -2);
-	if (rd == -1) {
+	key64 = read_key(kbd_fd, kbd_input, /*timeout off:*/ -2);
+	if ((int)key64 == -1) {
 		if (errno == EAGAIN) {
 			/* No keyboard input available. Since poll() did return,
 			 * we should have input on stdin */
@@ -868,25 +967,30 @@ static int getch_nowait(void)
 		less_exit(0);
 	}
 	set_tty_cooked();
-	return rd;
+	return key64;
 }
 
 /* Grab a character from input without requiring the return key.
  * May return KEYCODE_xxx values.
  * Note that this function works best with raw input. */
-static int less_getch(int pos)
+static int64_t less_getch(int pos)
 {
-	int i;
+	int64_t key64;
+	int key;
 
  again:
 	less_gets_pos = pos;
-	i = getch_nowait();
+	key = key64 = getch_nowait();
 	less_gets_pos = -1;
 
-	/* Discard Ctrl-something chars */
-	if (i >= 0 && i < ' ' && i != 0x0d && i != 8)
+	/* Discard Ctrl-something chars.
+	 * (checking only lower 32 bits is a size optimization:
+	 * upper 32 bits are used only by KEYCODE_CURSOR_POS)
+	 */
+	if (key >= 0 && key < ' ' && key != 0x0d && key != 8)
 		goto again;
-	return i;
+
+	return key64;
 }
 
 static char* less_gets(int sz)
@@ -1426,6 +1530,9 @@ static void keypress_process(int keypress)
 		break;
 #endif
 	case 'r': case 'R':
+		/* TODO: (1) also bind ^R, ^L to this?
+		 * (2) re-measure window size?
+		 */
 		buffer_print();
 		break;
 	/*case 'R':
@@ -1501,8 +1608,6 @@ static void sigwinch_handler(int sig UNUSED_PARAM)
 int less_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int less_main(int argc, char **argv)
 {
-	int keypress;
-
 	INIT_G();
 
 	/* TODO: -x: do not interpret backspace, -xx: tab also */
@@ -1545,7 +1650,7 @@ int less_main(int argc, char **argv)
 	term_less.c_cc[VMIN] = 1;
 	term_less.c_cc[VTIME] = 0;
 
-	get_terminal_width_height(kbd_fd, &width, &max_displayed_line);
+	IF_FEATURE_LESS_ASK_TERMINAL(G.winsize_err =) get_terminal_width_height(kbd_fd, &width, &max_displayed_line);
 	/* 20: two tabstops + 4 */
 	if (width < 20 || max_displayed_line < 3)
 		return bb_cat(argv);
@@ -1560,11 +1665,14 @@ int less_main(int argc, char **argv)
 	buffer = xmalloc((max_displayed_line+1) * sizeof(char *));
 	reinitialize();
 	while (1) {
+		int64_t keypress;
+
 #if ENABLE_FEATURE_LESS_WINCH
 		while (WINCH_COUNTER) {
  again:
 			winch_counter--;
-			get_terminal_width_height(kbd_fd, &width, &max_displayed_line);
+			IF_FEATURE_LESS_ASK_TERMINAL(G.winsize_err =) get_terminal_width_height(kbd_fd, &width, &max_displayed_line);
+ IF_FEATURE_LESS_ASK_TERMINAL(got_size:)
 			/* 20: two tabstops + 4 */
 			if (width < 20)
 				width = 20;
@@ -1584,8 +1692,18 @@ int less_main(int argc, char **argv)
 			/* This took some time. Loop back and check,
 			 * were there another SIGWINCH? */
 		}
-#endif
 		keypress = less_getch(-1); /* -1: do not position cursor */
+# if ENABLE_FEATURE_LESS_ASK_TERMINAL
+		if ((int32_t)keypress == KEYCODE_CURSOR_POS) {
+			uint32_t rc = (keypress >> 32);
+			width = (rc & 0x7fff);
+			max_displayed_line = ((rc >> 16) & 0x7fff);
+			goto got_size;
+		}
+# endif
+#else
+		keypress = less_getch(-1); /* -1: do not position cursor */
+#endif
 		keypress_process(keypress);
 	}
 }

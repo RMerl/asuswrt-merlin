@@ -85,5 +85,3 @@ extern int ext2fs_process_dir_block(ext2_filsys		fs,
 				    blk_t		ref_block,
 				    int			ref_offset,
 				    void		*priv_data);
-
-

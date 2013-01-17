@@ -4,7 +4,7 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
@@ -30,7 +30,8 @@ struct mntent* FAST_FUNC find_mount_point(const char *name, int subdir_too)
 
 	devno_of_name = s.st_dev;
 	block_dev = 0;
-	if (S_ISBLK(s.st_mode)) {
+	/* Why S_ISCHR? - UBI volumes use char devices, not block */
+	if (S_ISBLK(s.st_mode) || S_ISCHR(s.st_mode)) {
 		devno_of_name = s.st_rdev;
 		block_dev = 1;
 	}
@@ -43,7 +44,7 @@ struct mntent* FAST_FUNC find_mount_point(const char *name, int subdir_too)
 		/* rootfs mount in Linux 2.6 exists always,
 		 * and it makes sense to always ignore it.
 		 * Otherwise people can't reference their "real" root! */
-		if (strcmp(mountEntry->mnt_fsname, "rootfs") == 0)
+		if (ENABLE_FEATURE_SKIP_ROOTFS && strcmp(mountEntry->mnt_fsname, "rootfs") == 0)
 			continue;
 
 		if (strcmp(name, mountEntry->mnt_dir) == 0

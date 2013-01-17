@@ -2,6 +2,8 @@ Busybox TODO
 
 Harvest patches from
 http://git.openembedded.org/cgit.cgi/openembedded/tree/recipes/busybox/
+https://dev.openwrt.org/browser/trunk/package/busybox/patches/
+
 
 Stuff that needs to be done.  This is organized by who plans to get around to
 doing it eventually, but that doesn't mean they "own" the item.  If you want to
@@ -82,7 +84,7 @@ Rob Landley suggested this:
 
   initramfs
     Busybox should have a sample initramfs build script.  This depends on
-    bbsh, mdev, and switch_root.
+    shell, mdev, and switch_root.
 
   mkdep
     Write a mkdep that doesn't segfault if there's a directory it doesn't

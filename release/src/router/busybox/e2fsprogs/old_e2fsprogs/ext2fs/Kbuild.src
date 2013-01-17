@@ -2,7 +2,7 @@
 #
 # Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
 #
-# Licensed under the GPL v2, see the file LICENSE in this tarball.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 NEEDED-$(CONFIG_E2FSCK) = y
 NEEDED-$(CONFIG_FSCK) = y
@@ -23,4 +23,4 @@ lib-$(NEEDED-y) += gen_bitmap.o bitops.o ismounted.o mkjournal.o unix_io.o \
                    dirhash.o version.o flushb.o unlink.o check_desc.o valid_blk.o \
                    ext_attr.o bmap.o dblist_dir.o ext2fs_inline.o swapfs.o
 
-CFLAGS += -include $(srctree)/e2fsprogs/old_e2fsprogs/e2fsbb.h
+CFLAGS += -include $(srctree)/e2fsprogs/e2fsbb.h

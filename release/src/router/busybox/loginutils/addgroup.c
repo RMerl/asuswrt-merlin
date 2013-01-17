@@ -6,9 +6,17 @@
  * Copyright (C) 1999,2000,2001 by John Beppu <beppu@codepoet.org>
  * Copyright (C) 2007 by Tito Ragusa <farmatito@tiscali.it>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  */
+
+//usage:#define addgroup_trivial_usage
+//usage:       "[-g GID] " IF_FEATURE_ADDUSER_TO_GROUP("[USER] ") "GROUP"
+//usage:#define addgroup_full_usage "\n\n"
+//usage:       "Add a group " IF_FEATURE_ADDUSER_TO_GROUP("or add a user to a group") "\n"
+//usage:     "\n	-g GID	Group id"
+//usage:     "\n	-S	Create a system group"
+
 #include "libbb.h"
 
 #if CONFIG_LAST_SYSTEM_ID < CONFIG_FIRST_SYSTEM_ID
@@ -168,7 +176,6 @@ int addgroup_main(int argc UNUSED_PARAM, char **argv)
 	{
 		die_if_bad_username(argv[0]);
 		new_group(argv[0], gid);
-
 	}
 	/* Reached only on success */
 	return EXIT_SUCCESS;

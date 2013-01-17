@@ -4,8 +4,18 @@
  *
  * Copyright (C) 2007 Denys Vlasenko
  *
- * Licensed under GPL version 2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define fakeidentd_trivial_usage
+//usage:       "[-fiw] [-b ADDR] [STRING]"
+//usage:#define fakeidentd_full_usage "\n\n"
+//usage:       "Provide fake ident (auth) service\n"
+//usage:     "\n	-f	Run in foreground"
+//usage:     "\n	-i	Inetd mode"
+//usage:     "\n	-w	Inetd 'wait' mode"
+//usage:     "\n	-b ADDR	Bind to specified address"
+//usage:     "\n	STRING	Ident answer string (default: nobody)"
 
 #include "libbb.h"
 #include <syslog.h>

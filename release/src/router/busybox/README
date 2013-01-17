@@ -44,7 +44,7 @@ Using busybox:
   run (I.E. "./busybox ls -l /proc").
 
   The "standalone shell" mode is an easy way to try out busybox; this is a
-  command shell that calls the builtin applets without needing them to be
+  command shell that calls the built-in applets without needing them to be
   installed in the path.  (Note that this requires /proc to be mounted, if
   testing from a boot floppy or in a chroot environment.)
 
@@ -80,7 +80,7 @@ Downloading the current source code:
   The developers also have a bug and patch tracking system
   (https://bugs.busybox.net) although posting a bug/patch to the mailing list
   is generally a faster way of getting it fixed, and the complete archive of
-  what happened is the subversion changelog.
+  what happened is the git changelog.
 
   Note: if you want to compile busybox in a busybox environment you must
   select CONFIG_DESKTOP.
@@ -169,7 +169,7 @@ Portability:
   MacOS X, Solaris, Cygwin, or the BSD Fork Du Jour).  This generally involves
   a different kernel and a different C library at the same time.  While it
   should be possible to port the majority of the code to work in one of
-  these environments, don't be suprised if it doesn't work out of the box.  If
+  these environments, don't be surprised if it doesn't work out of the box.  If
   you're into that sort of thing, start small (selecting just a few applets)
   and work your way up.
 

@@ -9,6 +9,8 @@
 
 <p>Before looking at the Linux implementation, first a general Unix
 description of threads, processes, process groups and sessions.
+</p><p>
+(See also <a href="http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap11.html">General Terminal Interface</a>)
 </p><p>A session contains a number of process groups, and a process group
 contains a number of processes, and a process contains a number
 of threads.
@@ -277,6 +279,7 @@ and inspect it by
 Again, if TOSTOP is set but the background process ignores or blocks
 the SIGTTOU signal, or if its process group is orphaned (see below),
 then the write() returns an EIO error, and no signal is sent.
+[vda: correction. SUS says that if SIGTTOU is blocked/ignored, write succeeds. ]
 <p>
 </p><h3>Orphaned process groups</h3>
 

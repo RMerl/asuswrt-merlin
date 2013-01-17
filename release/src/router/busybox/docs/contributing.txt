@@ -229,8 +229,11 @@ Here are some guidelines on how to submit a patch to Busybox.
 Making A Patch
 ~~~~~~~~~~~~~~
 
-If you've got anonymous CVS access set up, making a patch is simple. Just make
-sure you're in the busybox/ directory and type 'cvs diff -bwu > mychanges.patch'.
+If you've got anonymous Git access set up, making a patch is simple. Just make
+sure you're in the busybox/ directory and type:
+
+	git diff -b -w > mychanges.patch
+
 You can send the resulting .patch file to the mailing list with a description
 of what it does. (But not before you test it! See the next section for some
 guidelines.) It is preferred that patches be sent as attachments, but it is
@@ -238,8 +241,12 @@ not required.
 
 Also, feel free to help test other people's patches and reply to them with
 comments. You can apply a patch by saving it into your busybox/ directory and
-typing 'patch < mychanges.patch'. Then you can recompile, see if it runs, test
-if it works as advertised, and post your findings to the mailing list.
+typing:
+
+	patch -p1 < mychanges.patch
+
+Then you can recompile, see if it runs, test if it works as advertised, and
+post your findings to the mailing list.
 
 NOTE: Please do not include extraneous or irrelevant changes in your patches.
 Please do not try to "bundle" two patches together into one. Make single,
@@ -252,7 +259,7 @@ Testing Guidelines
 ~~~~~~~~~~~~~~~~~~
 
 It's considered good form to test your new feature before you submit a patch
-to the mailing list, and especially before you commit a change to CVS. Here
+to the mailing list, and especially before you push a change to Git. Here
 are some guidelines on how to test your changes.
 
  - Always test Busybox applets against GNU counterparts and make sure the
@@ -348,7 +355,7 @@ responses from queries to applet maintainer or positive responses from folks
 on the mailing list.
 
 We've made strident efforts to put a useful "collaboration" infrastructure in
-place in the form of mailing lists, the bug tracking system, and CVS. Please
+place in the form of mailing lists, the bug tracking system, and Git. Please
 use these resources.
 
 
@@ -373,39 +380,43 @@ opposite effect.
 
 
 
-Committing Changes to CVS
--------------------------
+Pushing Changes to Git
+----------------------
 
 If you submit several patches that demonstrate that you are a skilled and wise
-coder, you may be invited to become a committer, thus enabling you to commit
-changes directly to CVS. This is nice because you don't have to wait for
-someone else to commit your change for you, you can just do it yourself.
+coder, you may be invited to become a committer, thus enabling you to push
+changes directly to Git. This is nice because you don't have to wait for
+someone else to push your change for you, you can just do it yourself.
 
 But note that this is a privilege that comes with some responsibilities. You
-should test your changes before you commit them. You should also talk to an
+should test your changes before you push them. You should also talk to an
 applet maintainer before you make any kind of sweeping changes to somebody
 else's code. Big changes should still go to the mailing list first. Remember,
 being wise, polite, and discreet is more important than being clever.
 
+For more information on Git push access, see:
 
-When To Commit
-~~~~~~~~~~~~~~
+	http://busybox.net/developer.html
 
-Generally, you should feel free to commit a change if:
+
+When To Push
+~~~~~~~~~~~~
+
+Generally, you should feel free to push a change if:
 
  - Your changes are small and don't touch many files
  - You are fixing a bug
  - Somebody has told you that it's okay
  - It's obviously the Right Thing
 
-The more of the above are true, the better it is to just commit a change
-directly to CVS.
+The more of the above are true, the better it is to just push a change
+directly to Git.
 
 
-When Not To Commit
-~~~~~~~~~~~~~~~~~~
+When Not To Push
+~~~~~~~~~~~~~~~~
 
-Even if you have commit rights, you should probably still post a patch to the
+Even if you have push access, you should probably still post a patch to the
 mailing list if:
 
  - Your changes are broad and touch many different files
@@ -414,7 +425,7 @@ mailing list if:
  - You are not the maintainer and your changes make the maintainer cringe
 
 The more of the above are true, the better it is to post a patch to the
-mailing list instead of committing.
+mailing list instead of pushing.
 
 
 
@@ -426,5 +437,3 @@ you're having difficulty following some of the steps outlined in this
 document don't worry, the folks on the Busybox mailing list are a fairly
 good-natured bunch and will work with you to help get your patches into shape
 or help you make contributions.
-
-

@@ -1,0 +1,47 @@
+# This testcase demonstrates that backslashes are treated differently
+# in 1st and 2nd parts of ${var/search/repl}:
+# if quoted ("${var/search/repl}"), and repl contains \a (a non-special char),
+# the backslash in repl stays; if unquoted, backslash is removed.
+# But search part does not act like that: \a is always converted to just a,
+# even in quotes.
+#
+# bash4 (and probably bash3 too): "Quoted:" results are different from
+# unquoted and assignment expansions - they have a backslash before z.
+
+v='a*b\*c'
+echo 'Source:       ' "$v"
+echo 'Replace str:  ' '_\\_\z_'
+
+echo 'Pattern:      ' 'single backslash and star: "replace literal star"'
+r=${v/\*/_\\_\z_}
+echo 'In assignment:' "$r"
+echo 'Unquoted:     ' ${v/\*/_\\_\z_}
+echo 'Quoted:       ' "${v/\*/_\\_\z_}"
+
+echo 'Pattern:      ' 'double backslash and star: "replace backslash and everything after it"'
+r=${v/\\*/_\\_\z_}
+echo 'In assignment:' "$r"
+echo 'Unquoted:     '  ${v/\\*/_\\_\z_}
+echo 'Quoted:       ' "${v/\\*/_\\_\z_}"
+
+echo
+
+v='a\bc'
+echo 'Source:       ' "$v"
+echo 'Replace str:  ' '_\\_\z_'
+
+echo 'Pattern:      ' 'single backslash and b: "replace b"'
+r=${v/\b/_\\_\z_}
+echo 'In assignment:' "$r"
+echo 'Unquoted:     '  ${v/\b/_\\_\z_}
+echo 'Quoted:       ' "${v/\b/_\\_\z_}"
+
+echo 'Pattern:      ' 'double backslash and b: "replace backslash and b"'
+r=${v/\\b/_\\_\z_}
+echo 'In assignment:' "$r"
+echo 'Unquoted:     '  ${v/\\b/_\\_\z_}
+echo 'Quoted:       ' "${v/\\b/_\\_\z_}"
+
+echo
+
+echo Done: $?

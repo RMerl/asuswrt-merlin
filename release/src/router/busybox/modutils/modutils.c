@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2008 by Timo Teras <timo.teras@iki.fi>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 #include "modutils.h"
 
@@ -62,7 +62,7 @@ char* FAST_FUNC filename2modname(const char *filename, char *modname)
 	return modname;
 }
 
-char* FAST_FUNC parse_cmdline_module_options(char **argv)
+char* FAST_FUNC parse_cmdline_module_options(char **argv, int quote_spaces)
 {
 	char *options;
 	int optlen;
@@ -70,14 +70,31 @@ char* FAST_FUNC parse_cmdline_module_options(char **argv)
 	options = xzalloc(1);
 	optlen = 0;
 	while (*++argv) {
-		options = xrealloc(options, optlen + 2 + strlen(*argv) + 2);
-		/* Older versions were enclosing space-containing *argv in "",
-		 * but both modprobe and insmod from module-init-tools 3.11.1
-		 * don't do this anymore. (As to extra trailing space,
-		 * insmod adds it but modprobe does not. We do in both cases)
-		 */
-		optlen += sprintf(options + optlen, "%s ", *argv);
+		const char *fmt;
+		const char *var;
+		const char *val;
+
+		var = *argv;
+		options = xrealloc(options, optlen + 2 + strlen(var) + 2);
+		fmt = "%.*s%s ";
+		val = strchrnul(var, '=');
+		if (quote_spaces) {
+			/*
+			 * modprobe (module-init-tools version 3.11.1) compat:
+			 * quote only value:
+			 * var="val with spaces", not "var=val with spaces"
+			 * (note: var *name* is not checked for spaces!)
+			 */
+			if (*val) { /* has var=val format. skip '=' */
+				val++;
+				if (strchr(val, ' '))
+					fmt = "%.*s\"%s\" ";
+			}
+		}
+		optlen += sprintf(options + optlen, fmt, (int)(val - var), var, val);
 	}
+	/* Remove trailing space. Disabled */
+	/* if (optlen != 0) options[optlen-1] = '\0'; */
 	return options;
 }
 

@@ -11,8 +11,16 @@
  *
  * Termios corrects by Vladimir Oleynik <dzo@simtreas.ru>
  *
- * Licensed under GPLv2 or later, see file License in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define more_trivial_usage
+//usage:       "[FILE]..."
+//usage:#define more_full_usage "\n\n"
+//usage:       "View FILE (or stdin) one screenful at a time"
+//usage:
+//usage:#define more_example_usage
+//usage:       "$ dmesg | more\n"
 
 #include "libbb.h"
 
@@ -29,16 +37,20 @@ struct globals {
 #define new_settings     (G.new_settings    )
 #define cin_fileno       (G.cin_fileno      )
 
-#define setTermSettings(fd, argp) do { \
-		if (ENABLE_FEATURE_USE_TERMIOS) tcsetattr(fd, TCSANOW, argp); \
-	} while (0)
+#define setTermSettings(fd, argp) \
+do { \
+	if (ENABLE_FEATURE_USE_TERMIOS) \
+		tcsetattr(fd, TCSANOW, argp); \
+} while (0)
 #define getTermSettings(fd, argp) tcgetattr(fd, argp)
 
 static void gotsig(int sig UNUSED_PARAM)
 {
-	bb_putchar('\n');
+	/* bb_putchar_stderr doesn't use stdio buffering,
+	 * therefore it is safe in signal handler */
+	bb_putchar_stderr('\n');
 	setTermSettings(cin_fileno, &initial_settings);
-	exit(EXIT_FAILURE);
+	_exit(EXIT_FAILURE);
 }
 
 #define CONVERTED_TAB_SIZE 8
@@ -73,8 +85,7 @@ int more_main(int argc UNUSED_PARAM, char **argv)
 		cin_fileno = fileno(cin);
 		getTermSettings(cin_fileno, &initial_settings);
 		new_settings = initial_settings;
-		new_settings.c_lflag &= ~ICANON;
-		new_settings.c_lflag &= ~ECHO;
+		new_settings.c_lflag &= ~(ICANON | ECHO);
 		new_settings.c_cc[VMIN] = 1;
 		new_settings.c_cc[VTIME] = 0;
 		setTermSettings(cin_fileno, &new_settings);
@@ -109,9 +120,12 @@ int more_main(int argc UNUSED_PARAM, char **argv)
  loop_top:
 			if (input != 'r' && please_display_more_prompt) {
 				len = printf("--More-- ");
-				if (st.st_size > 0) {
+				if (st.st_size != 0) {
+					uoff_t d = (uoff_t)st.st_size / 100;
+					if (d == 0)
+						d = 1;
 					len += printf("(%u%% of %"OFF_FMT"u bytes)",
-						(int) (ftello(file)*100 / st.st_size),
+						(int) ((uoff_t)ftello(file) / d),
 						st.st_size);
 				}
 				fflush_all();
@@ -155,7 +169,7 @@ int more_main(int argc UNUSED_PARAM, char **argv)
 			/* Crudely convert tabs into spaces, which are
 			 * a bajillion times easier to deal with. */
 			if (c == '\t') {
-				spaces = CONVERTED_TAB_SIZE - 1;
+				spaces = ((unsigned)~len) % CONVERTED_TAB_SIZE;
 				c = ' ';
 			}
 
@@ -187,6 +201,7 @@ int more_main(int argc UNUSED_PARAM, char **argv)
 			}
 			/* My small mind cannot fathom backspaces and UTF-8 */
 			putchar(c);
+			die_if_ferror_stdout(); /* if tty was destroyed (closed xterm, etc) */
 		}
 		fclose(file);
 		fflush_all();

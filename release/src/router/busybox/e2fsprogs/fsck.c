@@ -20,7 +20,7 @@
  * Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
  *      2001, 2002, 2003, 2004, 2005 by  Theodore Ts'o.
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 /* All filesystem specific hooks have been removed.
@@ -33,6 +33,19 @@
  * spawns actual fsck.something for each filesystem to check.
  * It doesn't guess filesystem types from on-disk format.
  */
+
+//usage:#define fsck_trivial_usage
+//usage:       "[-ANPRTV] [-C FD] [-t FSTYPE] [FS_OPTS] [BLOCKDEV]..."
+//usage:#define fsck_full_usage "\n\n"
+//usage:       "Check and repair filesystems\n"
+//usage:     "\n	-A	Walk /etc/fstab and check all filesystems"
+//usage:     "\n	-N	Don't execute, just show what would be done"
+//usage:     "\n	-P	With -A, check filesystems in parallel"
+//usage:     "\n	-R	With -A, skip the root filesystem"
+//usage:     "\n	-T	Don't show title on startup"
+//usage:     "\n	-V	Verbose"
+//usage:     "\n	-C n	Write status information to specified filedescriptor"
+//usage:     "\n	-t TYPE	List of filesystem types to check"
 
 #include "libbb.h"
 
@@ -303,7 +316,6 @@ static void load_fs_info(const char *filename)
 {
 	FILE *fstab;
 	struct mntent mte;
-	struct fs_info *fs;
 
 	fstab = setmntent(filename, "r");
 	if (!fstab) {
@@ -316,7 +328,7 @@ static void load_fs_info(const char *filename)
 		//bb_info_msg("CREATE[%s][%s][%s][%s][%d]", mte.mnt_fsname, mte.mnt_dir,
 		//	mte.mnt_type, mte.mnt_opts,
 		//	mte.mnt_passno);
-		fs = create_fs_device(mte.mnt_fsname, mte.mnt_dir,
+		create_fs_device(mte.mnt_fsname, mte.mnt_dir,
 			mte.mnt_type, mte.mnt_opts,
 			mte.mnt_passno);
 	}
@@ -972,13 +984,13 @@ int fsck_main(int argc UNUSED_PARAM, char **argv)
 			case 'C':
 				progress = 1;
 				if (arg[++j]) { /* -Cn */
-					progress_fd = xatoi_u(&arg[j]);
+					progress_fd = xatoi_positive(&arg[j]);
 					goto next_arg;
 				}
 				/* -C n */
 				if (!*++argv)
 					bb_show_usage();
-				progress_fd = xatoi_u(*argv);
+				progress_fd = xatoi_positive(*argv);
 				goto next_arg;
 #endif
 			case 'V':

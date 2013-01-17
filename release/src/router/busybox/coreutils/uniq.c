@@ -4,11 +4,28 @@
  *
  * Copyright (C) 2005  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* BB_AUDIT SUSv3 compliant */
 /* http://www.opengroup.org/onlinepubs/007904975/utilities/uniq.html */
+
+//usage:#define uniq_trivial_usage
+//usage:       "[-cdu][-f,s,w N] [INPUT [OUTPUT]]"
+//usage:#define uniq_full_usage "\n\n"
+//usage:       "Discard duplicate lines\n"
+//usage:     "\n	-c	Prefix lines by the number of occurrences"
+//usage:     "\n	-d	Only print duplicate lines"
+//usage:     "\n	-u	Only print unique lines"
+//usage:     "\n	-f N	Skip first N fields"
+//usage:     "\n	-s N	Skip first N chars (after any skipped fields)"
+//usage:     "\n	-w N	Compare N characters in line"
+//usage:
+//usage:#define uniq_example_usage
+//usage:       "$ echo -e \"a\\na\\nb\\nc\\nc\\na\" | sort | uniq\n"
+//usage:       "a\n"
+//usage:       "b\n"
+//usage:       "c\n"
 
 #include "libbb.h"
 
@@ -52,8 +69,8 @@ int uniq_main(int argc UNUSED_PARAM, char **argv)
 			if (output[0] != '-' || output[1]) {
 				// Won't work with "uniq - FILE" and closed stdin:
 				//close(STDOUT_FILENO);
-				//xopen3(output, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-				xmove_fd(xopen3(output, O_WRONLY | O_CREAT | O_TRUNC, 0666), STDOUT_FILENO);
+				//xopen(output, O_WRONLY | O_CREAT | O_TRUNC);
+				xmove_fd(xopen(output, O_WRONLY | O_CREAT | O_TRUNC), STDOUT_FILENO);
 			}
 		}
 	}
@@ -86,7 +103,7 @@ int uniq_main(int argc UNUSED_PARAM, char **argv)
 			}
 
 			free(cur_line);
-			++dups;	 /* testing for overflow seems excessive */
+			++dups;  /* testing for overflow seems excessive */
 		}
 
 		if (old_line) {

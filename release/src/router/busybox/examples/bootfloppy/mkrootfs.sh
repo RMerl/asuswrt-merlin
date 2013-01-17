@@ -102,4 +102,3 @@ then
 	rmdir $TARGET_DIR
 	gzip -9 rootfs
 fi
-

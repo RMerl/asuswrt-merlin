@@ -5,7 +5,7 @@
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  * Copyright (C) 2005 by Rob Landley <rob@landley.net>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 #include "libbb.h"
 #include <linux/version.h>
@@ -84,7 +84,7 @@ int FAST_FUNC del_loop(const char *device)
    search will re-use an existing loop device already bound to that
    file/offset if it finds one.
  */
-int FAST_FUNC set_loop(char **device, const char *file, unsigned long long offset)
+int FAST_FUNC set_loop(char **device, const char *file, unsigned long long offset, int ro)
 {
 	char dev[LOOP_NAMESIZE];
 	char *try;
@@ -93,11 +93,13 @@ int FAST_FUNC set_loop(char **device, const char *file, unsigned long long offse
 	int i, dfd, ffd, mode, rc = -1;
 
 	/* Open the file.  Barf if this doesn't work.  */
-	mode = O_RDWR;
+	mode = ro ? O_RDONLY : O_RDWR;
 	ffd = open(file, mode);
 	if (ffd < 0) {
-		mode = O_RDONLY;
-		ffd = open(file, mode);
+		if (mode != O_RDONLY) {
+			mode = O_RDONLY;
+			ffd = open(file, mode);
+		}
 		if (ffd < 0)
 			return -errno;
 	}

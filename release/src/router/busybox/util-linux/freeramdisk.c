@@ -6,8 +6,22 @@
  * Adjusted a bit by Erik Andersen <andersen@codepoet.org>
  * Unified with fdflush by Tito Ragusa <farmatito@tiscali.it>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define freeramdisk_trivial_usage
+//usage:       "DEVICE"
+//usage:#define freeramdisk_full_usage "\n\n"
+//usage:       "Free all memory used by the specified ramdisk"
+//usage:
+//usage:#define freeramdisk_example_usage
+//usage:       "$ freeramdisk /dev/ram2\n"
+//usage:
+//usage:#define fdflush_trivial_usage
+//usage:       "DEVICE"
+//usage:#define fdflush_full_usage "\n\n"
+//usage:       "Force floppy disk drive to detect disk change"
+
 #include <sys/mount.h>
 #include "libbb.h"
 

@@ -255,6 +255,7 @@ if test "$CONFIG_FEATURE_SHARED_BUSYBOX" = y; then
 	    $GC_SECTIONS \
 	    $START_GROUP $O_FILES $END_GROUP \
 	    -L"$sharedlib_dir" -lbusybox \
+	    $l_list \
 	    $INFO_OPTS \
     || {
 	echo "Linking $EXE failed"

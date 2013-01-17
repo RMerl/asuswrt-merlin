@@ -1,8 +1,8 @@
 /* vi: set sw=4 ts=4: */
 /*
  * inline.c --- Includes the inlined functions defined in the header
- *	files as standalone functions, in case the application program
- *	is compiled with inlining turned off.
+ * files as standalone functions, in case the application program
+ * is compiled with inlining turned off.
  *
  * Copyright (C) 1993, 1994 Theodore Ts'o.
  *
@@ -30,4 +30,3 @@
 #include "ext2_fs.h"
 #define INCLUDE_INLINE_FUNCS
 #include "ext2fs.h"
-

@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2005  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* Notes:
@@ -19,6 +19,15 @@
  *   following IDs (if any).  Multiple switches are allowed.
  */
 
+//usage:#define renice_trivial_usage
+//usage:       "{{-n INCREMENT} | PRIORITY} [[-p | -g | -u] ID...]"
+//usage:#define renice_full_usage "\n\n"
+//usage:       "Change scheduling priority for a running process\n"
+//usage:     "\n	-n	Adjust current nice value (smaller is faster)"
+//usage:     "\n	-p	Process id(s) (default)"
+//usage:     "\n	-g	Process group id(s)"
+//usage:     "\n	-u	Process user name(s) and/or id(s)"
+
 #include "libbb.h"
 #include <sys/resource.h>
 
@@ -32,7 +41,7 @@ int renice_main(int argc UNUSED_PARAM, char **argv)
 	static const char Xetpriority_msg[] ALIGN1 = "%cetpriority";
 
 	int retval = EXIT_SUCCESS;
-	int which = PRIO_PROCESS;	/* Default 'which' value. */
+	int which = PRIO_PROCESS;  /* Default 'which' value. */
 	int use_relative = 0;
 	int adjustment, new_priority;
 	unsigned who;
@@ -57,7 +66,7 @@ int renice_main(int argc UNUSED_PARAM, char **argv)
 			arg += 2;
 	}
 
-	if (!arg) {				/* No args?  Then show usage. */
+	if (!arg) {  /* No args?  Then show usage. */
 		bb_show_usage();
 	}
 
@@ -91,7 +100,7 @@ int renice_main(int argc UNUSED_PARAM, char **argv)
 		} else {
 			who = bb_strtou(arg, NULL, 10);
 			if (errno) {
-				bb_error_msg("bad value: %s", arg);
+				bb_error_msg("invalid number '%s'", arg);
 				goto HAD_ERROR;
 			}
 		}
@@ -100,7 +109,7 @@ int renice_main(int argc UNUSED_PARAM, char **argv)
 		if (use_relative) {
 			int old_priority;
 
-			errno = 0;	 /* Needed for getpriority error detection. */
+			errno = 0;  /* Needed for getpriority error detection. */
 			old_priority = getpriority(which, who);
 			if (errno) {
 				bb_perror_msg(Xetpriority_msg, 'g');

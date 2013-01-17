@@ -6,8 +6,14 @@
  *
  * Maintainer: Gennady Feldman <gfeldman@gena01.com> as of Mar 12, 2001
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define logread_trivial_usage
+//usage:       "[-f]"
+//usage:#define logread_full_usage "\n\n"
+//usage:       "Show messages in syslogd's circular buffer\n"
+//usage:     "\n	-f	Output data as log grows"
 
 #include "libbb.h"
 #include <sys/ipc.h>

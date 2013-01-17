@@ -6,8 +6,20 @@
  *
  * Adjusted for BusyBox by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define setkeycodes_trivial_usage
+//usage:       "SCANCODE KEYCODE..."
+//usage:#define setkeycodes_full_usage "\n\n"
+//usage:       "Set entries into the kernel's scancode-to-keycode map,\n"
+//usage:       "allowing unusual keyboards to generate usable keycodes.\n\n"
+//usage:       "SCANCODE may be either xx or e0xx (hexadecimal),\n"
+//usage:       "and KEYCODE is given in decimal."
+//usage:
+//usage:#define setkeycodes_example_usage
+//usage:       "$ setkeycodes e030 127\n"
+
 #include "libbb.h"
 
 /* From <linux/kd.h> */

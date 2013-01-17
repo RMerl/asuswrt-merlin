@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2009 Denys Vlasenko
  *
- * Licensed under GPL version 2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #include "libbb.h"
 #include "unicode.h"
@@ -23,17 +23,24 @@ uint8_t unicode_status;
 
 /* Unicode support using libc locale support. */
 
-void FAST_FUNC init_unicode(void)
+void FAST_FUNC reinit_unicode(const char *LANG)
 {
 	static const char unicode_0x394[] = { 0xce, 0x94, 0 };
 	size_t width;
 
-	if (unicode_status != UNICODE_UNKNOWN)
-		return;
+//TODO: avoid repeated calls by caching last string?
+	setlocale(LC_ALL, (LANG && LANG[0]) ? LANG : "C");
+
 	/* In unicode, this is a one character string */
 // can use unicode_strlen(string) too, but otherwise unicode_strlen() is unused
 	width = mbstowcs(NULL, unicode_0x394, INT_MAX);
 	unicode_status = (width == 1 ? UNICODE_ON : UNICODE_OFF);
+}
+
+void FAST_FUNC init_unicode(void)
+{
+	if (unicode_status == UNICODE_UNKNOWN)
+		reinit_unicode(getenv("LANG"));
 }
 
 #else
@@ -41,18 +48,18 @@ void FAST_FUNC init_unicode(void)
 /* Homegrown Unicode support. It knows only C and Unicode locales. */
 
 # if ENABLE_FEATURE_CHECK_UNICODE_IN_ENV
-void FAST_FUNC init_unicode(void)
+void FAST_FUNC reinit_unicode(const char *LANG)
 {
-	char *lang;
-
-	if (unicode_status != UNICODE_UNKNOWN)
-		return;
-
 	unicode_status = UNICODE_OFF;
-	lang = getenv("LANG");
-	if (!lang || !(strstr(lang, ".utf") || strstr(lang, ".UTF")))
+	if (!LANG || !(strstr(LANG, ".utf") || strstr(LANG, ".UTF")))
 		return;
 	unicode_status = UNICODE_ON;
+}
+
+void FAST_FUNC init_unicode(void)
+{
+	if (unicode_status == UNICODE_UNKNOWN)
+		reinit_unicode(getenv("LANG"));
 }
 # endif
 
@@ -1005,8 +1012,11 @@ static char* FAST_FUNC unicode_conv_to_printable2(uni_stat_t *stats, const char 
 				d++;
 			}
 		}
-		if (stats)
-			stats->byte_count = stats->unicode_count = stats->unicode_width = (d - dst);
+		if (stats) {
+			stats->byte_count = (d - dst);
+			stats->unicode_count = (d - dst);
+			stats->unicode_width = (d - dst);
+		}
 		return dst;
 	}
 

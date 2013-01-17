@@ -6,7 +6,7 @@
  * Copyright (C) 2006 Rob Landley
  * Copyright (C) 2006 Denys Vlasenko
  *
- * Licensed under GPL version 2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 /* We need to have separate xfuncs.c and xfuncs_printf.c because
@@ -134,7 +134,7 @@ int FAST_FUNC xopen3(const char *pathname, int flags, int mode)
 	return ret;
 }
 
-// Die if we can't open an existing file and return a fd.
+// Die if we can't open a file and return a fd.
 int FAST_FUNC xopen(const char *pathname, int flags)
 {
 	return xopen3(pathname, flags, 0666);
@@ -238,6 +238,14 @@ off_t FAST_FUNC xlseek(int fd, off_t offset, int whence)
 		bb_perror_msg_and_die("lseek");
 	}
 	return off;
+}
+
+int FAST_FUNC xmkstemp(char *template)
+{
+	int fd = mkstemp(template);
+	if (fd < 0)
+		bb_perror_msg_and_die("can't create temp file '%s'", template);
+	return fd;
 }
 
 // Die with supplied filename if this FILE* has ferror set.
@@ -354,6 +362,7 @@ void FAST_FUNC xchroot(const char *path)
 {
 	if (chroot(path))
 		bb_perror_msg_and_die("can't change root directory to %s", path);
+	xchdir("/");
 }
 
 // Print a warning message if opendir() fails, but don't die.
@@ -387,8 +396,12 @@ int FAST_FUNC xsocket(int domain, int type, int protocol)
 		/* Hijack vaguely related config option */
 #if ENABLE_VERBOSE_RESOLUTION_ERRORS
 		const char *s = "INET";
+# ifdef AF_PACKET
 		if (domain == AF_PACKET) s = "PACKET";
+# endif
+# ifdef AF_NETLINK
 		if (domain == AF_NETLINK) s = "NETLINK";
+# endif
 IF_FEATURE_IPV6(if (domain == AF_INET6) s = "INET6";)
 		bb_perror_msg_and_die("socket(AF_%s,%d,%d)", s, type, protocol);
 #else
@@ -430,6 +443,16 @@ void FAST_FUNC xstat(const char *name, struct stat *stat_buf)
 {
 	if (stat(name, stat_buf))
 		bb_perror_msg_and_die("can't stat '%s'", name);
+}
+
+void FAST_FUNC xfstat(int fd, struct stat *stat_buf, const char *errmsg)
+{
+	/* errmsg is usually a file name, but not always:
+	 * xfstat may be called in a spot where file name is no longer
+	 * available, and caller may give e.g. "can't stat input file" string.
+	 */
+	if (fstat(fd, stat_buf))
+		bb_simple_perror_msg_and_die(errmsg);
 }
 
 // selinux_or_die() - die if SELinux is disabled.

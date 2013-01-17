@@ -4,10 +4,10 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
-/* BB_AUDIT SUSv3 _NOT_ compliant -- options -a, -m, -r, -t not supported. */
+/* BB_AUDIT SUSv3 _NOT_ compliant -- options -a, -m not supported. */
 /* http://www.opengroup.org/onlinepubs/007904975/utilities/touch.html */
 
 /* Mar 16, 2003      Manuel Novoa III   (mjn3@codepoet.org)
@@ -18,6 +18,42 @@
  */
 
 #include "libbb.h"
+
+//config:config TOUCH
+//config:	bool "touch"
+//config:	default y
+//config:	help
+//config:	  touch is used to create or change the access and/or
+//config:	  modification timestamp of specified files.
+//config:
+//config:config FEATURE_TOUCH_SUSV3
+//config:	bool "Add support for SUSV3 features (-d -t -r)"
+//config:	default y
+//config:	depends on TOUCH
+//config:	help
+//config:	  Enable touch to use a reference file or a given date/time argument.
+
+//applet:IF_TOUCH(APPLET_NOFORK(touch, touch, BB_DIR_BIN, BB_SUID_DROP, touch))
+
+//kbuild:lib-$(CONFIG_TOUCH) += touch.o
+
+//usage:#define touch_trivial_usage
+//usage:       "[-c]" IF_FEATURE_TOUCH_SUSV3(" [-d DATE] [-t DATE] [-r FILE]") " FILE..."
+//usage:#define touch_full_usage "\n\n"
+//usage:       "Update the last-modified date on the given FILE[s]\n"
+//usage:     "\n	-c	Don't create files"
+//usage:	IF_FEATURE_TOUCH_SUSV3(
+//usage:     "\n	-d DT	Date/time to use"
+//usage:     "\n	-t DT	Date/time to use"
+//usage:     "\n	-r FILE	Use FILE's date/time"
+//usage:	)
+//usage:
+//usage:#define touch_example_usage
+//usage:       "$ ls -l /tmp/foo\n"
+//usage:       "/bin/ls: /tmp/foo: No such file or directory\n"
+//usage:       "$ touch /tmp/foo\n"
+//usage:       "$ ls -l /tmp/foo\n"
+//usage:       "-rw-rw-r--    1 andersen andersen        0 Apr 15 01:11 /tmp/foo\n"
 
 /* This is a NOFORK applet. Be very careful! */
 
@@ -43,7 +79,7 @@ int touch_main(int argc UNUSED_PARAM, char **argv)
 	int fd;
 	int status = EXIT_SUCCESS;
 	int opts;
-#if ENABLE_DESKTOP
+#if ENABLE_FEATURE_TOUCH_SUSV3
 # if ENABLE_LONG_OPTS
 	static const char touch_longopts[] ALIGN1 =
 		/* name, has_arg, val */
@@ -62,17 +98,17 @@ int touch_main(int argc UNUSED_PARAM, char **argv)
 # define timebuf        ((struct timeval*)NULL)
 #endif
 
-#if ENABLE_DESKTOP && ENABLE_LONG_OPTS
+#if ENABLE_FEATURE_TOUCH_SUSV3 && ENABLE_LONG_OPTS
 	applet_long_options = touch_longopts;
 #endif
 	/* -d and -t both set time. In coreutils,
 	 * accepted data format differs a bit between -d and -t.
 	 * We accept the same formats for both */
-	opts = getopt32(argv, "c" IF_DESKTOP("r:d:t:")
+	opts = getopt32(argv, "c" IF_FEATURE_TOUCH_SUSV3("r:d:t:")
 				/*ignored:*/ "fma"
-				IF_DESKTOP(, &reference_file)
-				IF_DESKTOP(, &date_str)
-				IF_DESKTOP(, &date_str)
+				IF_FEATURE_TOUCH_SUSV3(, &reference_file)
+				IF_FEATURE_TOUCH_SUSV3(, &date_str)
+				IF_FEATURE_TOUCH_SUSV3(, &date_str)
 	);
 
 	opts &= 1; /* only -c bit is left */
@@ -91,13 +127,14 @@ int touch_main(int argc UNUSED_PARAM, char **argv)
 		struct tm tm_time;
 		time_t t;
 
-		//time(&t);
-		//localtime_r(&t, &tm_time);
-		memset(&tm_time, 0, sizeof(tm_time));
+		//memset(&tm_time, 0, sizeof(tm_time));
+		/* Better than memset: makes "HH:MM" dates meaningful */
+		time(&t);
+		localtime_r(&t, &tm_time);
 		parse_datestr(date_str, &tm_time);
 
 		/* Correct any day of week and day of year etc. fields */
-		tm_time.tm_isdst = -1;	/* Be sure to recheck dst */
+		tm_time.tm_isdst = -1;  /* Be sure to recheck dst */
 		t = validate_tm_time(date_str, &tm_time);
 
 		timebuf[1].tv_sec = timebuf[0].tv_sec = t;

@@ -6,7 +6,7 @@
  * Copyright (C) 2007  Natanael Copa  <natanael.copa@gmail.com>
  * Copyright (C) 2007  Tito Ragusa    <farmatito@tiscali.it>
  *
- * Licensed under GPLv2, see file License in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  *
  */
 
@@ -15,6 +15,11 @@
 /* Based on Yang Xiaopeng's (yxp at hanwang.com.cn) patch
  * http://www.uclibc.org/lists/busybox/2003-July/008813.html
  */
+
+//usage:#define tac_trivial_usage
+//usage:	"[FILE]..."
+//usage:#define tac_full_usage "\n\n"
+//usage:	"Concatenate FILEs and print them in reverse"
 
 #include "libbb.h"
 

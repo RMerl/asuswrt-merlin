@@ -4,7 +4,7 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
@@ -30,7 +30,7 @@ ssize_t FAST_FUNC full_write(int fd, const void *buf, size_t len)
 				/* user can do another write to know the error code */
 				return total;
 			}
-			return cc;	/* write() returns -1 on failure. */
+			return cc;  /* write() returns -1 on failure. */
 		}
 
 		total += cc;

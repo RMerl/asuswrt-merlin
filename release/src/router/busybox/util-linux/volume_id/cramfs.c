@@ -51,7 +51,7 @@ int FAST_FUNC volume_id_probe_cramfs(struct volume_id *id /*,uint64_t off*/)
 		volume_id_set_label_string(id, cs->name, 16);
 
 //		volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
-//		id->type = "cramfs";
+		IF_FEATURE_BLKID_TYPE(id->type = "cramfs";)
 		return 0;
 	}
 

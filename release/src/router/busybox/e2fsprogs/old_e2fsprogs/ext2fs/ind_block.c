@@ -67,5 +67,3 @@ errcode_t ext2fs_write_ind_block(ext2_filsys fs, blk_t blk, void *buf)
 #endif
 	return io_channel_write_blk(fs->io, blk, 1, buf);
 }
-
-

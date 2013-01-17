@@ -3,7 +3,7 @@
  *
  * Copyright (C) 89, 91, 1995-2006 Free Software Foundation, Inc.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * David MacKenzie <djm@gnu.ai.mit.edu>
  *
@@ -20,6 +20,35 @@
  *
  *  Caveat: this versions of expand and unexpand don't accept tab lists.
  */
+
+//usage:#define expand_trivial_usage
+//usage:       "[-i] [-t N] [FILE]..."
+//usage:#define expand_full_usage "\n\n"
+//usage:       "Convert tabs to spaces, writing to stdout\n"
+//usage:	IF_FEATURE_EXPAND_LONG_OPTIONS(
+//usage:     "\n	-i,--initial	Don't convert tabs after non blanks"
+//usage:     "\n	-t,--tabs=N	Tabstops every N chars"
+//usage:	)
+//usage:	IF_NOT_FEATURE_EXPAND_LONG_OPTIONS(
+//usage:     "\n	-i	Don't convert tabs after non blanks"
+//usage:     "\n	-t	Tabstops every N chars"
+//usage:	)
+
+//usage:#define unexpand_trivial_usage
+//usage:       "[-fa][-t N] [FILE]..."
+//usage:#define unexpand_full_usage "\n\n"
+//usage:       "Convert spaces to tabs, writing to stdout\n"
+//usage:	IF_FEATURE_UNEXPAND_LONG_OPTIONS(
+//usage:     "\n	-a,--all	Convert all blanks"
+//usage:     "\n	-f,--first-only	Convert only leading blanks"
+//usage:     "\n	-t,--tabs=N	Tabstops every N chars"
+//usage:	)
+//usage:	IF_NOT_FEATURE_UNEXPAND_LONG_OPTIONS(
+//usage:     "\n	-a	Convert all blanks"
+//usage:     "\n	-f	Convert only leading blanks"
+//usage:     "\n	-t N	Tabstops every N chars"
+//usage:	)
+
 #include "libbb.h"
 #include "unicode.h"
 

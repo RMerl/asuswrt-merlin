@@ -94,5 +94,3 @@ errcode_t ext2fs_read_bb_FILE(ext2_filsys fs, FILE *f,
 	return ext2fs_read_bb_FILE2(fs, f, bb_list, (void *) invalid,
 				    call_compat_invalid);
 }
-
-

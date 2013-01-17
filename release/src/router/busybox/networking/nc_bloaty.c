@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2007 Denys Vlasenko.
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 /* Author's comments from nc 1.10:
@@ -57,10 +57,10 @@
 //usage:#define nc_trivial_usage
 //usage:       "[OPTIONS] HOST PORT  - connect"
 //usage:	IF_NC_SERVER("\n"
-//usage:       "nc [OPTIONS] -l -p PORT [HOST] [PORT]  - listen")
+//usage:       "nc [OPTIONS] -l -p PORT [HOST] [PORT]  - listen"
+//usage:	)
 //usage:#define nc_full_usage "\n\n"
-//usage:       "Options:"
-//usage:     "\n	-e PROG	Run PROG after connect (must be last)"
+//usage:       "	-e PROG	Run PROG after connect (must be last)"
 //usage:	IF_NC_SERVER(
 //usage:     "\n	-l	Listen mode, for inbound connects"
 //usage:	)
@@ -115,6 +115,7 @@ struct globals {
 	unsigned wrote_out;          /* total stdout bytes */
 	unsigned wrote_net;          /* total net bytes */
 #endif
+	char *proggie0saved;
 	/* ouraddr is never NULL and goes through three states as we progress:
 	 1 - local address before bind (IP/port possibly zero)
 	 2 - local address after bind (port is nonzero)
@@ -127,7 +128,6 @@ struct globals {
 
 	jmp_buf jbuf;                /* timer crud */
 
-	/* will malloc up the following globals: */
 	fd_set ding1;                /* for select loop */
 	fd_set ding2;
 	char bigbuf_in[BIGSIZ];      /* data buffers */
@@ -159,17 +159,16 @@ struct globals {
 
 /* Must match getopt32 call! */
 enum {
-	OPT_h = (1 << 0),
-	OPT_n = (1 << 1),
-	OPT_p = (1 << 2),
-	OPT_s = (1 << 3),
-	OPT_u = (1 << 4),
-	OPT_v = (1 << 5),
-	OPT_w = (1 << 6),
-	OPT_l = (1 << 7) * ENABLE_NC_SERVER,
-	OPT_i = (1 << (7+ENABLE_NC_SERVER)) * ENABLE_NC_EXTRA,
-	OPT_o = (1 << (8+ENABLE_NC_SERVER)) * ENABLE_NC_EXTRA,
-	OPT_z = (1 << (9+ENABLE_NC_SERVER)) * ENABLE_NC_EXTRA,
+	OPT_n = (1 << 0),
+	OPT_p = (1 << 1),
+	OPT_s = (1 << 2),
+	OPT_u = (1 << 3),
+	OPT_v = (1 << 4),
+	OPT_w = (1 << 5),
+	OPT_l = (1 << 6) * ENABLE_NC_SERVER,
+	OPT_i = (1 << (6+ENABLE_NC_SERVER)) * ENABLE_NC_EXTRA,
+	OPT_o = (1 << (7+ENABLE_NC_SERVER)) * ENABLE_NC_EXTRA,
+	OPT_z = (1 << (8+ENABLE_NC_SERVER)) * ENABLE_NC_EXTRA,
 };
 
 #define o_nflag   (option_mask32 & OPT_n)
@@ -263,12 +262,13 @@ Debug("findline returning whole thing: %d", siz);
 static int doexec(char **proggie) NORETURN;
 static int doexec(char **proggie)
 {
+	if (G.proggie0saved)
+		proggie[0] = G.proggie0saved;
 	xmove_fd(netfd, 0);
 	dup2(0, 1);
 	/* dup2(0, 2); - do we *really* want this? NO!
 	 * exec'ed prog can do it yourself, if needed */
-	execvp(proggie[0], proggie);
-	bb_perror_msg_and_die("can't execute '%s'", proggie[0]);
+	BB_EXECVP_or_die(proggie);
 }
 
 /* connect_w_timeout:
@@ -386,10 +386,10 @@ create new one, and bind() it. TODO */
 				if (port == 0) {
 					/* "nc -nl -p LPORT RHOST" (w/o RPORT!):
 					 * we should accept any remote port */
-					set_nport(&remend, 0); /* blot out remote port# */
+					set_nport(&remend.u.sa, 0); /* blot out remote port# */
 				}
 				r = memcmp(&remend.u.sa, &themaddr->u.sa, remend.len);
-				set_nport(&remend, sv_port); /* restore */
+				set_nport(&remend.u.sa, sv_port); /* restore */
 				if (r != 0) {
 					/* nc 1.10 bails out instead, and its error message
 					 * is not suppressed by o_verbose */
@@ -429,8 +429,7 @@ create new one, and bind() it. TODO */
 
 		rr = getsockopt(netfd, IPPROTO_IP, IP_OPTIONS, optbuf, &x);
 		if (rr >= 0 && x) {    /* we've got options, lessee em... */
-			bin2hex(bigbuf_net, optbuf, x);
-			bigbuf_net[2*x] = '\0';
+			*bin2hex(bigbuf_net, optbuf, x) = '\0';
 			fprintf(stderr, "IP options: %s\n", bigbuf_net);
 		}
 #endif
@@ -486,7 +485,7 @@ static int udptest(void)
 	 us to hang forever, and hit it */
 		o_wait = 5;                     /* enough that we'll notice?? */
 		rr = xsocket(ouraddr->u.sa.sa_family, SOCK_STREAM, 0);
-		set_nport(themaddr, htons(SLEAZE_PORT));
+		set_nport(&themaddr->u.sa, htons(SLEAZE_PORT));
 		connect_w_timeout(rr);
 		/* don't need to restore themaddr's port, it's not used anymore */
 		close(rr);
@@ -728,7 +727,7 @@ int nc_main(int argc UNUSED_PARAM, char **argv)
 {
 	char *str_p, *str_s;
 	IF_NC_EXTRA(char *str_i, *str_o;)
-	char *themdotted = themdotted; /* gcc */
+	char *themdotted = themdotted; /* for compiler */
 	char **proggie;
 	int x;
 	unsigned o_lport = 0;
@@ -756,16 +755,30 @@ int nc_main(int argc UNUSED_PARAM, char **argv)
 			proggie++;
 			goto e_found;
 		}
+		/* -<other_opts>e PROG [ARGS] ? */
+		/* (aboriginal linux uses this form) */
+		if (proggie[0][0] == '-') {
+			char *optpos = *proggie + 1;
+			/* Skip all valid opts w/o params */
+			optpos = optpos + strspn(optpos, "nuv"IF_NC_SERVER("l")IF_NC_EXTRA("z"));
+			if (*optpos == 'e' && !optpos[1]) {
+				*optpos = '\0';
+				proggie++;
+				G.proggie0saved = *proggie;
+				*proggie = NULL; /* terminate argv for getopt32 */
+				goto e_found;
+			}
+		}
 	}
 	proggie = NULL;
  e_found:
 
 	// -g -G -t -r deleted, unimplemented -a deleted too
 	opt_complementary = "?2:vv:w+"; /* max 2 params; -v is a counter; -w N */
-	getopt32(argv, "hnp:s:uvw:" IF_NC_SERVER("l")
+	getopt32(argv, "np:s:uvw:" IF_NC_SERVER("l")
 			IF_NC_EXTRA("i:o:z"),
 			&str_p, &str_s, &o_wait
-			IF_NC_EXTRA(, &str_i, &str_o, &o_verbose));
+			IF_NC_EXTRA(, &str_i, &str_o), &o_verbose);
 	argv += optind;
 #if ENABLE_NC_EXTRA
 	if (option_mask32 & OPT_i) /* line-interval time */
@@ -813,7 +826,7 @@ int nc_main(int argc UNUSED_PARAM, char **argv)
 				(themaddr ? themaddr->u.sa.sa_family : AF_UNSPEC),
 				x);
 		if (o_lport)
-			set_nport(ouraddr, htons(o_lport));
+			set_nport(&ouraddr->u.sa, htons(o_lport));
 	}
 	xmove_fd(x, netfd);
 	setsockopt_reuseaddr(netfd);
@@ -858,7 +871,7 @@ int nc_main(int argc UNUSED_PARAM, char **argv)
 	} else {
 		/* Outbound connects.  Now we're more picky about args... */
 		if (!themaddr)
-			bb_error_msg_and_die("no destination");
+			bb_show_usage();
 
 		remend = *themaddr;
 		if (o_verbose)

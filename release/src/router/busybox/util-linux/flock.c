@@ -3,6 +3,16 @@
  *
  * This is free software, licensed under the GNU General Public License v2.
  */
+
+//usage:#define flock_trivial_usage
+//usage:       "[-sxun] FD|{FILE [-c] PROG ARGS}"
+//usage:#define flock_full_usage "\n\n"
+//usage:       "[Un]lock file descriptor, or lock FILE, run PROG\n"
+//usage:     "\n	-s	Shared lock"
+//usage:     "\n	-x	Exclusive lock (default)"
+//usage:     "\n	-u	Unlock FD"
+//usage:     "\n	-n	Fail rather than wait"
+
 #include <sys/file.h>
 #include "libbb.h"
 
@@ -19,7 +29,7 @@ int flock_main(int argc UNUSED_PARAM, char **argv)
 	};
 
 #if ENABLE_LONG_OPTS
-        static const char getopt_longopts[] ALIGN1 =
+	static const char getopt_longopts[] ALIGN1 =
 		"shared\0"      No_argument       "s"
 		"exclusive\0"   No_argument       "x"
 		"unlock\0"      No_argument       "u"
@@ -40,7 +50,7 @@ int flock_main(int argc UNUSED_PARAM, char **argv)
 			bb_perror_msg_and_die("can't open '%s'", argv[0]);
 		//TODO? close_on_exec_on(fd);
 	} else {
-		fd = xatoi_u(argv[0]);
+		fd = xatoi_positive(argv[0]);
 	}
 	argv++;
 

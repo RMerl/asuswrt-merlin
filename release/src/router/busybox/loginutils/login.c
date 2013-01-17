@@ -1,12 +1,18 @@
 /* vi: set sw=4 ts=4: */
 /*
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define login_trivial_usage
+//usage:       "[-p] [-h HOST] [[-f] USER]"
+//usage:#define login_full_usage "\n\n"
+//usage:       "Begin a new session on the system\n"
+//usage:     "\n	-f	Don't authenticate (user already authenticated)"
+//usage:     "\n	-h	Name of the remote host"
+//usage:     "\n	-p	Preserve environment"
+
 #include "libbb.h"
 #include <syslog.h>
-#if ENABLE_FEATURE_UTMP
-# include <utmp.h> /* USER_PROCESS */
-#endif
 #include <sys/resource.h>
 
 #if ENABLE_SELINUX
@@ -35,7 +41,12 @@ enum {
 	TTYNAME_SIZE = 32,
 };
 
-static char* short_tty;
+struct globals {
+	struct termios tty_attrs;
+} FIX_ALIASING;
+#define G (*(struct globals*)&bb_common_bufsiz1)
+#define INIT_G() do { } while (0)
+
 
 #if ENABLE_FEATURE_NOLOGIN
 static void die_if_nologin(void)
@@ -68,7 +79,7 @@ static void die_if_nologin(void)
 #endif
 
 #if ENABLE_FEATURE_SECURETTY && !ENABLE_PAM
-static int check_securetty(void)
+static int check_securetty(const char *short_tty)
 {
 	char *buf = (char*)"/etc/securetty"; /* any non-NULL is ok */
 	parser_t *parser = config_open2("/etc/securetty", fopen_for_read);
@@ -83,7 +94,7 @@ static int check_securetty(void)
 	return buf != NULL;
 }
 #else
-static ALWAYS_INLINE int check_securetty(void) { return 1; }
+static ALWAYS_INLINE int check_securetty(const char *short_tty UNUSED_PARAM) { return 1; }
 #endif
 
 #if ENABLE_SELINUX
@@ -124,7 +135,7 @@ static void run_login_script(struct passwd *pw, char *full_tty)
 		xsetenv("LOGIN_UID", utoa(pw->pw_uid));
 		xsetenv("LOGIN_GID", utoa(pw->pw_gid));
 		xsetenv("LOGIN_SHELL", pw->pw_shell);
-		spawn_and_wait(t_argv);	/* NOMMU-friendly */
+		spawn_and_wait(t_argv); /* NOMMU-friendly */
 		unsetenv("LOGIN_TTY");
 		unsetenv("LOGIN_USER");
 		unsetenv("LOGIN_UID");
@@ -135,6 +146,29 @@ static void run_login_script(struct passwd *pw, char *full_tty)
 #else
 void run_login_script(struct passwd *pw, char *full_tty);
 #endif
+
+#if ENABLE_LOGIN_SESSION_AS_CHILD && ENABLE_PAM
+static void login_pam_end(pam_handle_t *pamh)
+{
+	int pamret;
+
+	pamret = pam_setcred(pamh, PAM_DELETE_CRED);
+	if (pamret != PAM_SUCCESS) {
+		bb_error_msg("pam_%s failed: %s (%d)", "setcred",
+			pam_strerror(pamh, pamret), pamret);
+	}
+	pamret = pam_close_session(pamh, 0);
+	if (pamret != PAM_SUCCESS) {
+		bb_error_msg("pam_%s failed: %s (%d)", "close_session",
+			pam_strerror(pamh, pamret), pamret);
+	}
+	pamret = pam_end(pamh, pamret);
+	if (pamret != PAM_SUCCESS) {
+		bb_error_msg("pam_%s failed: %s (%d)", "end",
+			pam_strerror(pamh, pamret), pamret);
+	}
+}
+#endif /* ENABLE_PAM */
 
 static void get_username_or_die(char *buf, int size_buf)
 {
@@ -179,15 +213,21 @@ static void motd(void)
 
 static void alarm_handler(int sig UNUSED_PARAM)
 {
-	/* This is the escape hatch!  Poor serial line users and the like
+	/* This is the escape hatch! Poor serial line users and the like
 	 * arrive here when their connection is broken.
 	 * We don't want to block here */
-	ndelay_on(1);
-	printf("\r\nLogin timed out after %d seconds\r\n", TIMEOUT);
+	ndelay_on(STDOUT_FILENO);
+	/* Test for correct attr restoring:
+	 * run "getty 0 -" from a shell, enter bogus username, stop at
+	 * password prompt, let it time out. Without the tcsetattr below,
+	 * when you are back at shell prompt, echo will be still off.
+	 */
+	tcsetattr_stdin_TCSANOW(&G.tty_attrs);
+	printf("\r\nLogin timed out after %u seconds\r\n", TIMEOUT);
 	fflush_all();
 	/* unix API is brain damaged regarding O_NONBLOCK,
 	 * we should undo it, or else we can affect other processes */
-	ndelay_off(1);
+	ndelay_off(STDOUT_FILENO);
 	_exit(EXIT_SUCCESS);
 }
 
@@ -201,7 +241,6 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 	};
 	char *fromhost;
 	char username[USERNAME_SIZE];
-	const char *shell;
 	int run_by_root;
 	unsigned opt;
 	int count = 0;
@@ -209,6 +248,7 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 	char *opt_host = NULL;
 	char *opt_user = opt_user; /* for compiler */
 	char *full_tty;
+	char *short_tty;
 	IF_SELINUX(security_context_t user_sid = NULL;)
 #if ENABLE_PAM
 	int pamret;
@@ -217,11 +257,13 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 	const char *failed_msg;
 	struct passwd pwdstruct;
 	char pwdbuf[256];
+	char **pamenv;
+#endif
+#if ENABLE_LOGIN_SESSION_AS_CHILD
+	pid_t child_pid;
 #endif
 
-	username[0] = '\0';
-	signal(SIGALRM, alarm_handler);
-	alarm(TIMEOUT);
+	INIT_G();
 
 	/* More of suid paranoia if called by non-root: */
 	/* Clear dangerous stuff, set PATH */
@@ -233,6 +275,7 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 	 * (The name of the function is misleading. Not daemonizing here.) */
 	bb_daemonize_or_rexec(DAEMON_ONLY_SANITIZE | DAEMON_CLOSE_EXTRA_FDS, NULL);
 
+	username[0] = '\0';
 	opt = getopt32(argv, "f:h:p", &opt_user, &opt_host);
 	if (opt & LOGIN_OPT_f) {
 		if (!run_by_root)
@@ -243,9 +286,19 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 	if (argv[0]) /* user from command line (getty) */
 		safe_strncpy(username, argv[0], sizeof(username));
 
-	/* Let's find out and memorize our tty */
-	if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO) || !isatty(STDERR_FILENO))
-		return EXIT_FAILURE;		/* Must be a terminal */
+	/* Save tty attributes - and by doing it, check that it's indeed a tty */
+	if (tcgetattr(STDIN_FILENO, &G.tty_attrs) < 0
+	 || !isatty(STDOUT_FILENO)
+	 /*|| !isatty(STDERR_FILENO) - no, guess some people might want to redirect this */
+	) {
+		return EXIT_FAILURE;  /* Must be a terminal */
+	}
+
+	/* We install timeout handler only _after_ we saved G.tty_attrs */
+	signal(SIGALRM, alarm_handler);
+	alarm(TIMEOUT);
+
+	/* Find out and memorize our tty name */
 	full_tty = xmalloc_ttyname(STDIN_FILENO);
 	if (!full_tty)
 		full_tty = xstrdup("UNKNOWN");
@@ -264,7 +317,7 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 
 	while (1) {
 		/* flush away any type-ahead (as getty does) */
-		ioctl(0, TCFLSH, TCIFLUSH);
+		tcflush(0, TCIFLUSH);
 
 		if (!username[0])
 			get_username_or_die(username, sizeof(username));
@@ -281,14 +334,24 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 			failed_msg = "set_item(TTY)";
 			goto pam_auth_failed;
 		}
-		pamret = pam_authenticate(pamh, 0);
-		if (pamret != PAM_SUCCESS) {
-			failed_msg = "authenticate";
-			goto pam_auth_failed;
-			/* TODO: or just "goto auth_failed"
-			 * since user seems to enter wrong password
-			 * (in this case pamret == 7)
-			 */
+		/* set RHOST */
+		if (opt_host) {
+			pamret = pam_set_item(pamh, PAM_RHOST, opt_host);
+			if (pamret != PAM_SUCCESS) {
+				failed_msg = "set_item(RHOST)";
+				goto pam_auth_failed;
+			}
+		}
+		if (!(opt & LOGIN_OPT_f)) {
+			pamret = pam_authenticate(pamh, 0);
+			if (pamret != PAM_SUCCESS) {
+				failed_msg = "authenticate";
+				goto pam_auth_failed;
+				/* TODO: or just "goto auth_failed"
+				 * since user seems to enter wrong password
+				 * (in this case pamret == 7)
+				 */
+			}
 		}
 		/* check that the account is healthy */
 		pamret = pam_acct_mgmt(pamh, 0);
@@ -345,25 +408,32 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 		if (opt & LOGIN_OPT_f)
 			break; /* -f USER: success without asking passwd */
 
-		if (pw->pw_uid == 0 && !check_securetty())
+		if (pw->pw_uid == 0 && !check_securetty(short_tty))
 			goto auth_failed;
 
 		/* Don't check the password if password entry is empty (!) */
 		if (!pw->pw_passwd[0])
 			break;
  fake_it:
-		/* authorization takes place here */
+		/* Password reading and authorization takes place here.
+		 * Note that reads (in no-echo mode) trash tty attributes.
+		 * If we get interrupted by SIGALRM, we need to restore attrs.
+		 */
 		if (correct_password(pw))
 			break;
 #endif /* ENABLE_PAM */
  auth_failed:
 		opt &= ~LOGIN_OPT_f;
-		bb_do_delay(FAIL_DELAY);
+		bb_do_delay(LOGIN_FAIL_DELAY);
 		/* TODO: doesn't sound like correct English phrase to me */
 		puts("Login incorrect");
 		if (++count == 3) {
 			syslog(LOG_WARNING, "invalid password for '%s'%s",
 						username, fromhost);
+
+			if (ENABLE_FEATURE_CLEAN_UP)
+				free(fromhost);
+
 			return EXIT_FAILURE;
 		}
 		username[0] = '\0';
@@ -375,7 +445,22 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 	if (pw->pw_uid != 0)
 		die_if_nologin();
 
-	IF_SELINUX(initselinux(username, full_tty, &user_sid));
+#if ENABLE_LOGIN_SESSION_AS_CHILD
+	child_pid = vfork();
+	if (child_pid != 0) {
+		if (child_pid < 0)
+			bb_perror_msg("vfork");
+		else {
+			if (safe_waitpid(child_pid, NULL, 0) == -1)
+				bb_perror_msg("waitpid");
+			update_utmp(child_pid, DEAD_PROCESS, NULL, NULL, NULL);
+		}
+		IF_PAM(login_pam_end(pamh);)
+		return 0;
+	}
+#endif
+
+	IF_SELINUX(initselinux(username, full_tty, &user_sid);)
 
 	/* Try these, but don't complain if they fail.
 	 * _f_chown is safe wrt race t=ttyname(0);...;chown(t); */
@@ -389,17 +474,27 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 		run_login_script(pw, full_tty);
 
 	change_identity(pw);
-	shell = pw->pw_shell;
-	if (!shell || !shell[0])
-		shell = DEFAULT_SHELL;
-	setup_environment(shell,
+	setup_environment(pw->pw_shell,
 			(!(opt & LOGIN_OPT_p) * SETUP_ENV_CLEARENV) + SETUP_ENV_CHANGEENV,
 			pw);
+
+#if ENABLE_PAM
+	/* Modules such as pam_env will setup the PAM environment,
+	 * which should be copied into the new environment. */
+	pamenv = pam_getenvlist(pamh);
+	if (pamenv) while (*pamenv) {
+		putenv(*pamenv);
+		pamenv++;
+	}
+#endif
 
 	motd();
 
 	if (pw->pw_uid == 0)
 		syslog(LOG_INFO, "root login%s", fromhost);
+
+	if (ENABLE_FEATURE_CLEAN_UP)
+		free(fromhost);
 
 	/* well, a simple setexeccon() here would do the job as well,
 	 * but let's play the game for now */
@@ -427,7 +522,7 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 	signal(SIGINT, SIG_DFL);
 
 	/* Exec login shell with no additional parameters */
-	run_shell(shell, 1, NULL, NULL);
+	run_shell(pw->pw_shell, 1, NULL, NULL);
 
 	/* return EXIT_FAILURE; - not reached */
 }

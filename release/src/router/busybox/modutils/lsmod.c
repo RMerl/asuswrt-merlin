@@ -5,8 +5,18 @@
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  * Copyright (C) 2008 by Vladimir Dronnikov <dronnikov@gmail.com>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//applet:IF_LSMOD(APPLET(lsmod, BB_DIR_SBIN, BB_SUID_DROP))
+
+//usage:#if !ENABLE_MODPROBE_SMALL
+//usage:#define lsmod_trivial_usage
+//usage:       ""
+//usage:#define lsmod_full_usage "\n\n"
+//usage:       "List the currently loaded kernel modules"
+//usage:#endif
+
 #include "libbb.h"
 #include "unicode.h"
 
@@ -77,7 +87,8 @@ int lsmod_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 			// N.B. token[3] is either '-' (module is not used by others)
 			// or comma-separated list ended by comma
 			// so trimming the trailing char is just what we need!
-			token[3][strlen(token[3])-1] = '\0';
+			if (token[3][0])
+				token[3][strlen(token[3]) - 1] = '\0';
 # if ENABLE_UNICODE_SUPPORT
 			{
 				uni_stat_t uni_stat;

@@ -2,4 +2,3 @@
 ::respawn:-/bin/sh
 tty2::askfirst:-/bin/sh
 ::ctrlaltdel:/bin/umount -a -r
-

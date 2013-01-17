@@ -268,4 +268,3 @@ static errcode_t inode_flush(io_channel channel)
 
 	return ext2fs_file_flush(data->file);
 }
-

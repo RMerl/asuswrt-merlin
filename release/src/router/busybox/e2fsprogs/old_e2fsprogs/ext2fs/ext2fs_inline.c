@@ -155,8 +155,8 @@ int ext2fs_group_of_ino(ext2_filsys fs, ext2_ino_t ino)
 blk_t ext2fs_inode_data_blocks(ext2_filsys fs,
 					struct ext2_inode *inode)
 {
-       return inode->i_blocks -
-	      (inode->i_file_acl ? fs->blocksize >> 9 : 0);
+	return inode->i_blocks -
+		(inode->i_file_acl ? fs->blocksize >> 9 : 0);
 }
 
 

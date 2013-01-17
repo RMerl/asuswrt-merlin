@@ -1,8 +1,16 @@
 /*
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *  Copyright (C) 2000, Jan-Derk Bakker (J.D.Bakker@its.tudelft.nl)
  *  Copyright (C) 2008, BusyBox Team. -solar 4/26/08
  */
+
+//usage:#define devmem_trivial_usage
+//usage:	"ADDRESS [WIDTH [VALUE]]"
+//usage:#define devmem_full_usage "\n\n"
+//usage:       "Read/write from physical address\n"
+//usage:     "\n	ADDRESS	Address to act upon"
+//usage:     "\n	WIDTH	Width (8/16/...)"
+//usage:     "\n	VALUE	Data to be written"
 
 #include "libbb.h"
 

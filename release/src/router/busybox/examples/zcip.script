@@ -20,9 +20,9 @@ config)
 		exit 1
 	fi
 	# remember $ip for $interface, to use on restart
-	if [ "x$IP" != x -a -w "$IP.$interface" ]
+	if [ "x$ip" != x -a -w "$ip.$interface" ]
 	then
-		echo $ip > "$IP.$interface"
+		echo $ip > "$ip.$interface"
 	fi
 	exec ip address add dev $interface \
 		scope link local "$ip/16" broadcast +

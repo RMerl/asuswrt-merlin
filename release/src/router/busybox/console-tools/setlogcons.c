@@ -6,8 +6,13 @@
  *
  * Based on setlogcons (kbd-1.12) by Andries E. Brouwer
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define setlogcons_trivial_usage
+//usage:       "N"
+//usage:#define setlogcons_full_usage "\n\n"
+//usage:       "Redirect the kernel output to console N (0 for current)"
 
 #include "libbb.h"
 

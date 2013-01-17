@@ -4,11 +4,23 @@
  *
  * Copyright (C) 2003  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* BB_AUDIT SUSv4 compliant */
 /* http://www.opengroup.org/onlinepubs/9699919799/utilities/tty.html */
+
+//usage:#define tty_trivial_usage
+//usage:       ""
+//usage:#define tty_full_usage "\n\n"
+//usage:       "Print file name of stdin's terminal"
+//usage:	IF_INCLUDE_SUSv2( "\n"
+//usage:     "\n	-s	Print nothing, only return exit status"
+//usage:	)
+//usage:
+//usage:#define tty_example_usage
+//usage:       "$ tty\n"
+//usage:       "/dev/tty2\n"
 
 #include "libbb.h"
 
@@ -16,10 +28,10 @@ int tty_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int tty_main(int argc UNUSED_PARAM, char **argv)
 {
 	const char *s;
-	IF_INCLUDE_SUSv2(int silent;)	/* Note: No longer relevant in SUSv3. */
+	IF_INCLUDE_SUSv2(int silent;)  /* Note: No longer relevant in SUSv3. */
 	int retval;
 
-	xfunc_error_retval = 2;	/* SUSv3 requires > 1 for error. */
+	xfunc_error_retval = 2;  /* SUSv3 requires > 1 for error. */
 
 	IF_INCLUDE_SUSv2(silent = getopt32(argv, "s");)
 	IF_INCLUDE_SUSv2(argv += optind;)

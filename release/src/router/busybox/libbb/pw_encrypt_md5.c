@@ -92,10 +92,10 @@ md5_crypt(char result[MD5_OUT_BUFSIZE], const unsigned char *pw, const unsigned 
 	/* Hash. the password first, since that is what is most unknown */
 	md5_begin(&ctx);
 	pw_len = strlen((char*)pw);
-	md5_hash(pw, pw_len, &ctx);
+	md5_hash(&ctx, pw, pw_len);
 
 	/* Then the salt including "$1$" */
-	md5_hash(salt, sl, &ctx);
+	md5_hash(&ctx, salt, sl);
 
 	/* Copy salt to result; skip "$1$" */
 	memcpy(result, salt, sl);
@@ -105,19 +105,19 @@ md5_crypt(char result[MD5_OUT_BUFSIZE], const unsigned char *pw, const unsigned 
 
 	/* Then just as many characters of the MD5(pw, salt, pw) */
 	md5_begin(&ctx1);
-	md5_hash(pw, pw_len, &ctx1);
-	md5_hash(salt, sl, &ctx1);
-	md5_hash(pw, pw_len, &ctx1);
-	md5_end(final, &ctx1);
+	md5_hash(&ctx1, pw, pw_len);
+	md5_hash(&ctx1, salt, sl);
+	md5_hash(&ctx1, pw, pw_len);
+	md5_end(&ctx1, final);
 	for (pl = pw_len; pl > 0; pl -= 16)
-		md5_hash(final, pl > 16 ? 16 : pl, &ctx);
+		md5_hash(&ctx, final, pl > 16 ? 16 : pl);
 
 	/* Then something really weird... */
 	memset(final, 0, sizeof(final));
 	for (i = pw_len; i; i >>= 1) {
-		md5_hash(((i & 1) ? final : (const unsigned char *) pw), 1, &ctx);
+		md5_hash(&ctx, ((i & 1) ? final : (const unsigned char *) pw), 1);
 	}
-	md5_end(final, &ctx);
+	md5_end(&ctx, final);
 
 	/* And now, just to make sure things don't run too fast.
 	 * On a 60 Mhz Pentium this takes 34 msec, so you would
@@ -126,21 +126,21 @@ md5_crypt(char result[MD5_OUT_BUFSIZE], const unsigned char *pw, const unsigned 
 	for (i = 0; i < 1000; i++) {
 		md5_begin(&ctx1);
 		if (i & 1)
-			md5_hash(pw, pw_len, &ctx1);
+			md5_hash(&ctx1, pw, pw_len);
 		else
-			md5_hash(final, 16, &ctx1);
+			md5_hash(&ctx1, final, 16);
 
 		if (i % 3)
-			md5_hash(salt, sl, &ctx1);
+			md5_hash(&ctx1, salt, sl);
 
 		if (i % 7)
-			md5_hash(pw, pw_len, &ctx1);
+			md5_hash(&ctx1, pw, pw_len);
 
 		if (i & 1)
-			md5_hash(final, 16, &ctx1);
+			md5_hash(&ctx1, final, 16);
 		else
-			md5_hash(pw, pw_len, &ctx1);
-		md5_end(final, &ctx1);
+			md5_hash(&ctx1, pw, pw_len);
+		md5_end(&ctx1, final);
 	}
 
 	p = result + sl + 4; /* 12 bytes max (sl is up to 8 bytes) */

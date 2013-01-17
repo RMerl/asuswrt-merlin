@@ -33,6 +33,7 @@ config FSCK
 config LSATTR
 	bool "lsattr"
 	default y
+	select PLATFORM_LINUX
 	help
 	  lsattr lists the file attributes on a second extended file system.
 

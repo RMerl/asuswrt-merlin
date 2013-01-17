@@ -159,7 +159,7 @@ sub maybe_unshift
 	my ($array, $ele) = @_;
 	# chop off the leading path /lib/modules/<kver>/ as modprobe
 	# will handle relative paths just fine
-##!!	$ele =~ s:^/lib/modules/[^/]*/::;
+	$ele =~ s:^/lib/modules/[^/]*/::;
 	foreach (@{$array}) {
 		if ($_ eq $ele) {
 			return;
@@ -173,6 +173,9 @@ sub add_mod_deps
 
 	$depth .= " ";
 	warn "${depth}loading deps of module: $this_module\n" if $verbose;
+	if (length($depth) > 50) {
+		die "too much recursion (circular dependencies in modules?)";
+	}
 
 	foreach my $md (keys %{$mod->{$this_module}}) {
 		add_mod_deps ($depth, $mod, $mod2, $module, $md);
@@ -196,17 +199,17 @@ if ($stdout == 0) {
     open(STDOUT, ">$basedir/modules.dep")
                              or die "cannot open $basedir/modules.dep: $!";
 }
-my $kseries = $basedir =~ m,/2\.6\.[^/]*, ? '2.6' : '2.4';
+my $kseries = $basedir =~ m,/2\.4\.[^/]*, ? '2.4' : 'others';
 
 foreach my $module ( keys %$mod ) {
     if($kseries eq '2.4') {
 	    print "$module:\t";
 	    my @sorted = sort bydep keys %{$mod->{$module}};
-	    print join(" ",@sorted);
+	    print join(" \\\n\t",@sorted);
 	    print "\n\n";
     } else {
 	    my $shortmod = $module;
-##!!	    $shortmod =~ s:^/lib/modules/[^/]*/::;
+	    $shortmod =~ s:^/lib/modules/[^/]*/::;
 	    print "$shortmod:";
 	    my @sorted = @{$mod2->{$module}};
 	    printf " " if @sorted;
