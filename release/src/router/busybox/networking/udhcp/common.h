@@ -152,6 +152,8 @@ enum {
 #define DHCP_VLAN_ID            0x84 /* 802.1P VLAN ID */
 #define DHCP_VLAN_PRIORITY      0x85 /* 802.1Q VLAN priority */
 //#define DHCP_MS_STATIC_ROUTES 0xf9 /* Microsoft's pre-RFC 3442 code for 0x79? */
+//#define DHCP_6RD              0xd4 /* RFC 5969 6RD option */
+//#define DHCP_COMCAST_6RD      0x96 /* Comcast ISP RFC 5969 compatible 6RD option */
 //#define DHCP_WPAD             0xfc /* MSIE's Web Proxy Autodiscovery Protocol */
 #define DHCP_END                0xff
 
