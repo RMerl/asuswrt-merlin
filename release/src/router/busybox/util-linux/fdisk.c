@@ -423,8 +423,8 @@ static sector_t bb_BLKGETSIZE_sectors(int fd)
 	unsigned long longsectors;
 
 	if (ioctl(fd, BLKGETSIZE64, &v64) == 0) {
-		/* Got bytes, convert to 512 byte sectors */
-		v64 >>= 9;
+		/* Got bytes, convert to sectors */
+		v64 /= sector_size;
 		if (v64 != (sector_t)v64) {
  ret_trunc:
 			/* Not only DOS, but all other partition tables
@@ -1939,7 +1939,7 @@ check_consistency(const struct partition *p, int partition)
 static void
 list_disk_geometry(void)
 {
-	ullong bytes = ((ullong)total_number_of_sectors << 9);
+	ullong bytes = ((ullong)total_number_of_sectors * sector_size);
 	long megabytes = bytes / 1000000;
 
 	if (megabytes < 10000)
@@ -1952,7 +1952,7 @@ list_disk_geometry(void)
 		   g_heads, g_sectors, g_cylinders);
 	if (units_per_sector == 1)
 		printf(", total %"SECT_FMT"u sectors",
-			total_number_of_sectors / (sector_size/512));
+			total_number_of_sectors);
 	printf("\nUnits = %s of %u * %u = %u bytes\n\n",
 		str_units(PLURAL),
 		units_per_sector, sector_size, units_per_sector * sector_size);
