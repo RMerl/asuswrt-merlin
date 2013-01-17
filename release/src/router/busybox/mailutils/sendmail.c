@@ -118,7 +118,7 @@ int sendmail_main(int argc UNUSED_PARAM, char **argv)
 	char *opt_from;
 	char *s;
 	llist_t *list = NULL;
-	char *domain = sane_address(safe_getdomainname());
+	char *host = sane_address(safe_gethostname());
 	unsigned nheaders = 0;
 	int code;
 
@@ -222,8 +222,9 @@ int sendmail_main(int argc UNUSED_PARAM, char **argv)
 	}
 
 	// we should start with modern EHLO
-	if (250 != smtp_checkp("EHLO %s", domain, -1))
-		smtp_checkp("HELO %s", domain, 250);
+	if (250 != smtp_checkp("EHLO %s", host, -1))
+		smtp_checkp("HELO %s", host, 250);
+	free(host);
 
 	// perform authentication
 	if (opts & OPT_a) {

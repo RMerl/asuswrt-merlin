@@ -796,7 +796,6 @@ void qsort_string_vector(char **sv, unsigned count) FAST_FUNC;
 int safe_poll(struct pollfd *ufds, nfds_t nfds, int timeout_ms) FAST_FUNC;
 
 char *safe_gethostname(void) FAST_FUNC;
-char *safe_getdomainname(void) FAST_FUNC;
 
 /* Convert each alpha char in str to lower-case */
 char* str_tolower(char *str) FAST_FUNC;
