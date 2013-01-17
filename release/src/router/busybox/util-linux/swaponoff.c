@@ -55,7 +55,10 @@ static int swap_enable_disable(char *device)
 	struct stat st;
 
 	resolve_mount_spec(&device);
-	xstat(device, &st);
+	if (stat(device, &st)) {
+		bb_perror_msg("warning: can't stat '%s'", device);
+		return 1;
+	}
 
 #if ENABLE_DESKTOP
 	/* test for holes */
