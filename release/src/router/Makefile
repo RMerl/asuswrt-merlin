@@ -126,6 +126,7 @@ obj-$(RTCONFIG_USB_BECEEM) += zlib # for GCT WiMAX
 obj-$(RTCONFIG_USB_BECEEM) += gctwimax-0.0.3rc4 # for GCT WiMAX
 
 obj-y += libdisk
+obj-y += e2fsprogs
 
 obj-y += dosfstools
 obj-$(RTCONFIG_NTFS) += linux-ntfs-2.0.0
@@ -244,6 +245,7 @@ obj-y += ez-ipupdate
 # Merlin addons
 obj-y += wol
 obj-y += netstat-nat
+
 obj-clean := $(foreach obj, $(obj-y) $(obj-n) $(obj-), $(obj)-clean)
 obj-install := $(foreach obj,$(obj-y),$(obj)-install)
 
@@ -642,6 +644,39 @@ busybox-clean:
 
 busybox-config:
 	$(MAKE) -C busybox menuconfig
+
+e2fsprogs/Makefile: e2fsprogs/Makefile.in
+	cd e2fsprogs && CFLAGS="-Os $(EXTRACFLAGS)" \
+	$(CONFIGURE) --prefix=/usr --sysconfdir=/etc --enable-elf-shlibs \
+		--disable-rpath --disable-nls \
+		--disable-debugfs --disable-imager --disable-resizer --disable-uuidd
+
+e2fsprogs: e2fsprogs/Makefile
+	$(MAKE) -C $@
+
+e2fsprogs-install:
+	install -D e2fsprogs/lib/libblkid.so.1.0 $(INSTALLDIR)/e2fsprogs/usr/lib/libblkid.so.1.0
+	install -D e2fsprogs/lib/libcom_err.so.2.1 $(INSTALLDIR)/e2fsprogs/usr/lib/libcom_err.so.2.1
+	install -D e2fsprogs/lib/libe2p.so.2.3 $(INSTALLDIR)/e2fsprogs/usr/lib/libe2p.so.2.3
+	install -D e2fsprogs/lib/libext2fs.so.2.4 $(INSTALLDIR)/e2fsprogs/usr/lib/libext2fs.so.2.4
+	install -D e2fsprogs/lib/libuuid.so.1.2 $(INSTALLDIR)/e2fsprogs/usr/lib/libuuid.so.1.2
+	$(STRIP) $(INSTALLDIR)/e2fsprogs/usr/lib/*.so.*
+	ln -sf libblkid.so.1.0 $(INSTALLDIR)/e2fsprogs/usr/lib/libblkid.so.1
+	ln -sf libcom_err.so.2.1 $(INSTALLDIR)/e2fsprogs/usr/lib/libcom_err.so.2
+	ln -sf libe2p.so.2.3 $(INSTALLDIR)/e2fsprogs/usr/lib/libe2p.so.2
+	ln -sf libext2fs.so.2.4 $(INSTALLDIR)/e2fsprogs/usr/lib/libext2fs.so.2
+	ln -sf libuuid.so.1.2 $(INSTALLDIR)/e2fsprogs/usr/lib/libuuid.so.1
+	install -D e2fsprogs/e2fsck/e2fsck $(INSTALLDIR)/e2fsprogs/usr/sbin/e2fsck
+	install -D e2fsprogs/misc/mke2fs $(INSTALLDIR)/e2fsprogs/usr/sbin/mke2fs
+	install -D e2fsprogs/misc/tune2fs $(INSTALLDIR)/e2fsprogs/usr/sbin/tune2fs
+	$(STRIP) $(INSTALLDIR)/e2fsprogs/usr/sbin/*
+	ln -sf e2fsck $(INSTALLDIR)/e2fsprogs/usr/sbin/fsck.ext2
+	ln -sf e2fsck $(INSTALLDIR)/e2fsprogs/usr/sbin/fsck.ext3
+#	ln -sf e2fsck $(INSTALLDIR)/e2fsprogs/usr/sbin/fsck.ext4
+	ln -sf mke2fs $(INSTALLDIR)/e2fsprogs/usr/sbin/mkfs.ext2
+	ln -sf mke2fs $(INSTALLDIR)/e2fsprogs/usr/sbin/mkfs.ext3
+#	ln -sf mke2fs $(INSTALLDIR)/e2fsprogs/usr/sbin/mkfs.ext4
+	install -D -m 0644 e2fsprogs/e2fsck/e2fsck.conf $(INSTALLDIR)/rom/rom/etc/e2fsck.conf
 
 httpd: shared nvram libdisk $(if $(RTCONFIG_HTTPS),mssl)
 	@$(SEP)
