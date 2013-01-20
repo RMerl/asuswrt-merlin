@@ -8,6 +8,7 @@ FILES
 patches
 Makefile
 *.o
+*.so*
 MCONFIG
 asm_types.h
 config.log
@@ -137,3 +138,7 @@ util/gen-tarball
 util/subst
 util/subst.conf
 Meta
+intl/libgnuintl.h
+lib/blkid/blkid.h
+lib/uuid/uuid.h
+
