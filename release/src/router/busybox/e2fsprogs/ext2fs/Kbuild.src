@@ -1,0 +1,26 @@
+# Makefile for busybox
+#
+# Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
+#
+# Licensed under GPLv2, see file LICENSE in this source tree.
+
+NEEDED-$(CONFIG_E2FSCK) = y
+NEEDED-$(CONFIG_FSCK) = y
+NEEDED-$(CONFIG_MKE2FS) = y
+NEEDED-$(CONFIG_TUNE2FS) = y
+
+lib-y:=
+
+INSERT
+
+lib-$(NEEDED-y) += gen_bitmap.o bitops.o ismounted.o mkjournal.o unix_io.o \
+                   rw_bitmaps.o initialize.o bitmaps.o block.o \
+                   ind_block.o inode.o freefs.o alloc_stats.o closefs.o \
+                   openfs.o io_manager.o finddev.o read_bb.o alloc.o badblocks.o \
+                   getsize.o getsectsize.o alloc_tables.o read_bb_file.o mkdir.o \
+                   bb_inode.o newdir.o alloc_sb.o lookup.o dirblock.o expanddir.o \
+                   dir_iterate.o link.o res_gdt.o icount.o get_pathname.o dblist.o \
+                   dirhash.o version.o flushb.o unlink.o check_desc.o valid_blk.o \
+                   ext_attr.o bmap.o dblist_dir.o ext2fs_inline.o swapfs.o
+
+CFLAGS += -include $(srctree)/e2fsprogs/e2fsbb.h
