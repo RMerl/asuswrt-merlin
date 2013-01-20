@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# e2croncheck -- run e2fsck automatically out of /etc/cron.weekly
+#
+# This script is intended to be run by the system administrator 
+# periodically from the command line, or to be run once a week
+# or so by the cron daemon to check a mounted filesystem (normally
+# the root filesystem, but it could be used to check other filesystems
+# that are always mounted when the system is booted).
+#
+# Make sure you customize "VG" so it is your LVM volume group name, 
+# "VOLUME" so it is the name of the filesystem's logical volume, 
+# and "EMAIL" to be your e-mail address
+#
+# Written by Theodore Ts'o, Copyright 2007, 2008, 2009.
+#
+# This file may be redistributed under the terms of the 
+# GNU Public License, version 2.
+#
+
+VG=ssd
+VOLUME=root
+SNAPSIZE=100m
+EMAIL=sysadmin@example.com
+
+TMPFILE=`mktemp -t e2fsck.log.XXXXXXXXXX`
+
+OPTS="-Fttv -C0"
+#OPTS="-Fttv -E fragcheck"
+
+set -e
+START="$(date +'%Y%m%d%H%M%S')"
+lvcreate -s -L ${SNAPSIZE} -n "${VOLUME}-snap" "${VG}/${VOLUME}"
+if nice logsave -as $TMPFILE e2fsck -p $OPTS "/dev/${VG}/${VOLUME}-snap" && \
+   nice logsave -as $TMPFILE e2fsck -fy $OPTS "/dev/${VG}/${VOLUME}-snap" ; then
+  echo 'Background scrubbing succeeded!'
+  tune2fs -C 0 -T "${START}" "/dev/${VG}/${VOLUME}"
+else
+  echo 'Background scrubbing failed! Reboot to fsck soon!'
+  tune2fs -C 16000 -T "19000101" "/dev/${VG}/${VOLUME}"
+  if test -n "$RPT-EMAIL"; then 
+    mail -s "E2fsck of /dev/${VG}/${VOLUME} failed!" $EMAIL < $TMPFILE
+  fi
+fi
+lvremove -f "${VG}/${VOLUME}-snap"
+rm $TMPFILE
+

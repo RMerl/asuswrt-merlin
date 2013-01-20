@@ -1,0 +1,6 @@
+libext2fs	2
+libe2p		2
+libuuid		1
+libcom_err	2
+libss		2
+libblkid	1

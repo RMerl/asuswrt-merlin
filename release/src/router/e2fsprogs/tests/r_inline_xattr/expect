@@ -1,0 +1,16 @@
+resize2fs test
+debugfs -R ''stat file'' ./test.img 2>&1 | grep ''^Inode\|in inode body\|name = ''
+Inode: 1550   Type: regular    Mode:  0644   Flags: 0x0
+Extended attributes stored in inode body: 
+  name = "propervalue" (11)
+Exit status is 0
+resize2fs ./test.img 5M
+Resizing the filesystem on ./test.img to 5120 (1k) blocks.
+The filesystem on ./test.img is now 5120 blocks long.
+
+Exit status is 0
+debugfs -R ''stat file'' ./test.img 2>&1 | grep ''^Inode\|in inode body\|name = ''
+Inode: 12   Type: regular    Mode:  0644   Flags: 0x0
+Extended attributes stored in inode body: 
+  name = "propervalue" (11)
+Exit status is 0

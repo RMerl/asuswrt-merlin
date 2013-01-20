@@ -1,0 +1,31 @@
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Entry 'foo' in / (2) references inode 65 found in group 1's unused inodes area.
+Fix? yes
+
+Entry '1' in / (2) references inode 12 found in group 0's unused inodes area.
+Fix? yes
+
+Restarting e2fsck from the beginning...
+One or more block group descriptor checksums are invalid.  Fix? yes
+
+Group descriptor 0 checksum is invalid.  FIXED.
+Group descriptor 1 checksum is invalid.  FIXED.
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Free inodes count wrong for group #0 (53, counted=51).
+Fix? yes
+
+Free inodes count wrong for group #1 (64, counted=58).
+Fix? yes
+
+Free inodes count wrong (117, counted=109).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 19/128 files (0.0% non-contiguous), 165/1000 blocks
+Exit status is 1

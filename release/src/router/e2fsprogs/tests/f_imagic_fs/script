@@ -1,0 +1,3 @@
+IMAGE=$test_dir/../f_imagic/image.gz
+PREP_CMD='$DEBUGFS -w -R "feature imagic_inodes" $TMPFILE > /dev/null 2>&1'
+. $cmd_dir/run_e2fsck

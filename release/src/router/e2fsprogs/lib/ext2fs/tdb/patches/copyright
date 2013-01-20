@@ -1,0 +1,20 @@
+Index: tdbsa/tdb.c
+===================================================================
+--- tdbsa.orig/tdb.c
++++ tdbsa/tdb.c
+@@ -4,11 +4,11 @@ Rev: 23371
+ Last Changed Date: 2007-06-06 20:14:06 -0400 (Wed, 06 Jun 2007)
+ */
+  /* 
+-   Unix SMB/CIFS implementation.
++   trivial database library - standalone version
+ 
+-   trivial database library - private includes
+-
+-   Copyright (C) Andrew Tridgell              2005
++   Copyright (C) Andrew Tridgell              1999-2005
++   Copyright (C) Jeremy Allison               2000-2006
++   Copyright (C) Paul `Rusty' Russell         2000
+    
+      ** NOTE! The following LGPL license applies to the tdb
+      ** library. This does NOT imply that all of Samba is released

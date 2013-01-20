@@ -1,0 +1,10 @@
+Document: libext2fs
+Title: The EXT2FS library
+Author: Theodore Ts'o
+Abstract: The EXT2FS library is designed to allow
+ user-level programs to manipulate an ext2 filesystem.
+Section: Programming
+
+Format: HTML
+Index: /usr/share/doc/e2fslibs/html-info/libext2fs_toc.html
+Files: /usr/share/doc/e2fslibs/html-info/*.html 

@@ -1,0 +1,440 @@
+#
+# Makefile for e2fsck
+#
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+top_builddir = ..
+my_dir = e2fsck
+INSTALL = @INSTALL@
+
+@MCONFIG@
+
+PROGS=		e2fsck
+MANPAGES=	e2fsck.8
+FMANPAGES=	e2fsck.conf.5
+XTRA_CFLAGS=	-DRESOURCE_TRACK -I.
+
+LIBS= $(LIBEXT2FS) $(LIBCOM_ERR) $(LIBBLKID) $(LIBUUID) $(LIBINTL) $(LIBE2P)
+DEPLIBS= $(LIBEXT2FS) $(DEPLIBCOM_ERR) $(DEPLIBBLKID) $(DEPLIBUUID) \
+	$(DEPLIBE2P)
+
+STATIC_LIBS= $(STATIC_LIBEXT2FS) $(STATIC_LIBCOM_ERR) $(STATIC_LIBBLKID) \
+	$(STATIC_LIBUUID) $(LIBINTL) $(STATIC_LIBE2P)
+STATIC_DEPLIBS= $(STATIC_LIBEXT2FS) $(DEPSTATIC_LIBCOM_ERR) \
+	$(DEPSTATIC_LIBBLKID) $(DEPSTATIC_LIBUUID) $(DEPSTATIC_LIBE2P)
+
+PROFILED_LIBS= $(PROFILED_LIBEXT2FS) $(PROFILED_LIBCOM_ERR) \
+	$(PROFILED_LIBBLKID) $(PROFILED_LIBUUID) $(PROFILED_LIBE2P) $(LIBINTL)
+PROFILED_DEPLIBS= $(PROFILED_LIBEXT2FS) $(DEPPROFILED_LIBCOM_ERR) \
+	$(DEPPROFILED_LIBBLKID) $(DEPPROFILED_LIBUUID) $(DEPPROFILED_LIBE2P)
+
+COMPILE_ET=$(top_builddir)/lib/et/compile_et --build-tree
+
+.c.o:
+	$(E) "	CC $<"
+	$(Q) $(CC) -c $(ALL_CFLAGS) $< -o $@
+@PROFILE_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -g -pg -o profiled/$*.o -c $<
+
+#
+# Flags for using Checker
+#	Note: The optimization flags must include -g
+#
+#MCHECK=	-checker
+#LIBS= $(LIBCOM_ERR) $(LIB_EXT2FS) $(CHECKLIB)
+#DEPLIBS= $(LIBCOM_ERR) $(LIB_EXT2FS) 
+#CHECKLIB= /usr/lib/libchecker.o
+
+#
+# Flags for doing mtrace --- uncomment to produce mtracing e2fsck
+# 	Note:  The optimization flags must include -g
+#
+#MTRACE=	-DMTRACE
+#MTRACE_OBJ= mtrace.o
+#MTRACE_SRC= $(srcdir)/mtrace.c
+#OPT= -g
+
+#
+# Flags for doing mcheck --- uncomment to produce mchecking e2fsck
+# 	Note:  The optimization flags must include -g
+#
+#MCHECK= -DMCHECK
+
+OBJS= crc32.o dict.o unix.o e2fsck.o super.o pass1.o pass1b.o pass2.o \
+	pass3.o pass4.o pass5.o journal.o badblocks.o util.o dirinfo.o \
+	dx_dirinfo.o ehandler.o problem.o message.o recovery.o region.o \
+	revoke.o ea_refcount.o rehash.o profile.o prof_err.o $(MTRACE_OBJ)
+
+PROFILED_OBJS= profiled/dict.o profiled/unix.o profiled/e2fsck.o \
+	profiled/super.o profiled/pass1.o profiled/pass1b.o \
+	profiled/pass2.o profiled/pass3.o profiled/pass4.o profiled/pass5.o \
+	profiled/journal.o profiled/badblocks.o profiled/util.o \
+	profiled/dirinfo.o profiled/dx_dirinfo.o profiled/ehandler.o \
+	profiled/message.o profiled/problem.o \
+	profiled/recovery.o profiled/region.o profiled/revoke.o \
+	profiled/ea_refcount.o profiled/rehash.o profiled/profile.o \
+	profiled/crc32.o profiled/prof_err.o
+
+SRCS= $(srcdir)/e2fsck.c \
+	$(srcdir)/crc32.c \
+	$(srcdir)/gen_crc32table.c \
+	$(srcdir)/dict.c \
+	$(srcdir)/super.c \
+	$(srcdir)/pass1.c \
+	$(srcdir)/pass1b.c \
+	$(srcdir)/pass2.c \
+	$(srcdir)/pass3.c \
+	$(srcdir)/pass4.c \
+	$(srcdir)/pass5.c \
+	$(srcdir)/journal.c \
+	$(srcdir)/recovery.c \
+	$(srcdir)/revoke.c \
+	$(srcdir)/badblocks.c \
+	$(srcdir)/util.c \
+	$(srcdir)/unix.c \
+	$(srcdir)/dirinfo.c \
+	$(srcdir)/dx_dirinfo.c \
+	$(srcdir)/ehandler.c \
+	$(srcdir)/problem.c \
+	$(srcdir)/message.c \
+	$(srcdir)/ea_refcount.c \
+	$(srcdir)/rehash.c \
+	$(srcdir)/region.c \
+	$(srcdir)/profile.c \
+	prof_err.c \
+	$(MTRACE_SRC)
+
+all:: profiled $(PROGS) e2fsck $(MANPAGES) $(FMANPAGES)
+
+@PROFILE_CMT@all:: e2fsck.profiled
+
+prof_err.c prof_err.h: prof_err.et
+	$(E) "	COMPILE_ET prof_err.et"
+	$(Q) $(COMPILE_ET) $(srcdir)/prof_err.et
+
+e2fsck: $(OBJS)  $(DEPLIBS)
+	$(E) "	LD $@"
+	$(Q) $(LD) $(ALL_LDFLAGS) -o e2fsck $(OBJS) $(LIBS) 
+
+e2fsck.static: $(OBJS) $(STATIC_DEPLIBS)
+	$(E) "	LD $@"
+	$(Q) $(LD) $(LDFLAGS_STATIC) -o e2fsck.static $(OBJS) $(STATIC_LIBS) 
+
+e2fsck.profiled: $(PROFILED_OBJS)  $(PROFILED_DEPLIBS)
+	$(E) "	LD $@"
+	$(Q) $(LD) $(ALL_LDFLAGS) -g -pg -o e2fsck.profiled $(PROFILED_OBJS) \
+		$(PROFILED_LIBS) 
+
+gen_crc32table: $(srcdir)/gen_crc32table.c
+	$(E) "	CC $@"
+	$(Q) $(BUILD_CC) $(BUILD_CFLAGS) -o gen_crc32table \
+		$(srcdir)/gen_crc32table.c
+
+crc32table.h: gen_crc32table
+	$(E) "	GEN32TABLE $@"
+	$(Q) ./gen_crc32table > crc32table.h
+
+tst_problem: $(srcdir)/problem.c $(srcdir)/problem.h $(LIBEXT2FS) \
+	$(DEPLIBCOM_ERR)
+	$(Q) $(CC) $(BUILD_LDFLAGS) $(ALL_CFLAGS) -o tst_problem \
+		$(srcdir)/problem.c -DUNITTEST $(LIBEXT2FS) $(LIBCOM_ERR)
+
+tst_crc32: $(srcdir)/crc32.c $(LIBEXT2FS) $(DEPLIBCOM_ERR)
+	$(Q) $(CC) $(BUILD_LDFLAGS) $(ALL_CFLAGS) -o tst_crc32 $(srcdir)/crc32.c \
+		-DUNITTEST $(LIBEXT2FS) $(LIBCOM_ERR)
+
+tst_refcount: ea_refcount.c $(DEPLIBCOM_ERR)
+	$(E) "	LD $@"
+	$(Q) $(CC) -o tst_refcount $(srcdir)/ea_refcount.c \
+		$(ALL_CFLAGS) -DTEST_PROGRAM $(LIBCOM_ERR) $(LIBEXT2FS) 
+
+tst_region: region.c $(DEPLIBCOM_ERR)
+	$(E) "	LD $@"
+	$(Q) $(CC) -o tst_region $(srcdir)/region.c \
+		$(ALL_CFLAGS) -DTEST_PROGRAM $(LIBCOM_ERR)
+
+check:: tst_refcount tst_region tst_crc32 tst_problem
+	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_refcount
+	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_region
+	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_crc32
+	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_problem
+
+extend: extend.o
+	$(E) "	LD $@"
+	$(Q) $(LD) $(ALL_LDFLAGS) -o extend extend.o $(CHECKLIB)
+
+flushb: flushb.o
+	$(E) "	LD $@"
+	$(Q) $(LD) $(ALL_LDFLAGS) -o flushb flushb.o $(CHECKLIB)
+
+iscan: iscan.o util.o ehandler.o $(DEPLIBS)
+	$(E) "	LD $@"
+	$(Q) $(LD) $(ALL_LDFLAGS) -o iscan iscan.o util.o ehandler.o $(LIBS)
+
+test_profile: $(srcdir)/profile.c profile_helpers.o argv_parse.o \
+		prof_err.o profile.h $(DEPSTATIC_LIBCOM_ERR)
+	$(E) "	LD $@"
+	$(Q) $(CC) -o test_profile -DDEBUG_PROGRAM $(srcdir)/profile.c prof_err.o \
+		profile_helpers.o argv_parse.o $(STATIC_LIBCOM_ERR) \
+		$(ALL_CFLAGS)
+
+profiled:
+@PROFILE_CMT@	$(E) "	MKDIR $@"
+@PROFILE_CMT@	$(Q) mkdir profiled
+
+e2fsck.8: $(DEP_SUBSTITUTE) $(srcdir)/e2fsck.8.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE_UPTIME) $(srcdir)/e2fsck.8.in e2fsck.8
+
+e2fsck.conf.5: $(DEP_SUBSTITUTE) $(srcdir)/e2fsck.conf.5.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE_UPTIME) $(srcdir)/e2fsck.conf.5.in e2fsck.conf.5
+
+installdirs:
+	$(E) "	MKINSTALLDIRS $(root_sbindir) $(man8dir)"
+	$(Q) $(MKINSTALLDIRS) $(DESTDIR)$(root_sbindir) \
+		$(DESTDIR)$(man8dir) $(DESTDIR)$(man5dir)
+
+install: $(PROGS) $(MANPAGES) $(FMANPAGES) installdirs
+	$(Q) for i in $(PROGS); do \
+		echo "	INSTALL $(root_sbindir)/$$i"; \
+		$(INSTALL_PROGRAM) $$i $(DESTDIR)$(root_sbindir)/$$i; \
+	done
+	$(Q) for i in ext2 ext3 ext4 ext4dev; do \
+		echo "	LINK $(root_sbindir)/fsck.$$i"; \
+		(cd $(DESTDIR)$(root_sbindir); \
+			$(LN) $(LINK_INSTALL_FLAGS) e2fsck fsck.$$i); \
+	done
+	$(Q) for i in $(MANPAGES); do \
+		for j in $(COMPRESS_EXT); do \
+			$(RM) -f $(DESTDIR)$(man8dir)/$$i.$$j; \
+		done; \
+		echo "	INSTALL_DATA $(man8dir)/$$i"; \
+		$(INSTALL_DATA) $$i $(DESTDIR)$(man8dir)/$$i; \
+	done
+	$(Q) for i in $(FMANPAGES); do \
+		for j in $(COMPRESS_EXT); do \
+			$(RM) -f $(DESTDIR)$(man5dir)/$$i.$$j; \
+		done; \
+		echo "	INSTALL_DATA $(man5dir)/$$i"; \
+		$(INSTALL_DATA) $$i $(DESTDIR)$(man5dir)/$$i; \
+	done
+	$(Q) for i in ext2 ext3 ext4 ext4dev; do \
+		echo "	LINK $(man8dir)/fsck.$$i.8"; \
+		(cd $(DESTDIR)$(man8dir); \
+			$(LN) $(LINK_INSTALL_FLAGS) e2fsck.8 fsck.$$i.8); \
+	done
+
+install-strip: install
+	$(Q) for i in $(PROGS); do \
+		echo "	STRIP $(root_sbindir)/$$i"; \
+		$(STRIP) $(DESTDIR)$(root_sbindir)/$$i; \
+	done
+
+uninstall:
+	for i in $(PROGS); do \
+		$(RM) -f $(DESTDIR)$(root_sbindir)/$$i; \
+	done
+	$(RM) -f $(DESTDIR)$(root_sbindir)/fsck.ext2 \
+		$(DESTDIR)$(root_sbindir)/fsck.ext3 \
+		$(DESTDIR)$(root_sbindir)/fsck.ext4 \
+		$(DESTDIR)$(root_sbindir)/fsck.ext4dev
+	for i in $(MANPAGES); do \
+		$(RM) -f $(DESTDIR)$(man8dir)/$$i; \
+	done
+	for i in $(FMANPAGES); do \
+		$(RM) -f $(DESTDIR)$(man5dir)/$$i; \
+	done
+	$(RM) -f $(DESTDIR)$(root_sbindir)/fsck.ext2 \
+			$(DESTDIR)$(root_sbindir)/fsck.ext3 \
+			$(DESTDIR)$(root_sbindir)/fsck.ext4 \
+			$(DESTDIR)$(root_sbindir)/fsck.ext4dev
+
+clean:
+	$(RM) -f $(PROGS) \#* *\# *.s *.o *.a *~ core e2fsck.static \
+		e2fsck.shared e2fsck.profiled flushb e2fsck.8 \
+		tst_problem tst_crc32 tst_region tst_refcount gen_crc32table \
+		crc32table.h e2fsck.conf.5 prof_err.c prof_err.h \
+		test_profile
+	$(RM) -rf profiled
+
+mostlyclean: clean
+distclean: clean
+	$(RM) -f .depend Makefile $(srcdir)/TAGS $(srcdir)/Makefile.in.old
+
+# +++ Dependency line eater +++
+# 
+# Makefile dependencies follow.  This must be the last section in
+# the Makefile.in file
+#
+e2fsck.o: $(srcdir)/e2fsck.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/problem.h
+crc32.o: $(srcdir)/crc32.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/crc32defs.h crc32table.h
+gen_crc32table.o: $(srcdir)/gen_crc32table.c $(srcdir)/crc32defs.h
+dict.o: $(srcdir)/dict.c $(srcdir)/dict.h
+super.o: $(srcdir)/super.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/problem.h
+pass1.o: $(srcdir)/pass1.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/problem.h
+pass1b.o: $(srcdir)/pass1b.c $(top_srcdir)/lib/et/com_err.h \
+ $(srcdir)/e2fsck.h $(top_srcdir)/lib/ext2fs/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(top_srcdir)/lib/ext2fs/ext2fs.h \
+ $(top_srcdir)/lib/ext2fs/ext3_extents.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/problem.h $(srcdir)/dict.h
+pass2.o: $(srcdir)/pass2.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/problem.h $(srcdir)/dict.h
+pass3.o: $(srcdir)/pass3.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/problem.h
+pass4.o: $(srcdir)/pass4.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/problem.h
+pass5.o: $(srcdir)/pass5.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/problem.h
+journal.o: $(srcdir)/journal.c $(srcdir)/jfs_user.h $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(top_srcdir)/lib/ext2fs/kernel-jbd.h \
+ $(top_srcdir)/lib/ext2fs/jfs_compat.h $(top_srcdir)/lib/ext2fs/kernel-list.h \
+ $(srcdir)/problem.h
+recovery.o: $(srcdir)/recovery.c $(srcdir)/jfs_user.h $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(top_srcdir)/lib/ext2fs/kernel-jbd.h \
+ $(top_srcdir)/lib/ext2fs/jfs_compat.h $(top_srcdir)/lib/ext2fs/kernel-list.h
+revoke.o: $(srcdir)/revoke.c $(srcdir)/jfs_user.h $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(top_srcdir)/lib/ext2fs/kernel-jbd.h \
+ $(top_srcdir)/lib/ext2fs/jfs_compat.h $(top_srcdir)/lib/ext2fs/kernel-list.h
+badblocks.o: $(srcdir)/badblocks.c $(top_srcdir)/lib/et/com_err.h \
+ $(srcdir)/e2fsck.h $(top_srcdir)/lib/ext2fs/ext2_fs.h \
+ $(top_builddir)/lib/ext2fs/ext2_types.h $(top_srcdir)/lib/ext2fs/ext2fs.h \
+ $(top_srcdir)/lib/ext2fs/ext3_extents.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h
+util.o: $(srcdir)/util.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h
+unix.o: $(srcdir)/unix.c $(top_srcdir)/lib/e2p/e2p.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/et/com_err.h $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/ext2fs/ext2_io.h $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/problem.h $(top_srcdir)/version.h
+dirinfo.o: $(srcdir)/dirinfo.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(top_srcdir)/lib/ext2fs/tdb.h
+dx_dirinfo.o: $(srcdir)/dx_dirinfo.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h
+ehandler.o: $(srcdir)/ehandler.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h
+problem.o: $(srcdir)/problem.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/problem.h $(srcdir)/problemP.h
+message.o: $(srcdir)/message.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/problem.h
+ea_refcount.o: $(srcdir)/ea_refcount.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h
+rehash.o: $(srcdir)/rehash.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h $(srcdir)/problem.h
+region.o: $(srcdir)/region.c $(srcdir)/e2fsck.h \
+ $(top_srcdir)/lib/ext2fs/ext2_fs.h $(top_builddir)/lib/ext2fs/ext2_types.h \
+ $(top_srcdir)/lib/ext2fs/ext2fs.h $(top_srcdir)/lib/ext2fs/ext3_extents.h \
+ $(top_srcdir)/lib/et/com_err.h $(top_srcdir)/lib/ext2fs/ext2_io.h \
+ $(top_builddir)/lib/ext2fs/ext2_err.h \
+ $(top_srcdir)/lib/ext2fs/ext2_ext_attr.h $(top_srcdir)/lib/ext2fs/bitops.h \
+ $(srcdir)/profile.h prof_err.h
+profile.o: $(srcdir)/profile.c $(top_srcdir)/lib/et/com_err.h \
+ $(srcdir)/profile.h prof_err.h
+prof_err.o: prof_err.c

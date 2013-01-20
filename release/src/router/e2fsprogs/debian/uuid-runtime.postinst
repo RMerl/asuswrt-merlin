@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+if ! getent group | grep -q libuuid; then
+groupadd -f -K GID_MIN=1 -K GID_MAX=999 libuuid
+fi
+if ! getent passwd | grep -q libuuid; then
+   useradd -d /var/lib/libuuid -K UID_MIN=1 -K UID_MAX=499 -g libuuid libuuid
+fi
+chown libuuid:libuuid /usr/sbin/uuidd
+chmod 6755 /usr/sbin/uuidd
+
+#DEBHELPER#
+
+exit 0

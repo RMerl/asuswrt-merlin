@@ -1,0 +1,164 @@
+#
+# Copyright (C) 1993 Theodore Ts'o.  This file may be redistributed
+# under the terms of the GNU Public License.
+#
+command_table debug_cmds;
+
+request do_show_debugfs_params, "Show debugfs parameters",
+	show_debugfs_params, params;
+
+request do_open_filesys, "Open a filesystem",
+	open_filesys, open;
+
+request do_close_filesys, "Close the filesystem",
+	close_filesys, close;
+
+request do_features, "Set/print superblock features",
+	feature, features;
+
+request do_dirty_filesys, "Mark the filesystem as dirty",
+	dirty_filesys, dirty;
+
+request do_init_filesys, "Initialize a filesystem (DESTROYS DATA)",
+	init_filesys;
+
+request do_show_super_stats, "Show superblock statistics",
+	show_super_stats, stats;
+
+request do_ncheck, "Do inode->name translation",
+	ncheck;
+
+request do_icheck, "Do block->inode translation",
+	icheck;
+
+request do_chroot, "Change root directory",
+	change_root_directory, chroot;
+
+request do_change_working_dir, "Change working directory",
+	change_working_directory, cd;
+
+request do_list_dir, "List directory",
+	list_directory, ls;
+
+request do_stat, "Show inode information ",
+	show_inode_info, stat;
+
+request do_dump_extents, "Dump extents information ",
+	dump_extents, extents, ex;
+
+request do_link, "Create directory link",
+	link, ln;
+
+request do_unlink, "Delete a directory link",
+	unlink;
+
+request do_mkdir, "Create a directory",
+	mkdir;
+
+request do_rmdir, "Remove a directory",
+	rmdir;
+
+request do_rm, "Remove a file (unlink and kill_file, if appropriate)",
+	rm;
+
+request do_kill_file, "Deallocate an inode and its blocks",
+	kill_file;
+
+request do_clri, "Clear an inode's contents",
+	clri;
+
+request do_freei, "Clear an inode's in-use flag",
+	freei;
+
+request do_seti, "Set an inode's in-use flag",
+	seti;
+
+request do_testi, "Test an inode's in-use flag",
+	testi;
+
+request do_freeb, "Clear a block's in-use flag",
+	freeb;
+
+request do_setb, "Set a block's in-use flag",
+	setb;
+
+request do_testb, "Test a block's in-use flag",
+	testb;
+
+request do_modify_inode, "Modify an inode by structure",
+	modify_inode, mi;
+
+request do_find_free_block, "Find free block(s)",
+	find_free_block, ffb;
+
+request do_find_free_inode, "Find free inode(s)",
+	find_free_inode, ffi;
+
+request	do_print_working_directory, "Print current working directory",
+	print_working_directory, pwd; 
+
+request	do_expand_dir, "Expand directory",
+	expand_dir, expand;
+
+request do_mknod, "Create a special file",
+	mknod;
+
+request do_lsdel, "List deleted inodes",
+	list_deleted_inodes, lsdel;
+
+request do_undel, "Undelete file",
+	undelete, undel;
+
+request do_write, "Copy a file from your native filesystem",
+	write;
+
+request do_dump, "Dump an inode out to a file",
+	dump_inode, dump;
+
+request do_cat, "Dump an inode out to stdout",
+	cat;
+
+request do_lcd, "Change the current directory on your native filesystem",
+	lcd;
+
+request do_rdump, "Recursively dump a directory to the native filesystem",
+	rdump;
+
+request do_set_super, "Set superblock value",
+	set_super_value, ssv;
+
+request do_set_inode, "Set inode field",
+	set_inode_field, sif;
+
+request do_set_block_group_descriptor, "Set block group descriptor field",
+	set_block_group, set_bg;
+
+request do_logdump, "Dump the contents of the journal",
+	logdump;
+
+request do_htree_dump, "Dump a hash-indexed directory",
+	htree_dump, htree;
+
+request do_dx_hash, "Calculate the directory hash of a filename",
+	dx_hash, hash;
+
+request do_dirsearch, "Search a directory for a particular filename",
+	dirsearch;
+
+request do_bmap, "Calculate the logical->physical block mapping for an inode",
+	bmap;
+
+request do_imap, "Calculate the location of an inode",
+	imap;
+
+request	do_dump_unused, "Dump unused blocks",
+	dump_unused;
+
+request do_set_current_time, "Set current time to use when setting filesystme fields",
+	set_current_time;
+
+request do_supported_features, "Print features supported by this version of e2fsprogs",
+	supported_features;
+
+end;
+

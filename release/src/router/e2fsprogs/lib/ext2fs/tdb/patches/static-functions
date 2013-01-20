@@ -1,0 +1,13 @@
+Index: tdbsa/tdb.c
+===================================================================
+--- tdbsa.orig/tdb.c
++++ tdbsa/tdb.c
+@@ -2254,7 +2254,7 @@ int tdb_transaction_recover(struct tdb_c
+ /* file: freelist.c */
+ 
+ /* read a freelist record and check for simple errors */
+-int tdb_rec_free_read(struct tdb_context *tdb, tdb_off_t off, struct list_struct *rec)
++static int tdb_rec_free_read(struct tdb_context *tdb, tdb_off_t off, struct list_struct *rec)
+ {
+ 	if (tdb->methods->tdb_read(tdb, off, rec, sizeof(*rec),DOCONV()) == -1)
+ 		return -1;

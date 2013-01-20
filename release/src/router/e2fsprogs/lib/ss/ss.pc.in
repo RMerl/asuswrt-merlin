@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: ss
+Description: Subsystem command parsing library
+Version: @E2FSPROGS_VERSION@
+Requires.private: com_err
+Cflags: -I${includedir}/ss
+Libs: -L${libdir} -lss
+Libs.private: @DLOPEN_LIB@

@@ -1,0 +1,114 @@
+Source: e2fsprogs
+Section: base
+Priority: required
+Maintainer: Yann Dirson <dirson@debian.org>
+Standards-Version: 2.4.0.0
+
+Package: e2fsprogs
+Essential: yes
+Depends: ${shlibs:Depends}
+Conflicts: e2fsprogsg, dump (<< 0.4b4-4), quota (<< 1.55-8.1)
+Architecture: any
+Description: The EXT2 file system utilities.
+ EXT2 stands for "Extended Filesystem", version 2. It's the main
+ filesystem type used for hard disks on Debian and other Linux systems.
+ .
+ This package contains programs for creating, checking, and maintaining EXT2
+ filesystems, and the generic `fsck' wrapper.
+ .
+ This release may break older versions of dump and quota.
+
+Package: comerr2g
+Depends: ${shlibs:Depends}
+Conflicts: e2fsprogs (<< 1.10-6), comerr2
+Architecture: any
+Description: The Common Error Description library - shared libraries.
+ libcomerr is an attempt to present a common error-handling mechanism to
+ manipulate the most common form of error code in a fashion that does not
+ have the problems identified with mechanisms commonly in use.
+ .
+ It is mainly used by the EXT2-filesystem tools.
+
+Package: ss2g
+Depends: ${shlibs:Depends}
+Conflicts: e2fsprogs (<< 1.10-6), ss2
+Architecture: any
+Description: "Sub-System" library for simple command-line interface parsing - shared libs
+ This package contains the shared libs to support command-line
+ interface parsers generated with the ssg-dev package.
+ . 
+ It was originally inspired by the Multics SubSystem library.
+
+Package: e2fslibsg
+Depends: ${shlibs:Depends}
+Provides: ext2fs2g, e2p2g, uuid1g
+Conflicts: e2fsprogs (<= 1.10-7)
+Architecture: any
+Description: The EXT2 file system shared libs.
+ EXT2 stands for "Extended Filesystem", version 2. It's the filesystem type
+ used for hard disks on Debian and other Linux systems.
+ .
+ This package contains shared libraries needed by the utility programs.
+
+Package: comerrg-dev
+Section: devel
+Priority: extra
+Depends: ${libcdev:Depends}, comerr2g
+Suggests: doc-base
+Conflicts: e2fsprogs (<< 1.10-6), comerr-dev
+Architecture: any
+Description: The Common Error Description library - headers and static libraries.
+ libcomerr is an attempt to present a common error-handling mechanism to
+ manipulate the most common form of error code in a fashion that does not
+ have the problems identified with mechanisms commonly in use.
+
+Package: ssg-dev
+Section: devel
+Priority: extra
+Depends: ${libcdev:Depends}, ss2g
+Conflicts: e2fsprogs (<< 1.10-6), ss-dev
+Architecture: any
+Description: "Sub-System" library for simple command-line interface parsing - devel. files
+ This package includes a tool that parses a command table to generate
+ a simple command-line interface parser, the include files needed to
+ compile and use it, and the static libs.
+ . 
+ It was originally inspired by the Multics SubSystem library.
+
+Package: e2fslibsg-dev
+Section: devel
+Priority: extra
+Depends: ${libcdev:Depends}, e2fslibsg, comerrg-dev
+Suggests: doc-base
+Provides: ext2fsg-dev, e2pg-dev, uuidg-dev
+Conflicts: e2fsprogs (<< 1.10-6), e2fslibs-dev
+Architecture: any
+Description: The headers and static libraries for ext2fs-aware tools-development.
+ EXT2FS stands for "Extended Filesystem", version 2. It's the filesystem
+ type used for hard disks on Debian and other Linux systems.
+ .
+ This package contains the headers and shared libraries needed to compile
+ ext2fs-aware programs. Only programmers that really manipulate
+ features specific to the ext2 filesystem will need this. Most
+ programmers will use the generic filesystem-independent interface
+ from libc.
+ .
+ It also contains dev files for 2 other libs (e2p and uuid) used by
+ the e2fsprogs, but which are not yet packaged all by themselves
+ because they lack documentation. They may also lack some support
+ files, by I can't really know until someone uses them...
+ .
+ libe2p is for user-level e2fsprogs commands.  It's used by dumpe2fs,
+ chattr, and lsattr.  Functions in libe2p typically have two
+ characteristics (a) don't require that block device containing the
+ filesystem be opened directly (functions in libext2fs do), and (b)
+ libe2p typically contains printf statements or parse user input, and so
+ have more internationalization issues.
+ .
+ libuuid generates and parses 128-bit universally unique id's (UUID's),
+ using a standard which is blessed by both Microsoft and DCE, and is
+ being proposed as an internet standard.  See the internet-draft:
+ .
+                draft-leach-uuids-guids-01.txt
+ .
+ for more information.

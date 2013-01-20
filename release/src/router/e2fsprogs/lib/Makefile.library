@@ -1,0 +1,25 @@
+all:: subdirs $(LIBRARY).a
+
+install-shlibs::
+
+uninstall-shlibs::
+
+real-subdirs::
+
+subdirs:: Makefile
+	$(Q) $(MAKE) -s real-subdirs
+	$(Q) touch subdirs
+
+clean::
+	$(Q) $(RM) -f subdirs
+
+$(LIBRARY).a: $(OBJS)
+	$(E) "	GEN_LIB $@"
+	$(Q) (if test -r $@; then $(RM) -f $@.bak && $(MV) $@ $@.bak; fi)
+	$(Q) $(ARGEN) $@ $(OBJS)
+	-@$(RANLIB) $@
+	$(Q) $(RM) -f ../$@
+	$(Q) (cd ..; $(LN) $(LINK_BUILD_FLAGS) \
+		`echo $(my_dir) | sed -e 's;lib/;;'`/$@ $@)
+
+$(LIB)/$(LIBRARY).a: $(LIBRARY).a

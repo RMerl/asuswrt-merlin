@@ -1,0 +1,50 @@
+SKIP_GUNZIP="true"
+TEST_DATA="test.data"
+
+echo "/ Murphy Magic.  The SeCrEt of the UnIvErSe is 43, NOT 42" > $TEST_DATA
+
+touch $TMPFILE
+$MKE2FS -N 32 -F -o Linux -b 1024 $TMPFILE 100 > /dev/null 2>&1 
+$DEBUGFS -w $TMPFILE << EOF > /dev/null 2>&1
+set_current_time 200704102100
+set_super_value lastcheck 0
+set_super_value hash_seed null
+set_super_value mkfs_time 0
+mkdir dir
+mkdir dir2
+mkdir dir3
+mkdir dir4
+cd /dir
+write $TEST_DATA foo
+cd /dir2
+write $TEST_DATA bar
+cd /dir3
+write $TEST_DATA baz
+cd /dir4
+write $TEST_DATA quux
+mkdir /dir/fee
+mkdir /dir2/fie
+mkdir /dir3/foe
+mkdir /dir4/fum
+link /dir/foo /dir2/foo1
+link /dir/foo /dir3/foo2
+link /dir2/bar /dir3/bar1
+link /dir4/quux /dir/quux1
+link /dir4/quux /dir2/quux2
+set_inode_field /dir/foo block[0] 30
+set_inode_field /dir2/bar block[0] 30
+set_inode_field /dir3/baz block[0] 30
+set_inode_field /dir/fee block[0] 34
+set_inode_field /dir2/fie block[0] 34
+set_inode_field /dir3/foe block[0] 34
+q
+EOF
+
+E2FSCK_TIME=200704102100
+export E2FSCK_TIME
+
+. $cmd_dir/run_e2fsck
+
+rm -f $TEST_DATA
+
+unset E2FSCK_TIME TEST_DATA

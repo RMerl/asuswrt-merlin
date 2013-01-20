@@ -1,0 +1,157 @@
+#
+# Makefile for lib/et
+#
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+top_builddir = ../..
+my_dir = lib/et
+INSTALL = @INSTALL@
+
+DEP_MAKEFILE = $(DEP_LIB_MAKEFILES)
+
+@MCONFIG@
+
+all:: compile_et com_err.pc
+
+OBJS= error_message.o et_name.o init_et.o com_err.o com_right.o
+SRCS = $(srcdir)/error_message.c $(srcdir)/et_name.c $(srcdir)/init_et.c \
+	$(srcdir)/com_err.c $(srcdir)/com_right.c
+
+HFILES= com_err.h
+SHARE_FILES= et_c.awk et_h.awk
+
+LIBRARY= libcom_err
+LIBDIR= et
+
+ELF_VERSION = 2.1
+ELF_SO_VERSION = 2
+ELF_IMAGE = libcom_err
+ELF_MYDIR = et
+ELF_INSTALL_DIR = $(root_libdir)
+ELF_OTHER_LIBS = @SEM_INIT_LIB@
+
+BSDLIB_VERSION = 1.1
+BSDLIB_IMAGE = libcom_err
+BSDLIB_MYDIR = et
+BSDLIB_INSTALL_DIR = $(root_libdir)
+
+#
+# what to build...
+#
+.c.o:
+	$(E) "	CC $<"
+	$(Q) $(CC) $(ALL_CFLAGS) -c $< -o $@
+@PROFILE_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -g -pg -o profiled/$*.o -c $<
+@CHECKER_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -checker -g -o checker/$*.o -c $<
+@ELF_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -fPIC -o elfshared/$*.o -c $<
+@BSDLIB_CMT@	$(Q) $(CC) $(ALL_CFLAGS) $(BSDLIB_PIC_FLAG) -o pic/$*.o -c $<
+
+@MAKEFILE_LIBRARY@
+@MAKEFILE_ELF@
+@MAKEFILE_BSDLIB@
+@MAKEFILE_PROFILE@
+@MAKEFILE_CHECKER@
+
+compile_et: $(DEP_SUBSTITUTE) $(srcdir)/compile_et.sh.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE) $(srcdir)/compile_et.sh.in compile_et
+	$(Q) $(CHMOD) +x compile_et
+
+com_err.ps : com_err.dvi
+com_err.dvi: com_err.texinfo
+
+com_err_abt.html: $(srcdir)/com_err.texinfo
+	$(E) "	TEXI2HTML $@"
+	-$(Q) texi2html -split_chapter $(srcdir)/com_err.texinfo
+	-$(Q) if test -d com_err ; then \
+		mv com_err/* . ; rmdir com_err ; \
+		fi
+
+com_err.pc: $(srcdir)/com_err.pc.in $(top_builddir)/config.status
+	$(E) "	CONFIG.STATUS $@"
+	$(Q) cd $(top_builddir); CONFIG_FILES=lib/et/com_err.pc ./config.status
+
+#libcom_err.o:	$(LIBOBJS)
+#	$(LD) -r -s -o libcom_err.o $(LIBOBJS)
+#	chmod -x libcom_err.o
+
+TAGS:	$(SRCS)
+	$(TAGS) $(SRCS)
+
+installdirs::
+	$(E) "	MKINSTALLDIRS $(libdir) $(includedir)/et $(datadir)/et $(bindir) $(man1dir) $(man3dir)"
+	$(Q) $(MKINSTALLDIRS) $(DESTDIR)$(libdir) \
+		$(DESTDIR)$(includedir)/et $(DESTDIR)$(datadir)/et \
+		$(DESTDIR)$(bindir) $(DESTDIR)$(man1dir) \
+		$(DESTDIR)$(man3dir) $(DESTDIR)$(libdir)/pkgconfig
+
+install:: compile_et libcom_err.a $(HFILES) installdirs com_err.pc
+	$(E) "	INSTALL_DATA $(libdir)/libcom_err.a"
+	$(Q) $(INSTALL_DATA) libcom_err.a $(DESTDIR)$(libdir)/libcom_err.a
+	-$(Q) $(RANLIB) $(DESTDIR)$(libdir)/libcom_err.a
+	$(Q) $(CHMOD) $(LIBMODE) $(DESTDIR)$(libdir)/libcom_err.a
+	$(Q) for i in $(HFILES); do \
+		echo "	INSTALL_DATA $(includedir)/et/$$i"; \
+		$(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(includedir)/et/$$i; \
+	done
+	$(Q) for i in $(SHARE_FILES); do \
+		echo "	INSTALL_DATA $(datadir)/et/$$i"; \
+		$(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(datadir)/et/$$i; \
+	done
+	$(E) "	INSTALL_SCRIPT $(bindir)/compile_et"
+	$(Q) $(INSTALL_SCRIPT) compile_et $(DESTDIR)$(bindir)/compile_et
+	$(E) "	INSTALL_DATA $(man3dir)/com_err.3"
+	$(Q) $(INSTALL_DATA) $(srcdir)/com_err.3 $(DESTDIR)$(man3dir)/com_err.3
+	$(E) "	INSTALL_DATA $(man1dir)/compile_et.1"
+	$(Q) $(INSTALL_DATA) $(srcdir)/compile_et.1 \
+			$(DESTDIR)$(man1dir)/compile_et.1
+	$(E) "	INSTALL_DATA $(libdir)/pkgconfig/com_err.pc"
+	$(Q) $(INSTALL_DATA) com_err.pc $(DESTDIR)$(libdir)/pkgconfig/com_err.pc
+
+uninstall::
+	$(RM) -f $(DESTDIR)$(libdir)/libcom_err.a \
+		$(DESTDIR)$(bindir)/compile_et \
+		$(DESTDIR)$(libdir)/pkgconfig/com_err.pc
+	$(RM) -rf $(DESTDIR)$(includedir)/et $(DESTDIR)$(datadir)/et
+
+check:: compile_et
+	for i in $(srcdir)/test_cases/*.et ; do \
+		t=`basename $$i | sed -e 's/.et//'`; \
+		./compile_et --build-tree $$i ; \
+		diff -c $(srcdir)/test_cases/$$t.c $$t.c > $$t.failed; \
+		if [ $$? -ne 0 ]; then echo Test case $$t failed; exit 1 ; fi ; \
+		diff -c $(srcdir)/test_cases/$$t.h $$t.h >> $$t.failed; \
+		if [ $$? -ne 0 ]; then echo Test case $$t failed; exit 1 ; fi ; \
+		$(RM) -f $$t.c $$t.h $$t.failed; \
+		echo "Test case $$t succeeded" ; \
+	done
+
+clean::
+	$(RM) -f compile_et libcom_err.a libcom_err_p.a com_err.info
+	$(RM) -f $(OBJS) profiled/*
+	$(RM) -f *~ \#* *.bak *.otl *.aux *.toc *.PS *.dvi *.ps TAGS *.ln *.html
+	$(RM) -f ../libcom_err.a ../libcom_err_p.a
+
+mostlyclean:: clean
+distclean:: clean
+	$(RM) -f .depend Makefile com_err.pc \
+		$(srcdir)/TAGS $(srcdir)/Makefile.in.old
+
+$(OBJS): subdirs
+
+# +++ Dependency line eater +++
+# 
+# Makefile dependencies follow.  This must be the last section in
+# the Makefile.in file
+#
+error_message.o: $(srcdir)/error_message.c $(srcdir)/com_err.h \
+ $(srcdir)/error_table.h $(srcdir)/internal.h
+et_name.o: $(srcdir)/et_name.c $(srcdir)/com_err.h $(srcdir)/error_table.h \
+ $(srcdir)/internal.h
+init_et.o: $(srcdir)/init_et.c $(srcdir)/com_err.h $(srcdir)/error_table.h
+com_err.o: $(srcdir)/com_err.c $(srcdir)/com_err.h $(srcdir)/error_table.h \
+ $(srcdir)/internal.h
+com_right.o: $(srcdir)/com_right.c $(srcdir)/com_err.h \
+ $(srcdir)/error_table.h

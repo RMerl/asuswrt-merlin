@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: com_err
+Description: Common error description library
+Version: @E2FSPROGS_VERSION@
+Requires:
+Cflags: -I${includedir}/et
+Libs: -L${libdir} -lcom_err
+Libs.private: @SEM_INIT_LIB@

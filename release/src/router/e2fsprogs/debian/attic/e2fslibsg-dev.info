@@ -1,0 +1,4 @@
+DESCR="Library of routines to manipulate an ext2 filesystem."
+SECTION_MATCH="Development"
+SECTION_NAME="Development"
+FILE=libext2fs.info

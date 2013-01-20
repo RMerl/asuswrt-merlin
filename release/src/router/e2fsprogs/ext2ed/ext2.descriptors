@@ -1,0 +1,976 @@
+Extended 2 filesystem structure definitions for ext2ed.
+
+Most of this file is just copied from the ext2 main include file.
+
+My parser is very primitive - It only searches for the struct keywords,
+and uses the variables in there. The rest of the file is just ignored.
+
+You will find at the end a few additional types which are not aviable in
+the original include file, such as the types "file" and "dir". They have
+no variables, but are necessary due to the way ext2ed binds C commands
+to specific types.
+
+Gadi Oxman, 7/95
+
+Here is the original copyright:
+
+/*
+ *  linux/include/linux/ext2_fs.h
+ *
+ *  Copyright (C) 1992, 1993, 1994  Remy Card (card@masi.ibp.fr)
+ *                                  Laboratoire MASI - Institut Blaise Pascal
+ *                                  Universite Pierre et Marie Curie (Paris VI)
+ *
+ *  from
+ *
+ *  linux/include/linux/minix_fs.h
+ *
+ *  Copyright (C) 1991, 1992  Linus Torvalds
+ */
+
+
+/*
+ * ACL structures
+ */
+struct ext2_acl_header	/* Header of Access Control Lists */
+{
+	unsigned long aclh_size;
+	unsigned long aclh_file_count;
+	unsigned long aclh_acle_count;
+	unsigned long aclh_first_acle;
+};
+
+struct ext2_acl_entry	/* Access Control List Entry */
+{
+	unsigned long  acle_size;
+	unsigned short acle_perms;	/* Access permissions */
+	unsigned short acle_type;	/* Type of entry */
+	unsigned short acle_tag;	/* User or group identity */
+	unsigned short acle_pad1;
+	unsigned long  acle_next;	/* Pointer on next entry for the */
+					/* same inode or on next free entry */
+};
+
+/*
+ * Structure of a blocks group descriptor
+ */
+
+struct ext2_group_desc
+{
+	__u32	bg_block_bitmap;		/* Blocks bitmap block */
+	__u32	bg_inode_bitmap;		/* Inodes bitmap block */
+	__u32	bg_inode_table;		/* Inodes table block */
+	__u16	bg_free_blocks_count;	/* Free blocks count */
+	__u16	bg_free_inodes_count;	/* Free inodes count */
+	__u16	bg_used_dirs_count;	/* Directories count */
+	__u16	bg_pad;
+	__u32   bg_reserved[0];
+	__u32   bg_reserved[1];
+	__u32   bg_reserved[2];
+};
+
+/*
+ * Structure of an inode on the disk
+ */
+struct ext2_inode {
+	__u16 i_mode;		/* File mode */
+	__u16 i_uid;		/* Owner Uid */
+	__u32  i_size;		/* Size in bytes */
+	__u32  i_atime;		/* Access time */
+	__u32  i_ctime;		/* Creation time */
+	__u32  i_mtime;		/* Modification time */
+	__u32  i_dtime;		/* Deletion Time */
+	__u16  i_gid;		/* Group Id */
+	__u16  i_links_count;	/* Links count */
+	__u32  i_blocks;	/* Blocks count */
+	__u32  i_flags;		/* File flags */
+	__u32  l_i_reserved1;
+	__u32  i_block[0]; /* Pointers to blocks */
+	__u32  i_block[1]; /* Pointers to blocks */
+	__u32  i_block[2]; /* Pointers to blocks */
+	__u32  i_block[3]; /* Pointers to blocks */
+	__u32  i_block[4]; /* Pointers to blocks */
+	__u32  i_block[5]; /* Pointers to blocks */
+	__u32  i_block[6]; /* Pointers to blocks */
+	__u32  i_block[7]; /* Pointers to blocks */
+	__u32  i_block[8]; /* Pointers to blocks */
+	__u32  i_block[9]; /* Pointers to blocks */
+	__u32  i_block[10]; /* Pointers to blocks */
+	__u32  i_block[11]; /* Pointers to blocks */
+	__u32  i_block[12]; /* Pointers to blocks */
+	__u32  i_block[13]; /* Pointers to blocks */
+	__u32  i_block[14]; /* Pointers to blocks */
+	__u32  i_version;	/* File version (for NFS) */
+	__u32  i_file_acl;	/* File ACL */
+	__u32  i_dir_acl;	/* Directory ACL */
+	__u32  i_faddr;		/* Fragment address */
+	__u8   l_i_frag;	/* Fragment number */
+	__u8   l_i_fsize;	/* Fragment size */
+	__u16  i_pad1;
+	__u16	l_i_uid_high;	/* these 2 fields    */
+	__u16	l_i_gid_high;	/* were reserved2[0] */
+	__u32  l_i_reserved2;
+};
+
+/*
+ * Structure of the super block
+ */
+struct ext2_super_block {
+	__u32	s_inodes_count;		/* Inodes count */
+	__u32	s_blocks_count;		/* Blocks count */
+	__u32	s_r_blocks_count;	/* Reserved blocks count */
+	__u32	s_free_blocks_count;	/* Free blocks count */
+	__u32	s_free_inodes_count;	/* Free inodes count */
+	__u32	s_first_data_block;	/* First Data Block */
+	__u32	s_log_block_size;	/* Block size */
+	__s32	s_log_frag_size;	/* Fragment size */
+	__u32	s_blocks_per_group;	/* # Blocks per group */
+	__u32	s_frags_per_group;	/* # Fragments per group */
+	__u32	s_inodes_per_group;	/* # Inodes per group */
+	__u32	s_mtime;		/* Mount time */
+	__u32	s_wtime;		/* Write time */
+	__u16	s_mnt_count;		/* Mount count */
+	__s16	s_max_mnt_count;	/* Maximal mount count */
+	__u16	s_magic;		/* Magic signature */
+	__u16	s_state;		/* File system state */
+	__u16	s_errors;		/* Behaviour when detecting errors */
+	__u16	s_minor_rev_level; 	/* minor revision level */
+	__u32	s_lastcheck;		/* time of last check */
+	__u32	s_checkinterval;	/* max. time between checks */
+	__u32	s_creator_os;		/* OS */
+	__u32	s_rev_level;		/* Revision level */
+	__u16	s_def_resuid;		/* Default uid for reserved blocks */
+	__u16	s_def_resgid;		/* Default gid for reserved blocks */
+	__u32	s_first_ino; 		/* First non-reserved inode */
+	__u16   s_inode_size; 		/* size of inode structure */
+	__u16	s_block_group_nr; 	/* block group # of this superblock */
+	__u32	s_feature_compat; 	/* compatible feature set */
+	__u32	s_feature_incompat; 	/* incompatible feature set */
+	__u32	s_feature_ro_compat; 	/* readonly-compatible feature set */
+	char[16] s_uuid;		/* 128-bit uuid for volume */
+	char[16] s_volume_name; 	/* volume name */
+	char[64] s_last_mounted; 	/* directory where last mounted */
+	__u32	s_algorithm_usage_bitmap; /* For compression */
+	/*
+	 * Performance hints.  Directory preallocation should only
+	 * happen if the EXT2_FEATURE_COMPAT_DIR_PREALLOC flag is on.
+	 */
+	__u8	s_prealloc_blocks;	/* Nr of blocks to try to preallocate*/
+	__u8	s_prealloc_dir_blocks;	/* Nr to preallocate for dirs */
+	__u16	s_padding1;
+	/* 
+	 * Journaling support valid if EXT2_FEATURE_COMPAT_HAS_JOURNAL set.
+	 */
+	char[16] s_journal_uuid;	/* uuid of journal superblock */
+	__u32	s_journal_inum;		/* inode number of journal file */
+	__u32	s_journal_dev;		/* device number of journal file */
+	__u32	s_last_orphan;		/* start of list of inodes to delete */
+
+
+	__u32  s_reserved[0];	/* Padding to the end of the block */
+	__u32  s_reserved[1];
+	__u32  s_reserved[2];
+	__u32  s_reserved[3];
+	__u32  s_reserved[4];
+	__u32  s_reserved[5];
+	__u32  s_reserved[6];
+	__u32  s_reserved[7];
+	__u32  s_reserved[8];
+	__u32  s_reserved[9];
+	__u32  s_reserved[10];
+	__u32  s_reserved[11];
+	__u32  s_reserved[12];
+	__u32  s_reserved[13];
+	__u32  s_reserved[14];
+	__u32  s_reserved[15];
+	__u32  s_reserved[16];
+	__u32  s_reserved[17];
+	__u32  s_reserved[18];
+	__u32  s_reserved[19];
+	__u32  s_reserved[20];
+	__u32  s_reserved[21];
+	__u32  s_reserved[22];
+	__u32  s_reserved[23];
+	__u32  s_reserved[24];
+	__u32  s_reserved[25];
+	__u32  s_reserved[26];
+	__u32  s_reserved[27];
+	__u32  s_reserved[28];
+	__u32  s_reserved[29];
+	__u32  s_reserved[30];
+	__u32  s_reserved[31];
+	__u32  s_reserved[32];
+	__u32  s_reserved[33];
+	__u32  s_reserved[34];
+	__u32  s_reserved[35];
+	__u32  s_reserved[36];
+	__u32  s_reserved[37];
+	__u32  s_reserved[38];
+	__u32  s_reserved[39];
+	__u32  s_reserved[40];
+	__u32  s_reserved[41];
+	__u32  s_reserved[42];
+	__u32  s_reserved[43];
+	__u32  s_reserved[44];
+	__u32  s_reserved[45];
+	__u32  s_reserved[46];
+	__u32  s_reserved[47];
+	__u32  s_reserved[48];
+	__u32  s_reserved[49];
+	__u32  s_reserved[50];
+	__u32  s_reserved[51];
+	__u32  s_reserved[52];
+	__u32  s_reserved[53];
+	__u32  s_reserved[54];
+	__u32  s_reserved[55];
+	__u32  s_reserved[56];
+	__u32  s_reserved[57];
+	__u32  s_reserved[58];
+	__u32  s_reserved[59];
+	__u32  s_reserved[60];
+	__u32  s_reserved[61];
+	__u32  s_reserved[62];
+	__u32  s_reserved[63];
+	__u32  s_reserved[64];
+	__u32  s_reserved[65];
+	__u32  s_reserved[66];
+	__u32  s_reserved[67];
+	__u32  s_reserved[68];
+	__u32  s_reserved[69];
+	__u32  s_reserved[70];
+	__u32  s_reserved[71];
+	__u32  s_reserved[72];
+	__u32  s_reserved[73];
+	__u32  s_reserved[74];
+	__u32  s_reserved[75];
+	__u32  s_reserved[76];
+	__u32  s_reserved[77];
+	__u32  s_reserved[78];
+	__u32  s_reserved[79];
+	__u32  s_reserved[80];
+	__u32  s_reserved[81];
+	__u32  s_reserved[82];
+	__u32  s_reserved[83];
+	__u32  s_reserved[84];
+	__u32  s_reserved[85];
+	__u32  s_reserved[86];
+	__u32  s_reserved[87];
+	__u32  s_reserved[88];
+	__u32  s_reserved[89];
+	__u32  s_reserved[90];
+	__u32  s_reserved[91];
+	__u32  s_reserved[92];
+	__u32  s_reserved[93];
+	__u32  s_reserved[94];
+	__u32  s_reserved[95];
+	__u32  s_reserved[96];
+	__u32  s_reserved[97];
+	__u32  s_reserved[98];
+	__u32  s_reserved[99];
+	__u32  s_reserved[100];
+	__u32  s_reserved[101];
+	__u32  s_reserved[102];
+	__u32  s_reserved[103];
+	__u32  s_reserved[104];
+	__u32  s_reserved[105];
+	__u32  s_reserved[106];
+	__u32  s_reserved[107];
+	__u32  s_reserved[108];
+	__u32  s_reserved[109];
+	__u32  s_reserved[110];
+	__u32  s_reserved[111];
+	__u32  s_reserved[112];
+	__u32  s_reserved[113];
+	__u32  s_reserved[114];
+	__u32  s_reserved[115];
+	__u32  s_reserved[116];
+	__u32  s_reserved[117];
+	__u32  s_reserved[118];
+	__u32  s_reserved[119];
+	__u32  s_reserved[120];
+	__u32  s_reserved[121];
+	__u32  s_reserved[122];
+	__u32  s_reserved[123];
+	__u32  s_reserved[124];
+	__u32  s_reserved[125];
+	__u32  s_reserved[126];
+	__u32  s_reserved[127];
+	__u32  s_reserved[128];
+	__u32  s_reserved[129];
+	__u32  s_reserved[130];
+	__u32  s_reserved[131];
+	__u32  s_reserved[132];
+	__u32  s_reserved[133];
+	__u32  s_reserved[134];
+	__u32  s_reserved[135];
+	__u32  s_reserved[136];
+	__u32  s_reserved[137];
+	__u32  s_reserved[138];
+	__u32  s_reserved[139];
+	__u32  s_reserved[140];
+	__u32  s_reserved[141];
+	__u32  s_reserved[142];
+	__u32  s_reserved[143];
+	__u32  s_reserved[144];
+	__u32  s_reserved[145];
+	__u32  s_reserved[146];
+	__u32  s_reserved[147];
+	__u32  s_reserved[148];
+	__u32  s_reserved[149];
+	__u32  s_reserved[150];
+	__u32  s_reserved[151];
+	__u32  s_reserved[152];
+	__u32  s_reserved[153];
+	__u32  s_reserved[154];
+	__u32  s_reserved[155];
+	__u32  s_reserved[156];
+	__u32  s_reserved[157];
+	__u32  s_reserved[158];
+	__u32  s_reserved[159];
+	__u32  s_reserved[160];
+	__u32  s_reserved[161];
+	__u32  s_reserved[162];
+	__u32  s_reserved[163];
+	__u32  s_reserved[164];
+	__u32  s_reserved[165];
+	__u32  s_reserved[166];
+	__u32  s_reserved[167];
+	__u32  s_reserved[168];
+	__u32  s_reserved[169];
+	__u32  s_reserved[170];
+	__u32  s_reserved[171];
+	__u32  s_reserved[172];
+	__u32  s_reserved[173];
+	__u32  s_reserved[174];
+	__u32  s_reserved[175];
+	__u32  s_reserved[176];
+	__u32  s_reserved[177];
+	__u32  s_reserved[178];
+	__u32  s_reserved[179];
+	__u32  s_reserved[180];
+	__u32  s_reserved[181];
+	__u32  s_reserved[182];
+	__u32  s_reserved[183];
+	__u32  s_reserved[184];
+	__u32  s_reserved[185];
+	__u32  s_reserved[186];
+	__u32  s_reserved[187];
+	__u32  s_reserved[188];
+	__u32  s_reserved[189];
+	__u32  s_reserved[190];
+	__u32  s_reserved[191];
+	__u32  s_reserved[192];
+	__u32  s_reserved[193];
+	__u32  s_reserved[194];
+	__u32  s_reserved[195];
+	__u32  s_reserved[196];
+};
+
+The following is actually not used, due to the variable length of the
+name field. EXT2ED handles directories through the type "dir" below.
+
+/*
+ * Structure of a directory entry
+ */
+
+/* struct ext2_dir_entry { */
+/*
+	__u32  inode;			/* Inode number */
+	__u16 rec_len;			/* Directory entry length */
+	__u16 name_len;		/* Name length */
+	char           name[EXT2_NAME_LEN];	/* File name */
+};
+*/
+
+struct file {
+};
+
+struct dir {
+};
+
+struct block_bitmap {
+};
+
+struct inode_bitmap {
+};
+
+struct ext2_dx_root_node {
+	__u32 dot_inode;
+	__u16 dot_rec_len;
+	__u8 dot_name_len;
+	__u8 dot_file_type;
+	char[4] dot_name;
+	__u32 dot_dot_inode;
+	__u16 dot_dot_rec_len;
+	__u8 dot_dot_name_len;
+	__u8 dot_dot_file_type;
+	char[4] dot_dot_name;
+	__u32 reserved_zero;
+	__u8 hash_version; /* 0 now, 1 at release */
+	__u8 info_length; /* 8 */
+	__u8 indirect_levels;
+	__u8 unused_flags;
+	__u16 limit;
+	__u16 count;
+	__u32 block[0];
+	__u32 hash[1];
+	__u32 block[1];
+	__u32 hash[2];
+	__u32 block[2];
+	__u32 hash[3];
+	__u32 block[3];
+	__u32 hash[4];
+	__u32 block[4];
+	__u32 hash[5];
+	__u32 block[5];
+	__u32 hash[6];
+	__u32 block[6];
+	__u32 hash[7];
+	__u32 block[7];
+	__u32 hash[8];
+	__u32 block[8];
+	__u32 hash[9];
+	__u32 block[9];
+	__u32 hash[10];
+	__u32 block[10];
+	__u32 hash[11];
+	__u32 block[11];
+	__u32 hash[12];
+	__u32 block[12];
+	__u32 hash[13];
+	__u32 block[13];
+	__u32 hash[14];
+	__u32 block[14];
+	__u32 hash[15];
+	__u32 block[15];
+	__u32 hash[16];
+	__u32 block[16];
+	__u32 hash[17];
+	__u32 block[17];
+	__u32 hash[18];
+	__u32 block[18];
+	__u32 hash[19];
+	__u32 block[19];
+	__u32 hash[20];
+	__u32 block[20];
+	__u32 hash[21];
+	__u32 block[21];
+	__u32 hash[22];
+	__u32 block[22];
+	__u32 hash[23];
+	__u32 block[23];
+	__u32 hash[24];
+	__u32 block[24];
+	__u32 hash[25];
+	__u32 block[25];
+	__u32 hash[26];
+	__u32 block[26];
+	__u32 hash[27];
+	__u32 block[27];
+	__u32 hash[28];
+	__u32 block[28];
+	__u32 hash[29];
+	__u32 block[29];
+	__u32 hash[30];
+	__u32 block[30];
+	__u32 hash[31];
+	__u32 block[31];
+	__u32 hash[32];
+	__u32 block[32];
+	__u32 hash[33];
+	__u32 block[33];
+	__u32 hash[34];
+	__u32 block[34];
+	__u32 hash[35];
+	__u32 block[35];
+	__u32 hash[36];
+	__u32 block[36];
+	__u32 hash[37];
+	__u32 block[37];
+	__u32 hash[38];
+	__u32 block[38];
+	__u32 hash[39];
+	__u32 block[39];
+	__u32 hash[40];
+	__u32 block[40];
+	__u32 hash[41];
+	__u32 block[41];
+	__u32 hash[42];
+	__u32 block[42];
+	__u32 hash[43];
+	__u32 block[43];
+	__u32 hash[44];
+	__u32 block[44];
+	__u32 hash[45];
+	__u32 block[45];
+	__u32 hash[46];
+	__u32 block[46];
+	__u32 hash[47];
+	__u32 block[47];
+	__u32 hash[48];
+	__u32 block[48];
+	__u32 hash[49];
+	__u32 block[49];
+	__u32 hash[50];
+	__u32 block[50];
+	__u32 hash[51];
+	__u32 block[51];
+	__u32 hash[52];
+	__u32 block[52];
+	__u32 hash[53];
+	__u32 block[53];
+	__u32 hash[54];
+	__u32 block[54];
+	__u32 hash[55];
+	__u32 block[55];
+	__u32 hash[56];
+	__u32 block[56];
+	__u32 hash[57];
+	__u32 block[57];
+	__u32 hash[58];
+	__u32 block[58];
+	__u32 hash[59];
+	__u32 block[59];
+	__u32 hash[60];
+	__u32 block[60];
+	__u32 hash[61];
+	__u32 block[61];
+	__u32 hash[62];
+	__u32 block[62];
+	__u32 hash[63];
+	__u32 block[63];
+	__u32 hash[64];
+	__u32 block[64];
+	__u32 hash[65];
+	__u32 block[65];
+	__u32 hash[66];
+	__u32 block[66];
+	__u32 hash[67];
+	__u32 block[67];
+	__u32 hash[68];
+	__u32 block[68];
+	__u32 hash[69];
+	__u32 block[69];
+	__u32 hash[70];
+	__u32 block[70];
+	__u32 hash[71];
+	__u32 block[71];
+	__u32 hash[72];
+	__u32 block[72];
+	__u32 hash[73];
+	__u32 block[73];
+	__u32 hash[74];
+	__u32 block[74];
+	__u32 hash[75];
+	__u32 block[75];
+	__u32 hash[76];
+	__u32 block[76];
+	__u32 hash[77];
+	__u32 block[77];
+	__u32 hash[78];
+	__u32 block[78];
+	__u32 hash[79];
+	__u32 block[79];
+	__u32 hash[80];
+	__u32 block[80];
+	__u32 hash[81];
+	__u32 block[81];
+	__u32 hash[82];
+	__u32 block[82];
+	__u32 hash[83];
+	__u32 block[83];
+	__u32 hash[84];
+	__u32 block[84];
+	__u32 hash[85];
+	__u32 block[85];
+	__u32 hash[86];
+	__u32 block[86];
+	__u32 hash[87];
+	__u32 block[87];
+	__u32 hash[88];
+	__u32 block[88];
+	__u32 hash[89];
+	__u32 block[89];
+	__u32 hash[80];
+	__u32 block[80];
+	__u32 hash[81];
+	__u32 block[81];
+	__u32 hash[82];
+	__u32 block[82];
+	__u32 hash[83];
+	__u32 block[83];
+	__u32 hash[84];
+	__u32 block[84];
+	__u32 hash[85];
+	__u32 block[85];
+	__u32 hash[86];
+	__u32 block[86];
+	__u32 hash[87];
+	__u32 block[87];
+	__u32 hash[88];
+	__u32 block[88];
+	__u32 hash[89];
+	__u32 block[89];
+	__u32 hash[90];
+	__u32 block[90];
+	__u32 hash[91];
+	__u32 block[91];
+	__u32 hash[92];
+	__u32 block[92];
+	__u32 hash[93];
+	__u32 block[93];
+	__u32 hash[94];
+	__u32 block[94];
+	__u32 hash[95];
+	__u32 block[95];
+	__u32 hash[96];
+	__u32 block[96];
+	__u32 hash[97];
+	__u32 block[97];
+	__u32 hash[98];
+	__u32 block[98];
+	__u32 hash[99];
+	__u32 block[99];
+	__u32 hash[100];
+	__u32 block[100];
+	__u32 hash[101];
+	__u32 block[101];
+	__u32 hash[102];
+	__u32 block[102];
+	__u32 hash[103];
+	__u32 block[103];
+	__u32 hash[104];
+	__u32 block[104];
+	__u32 hash[105];
+	__u32 block[105];
+	__u32 hash[106];
+	__u32 block[106];
+	__u32 hash[107];
+	__u32 block[107];
+	__u32 hash[108];
+	__u32 block[108];
+	__u32 hash[109];
+	__u32 block[109];
+	__u32 hash[110];
+	__u32 block[110];
+	__u32 hash[111];
+	__u32 block[111];
+	__u32 hash[112];
+	__u32 block[112];
+	__u32 hash[113];
+	__u32 block[113];
+	__u32 hash[114];
+	__u32 block[114];
+	__u32 hash[115];
+	__u32 block[115];
+	__u32 hash[116];
+	__u32 block[116];
+	__u32 hash[117];
+	__u32 block[117];
+	__u32 hash[118];
+	__u32 block[118];
+	__u32 hash[119];
+	__u32 block[119];
+	__u32 hash[120];
+	__u32 block[120];
+	__u32 hash[121];
+	__u32 block[121];
+	__u32 hash[122];
+	__u32 block[122];
+	__u32 hash[123];
+	__u32 block[123];
+	__u32 hash[124];
+	__u32 block[124];
+	__u32 hash[125];
+	__u32 block[125];
+	__u32 hash[126];
+	__u32 block[126];
+	__u32 hash[127];
+	__u32 block[127];
+};
+
+struct ext2_dx_int_node {
+	__u32 fake_inode;
+	__u16 fake_rec_len;
+	__u8 fake_name_len;
+	__u8 fake_file_type;
+	__u16 limit;
+	__u16 count;
+	__u32 block[0];
+	__u32 hash[1];
+	__u32 block[1];
+	__u32 hash[2];
+	__u32 block[2];
+	__u32 hash[3];
+	__u32 block[3];
+	__u32 hash[4];
+	__u32 block[4];
+	__u32 hash[5];
+	__u32 block[5];
+	__u32 hash[6];
+	__u32 block[6];
+	__u32 hash[7];
+	__u32 block[7];
+	__u32 hash[8];
+	__u32 block[8];
+	__u32 hash[9];
+	__u32 block[9];
+	__u32 hash[10];
+	__u32 block[10];
+	__u32 hash[11];
+	__u32 block[11];
+	__u32 hash[12];
+	__u32 block[12];
+	__u32 hash[13];
+	__u32 block[13];
+	__u32 hash[14];
+	__u32 block[14];
+	__u32 hash[15];
+	__u32 block[15];
+	__u32 hash[16];
+	__u32 block[16];
+	__u32 hash[17];
+	__u32 block[17];
+	__u32 hash[18];
+	__u32 block[18];
+	__u32 hash[19];
+	__u32 block[19];
+	__u32 hash[20];
+	__u32 block[20];
+	__u32 hash[21];
+	__u32 block[21];
+	__u32 hash[22];
+	__u32 block[22];
+	__u32 hash[23];
+	__u32 block[23];
+	__u32 hash[24];
+	__u32 block[24];
+	__u32 hash[25];
+	__u32 block[25];
+	__u32 hash[26];
+	__u32 block[26];
+	__u32 hash[27];
+	__u32 block[27];
+	__u32 hash[28];
+	__u32 block[28];
+	__u32 hash[29];
+	__u32 block[29];
+	__u32 hash[30];
+	__u32 block[30];
+	__u32 hash[31];
+	__u32 block[31];
+	__u32 hash[32];
+	__u32 block[32];
+	__u32 hash[33];
+	__u32 block[33];
+	__u32 hash[34];
+	__u32 block[34];
+	__u32 hash[35];
+	__u32 block[35];
+	__u32 hash[36];
+	__u32 block[36];
+	__u32 hash[37];
+	__u32 block[37];
+	__u32 hash[38];
+	__u32 block[38];
+	__u32 hash[39];
+	__u32 block[39];
+	__u32 hash[40];
+	__u32 block[40];
+	__u32 hash[41];
+	__u32 block[41];
+	__u32 hash[42];
+	__u32 block[42];
+	__u32 hash[43];
+	__u32 block[43];
+	__u32 hash[44];
+	__u32 block[44];
+	__u32 hash[45];
+	__u32 block[45];
+	__u32 hash[46];
+	__u32 block[46];
+	__u32 hash[47];
+	__u32 block[47];
+	__u32 hash[48];
+	__u32 block[48];
+	__u32 hash[49];
+	__u32 block[49];
+	__u32 hash[50];
+	__u32 block[50];
+	__u32 hash[51];
+	__u32 block[51];
+	__u32 hash[52];
+	__u32 block[52];
+	__u32 hash[53];
+	__u32 block[53];
+	__u32 hash[54];
+	__u32 block[54];
+	__u32 hash[55];
+	__u32 block[55];
+	__u32 hash[56];
+	__u32 block[56];
+	__u32 hash[57];
+	__u32 block[57];
+	__u32 hash[58];
+	__u32 block[58];
+	__u32 hash[59];
+	__u32 block[59];
+	__u32 hash[60];
+	__u32 block[60];
+	__u32 hash[61];
+	__u32 block[61];
+	__u32 hash[62];
+	__u32 block[62];
+	__u32 hash[63];
+	__u32 block[63];
+	__u32 hash[64];
+	__u32 block[64];
+	__u32 hash[65];
+	__u32 block[65];
+	__u32 hash[66];
+	__u32 block[66];
+	__u32 hash[67];
+	__u32 block[67];
+	__u32 hash[68];
+	__u32 block[68];
+	__u32 hash[69];
+	__u32 block[69];
+	__u32 hash[70];
+	__u32 block[70];
+	__u32 hash[71];
+	__u32 block[71];
+	__u32 hash[72];
+	__u32 block[72];
+	__u32 hash[73];
+	__u32 block[73];
+	__u32 hash[74];
+	__u32 block[74];
+	__u32 hash[75];
+	__u32 block[75];
+	__u32 hash[76];
+	__u32 block[76];
+	__u32 hash[77];
+	__u32 block[77];
+	__u32 hash[78];
+	__u32 block[78];
+	__u32 hash[79];
+	__u32 block[79];
+	__u32 hash[80];
+	__u32 block[80];
+	__u32 hash[81];
+	__u32 block[81];
+	__u32 hash[82];
+	__u32 block[82];
+	__u32 hash[83];
+	__u32 block[83];
+	__u32 hash[84];
+	__u32 block[84];
+	__u32 hash[85];
+	__u32 block[85];
+	__u32 hash[86];
+	__u32 block[86];
+	__u32 hash[87];
+	__u32 block[87];
+	__u32 hash[88];
+	__u32 block[88];
+	__u32 hash[89];
+	__u32 block[89];
+	__u32 hash[80];
+	__u32 block[80];
+	__u32 hash[81];
+	__u32 block[81];
+	__u32 hash[82];
+	__u32 block[82];
+	__u32 hash[83];
+	__u32 block[83];
+	__u32 hash[84];
+	__u32 block[84];
+	__u32 hash[85];
+	__u32 block[85];
+	__u32 hash[86];
+	__u32 block[86];
+	__u32 hash[87];
+	__u32 block[87];
+	__u32 hash[88];
+	__u32 block[88];
+	__u32 hash[89];
+	__u32 block[89];
+	__u32 hash[90];
+	__u32 block[90];
+	__u32 hash[91];
+	__u32 block[91];
+	__u32 hash[92];
+	__u32 block[92];
+	__u32 hash[93];
+	__u32 block[93];
+	__u32 hash[94];
+	__u32 block[94];
+	__u32 hash[95];
+	__u32 block[95];
+	__u32 hash[96];
+	__u32 block[96];
+	__u32 hash[97];
+	__u32 block[97];
+	__u32 hash[98];
+	__u32 block[98];
+	__u32 hash[99];
+	__u32 block[99];
+	__u32 hash[100];
+	__u32 block[100];
+	__u32 hash[101];
+	__u32 block[101];
+	__u32 hash[102];
+	__u32 block[102];
+	__u32 hash[103];
+	__u32 block[103];
+	__u32 hash[104];
+	__u32 block[104];
+	__u32 hash[105];
+	__u32 block[105];
+	__u32 hash[106];
+	__u32 block[106];
+	__u32 hash[107];
+	__u32 block[107];
+	__u32 hash[108];
+	__u32 block[108];
+	__u32 hash[109];
+	__u32 block[109];
+	__u32 hash[110];
+	__u32 block[110];
+	__u32 hash[111];
+	__u32 block[111];
+	__u32 hash[112];
+	__u32 block[112];
+	__u32 hash[113];
+	__u32 block[113];
+	__u32 hash[114];
+	__u32 block[114];
+	__u32 hash[115];
+	__u32 block[115];
+	__u32 hash[116];
+	__u32 block[116];
+	__u32 hash[117];
+	__u32 block[117];
+	__u32 hash[118];
+	__u32 block[118];
+	__u32 hash[119];
+	__u32 block[119];
+	__u32 hash[120];
+	__u32 block[120];
+	__u32 hash[121];
+	__u32 block[121];
+	__u32 hash[122];
+	__u32 block[122];
+	__u32 hash[123];
+	__u32 block[123];
+	__u32 hash[124];
+	__u32 block[124];
+	__u32 hash[125];
+	__u32 block[125];
+	__u32 hash[126];
+	__u32 block[126];
+	__u32 hash[127];
+	__u32 block[127];
+};
+
+

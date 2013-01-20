@@ -1,0 +1,3 @@
+lib/*.so.?.*
+lib/*.so.?
+usr/doc/e2fslibsg/*

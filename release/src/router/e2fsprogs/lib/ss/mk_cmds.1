@@ -1,0 +1,59 @@
+.\" Copyright (c) 2003 Theodore Ts'o
+.\"
+.TH MK_CMDS 1 "2003" E2FSPROGS
+.SH NAME
+mk_cmds \- error table compiler
+.SH SYNOPSIS
+.B mk_cmds
+file
+.SH DESCRIPTION
+.B Mk_cmds
+converts a table listing command names and associated help messages
+into a C source file suitable for use with the
+.IR ss (3)
+library.
+
+The source file name must end with a suffix of ``.ct''; the file
+consists of a declaration supplying the name of the command table:
+
+.B command_table
+.I name
+
+followed by entries of the form:
+
+[
+.B request
+|
+.B unimplemented
+] 
+.I name,
+"
+.I string
+"[, abbrev]...;
+
+and a final
+
+.B end
+
+to indicate the end of the table.
+
+A C source file is generated which should be compiled and linked
+with the object files use the ss library.   
+
+A ``#'' in the source file is treated as a comment character, and all
+remaining text to the end of the source line will be ignored.
+
+.SH BUGS
+
+Since the original
+.B mk_cmds
+uses a very simple parser based on
+.IR yacc (1), 
+and this current version of 
+.B mk_cmds
+uses an awk/sed combination of scripts, 
+its error recovery leaves much to be desired.
+
+.SH "SEE ALSO"
+ss (3)
+

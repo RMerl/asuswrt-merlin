@@ -1,0 +1,5 @@
+DESCRIPTION="test bg overhead calculation"
+FS_SIZE=1024
+MKE2FS_OPTS="-b 1024 -m 0 -g 256 -N 3745"
+. $cmd_dir/run_mke2fs
+

@@ -1,0 +1,3 @@
+e2fsprogs source: weak-library-dev-dependency ss-dev on libss2 (= ${mainBinary})
+e2fsprogs source: weak-library-dev-dependency comerr-dev on libcomerr2 (= ${mainBinary})
+e2fsprogs source: weak-library-dev-dependency uuid-dev on libuuid1 (= ${mainBinary})

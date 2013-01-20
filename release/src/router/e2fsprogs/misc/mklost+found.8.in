@@ -1,0 +1,43 @@
+.\" -*- nroff -*-
+.\" Copyright 1993, 1994, 1995 by Theodore Ts'o.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\" 
+.TH MKLOST+FOUND 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+mklost+found \- create a lost+found directory on a mounted Linux
+second extended file system
+.SH SYNOPSIS
+.B mklost+found
+.SH DESCRIPTION
+.B mklost+found
+is used to create a
+.I lost+found
+directory in the current working directory on a Linux second extended
+file system.  There is normally a
+.I lost+found
+directory in the root directory of each filesystem.
+.PP
+.B mklost+found
+pre-allocates disk blocks to the
+.I lost+found
+directory so that when
+.BR e2fsck (8)
+is being run to recover a filesystem, it does not need to allocate blocks in
+the filesystem to store a large number of unlinked files.  This ensures that
+.B e2fsck
+will not have to allocate data blocks in the filesystem during recovery.
+.SH OPTIONS
+There are none.
+.SH AUTHOR
+.B mklost+found
+has been written by Remy Card <Remy.Card@linux.org>.  It is currently being
+maintained by Theodore Ts'o <tytso@alum.mit.edu>.
+.SH BUGS
+There are none :-)
+.SH AVAILABILITY
+.B mklost+found
+is part of the e2fsprogs package and is available from 
+http://e2fsprogs.sourceforge.net.
+.SH SEE ALSO
+.BR e2fsck (8),
+.BR mke2fs (8)

@@ -1,0 +1,69 @@
+	To install the second extended file system management programs,
+just follow the steps:
+
+1) Change directory into the top of the e2fsprogs source tree
+
+2) Create a build directory and cd into it:
+
+	mkdir build; cd build
+
+3)  Run the configure script
+
+	../configure
+
+	If you wish to turn on ELF shared libraries, add the option
+--enable-elf-shlibs.  If you wish to build profiling libraries, add
+the option --enable-profile.
+
+	Note that if you are building on an older system (i.e., a 2.4
+kernel and/or glibc 2.2), the use of thread local storage will probably
+cause programs that use the uuid library to core dump.  To disable
+thread local storage, use the configure option --disable-tls.
+
+4)  Compile the programs
+
+	make
+
+5)   Check to make sure the installation built correctly:
+
+	make check
+
+6)  Install the programs
+
+	Run `make install'
+
+7)  Install the include files and libraries
+
+	You can run `make install-libs' to install the include files and
+libraries.  Please note that this installation is not needed for the
+programs to work.  It is only needed if you expect to develop other
+programs using the libraries or if you want to compile other program
+using these libraries (like the 4.4BSD dump and restore port).
+
+8)  Remove any pre-formatted man pages.  
+
+	Some distributions will have pre-formatted manual pages which
+will always be displayed in preference to newer man pages in /usr/man.
+If this is the case, you may need to manually remove them in order to
+see the correct manual pages.  The shell script in
+install-utils/remove_preformat_manpages may be helpful in doing so.
+
+9)  Make sure your /etc/fstab file is correct.
+
+	Some distributions install an /etc/fstab which is missing the
+fifth and sixth field of filesystem entry, which are the dump
+frequency, and the fsck pass number, respectively.  The problem with
+this is that the getmntent() library routine interprets those missing
+fields as "0", and a pass number of 0 is documented as meaning that
+fsck should not check that particular filesystem.  If your entries in
+your /etc/fstab file look liks this:
+
+/dev/hda4       /        ext2        defaults
+
+you should add "1 1" at the end of each line, so that they look like this:
+
+/dev/hda4       /        ext2        defaults	1	1
+
+	There is a script in install-utils/convfstab (donated by
+Michael Weller) that may help you correct your /etc/fstab file.
+

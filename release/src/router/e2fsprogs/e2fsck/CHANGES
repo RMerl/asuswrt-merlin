@@ -1,0 +1,53 @@
+[tytso:19940101.1200EST]
+
+Add new options -l and -L, to append to and modify the bad-blocks list.
+
+Fix bugs in bad-block cloning.
+
+[tytso:19931230.1832EST]
+
+Clean up e2fsck and library to be clean even when compiling with full
+warnings enabled.
+
+Make e2fsck deal with zero-length directories correctly.
+
+Deleted inodes from old ext2fs code (inodes with dtime set but
+non-zero link count) are detected, and the user is given the
+opportunity to clear them.
+
+The last bit in the last group of the block bitmap badding was not
+being checked; now fixed.
+
+The free_blocks and free_inodes count in the last group weren't being
+checked.  Now fixed.
+
+[tytso:19931101.0007EST]
+
+Fixed bugs with root reallocation; previously the parent pointers in
+the dirinfo structure would get corrupted, causing many different '..'
+links to be wrong.  Also, the inode link count for the root directory
+wasn't always being set correctly.  (All of this would be fixed on
+the second e2fsck, however).
+
+Fixed to recognize filesystem corruption caused by mke2fs 0.2b (where
+/ and /lost+found had non-zero dtime entries).  Offers to fix /'s
+dtime entry.
+
+e2fsck will now expand the /lost+found directory if it runs out of room.
+
+Fixed dependency on BLOCK_SIZE in pass2.  e2fsck will now handle 4k
+filesystems w/o problems.
+
+e2fsck will now move bad blocks found in the inode bitmaps, block
+bitmaps, and in the inode tables.  (Can't handle bad blocks found in
+the superblock and the group descriptors.)  (Doesn't update alternate
+superblocks, group descriptors.)
+
+e2fsck now supports the -b option, to allow a user to specify an
+alternate superblock.
+
+The -B option now specifies the blocksize of the filesystem.  (If not
+specified, and the -b option is specified, e2fsck will attempt to
+search through various blocksizes to find the correct one.)
+
+Added manual page.

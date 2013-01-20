@@ -1,0 +1,9 @@
+usr/lib/libcom_err.a
+usr/lib/libcom_err.so
+usr/include/et/*
+usr/include/com_err.h
+usr/share/man/man1/compile_et*
+usr/share/man/man3/com_err.3*
+usr/bin/compile_et
+usr/share/et/*
+usr/lib/pkgconfig/com_err.pc

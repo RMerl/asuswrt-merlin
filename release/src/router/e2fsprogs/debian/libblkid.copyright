@@ -1,0 +1,19 @@
+This package was added to the e2fsprogs debian source package by
+Theodore Ts'o <tytso@mit.edu> on Sat Mar 15 15:33:37 EST 2003
+
+It is part of the main e2fsprogs distribution, which can be found at:
+
+	http://sourceforge.net/projects/e2fsprogs
+
+Upstream Author: Theodore Ts'o <tytso@mit.edu>
+
+Copyright:
+
+Copyright (C) 1999, 2001 by Andries Brouwer
+Copyright (C) 1999, 2000, 2003 by Theodore Ts'o
+
+You are free to distribute this software under the terms of the GNU
+Lesser (Library) General Public License.
+
+On Debian systems, the complete text of the GNU Lesser (Library)
+General Public License can be found in /usr/share/common-licenses/LGPL-2.

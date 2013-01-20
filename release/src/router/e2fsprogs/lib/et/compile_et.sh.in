@@ -1,0 +1,62 @@
+#!/bin/sh
+#
+#
+
+datarootdir=@datarootdir@
+AWK=@AWK@
+DIR="${DIR-@datadir@/et}"
+ET_DIR="@ET_DIR@"
+
+if test "$1" = "--build-tree" ; then
+    shift;
+    DIR="$ET_DIR"
+fi
+
+if test "x$1" = x ; then
+    echo "Usage: compile_et file"
+    exit 1
+fi
+
+for as_var in \
+  LANG LANGUAGE LC_ADDRESS LC_ALL LC_COLLATE LC_CTYPE LC_IDENTIFICATION \
+  LC_MEASUREMENT LC_MESSAGES LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER \
+  LC_TELEPHONE LC_TIME
+do
+  if (set +x; test -z "`(eval $as_var=C; export $as_var) 2>&1`"); then
+    eval $as_var=C; export $as_var
+  else
+    $as_unset $as_var
+  fi
+done
+
+if test ! -f "$DIR/et_h.awk" || test ! -f "$DIR/et_c.awk" ; then
+    DIR="$ET_DIR"
+#    echo "Falling back to $DIR..."
+    if test ! -f "$DIR/et_h.awk" || test ! -f "$DIR/et_c.awk" ; then
+	echo "compile_et: Couldn't find compile_et's template files."
+	exit 1
+    fi
+fi
+
+ROOT=`echo $1 | sed -e s/.et$//`
+BASE=`basename $ROOT`
+
+if test ! -f "$ROOT.et" ; then
+    echo "compile_et: $ROOT.et: File not found"
+    exit 1;
+fi
+
+$AWK -f "${DIR}/et_h.awk" "outfile=${BASE}.h.$$" "outfn=${BASE}.h" "$ROOT.et"
+if test -f ${BASE}.h && cmp -s ${BASE}.h.$$ ${BASE}.h ; then
+    rm -f ${BASE}.h.$$
+else
+    mv -f ${BASE}.h.$$ ${BASE}.h
+    chmod -w ${BASE}.h
+fi
+$AWK -f "${DIR}/et_c.awk" "outfile=${BASE}.c.$$" "outfn=${BASE}.c" "$ROOT.et"
+if test -f ${BASE}.c && cmp -s ${BASE}.c.$$ ${BASE}.c ; then
+    rm -f ${BASE}.c.$$
+else
+    mv -f ${BASE}.c.$$ ${BASE}.c
+    chmod -w ${BASE}.c
+fi

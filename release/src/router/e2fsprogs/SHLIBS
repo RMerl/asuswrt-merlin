@@ -1,0 +1,35 @@
+Library:libcom_err.o
+Description: Common error code library
+Maintainer: Theodore Ts'o
+Email: tytso@mit.edu
+Start: 0x66800000
+End:   0x6687ffff
+
+Library:libss.o
+Description: Generic Subsystem library (Simple tty UI)
+Maintainer: Theodore Ts'o
+Email: tytso@mit.edu
+Start: 0x66880000
+End:   0x668fffff
+
+Library:libext2fs.so
+Description: The ext2fs (raw interface) library
+Maintainer: Theodore Ts'o
+Email: tytso@mit.edu
+Start: 0x66900000
+End:   0x6697ffff
+
+Library:libe2p.so
+Description: The e2p (ext2fs's programmers) library
+Maintainer: Theodore Ts'o
+Email: tytso@mit.edu
+Start: 0x66980000
+End:   0x669fffff
+
+Library:libuuid.so
+Description: DCE Universally Unique ID (UUID) library
+Maintainer: Theodore Ts'o
+Email: tytso@mit.edu
+Start: 0x67900000
+End:   0x679fffff
+

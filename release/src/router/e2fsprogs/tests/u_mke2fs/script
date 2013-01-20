@@ -1,0 +1,36 @@
+printf "e2undo with mke2fs: "
+if test -x $E2UNDO_EXE; then
+
+E2FSPROGS_UNDO_DIR=./
+export E2FSPROGS_UNDO_DIR
+TDB_FILE=./mke2fs-test.img.e2undo
+OUT=$test_name.log
+rm -f $TDB_FILE >/dev/null 2>&1
+
+dd if=/dev/zero of=$TMPFILE bs=1k count=512 > /dev/null 2>&1
+
+echo mke2fs -q -F -o Linux -b 1024 test.img  > $OUT
+$MKE2FS -F -o Linux -I 128 -b 1024 $TMPFILE  >> $OUT 2>&1
+md5=`md5sum $TMPFILE | cut -d " " -f 1`
+echo md5sum before mke2fs $md5 >> $OUT
+
+echo using mke2fs to test e2undo >> $OUT
+$MKE2FS -q -F -o Linux -I 256 -O uninit_bg -E lazy_itable_init=1 -b 1024 $TMPFILE  >> $OUT 2>&1
+new_md5=`md5sum $TMPFILE | cut -d " " -f 1`
+echo md5sum after mke2fs $new_md5 >> $OUT
+
+$E2UNDO_EXE  $TDB_FILE $TMPFILE  >> $OUT 2>&1
+new_md5=`md5sum $TMPFILE | cut -d " " -f 1`
+echo md5sum after e2undo $new_md5 >> $OUT
+
+if [ $md5 = $new_md5 ]; then
+	echo "ok"
+	touch $test_name.ok
+	rm -f $test_name.failed
+else
+	rm -f $test_name.ok
+	ln -f $test_name.log $test_name.failed
+	echo "failed"
+fi
+rm -f $TDB_FILE $TMPFILE
+fi

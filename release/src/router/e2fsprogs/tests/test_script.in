@@ -1,0 +1,79 @@
+#!/bin/sh
+#
+# Test script for e2fsck
+#
+
+LC_ALL=C
+export LC_ALL
+
+case "$1" in 
+    --valgrind)
+    	export USE_VALGRIND="valgrind -q --sim-hints=lax-ioctls"
+	shift;
+	;;
+    --valgrind-leakcheck)
+    	export USE_VALGRIND="valgrind --sim-hints=lax-ioctls --leak-check=full --show-reachable=yes --log-file=/tmp/valgrind-%p.log"
+	shift;
+	;;
+esac
+
+if test "$1"x = x ; then
+  TESTS=`ls -d $SRCDIR/[a-zA-Z]_* | $EGREP -v "\.failed|\.new"`
+else
+  TESTS=
+  for i 
+  do
+    case $i in
+	*.failed|*.new)	continue ;;
+	[a-zA-Z])	TESTS="$TESTS $SRCDIR/${i}_*" ;;
+	*)		TESTS="$TESTS $SRCDIR/$i" ;;
+    esac
+  done
+fi
+
+cmd_dir=$SRCDIR
+
+if test "$TEST_CONFIG"x = x; then
+	TEST_CONFIG=$SRCDIR/test_config
+fi
+
+. $TEST_CONFIG
+
+for test_dir in $TESTS
+do
+	test_name=`echo $test_dir | sed -e 's;.*/;;'`
+	if [ -f $test_dir ] ; then
+	    continue;
+	fi
+	if [ ! -d $test_dir ] ; then
+		echo "The test '$test_name' does not exist."
+		continue;
+	fi
+	if [ -z "`ls $test_dir`" ]; then
+		continue
+	fi
+	if [ -f $test_dir/name ]; then
+		test_description=`cat $test_dir/name`
+		printf "%s: %s: " "$test_name" "$test_description"
+	else
+		printf "%s: " "$test_name"
+	fi
+	if [ -f $test_dir/script ]; then
+		. $test_dir/script
+	else
+		test_base=`echo $test_name | sed -e 's/_.*//'`
+		default_script=$SRCDIR/defaults/${test_base}_script
+		if [ -f $default_script ]; then
+			. $SRCDIR/defaults/${test_base}_script
+		else
+			echo "Missing test script!"
+		fi
+	fi
+done
+
+num_ok=`ls *.ok 2>/dev/null | wc -l`
+num_failed=`ls *.failed 2>/dev/null | wc -l`
+
+echo "$num_ok tests succeeded	$num_failed tests failed"
+
+test "$num_failed" -eq 0 || exit 1

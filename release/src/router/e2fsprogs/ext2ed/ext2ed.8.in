@@ -1,0 +1,72 @@
+.\" -*- nroff -*-
+.TH EXT2ED 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+ext2ed \- ext2 file system editor
+.SH SYNOPSIS
+.B ext2ed
+.SH DESCRIPTION
+.B ext2ed
+in an 
+.B editor
+for the
+.B second extended filesystem.
+Its aim is to show you the various internal filesystem structures in an
+intuitive form so that you would be able to easily understand and modify
+them.
+.SH DOCUMENTATION
+The documentation is not available in man page format. Instead, I have
+written three articles which are related to ext2ed:
+
+The first article is
+.B The user's guide.
+This article explains how to use ext2ed.
+
+The second article is
+.B The Ext2fs overview.
+This article gives an overview of internal structure of the ext2 filesystem.
+You need to understand the internal layout in order to effectively edit
+your filesystem.
+
+The third article is
+.B EXT2ED - Design and implementation.
+This article explains how I constructed ext2ed. You may want to have a look
+in it if you plan to view or modify the source code.
+
+.SH WARNING
+
+.B
+Do not use ext2ed on a mounted filesystem.
+
+.SH FILES
+.TP
+.I /usr/bin/ext2ed
+The program itself.
+.TP
+.I @root_sysconfdir@/ext2ed.conf
+ext2ed's configuration file.
+.TP
+.I @datadir@/ext2.descriptors
+Definition of the various objects for the ext2 filesystem.
+.TP
+.I /var/log/ext2ed.log
+Log file of actual changes made to the filesystem.
+.TP
+.I /usr/man/man8/ext2ed.8
+The manual page.
+.TP
+.I @datadir@/doc/ext2ed/user-guide-0.1.ps
+The user's guide.
+.TP
+.I @datadir@/doc/ext2ed/Ext2fs-overview-0.1.ps
+Technical overview of the ext2 filesystem.
+.TP
+.I @datadir@/doc/ext2ed/ext2ed-design-0.1.ps
+EXT2ED design notes.
+
+.SH BUGS
+Filesystems bigger than 2 GB aren't yet supported.
+.SH AUTHOR
+Gadi Oxman <tgud@tochnapc2.technion.ac.il>
+.SH SEE ALSO
+.BR e2fsck (8),
+.BR debugfs (8)

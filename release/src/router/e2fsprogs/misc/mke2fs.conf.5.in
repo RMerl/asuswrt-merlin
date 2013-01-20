@@ -1,0 +1,366 @@
+.\" -*- nroff -*-
+.\" Copyright 2006 by Theodore Ts'o.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\" 
+.TH mke2fs.conf 5 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+mke2fs.conf \- Configuration file for mke2fs
+.SH DESCRIPTION
+.I mke2fs.conf
+is the configuration file for 
+.BR mke2fs (8).  
+It controls the default parameters used by 
+.BR mke2fs (8)
+when it is creating ext2 or ext3 filesystems.
+.PP
+The
+.I mke2fs.conf
+file uses an INI-style format.  Stanzas, or top-level sections, are 
+delimited by square braces: [ ].  Within each section, each line 
+defines a relation, which assigns tags to values, or to a subsection,
+which contains further relations or subsections.   
+.\" Tags can be assigned multiple values
+An example of the INI-style format used by this configuration file 
+follows below:
+.P
+	[section1]
+.br
+		tag1 = value_a
+.br
+		tag1 = value_b
+.br
+		tag2 = value_c
+.P
+	[section 2]
+.br
+		tag3 = {
+.br
+			subtag1 = subtag_value_a
+.br
+			subtag1 = subtag_value_b
+.br
+			subtag2 = subtag_value_c
+.br
+		}
+.br
+		tag1 = value_d
+.br
+		tag2 = value_e
+.br
+	}
+.P
+Comments are delimited by a semicolon (';') or a hash ('#') character 
+at the beginning of the comment, and are terminated by the end of 
+line character.
+.P
+Tags and values must be quoted using double quotes if they contain
+spaces.  Within a quoted string, the standard backslash interpretations 
+apply: "\en" (for the newline character), 
+"\et" (for the tab character), "\eb" (for the backspace character), 
+and "\e\e" (for the backslash character).
+.P
+The following stanzas are used in the 
+.I mke2fs.conf
+file.  They will be described in more detail in future sections of this
+document.
+.TP 
+.I [defaults]
+Contains relations which define the default parameters 
+used by
+.BR mke2fs (8).
+In general, these defaults may be overridden by a definition in the
+.B fs_types
+stanza, or by an command-line option provided by the user.
+.TP 
+.I [fs_types]
+Contains relations which define defaults that should be used for specific
+filesystem types.  The filesystem type can be specified explicitly using
+the 
+.B -T
+option to
+.BR mke2fs (8).
+.SH THE [defaults] STANZA
+The following relations are defined in the 
+.I [defaults]
+stanza.
+.TP
+.I base_features
+This relation specifies the filesystems features which are enabled in
+newly created filesystems.  It may be overridden by the
+.I base_features
+relation found in the filesystem or usage type subsection of
+the
+.I [fs_types] 
+stanza.
+.TP
+.I default_features
+This relation specifies a set of features that should be added or
+removed to the features listed in the
+.I base_features
+relation.  It may be overridden by the filesystem-specific 
+.I default_features
+in the filesystem or usage type subsection of
+.IR [fs_types] ,
+and by the 
+.B -O
+command-line option
+to 
+.BR mke2fs (8).
+.TP
+.I force_undo
+This relation, if set to a boolean value of true, forces
+.B mke2fs
+to always try to create an undo file, even if the undo file might be
+huge and it might extend the time to create the filesystem image
+because the inode table isn't being initialized lazily.
+.TP
+.I fs_type
+This relation specifies the default filesystem type if the user does not
+specify it via the
+.B \-t
+option, or if
+.B mke2fs
+is not started using a program name of the form
+.BI mkfs. fs-type\fR.
+If both the user and the
+.B mke2fs.conf
+file does not specify a default filesystem type, mke2fs will use a
+default filesystem type of
+.IR ext3
+if a journal was requested via a command-line option, or
+.I ext2
+if not.
+.TP
+.I blocksize
+This relation specifies the default blocksize if the user does not
+specify a blocksize on the command line, and the filesystem-type
+specific section of the configuration file does not specify a blocksize.
+.TP
+.I hash_alg
+This relation specifies the default hash algorithm used for the
+new filesystems with hashed b-tree directories.  Valid algorithms
+accepted are:
+.IR legacy ,
+.IR half_md4 ,
+and
+.IR tea .
+.TP
+.I inode_ratio
+This relation specifies the default inode ratio if the user does not
+specify one on the command line, and the filesystem-type
+specific section of the configuration file does not specify a default
+inode ratio.
+.TP
+.I inode_size
+This relation specifies the default inode size if the user does not
+specify one on the command line, and the filesystem-type
+specific section of the configuration file does not specify a default
+inode size.
+.TP
+.I undo_dir
+This relation specifies the directory where the undo file should be
+stored.  It can be overridden via the
+.B E2FSPROGS_UNDO_DIR
+environment variable.  If the directory location is set to the value
+.IR none ,
+.B mke2fs
+will not create an undo file.
+.SH THE [fs_types] STANZA
+Each tag in the
+.I [fs_types] 
+stanza names a filesystem type or usage type which can be specified via the
+.B \-t
+or
+.B \-T
+options to
+.BR mke2fs (8),
+respectively.
+.P
+The
+.B mke2fs
+program constructs a list of fs_types by concatenating the filesystem
+type (i.e., ext2, ext3, etc.) with the usage type list.  For most
+configuration options,
+.B mke2fs
+will look for a subsection in the
+.I [fs_types]
+stanza corresponding with each entry in the constructed list, with later
+entries overriding earlier filesystem or usage types.
+For
+example, consider the following
+.B mke2fs.conf
+fragment:
+.P
+[defaults]
+.br
+	base_features = sparse_super,filetype,resize_inode,dir_index
+.br
+	blocksize = 4096
+.br
+	inode_size = 256
+.br
+	inode_ratio = 16384
+.br
+
+.br
+[fs_types]
+.br
+	ext3 = {
+.br
+		features = has_journal
+.br
+	}
+.br
+	ext4 = {
+.br
+		features = extents,flex_bg
+.br
+		inode_size = 256
+.br
+	}
+.br
+	small = {
+.br
+		blocksize = 1024
+.br
+		inode_ratio = 4096
+.br
+	}
+.br
+	floppy = {
+.br
+		features = ^resize_inode
+.br
+		blocksize = 1024
+.br
+		inode_size = 128
+.br
+	}
+.P
+If mke2fs started with a program name of
+.BR mke2fs.ext4 ,
+then the filesystem type of ext4 will be used.  If the filesystem is
+smaller than 3 megabytes, and no usage type is specified, then
+.B mke2fs
+will use a default
+usage type of
+.IR floppy .
+This results in an fs_types list of "ext4, floppy".   Both the ext4
+subsection and the floppy subsection define an
+.I inode_size
+relation, but since the later entries in the fs_types list supersede
+earlier ones, the configuration parameter for fs_types.floppy.inode_size
+will be used, so the filesystem  will have an inode size of 128.
+.P
+The exception to this resolution is the
+.I features
+tag, which is specifies a set of changes to the features used by the
+filesystem, and which is cumulative.  So in the above example, first
+the configuration relation defaults.base_features would enable an
+initial feature set with the sparse_super, filetype, resize_inode, and
+dir_index features enabled.  Then configuration relation
+fs_types.ext4.features would enable the extents and flex_bg
+features, and finally the configuration relation
+fs_types.floppy.features would remove
+the resize_inode feature, resulting in a filesystem feature set
+consisting of the sparse_super, filetype, resize_inode, dir_index,
+extents_and flex_bg features.
+.P
+For each filesystem type, the following tags may be used in that 
+fs_type's subsection:
+.TP
+.I base_features
+This relation specifies the features which are initially enabled for this
+filesystem type.  Only one
+.I base_features
+will be used, so if there are multiple entries in the fs_types list
+whose subsections define the
+.I base_features
+relation, only the last will be used by
+.BR mke2fs (8).
+.TP
+.I features
+This relation specifies a comma-separated list of features edit
+requests which modify the feature set
+used by the newly constructed filesystem.  The syntax is the same as the
+.B -O
+command-line option to
+.BR mke2fs (8);
+that is, a feature can be prefixed by a caret ('^') symbol to disable
+a named feature.  Each
+.I feature
+relation specified in the fs_types list will be applied in the order
+found in the fs_types list.
+.TP
+.I default_features
+This relation specifies set of features which should be enabled or 
+disabled after applying the features listed in the
+.I base_features
+and
+.I features
+relations.  It may be overridden by the
+.B -O
+command-line option to
+.BR mke2fs (8).
+.TP
+.I blocksize
+This relation specifies the default blocksize if the user does not
+specify a blocksize on the command line.
+.TP
+.I lazy_itable_init
+This relation is a boolean which specifies whether the inode table should 
+be lazily initialized.  It only has meaning if the uninit_bg feature is
+enabled.  If lazy_itable_init is true and the uninit_bg feature is
+enabled,  the inode table will
+not fully initialized by 
+.BR mke2fs (8).
+This speeds up filesystem
+initialization noticeably, but it requires the kernel to finish
+initializing the filesystem in the background when the filesystem is
+first mounted.
+.TP
+.I inode_ratio
+This relation specifies the default inode ratio if the user does not
+specify one on the command line.
+.TP
+.I inode_size
+This relation specifies the default inode size if the user does not
+specify one on the command line.
+.TP
+.I hash_alg
+This relation specifies the default hash algorithm used for the
+new filesystems with hashed b-tree directories.  Valid algorithms
+accepted are:
+.IR legacy ,
+.IR half_md4 ,
+and
+.IR tea .
+.TP
+.I flex_bg_size
+This relation specifies the number of block goups that will be packed
+together to create one large virtual block group on an ext4 filesystem.
+This improves meta-data locality and performance on meta-data heavy
+workloads.  The number of goups must be a power of 2 and may only be
+specified if the flex_bg filesystem feature is enabled.
+.I options
+This relation specifies additional extended options which should be
+treated by
+.BR mke2fs (8)
+as if they were prepended to the argument of the
+.B -E
+option.  This can be used to configure the default extended options used
+by
+.BR mke2fs (8)
+on a per-filesystem type basis.
+.TP
+.I discard
+This relation is a boolean which specifies whether the
+.BR mke2fs (8)
+should attempt to discard device prior to filesystem creation.
+.SH FILES
+.TP
+.I /etc/mke2fs.conf
+The configuration file for 
+.BR mke2fs (8).
+.SH SEE ALSO
+.BR mke2fs (8)

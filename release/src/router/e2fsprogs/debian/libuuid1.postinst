@@ -1,0 +1,40 @@
+#!/bin/sh
+
+set -e
+
+ADDUSERCONF='/etc/adduser.conf'
+
+if test -f $ADDUSERCONF; then
+    FIRST_SYSTEM_UID=$(sed -n "s/^[[:space:]]*FIRST_SYSTEM_UID[[:space:]]*=[[:space:]]*[\"']\?\([^\"']*\)[\"']\?/\1/p" $ADDUSERCONF)
+    LAST_SYSTEM_UID=$(sed -n "s/^[[:space:]]*LAST_SYSTEM_UID[[:space:]]*=[[:space:]]*[\"']\?\([^\"']*\)[\"']\?/\1/p" $ADDUSERCONF)
+    FIRST_SYSTEM_GID=$(sed -n "s/^[[:space:]]*FIRST_SYSTEM_GID[[:space:]]*=[[:space:]]*[\"']\?\([^\"']*\)[\"']\?/\1/p" $ADDUSERCONF)
+    LAST_SYSTEM_GID=$(sed -n "s/^[[:space:]]*LAST_SYSTEM_GID[[:space:]]*=[[:space:]]*[\"']\?\([^\"']*\)[\"']\?/\1/p" $ADDUSERCONF)
+fi
+
+if test -z "$FIRST_SYSTEM_UID"; then
+    FIRST_SYSTEM_UID=100
+fi
+if test -z "$LAST_SYSTEM_UID"; then
+    LAST_SYSTEM_UID=999
+fi
+if test -z "$FIRST_SYSTEM_GID"; then
+    FIRST_SYSTEM_GID=100
+fi
+if test -z "$LAST_SYSTEM_GID"; then
+    LAST_SYSTEM_GID=999
+fi
+
+if ! getent group | grep -q libuuid; then
+  groupadd -f -K GID_MIN=$FIRST_SYSTEM_GID -K GID_MAX=$LAST_SYSTEM_GID libuuid
+fi
+if ! getent passwd | grep -q libuuid; then
+   useradd -d /var/lib/libuuid -K UID_MIN=$FIRST_SYSTEM_UID -K UID_MAX=$LAST_SYSTEM_UID -g libuuid libuuid
+fi
+
+mkdir -p /var/lib/libuuid
+chown libuuid:libuuid /var/lib/libuuid
+chmod 2775 /var/lib/libuuid
+
+#DEBHELPER#
+
+exit 0

@@ -1,0 +1,52 @@
+Pass 1: Checking inodes, blocks, and sizes
+Inode 12 is in extent format, but superblock is missing EXTENTS feature
+Fix? yes
+
+Inode 12 has an invalid extent
+	(logical block 0, invalid physical block 21994527527949, len 17)
+Clear? yes
+
+Inode 12, i_blocks is 34, should be 0.  Fix? yes
+
+Inode 13 missing EXTENT_FL, but is in extents format
+Fix? yes
+
+Inode 17 has an invalid extent
+	(logical block 0, invalid physical block 22011707397135, len 15)
+Clear? yes
+
+Inode 17, i_blocks is 32, should be 0.  Fix? yes
+
+Error while reading over extent tree in inode 18: Corrupt extent header
+Clear inode? yes
+
+Inode 18, i_blocks is 2, should be 0.  Fix? yes
+
+Pass 2: Checking directory structure
+Entry 'fbad-flag' in / (2) has deleted/unused inode 18.  Clear? yes
+
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Block bitmap differences:  -1081 +4611 -(5121--5142)
+Fix? yes
+
+Free blocks count wrong for group #0 (7081, counted=7098).
+Fix? yes
+
+Free blocks count wrong (7081, counted=7098).
+Fix? yes
+
+Inode bitmap differences:  -18
+Fix? yes
+
+Free inodes count wrong for group #0 (237, counted=238).
+Fix? yes
+
+Free inodes count wrong (237, counted=238).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 18/256 files (0.0% non-contiguous), 1094/8192 blocks
+Exit status is 1

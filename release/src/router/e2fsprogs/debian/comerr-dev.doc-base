@@ -1,0 +1,12 @@
+Document: comerr-manual
+Title: The com_err library
+Author: Ken Raeburn and Bill Sommerfeld
+Abstract: A library, and associated utilities,
+ which allow a more uniform way for libraries
+ to return errors to their callers, and for programs
+ to describe errors and exceptional conditions to their users.
+Section: Programming
+
+Format: HTML
+Index: /usr/share/doc/comerr-dev/html-info/com_err_toc.html
+Files: /usr/share/doc/comerr-dev/html-info/*.html

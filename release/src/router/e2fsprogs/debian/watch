@@ -1,0 +1,4 @@
+version=3
+http://sf.net/e2fsprogs/e2fsprogs-([0-9].+)\.tar\.gz
+#ftp://ftp.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/e2fsprogs-([0-9].+)\.tar\.gz
+

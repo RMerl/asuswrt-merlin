@@ -1,0 +1,80 @@
+.\" Copyright 2001 Andreas Dilger (adilger@turbolinux.com)
+.\"
+.\" This man page was created for libblkid.so.1.0 from e2fsprogs-1.24.
+.\"
+.\" This file may be copied under the terms of the GNU Public License.
+.\"
+.\" Created  Wed Sep 14 12:02:12 2001, Andreas Dilger
+.TH LIBBLKID 3 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+libblkid \- block device identification library
+.SH SYNOPSIS
+.B #include <blkid/blkid.h>
+.sp
+.B cc
+.I file.c
+.B \-lblkid
+.SH DESCRIPTION
+The
+.B libblkid
+library is used to identify block devices (disks) as to their content (e.g.
+filesystem type) as well as extracting additional information such as
+filesystem labels/volume names, unique identifiers/serial numbers, etc.
+A common use is to allow use of LABEL= and UUID= tags instead of hard-coding
+specific block device names into configuration files.
+.P
+Block device information is normally kept in a cache file
+.I /etc/blkid.tab
+and is verified to still be valid before being returned to the user
+(if the user has read permission on the raw block device, otherwise not).
+The cache file also allows unprivileged users (normally anyone other
+than root, or those not in the "disk" group) to locate devices by label/id.
+The standard location of the cache file can be overridden by the
+environment variable BLKID_FILE.
+.P
+In situations where one is getting information about a single known device,
+it does not impact performance whether the cache is used or not (unless you
+are not able to read the block device directly).  If you are dealing with
+multiple devices, use of the cache is highly recommended (even if empty) as
+devices will be scanned at most one time and the on-disk cache will be
+updated if possible.  There is rarely a reason not to use the cache.
+.P
+In some cases (modular kernels), block devices are not even visible until
+after they are accessed the first time, so it is critical that there is
+some way to locate these devices without enumerating only visible devices,
+so the use of the cache file is
+.B required
+in this situation.
+.SH AUTHOR
+.B libblkid
+was written by Andreas Dilger for the ext2 filesystem utilties, with input
+from Ted Ts'o.  The library was subsequently heavily modified by Ted Ts'o.
+.SH FILES
+.TP
+.I /etc/blkid.tab
+Caches data extracted from each recognized block device.
+.SH AVAILABILITY
+.B libblkid
+is part of the e2fsprogs package since version 1.33 and is available from
+http://e2fsprogs.sourceforge.net.
+.SH COPYING
+.B libblkid
+is available under the terms of the GNU Library General Public License (LGPL),
+version 2 (or at your discretion any later version).  A copy of the LGPL
+should be included with this library in the file COPYING.  If not, write to
+.RS
+Free Software Foundation, Inc.
+.br
+51 Franklin St
+.br
+Fifth Floor
+.br
+Boston, MA  02110-1301  USA
+.RE
+.PP
+or visit
+.UR http://www.gnu.org/licenses/licenses.html#LGPL
+http://www.gnu.org/licenses/licenses.html#LGPL
+.UE
+.SH "SEE ALSO"
+.BR blkid (8)

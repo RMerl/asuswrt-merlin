@@ -1,0 +1,140 @@
+printf "e2fsck with resize_inode: "
+FSCK_OPT=-yf
+OUT=$test_name.log
+if [ -f $test_dir/expect.gz ]; then
+	EXP=tmp_expect
+	gunzip < $test_dir/expect.gz > $EXP1
+else
+	EXP=$test_dir/expect
+fi
+
+cp /dev/null $OUT
+
+dd if=/dev/zero of=$TMPFILE bs=1k count=512 > /dev/null 2>&1
+
+echo mke2fs -F -O resize_inode -o Linux -b 1024 -g 1024 test.img 16384 > $OUT
+$MKE2FS -F -O resize_inode -o Linux -b 1024 -g 1024 $TMPFILE 16384 2>&1 \
+	| sed -e '1d' | grep -v "automatically checked" | 
+	grep -v "whichever comes first" >> $OUT 
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '1d' $OUT.new | sed -e '/^JFS DEBUG:/d'  | tr -d \\015 >> $OUT
+rm -f $OUT.new
+
+echo ----------------------------------------------- >> $OUT
+
+echo " " >> $OUT
+echo "debugfs -R ''set_inode_field <7> block[2] 42'' -w $TMPFILE" > $OUT.new
+$DEBUGFS -R "set_inode_field <7> block[2] 42" -w $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '1d' $OUT.new | sed -e '/^JFS DEBUG:/d'  | tr -d \\015 >> $OUT
+rm -f $OUT.new
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '1d' $OUT.new | sed -e '/^JFS DEBUG:/d'  | tr -d \\015 >> $OUT
+rm -f $OUT.new
+
+echo ----------------------------------------------- >> $OUT
+
+echo " " >> $OUT
+echo "debugfs -R ''clri <7>'' -w $TMPFILE" > $OUT.new
+$DEBUGFS -R "clri <7>" -w $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '1d' $OUT.new | sed -e '/^JFS DEBUG:/d'  | tr -d \\015 >> $OUT
+rm -f $OUT.new
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '1d' $OUT.new | sed -e '/^JFS DEBUG:/d'  | tr -d \\015 >> $OUT
+rm -f $OUT.new
+
+echo ----------------------------------------------- >> $OUT
+
+echo " " >> $OUT
+echo "debugfs -R ''set_inode_field <7> bmap[524] 57'' -w $TMPFILE" > $OUT.new
+$DEBUGFS -R "set_inode_field <7> bmap[524] 57" -w $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '1d' $OUT.new | sed -e '/^JFS DEBUG:/d'  | tr -d \\015 >> $OUT
+rm -f $OUT.new
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '1d' $OUT.new | sed -e '/^JFS DEBUG:/d'  | tr -d \\015 >> $OUT
+rm -f $OUT.new
+
+echo ----------------------------------------------- >> $OUT
+
+echo " " >> $OUT
+echo "debugfs -R ''set_super_value reserved_gdt_blocks 15679'' -w $TMPFILE" > $OUT.new
+$DEBUGFS -R "set_super_value reserved_gdt_blocks 15679" -w $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '1d' $OUT.new | sed -e '/^JFS DEBUG:/d'  | tr -d \\015 >> $OUT
+rm -f $OUT.new
+
+echo ----------------------------------------------- >> $OUT
+
+echo " " >> $OUT
+echo "debugfs -R ''set_super_value reserved_gdt_blocks 32'' -w $TMPFILE" > $OUT.new
+$DEBUGFS -R "set_super_value reserved_gdt_blocks 32" -w $TMPFILE >> $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '2d' $OUT.new >> $OUT
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '1d' $OUT.new | sed -e '/^JFS DEBUG:/d'  | tr -d \\015 >> $OUT
+rm -f $OUT.new
+
+$FSCK $FSCK_OPT  -N test_filesys $TMPFILE > $OUT.new 2>&1
+status=$?
+echo Exit status is $status >> $OUT.new
+sed -e '1d' $OUT.new | sed -e '/^JFS DEBUG:/d'  | tr -d \\015 >> $OUT
+rm -f $OUT.new
+
+
+rm -f $test_name.ok $test_name.failed
+cmp -s $OUT $EXP
+status=$?
+
+if [ "$status" = 0 ] ; then
+	echo "ok"
+	touch $test_name.ok
+else
+	echo "failed"
+	diff $DIFF_OPTS $EXP $OUT > $test_name.failed
+	rm -f tmp_expect
+fi
+
+unset IMAGE FSCK_OPT OUT EXP
+

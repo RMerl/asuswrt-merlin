@@ -1,0 +1,8 @@
+libcom_err 2 libcomerr2 (>= 1.34-1)
+libss 2 libss2 (>= 1.34-1)
+ifdef(`UTIL_LINUX_NG',,
+``libuuid 1 libuuid1 (>= 1.34-1)
+libblkid 1 libblkid1 (>= 1.34-1)
+'')dnl
+libext2fs 2 e2fslibs (= ${Source-Version})
+libe2p 2 e2fslibs (= ${Source-Version})

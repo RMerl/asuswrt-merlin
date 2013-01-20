@@ -1,0 +1,118 @@
+#!/bin/sh
+#$Id$
+# Create Adobe-PostScript file that graphically displays the output of
+# dumpe2fs(8). Use "dumpe2fs | dconf" to create a PostScript file on stdout.
+# Developed and tested for Linux 1.0.
+# Copyright (c) 1994
+# Ulrich Windl
+# ALte Regensburger Strasse 11a
+# D-93149 Nittenau, Germany
+# <Ulrich.Windl@rz.uni-regensburg.de>
+SELF=`basename $0`
+AWKFILE=/tmp/${SELF}.awk
+TEMPFILE=/tmp/${SELF}.tmp
+echo '
+BEGIN {
+	print "B"
+}
+/^Inode count:/ {
+	ic=$3; next
+}
+/^Block count:/ {
+	bc=$3; next
+}
+/^First block:/ {
+	fb=$3; next
+}
+/^Block size:/ {
+	bs=$3; next
+}
+/^Blocks per group:/ {
+	bpg=$4
+	printf("BC %d\n", bpg)
+	printf("GC %d\n", (bc + bpg - 1) / bpg)
+	next
+}
+/^Inodes per group:/ {
+	ipg=$4; next
+}
+/^Last write time:/ {
+	lwtime=$0; gsub("Last write time:[ ]+", "", lwtime)
+	printf("T %s\n", lwtime)
+	next
+}
+/^Group [0-9]+:/ {
+	group=$2; gsub(":", "", group)
+	block=""
+	group_start=group*bpg+fb
+	group_end=group_start+bpg
+	printf("G %d : %d - %d\n", group, group_start, group_end)
+	next
+}
+/^[ ]+Free blocks: / {
+	for ( i=3; i < NF; ++i ) {
+		block=$i; gsub(",", "", block)
+		if ( index(block, "-") == 0 ) block=block "-" block
+		pos=index(block, "-")
+		printf("FB %d-%d\n",
+		       substr(block, 0, pos) - group_start,
+		       substr(block, pos + 1) - group_start)
+	}
+	if ( block == "" ) printf("Group %d is full\n", group)
+	print "----"
+	next
+}
+END {
+	printf("E %s\n", lwtime)
+}' >$AWKFILE
+awk -f $AWKFILE $* >$TEMPFILE
+echo '
+BEGIN {
+        printf("%%!PS-Adobe\n")
+        printf("%%%%BoundingBox: 0 0 1 1\n")
+	printf("/rect {/y2 exch def /x2 exch def /y1 exch def /x1 exch def\n")
+	printf("       newpath x1 y1 moveto x2 y1 lineto x2 y2 lineto\n")
+	printf("       x1 y2 lineto closepath} def\n")
+	printf("/fb {rect gsave 1.0 setgray fill grestore} def\n")
+	printf("/dg {rect gsave gsave 0.0 setgray fill grestore\n")
+	printf("     0.5 setgray stroke grestore} def\n")
+	printf("/textxy {moveto show} bind def\n")
+	printf("0.0001 setlinewidth\n")
+}
+$1 == "GC" && NF == 2 {
+	number_of_groups=$2
+	printf("/Times-Roman findfont %g scalefont setfont\n",
+	       1.0 / number_of_groups)
+	next
+}
+$1 == "BC" && NF == 2 {
+	blocks_per_group=$2; next
+}
+$1 == "T" && NF > 1 {
+	printf("(%s) %g %g textxy\n",
+	       substr($0, 2), 0, 1.02)
+	next
+}
+$1 == "G" && NF == 6 && $3 == ":" && $5 == "-" {
+	group_index=$2
+	gs=$4
+	ge=$6
+	height=1.0 / number_of_groups
+	vstart=group_index * height
+	printf("%% group %d of %d:\n0 %g 1 %g dg\n",
+	       group_index, number_of_groups, vstart, vstart + height)
+	printf("(Group %s) 1.02 %g textxy\n", group_index, vstart)
+	next
+}
+$1 == "FB" && NF == 2 {
+	pos = index($2, "-")
+	printf("%% hole %s\n%g %g %g %g fb\n",
+	       $2, substr($2, 0, pos) / blocks_per_group, vstart,
+	       (substr($2, pos + 1) + 1) / blocks_per_group, vstart + height)
+	next
+}
+END {
+    	printf("%%%%EOF\n")
+}
+' >$AWKFILE
+awk -f $AWKFILE $TEMPFILE

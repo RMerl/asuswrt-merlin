@@ -1,0 +1,8 @@
+	error_table	ovk
+
+error_code CHPASS_UTIL_PASSWORD_IN_DICTIONARY,
+"New password was found in a dictionary of possible passwords and\n\
+therefore may be easily guessed. Please choose another password.\n\
+See the ovpasswd man page for help in choosing a good password."
+
+	end

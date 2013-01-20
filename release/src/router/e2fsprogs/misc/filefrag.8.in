@@ -1,0 +1,43 @@
+.\" -*- nroff -*-
+.TH FILEFRAG 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+filefrag \- report on file fragmentation
+.SH SYNOPSIS
+.B filefrag
+[
+.B \-Bbsvx
+]
+[
+.I files...
+]
+.SH DESCRIPTION
+.B filefrag
+reports on how badly fragmented a particular file might be.  It makes 
+allowances for indirect blocks for ext2 and ext3 filesystems, but can be
+used on files for any filesystem.
+.PP
+The 
+.B filefrag
+program initially attempts to get the
+extent information using FIEMAP ioctl which is more efficient and faster.
+If FIEMAP is not supported then filefrag will fall back to using FIBMAP.
+.SH OPTIONS
+.TP
+.B \-B
+Force the use of the older FIBMAP ioctl instead of the FIEMAP ioctl for
+testing purposes.
+.TP
+.B \-b
+Use 1024 byte blocksize for the output.
+.TP
+.B \-s
+Sync the file before requesting the mapping.
+.TP
+.B \-v
+Be verbose when checking for file fragmentation.
+.TP
+.B \-x
+Display mapping of extended attributes.
+.SH AUTHOR
+.B filefrag
+was written by Theodore Ts'o <tytso@mit.edu>.

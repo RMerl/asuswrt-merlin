@@ -1,0 +1,4 @@
+?package(e2fslibsg-dev):needs="dwww" section="Apps/Programming"\
+  title="The ext2fs library." \
+  longtitle="A library to handle low-level structures in an ext2 filesystem"\
+  command="/usr/doc/e2fslibsg-dev/html-info/libext2fs_toc.html"

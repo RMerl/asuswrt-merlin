@@ -1,0 +1,403 @@
+.\" -*- nroff -*-
+.\" Copyright 1993, 1994, 1995 by Theodore Ts'o.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\" 
+.TH E2FSCK 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+e2fsck \- check a Linux ext2/ext3/ext4 file system
+.SH SYNOPSIS
+.B e2fsck
+[
+.B \-pacnyrdfkvtDFV
+]
+[
+.B \-b
+.I superblock
+]
+[
+.B \-B
+.I blocksize
+]
+[
+.BR \-l | \-L
+.I bad_blocks_file
+]
+[
+.B \-C
+.I fd
+]
+@JDEV@[
+@JDEV@.B \-j
+@JDEV@.I external-journal
+@JDEV@]
+[
+.B \-E
+.I extended_options
+]
+.I device
+.SH DESCRIPTION
+.B e2fsck
+is used to check the ext2/ext3/ext4 family of file systems.   
+For ext3 and ext4 filesystems that use a journal, if the system has been
+shut down uncleanly without any errors, normally, after replaying the
+committed transactions  in the journal, the file system should be
+marked as clean.   Hence, for filesystems that use journalling,
+.B e2fsck
+will normally replay the journal and exit, unless its superblock
+indicates that further checking is required.
+.PP
+.I device
+is the device file where the filesystem is stored (e.g.
+.IR /dev/hdc1 ).
+.PP
+Note that in general it is not safe to run
+.B e2fsck
+on mounted filesystems.  The only exception is if the
+.B \-n
+option is specified, and 
+.BR \-c , 
+.BR \-l ,
+or
+.B -L
+options are 
+.I not
+specified.   However, even if it is safe to do so, the results printed by
+.B e2fsck
+are not valid if the filesystem is mounted.   If 
+.B e2fsck
+asks whether or not you should check a filesystem which is mounted, 
+the only correct answer is ``no''.  Only experts who really know what
+they are doing should consider answering this question in any other way.
+.SH OPTIONS
+.TP
+.B \-a 
+This option does the same thing as the 
+.B \-p
+option.  It is provided for backwards compatibility only; it is
+suggested that people use 
+.B \-p 
+option whenever possible.
+.TP
+.BI \-b " superblock"
+Instead of using the normal superblock, use an alternative superblock
+specified by 
+.IR superblock .
+This option is normally used when the primary superblock has been
+corrupted.  The location of the backup superblock is dependent on the
+filesystem's blocksize.  For filesystems with 1k blocksizes, a backup
+superblock can be found at block 8193; for filesystems with 2k
+blocksizes, at block 16384; and for 4k blocksizes, at block 32768.  
+.IP
+Additional backup superblocks can be determined by using the 
+.B mke2fs 
+program using the 
+.B \-n
+option to print out where the superblocks were created.   The 
+.B \-b 
+option to 
+.BR mke2fs ,
+which specifies blocksize of the filesystem must be specified in order
+for the superblock locations that are printed out to be accurate.
+.IP
+If an alternative superblock is specified and  
+the filesystem is not opened read-only, e2fsck will make sure that the
+primary superblock is updated appropriately upon completion of the 
+filesystem check.
+.TP
+.BI \-B " blocksize"
+Normally, 
+.B e2fsck
+will search for the superblock at various different
+block sizes in an attempt to find the appropriate block size.
+This search can be fooled in some cases.  This option forces 
+.B e2fsck
+to only try locating the superblock at a particular blocksize.
+If the superblock is not found, 
+.B e2fsck 
+will terminate with a fatal error.
+.TP
+.B \-c
+This option causes 
+.B e2fsck 
+to use 
+.BR badblocks (8)
+program to do a read-only scan of the device in order to find any bad
+blocks.  If any bad blocks are found, they are added to the bad block
+inode to prevent them from being allocated to a file or directory.  If
+this option is specified twice, then the bad block scan will be done
+using a non-destructive read-write test.
+.TP
+.BI \-C " fd"
+This option causes
+.B e2fsck
+to write completion information to the specified file descriptor 
+so that the progress of the filesystem 
+check can be monitored.  This option is typically used by programs 
+which are running
+.BR e2fsck .
+If the file descriptor number is negative, then absolute value of
+the file descriptor will be used, and the progress information will be
+suppressed initially.  It can later be enabled by sending the
+.B e2fsck
+process a SIGUSR1 signal.
+If the file descriptor specified is 0, 
+.B e2fsck
+will print a completion bar as it goes about its business.  This requires
+that e2fsck is running on a video console or terminal.
+.TP
+.B \-d
+Print debugging output (useless unless you are debugging
+.BR e2fsck ).
+.TP
+.B \-D
+Optimize directories in filesystem.  This option causes e2fsck to
+try to optimize all directories, either by reindexing them if the
+filesystem supports directory indexing,  or by sorting and compressing
+directories for smaller directories, or for filesystems using
+traditional linear directories.
+.IP
+Even without the
+.B \-D
+option,
+.B e2fsck
+may sometimes optimize a few directories --- for example, if
+directory indexing is enabled and a directory is not indexed and would
+benefit from being indexed, or if the index structures are corrupted
+and need to be rebuilt.  The
+.B \-D
+option forces all directories in the filesystem to be optimized.  This can
+sometimes make them a little smaller and slightly faster to search, but
+in practice, you should rarely need to use this option.
+.IP
+The
+.B \-D
+option will detect directory entries with duplicate names in a single
+directory, which e2fsck normally does not enforce for performance reasons.
+.TP
+.BI \-E " extended_options"
+Set e2fsck extended options.  Extended options are comma
+separated, and may take an argument using the equals ('=') sign.  The 
+following options are supported:
+.RS 1.2i
+.TP
+.BI ea_ver= extended_attribute_version
+Set the version of the extended attribute blocks which
+.B e2fsck
+will require while checking the filesystem.  The version number may 
+be 1 or 2.  The default extended attribute version format is 2.
+.TP
+.BI journal_only
+Only replay the journal if required, but do not perform any further checks
+or repairs.
+.TP
+.BI fragcheck
+During pass 1, print a detailed report of any discontiguous blocks for
+files in the filesystem.
+.RE
+.TP
+.B \-f
+Force checking even if the file system seems clean.
+.TP
+.B \-F
+Flush the filesystem device's buffer caches before beginning.  Only
+really useful for doing 
+.B e2fsck 
+time trials.
+@JDEV@.TP
+@JDEV@.BI \-j " external-journal"
+@JDEV@Set the pathname where the external-journal for this filesystem can be
+@JDEV@found.
+.TP
+.BI \-k
+When combined with the 
+.B \-c
+option, any existing bad blocks in the bad blocks list are preserved,
+and any new bad blocks found by running
+.BR badblocks (8) 
+will be added to the existing bad blocks list.
+.TP
+.BI \-l " filename"
+Add the block numbers listed in the file specified by 
+.I filename
+to the list of bad blocks.  The format of this file is the same as the
+one generated by the 
+.BR badblocks (8)
+program.  Note that the block numbers are based on the blocksize
+of the filesystem.  Hence, 
+.BR badblocks (8)
+must be given the blocksize of the filesystem in order to obtain correct
+results.  As a result, it is much simpler and safer to use the 
+.B -c
+option to 
+.BR e2fsck ,
+since it will assure that the correct parameters are passed to the
+.B badblocks
+program.
+.TP
+.BI \-L " filename"
+Set the bad blocks list to be the list of blocks specified by 
+.IR filename .
+(This option is the same as the 
+.B \-l
+option, except the bad blocks list is cleared before the blocks listed
+in the file are added to the bad blocks list.)
+.TP
+.B \-n
+Open the filesystem read-only, and assume an answer of `no' to all
+questions.  Allows
+.B e2fsck
+to be used non-interactively.  This option
+may not be specified at the same time as the 
+.B \-p
+or
+.B \-y
+options.
+.TP
+.B \-p
+Automatically repair ("preen") the file system.  This option will cause
+.B e2fsck
+to automatically
+fix any filesystem problems that can be safely fixed without human
+intervention.  If 
+.B e2fsck
+discovers a problem which may require the system administrator
+to take additional corrective action, 
+.B e2fsck
+will print a description of the problem and then exit with the value 4
+logically or'ed into the exit code.  (See the \fBEXIT CODE\fR section.)
+This option is normally used by the system's boot scripts.  It may not 
+be specified at the same time as the
+.B \-n
+or
+.B \-y
+options.
+.TP
+.B \-r
+This option does nothing at all; it is provided only for backwards
+compatibility.
+.TP
+.B \-t
+Print timing statistics for
+.BR e2fsck .
+If this option is used twice, additional timing statistics are printed
+on a pass by pass basis.
+.TP
+.B \-v
+Verbose mode.
+.TP
+.B \-V
+Print version information and exit.
+.TP
+.B \-y
+Assume an answer of `yes' to all questions; allows 
+.B e2fsck
+to be used non-interactively.  This option
+may not be specified at the same time as the 
+.B \-n
+or
+.B \-p
+options.
+.SH EXIT CODE
+The exit code returned by
+.B e2fsck
+is the sum of the following conditions:
+.br
+\	0\	\-\ No errors
+.br
+\	1\	\-\ File system errors corrected
+.br
+\	2\	\-\ File system errors corrected, system should
+.br
+\	\	\ \ be rebooted
+.br
+\	4\	\-\ File system errors left uncorrected
+.br
+\	8\	\-\ Operational error
+.br
+\	16\	\-\ Usage or syntax error
+.br
+\	32\	\-\ E2fsck canceled by user request
+.br
+\	128\	\-\ Shared library error
+.br
+.SH SIGNALS
+The following signals have the following effect when sent to 
+.BR e2fsck .
+.TP
+.B SIGUSR1
+This signal causes
+.B e2fsck
+to start displaying a completion bar or emitting progress information.  
+(See discussion of the 
+.B \-C
+option.)
+.TP
+.B SIGUSR2
+This signal causes
+.B e2fsck 
+to stop displaying a completion bar or emitting progress information.
+.SH REPORTING BUGS
+Almost any piece of software will have bugs.  If you manage to find a
+filesystem which causes 
+.B e2fsck
+to crash, or which 
+.B e2fsck
+is unable to repair, please report it to the author.
+.PP
+Please include as much information as possible in your bug report.
+Ideally, include a complete transcript of the
+.B e2fsck
+run, so I can see exactly what error messages are displayed.  (Make sure
+the messages printed by 
+.B e2fsck 
+are in English; if your system has been
+configured so that 
+.BR e2fsck 's
+messages have been translated into another language, please set the the
+.B LC_ALL
+environment variable to
+.B C
+so that the transcript of e2fsck's output will be useful to me.)
+If you
+have a writable filesystem where the transcript can be stored, the 
+.BR script (1)
+program is a handy way to save the output of
+.B e2fsck
+to a file.
+.PP
+It is also useful to send the output of 
+.BR dumpe2fs (8).
+If a specific inode or inodes seems to be giving 
+.B e2fsck 
+trouble, try running the
+.BR debugfs (8)
+command and send the output of the 
+.BR stat (1u)
+command run on the relevant inode(s).  If the inode is a directory, the 
+.B debugfs
+.I dump
+command will allow you to extract the contents of the directory inode,
+which can sent to me after being first run through
+.BR uuencode (1).  
+The most useful data you can send to help reproduce
+the bug is a compressed raw image dump of the filesystem, generated using
+.BR e2image (8).
+See the 
+.BR e2image (8)
+man page for more details.
+.PP
+Always include the full version string which 
+.B e2fsck
+displays when it is run, so I know which version you are running.
+.SH AUTHOR
+This version of 
+.B e2fsck
+was written by Theodore Ts'o <tytso@mit.edu>.
+.SH SEE ALSO
+.BR e2fsck.conf (5),
+.BR badblocks (8),
+.BR dumpe2fs (8),
+.BR debugfs (8),
+.BR e2image (8),
+.BR mke2fs (8),
+.BR tune2fs (8)

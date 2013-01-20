@@ -1,0 +1,8 @@
+lib
+sbin
+usr/bin
+usr/sbin
+usr/lib/e2initrd_helper
+usr/share/man
+usr/share/locale
+etc

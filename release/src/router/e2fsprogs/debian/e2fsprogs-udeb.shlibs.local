@@ -1,0 +1,6 @@
+libblkid 1 libblkid1-udeb
+# force the dependency to libblkid1-udeb, even if it don't include the lib
+libcom_err 2 libblkid1-udeb
+libuuid 1 libuuid1-udeb
+libext2fs 2 libblkid1-udeb
+libe2p 2 libblkid1-udeb

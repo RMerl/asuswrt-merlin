@@ -1,0 +1,1 @@
+uuid-runtime: command-with-path-in-maintainer-script prerm:5 /usr/sbin/uuidd

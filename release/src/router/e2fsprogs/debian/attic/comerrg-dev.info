@@ -1,0 +1,4 @@
+DESCR="The Common Error Description library."
+SECTION_MATCH="Development"
+SECTION_NAME="Development"
+FILE=com_err.info

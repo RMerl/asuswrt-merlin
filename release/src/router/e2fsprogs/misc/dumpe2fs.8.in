@@ -1,0 +1,87 @@
+.\" -*- nroff -*-
+.\" Copyright 1993, 1994, 1995 by Theodore Ts'o.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\" 
+.TH DUMPE2FS 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+dumpe2fs \- dump ext2/ext3/ext4 filesystem information
+.SH SYNOPSIS
+.B dumpe2fs
+[
+.B \-bfhixV
+]
+[
+.B \-o superblock=\fIsuperblock
+]
+[
+.B \-o blocksize=\fIblocksize
+]
+.I device
+.SH DESCRIPTION
+.B dumpe2fs
+prints the super block and blocks group information for the filesystem
+present on
+.I device.
+.PP
+.B dumpe2fs
+is similar to Berkeley's
+.B dumpfs
+program for the BSD Fast File System.
+.SH OPTIONS
+.TP
+.B \-b
+print the blocks which are reserved as bad in the filesystem.
+.TP
+.B \-o superblock=\fIsuperblock
+use the block
+.I superblock
+when examining the filesystem.
+This option is not usually needed except by a filesystem wizard who 
+is examining the remains of a very badly corrupted filesystem.
+.TP
+.B \-o blocksize=\fIblocksize
+use blocks of
+.I blocksize
+bytes when examining the filesystem.
+This option is not usually needed except by a filesystem wizard who 
+is examining the remains of a very badly corrupted filesystem.
+.TP
+.B \-f
+force dumpe2fs to display a filesystem even though it may have some 
+filesystem feature flags which dumpe2fs may not understand (and which
+can cause some of dumpe2fs's display to be suspect).
+.TP 
+.B \-h
+only display the superblock information and not any of the block
+group descriptor detail information.
+.TP
+.B \-i
+display the filesystem data from an image file created by 
+.BR e2image ,
+using 
+.I device
+as the pathname to the image file.
+.TP
+.B \-x
+print the detailed group information block numbers in hexadecimal format
+.TP
+.B \-V
+print the version number of 
+.B dumpe2fs
+and exit.
+.SH BUGS
+You need to know the physical filesystem structure to understand the
+output.
+.SH AUTHOR
+.B dumpe2fs 
+was written by Remy Card <Remy.Card@linux.org>.  It is currently being
+maintained by Theodore Ts'o <tytso@alum.mit.edu>.
+.SH AVAILABILITY
+.B dumpe2fs
+is part of the e2fsprogs package and is available from 
+http://e2fsprogs.sourceforge.net.
+.SH SEE ALSO
+.BR e2fsck (8),
+.BR mke2fs (8),
+.BR tune2fs (8)
+

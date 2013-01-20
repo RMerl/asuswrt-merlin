@@ -1,0 +1,127 @@
+# imap_err.et -- Error codes for Cyrus IMAP server programs
+#
+# Copyright 1998 Carnegie Mellon University
+# 
+# No warranties, either expressed or implied, are made regarding the
+# operation, use, or results of the software.
+#
+# Permission to use, copy, modify and distribute this software and its
+# documentation is hereby granted for non-commercial purposes only
+# provided that this copyright notice appears in all copies and in
+# supporting documentation.
+#
+# Permission is also granted to Internet Service Providers and others
+# entities to use the software for internal purposes.
+#
+# The distribution, modification or sale of a product which uses or is
+# based on the software, in whole or in part, for commercial purposes or
+# benefits requires specific, additional permission from:
+#
+#  Office of Technology Transfer
+#  Carnegie Mellon University
+#  5000 Forbes Avenue
+#  Pittsburgh, PA  15213-3890
+#  (412) 268-4387, fax: (412) 268-7395
+#  tech-transfer@andrew.cmu.edu
+# 
+error_table imap
+
+ec IMAP_IOERROR,
+   "System I/O error"
+
+ec IMAP_PERMISSION_DENIED,
+   "Permission denied"
+
+ec IMAP_QUOTA_EXCEEDED,
+   "Over quota"
+
+ec IMAP_USERFLAG_EXHAUSTED,
+   "Too many user flags in mailbox"
+
+ec IMAP_MAILBOX_BADFORMAT,
+   "Mailbox has an invalid format"
+
+ec IMAP_MAILBOX_NOTSUPPORTED,
+   "Operation is not supported on mailbox"
+
+ec IMAP_MAILBOX_NONEXISTENT,
+   "Mailbox does not exist"
+
+ec IMAP_MAILBOX_EXISTS,
+   "Mailbox already exists"
+
+ec IMAP_MAILBOX_BADNAME,
+   "Invalid mailbox name"
+
+ec IMAP_MAILBOX_POPLOCKED,
+   "Mailbox is locked by POP server"
+
+ec IMAP_PARTITION_UNKNOWN,
+   "Unknown/invalid partition"
+
+ec IMAP_INVALID_IDENTIFIER,
+   "Invalid identifier"
+
+ec IMAP_MESSAGE_CONTAINSNULL,
+   "Message contains NUL characters"
+
+ec IMAP_MESSAGE_CONTAINSNL,
+   "Message contains bare newlines"
+
+ec IMAP_MESSAGE_CONTAINS8BIT,
+   "Message contains non-ASCII characters in headers"
+
+ec IMAP_MESSAGE_BADHEADER,
+   "Message contains invalid header"
+
+ec IMAP_MESSAGE_NOBLANKLINE,
+   "Message has no header/body separator"
+
+ec IMAP_QUOTAROOT_NONEXISTENT,
+   "Quota root does not exist"
+
+# Following only used for internationalization of error messages
+
+ec IMAP_UNRECOGNIZED_CHARSET,
+   "Unrecognized character set"
+
+ec IMAP_INVALID_USER,
+   "Invalid user"
+
+ec IMAP_INVALID_LOGIN,
+   "Login incorrect"
+
+ec IMAP_ANONYMOUS_NOT_PERMITTED,
+   "Anonymous login is not permitted"
+
+ec IMAP_UNSUPPORTED_QUOTA,
+   "Unsupported quota resource"
+
+# Following used for internationalization of untagged OK/NO responses
+
+ec IMAP_NO_OVERQUOTA,
+   "Mailbox is over quota"
+
+ec IMAP_NO_CLOSEQUOTA,
+   "Mailbox is at %d%% of quota"
+
+ec IMAP_NO_MSGGONE,
+   "Message %d no longer exists"
+
+ec IMAP_NO_CHECKSEEN,
+   "Unable to checkpoint \\Seen state"
+
+ec IMAP_NO_CHECKPRESERVE,
+   "Unable to preserve \\Seen state"
+
+# Following used for internationalization of untagged BYE response
+
+ec IMAP_BYE_LOGOUT,
+   "LOGOUT received"
+
+# Following used for internationalization of tagged OK response
+
+ec IMAP_OK_COMPLETED,
+   "Completed"
+
+end

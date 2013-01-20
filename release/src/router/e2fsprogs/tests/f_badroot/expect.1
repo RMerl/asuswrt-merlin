@@ -1,0 +1,29 @@
+Filesystem did not have a UUID; generating one.
+
+Pass 1: Checking inodes, blocks, and sizes
+Root inode is not a directory.  Clear? yes
+
+Pass 2: Checking directory structure
+Entry '..' in ??? (11) has deleted/unused inode 2.  Clear? yes
+
+Pass 3: Checking directory connectivity
+Root inode not allocated.  Allocate? yes
+
+Unconnected directory inode 11 (...)
+Connect to /lost+found? yes
+
+/lost+found not found.  Create? yes
+
+Pass 4: Checking reference counts
+Inode 11 ref count is 3, should be 2.  Fix? yes
+
+Unattached inode 12
+Connect to /lost+found? yes
+
+Inode 12 ref count is 2, should be 1.  Fix? yes
+
+Pass 5: Checking group summary information
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 13/32 files (0.0% non-contiguous), 24/100 blocks
+Exit status is 1

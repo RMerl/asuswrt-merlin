@@ -1,0 +1,79 @@
+##############################################################################
+# ext2ed.conf                                                                #
+#                                                                            #
+# Configuration file for the extended 2 file system disk editor.             #
+##############################################################################
+
+# Ext2Descriptors is the location of the ext2 filesystem structure
+# definitions.
+
+
+Ext2Descriptors		@datadir@/ext2.descriptors 
+
+
+# Using AlternateDescriptors you can declare additional structures. Those
+# structures can contain only variables. Linking functions to the objects is
+# possible only through source code additions.
+
+
+AlternateDescriptors	
+
+
+# LogFile is the location of the log file. Actual changes to the filesystem
+# are logged there. See also LogChanges.
+
+
+LogFile			/var/log/ext2ed.log
+
+
+# The following selects the default behavior when changes are made to the
+# filesystem. When on, each change will be logged - Both the previous data
+# and the new written data.
+
+
+LogChanges		on
+
+
+# AllowChanges off will not allow ext2ed to do any changes to the
+# filesystem - The "enablewrite" command will not work. When on, enablewrite
+# will still have to be issued to allow write access.
+
+
+AllowChanges		on
+
+
+# With this option you can choose whether ext2ed will allow read-only mode on
+# a mounted filesystem. Read-Write mode is never allowed on a mounted
+# filesystem.
+
+
+AllowMountedRead	on
+
+
+# When ForceExt2 is set to on, the filesystem is assumed to be ext2
+# filesystem, despite the possibly corrupt superblock magic number reading.
+# All the ext2 specific commands will be aviable despite the possible
+# autodetection failture.
+
+ForceExt2		off
+
+
+# Normally, the various filesystem parameters such as the block size and the
+# total number of blocks are gathered from the ext2 filesystem itself.
+# However, on a corrupt filesystem, ext2ed is unable to get the right
+# parameters. In this case, they will be taken from here. See also
+# ForceDefault.
+
+
+DefaultBlockSize	1024
+DefaultTotalBlocks	2097151		# ~2 GB total size
+DefaultBlocksInGroup	8192
+
+# With ForceDefault on, you can force the use of the default parameters
+# above. This is not recommended, as ext2ed will fallback by default to those
+# parameters if it can't figure up the parameters from the filesystem itself.
+
+
+ForceDefault 		off
+
+

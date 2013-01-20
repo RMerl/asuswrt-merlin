@@ -1,0 +1,53 @@
+NOTE: This is the ELF version of the binary distribution.  If you have
+a DLL system, please compile e2fsprogs from sources yourself.  (In
+fact, in general you're better off compiling e2fsprogs from sources
+instead of using precompiled binaries.)  
+
+Also please note that these binaries assume the use of the GNU Libc.
+If you're still using libc5, you'll need build e2fsprogs from source.
+
+	To install the binary distribution of the second extended file
+system management programs, just follow the steps:
+
+1) Install this tar file using the following command:
+
+	gunzip < e2fsprogs-1.13-elfbin.tar.gz | (cd /; tar Sxvpf - )
+
+2) Run ldconfig to update the shared library pointers.
+
+        As root, type /sbin/ldconfig. This will update the links to
+the shared libraries included in the distribution. You can then remove
+the old versions of the libraries from /lib.  
+
+3) Remove any pre-formatted man pages.  
+
+	Some distributions will have pre-formatted manual pages which
+will always be displayed in preference to newer man pages in /usr/man.
+If this is the case, you may need to manually remove them in order to
+see the correct manual pages.  The shell script in
+install-utils/remove_preformat_manpages may be helpful in doing so.
+
+4) Make sure your /etc/fstab file is correct.
+
+	Some distributions install an /etc/fstab which is missing the
+fifth and sixth field of filesystem entry, which are the dump
+frequency, and the fsck pass number, respectively.  The problem with
+this is that the getmntent() library routine interprets those missing
+fields as "0", and a pass number of 0 is documented as meaning that
+fsck should not check that particular filesystem.  If your entries in
+your /etc/fstab file look liks this:
+
+/dev/hda4       /        ext2        defaults
+
+you should add "1 1" at the end of each line, so that they look like this:
+
+/dev/hda4       /        ext2        defaults	1	1
+
+	There is a script in install-utils/convfstab (donated by
+Michael Weller) that may help you correct your /etc/fstab file.
+
+5) Cleanup files from the installation.
+
+	When you're done with the installation, you will probably want
+to remove /INSTALL (this file), /README, and /install-utils from your
+root directory

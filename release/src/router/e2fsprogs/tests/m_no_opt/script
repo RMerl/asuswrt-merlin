@@ -1,0 +1,4 @@
+DESCRIPTION="no filesystem extensions"
+FS_SIZE=65536
+MKE2FS_OPTS="-O ^sparse_super,^filetype,^resize_inode,^dir_index,^ext_attr"
+. $cmd_dir/run_mke2fs

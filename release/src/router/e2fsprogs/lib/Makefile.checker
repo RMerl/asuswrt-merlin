@@ -1,0 +1,17 @@
+all:: $(LIBRARY)_chk.a
+
+real-subdirs:: Makefile
+	$(E) "	MKDIR checker"
+	$(Q) mkdir -p checker
+
+clean::
+	$(RM) -rf checker
+
+$(LIBRARY)_chk.a: $(OBJS)
+	$(E) "	GEN_CHECKER_LIB $@"
+	$(Q) (test -r $@ && $(RM) -f $@.bak && $(MV) $@ $@.bak)
+	$(Q) (cd checker; $(ARGEN) $@ $(OBJS))
+	-$(Q) $(RANLIB) $@
+	$(Q) $(RM) -f ../$@
+	$(Q) (cd .. ; $(LN) $(LINK_BUILD_FLAGS) \
+	     `echo $(my_dir) | sed -e 's;lib/;;'`/$@ $@)

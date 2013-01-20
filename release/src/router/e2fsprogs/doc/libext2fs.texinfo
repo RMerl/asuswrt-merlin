@@ -1,0 +1,1377 @@
+\input texinfo    @c -*-texinfo-*-
+@c %**start of header
+@setfilename libext2fs.info
+@settitle The EXT2FS Library (version 1.41.14)
+@synindex tp fn
+@comment %**end of header
+
+@ifinfo
+@dircategory Development
+@direntry
+* libext2fs: (libext2fs).                  The EXT2FS library.
+@end direntry
+@end ifinfo
+
+@c smallbook
+
+@iftex
+@finalout
+@end iftex
+
+@c Note: the edition number is listed in *three* places; please update
+@c all three.  Also, update the month and year where appropriate.
+
+@c ==> Update edition number for settitle and subtitle, and in the
+@c ==> following paragraph; update date, too.
+
+
+@ifinfo
+This file documents the ext2fs library, a library for manipulating the
+ext2 filesystem.
+
+Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
+2006, 2007, 2008, 2009 by Theodore Ts'o
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@ignore
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that this permission notice may be stated in a translation approved
+by the author.
+@end ifinfo
+
+@setchapternewpage on
+@titlepage
+@c  use the new format for titles
+
+@title The EXT2FS Library
+@subtitle The EXT2FS Library
+@subtitle Version 1.41.14
+@subtitle December 2010
+
+@author by Theodore Ts'o
+
+@c Include the Distribution inside the titlepage so
+@c that headings are turned off.
+
+@tex
+\global\parindent=0pt
+\global\parskip=8pt
+\global\baselineskip=13pt
+@end tex
+
+@page
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
+2005 Theodore Ts'o
+
+@sp 2
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that this permission notice may be stated in a translation approved
+by the Foundation.
+@end titlepage
+@headings double
+
+@ifinfo
+@node Top, Introduction to the EXT2FS Library, (dir), (dir)
+
+@top The EXT2FS Library
+
+This manual documents the EXT2FS Library, version 1.41.14.
+
+@end ifinfo
+
+@menu
+* Introduction to the EXT2FS Library::  
+* EXT2FS Library Functions::    
+* Concept Index::               
+* Function Index::              
+@end menu
+
+@c ----------------------------------------------------------------------
+
+@node Introduction to the EXT2FS Library, EXT2FS Library Functions, Top, Top
+@comment  node-name,  next,  previous,  up
+@chapter Introduction to the EXT2FS Library
+
+The EXT2FS library is designed to allow user-level programs to
+manipulate an ext2 filesystem.
+
+@node EXT2FS Library Functions, Concept Index, Introduction to the EXT2FS Library, Top
+@comment  node-name,  next,  previous,  up
+@chapter EXT2FS Library Functions
+
+@menu
+* Filesystem-level functions::  
+* File I/O Functions::          
+* Inode Functions::             
+* Directory functions::         
+* Bitmap Functions::            
+* EXT2 data abstractions::      
+* Byte-swapping functions::     
+* Other functions::             
+@end menu
+
+@c ----------------------------------------------------------------------
+
+@node Filesystem-level functions, File I/O Functions, EXT2FS Library Functions, EXT2FS Library Functions
+@comment  node-name,  next,  previous,  up
+@section Filesystem-level functions
+
+The following functions operate on a filesystem handle.  Most EXT2FS
+Library functions require a filesystem handle as their first argument.
+There are two functions which create a filesystem handle,
+@code{ext2fs_open} and @code{ext2fs_initialize}.  
+
+The filesystem can also be closed using @code{ext2fs_close}, and any
+changes to the superblock and group descripts can be written out to disk
+using @code{ext2fs_flush}.
+
+@menu
+* Opening an ext2 filesystem::  
+* Closing and flushing out changes::  
+* Initializing a filesystem::   
+* Filesystem flag functions::   
+@end menu
+
+@c ----------------------------------------------------------------------
+
+@node Opening an ext2 filesystem, Closing and flushing out changes, Filesystem-level functions, Filesystem-level functions
+@comment  node-name,  next,  previous,  up
+@subsection Opening an ext2 filesystem
+
+Most libext2fs functions take a filesystem handle of type
+@code{ext2_filsys}.  A filesystem handle is created either by opening
+an existing function using @code{ext2fs_open}, or by initializing a new
+filesystem using @code{ext2fs_initialize}.
+
+@deftypefun errcode_t ext2fs_open (const char *@var{name}, int @var{flags}, int @var{superblock}, int @var{block_size}, io_manager @var{manager}, ext2_filsys *@var{ret_fs})
+
+Opens a filesystem named @var{name}, using the the io_manager
+@var{manager} to define the input/output routines needed to read and
+write the filesystem.  In the case of the @code{unix_io} io_manager,
+@var{name} is interpreted as the Unix filename of the filesystem image.
+This is often a device file, such as @file{/dev/hda1}.
+
+The @var{superblock} parameter specifies the block number of the
+superblock which should be used when opening the filesystem.
+If @var{superblock} is zero, @code{ext2fs_open} will use the primary
+superblock located at offset 1024 bytes from the start of the filesystem
+image.
+
+The @var{block_size} parameter specifies the block size used by the
+filesystem.  Normally this is determined automatically from the
+filesystem uperblock.  If @var{block_size} is non-zero, it must match
+the block size found in the superblock, or the error
+@code{EXT2_ET_UNEXPECTED_BLOCK_SIZE} will be returned.  The
+@var{block_size} parameter is also used to help fund the superblock when
+@var{superblock} is non-zero.
+
+The @var{flags} argument contains a bitmask of flags which control how
+the filesystem open should be handled.
+
+@table @code
+@item EXT2_FLAG_RW
+Open the filesystem for reading and writing.  Without this flag, the
+filesystem is opened for reading only.
+
+@item EXT2_FLAG_FORCE
+Open the filesystem regardless of the feature sets listed in the
+superblock.
+
+@end table
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Closing and flushing out changes, Initializing a filesystem, Opening an ext2 filesystem, Filesystem-level functions
+@comment  node-name,  next,  previous,  up
+@subsection Closing and flushing out changes
+
+@deftypefun errcode_t ext2fs_flush (ext2_filsys @var{fs})
+
+Write any changes to the high-level filesystem data structures in the
+@var{fs} filesystem.  The following data structures will be written out:
+
+@itemize @bullet
+@item The filesystem superblock
+@item The filesystem group descriptors
+@item The filesystem bitmaps, if read in via @code{ext2fs_read_bitmaps}.
+@end itemize
+
+@end deftypefun
+
+@deftypefun void ext2fs_free (ext2_filsys @var{fs})
+
+Close the io_manager abstraction for @var{fs} and release all memory
+associated with the filesystem handle.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_close (ext2_filsys @var{fs})
+
+Flush out any changes to the high-level filesystem data structures using
+@code{ext2fs_flush} if the filesystem is marked dirty; then close and
+free the filesystem using @code{ext2fs_free}.
+
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Initializing a filesystem, Filesystem flag functions, Closing and flushing out changes, Filesystem-level functions
+@comment  node-name,  next,  previous,  up
+@subsection Initializing a filesystem
+
+An ext2 filesystem is initializing by the @code{mke2fs} program.  The
+two functions described here, @code{ext2fs_initialize} and
+@code{ext2fs_allocate_tables} do much of the initial work for setting up
+a filesystem.  However, they don't do the whole job.  @code{mke2fs}
+calls @code{ext2fs_initialize} to set up the filesystem superblock, and
+calls @code{ext2fs_allocate_tables} to allocate space for the inode
+table, and the inode and block bitmaps.  In addition, @code{mke2fs} must
+also initialize the inode tables by clearing them with zeros, create the
+root and lost+found directories, and reserve the reserved inodes.
+
+@deftypefun errcode_t ext2fs_initialize (const char *@var{name}, int @var{flags}, struct ext2_super_block *@var{param}, io_manager @var{manager}, ext2_filsys *@var{ret_fs})
+
+This function is used by the @code{mke2fs} program to initialize a
+filesystem.  The @code{ext2fs_initialize} function creates a filesystem
+handle which is returned in @var{ret_fs} that has been properly setup
+for a filesystem to be located in @var{name}, using the io_manager
+@var{manager}.  The prototype superblock in @var{param} is used to
+supply parameters such as the number of blocks in the filesystem, the
+block size, etc.  
+
+The @code{ext2fs_initialize} function does not actually do any I/O; that
+will be done when the application program calls @code{ext2fs_close} or
+@code{ext2fs_flush}.  Also, this function only initializes the
+superblock and group descriptor structures.  It does not create the
+inode table or the root directory.  This must be done by the calling
+application, such as @code{mke2fs}.
+
+The following values may be set in the @var{param} prototype superblock;
+if a value of 0 is found in a field, @code{ext2fs_initialize} will use a
+default value.  The calling application should zero out the prototype
+entire superblock, and then fill in any appropriate values.
+
+@table @code
+
+@item s_blocks_count
+The number of blocks in the filesystem.  This parameter is mandatory and
+must be set by the calling application.
+
+@item s_inodes_count
+The number of inodes in the filesystem.  The
+default value is determined by calculating the size of the filesystem,
+and creating one inode for every 4096 bytes.
+
+@item s_r_blocks_count
+The number of blocks which should be reserved for the superuser.  The
+default value is zero blocks.
+
+@item s_log_block_size
+The blocksize of the filesystem.  Valid values are 0 (1024 bytes), 1
+(2048 bytes), or 2 (4096 bytes).  The default blocksize is 1024 bytes.
+
+@item s_log_frag_size
+The size of fragments.  The ext2 filesystem does not support fragments
+(and may never support fragments).  Currently this field must be the
+same as @code{s_log_block_size}.
+
+@item s_first_data_block
+The first data block for the filesystem.  For filesystem with a
+blocksize of 1024 bytes, this value must be at least 1, since the
+superblock is located in block number 1.  For filesystems with larger
+blocksizes, the superblock is still located at an offset of 1024 bytes,
+so the superblock is located in block number 0.  By default, this value
+is set to 1 for filesystems with a block size of 1024 bytes, or 0 for
+filesystems with larger blocksizes.
+
+@item s_max_mnt_count
+This field defines the number of times that the filesystem can be
+mounted before it should be checked using @code{e2fsck}.  When
+@code{e2fsck} is run without the @samp{-f} option, @code{e2fsck} will
+skip the filesystem check if the number of times that the filesystem has
+been mounted is less than @code{s_max_mnt_count} and if the interval
+between the last time a filesystem check was performed and the current
+time is less than @code{s_checkinterval} (see below).  The default value
+of @code{s_max_mnt_count} is 20.
+
+@item s_checkinterval
+This field defines the minimal interval between filesystem checks.  See
+the previous entry for a discussion of how this field is used by
+@code{e2fsck}.  The default value of this field is 180 days (six
+months).
+
+@item s_errors
+This field defines the behavior which should be used by the kernel of
+errors are detected in the filesystem.  Possible values include:
+
+@table @samp
+@item EXT2_ERRORS_CONTINUE
+Continue execution when errors are detected.
+
+@item EXT2_ERRORS_RO
+Remount the filesystem read-only.
+
+@item EXT2_ERRORS_PANIC
+Panic.
+
+@end table
+
+The default behavior is @samp{EXT2_ERRORS_CONTINUE}.
+
+@end table
+
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_allocate_tables (ext2_filsys @var{fs})
+Allocate space for the inode table and the block and inode bitmaps.  The
+inode tables and block and inode bitmaps aren't actually initialized;
+this function just allocates the space for them.
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Filesystem flag functions,  , Initializing a filesystem, Filesystem-level functions
+@comment  node-name,  next,  previous,  up
+@subsection Filesystem flag functions
+
+The filesystem handle has a number of flags which can be manipulated
+using the following function.  Some of these flags affect how the
+libext2fs filesystem behaves; others are provided solely for the
+application's convenience.
+
+@deftypefun void ext2fs_mark_changed (ext2_filsys @var{fs})
+@deftypefunx int ext2fs_test_changed (ext2_filsys @var{fs})
+This flag indicates whether or not the filesystem has been changed. 
+It is not used by the ext2fs library.
+@end deftypefun
+
+@deftypefun void ext2fs_mark_super_dirty (ext2_filsys @var{fs})
+Mark the filesystem @var{fs} as being dirty; this will cause
+the superblock information to be flushed out when @code{ext2fs_close} is
+called.  @code{ext2fs_mark_super_dirty} will also set the filesystem 
+changed flag.  The dirty flag is automatically cleared by
+@code{ext2fs_flush} when the superblock is written to disk.
+@end deftypefun
+
+@deftypefun void ext2fs_mark_valid (ext2_filsys @var{fs})
+@deftypefunx void ext2fs_unmark_valid (ext2_filsys @var{fs})
+@deftypefunx int ext2fs_test_valid (ext2_filsys @var{fs})
+This flag indicates whether or not the filesystem is free of errors.
+It is not used by libext2fs, and is solely for the application's 
+convenience.
+@end deftypefun
+
+@deftypefun void ext2fs_mark_ib_dirty (ext2_filsys @var{fs})
+@deftypefunx void ext2fs_mark_bb_dirty (ext2_filsys @var{fs})
+@deftypefunx int ext2fs_test_ib_dirty (ext2_filsys @var{fs})
+@deftypefunx int ext2fs_test_bb_dirty (ext2_filsys @var{fs})
+These flags indicate whether or not the inode or block bitmaps have been
+modified.   If the flag is set, it will cause the appropriate bitmap
+to be written when the filesystem is closed or flushed.
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node File I/O Functions, Inode Functions, Filesystem-level functions, EXT2FS Library Functions
+@comment  node-name,  next,  previous,  up
+@section File I/O Functions
+
+The following functions provide a convenient abstraction to read or
+write a file in an filesystem.  The interface is similar in spirit to
+the Linux/POSIX file I/O system calls.
+
+@menu
+* File handle manipulation::    
+* Reading and writing data::    
+* Changing the file offset ::   
+* Getting the file size::       
+@end menu
+
+@c ----------------------------------------------------------------------
+
+@node File handle manipulation, Reading and writing data, File I/O Functions, File I/O Functions
+@comment  node-name,  next,  previous,  up
+@subsection File handle manipulation
+
+The file handle functions much like a file descriptor in the Linux/POSIX
+file I/O system calls.  Unlike the Linux/POSIX system calls, files are
+opened via inode numbers instead of via pathnames.  To resolve a
+pathname to an inode number, use the function @code{ext2fs_namei} or to
+create a new file, use @code{ext2fs_new_inode} and @code{ext2fs_link}.
+
+@deftypefun errcode_t ext2fs_file_open2 (ext2_filsys @var{fs}, ext2_ino_t @var{ino}, struct ext2_inode *@var{inode}, int @var{flags}, ext2_file_t *@var{ret})
+@deftypefunx errcode_t ext2fs_file_open (ext2_filsys @var{fs}, ext2_ino_t @var{ino}, int @var{flags}, ext2_file_t *@var{ret})
+
+Opens a file identified by inode number @var{ino} in filesystem @var{fs}
+and returns a file handle in @var{ret}.  If an inode structure is
+provided in @var{inode}, then it is used instead of reading the inode
+from the filesystem.
+
+The @var{flags} argument contains a bitmask of flags which control how
+the file should be opened.
+
+@table @code
+@item EXT2_FILE_WRITE
+Open the file for reading and writing.  Without this flag, the file is
+opened for writing only.
+
+@item EXT2_FILE_CREATE
+Create the file if it is not already present.
+
+@end table
+@end deftypefun
+
+@deftypefun ext2_filsys ext2fs_file_get_fs (ext2_file_t @var{file})
+Return the filesystem handle where the open file @var{file} was opened.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_file_close (ext2_file_t @var{file})
+Close the file handle @var{file}.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_file_flush (ext2_file_t @var{file})
+Force any data written via @code{ext2fs_file_write} to disk.
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Reading and writing data, Changing the file offset , File handle manipulation, File I/O Functions
+@comment  node-name,  next,  previous,  up
+@subsection Reading and writing data
+
+@deftypefun errcode_t ext2fs_file_read (ext2_file_t @var{file}, void *@var{buf}, unsigned int @var{wanted}, unsigned int *@var{got})
+Read @var{wanted} bytes of data from @var{file} store it in the buffer
+@var{buf}.  The number of bytes that was actually read is returned
+via @var{got}.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_file_write (ext2_file_t @var{file}, const void *@var{buf}, unsigned int @var{nbytes}, unsigned int *@var{written})
+Write @var{wanted} bytes of data from the buffer @var{buf} to the
+current file position of @var{file}.  The number of bytes that was 
+actually written is returned via @var{got}.
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Changing the file offset , Getting the file size, Reading and writing data, File I/O Functions
+@comment  node-name,  next,  previous,  up
+@subsection Changing the file offset
+
+@deftypefun errcode_t ext2fs_file_llseek (ext2_file_t @var{file}, __u64 @var{offset}, int @var{whence}, __u64 *@var{ret_pos})
+@deftypefunx errcode_t ext2fs_file_lseek (ext2_file_t @var{file}, ext2_off_t @var{offset}, int @var{whence}, ext2_off_t *@var{ret_pos})
+Change the current file position of @var{file} according to the
+directive @var{whence} as follows:
+
+@table @code
+@item EXT2_SEEK_SET
+The file position is set to @var{offset} bytes from the beginning of the
+file.
+
+@item EXT2_SEEK_CUR
+The file position set to its current location plus @var{offset} bytes.
+
+@item EXT2_SEEK_END
+The file position is set to the size of the file plus @var{offset}
+bytes.
+@end table
+
+The current offset is returned via @var{ret_pos}.
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Getting the file size,  , Changing the file offset , File I/O Functions
+@comment  node-name,  next,  previous,  up
+@subsection Getting the file size
+
+@deftypefun errcode_t ext2fs_file_get_lsize (ext2_file_t @var{file}, __u64 *@var{ret_size})
+Return the size of the file @var{file} in @var{ret_size}.
+@end deftypefun
+
+@deftypefun ext2_off_t ext2fs_file_get_size (ext2_file_t @var{file})
+Return the size of the file @var{file}.
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Inode Functions, Directory functions, File I/O Functions, EXT2FS Library Functions
+@comment  node-name,  next,  previous,  up
+@section Inode Functions
+
+@menu
+* Reading and writing inodes::  
+* Iterating over inodes in a filesystem::  
+* Iterating over blocks in an inode::  
+* Inode Convenience Functions::  
+@end menu
+
+@c ----------------------------------------------------------------------
+
+@node Reading and writing inodes, Iterating over inodes in a filesystem, Inode Functions, Inode Functions
+@comment  node-name,  next,  previous,  up
+@subsection Reading and writing inodes
+
+@deftypefun errcode_t ext2fs_read_inode (ext2_filsys @var{fs}, ext2_ino_t @var{ino}, struct ext2_inode *@var{inode})
+Read the inode number @var{ino} into @var{inode}.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_write_inode (ext2_filsys @var{fs}, ext2_ino_t @var{ino}, struct ext2_inode *@var{inode})
+Write @var{inode} to inode @var{ino}.
+@end deftypefun
+
+
+@c ----------------------------------------------------------------------
+
+@node Iterating over inodes in a filesystem, Iterating over blocks in an inode, Reading and writing inodes, Inode Functions
+@comment  node-name,  next,  previous,  up
+@subsection Iterating over inodes in a filesystem
+
+The inode_scan abstraction is useful for iterating over all the inodes
+in a filesystem.  
+
+@deftypefun errcode_t ext2fs_open_inode_scan (ext2_filsys @var{fs}, int @var{buffer_blocks}, ext2_inode_scan *@var{scan})
+Initialize the iteration variable @var{scan}.  This variable is used by
+@code{ext2fs_get_next_inode}.  The @var{buffer_blocks} parameter
+controls how many blocks of the inode table are read in at a time.  A
+large number of blocks requires more memory, but reduces the overhead in
+seeking and reading from the disk.  If @var{buffer_blocks} is zero, a
+suitable default value will be used.
+@end deftypefun
+
+@deftypefun void ext2fs_close_inode_scan (ext2_inode_scan @var{scan})
+Release the memory associated with @var{scan} and invalidate it.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_get_next_inode (ext2_inode_scan @var{scan}, ext2_ino_t *@var{ino}, struct ext2_inode *@var{inode})
+
+This function returns the next inode from the filesystem; the inode
+number of the inode is stored in @var{ino}, and the inode is stored in
+@var{inode}.  
+
+If the inode is located in a block that has been marked as bad,
+@code{ext2fs_get_next_inode} will return the error
+@code{EXT2_ET_BAD_BLOCK_IN_INODE_TABLE}.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_inode_scan_goto_blockgroup (ext2_inode_scan @var{scan}, int @var{group})
+Start the inode scan at a particular ext2 blockgroup, @var{group}.  
+This function may be safely called at any time while @var{scan} is valid.
+@end deftypefun
+
+@deftypefun void ext2fs_set_inode_callback (ext2_inode_scan @var{scan}, errcode_t (*done_group)(ext2_filsys @var{fs}, ext2_inode_scan @var{scan}, dgrp_t @var{group}, void * @var{private}), void *@var{done_group_data})
+Register a callback function which will be called by
+@code{ext2_get_next_inode} when all of the inodes in a block group have
+been processed.
+@end deftypefun
+
+@deftypefun int ext2fs_inode_scan_flags (ext2_inode_scan @var{scan}, int @var{set_flags}, int @var{clear_flags})
+
+Set the scan_flags @var{set_flags} and clear the scan_flags @var{clear_flags}.
+The following flags can be set using this interface:
+
+@table @samp
+
+@item EXT2_SF_SKIP_MISSING_ITABLE 
+When a block group is missing an inode table, skip it.  If this flag is
+not set @code{ext2fs_get_next_inode} will return the error
+EXT2_ET_MISSING_INODE_TABLE.
+
+@end table
+
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Iterating over blocks in an inode, Inode Convenience Functions, Iterating over inodes in a filesystem, Inode Functions
+@comment  node-name,  next,  previous,  up
+@subsection Iterating over blocks in an inode
+
+@deftypefun errcode_t ext2fs_block_iterate (ext2_filsys @var{fs}, ext2_ino_t @var{ino}, int @var{flags}, char *block_buf, int (*func)(ext2_filsys @var{fs}, blk_t *@var{blocknr}, int @var{blockcnt}, void *@var{private}), void *@var{private})
+
+Iterate over all of the blocks in inode number @var{ino} in filesystem
+@var{fs}, by calling the function @var{func} for each block in the
+inode.  The @var{block_buf} parameter should either be NULL, or if the
+@code{ext2fs_block_iterate} function is called repeatedly, the overhead
+of allocating and freeing scratch memory can be avoided by passing a
+pointer to a scratch buffer which must be at least as big as three times the
+filesystem's blocksize.  
+
+The @var{flags} parameter controls how the iterator will function:
+
+@table @samp
+
+@item BLOCK_FLAG_HOLE
+This flag indiciates that the interator function should be called on
+blocks where the block number is zero (also known as ``holes''.)  It is
+also known as BLOCK_FLAG_APPEND, since it is also used by functions
+such as ext2fs_expand_dir() to add a new block to an inode.
+
+@item BLOCK_FLAG_DEPTH_TRAVERSE
+This flag indicates that the iterator function for the
+indirect, doubly indirect, etc. blocks should be called after all
+of the blocks containined in the indirect blocks are processed.
+This is useful if you are going to be deallocating blocks from an
+inode.
+
+@item BLOCK_FLAG_DATA_ONLY
+This flag indicates that the iterator function should be
+called for data blocks only.
+
+@end table
+
+The callback function @var{func} is called with a number of parameters;
+the @var{fs} and @var{private} parameters are self-explanatory, and
+their values are taken from the parameters to
+@code{ext2fs_block_iterate}.  (The @var{private} data structure is
+generally used by callers to @code{ext2fs_block_iterate} so that some
+private data structure can be passed to the callback function.  The 
+@var{blockcnt} parameter, if non-negative, indicates the logical block
+number of a data block in the inode.  If @var{blockcnt} is less than
+zero, then @var{func} was called on a metadata block, and @var{blockcnt}
+will be one of the following values:  BLOCK_COUNT_IND, BLOCK_COUNT_DIND,
+BLOCK_COUNT_TIND, or BLOCK_COUNT_TRANSLATOR.  The @var{blocknr} is a
+pointer to the inode or indirect block entry listing physical block
+number.  The callback function may modify the physical block number, if
+it returns the @var{BLOCK_CHANGED} flag.
+
+
+The callback function @var{func} returns a result code which is composed of
+the logical OR of the following flags:
+
+@table @samp
+
+@item BLOCK_CHANGED
+
+This flag indicates that callback function has modified the physical
+block number pointed to by @var{blocknr}.
+
+@item BLOCK_ABORT
+
+This flag requests that @code{ext2fs_block_iterate} to stop immediately
+and return to the caller.
+
+@end table
+
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_block_iterate2 (ext2_filsys @var{fs}, ext2_ino_t @var{ino}, int @var{flags}, char *@var{block}_buf, int (*func)(ext2_filsys @var{fs}, blk_t *@var{blocknr}, e2_blkcnt_t @var{blockcnt}, blk_t @var{ref_blk}, int  @var{ref_offset}, void *@var{private}), void *@var{private})
+
+This function is much like @code{ext2fs_block_iterate}, except that the
+@var{blockcnt} type is a 64-bit signed quantity, to support larger
+files, and the addition of the @var{ref_blk} and @var{ref_offset}
+arguments passed to the callback function, which identify the location
+of the physical block pointed to by pointer @var{blocknr}.  If
+@var{ref_blk} is zero, then @var{ref_offset} contains the offset into
+the @code{i_blocks} array.  If @var{ref_blk} is non-zero, then the physical
+block location is contained inside an indirect block group, and
+@var{ref_offset} contains the offset into the indirect block.
+
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Inode Convenience Functions,  , Iterating over blocks in an inode, Inode Functions
+@comment  node-name,  next,  previous,  up
+@subsection Convenience functions for Inodes
+
+@deftypefun errcode_t ext2fs_get_blocks (ext2_filsys @var{fs}, ext2_ino_t @var{ino}, blk_t *@var{blocks})
+
+Returns an array of blocks corresponding to the direct,
+indirect, doubly indirect, and triply indirect blocks as stored in the
+inode structure.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_check_directory (ext2_filsys @var{fs}, ext2_ino_t @var{ino})
+Returns 0 if @var{ino} is a directory, and @code{ENOTDIR} if it is not.
+@end deftypefun
+
+@deftypefun int ext2fs_inode_has_valid_blocks (struct ext2_inode *@var{inode})
+
+Returns 1 if the inode's block entries actually valid block entries, and
+0 if not.  Inodes which represent devices and fast symbolic links do not
+contain valid block entries.
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Directory functions, Bitmap Functions, Inode Functions, EXT2FS Library Functions
+@comment  node-name,  next,  previous,  up
+@section Directory functions
+
+@menu
+* Directory block functions::   
+* Iterating over a directory::  
+* Creating and expanding directories::  
+* Creating and removing directory entries::  
+* Looking up filenames::        
+* Translating inode numbers to filenames::  
+@end menu
+
+@c ----------------------------------------------------------------------
+
+@node Directory block functions, Iterating over a directory, Directory functions, Directory functions
+@comment  node-name,  next,  previous,  up
+@subsection Directory block functions
+
+@deftypefun errcode_t ext2fs_read_dir_block (ext2_filsys @var{fs}, blk_t @var{block}, void *@var{buf})
+
+This function reads a directory block, performing any necessary
+byte swapping if necessary.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_write_dir_block (ext2_filsys @var{fs}, blk_t @var{block}, void *@var{buf})
+
+This function writes a directory block, performing any necessary
+byte swapping if necessary.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_new_dir_block (ext2_filsys @var{fs}, ext2_ino_t @var{dir_ino}, ext2_ino_t @var{parent_ino}, char **@var{block})
+
+This function creates a new directory block in @var{block}.  If
+@var{dir_ino} is non-zero, then @var{dir_info} and @var{parent_ino} is used
+to initialize directory entries for @file{.} and @file{..}, respectively.
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Iterating over a directory, Creating and expanding directories, Directory block functions, Directory functions
+@comment  node-name,  next,  previous,  up
+@subsection Iterating over a directory
+
+@deftypefun errcode_t ext2fs_dir_iterate (ext2_filsys @var{fs}, ext2_ino_t @var{dir}, int @var{flags}, char *@var{block_buf}, int (*@var{func})(struct ext2_dir_entry *@var{dirent}, int @var{offset}, int @var{blocksize}, char *@var{buf}, void *@var{private}), void *@var{private})
+
+This function interates over all of the directory entries in the
+directory @var{dir}, calling the callback function @var{func} for each
+directory entry in the directory.  The @var{block_buf} parameter should
+either be NULL, or if the @code{ext2fs_dir_iterate} function is 
+called repeatedly, the overhead of allocating and freeing 
+scratch memory can be avoided by passing a pointer to a scratch buffer
+which must be at least as big as the filesystem's blocksize.  
+
+The @var{flags} parameter controls how the iterator will function:
+
+@table @samp
+
+@item DIRENT_FLAG_INCLUDE_EMPTY
+
+This flag indicates that the callback function should be called even 
+for deleted or empty directory entries.
+
+@end table
+
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Creating and expanding directories, Creating and removing directory entries, Iterating over a directory, Directory functions
+@comment  node-name,  next,  previous,  up
+@subsection Creating and expanding directories
+
+@deftypefun errcode_t ext2fs_mkdir (ext2_filsys @var{fs}, ext2_ino_t @var{parent}, ext2_ino_t @var{inum}, const char *@var{name})
+
+This function creates a new directory.  If @var{inum} is zero, then a
+new inode will be allocated; otherwise, the directory will be created in
+the inode specified by @var{inum}.  If @var{name} specifies the name of
+the new directory; if it is non-NULL, then the new directory will be
+linked into the parent directory @var{parent}.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_expand_dir (ext2_filsys @var{fs}, ext2_ino_t @var{dir})
+
+This function adds a new empty directory block and appends it to 
+the directory @var{dir}.  This allows functions such as
+@code{ext2fs_link} to add new directory entries to a directory which is full.
+
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Creating and removing directory entries, Looking up filenames, Creating and expanding directories, Directory functions
+@comment  node-name,  next,  previous,  up
+@subsection Creating and removing directory entries
+
+@deftypefun errcode_t ext2fs_link (ext2_filsys @var{fs}, ext2_ino_t @var{dir}, const char *@var{name}, ext2_ino_t @var{ino}, int flags)
+
+This function adds a new directory entry to the directory @var{dir}, 
+with @var{name} and @var{ino} specifying the name and inode number in
+the directory entry, respectively.  
+
+The low 3 bits of the flags field is used to specify the file type of
+inode:   (No other flags are currently defined.)
+
+@table @samp
+
+@item EXT2_FT_UNKNOWN
+
+The file type is unknown.
+
+@item EXT2_FT_REG_FILE
+
+The file type is a normal file.
+
+@item EXT2_FT_DIR
+
+The file type is a directory.
+
+@item EXT2_FT_CHRDEV
+
+The file type is a character device.
+
+@item EXT2_FT_BLKDEV
+
+The file type is a block device.
+
+@item EXT2_FT_FIFO
+
+The file type is a named pipe.
+
+@item EXT2_FT_SOCK
+
+The file type is a unix domain socket.
+
+@item EXT2_FT_SYMLINK
+
+The file type is a symbolic link.
+@end table 
+
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_unlink (ext2_filsys @var{fs}, ext2_ino_t @var{dir}, const char *@var{name}, ext2_ino_t @var{ino}, int @var{flags})
+
+This function removes a directory entry from @var{dir}.
+The directory entry to be removed is the first one which is
+matched by @var{name} and @var{ino}.  If @var{name} is non-NULL, 
+the directory entry's name must match @var{name}.  If @var{ino} is
+non-zero, the directory entry's inode number must match @var{ino}.
+No flags are currently defined for @code{ext2fs_unlink}; callers should
+pass in zero to this parameter.
+
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Looking up filenames, Translating inode numbers to filenames, Creating and removing directory entries, Directory functions
+@comment  node-name,  next,  previous,  up
+@subsection Looking up filenames
+
+@deftypefun errcode_t ext2fs_lookup (ext2_filsys @var{fs}, ext2_ino_t @var{dir}, const char *@var{name}, int @var{namelen}, char *@var{buf}, ext2_ino_t *@var{inode})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_namei (ext2_filsys @var{fs}, ext2_ino_t @var{root}, ext2_ino_t @var{cwd}, const char *@var{name}, ext2_ino_t *@var{inode})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_namei_follow (ext2_filsys @var{fs}, ext2_ino_t @var{root}, ext2_ino_t @var{cwd}, const char *@var{name}, ext2_ino_t *@var{inode})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_follow_link (ext2_filsys @var{fs}, ext2_ino_t @var{root}, ext2_ino_t @var{cwd}, ext2_ino_t @var{inode}, ext2_ino_t *@var{res}_inode)
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Translating inode numbers to filenames,  , Looking up filenames, Directory functions
+@comment  node-name,  next,  previous,  up
+@subsection Translating inode numbers to filenames
+
+@deftypefun errcode_t ext2fs_get_pathname (ext2_filsys @var{fs}, ext2_ino_t @var{dir}, ext2_ino_t @var{ino}, char **@var{name})
+@end deftypefun
+
+
+@c ----------------------------------------------------------------------
+
+@node Bitmap Functions, EXT2 data abstractions, Directory functions, EXT2FS Library Functions
+@comment  node-name,  next,  previous,  up
+@section Bitmap Functions
+
+@menu
+* Reading and Writing Bitmaps::  
+* Allocating Bitmaps::          
+* Free bitmaps::                
+* Bitmap Operations::           
+* Comparing bitmaps::           
+* Modifying Bitmaps::           
+* Resizing Bitmaps::            
+* Clearing Bitmaps::            
+@end menu
+
+@c ----------------------------------------------------------------------
+
+@node Reading and Writing Bitmaps, Allocating Bitmaps, Bitmap Functions, Bitmap Functions
+@comment  node-name,  next,  previous,  up
+@subsection Reading and Writing Bitmaps
+
+@deftypefun errcode_t ext2fs_write_inode_bitmap (ext2_filsys @var{fs})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_write_block_bitmap (ext2_filsys @var{fs})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_read_inode_bitmap (ext2_filsys @var{fs})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_read_block_bitmap (ext2_filsys @var{fs})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_read_bitmaps (ext2_filsys @var{fs})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_write_bitmaps (ext2_filsys @var{fs})
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Allocating Bitmaps, Free bitmaps, Reading and Writing Bitmaps, Bitmap Functions
+@comment  node-name,  next,  previous,  up
+@subsection Allocating Bitmaps
+
+@deftypefun errcode_t ext2fs_allocate_generic_bitmap (__u32 @var{start}, __u32 @var{end}, _u32 @var{real_end}, const char *@var{descr}, ext2fs_generic_bitmap *@var{ret})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_allocate_block_bitmap (ext2_filsys @var{fs}, const char *@var{descr}, ext2fs_block_bitmap *@var{ret})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_allocate_inode_bitmap (ext2_filsys @var{fs}, const char *@var{descr}, ext2fs_inode_bitmap *@var{ret})
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Free bitmaps, Bitmap Operations, Allocating Bitmaps, Bitmap Functions
+@comment  node-name,  next,  previous,  up
+@subsection Freeing bitmaps
+
+
+@deftypefun void ext2fs_free_generic_bitmap (ext2fs_inode_bitmap @var{bitmap})
+@end deftypefun
+
+@deftypefun void ext2fs_free_block_bitmap (ext2fs_block_bitmap @var{bitmap})
+@end deftypefun
+
+@deftypefun void ext2fs_free_inode_bitmap (ext2fs_inode_bitmap @var{bitmap})
+@end deftypefun
+
+
+@c ----------------------------------------------------------------------
+
+@node Bitmap Operations, Comparing bitmaps, Free bitmaps, Bitmap Functions
+@comment  node-name,  next,  previous,  up
+@subsection Bitmap Operations
+
+@deftypefun void ext2fs_mark_block_bitmap (ext2fs_block_bitmap @var{bitmap}, blk_t @var{block})
+
+@deftypefunx void ext2fs_unmark_block_bitmap (ext2fs_block_bitmap @var{bitmap}, blk_t @var{block})
+
+@deftypefunx int ext2fs_test_block_bitmap (ext2fs_block_bitmap @var{bitmap}, blk_t @var{block})
+
+These functions set, clear, and test bits in a block bitmap @var{bitmap}.
+@end deftypefun
+
+
+@deftypefun void ext2fs_mark_inode_bitmap (ext2fs_inode_bitmap @var{bitmap}, ext2_ino_t @var{inode})
+
+@deftypefunx void ext2fs_unmark_inode_bitmap (ext2fs_inode_bitmap @var{bitmap}, ext2_ino_t @var{inode})
+
+@deftypefunx int ext2fs_test_inode_bitmap (ext2fs_inode_bitmap @var{bitmap}, ext2_ino_t @var{inode})
+
+These functions set, clear, and test bits in an inode bitmap @var{bitmap}.
+@end deftypefun
+
+@deftypefun void ext2fs_fast_mark_block_bitmap (ext2fs_block_bitmap @var{bitmap}, blk_t @var{block})
+
+@deftypefunx void ext2fs_fast_unmark_block_bitmap (ext2fs_block_bitmap @var{bitmap}, blk_t @var{block})
+
+@deftypefunx int ext2fs_fast_test_block_bitmap (ext2fs_block_bitmap @var{bitmap}, blk_t @var{block})
+
+@deftypefunx void ext2fs_fast_mark_inode_bitmap (ext2fs_inode_bitmap @var{bitmap}, ext2_ino_t @var{inode})
+
+@deftypefunx void ext2fs_fast_unmark_inode_bitmap (ext2fs_inode_bitmap @var{bitmap}, ext2_ino_t @var{inode})
+
+@deftypefunx int ext2fs_fast_test_inode_bitmap (ext2fs_inode_bitmap @var{bitmap}, ext2_ino_t @var{inode})
+
+These ``fast'' functions are like their normal counterparts; however,
+they are implemented as inline functions and do not perform bounds
+checks on the inode number or block number; they are assumed to be
+correct.  They should only be used in speed-critical applications, where
+the inode or block number has already been validated by other means.
+@end deftypefun
+
+@deftypefun blk_t ext2fs_get_block_bitmap_start (ext2fs_block_bitmap @var{bitmap})
+@deftypefunx ext2_ino_t ext2fs_get_inode_bitmap_start (ext2fs_inode_bitmap @var{bitmap})
+Return the first inode or block which is stored in the bitmap.
+@end deftypefun
+
+@deftypefun blk_t ext2fs_get_block_bitmap_end (ext2fs_block_bitmap @var{bitmap})
+@deftypefunx ext2_ino_t ext2fs_get_inode_bitmap_end (ext2fs_inode_bitmap @var{bitmap})
+
+Return the last inode or block which is stored in the bitmap.
+@end deftypefun
+
+
+@c ----------------------------------------------------------------------
+
+@node Comparing bitmaps, Modifying Bitmaps, Bitmap Operations, Bitmap Functions
+@comment  node-name,  next,  previous,  up
+@subsection Comparing bitmaps
+
+@deftypefun errcode_t ext2fs_compare_block_bitmap (ext2fs_block_bitmap @var{bm1}, ext2fs_block_bitmap @var{bm2})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_compare_inode_bitmap (ext2fs_inode_bitmap @var{bm1}, ext2fs_inode_bitmap @var{bm2})
+@end deftypefun
+
+
+@c ----------------------------------------------------------------------
+
+@node Modifying Bitmaps, Resizing Bitmaps, Comparing bitmaps, Bitmap Functions
+@comment  node-name,  next,  previous,  up
+@subsection Modifying Bitmaps
+
+@deftypefun errcode_t ext2fs_fudge_inode_bitmap_end (ext2fs_inode_bitmap @var{bitmap}, ext2_ino_t @var{end}, ext2_ino_t *@var{oend})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_fudge_block_bitmap_end (ext2fs_block_bitmap @var{bitmap}, blk_t @var{end}, blk_t *@var{oend})
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Resizing Bitmaps, Clearing Bitmaps, Modifying Bitmaps, Bitmap Functions
+@comment  node-name,  next,  previous,  up
+@subsection Resizing Bitmaps
+
+@deftypefun errcode_t ext2fs_resize_generic_bitmap (__u32 @var{new_end}, __u32 @var{new_real_end}, ext2fs_generic_bitmap @var{bmap})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_resize_inode_bitmap (__u32 @var{new_end}, __u32 @var{new_real_end}, ext2fs_inode_bitmap @var{bmap})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_resize_block_bitmap (__u32 @var{new_end}, __u32 @var{new_real_end}, ext2fs_block_bitmap @var{bmap})
+@end deftypefun
+
+
+@c ----------------------------------------------------------------------
+
+@node Clearing Bitmaps,  , Resizing Bitmaps, Bitmap Functions
+@comment  node-name,  next,  previous,  up
+@subsection Clearing Bitmaps
+
+@deftypefun void ext2fs_clear_inode_bitmap (ext2fs_inode_bitmap @var{bitmap})
+
+This function sets all of the bits in the inode bitmap @var{bitmap} to 
+be zero.
+
+@end deftypefun
+
+@deftypefun void ext2fs_clear_block_bitmap (ext2fs_block_bitmap @var{bitmap})
+
+This function sets all of the bits in the block bitmap @var{bitmap} to 
+be zero.
+@end deftypefun
+
+
+@c ----------------------------------------------------------------------
+
+@node EXT2 data abstractions, Byte-swapping functions, Bitmap Functions, EXT2FS Library Functions
+@comment  node-name,  next,  previous,  up
+@section EXT2 data abstractions
+
+The ext2 library has a number of abstractions which are useful for ext2
+utility programs.  
+
+@menu
+* Badblocks list management::   
+* Directory-block list management::  
+* Inode count functions::       
+@end menu
+
+@c ----------------------------------------------------------------------
+
+@node Badblocks list management, Directory-block list management, EXT2 data abstractions, EXT2 data abstractions
+@comment  node-name,  next,  previous,  up
+@subsection Badblocks list management
+
+
+@deftypefun errcode_t ext2fs_badblocks_list_create (ext2_badblocks_list *@var{ret}, int @var{size})
+@end deftypefun
+
+@deftypefun void ext2fs_badblocks_list_free (ext2_badblocks_list @var{bb})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_badblocks_list_add (ext2_badblocks_list @var{bb}, blk_t @var{blk})
+@end deftypefun
+
+@deftypefun int ext2fs_badblocks_list_test (ext2_badblocks_list @var{bb}, blk_t @var{blk})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_badblocks_list_iterate_begin (ext2_badblocks_list @var{bb}, ext2_badblocks_iterate *@var{ret})
+@end deftypefun
+
+@deftypefun int ext2fs_badblocks_list_iterate (ext2_badblocks_iterate iter, blk_t *@var{blk})
+@end deftypefun
+
+@deftypefun void ext2fs_badblocks_list_iterate_end (ext2_badblocks_iterate @var{iter})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_update_bb_inode (ext2_filsys @var{fs}, ext2_badblocks_list @var{bb_list})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_read_bb_inode (ext2_filsys @var{fs}, ext2_badblocks_list *@var{bb_list})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_read_bb_FILE (ext2_filsys @var{fs}, FILE *f, ext2_badblocks_list *@var{bb_list}, void (*invalid)(ext2_filsys @var{fs}, blk_t @var{blk}))
+@end deftypefun
+
+
+@c ----------------------------------------------------------------------
+
+@node Directory-block list management, Inode count functions, Badblocks list management, EXT2 data abstractions
+@comment  node-name,  next,  previous,  up
+@subsection Directory-block list management
+
+The dblist abstraction stores a list of blocks belonging to
+directories.  This list can be useful when a program needs to interate
+over all directory entries in a filesystem; @code{e2fsck} does this in
+pass 2 of its operations, and @code{debugfs} needs to do this when it is
+trying to turn an inode number into a pathname.
+
+@deftypefun errcode_t ext2fs_init_dblist (ext2_filsys @var{fs}, ext2_dblist *@var{ret_dblist})
+
+Creates a dblist data structure and return it in @var{ret_dblist}.
+@end deftypefun
+
+@deftypefun void ext2fs_free_dblist (ext2_dblist @var{dblist})
+
+Free a dblist data structure.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_add_dir_block (ext2_dblist @var{dblist}, ext2_ino_t @var{ino}, blk_t @var{blk}, int @var{blockcnt})
+
+Add an entry to the dblist data structure.  This call records the fact
+that block number @var{blockcnt} of directory inode @var{ino} is stored
+in block @var{blk}.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_set_dir_block (ext2_dblist @var{dblist}, ext2_ino_t @var{ino}, blk_t @var{blk}, int @var{blockcnt})
+
+Change an entry in the dblist data structure; this changes the location
+of block number @var{blockcnt} of directory indoe @var{ino} to be block
+@var{blk}. 
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_dblist_iterate (ext2_dblist @var{dblist}, int (*func)(ext2_filsys @var{fs}, struct ext2_db_entry *@var{db_info}, void *@var{private}), void *@var{private})
+
+This iterator calls @var{func} for every entry in the dblist data structure.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_dblist_dir_iterate (ext2_dblist @var{dblist}, int flags, char *@var{block_buf}, int (*func)(ext2_ino_t @var{dir}, int  @var{entry}, struct ext2_dir_entry *@var{dirent}, int @var{offset}, int @var{blocksize}, char *@var{buf}, void *@var{private}), void *@var{private})
+
+This iterator takes reads in the directory block indicated in each
+dblist entry, and calls @var{func} for each directory entry in each
+directory block.  If @var{dblist} contains all the directory blocks in a
+filesystem, this function provides a convenient way to iterate over all
+directory entries for that filesystem.
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+
+@node Inode count functions,  , Directory-block list management, EXT2 data abstractions
+@comment  node-name,  next,  previous,  up
+@subsection Inode count functions
+
+The icount abstraction is a specialized data type used by @code{e2fsck}
+to store how many times a particular inode is referenced by the
+filesystem.  This is used twice; once to store the actual number of times
+that the inode is reference; and once to store the claimed number of times
+the inode is referenced according to the inode structure.
+
+This abstraction is designed to be extremely efficient for storing this
+sort of information, by taking advantage of the following properties of
+inode counts, namely (1) inode counts are very often zero (because
+the inode is currrently not in use), and (2) many files have a inode
+count of 1 (because they are a file which has no additional hard links).
+
+@deftypefun errcode_t ext2fs_create_icount2 (ext2_filsys @var{fs}, int @var{flags}, int @var{size}, ext2_icount_t @var{hint}, ext2_icount_t *@var{ret})
+
+Creates an icount stucture for a filesystem @var{fs}, with initial space
+for @var{size} inodes whose count is greater than 1.  The @var{flags}
+parameter is either 0 or @code{EXT2_ICOUNT_OPT_INCREMENT}, which
+indicates that icount structure should be able to increment inode counts
+quickly.  The icount structure is returned in @var{ret}.  The returned
+icount structure initially has a count of zero for all inodes.
+
+The @var{hint} parameter allows the caller to optionally pass in another
+icount structure which is used to initialize the array of inodes whose
+count is greater than 1.  It is used purely as a speed optimization so
+that the icount structure can determine in advance which inodes are
+likely to contain a count grater than 1.
+@end deftypefun
+
+@deftypefun void ext2fs_free_icount (ext2_icount_t @var{icount})
+
+Frees an icount structure.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_icount_fetch (ext2_icount_t @var{icount}, ext2_ino_t @var{ino}, __u16 *@var{ret})
+
+Returns in @var{ret} fetches the count for a particular inode @var{ino}.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_icount_increment (ext2_icount_t @var{icount}, ext2_ino_t @var{ino}, __u16 *@var{ret})
+
+Increments the ref count for inode @var{ino}.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_icount_decrement (ext2_icount_t @var{icount}, ext2_ino_t @var{ino}, __u16 *@var{ret})
+
+Decrements the ref count for inode @var{ino}.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_icount_store (ext2_icount_t @var{icount}, ext2_ino_t @var{ino}, __u16 @var{count})
+
+Sets the reference count for inode @var{ino} to be @var{count}.
+@end deftypefun
+
+@deftypefun ext2_ino_t ext2fs_get_icount_size (ext2_icount_t @var{icount})
+
+Returns the current number of inodes in @var{icount} which has a count
+greater than 1.
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_icount_validate (ext2_icount_t @var{icount}, FILE *@var{f})
+
+Validates the internal rep invariant of @var{icount}; if there are any
+problems, print out debugging information to @var{f}.  This function is
+intended for debugging and testing use only.
+@end deftypefun
+
+
+@c ----------------------------------------------------------------------
+
+@node Byte-swapping functions, Other functions, EXT2 data abstractions, EXT2FS Library Functions
+@comment  node-name,  next,  previous,  up
+@section Byte-swapping functions
+
+@deftypefun void ext2fs_swap_super (struct ext2_super_block * @var{super})
+@end deftypefun
+
+@deftypefun void ext2fs_swap_group_desc (struct ext2_group_desc *@var{gdp})
+@end deftypefun
+
+@deftypefun void ext2fs_swap_inode (ext2_filsys @var{fs}, struct ext2_inode *@var{to}, struct ext2_inode *@var{from}, int @var{hostorder})
+@end deftypefun
+
+@deftypefun int ext2fs_native_flag (void)
+@end deftypefun
+
+
+@c ----------------------------------------------------------------------
+
+@node Other functions,  , Byte-swapping functions, EXT2FS Library Functions
+@comment  node-name,  next,  previous,  up
+@section Other functions
+
+/* alloc.c */
+@deftypefun errcode_t ext2fs_new_inode (ext2_filsys @var{fs}, ext2_ino_t @var{dir}, int @var{mode}, ext2fs_inode_bitmap @var{map}, ext2_ino_t *@var{ret})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_new_block (ext2_filsys @var{fs}, blk_t @var{goal}, ext2fs_block_bitmap @var{map}, blk_t *@var{ret})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_get_free_blocks (ext2_filsys @var{fs}, blk_t @var{start}, blk_t @var{finish}, int @var{num}, ext2fs_block_bitmap @var{map}, blk_t *@var{ret})
+@end deftypefun
+
+/* check_desc.c */
+@deftypefun errcode_t ext2fs_check_desc (ext2_filsys @var{fs})
+@end deftypefun
+
+@deftypefun errcode_t ext2fs_get_num_dirs (ext2_filsys @var{fs}, ext2_ino_t *@var{ret_num_dirs})
+@end deftypefun
+
+
+/* getsize.c */
+@deftypefun errcode_t ext2fs_get_device_size (const char *@var{file}, int @var{blocksize}, blk_t *@var{retblocks})
+@end deftypefun
+
+
+/* ismounted.c */
+@deftypefun errcode_t ext2fs_check_if_mounted (const char *@var{file}, int *@var{mount_flags})
+@end deftypefun
+
+/* version.c */
+
+@deftypefun int ext2fs_get_library_version (const char **@var{ver_string}, const char **@var{date_string})
+
+This function returns the current version of the ext2 library.  The
+return value contains an integer version code, which consists of the
+major version number of the library multiplied by 100, plus the minor
+version number of the library.  Hence, if the library version is 1.08,
+the returned value will be 108.
+
+If @var{ver_string} and/or @var{date_string} are non-NULL, they will be
+set to point at a constant string containing the library version and/or
+release date, respectively.
+@end deftypefun
+
+@deftypefun int ext2fs_parse_version_string (const char *@var{ver_string})
+
+This function takes a version string which may included in an
+application and returns a version code using the same algorithm used by
+@code{ext2fs_get_library_version}.  It can be used by programs included
+in the @code{e2fsprogs} distribution to assure that they are using an
+up-to-date ext2 shared library.
+@end deftypefun
+
+/* inline functions */
+@deftypefun int ext2fs_group_of_blk (ext2_filsys @var{fs}, blk_t @var{blk})
+
+This function returns the block group which contains the block @var{blk}.
+
+@end deftypefun
+
+@deftypefun int ext2fs_group_of_ino (ext2_filsys @var{fs}, ext2_ino_t @var{ino})
+
+This function returns the block group which contains the inode @var{ino}.
+@end deftypefun
+
+
+@c ----------------------------------------------------------------------
+
+@node Concept Index, Function Index, EXT2FS Library Functions, Top
+@comment  node-name,  next,  previous,  up
+@unnumbered Concept Index
+@printindex cp
+
+@c ----------------------------------------------------------------------
+
+@node Function Index,  , Concept Index, Top
+@comment  node-name,  next,  previous,  up
+@unnumbered Function and Type Index
+@printindex fn
+
+
+@contents
+@bye

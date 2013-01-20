@@ -1,0 +1,92 @@
+Index: tdb/tdb.c
+===================================================================
+--- tdb.orig/tdb.c
++++ tdb/tdb.c
+@@ -29,11 +29,82 @@ Last Changed Date: 2007-06-22 13:36:10 -
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+-#include "replace.h"
+-#include "system/filesys.h"
+-#include "system/time.h"
+-#include "system/shmem.h"
+-#include "system/select.h"
++#ifdef CONFIG_STAND_ALONE
++#define HAVE_MMAP
++#define HAVE_STRDUP
++#define HAVE_SYS_MMAN_H
++#define HAVE_UTIME_H
++#define HAVE_UTIME
++#endif
++#define _XOPEN_SOURCE 500
++
++#include <unistd.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <stdarg.h>
++#include <stddef.h>
++#include <errno.h>
++#include <string.h>
++#ifdef HAVE_SYS_SELECT_H
++#include <sys/select.h>
++#endif
++#include <sys/time.h>
++#include <sys/types.h>
++#include <time.h>
++#ifdef HAVE_UTIME_H
++#include <utime.h>
++#endif
++#include <sys/stat.h>
++#include <sys/file.h>
++#include <fcntl.h>
++
++#ifdef HAVE_SYS_MMAN_H
++#include <sys/mman.h>
++#endif
++
++#ifndef MAP_FILE
++#define MAP_FILE 0
++#endif
++
++#ifndef MAP_FAILED
++#define MAP_FAILED ((void *)-1)
++#endif
++
++#ifndef HAVE_STRDUP
++#define strdup rep_strdup
++static char *rep_strdup(const char *s)
++{
++	char *ret;
++	int length;
++	if (!s)
++		return NULL;
++
++	if (!length)
++		length = strlen(s);
++
++	ret = malloc(length + 1);
++	if (ret) {
++		strncpy(ret, s, length);
++		ret[length] = '\0';
++	}
++	return ret;
++}
++#endif
++
++#ifndef PRINTF_ATTRIBUTE
++#if (__GNUC__ >= 3) && (__GNUC_MINOR__ >= 1 )
++/** Use gcc attribute to check printf fns.  a1 is the 1-based index of
++ * the parameter containing the format, and a2 the index of the first
++ * argument. Note that some gcc 2.x versions don't handle this
++ * properly **/
++#define PRINTF_ATTRIBUTE(a1, a2) __attribute__ ((format (__printf__, a1, a2)))
++#else
++#define PRINTF_ATTRIBUTE(a1, a2)
++#endif
++#endif
++
++typedef int bool;
++
+ #include "tdb.h"
+ 
+ #ifndef u32

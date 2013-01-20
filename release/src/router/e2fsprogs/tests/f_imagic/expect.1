@@ -1,0 +1,47 @@
+Pass 1: Checking inodes, blocks, and sizes
+Inode 12 has imagic flag set.  Clear? yes
+
+Inode 13 has imagic flag set.  Clear? yes
+
+Inode 14 has imagic flag set.  Clear? yes
+
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+/lost+found not found.  Create? yes
+
+Pass 4: Checking reference counts
+Inode 2 ref count is 4, should be 3.  Fix? yes
+
+Unattached inode 12
+Connect to /lost+found? yes
+
+Inode 12 ref count is 2, should be 1.  Fix? yes
+
+Unattached inode 14
+Connect to /lost+found? yes
+
+Inode 14 ref count is 2, should be 1.  Fix? yes
+
+Pass 5: Checking group summary information
+Block bitmap differences:  -(9--19)
+Fix? yes
+
+Free blocks count wrong for group #0 (75, counted=87).
+Fix? yes
+
+Free blocks count wrong (75, counted=87).
+Fix? yes
+
+Free inodes count wrong for group #0 (1, counted=2).
+Fix? yes
+
+Directories count wrong for group #0 (3, counted=2).
+Fix? yes
+
+Free inodes count wrong (1, counted=2).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 14/16 files (0.0% non-contiguous), 13/100 blocks
+Exit status is 1

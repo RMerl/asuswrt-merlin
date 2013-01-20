@@ -1,0 +1,230 @@
+.\" -*- nroff -*-
+.TH BADBLOCKS 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+badblocks \- search a device for bad blocks
+.SH SYNOPSIS
+.B badblocks
+[
+.B \-svwnf
+]
+[
+.B \-b
+.I block-size
+]
+[
+.B \-c
+.I blocks_at_once
+]
+[
+.B \-e
+.I max_bad_blocks
+]
+[
+.B \-d
+.I read_delay_factor
+]
+[
+.B \-i
+.I input_file
+]
+[
+.B \-o
+.I output_file
+]
+[
+.B \-p
+.I num_passes
+]
+[
+.B \-t
+.I test_pattern
+]
+.I device
+[
+.I last-block
+] [
+.I first-block 
+]
+.SH DESCRIPTION
+.B badblocks
+is used to search for bad blocks on a device (usually a disk partition).
+.I device
+is the special file corresponding to the device (e.g
+.IR /dev/hdc1 ).
+.I last-block
+is the last block to be checked; if it is not specified, the last block
+on the device is used as a default.
+.I first-block
+is an optional parameter specifying the starting block number
+for the test, which allows the testing to start in the middle of the
+disk.  If it is not specified the first block on the disk is used as a default.
+.PP
+.B Important note:
+If the output of 
+.B badblocks
+is going to be fed to the
+.B e2fsck
+or 
+.B mke2fs
+programs, it is important that the block size is properly specified,
+since the block numbers which are generated are very dependent on the 
+block size in use by the filesystem.   
+For this reason, it is strongly recommended that
+users 
+.B not
+run 
+.B badblocks 
+directly, but rather use the 
+.B \-c
+option of the
+.B e2fsck
+and 
+.B mke2fs
+programs.
+.SH OPTIONS
+.TP
+.BI \-b " block-size"
+Specify the size of blocks in bytes.  The default is 1024.
+.TP
+.BI \-c " number of blocks"
+is the number of blocks which are tested at a time.  The default is 64.
+.TP
+.BI \-e " max bad block count"
+Specify a maximum number of bad blocks before aborting the test.  The
+default is 0, meaning the test will continue until the end of the test
+range is reached.
+.TP
+.BI \-d " read delay factor"
+This parameter, if passed and non-zero, will cause bad blocks to sleep
+between reads if there were no errors encountered in the read
+operation; the delay will be calculated as a percentage of the time it
+took for the read operation to be performed. In other words, a value of 
+100 will cause each read to be delayed by the amount the previous read
+took, and a value of 200 by twice the amount.
+.TP
+.B \-f
+Normally, badblocks will refuse to do a read/write or a non-destructive
+test on a device which is mounted, since either can cause the system to
+potentially crash and/or damage the filesystem even if it is mounted
+read-only.  This can be overridden using the
+.B \-f
+flag, but should almost never be used --- if you think you're smarter
+than the 
+.B badblocks
+program, you almost certainly aren't.  The only time when this option 
+might be safe to use is if the /etc/mtab file is incorrect, and the device
+really isn't mounted.
+.TP
+.BI \-i " input_file"
+Read a list of already existing known bad blocks.
+.B Badblocks
+will skip testing these blocks since they are known to be bad.  If
+.I input_file
+is specified as "-", the list will be read from the standard input.
+Blocks listed in this list will be omitted from the list of
+.I new
+bad blocks produced on the standard output or in the output file.
+The
+.B \-b
+option of
+.BR dumpe2fs (8)
+can be used to retrieve the list of blocks currently marked bad on
+an existing filesystem, in a format suitable for use with this option.
+.TP
+.B \-n
+Use non-destructive read-write mode.  By default only a non-destructive 
+read-only test is done.  This option must not be combined with the 
+.B \-w
+option, as they are mutually exclusive.
+.TP
+.BI \-o " output_file"
+Write the list of bad blocks to the specified file.  Without this option,
+.B badblocks
+displays the list on its standard output.  The format of this file is suitable
+for use by the
+.
+.B \-l
+option in 
+.BR e2fsck (8)
+or
+.BR mke2fs (8).
+.TP
+.BI \-p " num_passes"
+Repeat scanning the disk until there are no new blocks discovered in
+num_passes consecutive scans of the disk.
+Default is 0, meaning
+.B badblocks
+will exit after the first pass.
+.TP
+.B \-s
+Show the progress of the scan by writing out rough percentage completion
+of the current badblocks pass over the disk.  Note that badblocks may do
+multiple test passes over the disk, in particular if the
+.B \-p
+or
+.B \-w
+option is requested by the user.
+.TP
+.BI \-t " test_pattern"
+Specify a test pattern to be read (and written) to disk blocks.   The
+.I test_pattern
+may either be a numeric value between 0 and ULONG_MAX-1 inclusive, or the word 
+"random", which specifies that the block should be filled with a random
+bit pattern.
+For read/write (\fB-w\fR) and non-destructive (\fB-n\fR) modes,
+one or more test patterns may be specified by specifying the
+.B -t
+option for each test pattern desired.  For
+read-only mode only a single pattern may be specified and it may not be
+"random".  Read-only testing with a pattern assumes that the
+specified pattern has previously been written to the disk - if not, large
+numbers of blocks will fail verification.  
+If multiple patterns
+are specified then all blocks will be tested with one pattern 
+before proceeding to the next pattern.
+.TP
+.B \-v
+Verbose mode.
+.TP
+.B \-w
+Use write-mode test. With this option,
+.B badblocks
+scans for bad blocks by writing some patterns (0xaa, 0x55, 0xff, 0x00) on
+every block of the device, reading every block and comparing the contents.  
+This option may not be combined with the 
+.B \-n 
+option, as they are mutually exclusive.
+.TP
+.B \-X
+Internal flag only to be used by
+.BR e2fsck (8)
+and
+.BR mke2fs (8).
+It bypasses the exclusive mode in-use device safety check.
+.SH WARNING
+Never use the
+.B \-w
+option on a device containing an existing file system.
+This option erases data!  If you want to do write-mode testing on
+an existing file system, use the
+.B \-n
+option instead.  It is slower, but it will preserve your data.  
+.PP
+The
+.B \-e
+option will cause badblocks to output a possibly incomplete list of
+bad blocks. Therefore it is recommended to use it only when one wants
+to know if there are any bad blocks at all on the device, and not when
+the list of bad blocks is wanted.
+.SH AUTHOR
+.B badblocks
+was written by Remy Card <Remy.Card@linux.org>.  Current maintainer is
+Theodore Ts'o <tytso@alum.mit.edu>.  Non-destructive read/write test
+implemented by David Beattie <dbeattie@softhome.net>.
+.SH AVAILABILITY
+.B badblocks
+is part of the e2fsprogs package and is available from 
+http://e2fsprogs.sourceforge.net.
+.SH SEE ALSO
+.BR e2fsck (8),
+.BR mke2fs (8)

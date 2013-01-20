@@ -1,0 +1,74 @@
+#
+# Copyright (C) 1993 Theodore Ts'o.  This file may be redistributed
+# under the terms of the GNU Public License.
+#
+command_table extent_cmds;
+
+request do_inode, "Open an inode",
+	inode;
+
+request do_current_node, "Current extent node",
+	current_node, current;
+
+request do_root_node, "Goto root extent",
+	root_node, root;
+
+request do_last_leaf, "Goto last leaf",
+	last_leaf;
+
+request do_first_sib, "Goto first sibling",
+	first_sibling, first_sib;
+
+request do_last_sib, "Goto last sibling",
+	last_sibling, last_sib;
+
+request do_next_sib, "Goto next sibling",
+	next_sibling, next_sib, ns;
+
+request do_prev_sib, "Goto previous sibling",
+	prev_sibling, prev_sib, ps;
+
+request do_next_leaf, "Goto next leaf",
+	next_leaf, nl;
+
+request do_prev_leaf, "Goto previous leaf",
+	prev_leaf, pl;
+
+request do_next, "Goto next node",
+	next, n;
+
+request do_prev, "Goto previous node",
+	previous, prev, p;
+
+request do_up, "Up node",
+	up_node, up, u;
+
+request do_down, "Down node",
+	down_node, down, d;
+
+request do_delete_node, "Delete node",
+	delete_node, delete;
+
+request do_insert_node, "Insert node",
+	insert_node, insert;
+
+request do_split_node, "Split node",
+	split_node, split;
+
+request do_set_bmap, "Set block mapping",
+	set_bmap;
+
+request do_replace_node, "Insert node",
+	replace_node, replace;
+
+request do_print_all, "Iterate over all nodes and print them",
+	print_all, all;
+
+request do_goto_block, "Goto extent containing specified block",
+	goto_block, goto;
+
+request do_info, "Print extent info",
+	info;
+
+end;
+

@@ -1,0 +1,64 @@
+create 10
+add 10 20
+add 11 21
+add 12 22
+add 14 45
+add 16 50
+add 17 51
+dump
+# Extent dump:
+#	Num=3, Size=10, Cursor=0, Sorted=1
+#		 10 -> 20 (3)
+#		 14 -> 45 (1)
+#		 16 -> 50 (2)
+add 18 52
+dump
+# Extent dump:
+#	Num=3, Size=10, Cursor=0, Sorted=1
+#		 10 -> 20 (3)
+#		 14 -> 45 (1)
+#		 16 -> 50 (3)
+lookup 10
+# Answer: 20
+lookup 11
+# Answer: 21
+lookup 12
+# Answer: 22
+lookup 13
+# Answer: 0 (not found)
+lookup 14
+# Answer: 45
+lookup 15
+# Answer: 0 (not found)
+lookup 16
+# Answer: 50
+lookup 1
+# Answer: 0 (not found)
+lookup 50
+# Answer: 0 (not found)
+add 19 100
+add 13 5
+lookup 18
+# Answer: 52
+lookup 19
+# Answer: 100
+lookup 20
+# Answer: 0 (not found)
+lookup 12
+# Answer: 22
+lookup 13
+# Answer: 5
+dump
+# Extent dump:
+#	Num=5, Size=10, Cursor=0, Sorted=1
+#		 10 -> 20 (3)
+#		 13 -> 5 (1)
+#		 14 -> 45 (1)
+#		 16 -> 50 (3)
+#		 19 -> 100 (1)
+iter_test
+# 10 -> 20 (3)
+# 13 -> 5 (1)
+# 14 -> 45 (1)
+# 16 -> 50 (3)
+# 19 -> 100 (1)

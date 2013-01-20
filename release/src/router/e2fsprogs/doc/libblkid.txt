@@ -1,0 +1,78 @@
+libblkid - a library to handle device identification and token extraction
+
+Basic usage is as follows - there are two normal usage patterns:
+
+For cases where a program wants information about multiple devices, or
+expects to be doing multiple token searches, the program should
+directly initialize cache file via (second parameter is cache
+filename, NULL = default):
+
+	blkid_cache cache = NULL;
+	if (blkid_get_cache(&cache, NULL) < 0)
+		/* error reading the cache file, not really fatal */
+
+Note that if no cache file exists, an empty cache struct is still
+allocated.  Usage of libblkid functions will use the cache to avoid
+needless device scans.
+
+The model of the blkid cache is that each device has a number of
+attributes that can be associated with it.  Currently the attributes
+which are supported (and set) by blkid are:
+
+	TYPE		filesystem type
+	UUID		filesystem uuid
+	LABEL		filesystem label
+
+
+How to use libblkid?  Normally, you either want to find a device with
+a specific NAME=value token, or you want to output token(s) from a
+device.  To find a device that matches a following attribute, you
+simply call the blkid_get_devname() function: 
+
+	if ((devname = blkid_get_devname(cache, attribute_name, value))) {
+		/* do something with devname */
+		string_free(devname);
+	}
+
+The cache parameter is optional; if it is NULL, then the blkid library
+will load the default blkid.tab cache file, and then release the cache
+before function call returns.  The return value is an allocated string
+which holds the resulting device name (if it is found).  If the value
+is NULL, then attribute_name is parsed as if it were
+"<attribute_name>=<value>"; if it cannot be so parsed, then the
+original attribute_name is returned in a copied allocated string.
+This is a convenience to allow user programs to want to translate user
+input, whether it is of the form: "/dev/hda1", "LABEL=root",
+"UUID=082D-26E3", and get back a device name that it can use.
+
+Alternatively, of course, the programmer can pass an attribute name of
+"LABEL", and value of "root", if that is more convenient.
+
+Another common usage is to retrieve the value of a specific attribute
+for a particular device.  This can be used to determine the filesystem
+type, or label, or uuid for a particular device:
+
+	if ((value = blkid_get_tag_value(cache, attribute_name, devname))) {
+		/* do something with value */
+		string_free(value);
+	}
+
+If a program needs to call multiple blkid functions, then passing in a
+cache value of NULL is not recommended, since the /etc/blkid.tab file
+will be repeatedly parsed over and over again, with memory allocated
+and deallocated.  To initialize the blkid cache, blkid_get_cache()
+function is used:
+
+	if (blkid_get_cache(&cache, NULL) < 0)
+		goto errout;
+
+The second parameter of blkid_get_cache (if non-zero) is the alternate
+filename of the blkid cache file (where the default is
+/etc/blkid.tab).  Normally, programs should just pass in NULL.
+
+If you have called blkid_get_cache(), you should call blkid_put_cache()
+when you are done using the blkid library functions.  This will save the
+cache to the blkid.tab file, if you have write access to the file.  It
+will also free all associated devices and tags:
+
+	blkid_put_cache(cache); 

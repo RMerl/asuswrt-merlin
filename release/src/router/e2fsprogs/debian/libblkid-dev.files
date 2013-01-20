@@ -1,0 +1,4 @@
+usr/lib/libblkid*
+usr/include/blkid
+usr/share/man/man3/libblkid.3
+usr/lib/pkgconfig/blkid.pc

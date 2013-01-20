@@ -1,0 +1,182 @@
+#! /usr/bin/make -f
+# -*- makefile -*-
+#
+# Invoke each target with `./debian/rules <target>'.  All targets should be
+# invoked with the package root as the current directory.
+#
+# The `binary' target must be run as root, as it needs to install files with
+# specific ownerships.
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+package = e2fsprogs
+ARCH = $(shell dpkg --print-architecture)
+
+# find the version for the main package, from changelog file
+MAIN_VERSION = $(shell head -1 debian/changelog | cut '-d ' -f 2 | sed 's/[()]//g')
+# find versions for libraries going into their own packages, from their Makefile.in's
+COMERR_VERSION = $(shell grep ELF_VERSION lib/et/Makefile.in | cut '-d ' -f3)
+COMERR_MAJOR = $(word 1,$(subst ., ,$(COMERR_VERSION)))
+SS_VERSION = $(shell grep ELF_VERSION lib/ss/Makefile.in | cut '-d ' -f3)
+SS_MAJOR = $(word 1,$(subst ., ,$(SS_VERSION)))
+
+topdir = $(shell pwd)
+debdir = $(topdir)/debian
+maindir = $(debdir)/tmp
+builddir = $(topdir)/builddir
+docdir = $(maindir)/usr/doc/$(package)
+
+SUBPACKAGES_DIRS = tmp e2fslibsg e2fslibsg-dev comerr$(COMERR_MAJOR)g comerrg-dev \
+	ss$(SS_MAJOR)g ssg-dev
+
+installdoc = install -m 644
+installbin = install -m 755
+
+ifeq ($(ARCH),alpha)
+CCOPTS = -g -O2 -fsigned-char -DHAVE_NETINET_IN_H
+LIBC-DEV = libc6.1-dev
+else
+CCOPTS = -g -O2 -fsigned-char
+LIBC-DEV = libc6-dev
+endif
+
+build: configured
+	dh_testdir
+	make -C $(builddir)
+	make -C $(builddir)/misc findsuper
+	cd doc && texi2html -split_chapter libext2fs.texinfo
+	cd lib/et && texi2html -split_chapter -expandinfo com_err.texinfo
+	touch build
+
+configured:
+	dh_testdir
+	mkdir -p $(builddir)
+	cd $(builddir) && CFLAGS="$(CFLAGS)" \
+		../configure --enable-elf-shlibs --enable-dynamic-e2fsck \
+		--with-ccopts="$(CCOPTS)"
+	touch configured
+
+clean:
+	dh_testdir
+	rm -f build configured install
+	-make -C $(builddir) -i distclean
+	rm -rf $(builddir)
+	rm -f doc/libext2fs_*.html lib/et/com_err_*.html
+	dh_clean
+
+binary-indep: build
+  # no arch-independant debs.
+
+binary-arch: build
+	dh_testversion 0.56 # == 0.53 + fixes
+	dh_testdir -a
+	dh_testroot -a
+	dh_clean -a -k
+	dh_installdirs -a
+
+	make -C $(builddir) install DESTDIR=$(maindir)
+	install -m 755 $(builddir)/misc/findsuper $(maindir)/sbin
+  # static libs and .h files
+	make -C $(builddir) install-libs DESTDIR=$(maindir)
+	install -m 644 $(builddir)/lib/ss/ss_err.h $(maindir)/usr/include/ss/
+
+# fix and install compile_et script
+	sed s%$(topdir)/lib/et%/usr/share/comerr% \
+	  <$(builddir)/lib/et/compile_et \
+	  >$(debdir)/comerrg-dev/usr/bin/compile_et
+	chmod 755 $(debdir)/comerrg-dev/usr/bin/compile_et
+# add support files for compile_et
+	install -m 644 lib/et/et_c.awk lib/et/et_h.awk \
+	  $(debdir)/comerrg-dev/usr/share/comerr/
+
+# fix and install mk_cmds script
+	sed s%$(topdir)/lib/ss%/usr/share/ss% \
+	  <$(builddir)/lib/ss/mk_cmds \
+	  >$(debdir)/ssg-dev/usr/bin/mk_cmds
+	chmod 755 $(debdir)/ssg-dev/usr/bin/mk_cmds
+# add support files for mk_cmds
+	install -m 644 lib/ss/ct_c.awk lib/ss/ct_c.sed \
+	  $(debdir)/ssg-dev/usr/share/ss/
+
+# docs
+	mkdir -p $(debdir)/e2fslibsg-dev/usr/doc/e2fslibsg
+	ln -sf e2fslibsg $(debdir)/e2fslibsg-dev/usr/doc/e2fslibsg-dev
+	mkdir -p $(maindir)/usr/doc/e2fslibsg
+	ln -sf e2fslibsg $(maindir)/usr/doc/e2fsprogs
+	mkdir -p $(debdir)/comerrg-dev/usr/doc/comerr$(COMERR_MAJOR)g
+	ln -sf comerr$(COMERR_MAJOR)g $(debdir)/comerrg-dev/usr/doc/comerrg-dev
+	mkdir -p $(debdir)/ssg-dev/usr/doc/ss$(SS_MAJOR)g
+	ln -sf ss$(SS_MAJOR)g $(debdir)/ssg-dev/usr/doc/ssg-dev
+	dh_installdocs -a
+
+  # HTML docs
+	install -d $(debdir)/e2fslibsg-dev/usr/doc/e2fslibsg-dev/html-info/
+	install -p $(topdir)/doc/libext2fs_*.html \
+	   $(debdir)/e2fslibsg-dev/usr/doc/e2fslibsg-dev/html-info/
+	install -d $(debdir)/comerrg-dev/usr/doc/comerrg-dev/html-info/
+	install -p $(topdir)/lib/et/com_err_*.html \
+	   $(debdir)/comerrg-dev/usr/doc/comerrg-dev/html-info/
+
+  # texinfo docs
+	install -p $(topdir)/doc/libext2fs.texinfo \
+	   $(debdir)/e2fslibsg-dev/usr/doc/e2fslibsg/libext2fs.texi
+	install -p $(topdir)/lib/et/com_err.texinfo \
+	   $(debdir)/comerrg-dev/usr/doc/comerr2g/com_err.texi
+
+  # doc-base support
+	install -d $(debdir)/e2fslibsg-dev/usr/share/doc-base/
+	install -p -m 644 $(debdir)/libext2fs.docbase \
+	   $(debdir)/e2fslibsg-dev/usr/share/doc-base/libext2fs
+	install -d $(debdir)/comerrg-dev/usr/share/doc-base/
+	install -p -m 644 $(debdir)/com_err.docbase \
+	   $(debdir)/comerrg-dev/usr/share/doc-base/com_err
+
+  # examples
+	dh_installexamples -a
+
+  # dh_installmanpages still makes a mess as of 0.54 (see below dh_movefiles)
+	install -p $(topdir)/lib/et/compile_et.1 $(maindir)/usr/man/man1/
+	install -d $(maindir)/usr/man/man3/
+	install -p $(topdir)/lib/et/com_err.3 $(maindir)/usr/man/man3/
+	ln -s e2fsck.8 $(maindir)/usr/man/man8/fsck.ext2.8
+	ln -s mke2fs.8 $(maindir)/usr/man/man8/mkfs.ext2.8
+
+	dh_movefiles -a
+  # cleanup empty dirs
+	cd  $(maindir) && rmdir usr/man/cat? bin lib usr/include/* usr/include \
+		usr/info usr/lib usr/man/man3 usr/doc/e2fslibsg
+
+#	dh_installmenu -a
+
+  # broken + useless in 0.52
+  #	dh_installmanpages -a
+
+	dh_undocumented -a
+
+	dh_installchangelogs -pe2fslibsg -pcomerr$(COMERR_MAJOR)g -pss$(SS_MAJOR)g ChangeLog
+
+	dh_strip -a
+	dh_compress -a
+	dh_fixperms -a
+
+	echo "libcdev:Depends=$(LIBC-DEV)" > debian/comerrg-dev.substvars
+	echo "libcdev:Depends=$(LIBC-DEV)" > debian/ssg-dev.substvars
+	echo "libcdev:Depends=$(LIBC-DEV)" > debian/e2fslibsg-dev.substvars
+
+	dh_installdeb -a
+	LD_LIBRARY_PATH=$(builddir)/lib:/lib:/usr/lib \
+	  dh_shlibdeps -a
+	dh_gencontrol -u '-isp' -pe2fsprogs -pe2fslibsg -pe2fslibsg-dev
+	dh_gencontrol -u '-isp' -pcomerr$(COMERR_MAJOR)g -pcomerrg-dev \
+	  -u '-v$(COMERR_VERSION)-$(MAIN_VERSION)'
+	dh_gencontrol -u '-isp' -pss$(SS_MAJOR)g -pssg-dev \
+	  -u '-v$(SS_VERSION)-$(MAIN_VERSION)'
+	dh_makeshlibs -a
+#	dh_du -a
+	dh_md5sums -a
+	dh_builddeb -a
+
+binary: binary-indep binary-arch
+
+.PHONY: binary binary-arch binary-indep clean checkroot

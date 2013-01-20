@@ -1,0 +1,53 @@
+.\" -*- nroff -*-
+.\" Copyright 1993, 1994, 1995 by Theodore Ts'o.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\" 
+.TH E2LABEL 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+e2label \- Change the label on an ext2/ext3/ext4 filesystem
+.SH SYNOPSIS
+.B e2label
+.I device
+[
+.I new-label
+]
+.SH DESCRIPTION
+.B e2label
+will display or change the filesystem label on the ext2, ext3, or ext4 
+filesystem located on
+.I device.  
+.PP
+If the optional argument 
+.I new-label
+is not present, 
+.B e2label
+will simply display the current filesystem label.
+.PP
+If the optional argument
+.I new-label
+is present, then 
+.B e2label
+will set the filesystem label to be
+.IR new-label .
+Ext2 filesystem labels can be at most 16 characters long; if
+.I new-label 
+is longer than 16 characters, 
+.B e2label
+will truncate it and print a warning message.  
+.PP
+It is also possible to set the filesystem label using the
+.B \-L
+option of 
+.BR tune2fs (8).
+.PP
+.SH AUTHOR
+.B e2label 
+was written by Theodore Ts'o (tytso@mit.edu).
+.SH AVAILABILITY
+.B e2label
+is part of the e2fsprogs package and is available from 
+http://e2fsprogs.sourceforge.net.
+.SH SEE ALSO
+.BR mke2fs (8),
+.BR tune2fs (8)
+

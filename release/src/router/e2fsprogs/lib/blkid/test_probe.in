@@ -1,0 +1,62 @@
+
+TESTS=$*
+
+if test "$TESTS"x = x ; then
+	for i in $SRCDIR/tests/*.img.bz2
+	do
+		TESTS="$TESTS `basename $i .img.bz2`"
+	done
+fi
+
+mkdir -p tests/tmp
+
+for i in $TESTS
+do
+	printf "%s: " $i
+	RESULTS=$SRCDIR/tests/$i.results
+	IMAGE_BZ2=$SRCDIR/tests/$i.img.bz2
+	IMAGE=tests/tmp/$i.img.$$
+	if test ! -f $IMAGE_BZ2 -a ! -f $RESULTS ;
+	then
+		echo "non-existent"
+		continue
+	fi
+	if [ "$i" = "swap0" ]; then
+		# swap is native-endian, so regenerate before testing
+		dd if=/dev/zero of=$IMAGE bs=16k count=64 2> /dev/null
+		mkswap -v0 $IMAGE > /dev/null
+	elif [ "$i" = "swap1" ]; then
+		# swap is native-endian, so regenerate before testing
+		dd if=/dev/zero of=$IMAGE bs=16k count=64 2> /dev/null
+		# check if mkswap supports the "-U" option
+		if mkswap -h 2>&1 | grep -q -- '-U'; then
+			UUID="-U 8ff8e77f-8553-485e-8656-58be67a81666"
+		else
+			RMUUID="| grep -v UUID"
+			RES_TMP=$SRCDIR/tests/tmp/$i.results
+			grep -v UUID $RESULTS > $RES_TMP
+			RESULTS=$RES_TMP
+		fi
+		mkswap -v1 -L SWAP-TEST $UUID $IMAGE >/dev/null
+	else
+		bunzip2 < $IMAGE_BZ2 > $IMAGE
+	fi
+	eval ./tst_probe $IMAGE $RMUUID > tests/$i.out
+	rm -f $IMAGE tests/$i.ok tests/$i.failed
+	cmp -s tests/$i.out $RESULTS
+	unset RMUUID
+	if [ $? = 0 ];  then
+		echo ok
+		touch tests/$i.ok
+	else	
+		echo failed
+		diff -c tests/$i.out $RESULTS > tests/$i.failed
+	fi
+done
+
+num_ok=`ls tests/*.ok 2>/dev/null | wc -l`
+num_failed=`ls tests/*.failed 2>/dev/null | wc -l`
+
+echo "$num_ok tests succeeded	$num_failed tests failed"
+
+test "$num_failed" -eq 0 || exit 1

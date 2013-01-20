@@ -1,0 +1,256 @@
+.\" -*- nroff -*-
+.\" Copyright 2006 by Theodore Ts'o.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\" 
+.TH e2fsck.conf 5 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+e2fsck.conf \- Configuration file for e2fsck
+.SH DESCRIPTION
+.I e2fsck.conf
+is the configuration file for 
+.BR e2fsck (8).  
+It controls the default behavior of 
+.BR e2fsck (8)
+while it is checking ext2, ext3, or ext4 filesystems.
+.PP
+The
+.I e2fsck.conf
+file uses an INI-style format.  Stanzas, or top-level sections, are 
+delimited by square braces: [ ].  Within each section, each line 
+defines a relation, which assigns tags to values, or to a subsection,
+which contains further relations or subsections.   
+.\" Tags can be assigned multiple values
+An example of the INI-style format used by this configuration file 
+follows below:
+.P
+	[section1]
+.br
+		tag1 = value_a
+.br
+		tag1 = value_b
+.br
+		tag2 = value_c
+.P
+	[section 2]
+.br
+		tag3 = {
+.br
+			subtag1 = subtag_value_a
+.br
+			subtag1 = subtag_value_b
+.br
+			subtag2 = subtag_value_c
+.br
+		}
+.br
+		tag1 = value_d
+.br
+		tag2 = value_e
+.br
+	}
+.P
+Comments are delimited by a semicolon (';') or a hash ('#') character 
+at the beginning of the comment, and are terminated by the end of 
+line character.
+.P
+Tags and values must be quoted using double quotes if they contain
+spaces.  Within a quoted string, the standard backslash interpretations 
+apply: "\en" (for the newline character), 
+"\et" (for the tab character), "\eb" (for the backspace character), 
+and "\e\e" (for the backslash character).
+.P
+The following stanzas are used in the 
+.I e2fsck.conf
+file.  They will be described in more detail in future sections of this
+document.
+.TP 
+.I [options]
+This stanza contains general configuration parameters for 
+.BR e2fsck 's
+behavior.
+.TP
+.I [problems]
+This stanza allows the administrator to reconfigure how e2fsck handles
+various filesystem inconsistencies.
+.TP
+.I [scratch_files]
+This stanza controls when e2fsck will attempt to use scratch files to
+reduce the need for memory.
+.SH THE [options] STANZA
+The following relations are defined in the 
+.I [options]
+stanza.
+.TP
+.I allow_cancellation
+If this relation is set to a boolean value of true, then if the user 
+interrupts e2fsck using ^C, and the filesystem is not explicitly flagged
+as containing errors, e2fsck will exit with an exit status of 0 instead
+of 32.  This setting defaults to false.
+.TP
+.I accept_time_fudge
+Unfortunately, due to Windows' unfortunate design decision
+to configure the hardware clock to tick localtime, instead
+of the more proper and less error-prone UTC time, many
+users end up in the situation where the system clock is
+incorrectly set at the time when e2fsck is run.
+.IP
+Historically this was usually due to some distributions
+having buggy init scripts and/or installers that didn't
+correctly detect this case and take appropriate
+countermeasures.  However, it's still possible, despite the
+best efforts of init script and installer authors to not be
+able to detect this misconfiguration, usually due to a
+buggy or misconfigured virtualization manager or the
+installer not having access to a network time server
+during the installation process.  So by default, we allow
+the superblock times to be fudged by up to 24 hours.
+This can be disabled by setting
+.I accept_time_fudge
+to the
+boolean value of false.  This setting defaults to true.
+.TP
+.I broken_system_clock
+The
+.BR e2fsck (8)
+program has some hueristics that assume that the system clock is
+correct.  In addition, many system programs make similar assumptions.
+For example, the UUID library depends on time not going backwards in
+order for it to be able to make its guarantees about issuing universally
+unique ID's.  Systems with broken system clocks, are well, broken.
+However, broken system clocks, particularly in embedded systems, do
+exist.  E2fsck will attempt to use hueristics to determine if the time
+can no tbe trusted; and to skip time-based checks if this is true.  If
+this boolean is set to true, then e2fsck will always assume that the
+system clock can not be trusted.
+.TP
+.I clear_test_fs_flag
+This boolean relation controls whether or not 
+.BR e2fsck (8)
+will offer to clear
+the test_fs flag if the ext4 filesystem is available on the system.  It
+defaults to true.
+.TP 
+.I defer_check_on_battery
+This boolean relation controls whether or not the interval between 
+filesystem checks (either based on time or number of mounts) should 
+be doubled if the system is running on battery.  This setting defaults to 
+true.
+.TP
+.I indexed_dir_slack_percentage
+When
+.BR e2fsck (8)
+repacks a indexed directory, reserve the specified percentage of
+empty space in each leaf nodes so that a few new entries can
+be added to the directory without splitting leaf nodes, so that
+the average fill ratio of directories can be maintained at a
+higher, more efficient level.  This relation defaults to 20
+percent.
+.SH THE [problems] STANZA
+Each tag in the
+.I [problems] 
+stanza names a problem code specified with a leading "0x" followed by
+six hex digits.   
+The value of the tag is a subsection where the relations in that
+subsection override the default treatment of that particular problem 
+code.
+.P
+Note that inappropriate settings in this stanza may cause 
+.B e2fsck
+to behave incorrectly, or even crash.  Most system administrators should
+not be making changes to this section without referring to source code.
+.P
+Within each problem code's subsection, the following tags may be used:
+.TP
+.I description
+This relation allows the message which is printed when this filesystem
+inconsistency is detected to be overridden.
+.TP
+.I preen_ok
+This boolean relation overrides the default behavior controlling 
+whether this filesystem problem should be automatically fixed when
+.B e2fsck
+is running in preen mode.
+.TP
+.I no_ok
+This boolean relation overrides the default behavior determining
+whether or not the filesystem will be marked as inconsistent if the user
+declines to fix the reported problem.
+.TP
+.I no_default
+This boolean relation overrides whether the default answer for this 
+problem (or question) should be "no".
+.TP 
+.I preen_nomessage
+This boolean relation overrides the default behavior controlling 
+whether or not the description for this filesystem problem should
+be suppressed when
+.B e2fsck
+is running in preen mode.
+.TP
+.I no_nomsg
+This boolean relation overrides the default behavior controlling 
+whether or not the description for this filesystem problem should
+be suppressed when a problem forced not to be fixed, either because
+.B e2fsck
+is run with the
+.B -n
+option or because the
+.I force_no
+flag has been set for the problem.
+.TP
+.I force_no
+This boolean option, if set to true, forces a problem to never be fixed.
+That is, it will be as if the user problem responds 'no' to the question
+of 'should this problem be fixed?'.  The
+.I force_no
+option even overrides the
+.B -y
+option given on the command-line (just for the specific problem, of course).
+.SH THE [scratch_files] STANZA
+The following relations are defined in the 
+.I [scratch_files]
+stanza.
+.TP
+.I directory
+If the directory named by this relation exists and is writeable, then
+e2fsck will attempt to use this directory to store scratch files instead
+of using in-memory data structures.
+.TP
+.I numdirs_threshold
+If this relation is set, then in-memory data structures be used if the
+number of directories in the filesystem are fewer than amount specified.
+.TP
+.I dirinfo
+This relation controls whether or not the scratch file directory is used
+instead of an in-memory data structure for directory information.  It
+defaults to true.
+.TP
+.I icount
+This relation controls whether or not the scratch file directory is used
+instead of an in-memory data structure when tracking inode counts.  It
+defaults to true.
+.SH EXAMPLES
+The following recipe will prevent e2fsck from aborting during the boot
+process when a filesystem contains orphaned files.  (Of course, this is
+not always a good idea, since critical files that are needed for the
+security of the system could potentially end up in lost+found, and
+starting the system without first having a system administrator check
+things out may be dangerous.)
+.P
+.br
+	[problems]
+.br
+		0x040002 = {
+.br
+			preen_ok = true
+.br
+			description = "@u @i %i.  "
+.br
+		}
+.SH FILES
+.TP
+.I /etc/e2fsck.conf
+The configuration file for 
+.BR e2fsck (8).
+.SH SEE ALSO
+.BR e2fsck (8)

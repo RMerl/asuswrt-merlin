@@ -1,0 +1,5 @@
+error_table ovk h3test
+prefix H3TEST
+ec TEST1,	"Test message 1"
+ec TEST2,	"Test message 2"
+end

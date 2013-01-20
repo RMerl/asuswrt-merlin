@@ -1,0 +1,17 @@
+Begin3
+Title:          EXT2 Filesystem utilities
+Version:        1.41.14
+Entered-date:   22Dec2010
+Description:    The filesystem utilities for the EXT2 filesystem, including 
+		e2fsck, mke2fs, dumpe2fs, fsck, and others.
+Keywords:       utilities, fsck, filesystem, Ext2fs
+Author:         tytso@mit.edu (Theodore Tso)
+Maintained-by:  tytso@mit.edu (Theodore Tso)
+Primary-site:   download.sourceforge.net /pub/sourceforge/e2fsprogs
+		4408kB e2fsprogs-1.41.14.tar.gz
+		480kB e2fsprogs-libs-1.41.14.tar.gz
+                1kB   e2fsprogs-1.41.14.lsm
+Alternate-site: 
+Platforms:	linux 1.2.x/1.3.x/2.0.x/2.1.x/2.2.x/2.3.x/2.4.x/2.5.x/2.6.x
+Copying-policy: GPL-2/LGPL-2
+End

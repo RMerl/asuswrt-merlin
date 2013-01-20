@@ -1,0 +1,51 @@
+#
+# This is a Makefile stub which handles the creation of Darwin BSD shared
+# libraries.
+#
+# In order to use this stub, the following makefile variables must be defined.
+#
+# BSDLIB_VERSION = 1.0
+# BSDLIB_IMAGE = libce
+# BSDLIB_MYDIR = et
+# BSDLIB_INSTALL_DIR = $(SHLIBDIR)
+#
+
+all:: image
+
+real-subdirs:: Makefile
+	$(E) "	MKDIR pic"
+	$(Q) mkdir -p pic
+
+BSD_LIB = $(BSDLIB_IMAGE).$(BSDLIB_VERSION).dylib
+BSDLIB_PIC_FLAG = -fPIC
+
+image:		$(BSD_LIB)
+
+$(BSD_LIB): $(OBJS)
+	$(E) "	GEN_BSD_SOLIB $(BSD_LIB)"
+	$(Q) (cd pic; $(CC) -dynamiclib -compatibility_version 1.0 -current_version $(BSDLIB_VERSION) \
+		-flat_namespace -undefined warning -o $(BSD_LIB) $(OBJS))
+	$(Q) $(MV) pic/$(BSD_LIB) .
+	$(Q) $(RM) -f ../$(BSD_LIB)
+	$(Q) (cd ..; $(LN) $(LINK_BUILD_FLAGS) \
+		`echo $(my_dir) | sed -e 's;lib/;;'`/$(BSD_LIB) $(BSD_LIB))
+	$(Q) (cd ..; $(LN) $(LINK_BUILD_FLAGS) $(BSD_LIB) $(BSDLIB_IMAGE).dylib)
+
+install-shlibs install:: $(BSD_LIB)
+	$(E) "	INSTALL_PROGRAM $(BSDLIB_INSTALL_DIR)/$(BSD_LIB)"
+	$(Q) $(INSTALL_PROGRAM) $(BSD_LIB) \
+		$(DESTDIR)$(BSDLIB_INSTALL_DIR)/$(BSD_LIB)
+	-$(Q) $(LDCONFIG)
+
+install-strip: install
+
+install-shlibs-strip: install-shlibs
+
+uninstall-shlibs uninstall::
+	$(RM) -f $(DESTDIR)$(BSDLIB_INSTALL_DIR)/$(BSD_LIB)
+
+clean::
+	$(RM) -rf pic
+	$(RM) -f $(BSD_LIB)
+	$(RM) -f ../$(BSD_LIB)
+	$(RM) -f ../$(BSDLIB_IMAGE).dylib

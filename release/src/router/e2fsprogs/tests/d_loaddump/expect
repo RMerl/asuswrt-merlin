@@ -1,0 +1,18 @@
+debugfs load/dump test
+mke2fs -Fq -b 1024 ./test.img 512
+Exit status is 0
+debugfs -R ''write test.data test_data'' -w ./test.img
+Allocated inode: 12
+Exit status is 0
+e2fsck -yf -N test_filesys
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+test_filesys: 12/64 files (0.0% non-contiguous), 158/512 blocks
+Exit status is 0
+debugfs -R ''dump test_data test.verify'' ./test.img
+Exit status is 0
+cmp test.data test.verify
+Exit status is 0

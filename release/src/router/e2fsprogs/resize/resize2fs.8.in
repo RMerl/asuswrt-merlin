@@ -1,0 +1,148 @@
+.\" -*- nroff -*-
+.\" Copyright 1997 by Theodore Ts'o.  All Rights Reserved.
+.\" 
+.\" .TH RESIZE2FS 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.TH RESIZE2FS 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+resize2fs \- ext2/ext3/ext4 file system resizer
+.SH SYNOPSIS
+.B resize2fs
+[
+.B \-fFpPM
+]
+[
+.B \-d 
+.I debug-flags
+]
+[
+.B \-S
+.I RAID-stride
+]
+.I device
+[
+.I size
+]
+.SH DESCRIPTION
+The 
+.B resize2fs 
+program will resize ext2, ext3, or ext4 file systems.  It can be used to
+enlarge or shrink an unmounted file system located on 
+.IR device .
+If the filesystem is mounted, it can be used to expand the size of the
+mounted filesystem, assuming the kernel supports on-line resizing.  (As
+of this writing, the Linux 2.6 kernel supports on-line resize for
+filesystems mounted using ext3 and ext4.).
+.PP
+The 
+.I size
+parameter specifies the requested new size of the filesystem.
+If no units are specified, the units of the
+.I size
+parameter shall be the filesystem blocksize of the filesystem.
+Optionally, the 
+.I size
+parameter may be suffixed by one of the following the units 
+designators: 's', 'K', 'M', or 'G',
+for 512 byte sectors, kilobytes, megabytes, or gigabytes, respectively.
+The 
+.I size
+of the filesystem may never be larger than the size of the partition.
+If 
+.I size
+parameter is not specified, it will default to the size of the partition.
+.PP
+Note: when kilobytes is used above, I mean
+.IR real ,
+power-of-2 kilobytes, (i.e., 1024 bytes), which some politically correct
+folks insist should be the stupid-sounding ``kibibytes''.  The same
+holds true for megabytes, also sometimes known as ``mebibytes'', or
+gigabytes, as the amazingly silly ``gibibytes''.  Makes you want to
+gibber, doesn't it?
+.PP
+The
+.B resize2fs
+program does not manipulate the size of partitions.  If you wish to enlarge
+a filesystem, you must make sure you can expand the size of the
+underlying partition first.  This can be done using 
+.BR fdisk (8)
+by deleting the partition and recreating it with a larger size or using
+.BR lvextend (8),
+if you're using the logical volume manager
+.BR lvm (8).
+When 
+recreating the partition, make sure you create it with the same starting
+disk cylinder as before!  Otherwise, the resize operation will 
+certainly not work, and you may lose your entire filesystem.  
+After running
+.BR fdisk (8),
+run resize2fs to resize the ext2 filesystem 
+to use all of the space in the newly enlarged partition.
+.PP
+If you wish to shrink an ext2 partition, first use 
+.B resize2fs
+to shrink the size of filesystem.  Then you may use 
+.BR fdisk (8)
+to shrink the size of the partition.  When shrinking the size of 
+the partition, make sure you do not make it smaller than the new size 
+of the ext2 filesystem!
+.SH OPTIONS
+.TP
+.B \-d \fIdebug-flags
+Turns on various resize2fs debugging features, if they have been compiled 
+into the binary.
+.I debug-flags
+should be computed by adding the numbers of the desired features 
+from the following list:
+.br
+\	2\	\-\ Debug block relocations
+.br
+\	4\	\-\ Debug inode relocations
+.br
+\	8\	\-\ Debug moving the inode table
+.TP 
+.B \-f
+Forces resize2fs to proceed with the filesystem resize operation, overriding 
+some safety checks which resize2fs normally enforces.
+.TP
+.B \-F
+Flush the filesystem device's buffer caches before beginning.  Only
+really useful for doing 
+.B resize2fs
+time trials.
+.TP
+.B \-M
+Shrink the filesystem to the minimum size.
+.TP
+.B \-p
+Prints out a percentage completion bars for each
+.B resize2fs
+operation during an offline resize, so that the user can keep track 
+of what the program is doing.
+.TP
+.B \-P
+Print the minimum size of the filesystem and exit.
+.TP
+.B \-S \fIRAID-stride
+The
+.B resize2fs
+program will heuristically determine the RAID stride that was specified
+when the filesystem was created.  This option allows the user to
+explicitly specify a RAID stride setting to be used by resize2fs instead.
+.SH KNOWN BUGS
+The minimum size of the filesystem as estimated by resize2fs may be
+incorrect, especially for filesystems with 1k and 2k blocksizes.
+.SH AUTHOR
+.B resize2fs
+was written by Theodore Ts'o <tytso@mit.edu>.
+.SH COPYRIGHT
+Resize2fs is Copyright 1998 by Theodore Ts'o and PowerQuest, Inc.  All
+rights reserved.  
+As of April, 2000
+.B Resize2fs
+may be redistributed under the terms of the GPL.
+.SH SEE ALSO
+.BR fdisk (8),
+.BR e2fsck (8),
+.BR mke2fs (8),
+.BR lvm (8), 
+.BR lvextend (8)

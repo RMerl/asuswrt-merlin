@@ -1,0 +1,204 @@
+# Makefile for the UUID library
+#
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+top_builddir = ../..
+my_dir = lib/uuid
+INSTALL = @INSTALL@
+
+@MCONFIG@
+
+all:: 
+
+SMANPAGES=	uuid.3 uuid_clear.3 uuid_compare.3 uuid_copy.3 \
+		uuid_generate.3 uuid_is_null.3 uuid_parse.3 \
+		uuid_time.3 uuid_unparse.3
+
+OBJS=		clear.o \
+		compare.o \
+		copy.o \
+		gen_uuid.o \
+		isnull.o \
+		pack.o \
+		parse.o \
+		unpack.o \
+		unparse.o \
+		uuid_time.o
+
+SRCS=		$(srcdir)/clear.c \
+		$(srcdir)/compare.c \
+		$(srcdir)/copy.c \
+		$(srcdir)/gen_uuid.c \
+		$(srcdir)/isnull.c \
+		$(srcdir)/pack.c \
+		$(srcdir)/parse.c \
+		$(srcdir)/unpack.c \
+		$(srcdir)/unparse.c \
+		$(srcdir)/uuid_time.c
+
+LIBRARY= libuuid
+LIBDIR= uuid
+
+ELF_VERSION = 1.2
+ELF_SO_VERSION = 1
+ELF_IMAGE = libuuid
+ELF_MYDIR = uuid
+ELF_INSTALL_DIR = $(root_libdir)
+ELF_OTHER_LIBS = 
+
+BSDLIB_VERSION = 1.1
+BSDLIB_IMAGE = libuuid
+BSDLIB_MYDIR = uuid
+BSDLIB_INSTALL_DIR = $(root_libdir)
+
+@MAKEFILE_LIBRARY@
+@MAKEFILE_ELF@
+@MAKEFILE_BSDLIB@
+@MAKEFILE_PROFILE@
+@MAKEFILE_CHECKER@
+
+.c.o:
+	$(E) "	CC $<"
+	$(Q) $(CC) $(ALL_CFLAGS) -c $< -o $@
+@PROFILE_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -g -pg -o profiled/$*.o -c $<
+@CHECKER_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -checker -g -o checker/$*.o -c $<
+@ELF_CMT@	$(Q) $(CC) $(ALL_CFLAGS) -fPIC -o elfshared/$*.o -c $<
+@BSDLIB_CMT@	$(Q) $(CC) $(ALL_CFLAGS) $(BSDLIB_PIC_FLAG) -o pic/$*.o -c $<
+
+all:: tst_uuid uuid_time $(SMANPAGES) uuid.pc
+
+uuid.h: $(srcdir)/uuid.h.in
+	$(E) "	CP $@"
+	$(Q) cp $(srcdir)/uuid.h.in uuid.h
+
+$(top_builddir)/lib/uuid/uuid_types.h: $(srcdir)/uuid_types.h.in $(top_builddir)/config.status
+	cd $(top_builddir); CONFIG_FILES=$(my_dir)/uuid_types.h ./config.status
+
+tst_uuid.o: $(srcdir)/tst_uuid.c
+	$(E) "	CC $@"
+	$(Q) $(CC) $(ALL_CFLAGS) -c $(srcdir)/tst_uuid.c -o tst_uuid.o
+
+tst_uuid: tst_uuid.o $(DEPSTATIC_LIBUUID)
+	$(E) "	LD $@"
+	$(Q) $(CC) $(ALL_LDFLAGS) -o tst_uuid tst_uuid.o $(STATIC_LIBUUID)
+
+uuid_time: $(srcdir)/uuid_time.c $(DEPLIBUUID)
+	$(E) "	LD $@"
+	$(Q) $(CC) $(ALL_CFLAGS) -DDEBUG -o uuid_time $(srcdir)/uuid_time.c \
+		$(LIBUUID)
+
+uuid.3: $(DEP_SUBSTITUTE) $(srcdir)/uuid.3.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE_UPTIME) $(srcdir)/uuid.3.in uuid.3
+
+uuid_clear.3: $(DEP_SUBSTITUTE) $(srcdir)/uuid_clear.3.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE_UPTIME) $(srcdir)/uuid_clear.3.in uuid_clear.3
+
+uuid_compare.3: $(DEP_SUBSTITUTE) $(srcdir)/uuid_compare.3.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE_UPTIME) $(srcdir)/uuid_compare.3.in uuid_compare.3
+
+uuid_copy.3: $(DEP_SUBSTITUTE) $(srcdir)/uuid_copy.3.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE_UPTIME) $(srcdir)/uuid_copy.3.in uuid_copy.3
+
+uuid_generate.3: $(DEP_SUBSTITUTE) $(srcdir)/uuid_generate.3.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE_UPTIME) $(srcdir)/uuid_generate.3.in uuid_generate.3
+
+uuid_is_null.3: $(DEP_SUBSTITUTE) $(srcdir)/uuid_is_null.3.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE_UPTIME) $(srcdir)/uuid_is_null.3.in uuid_is_null.3
+
+uuid_parse.3: $(DEP_SUBSTITUTE) $(srcdir)/uuid_parse.3.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE_UPTIME) $(srcdir)/uuid_parse.3.in uuid_parse.3
+
+uuid_time.3: $(DEP_SUBSTITUTE) $(srcdir)/uuid_time.3.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE_UPTIME) $(srcdir)/uuid_time.3.in uuid_time.3
+
+uuid_unparse.3: $(DEP_SUBSTITUTE) $(srcdir)/uuid_unparse.3.in
+	$(E) "	SUBST $@"
+	$(Q) $(SUBSTITUTE_UPTIME) $(srcdir)/uuid_unparse.3.in uuid_unparse.3
+
+uuid.pc: $(srcdir)/uuid.pc.in $(top_builddir)/config.status
+	$(E) "	CONFIG.STATUS $@"
+	$(Q) cd $(top_builddir); CONFIG_FILES=lib/uuid/uuid.pc ./config.status
+
+installdirs::
+	$(E) "	MKINSTALLDIRS $(libdir) $(includedir)/uuid $(man3dir)"
+	$(Q) $(MKINSTALLDIRS) $(DESTDIR)$(libdir)  \
+		$(DESTDIR)$(includedir)/uuid $(DESTDIR)$(man3dir) \
+		$(DESTDIR)$(libdir)/pkgconfig
+
+install:: all installdirs 
+	$(E) "	INSTALL_DATA $(libdir)/libuuid.a"
+	$(Q) $(INSTALL_DATA) libuuid.a $(DESTDIR)$(libdir)/libuuid.a
+	-$(Q) $(RANLIB) $(DESTDIR)$(libdir)/libuuid.a
+	$(Q) $(CHMOD) $(LIBMODE) $(DESTDIR)$(libdir)/libuuid.a
+	$(E) "	INSTALL_DATA $(includedir)/uuid/uuid.h"
+	$(Q) $(INSTALL_DATA) uuid.h $(DESTDIR)$(includedir)/uuid/uuid.h
+	$(Q) for i in $(SMANPAGES); do \
+		$(RM) -f $(DESTDIR)$(man3dir)/$$i.gz; \
+		echo "	INSTALL_DATA $(man3dir)/$$i"; \
+		$(INSTALL_DATA) $$i $(DESTDIR)$(man3dir)/$$i; \
+	done
+	$(Q) $(RM) -f $(DESTDIR)$(man3dir)/uuid_generate_random.3.gz \
+		$(DESTDIR)$(man3dir)/uuid_generate_time.3.gz
+	$(E) "	LINK $(man3dir)/uuid_generate_random.3"
+	$(Q) (cd $(DESTDIR)$(man3dir); \
+	    $(LN) $(LINK_INSTALL_FLAGS) uuid_generate.3 uuid_generate_random.3)
+	$(E) "	LINK $(man3dir)/uuid_generate_time.3"
+	$(Q) (cd $(DESTDIR)$(man3dir); \
+	    $(LN) $(LINK_INSTALL_FLAGS) uuid_generate.3 uuid_generate_time.3)
+	$(E) "	INSTALL_DATA $(libdir)/pkgconfig/uuid.pc"
+	$(Q) $(INSTALL_DATA) uuid.pc $(DESTDIR)$(libdir)/pkgconfig/uuid.pc
+
+uninstall::
+	$(RM) -f $(DESTDIR)$(libdir)/libuuid.a \
+		$(DESTDIR)$(libdir)/pkgconfig/uuid.pc
+	for i in $(SMANPAGES); do \
+		$(RM) -f $(DESTDIR)$(man3dir)/$$i; \
+	done
+	$(RM) -f $(DESTDIR)$(man3dir)/uuid_generate_random.3 $(DESTDIR)$(man3dir)/uuid_generate_time.3
+
+clean::
+	$(RM) -f \#* *.s *.o *.a *~ *.bak core profiled/* checker/* uuid.h
+	$(RM) -f ../libuuid.a ../libuuid_p.a tst_uuid uuid_time $(SMANPAGES)
+
+check:: tst_uuid
+	LD_LIBRARY_PATH=$(LIB) DYLD_LIBRARY_PATH=$(LIB) ./tst_uuid
+
+mostlyclean:: clean
+distclean:: clean
+	$(RM) -f .depend Makefile uuid.pc \
+		$(srcdir)/TAGS $(srcdir)/Makefile.in.old
+
+#
+# Hack to parallel makes recognize dependencies correctly.
+#
+../../lib/libuuid.a: libuuid.a
+../../lib/libuuid.so: image
+../../lib/libuuid.dylib: image
+
+$(OBJS): subdirs uuid.h
+
+# +++ Dependency line eater +++
+# 
+# Makefile dependencies follow.  This must be the last section in
+# the Makefile.in file
+#
+clear.o: $(srcdir)/clear.c $(srcdir)/uuidP.h
+compare.o: $(srcdir)/compare.c $(srcdir)/uuidP.h
+copy.o: $(srcdir)/copy.c $(srcdir)/uuidP.h
+gen_uuid.o: $(srcdir)/gen_uuid.c $(srcdir)/uuidP.h $(srcdir)/uuidd.h
+isnull.o: $(srcdir)/isnull.c $(srcdir)/uuidP.h
+pack.o: $(srcdir)/pack.c $(srcdir)/uuidP.h
+parse.o: $(srcdir)/parse.c $(srcdir)/uuidP.h
+unpack.o: $(srcdir)/unpack.c $(srcdir)/uuidP.h
+unparse.o: $(srcdir)/unparse.c $(srcdir)/uuidP.h
+uuid_time.o: $(srcdir)/uuid_time.c $(srcdir)/uuidP.h

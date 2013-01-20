@@ -1,0 +1,10 @@
+if test "$HTREE"x = x ; then
+	gunzip < $test_dir/image.gz > $TMPFILE
+	$DEBUGFS -w -R "feature ^dir_index" $TMPFILE >/dev/null 2>&1
+	gzip $TMPFILE
+	IMAGE="$TMPFILE".gz
+	EXP1=$test_dir/expect-nohtree.1
+	EXP2=$test_dir/expect-nohtree.2
+fi
+. $cmd_dir/run_e2fsck
+rm -f "$TMPFILE".gz

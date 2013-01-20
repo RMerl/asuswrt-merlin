@@ -1,0 +1,73 @@
+#
+# Makefile for the tests directory
+#
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+top_builddir = ..
+my_dir = tests
+INSTALL = @INSTALL@
+
+@MCONFIG@
+
+all:: @DO_TEST_SUITE@
+
+test_script: test_script.in Makefile mke2fs.conf
+	@echo "Creating test_script..."
+	@echo "#!/bin/sh" > test_script
+@HTREE_CMT@	@echo "HTREE=y" >> test_script
+	@echo 'EGREP="@EGREP@"' >> test_script
+	@echo "SRCDIR=@srcdir@" >> test_script
+	@echo "DIFF_OPTS=@UNI_DIFF_OPTS@" >> test_script
+	@cat $(srcdir)/test_script.in >> test_script
+	@chmod +x test_script
+
+mke2fs.conf: $(srcdir)/mke2fs.conf.in
+	$(CP) $(srcdir)/mke2fs.conf.in mke2fs.conf
+
+check:: test_script
+	@echo "Running e2fsprogs test suite..."
+	@echo " "
+	@./test_script
+
+check-failed:
+	@a=`/bin/ls *.failed 2> /dev/null | sed -e 's/.failed//'`; \
+	if test "$$a"x == x ; then \
+		echo "No failed tests" ; \
+	else \
+		./test_script $$a ; \
+	fi
+
+
+TDIR=f_testnew
+# Target which creates a new testcase to simplify adding new regression tests.
+testnew:
+	@echo "Creating a new e2fsck testcase in ${TDIR}"
+	@mkdir -p ${TDIR}
+	dd if=/dev/zero of=${TDIR}/image bs=1k count=8k
+	mke2fs -j -F -N 256 ${TDIR}/image
+	@echo "new test description" > ${TDIR}/name
+	@echo; echo; echo "New test filesystem at ${TDIR}/image."
+	@echo "Now, break the filesystem as appropriate, and run 'make testend'"
+
+EXPECT1=${TDIR}/expect.1
+EXPECT2=${TDIR}/expect.2
+# Target which generates the expect files for the new testcase.
+testend: test_script ${TDIR}/image
+	gzip -9 ${TDIR}/image
+	@OUT1=${EXPECT1} OUT2=${EXPECT2} ./test_script ${TDIR}
+	@echo; echo; echo "*** output from first e2fsck run (${EXPECT1}) ***"
+	@cat ${EXPECT1}
+	@echo "*** output from second e2fsck run (${EXPECT2}) ***"
+	@cat ${EXPECT2}
+	@echo "*** end of e2fsck output ***"
+	@echo; echo "Hopefully e2fsck now fixes this problem properly."
+	@echo "If all is well, edit ${TDIR}/name and rename ${TDIR}."
+
+clean::
+	$(RM) -f *~ *.log *.new *.failed *.ok test.img test_script mke2fs.conf
+
+distclean:: clean
+	$(RM) -f Makefile
+	$(RM) -rf ${TDIR}

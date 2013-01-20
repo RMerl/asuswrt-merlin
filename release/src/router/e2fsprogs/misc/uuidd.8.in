@@ -1,0 +1,97 @@
+.\" -*- nroff -*-
+.\" Copyright 2007 by Theodore Ts'o.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\"
+.TH UUIDD 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+uuidd \- UUID generation daemon
+.SH SYNOPSIS
+.B uuidd
+[
+.B \-d
+]
+[
+.B \-p
+.I pidfile
+]
+[
+.B \-s
+.I socketpath
+]
+[
+.B \-T
+.I timeout
+]
+
+.B uuidd
+[
+.B \-r
+|
+.B \-t
+]
+[
+.B \-n
+.I number
+]
+[
+.B \-s
+.I socketpath
+]
+
+.B uuidd \-k
+.SH DESCRIPTION
+The
+.B uuidd
+daemon is used by the UUID library to generate
+universally unique identifiers (UUIDs), especially time-based UUID's
+in a secure and guaranteed-unique fashion, even in the face of large
+numbers of threads trying to grab UUID's running on different CPU's.
+.SH OPTIONS
+.TP
+.B \-d
+Run
+.B uuidd
+in debugging mode.  This prevents uuidd from running as a daemon.
+.TP
+.B \-k
+If a currently uuidd daemon is running, kill it.
+.TP
+.BI \-n " number"
+When issuing a test request to a running uuidd, request a bulk response
+of
+.I number
+UUID's.
+.TP
+.BI \-p  " pidfile"
+Specify the pathname where the pid file should be written.  By default,
+the pid file is written to /var/lib/libuuid/uuidd.pid.
+.TP
+.BI \-s " socketpath"
+Specify the pathname used for the unix-domain socket used by uuidd.  By
+default, the pathname used is /var/lib/libuuid/request.  This is primarily
+for debugging purposes, since the pathname is hard-coded in the libuuid
+library.
+.TP
+.B \-r
+Test uuidd by trying to connect to a running uuidd daemon and
+request it to return a random-based UUID.
+.TP
+.B \-t
+Test uuidd by trying to connect to a running uuidd daemon and
+request it to return a time-based UUID.
+.TP
+.BI \-T " timeout"
+Specify a timeout for uuidd.  If specified, then uuidd will exit after
+.I timeout
+seconds of inactivity.
+.SH AUTHOR
+The
+.B uuidd
+daemon  was written by Theodore Ts'o <tytso@mit.edu>.
+.SH AVAILABILITY
+.B uuidd
+is part of libuuid from the e2fsprogs package and is available from
+http://e2fsprogs.sourceforge.net.
+.SH "SEE ALSO"
+.BR libuuid (3),
+.BR uuidgen (1)

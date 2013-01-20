@@ -1,0 +1,16 @@
+/dev/hda7	/dev/hda
+/dev/sda1	/dev/sda
+/dev/hda	/dev/hda
+/dev/sda	/dev/sda
+/dev/dsk/hda6	/dev/dsk/hda
+/dev/dsk/sda5	/dev/dsk/sda
+/dev/md4	/dev/md
+/dev/md/4	/dev/md
+/dev/ide/host0/bus1/target2/lun3	/dev/ide/host0/bus1/target2/lun3
+/dev/ide/host0/bus1/target2/lun3/part10	/dev/ide/host0/bus1/target2/lun3
+/dev/ide/host0/bus1/target2/lun3/	/dev/ide/host0/bus1/target2/lun3
+/dev/disks/disk2/part2	/dev/disks/disk2
+/dev/disks/disk2/	/dev/disks/disk2
+/dev/disks/disk2	/dev/disks/disk2
+/dev/discs/disc1/part10	/dev/discs/disc1
+/dev/discs/disc1/	/dev/discs/disc1

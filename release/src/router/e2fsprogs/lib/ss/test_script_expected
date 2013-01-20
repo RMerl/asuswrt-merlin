@@ -1,0 +1,22 @@
+test_ss 1.0.  Type '?' for a list of commands.
+
+test_icount: test
+Hello, world!
+Args: 
+test_icount: test foo bar quux
+Hello, world!
+Args: 'foo', 'bar', 'quux'
+test_icount: test bar quux
+Hello, world!
+Args: 'bar', 'quux'
+test_icount: quux bar
+test_ss: Command not found quux
+test_icount: quux
+test_ss: Command not found quux
+test_icount: test quux
+Hello, world!
+Args: 'quux'
+test_icount: quit
+test_icount: test foo bar
+Hello, world!
+Args: 'foo', 'bar'

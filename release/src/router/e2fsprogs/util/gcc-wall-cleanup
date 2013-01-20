@@ -1,0 +1,22 @@
+#!/bin/sed -f
+#
+# This script filters out gcc-wall crud that we're not interested in seeing.
+#
+/^cc /d
+/^kcc /d
+/^gcc /d
+/does not support `long long'/d
+/forbids long long integer constants/d
+/does not support the `ll' length modifier/d
+/does not support the `ll' printf length modifier/d
+/ANSI C forbids long long integer constants/d
+/traditional C rejects string concatenation/d
+/integer constant is unsigned in ANSI C, signed with -traditional/d
+/At top level:/d
+/In file included from/d
+/In function `.*':/d
+/zero-length format string/d
+/warning: missing initializer/d
+/warning: (near initialization for/d
+/^[ 	]*from/d
+

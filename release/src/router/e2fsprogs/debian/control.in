@@ -1,0 +1,320 @@
+Source: e2fsprogs
+Section: admin
+Priority: required
+Maintainer: Theodore Y. Ts'o <tytso@mit.edu>
+ifdef(`UTIL_LINUX_NG',
+``Build-Depends: texi2html (>= 1.76), gettext, texinfo, dc, pkg-config, dietlibc-dev (>> 0.30) [alpha amd64 arm hppa i386 ia64 powerpc ppc64 s390 sparc], debhelper (>= 7.0), m4, libblkid-dev (>= 2.16), uuid-dev (>= 2.16)
+'',
+``Build-Depends: texi2html (>= 1.76), gettext, texinfo, dc, pkg-config, dietlibc-dev (>> 0.30) [alpha amd64 arm hppa i386 ia64 powerpc ppc64 s390 sparc], debhelper (>= 7.0), m4
+'')dnl
+Standards-Version: 3.8.4
+Homepage: http://e2fsprogs.sourceforge.net
+
+Package: e2fsck-static
+Priority: optional
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: sash | bash-static | zsh-static | busybox-static | zsh30-static
+Architecture: any
+Description: statically-linked version of the ext2/ext3/ext4 filesystem checker
+ This may be of some help to you if your filesystem gets corrupted enough
+ to break the shared libraries used by the dynamically linked checker.
+ .
+ This binary takes much more space than its dynamic counterpart located
+ in e2fsprogs, though.
+ .
+ You may want to install a statically-linked shell as well, to be able
+ to run this program if something like your C library gets corrupted.
+
+Package: libcomerr2
+Section: libs
+Provides: libcomerr-kth-compat
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Replaces: e2fsprogs (<< 1.34-1)
+Architecture: any
+Description: common error description library
+ libcomerr is an attempt to present a common error-handling mechanism to
+ manipulate the most common form of error code in a fashion that does not
+ have the problems identified with mechanisms commonly in use.
+
+Package: comerr-dev
+Section: libdevel
+Priority: extra
+Depends: libc6-dev | libc-dev, libcomerr2 (= ${mainBinary}), ${misc:Depends}
+Suggests: doc-base
+Replaces: e2fslibs-dev (<< 1.33-2), libkrb5-dev (<< 1.3)
+Architecture: any
+Description: common error description library - headers and static libraries
+ libcom_err is an attempt to present a common error-handling mechanism to
+ manipulate the most common form of error code in a fashion that does not
+ have the problems identified with mechanisms commonly in use.
+ .
+ This package contains the development environment for the com_err library.
+
+Package: libss2
+Section: libs
+Depends: libcomerr2, ${shlibs:Depends}, ${misc:Depends}
+Replaces: e2fsprogs (<< 1.34-1)
+Architecture: any
+Description: command-line interface parsing library
+ This package includes a tool that parses a command table to generate
+ a simple command-line interface parser, the include files needed to
+ compile and use it, and the static libs.
+ . 
+ It was originally inspired by the Multics SubSystem library.
+
+Package: ss-dev
+Section: libdevel
+Priority: extra
+Depends: libc6-dev | libc-dev, libss2 (= ${mainBinary}), comerr-dev, ${misc:Depends}
+Architecture: any
+Description: command-line interface parsing library - headers and static libraries
+ This package includes a tool that parses a command table to generate
+ a simple command-line interface parser, the include files needed to
+ compile and use it, and the static libs.
+ . 
+ It was originally inspired by the Multics SubSystem library.
+ .
+ This package contains the development environment for the ss library.
+ifdef(`UTIL_LINUX_NG',,``
+Package: libuuid1
+Section: libs
+Depends: passwd, ${shlibs:Depends}, ${misc:Depends}
+Recommends: uuid-runtime
+Replaces: e2fsprogs (<< 1.34-1)
+Architecture: any
+Description: Universally Unique ID library
+ The libuuid library generates and parses 128-bit universally unique
+ ids (UUIDs).  A UUID is an identifier that is unique across both
+ space and time, with respect to the space of all UUIDs.  A UUID can
+ be used for multiple purposes, from tagging objects with an extremely
+ short lifetime, to reliably identifying very persistent objects
+ across a network.
+ .
+ See RFC 4122 for more information.  
+
+Package: uuid-runtime
+Section: libs
+Priority: optional
+Depends: passwd, libuuid1 (>> 1.40.3-1), ${shlibs:Depends}, ${misc:Depends}
+Replaces: e2fsprogs (<= 1.40.3-1ubuntu1)
+Architecture: any
+Description: runtime components for the Universally Unique ID library
+ The libuuid library generates and parses 128-bit universally unique
+ ids (UUIDs).  A UUID is an identifier that is unique across both
+ space and time, with respect to the space of all UUIDs.  A UUID can
+ be used for multiple purposes, from tagging objects with an extremely
+ short lifetime, to reliably identifying very persistent objects
+ across a network.
+ .
+ See RFC 4122 for more information.  
+ .
+ This package contains the uuidgen program and the uuidd daemon.
+ .
+ The uuidd daemon is used to generate UUIDs, especially time-based
+ UUID’s, in a secure and guaranteed-unique fashion, even in the face
+ of large numbers of threads trying to grab UUID’s running on
+ different CPU’s. It is used by libuuid as well as the uuidgen
+ program.
+
+Package: libuuid1-udeb
+XC-Package-Type: udeb
+Section: debian-installer
+Priority: optional
+Depends: ${shlibs:Depends}
+Architecture: any
+Description: stripped down universally unique id library, for debian-installer
+ libuuid generates and parses 128-bit universally unique ids (UUIDs).
+ See RFC 4122 for more information.
+ .
+ This is a minimal package for debian-installer.
+
+Package: uuid-dev
+Section: libdevel
+Priority: extra
+Depends: libc6-dev | libc-dev, libuuid1 (= ${mainBinary}), ${misc:Depends}
+Replaces: e2fslibs-dev (<< 1.15)
+Architecture: any
+Description: universally unique id library - headers and static libraries
+ libuuid generates and parses 128-bit universally unique ids (UUIDs).
+ See RFC 4122 for more information.
+ .
+ This package contains the development environment for the uuid library.
+
+Package: libblkid1
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Architecture: any
+Description: block device id library
+ The blkid library which allows system programs like fsck and 
+ mount to quickly and easily find block devices by filesystem UUID and 
+ LABEL.  This allows system administrators to avoid specifying 
+ filesystems by hard-coded device names, but via a logical naming 
+ system instead.
+
+Package: libblkid1-udeb
+XC-Package-Type: udeb
+Section: debian-installer
+Priority: optional
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Architecture: any
+Description: stripped down block device id library, for debian-installer
+ The blkid library which allows system programs like fsck and 
+ mount to quickly and easily find block devices by filesystem UUID and 
+ LABEL.  This allows system administrators to avoid specifiying 
+ filesystems by hard-coded device names, but via a logical naming 
+ system instead.
+ .
+ This is a minimal package for debian-installer.
+
+Package: libblkid-dev
+Section: libdevel
+Priority: extra
+Depends: libc6-dev | libc-dev, libblkid1 (= ${binary:Version}), ${misc:Depends}
+Architecture: any
+Description: block device id library - headers and static libraries
+ The blkid library which allows system programs like fsck and 
+ mount to quickly and easily find block devices by filesystem UUID and 
+ LABEL.  This allows system administrators to avoid specifiying 
+ filesystems by hard-coded device names, but via a logical naming 
+ system instead.
+ .
+ This package contains the development environment for the blkid library.
+'')dnl
+
+Package: e2fsprogs-udeb
+XC-Package-Type: udeb
+Section: debian-installer
+Priority: optional
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Architecture: any
+Description: stripped-down versions of e2fsprogs, for debian-installer
+ This package is an e2fsprogs package built for a reduced size, so that
+ it can help to save space in debian-installer.
+ .
+ Don't attempt to install this package, it has no support for a couple of
+ features you surely want.  Anyway it should refuse to install.
+
+Package: e2fslibs
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Replaces: e2fsprogs (<< 1.34-1)
+Provides: libext2fs2, libe2p2
+Architecture: any
+Description: ext2/ext3/ext4 file system libraries
+ The ext2, ext3 and ext4 file systems are successors of the original ext
+ ("extended") file system. They are the main file system types used for
+ hard disks on Debian and other Linux systems.
+ .
+ This package provides the ext2fs and e2p libraries, for userspace software
+ that directly accesses extended file systems. Programs that use libext2fs
+ include e2fsck, mke2fs, and tune2fs. Programs that use libe2p include
+ dumpe2fs, chattr, and lsattr.
+
+Package: e2fslibs-dev
+Section: libdevel
+Priority: extra
+Depends: libc6-dev | libc-dev, comerr-dev, e2fslibs (= ${binary:Version}), ${misc:Depends}
+Suggests: doc-base
+Provides: ext2fs-dev, e2p-dev
+Replaces: libkrb5-dev (<< 1.3)
+Architecture: any
+Description: ext2/ext3/ext4 file system libraries - headers and static libraries
+ The ext2, ext3 and ext4 file systems are successors of the original ext
+ ("extended") file system. They are the main file system types used for
+ hard disks on Debian and other Linux systems.
+ .
+ This package contains the development environment for the ext2fs and e2p 
+ libraries.
+
+Package: e2fsprogs
+Essential: yes
+ifdef(`UTIL_LINUX_NG',
+``Pre-Depends: ${shlibs:Depends}, ${misc:Depends}, util-linux (>= 2.15~rc1-1)
+'',
+``Pre-Depends: ${shlibs:Depends}, ${misc:Depends}
+'')dnl
+Suggests: gpart, parted, e2fsck-static
+Conflicts: dump (<< 0.4b4-4), quota (<< 1.55-8.1), initscripts (<< 2.85-4), sysvinit (<< 2.85-4)
+Replaces: hurd (<= 20040301-1), libblkid1 (<< 1.38+1.39-WIP-2005.12.10-2), libuuid1 (<< 1.38+1.39-WIP-2005.12.10-2)
+Architecture: any
+Description: ext2/ext3/ext4 file system utilities
+ The ext2, ext3 and ext4 file systems are successors of the original ext
+ ("extended") file system. They are the main file system types used for
+ hard disks on Debian and other Linux systems.
+ .
+ This package contains programs for creating, checking, and maintaining
+ ext2/3/4-based file systems.
+
+Package: e2fsprogs-dbg
+Section: debug
+Priority: extra
+Depends: e2fsprogs (= ${binary:Version}), ${misc:Depends}
+Architecture: any
+Description: debugging information for e2fsprogs
+ This package includes the debug information useful for debugging e2fsprogs
+ and its libraries, contained in the e2fsprogs and e2fsck-static packages.
+ The debug information is used for execution tracing and core
+ dump analysis. 
+ifdef(`UTIL_LINUX_NG',,``
+Package: uuid-runtime-dbg
+Section: debug
+Priority: extra
+Depends: uuid-runtime (= ${binary:Version}), ${misc:Depends}
+Architecture: any
+Description: debugging information for uuid-runtime
+ This package includes the debug information useful for debugging the
+ uuid runtime programs, contained in the uuid-runtime package.
+ The debugging information is used for execution tracing and core
+ dump analysis.
+'')dnl
+
+Package: e2fslibs-dbg
+Section: debug
+Priority: extra
+Depends: e2fslibs (= ${binary:Version}), ${misc:Depends}
+Architecture: any
+Description: debugging information for e2fslibs
+ This package includes the debug information useful for debugging the
+ ext2fs and e2p libraries, contained in the e2fslibs package.  The debug
+ information is used for execution tracing and core dump analysis.
+
+Package: libcomerr2-dbg
+Section: debug
+Priority: extra
+Depends: libcomerr2 (= ${binary:Version}), ${misc:Depends}
+Architecture: any
+Description: debugging information for libcomerr2
+ This package includes the debug information useful for debugging the
+ com_err library, contained in the libcomerr2 package.  The debugging
+ information is used for execution tracing and core dump analysis.
+
+Package: libss2-dbg
+Section: debug
+Priority: extra
+Depends: libss2 (= ${binary:Version}), ${misc:Depends}
+Architecture: any
+Description: debugging information for libss2
+ This package includes the debug information useful for debugging the
+ ss library, contained in the libss2 package.  The debug information
+ is used for execution tracing and core dump analysis.
+ifdef(`UTIL_LINUX_NG',,``
+Package: libblkid1-dbg
+Section: debug
+Priority: extra
+Depends: libblkid1 (= ${binary:Version}), ${misc:Depends}
+Architecture: any
+Description: debugging information for libblkid1
+ This package includes the debug information useful for debugging the
+ blkid library, contained in the libblkid1 package.  The debug
+ information is used for execution tracing and core dump analysis.
+
+Package: libuuid1-dbg
+Section: debug
+Priority: extra
+Depends: libuuid1 (= ${binary:Version}), ${misc:Depends}
+Architecture: any
+Description: debugging information for libuuid1
+ This package includes the debug information useful for debugging the
+ UUID library, contained in the libuuid1 package.  The debug
+ information is used for execution tracing and core dump analysis.
+'')dnl

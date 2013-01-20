@@ -1,0 +1,4 @@
+usr/bin/uuidgen
+usr/sbin/uuidd
+usr/share/man/man8/uuidd.*
+usr/share/man/man1/uuidgen.*

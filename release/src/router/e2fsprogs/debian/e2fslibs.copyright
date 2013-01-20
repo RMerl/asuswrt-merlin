@@ -1,0 +1,25 @@
+This is the Debian GNU/Linux prepackaged version of the EXT2 file
+system utilities (e2fsck, mke2fs, etc.).  The EXT2 utilities were
+written by Theodore Ts'o <tytso@mit.edu> and Remy Card <card@masi.ibp.fr>.
+
+Sources were obtained from http://sourceforge.net/projects/e2fsprogs
+
+Packaging is copyright (c) 2003 Theodore Ts'o <tytso@mit.edu>
+             copyright (c) 1997-2003 Yann Dirson <dirson@debian.org>
+	     copyright (c) 2001 Alcove <http://www.alcove.com/>
+	     copyright (c) 1997 Klee Dienes
+	     copyright (c) 1995-1996 Michael Nonweiler <mrn20@cam.ac.uk>
+
+Upstream Author: Theodore Ts'o <tytso@mit.edu>
+
+Copyright notice:
+
+This package, the EXT2 filesystem libraries, are protected by the GNU
+Public License.
+
+	Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+	2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 by Theodore Ts'o
+
+On Debian GNU systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL-2'.
+

@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: e2p
+Description: Ext2fs userpace programs utility library
+Version: @E2FSPROGS_VERSION@
+Requires: 
+Cflags: -I${includedir}/e2p
+Libs: -L${libdir} -le2p

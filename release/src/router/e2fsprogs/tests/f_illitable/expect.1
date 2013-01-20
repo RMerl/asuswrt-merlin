@@ -1,0 +1,48 @@
+Note: if several inode or block bitmap blocks or part
+of the inode table require relocation, you may wish to try
+running e2fsck with the '-b 8193' option first.  The problem
+may lie only with the primary block group descriptors, and
+the backup block group descriptors may be OK.
+
+Inode table for group 0 is not in group.  (block 40000)
+WARNING: SEVERE DATA LOSS POSSIBLE.
+Relocate? yes
+
+../e2fsck/e2fsck: A block group is missing an inode table while reading bad blocks inode
+This doesn't bode well, but we'll try to go on...
+Pass 1: Checking inodes, blocks, and sizes
+Relocating group 0's inode table to 5...
+Restarting e2fsck from the beginning...
+Pass 1: Checking inodes, blocks, and sizes
+Root inode is not a directory.  Clear? yes
+
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Root inode not allocated.  Allocate? yes
+
+/lost+found not found.  Create? yes
+
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Block bitmap differences:  -(11--21)
+Fix? yes
+
+Free blocks count wrong for group #0 (77, counted=89).
+Fix? yes
+
+Free blocks count wrong (77, counted=89).
+Fix? yes
+
+Free inodes count wrong for group #0 (20, counted=21).
+Fix? yes
+
+Directories count wrong for group #0 (3, counted=2).
+Fix? yes
+
+Free inodes count wrong (20, counted=21).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 11/32 files (0.0% non-contiguous), 11/100 blocks
+Exit status is 1

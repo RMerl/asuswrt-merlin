@@ -1,0 +1,144 @@
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+top_builddir = .
+my_dir = .
+INSTALL = @INSTALL@
+
+@MCONFIG@
+
+% : %.sh
+
+@RESIZER_CMT@RESIZE_DIR= resize
+@DEBUGFS_CMT@DEBUGFS_DIR= debugfs
+@UUID_CMT@UUID_LIB_SUBDIR= lib/uuid
+@BLKID_CMT@BLKID_LIB_SUBDIR= lib/blkid
+
+LIB_SUBDIRS=lib/et lib/ss lib/e2p $(UUID_LIB_SUBDIR) lib/ext2fs $(BLKID_LIB_SUBDIR) intl
+PROG_SUBDIRS=e2fsck $(DEBUGFS_DIR) misc $(RESIZE_DIR) tests/progs po
+SUBDIRS=util $(LIB_SUBDIRS) $(PROG_SUBDIRS) tests
+
+SUBS= lib/ext2fs/ext2_types.h lib/blkid/blkid_types.h lib/uuid/uuid_types.h
+
+TAR=tar
+
+all:: subs
+	$(MAKE) libs
+	$(MAKE) progs
+	$(MAKE) docs
+
+subs: $(DEP_SUBSTITUTE)
+	@for i in $(SUBS) ; do if test -d `dirname $$i` ; \
+		then $(MAKE) $$i || exit $$? ; fi ; done
+	@(if test -d lib/et ; then cd lib/et && $(MAKE) compile_et; fi)
+	@(if test -d lib/ext2fs ; then cd lib/ext2fs && $(MAKE) ext2_err.h; fi)
+
+progs: all-progs-recursive
+libs: all-libs-recursive
+all-progs-recursive all-libs-recursive: subs
+
+e2fsprogs.spec: $(DEP_SUBSTITUTE) e2fsprogs.spec.in
+	cd $(top_builddir); CONFIG_FILES=./e2fsprogs.spec ./config.status
+
+rpm: e2fsprogs.spec
+	sh contrib/build-rpm
+
+docs:
+	-@test -d doc && cd doc && $(MAKE) libext2fs.info
+
+install-doc-libs:
+	-@test -d doc && cd doc && $(MAKE) install-doc-libs
+
+uninstall-doc-libs:
+	-@test -d doc && cd doc && $(MAKE) uninstall-doc-libs
+
+clean-doc:
+	-@test -d doc && cd doc && $(MAKE) clean
+
+distclean-doc:
+	-test -d doc && cd doc && $(MAKE) distclean
+
+install: subs all-libs-recursive install-progs-recursive \
+  install-shlibs-libs-recursive install-doc-libs
+	if test ! -d e2fsck && test ! -d debugfs && test ! -d misc && test ! -d ext2ed ; then $(MAKE) install-libs ; fi
+
+install-strip: subs all-libs-recursive install-strip-progs-recursive \
+  install-shlibs-strip-libs-recursive install-doc-libs
+
+uninstall: uninstall-progs-recursive uninstall-shlibs-libs-recursive uninstall-doc-libs
+
+install-libs: install-libs-recursive
+
+uninstall-libs: uninstall-libs-recursive
+
+TAGS clean-recursive distclean-recursive depend-recursive check-recursive \
+  mostlyclean-recursive realclean-recursive:
+	@for subdir in $(SUBDIRS); do \
+	  if test -d $$subdir ; then \
+	    target=`echo $@|$(SED) 's/-recursive//'`; \
+	    echo making $$target in $$subdir; \
+	    (cd $$subdir && $(MAKE) $$target) || exit 1; \
+	  fi ; \
+	done
+
+all-progs-recursive install-progs-recursive install-strip-progs-recursive \
+  uninstall-progs-recursive: all-libs-recursive
+	@for subdir in $(PROG_SUBDIRS); do \
+	  if test -d $$subdir ; then \
+	    target=`echo $@|$(SED) 's/-progs-recursive//'`; \
+	    echo making $$target in $$subdir; \
+	    (cd $$subdir && $(MAKE) $$target) || exit 1; \
+	  fi ; \
+	done
+
+all-libs-recursive install-libs-recursive install-strip-libs-recursive \
+  uninstall-libs-recursive install-shlibs-libs-recursive \
+  install-shlibs-strip-libs-recursive uninstall-shlibs-libs-recursive:
+	@for subdir in $(LIB_SUBDIRS); do \
+	  if test -d $$subdir ; then \
+	    target=`echo $@|$(SED) 's/-libs-recursive//'`; \
+	    echo making $$target in $$subdir; \
+	    (cd $$subdir && $(MAKE) $$target) || exit 1; \
+	  fi ; \
+	done
+
+mostlyclean: mostlyclean-recursive mostlyclean-local
+
+clean: clean-recursive clean-local clean-doc
+	$(RM) -f $(SUBS) 
+
+distclean: distclean-doc distclean-recursive
+	$(RM) -rf autom4te.cache e2fsprogs.spec ext2ed/Makefile po/stamp-po
+	$(MAKE) distclean-local 
+
+realclean: realclean-recursive realclean-local
+
+depend:: depend-recursive
+
+lib/ext2fs/ext2_types.h: $(DEP_SUBSTITUTE) asm_types.h \
+		$(srcdir)/lib/ext2fs/ext2_types.h.in
+	cd $(top_builddir); CONFIG_FILES=./lib/ext2fs/ext2_types.h ./config.status
+
+lib/blkid/blkid_types.h: $(DEP_SUBSTITUTE) asm_types.h \
+		$(srcdir)/lib/blkid/blkid_types.h.in
+	cd $(top_builddir); CONFIG_FILES=./lib/blkid/blkid_types.h ./config.status
+
+lib/uuid/uuid_types.h: $(DEP_SUBSTITUTE) asm_types.h \
+		$(srcdir)/lib/uuid/uuid_types.h.in
+	cd $(top_builddir); CONFIG_FILES=./lib/uuid/uuid_types.h ./config.status
+
+mostlyclean-local:
+	$(RM) -f \#* *~ *.orig core MAKELOG 
+
+clean-local: mostlyclean-local
+
+distclean-local: clean-local
+	$(RM) -f $(SUBS) $(SUBST_CONF) \
+		config.status config.log config.cache MCONFIG Makefile \
+		$(srcdir)/TAGS $(srcdir)/Makefile.in.old
+
+realclean-local: distclean-local
+	$(RM) -f configure
+
+check::	subs check-recursive
+

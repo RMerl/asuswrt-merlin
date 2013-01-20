@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+if [ "$1" = purge ]
+then
+	rm -rf /var/run/uuidd
+fi
+
+#DEBHELPER#
+
+exit 0

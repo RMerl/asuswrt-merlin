@@ -1,0 +1,95 @@
+#
+# Standard e2fsprogs prologue....
+#
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+top_builddir = ..
+my_dir = ext2ed
+INSTALL = @INSTALL@
+
+@MCONFIG@
+
+PROGS=		ext2ed
+MANPAGES=	ext2ed.8
+
+DOC_DIR		=	$datadir/doc/ext2ed
+
+XTRA_CFLAGS	=	$(FLAGS) -DETC_DIR=\"$(root_sysconfdir)\" 
+LIBS		=	-lncurses
+
+SRCS=	$(srcdir)/main.c $(srcdir)/init.c $(srcdir)/general_com.c       \
+	$(srcdir)/inode_com.c $(srcdir)/dir_com.c $(srcdir)/super_com.c \
+	$(srcdir)/disk.c $(srcdir)/win.c $(srcdir)/group_com.c          \
+	$(srcdir)/file_com.c $(srcdir)/blockbitmap_com.c                \
+	$(srcdir)/ext2_com.c $(srcdir)/inodebitmap_com.c
+
+OBJS=	main.o init.o general_com.o inode_com.o dir_com.o super_com.o    \
+	disk.o win.o group_com.o file_com.o blockbitmap_com.o ext2_com.o \
+	inodebitmap_com.o
+
+DOCS=   doc/ext2ed-design.pdf doc/user-guide.pdf doc/ext2fs-overview.pdf \
+	doc/ext2ed-design.html doc/user-guide.html doc/ext2fs-overview.html
+
+.c.o:
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+
+.SUFFIXES: .sgml .ps .pdf .html
+
+.sgml.ps:
+	mkdir -p doc
+	sgmltools -b ps $< 
+	-mv `echo $< | sed -e 's/.sgml$$/.ps/'` $@
+
+.sgml.pdf:
+	mkdir -p doc
+	sgmltools -b pdf $< 
+	-mv `echo $< | sed -e 's/.sgml$$/.pdf/'` $@
+
+.sgml.html:
+	mkdir -p doc
+	sgmltools -b onehtml $< 
+	-mv `echo $< | sed -e 's/.sgml$$/.html/'` $@
+
+all:: $(PROGS) $(MANPAGES) ext2ed.conf 
+
+docs: $(DOCS)
+
+ext2ed: $(OBJS)
+	$(CC) $(ALL_LDFLAGS) -o ext2ed $(OBJS) $(LIBS)
+
+ext2ed.8: $(DEP_SUBSTITUTE) $(srcdir)/ext2ed.8.in
+	$(SUBSTITUTE_UPTIME) $(srcdir)/ext2ed.8.in ext2ed.8
+
+ext2ed.conf: $(DEP_SUBSTITUTE) $(srcdir)/ext2ed.conf.in
+	$(SUBSTITUTE_UPTIME) $(srcdir)/ext2ed.conf.in ext2ed.conf
+
+clean:
+	$(RM) -f ext2ed $(OBJS) $(DOCS) ext2ed.conf ext2ed.8
+	-rmdir doc
+
+install: ext2ed
+	install -d $(root_sysconfdir)
+	install -m 755 ext2ed $(sbindir)
+	install -m 644 $(srcdir)/ext2.descriptors $(datadir)
+	install -m 644 ext2ed.conf $(root_sysconfdir)
+	install -m 644 ext2ed.8 $(man8dir)
+
+# +++ Dependency line eater +++
+# 
+# Makefile dependencies follow.  This must be the last section in
+# the Makefile.in file
+#
+main.o: $(srcdir)/main.c $(srcdir)/ext2ed.h
+general_com.o: $(srcdir)/general_com.c $(srcdir)/ext2ed.h
+inode_com.o: $(srcdir)/inode_com.c $(srcdir)/ext2ed.h
+dir_com.o: $(srcdir)/dir_com.c $(srcdir)/ext2ed.h
+super_com.o: $(srcdir)/super_com.c $(srcdir)/ext2ed.h
+disk.o: $(srcdir)/disk.c $(srcdir)/ext2ed.h
+win.o: $(srcdir)/win.c $(srcdir)/ext2ed.h
+group_com.o: $(srcdir)/group_com.c $(srcdir)/ext2ed.h
+file_com.o: $(srcdir)/file_com.c $(srcdir)/ext2ed.h
+blockbitmap_com.o: $(srcdir)/blockbitmap_com.c $(srcdir)/ext2ed.h
+ext2_com.o: $(srcdir)/ext2_com.c $(srcdir)/ext2ed.h
+inodebitmap_com.o: $(srcdir)/inodebitmap_com.c $(srcdir)/ext2ed.h

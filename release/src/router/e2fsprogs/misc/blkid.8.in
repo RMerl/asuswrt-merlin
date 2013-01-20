@@ -1,0 +1,164 @@
+.\" Copyright 2000 Andreas Dilger (adilger@turbolinux.com)
+.\"
+.\" This man page was created for blkid from e2fsprogs-1.25.
+.\"
+.\" This file may be copied under the terms of the GNU Public License.
+.\"
+.\" Based on uuidgen, Mon Sep 17 10:42:12 2000, Andreas Dilger
+.TH BLKID 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+blkid \- command\-line utility to locate/print block device attributes
+.SH SYNOPSIS
+.B blkid
+[
+.B \-ghlLv
+]
+[
+[
+.B \-c
+.I cachefile
+]
+.B \-w
+.I writecachefile
+]
+[
+.B \-o
+.I format
+]
+[
+.B \-s
+.I tag
+]
+[
+.B \-t
+.IR NAME = value
+]
+[
+.I device ...
+]
+.SH DESCRIPTION
+The
+.B blkid
+program is the command-line interface to working with
+.BR libblkid (3)
+library.  It can determine the type of content (e.g. filesystem, swap)
+a block device holds, and also attributes (tokens, NAME=value pairs)
+from the content metadata (e.g. LABEL or UUID fields).
+.PP
+.B blkid
+has two main forms of operation: either searching for a device with a
+specific NAME=value pair, or displaying NAME=value pairs for one or
+more devices.
+.SH OPTIONS
+.TP
+.BI \-c " cachefile"
+Read from
+.I cachefile
+instead of reading from the default cache file
+.IR /etc/blkid.tab .
+If you want to start with a clean cache (i.e. don't report devices previously
+scanned but not necessarily available at this time), specify
+.IR /dev/null .
+.TP
+.B \-g
+Perform a garbage collection pass on the blkid cache to remove
+devices which no longer exist.
+.TP
+.B \-h
+Display a usage message and exit.
+.TP
+.B \-l
+Look up one device that matches the search parameter specified using
+the
+.B \-t
+option.  If there are multiple devices that match the specified search
+parameter, then the device with the highest priority is returned, and/or
+the first device found at a given priority.  Device types in order of
+decreasing priority are Device Mapper, EVMS, LVM, MD, and finally regular
+block devices.  If this option is not specified,
+.B blkid
+will print all of the devices that match the search parameter.
+.TP
+.BI \-o " format"
+Display
+.BR blkid 's
+output using the specified format.  The
+.I format
+parameter may be
+.I full
+(the default),
+.I value
+(only print the value of the tags),
+.I list
+(print the devices in a user-friendly format),
+or
+.I device
+(only print the device name).
+.TP
+.B \-L
+Print the devices in a user-friendly list format.  This is the
+equivalent of using the option \fB-o list\fR.
+.TP
+.BI \-s " tag"
+For each (specified) device, show only the tags that match
+.IR tag .
+It is possible to specify multiple
+.B \-s
+options.  If no tag is specified, then all tokens are shown for all
+(specified) devices.
+In order to just refresh the cache without showing any tokens, use
+.B "-s none"
+with no other options.
+.TP
+.BI \-t " NAME" = "value"
+Search for block devices with tokens named
+.I NAME
+that have the value
+.IR value ,
+and display any devices which are found.
+Common values for
+.I NAME
+include
+.BR TYPE ,
+.BR LABEL ,
+and
+.BR UUID .
+If there are no devices specified on the command line, all block devices
+will be searched; otherwise only the specified devices are searched.
+.TP
+.B \-v
+Display version number and exit.
+.TP
+.BI \-w " writecachefile"
+Write the device cache to
+.I writecachefile
+instead of writing it to the default cache file
+.IR /etc/blkid.tab .
+If you don't want to save the cache to the default file, specify
+.IR /dev/null.
+If not specified it will be the same file as that given by the
+.B \-c
+option.
+.TP
+.I device
+Display tokens from only the specified device.  It is possible to
+give multiple
+.I device
+options on the command line.  If none is given, all devices which
+appear in
+.I /proc/partitions
+are shown, if they are recognized.
+.SH "RETURN CODE"
+If the specified token was found, or if any tags were shown from (specified)
+devices, 0 is returned.  If the specified token was not found, or no
+(specified) devices could be identified, an exit code of 2 is returned.
+For usage or other errors, an exit code of 4 is returned.
+.SH AUTHOR
+.B blkid
+was written by Andreas Dilger for libblkid.
+.SH AVAILABILITY
+.B blkid
+is part the e2fsprogs package since version 1.26 and is available from
+http://e2fsprogs.sourceforge.net.
+.SH "SEE ALSO"
+.BR libblkid (3)

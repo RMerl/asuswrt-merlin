@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+# This script is used to generate the distribution tarball
+#
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_dir=`cd $top_srcdir; pwd`
+base_ver=`echo @E2FSPROGS_VERSION@ | sed -e 's/-WIP//' -e 's/pre-//' -e 's/-PLUS//'`
+base_e2fsprogs=`basename $top_dir`
+exclude=/tmp/exclude
+GZIP=gzip
+
+#
+# This hack is needed because texi2dvi blows up horribly if there are 
+# any '~' chracters in the directory pathname.  So we kludge around it by
+# using a non-standard directory name for WIP releases.  dpkg-source
+# complains, but life goes on.
+#
+deb_pkgver=`echo @E2FSPROGS_PKGVER@ | sed -e 's/~/-/g'`
+    
+case $1 in
+    debian|ubuntu)
+	SRCROOT="e2fsprogs-$deb_pkgver"
+	rename_tarball="e2fsprogs_@E2FSPROGS_PKGVER@.orig.tar.gz"
+	list=all
+	;;
+    subset)
+	SRCROOT="e2fsprogs-libs-$base_ver"
+	list=subset
+	;;
+   all|*)
+	SRCROOT="e2fsprogs-$base_ver"
+	list=all
+	;;
+esac
+
+mv ../e2fsprogs.spec $top_srcdir/e2fsprogs.spec
+(cd $top_srcdir/.. ; find $base_e2fsprogs \( -name \*~ -o -name \*.orig \
+		-o -name CVS -o -name \*.rej -o -name Makefile.pq \
+		-o -name TAGS -o -name \*.old -o -name SCCS \
+		-o -name changed-files -o -name .#\* -o -name \*.tar.gz \
+		-o -name autom4te.cache \) \
+		-print) | sed -e "s/^$base_e2fsprogs/$SRCROOT/" > $exclude
+sed -e "s;^;$SRCROOT/;" < $srcdir/$list.exclude >> $exclude
+
+(cd $top_srcdir/.. ; rm -f $SRCROOT ; ln -sf $base_e2fsprogs $SRCROOT)
+
+(cd $top_srcdir/.. ; tar -c -h -v -f - -X $exclude $SRCROOT) \
+	 | $GZIP -9 -c > $SRCROOT.tar.gz
+$GZIP -l $SRCROOT.tar.gz
+
+(cd $top_srcdir/.. ; rm -f $SRCROOT)
+mv $top_srcdir/e2fsprogs.spec ../e2fsprogs.spec 
+if test -n "$rename_tarball"; then
+    mv $SRCROOT.tar.gz $rename_tarball
+fi

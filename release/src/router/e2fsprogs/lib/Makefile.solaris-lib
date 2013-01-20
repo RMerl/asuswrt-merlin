@@ -1,0 +1,64 @@
+#
+# This is a Makefile stub which handles the creation of Linux ELF shared
+# libraries.
+#
+# In order to use this stub, the following makefile variables must be defined.
+# 
+# ELF_VERSION = 1.0
+# ELF_SO_VERSION = 1
+# ELF_IMAGE = libce
+# ELF_MYDIR = et
+# ELF_INSTALL_DIR = $(SHLIBDIR)
+# ELF_OTHER_LIBS = -lc
+
+all:: image
+
+real-subdirs:: Makefile
+	$(E) "	MKDIR elfshared"
+	$(Q) mkdir -p elfshared
+
+ELF_LIB = $(ELF_IMAGE).so.$(ELF_VERSION)
+ELF_SONAME = $(ELF_IMAGE).so.$(ELF_SO_VERSION)
+
+image:		$(ELF_LIB)
+
+$(ELF_LIB): $(OBJS)
+	$(E) "	GEN_ELF_SOLIB $(ELF_LIB)"
+	$(Q) (cd elfshared; $(CC) --shared -o $(ELF_LIB) $(LDFLAGS) \
+		-Wl,-h,$(ELF_SONAME) $(OBJS) $(ELF_OTHER_LIBS))
+	$(Q) $(MV) elfshared/$(ELF_LIB) .
+	$(Q) $(RM) -f ../$(ELF_LIB) ../$(ELF_IMAGE).so ../$(ELF_SONAME)
+	$(Q) (cd ..; $(LN) $(LINK_BUILD_FLAGS) \
+		`echo $(my_dir) | sed -e 's;lib/;;'`/$(ELF_LIB) $(ELF_LIB))
+	$(Q) (cd ..; $(LN) $(LINK_BUILD_FLAGS) $(ELF_LIB) $(ELF_IMAGE).so)
+	$(Q) (cd ..; $(LN) $(LINK_BUILD_FLAGS) $(ELF_LIB) $(ELF_SONAME))
+
+installdirs-elf-lib::
+	$(MKINSTALLDIRS) $(DESTDIR)$(ELF_INSTALL_DIR) \
+		$(DESTDIR)$(libdir)
+
+installdirs:: installdirs-elf-lib
+
+install-shlibs install:: $(ELF_LIB) installdirs-elf-lib
+	$(INSTALL_PROGRAM) $(ELF_LIB) $(DESTDIR)$(ELF_INSTALL_DIR)/$(ELF_LIB)
+	$(LN_S) -f $(ELF_LIB) $(DESTDIR)$(ELF_INSTALL_DIR)/$(ELF_SONAME)
+	$(LN_S) -f $(ELF_INSTALL_DIR)/$(ELF_SONAME) \
+		$(DESTDIR)$(libdir)/$(ELF_IMAGE).so
+	-$(LDCONFIG)
+
+install-strip: install
+	$(STRIP) -x $(DESTDIR)$(ELF_INSTALL_DIR)/$(ELF_LIB)
+
+install-shlibs-strip: install-shlibs
+	$(STRIP) -x $(DESTDIR)$(ELF_INSTALL_DIR)/$(ELF_LIB)
+
+uninstall-shlibs uninstall::
+	$(RM) -f $(DESTDIR)$(ELF_INSTALL_DIR)/$(ELF_LIB) \
+		$(DESTDIR)$(ELF_INSTALL_DIR)/$(ELF_SONAME) \
+		$(DESTDIR)$(libdir)/$(ELF_IMAGE).so
+	-$(LDCONFIG)
+
+clean::
+	$(RM) -rf elfshared
+	$(RM) -f $(ELF_LIB)
+	$(RM) -f ../$(ELF_LIB) ../$(ELF_IMAGE).so ../$(ELF_SONAME)

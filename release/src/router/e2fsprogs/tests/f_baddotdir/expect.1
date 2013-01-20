@@ -1,0 +1,59 @@
+Filesystem did not have a UUID; generating one.
+
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Missing '.' in directory inode 12.
+Fix? yes
+
+Missing '..' in directory inode 12.
+Fix? yes
+
+First entry 'X' (inode=11) in directory inode 13 (/b) should be '.'
+Fix? yes
+
+Missing '..' in directory inode 14.
+Fix? yes
+
+Second entry 'XX' (inode=11) in directory inode 15 should be '..'
+Fix? yes
+
+'.' directory entry in directory inode 17 is not NULL terminated
+Fix? yes
+
+'..' directory entry in directory inode 17 is not NULL terminated
+Fix? yes
+
+Missing '.' in directory inode 16.
+Fix? yes
+
+Missing '..' in directory inode 16.
+Fix? yes
+
+Pass 3: Checking directory connectivity
+'..' in /a (12) is <The NULL inode> (0), should be / (2).
+Fix? yes
+
+'..' in /c (14) is <The NULL inode> (0), should be / (2).
+Fix? yes
+
+'..' in /d (15) is <The NULL inode> (0), should be / (2).
+Fix? yes
+
+'..' in /e (16) is <The NULL inode> (0), should be / (2).
+Fix? yes
+
+'..' in /f (17) is <The NULL inode> (0), should be / (2).
+Fix? yes
+
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Free blocks count wrong for group #0 (70, counted=71).
+Fix? yes
+
+Free blocks count wrong (70, counted=71).
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 18/32 files (0.0% non-contiguous), 29/100 blocks
+Exit status is 1

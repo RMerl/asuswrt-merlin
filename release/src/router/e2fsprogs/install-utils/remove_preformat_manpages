@@ -1,0 +1,21 @@
+#!/bin/sh
+
+PREFORMAT_ROOT=/usr/man/preformat
+COMPILED_ROOT=/usr/man
+
+MAN8="debugfs.8 badblocks.8 e2fsck.8 mke2fs.8 dumpe2fs.8 mklost+found.8 \
+	fsck.8 tune2fs.8 e2label.8"
+MAN1="lsattr.1 chattr.1"
+
+for i in $MAN8
+do
+	rm -f $PREFORMAT_ROOT/cat8/$i $COMPILED_ROOT/cat8/$i \
+		$PREFORMAT_ROOT/cat8/$i.gz $COMPILED_ROOT/cat8/$i.gz
+done
+
+
+for i in $MAN1
+do
+	rm -f $PREFORMAT_ROOT/cat1/$i $COMPILED_ROOT/cat1/$i \
+		$PREFORMAT_ROOT/cat1/$i.gz $COMPILED_ROOT/cat1/$i.gz
+done

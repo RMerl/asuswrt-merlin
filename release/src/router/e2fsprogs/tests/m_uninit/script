@@ -1,0 +1,4 @@
+DESCRIPTION="uninitialized group feature"
+FS_SIZE=131072
+MKE2FS_OPTS="-O uninit_bg"
+. $cmd_dir/run_mke2fs

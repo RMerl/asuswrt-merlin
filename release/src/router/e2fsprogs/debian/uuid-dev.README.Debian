@@ -1,0 +1,23 @@
+
+In order to santize e2fsprogs to be DFSG free, the file
+draft-leach-uuids-guids-01.txt has been removed.  It can be obtained
+by downloading e2fsprogs from the upstream sources.  It may also be
+available from other sites on the network, if you do a quick web
+search for the string "draft-leach-uuids-guids-01".
+
+Note that debian/rules is set up to include the file on Ubuntu
+systems, so for people trying to build e2fsprogs on Ubuntu systems,
+they should start from the upstream sources, and not the
+Debian-expurgated sources found in the Debian repository.  (n.b., for
+WIP releases the command "./util/gen-tarball ubuntu" will help create
+tar file which is appropriately named to make life easier for
+dpkg-buildpackage.)  Since Ubuntu doesn't have the DFSG restrictions,
+the documentation which has been removed for Debian's DFSG license
+purity shouldn't be denied to Ubuntu users.
+
+					Theodore Ts'o
+					Ocotober 3, 2006
+
+
+
+

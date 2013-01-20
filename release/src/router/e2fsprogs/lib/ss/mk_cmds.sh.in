@@ -1,0 +1,62 @@
+#!/bin/sh
+#
+#
+
+datarootdir=@datarootdir@
+DIR="${DIR-@datadir@/ss}"
+SS_DIR="@SS_DIR@"
+AWK=@AWK@
+SED=@SED@
+
+for as_var in \
+  LANG LANGUAGE LC_ADDRESS LC_ALL LC_COLLATE LC_CTYPE LC_IDENTIFICATION \
+  LC_MEASUREMENT LC_MESSAGES LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER \
+  LC_TELEPHONE LC_TIME
+do
+  if (set +x; test -z "`(eval $as_var=C; export $as_var) 2>&1`"); then
+    eval $as_var=C; export $as_var
+  else
+    $as_unset $as_var
+  fi
+done
+
+if test "x$1" = x ; then
+    echo "Usage: mk_cmds file"
+    exit 1
+fi
+
+if test -n "$_SS_DIR_OVERRIDE" ; then
+    DIR="$_SS_DIR_OVERRIDE";
+fi
+
+if test ! -f $DIR/ct_c.sed || test ! -f $DIR/ct_c.awk ; then
+    DIR="$SS_DIR"
+#    echo "Falling back to $DIR..."
+    if test ! -f "$DIR/ct_c.sed" || test ! -f "$DIR/ct_c.awk" ; then
+	echo "mk_cmds: Couldn't find mk_cmds's template files."
+	exit 1
+    fi
+fi
+
+FILE="$1"
+ROOT=`echo $1 | sed -e s/.ct$//`
+BASE=`basename "$ROOT"`
+TMP="ct$$.c"
+
+if test ! -f "$FILE" ; then
+    echo "mk_cmds: $FILE: File not found"
+    exit 1;
+fi
+
+${SED} -f "${DIR}/ct_c.sed"  "${FILE}" \
+	| ${AWK} -f "${DIR}/ct_c.awk" "rootname=${ROOT}" "outfile=${TMP}" -
+
+if grep "^#__ERROR_IN_FILE" "${TMP}" > /dev/null; then
+	rm "${TMP}"
+	exit 1
+else
+	rm -f "${BASE}.c"
+	mv -f "${TMP}" "${BASE}.c"
+	chmod -w "${BASE}.c"
+	exit 0
+fi

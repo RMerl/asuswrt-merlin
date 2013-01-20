@@ -1,0 +1,27 @@
+../e2fsck/e2fsck: Group descriptors look bad... trying backup blocks...
+One or more block group descriptor checksums are invalid.  Fix? yes
+
+Group descriptor 0 checksum is invalid.  FIXED.
+Inode table for group 1 is not in group.  (block 0)
+WARNING: SEVERE DATA LOSS POSSIBLE.
+Relocate? yes
+
+Group descriptor 1 checksum is invalid.  FIXED.
+Group descriptor 2 checksum is invalid.  FIXED.
+Group descriptor 3 checksum is invalid.  FIXED.
+Pass 1: Checking inodes, blocks, and sizes
+Relocating group 1's inode table to 142...
+Restarting e2fsck from the beginning...
+Group descriptor 1 checksum is invalid.  FIXED.
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Inode bitmap differences:  -(65--128)
+Fix? yes
+
+
+test_filesys: ***** FILE SYSTEM WAS MODIFIED *****
+test_filesys: 12/256 files (0.0% non-contiguous), 31163/32768 blocks
+Exit status is 1

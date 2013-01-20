@@ -1,0 +1,44 @@
+.\" -*- nroff -*-
+.\" Copyright 2008 by Theodore Ts'o.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\"
+.TH E2UNDO 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+e2undo \- Replay an undo log for an ext2/ext3/ext4 filesystem
+.SH SYNOPSIS
+.B e2undo
+[
+.B \-f
+]
+.I undo_log device
+.SH DESCRIPTION
+.B e2undo
+will replay the undo log
+.I undo_log
+for an ext2/ext3/ext4 filesystem found on
+.IR device .
+This can be
+used to undo a failed operation by an e2fsprogs program.
+.SH OPTIONS
+.TP
+.B \-f
+Normally,
+.B e2undo
+will check the filesystem UUID and last modified time to make sure the
+undo log matches with the filesystem on the device.  If they do not
+match,
+.B e2undo
+will refuse to apply the undo log as a safety mechanism.  The
+.B \-f
+option disables this safety mechanism.
+.SH AUTHOR
+.B e2undo
+was written by Aneesh Kumar K.V. (aneesh.kumar@linux.vnet.ibm.com)
+.SH AVAILABILITY
+.B e2undo
+is part of the e2fsprogs package and is available from
+http://e2fsprogs.sourceforge.net.
+.SH SEE ALSO
+.BR mke2fs (8),
+.BR tune2fs (8)
+

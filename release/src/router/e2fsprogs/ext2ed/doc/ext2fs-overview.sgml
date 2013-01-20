@@ -1,0 +1,1569 @@
+<!DOCTYPE Article PUBLIC "-//Davenport//DTD DocBook V3.0//EN">
+
+<Article>
+
+<ArtHeader>
+
+<Title>The extended-2 filesystem overview</Title>
+<AUTHOR
+>
+<FirstName>Gadi Oxman, tgud@tochnapc2.technion.ac.il</FirstName>
+</AUTHOR
+>
+<PubDate>v0.1, August 3 1995</PubDate>
+
+</ArtHeader>
+
+<Sect1>
+<Title>Preface</Title>
+
+<Para>
+This document attempts to present an overview of the internal structure of
+the ext2 filesystem. It was written in summer 95, while I was working on the 
+<Literal remap="tt">ext2 filesystem editor project (EXT2ED)</Literal>. 
+</Para>
+
+<Para>
+In the process of constructing EXT2ED, I acquired knowledge of the various 
+design aspects of the the ext2 filesystem. This document is a result of an
+effort to document this knowledge.
+</Para>
+
+<Para>
+This is only the initial version of this document. It is obviously neither
+error-prone nor complete, but at least it provides a starting point.
+</Para>
+
+<Para>
+In the process of learning the subject, I have used the following sources /
+tools:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Experimenting with EXT2ED, as it was developed.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The ext2 kernel sources:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	The main ext2 include file,
+<FILENAME>/usr/include/linux/ext2&lowbar;fs.h</FILENAME>
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The contents of the directory <FILENAME>/usr/src/linux/fs/ext2</FILENAME>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The VFS layer sources (only a bit).
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The slides: The Second Extended File System, Current State, Future
+Development, by <personname><firstname>Remy</firstname> <surname>Card</surname></personname>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The slides: Optimisation in File Systems, by <personname><firstname>Stephen</firstname> <surname>Tweedie</surname></personname>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The various ext2 utilities.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Introduction</Title>
+
+<Para>
+The <Literal remap="tt">Second Extended File System (Ext2fs)</Literal> is very popular among Linux
+users. If you use Linux, chances are that you are using the ext2 filesystem.
+</Para>
+
+<Para>
+Ext2fs was designed by <personname><firstname>Remy</firstname> <surname>Card</surname></personname> and <personname><firstname>Wayne</firstname> <surname>Davison</surname></personname>. It was
+implemented by <personname><firstname>Remy</firstname> <surname>Card</surname></personname> and was further enhanced by <personname><firstname>Stephen</firstname>
+<surname>Tweedie</surname></personname> and <personname><firstname>Theodore</firstname> <surname>Ts'o</surname></personname>.
+</Para>
+
+<Para>
+The ext2 filesystem is still under development. I will document here
+version 0.5a, which is distributed along with Linux 1.2.x. At this time of
+writing, the most recent version of Linux is 1.3.13, and the version of the
+ext2 kernel source is 0.5b. A lot of fancy enhancements are planned for the
+ext2 filesystem in Linux 1.3, so stay tuned.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>A filesystem - Why do we need it?</Title>
+
+<Para>
+I thought that before we dive into the various small details, I'll reserve a
+few minutes for the discussion of filesystems from a general point of view.
+</Para>
+
+<Para>
+A <Literal remap="tt">filesystem</Literal> consists of two word - <Literal remap="tt">file</Literal> and <Literal remap="tt">system</Literal>.
+</Para>
+
+<Para>
+Everyone knows the meaning of the word <Literal remap="tt">file</Literal> - A bunch of data put
+somewhere. where? This is an important question. I, for example, usually
+throw almost everything into a single drawer, and have difficulties finding
+something later.
+</Para>
+
+<Para>
+This is where the <Literal remap="tt">system</Literal> comes in - Instead of just throwing the data
+to the device, we generalize and construct a <Literal remap="tt">system</Literal> which will
+virtualize for us a nice and ordered structure in which we could arrange our
+data in much the same way as books are arranged in a library. The purpose of
+the filesystem, as I understand it, is to make it easy for us to update and
+maintain our data.
+</Para>
+
+<Para>
+Normally, by <Literal remap="tt">mounting</Literal> filesystems, we just use the nice and logical
+virtual structure. However, the disk knows nothing about that - The device
+driver views the disk as a large continuous paper in which we can write notes
+wherever we wish. It is the task of the filesystem management code to store
+bookkeeping information which will serve the kernel for showing us the nice
+and ordered virtual structure.
+</Para>
+
+<Para>
+In this document, we consider one particular administrative structure - The
+Second Extended Filesystem.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>The Linux VFS layer</Title>
+
+<Para>
+When Linux was first developed, it supported only one filesystem - The
+<Literal remap="tt">Minix</Literal> filesystem. Today, Linux has the ability to support several
+filesystems concurrently. This was done by the introduction of another layer
+between the kernel and the filesystem code - The Virtual File System (VFS).
+</Para>
+
+<Para>
+The kernel "speaks" with the VFS layer. The VFS layer passes the kernel's
+request to the proper filesystem management code. I haven't learned much of
+the VFS layer as I didn't need it for the construction of EXT2ED so that I
+can't elaborate on it. Just be aware that it exists.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>About blocks and block groups</Title>
+
+<Para>
+In order to ease management, the ext2 filesystem logically divides the disk
+into small units called <Literal remap="tt">blocks</Literal>. A block is the smallest unit which
+can be allocated. Each block in the filesystem can be <Literal remap="tt">allocated</Literal> or
+<Literal remap="tt">free</Literal>.
+<FOOTNOTE>
+
+<Para>
+The Ext2fs source code refers to the concept of <Literal remap="tt">fragments</Literal>, which I
+believe are supposed to be sub-block allocations. As far as I know,
+fragments are currently unsupported in Ext2fs.
+</Para>
+
+</FOOTNOTE>
+
+The block size can be selected to be 1024, 2048 or 4096 bytes when creating
+the filesystem.
+</Para>
+
+<Para>
+Ext2fs groups together a fixed number of sequential blocks into a <Literal remap="tt">group
+block</Literal>. The resulting situation is that the filesystem is managed as a
+series of group blocks. This is done in order to keep related information
+physically close on the disk and to ease the management task. As a result,
+much of the filesystem management reduces to management of a single blocks
+group.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>The view of inodes from the point of view of a blocks group</Title>
+
+<Para>
+Each file in the filesystem is reserved a special <Literal remap="tt">inode</Literal>. I don't want
+to explain inodes now. Rather, I would like to treat it as another resource,
+much like a <Literal remap="tt">block</Literal> - Each blocks group contains a limited number of
+inode, while any specific inode can be <Literal remap="tt">allocated</Literal> or
+<Literal remap="tt">unallocated</Literal>.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>The group descriptors</Title>
+
+<Para>
+Each blocks group is accompanied by a <Literal remap="tt">group descriptor</Literal>. The group
+descriptor summarizes some necessary information about the specific group
+block. Follows the definition of the group descriptor, as defined in
+<FILENAME>/usr/include/linux/ext2&lowbar;fs.h</FILENAME>:
+</Para>
+
+<Para>
+
+<ProgramListing>
+struct ext2_group_desc
+{
+	__u32	bg_block_bitmap;	/* Blocks bitmap block */
+	__u32	bg_inode_bitmap;	/* Inodes bitmap block */
+	__u32	bg_inode_table;		/* Inodes table block */
+	__u16	bg_free_blocks_count;	/* Free blocks count */
+	__u16	bg_free_inodes_count;	/* Free inodes count */
+	__u16	bg_used_dirs_count;	/* Directories count */
+	__u16	bg_pad;
+	__u32	bg_reserved[3];
+};
+</ProgramListing>
+
+</Para>
+
+<Para>
+The last three variables: <Literal remap="tt">bg&lowbar;free&lowbar;blocks&lowbar;count, bg&lowbar;free&lowbar;inodes&lowbar;count and bg&lowbar;used&lowbar;dirs&lowbar;count</Literal> provide statistics about the use of the three
+resources in a blocks group - The <Literal remap="tt">blocks</Literal>, the <Literal remap="tt">inodes</Literal> and the
+<Literal remap="tt">directories</Literal>. I believe that they are used by the kernel for balancing
+the load between the various blocks groups.
+</Para>
+
+<Para>
+<Literal remap="tt">bg&lowbar;block&lowbar;bitmap</Literal> contains the block number of the <Literal remap="tt">block allocation
+bitmap block</Literal>. This is used to allocate / deallocate each block in the
+specific blocks group.
+</Para>
+
+<Para>
+<Literal remap="tt">bg&lowbar;inode&lowbar;bitmap</Literal> is fully analogous to the previous variable - It
+contains the block number of the <Literal remap="tt">inode allocation bitmap block</Literal>, which
+is used to allocate / deallocate each specific inode in the filesystem.
+</Para>
+
+<Para>
+<Literal remap="tt">bg&lowbar;inode&lowbar;table</Literal> contains the block number of the start of the
+<Literal remap="tt">inode table of the current blocks group</Literal>. The <Literal remap="tt">inode table</Literal> is
+just the actual inodes which are reserved for the current block.
+</Para>
+
+<Para>
+The block bitmap block, inode bitmap block and the inode table are created
+when the filesystem is created.
+</Para>
+
+<Para>
+The group descriptors are placed one after the other. Together they make the
+<Literal remap="tt">group descriptors table</Literal>.
+</Para>
+
+<Para>
+Each blocks group contains the entire table of group descriptors in its
+second block, right after the superblock. However, only the first copy (in
+group 0) is actually used by the kernel. The other copies are there for
+backup purposes and can be of use if the main copy gets corrupted.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>The block bitmap allocation block</Title>
+
+<Para>
+Each blocks group contains one special block which is actually a map of the
+entire blocks in the group, with respect to their allocation status. Each
+<Literal remap="tt">bit</Literal> in the block bitmap indicated whether a specific block in the
+group is used or free.
+</Para>
+
+<Para>
+The format is actually quite simple - Just view the entire block as a series
+of bits. For example,
+</Para>
+
+<Para>
+Suppose the block size is 1024 bytes. As such, there is a place for
+1024*8=8192 blocks in a group block. This number is one of the fields in the
+filesystem's <Literal remap="tt">superblock</Literal>, which will be explained later.
+</Para>
+
+<Para>
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Block 0 in the blocks group is managed by bit 0 of byte 0 in the bitmap
+block.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Block 7 in the blocks group is managed by bit 7 of byte 0 in the bitmap
+block.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Block 8 in the blocks group is managed by bit 0 of byte 1 in the bitmap
+block.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Block 8191 in the blocks group is managed by bit 7 of byte 1023 in the
+bitmap 	block.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+A value of "<Literal remap="tt">1</Literal>" in the appropriate bit signals that the block is
+allocated, while a value of "<Literal remap="tt">0</Literal>" signals that the block is
+unallocated.
+</Para>
+
+<Para>
+You will probably notice that typically, all the bits in a byte contain the
+same value, making the byte's value <Literal remap="tt">0</Literal> or <Literal remap="tt">0ffh</Literal>. This is done by
+the kernel on purpose in order to group related data in physically close
+blocks, since the physical device is usually optimized to handle such a close
+relationship.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>The inode allocation bitmap</Title>
+
+<Para>
+The format of the inode allocation bitmap block is exactly like the format of
+the block allocation bitmap block. The explanation above is valid here, with
+the work <Literal remap="tt">block</Literal> replaced by <Literal remap="tt">inode</Literal>. Typically, there are much less
+inodes then blocks in a blocks group and thus only part of the inode bitmap
+block is used. The number of inodes in a blocks group is another variable
+which is listed in the <Literal remap="tt">superblock</Literal>.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>On the inode and the inode tables</Title>
+
+<Para>
+An inode is a main resource in the ext2 filesystem. It is used for various
+purposes, but the main two are:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Support of files
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Support of directories
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+Each file, for example, will allocate one inode from the filesystem
+resources.
+</Para>
+
+<Para>
+An ext2 filesystem has a total number of available inodes which is determined
+while creating the filesystem. When all the inodes are used, for example, you
+will not be able to create an additional file even though there will still
+be free blocks on the filesystem. 
+</Para>
+
+<Para>
+Each inode takes up 128 bytes in the filesystem. By default, <Literal remap="tt">mke2fs</Literal>
+reserves an inode for each 4096 bytes of the filesystem space.
+</Para>
+
+<Para>
+The inodes are placed in several tables, each of which contains the same
+number of inodes and is placed at a different blocks group. The goal is to
+place inodes and their related files in the same blocks group because of
+locality arguments.
+</Para>
+
+<Para>
+The number of inodes in a blocks group is available in the superblock variable
+<Literal remap="tt">s&lowbar;inodes&lowbar;per&lowbar;group</Literal>. For example, if there are 2000 inodes per group,
+group 0 will contain the inodes 1-2000, group 2 will contain the inodes
+2001-4000, and so on.
+</Para>
+
+<Para>
+Each inode table is accessed from the group descriptor of the specific
+blocks group which contains the table.
+</Para>
+
+<Para>
+Follows the structure of an inode in Ext2fs:
+</Para>
+
+<Para>
+
+<ProgramListing>
+struct ext2_inode {
+	__u16	i_mode;		/* File mode */
+	__u16	i_uid;		/* Owner Uid */
+	__u32	i_size;		/* Size in bytes */
+	__u32	i_atime;	/* Access time */
+	__u32	i_ctime;	/* Creation time */
+	__u32	i_mtime;	/* Modification time */
+	__u32	i_dtime;	/* Deletion Time */
+	__u16	i_gid;		/* Group Id */
+	__u16	i_links_count;	/* Links count */
+	__u32	i_blocks;	/* Blocks count */
+	__u32	i_flags;	/* File flags */
+	union {
+		struct {
+			__u32  l_i_reserved1;
+		} linux1;
+		struct {
+			__u32  h_i_translator;
+		} hurd1;
+		struct {
+			__u32  m_i_reserved1;
+		} masix1;
+	} osd1;				/* OS dependent 1 */
+	__u32	i_block[EXT2_N_BLOCKS];/* Pointers to blocks */
+	__u32	i_version;	/* File version (for NFS) */
+	__u32	i_file_acl;	/* File ACL */
+	__u32	i_dir_acl;	/* Directory ACL */
+	__u32	i_faddr;	/* Fragment address */
+	union {
+		struct {
+			__u8	l_i_frag;	/* Fragment number */
+			__u8	l_i_fsize;	/* Fragment size */
+			__u16	i_pad1;
+			__u32	l_i_reserved2[2];
+		} linux2;
+		struct {
+			__u8	h_i_frag;	/* Fragment number */
+			__u8	h_i_fsize;	/* Fragment size */
+			__u16	h_i_mode_high;
+			__u16	h_i_uid_high;
+			__u16	h_i_gid_high;
+			__u32	h_i_author;
+		} hurd2;
+		struct {
+			__u8	m_i_frag;	/* Fragment number */
+			__u8	m_i_fsize;	/* Fragment size */
+			__u16	m_pad1;
+			__u32	m_i_reserved2[2];
+		} masix2;
+	} osd2;				/* OS dependent 2 */
+};
+</ProgramListing>
+
+</Para>
+
+<Sect2>
+<Title>The allocated blocks</Title>
+
+<Para>
+The basic functionality of an inode is to group together a series of
+allocated blocks. There is no limitation on the allocated blocks - Each
+block can be allocated to each inode. Nevertheless, block allocation will
+usually be done in series to take advantage of the locality principle.
+</Para>
+
+<Para>
+The inode is not always used in that way. I will now explain the allocation
+of blocks, assuming that the current inode type indeed refers to a list of
+allocated blocks.
+</Para>
+
+<Para>
+It was found experimently that many of the files in the filesystem are
+actually quite small. To take advantage of this effect, the kernel provides
+storage of up to 12 block numbers in the inode itself. Those blocks are
+called <Literal remap="tt">direct blocks</Literal>. The advantage is that once the kernel has the
+inode, it can directly access the file's blocks, without an additional disk
+access. Those 12 blocks are directly specified in the variables
+<Literal remap="tt">i&lowbar;block[0] to i&lowbar;block[11]</Literal>.
+</Para>
+
+<Para>
+<Literal remap="tt">i&lowbar;block[12]</Literal> is the <Literal remap="tt">indirect block</Literal> - The block pointed by
+i&lowbar;block&lsqb;12] will <Literal remap="tt">not</Literal> be a data block. Rather, it will just contain a
+list of direct blocks. For example, if the block size is 1024 bytes, since
+each block number is 4 bytes long, there will be place for 256 indirect
+blocks. That is, block 13 till block 268 in the file will be accessed by the
+<Literal remap="tt">indirect block</Literal> method. The penalty in this case, compared to the
+direct blocks case, is that an additional access to the device is needed -
+We need <Literal remap="tt">two</Literal> accesses to reach the required data block.
+</Para>
+
+<Para>
+In much the same way, <Literal remap="tt">i&lowbar;block[13]</Literal> is the <Literal remap="tt">double indirect block</Literal>
+and <Literal remap="tt">i&lowbar;block[14]</Literal> is the <Literal remap="tt">triple indirect block</Literal>.
+</Para>
+
+<Para>
+<Literal remap="tt">i&lowbar;block[13]</Literal> points to a block which contains pointers to indirect
+blocks. Each one of them is handled in the way described above.
+</Para>
+
+<Para>
+In much the same way, the triple indirect block is just an additional level
+of indirection - It will point to a list of double indirect blocks.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The i&lowbar;mode variable</Title>
+
+<Para>
+The i&lowbar;mode variable is used to determine the <Literal remap="tt">inode type</Literal> and the
+associated <Literal remap="tt">permissions</Literal>. It is best described by representing it as an
+octal number. Since it is a 16 bit variable, there will be 6 octal digits.
+Those are divided into two parts - The rightmost 4 digits and the leftmost 2
+digits.
+</Para>
+
+<Sect3>
+<Title>The rightmost 4 octal digits</Title>
+
+<Para>
+The rightmost 4 digits are <Literal remap="tt">bit options</Literal> - Each bit has its own
+purpose.
+</Para>
+
+<Para>
+The last 3 digits (Octal digits 0,1 and 2) are just the usual permissions,
+in the known form <Literal remap="tt">rwxrwxrwx</Literal>. Digit 2 refers to the user, digit 1 to
+the group and digit 2 to everyone else. They are used by the kernel to grant
+or deny access to the object presented by this inode.
+<FOOTNOTE>
+
+<Para>
+A <Literal remap="tt">smarter</Literal> permissions control is one of the enhancements planned for
+Linux 1.3 - The ACL (Access Control Lists). Actually, from browsing of the
+kernel source, some of the ACL handling is already done.
+</Para>
+
+</FOOTNOTE>
+
+</Para>
+
+<Para>
+Bit number 9 signals that the file (I'll refer to the object presented by
+the inode as file even though it can be a special device, for example) is
+<Literal remap="tt">set VTX</Literal>. I still don't know what is the meaning of "VTX".
+</Para>
+
+<Para>
+Bit number 10 signals that the file is <Literal remap="tt">set group id</Literal> - I don't know
+exactly the meaning of the above either.
+</Para>
+
+<Para>
+Bit number 11 signals that the file is <Literal remap="tt">set user id</Literal>, which means that
+the file will run with an effective user id root.
+</Para>
+
+</Sect3>
+
+<Sect3>
+<Title>The leftmost two octal digits</Title>
+
+<Para>
+Note the the leftmost octal digit can only be 0 or 1, since the total number
+of bits is 16.
+</Para>
+
+<Para>
+Those digits, as opposed to the rightmost 4 digits, are not bit mapped
+options. They determine the type of the "file" to which the inode belongs:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">01</Literal> - The file is a <Literal remap="tt">FIFO</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">02</Literal> - The file is a <Literal remap="tt">character device</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">04</Literal> - The file is a <Literal remap="tt">directory</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">06</Literal> - The file is a <Literal remap="tt">block device</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">10</Literal> - The file is a <Literal remap="tt">regular file</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">12</Literal> - The file is a <Literal remap="tt">symbolic link</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">14</Literal> - The file is a <Literal remap="tt">socket</Literal>.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+</Sect3>
+
+</Sect2>
+
+<Sect2>
+<Title>Time and date</Title>
+
+<Para>
+Linux records the last time in which various operations occured with the
+file. The time and date are saved in the standard C library format - The
+number of seconds which passed since 00:00:00 GMT, January 1, 1970. The
+following times are recorded:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">i&lowbar;ctime</Literal> - The time in which the inode was last allocated. In
+other words, the time in which the file was created.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">i&lowbar;mtime</Literal> - The time in which the file was last modified.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">i&lowbar;atime</Literal> - The time in which the file was last accessed.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">i&lowbar;dtime</Literal> - The time in which the inode was deallocated. In
+other words, the time in which the file was deleted.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>i&lowbar;size</Title>
+
+<Para>
+<Literal remap="tt">i&lowbar;size</Literal> contains information about the size of the object presented by
+the inode. If the inode corresponds to a regular file, this is just the size
+of the file in bytes. In other cases, the interpretation of the variable is
+different.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>User and group id</Title>
+
+<Para>
+The user and group id of the file are just saved in the variables
+<Literal remap="tt">i&lowbar;uid</Literal> and <Literal remap="tt">i&lowbar;gid</Literal>.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Hard links</Title>
+
+<Para>
+Later, when we'll discuss the implementation of directories, it will be
+explained that each <Literal remap="tt">directory entry</Literal> points to an inode. It is quite
+possible that a <Literal remap="tt">single inode</Literal> will be pointed to from <Literal remap="tt">several</Literal>
+directories. In that case, we say that there exist <Literal remap="tt">hard links</Literal> to the
+file - The file can be accessed from each of the directories.
+</Para>
+
+<Para>
+The kernel keeps track of the number of hard links in the variable
+<Literal remap="tt">i&lowbar;links&lowbar;count</Literal>. The variable is set to "1" when first allocating the
+inode, and is incremented with each additional link. Deletion of a file will
+delete the current directory entry and will decrement the number of links.
+Only when this number reaches zero, the inode will be actually deallocated.
+</Para>
+
+<Para>
+The name <Literal remap="tt">hard link</Literal> is used to distinguish between the alias method
+described above, to another alias method called <Literal remap="tt">symbolic linking</Literal>,
+which will be described later.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The Ext2fs extended flags</Title>
+
+<Para>
+The ext2 filesystem associates additional flags with an inode. The extended
+attributes are stored in the variable <Literal remap="tt">i&lowbar;flags</Literal>. <Literal remap="tt">i&lowbar;flags</Literal> is a 32
+bit variable. Only the 7 rightmost bits are defined. Of them, only 5 bits
+are used in version 0.5a of the filesystem. Specifically, the
+<Literal remap="tt">undelete</Literal> and the <Literal remap="tt">compress</Literal> features are not implemented, and
+are to be introduced in Linux 1.3 development.
+</Para>
+
+<Para>
+The currently available flags are:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	bit 0 - Secure deletion.
+
+When this bit is on, the file's blocks are zeroed when the file is
+deleted. With this bit off, they will just be left with their
+original data when the inode is deallocated.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	bit 1 - Undelete.
+	
+This bit is not supported yet. It will be used to provide an
+<Literal remap="tt">undelete</Literal> feature in future Ext2fs developments.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	bit 2 - Compress file.
+
+This bit is also not supported. The plan is to offer "compression on
+the fly" in future releases.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	bit 3 - Synchronous updates.
+
+With this bit on, the meta-data will be written synchronously to the
+disk, as if the filesystem was mounted with the "sync" mount option.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	bit 4 - Immutable file.
+
+When this bit is on, the file will stay as it is - Can not be
+changed, deleted, renamed, no hard links, etc, before the bit is
+cleared.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	bit 5 - Append only file.
+	
+With this option active, data will only be appended to the file.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	bit 6 - Do not dump this file.
+
+I think that this bit is used by the port of dump to linux (ported by
+<Literal remap="tt">Remy Card</Literal>) to check if the file should not be dumped.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Symbolic links</Title>
+
+<Para>
+The <Literal remap="tt">hard links</Literal> presented above are just another pointers to the same
+inode. The important aspect is that the inode number is <Literal remap="tt">fixed</Literal> when
+the link is created. This means that the implementation details of the
+filesystem are visible to the user - In a pure abstract usage of the
+filesystem, the user should not care about inodes.
+</Para>
+
+<Para>
+The above causes several limitations:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Hard links can be done only in the same filesystem. This is obvious,
+since a hard link is just an inode number in some directory entry,
+and the above elements are filesystem specific.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	You can not "replace" the file which is pointed to by the hard link
+after the link creation. "Replacing" the file in one directory will
+still leave the original file in the other directory - The
+"replacement" will not deallocate the original inode, but rather
+allocate another inode for the new version, and the directory entry
+at the other place will just point to the old inode number.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+<Literal remap="tt">Symbolic link</Literal>, on the other hand, is analyzed at <Literal remap="tt">run time</Literal>. A
+symbolic link is just a <Literal remap="tt">pathname</Literal> which is accessible from an inode.
+As such, it "speaks" in the language of the abstract filesystem. When the
+kernel reaches a symbolic link, it will <Literal remap="tt">follow it in run time</Literal> using
+its normal way of reaching directories.
+</Para>
+
+<Para>
+As such, symbolic link can be made <Literal remap="tt">across different filesystems</Literal> and a
+replacement of a file with a new version will automatically be active on all
+its symbolic links.
+</Para>
+
+<Para>
+The disadvantage is that hard link doesn't consume space except to a small
+directory entry. Symbolic link, on the other hand, consumes at least an
+inode, and can also consume one block.
+</Para>
+
+<Para>
+When the inode is identified as a symbolic link, the kernel needs to find
+the path to which it points.
+</Para>
+
+<Sect3>
+<Title>Fast symbolic links</Title>
+
+<Para>
+When the pathname contains up to 64 bytes, it can be saved directly in the
+inode, on the <Literal remap="tt">i&lowbar;block[0] - i&lowbar;block[15]</Literal> variables, since those are not
+needed in that case. This is called <Literal remap="tt">fast</Literal> symbolic link. It is fast
+because the pathname resolution can be done using the inode itself, without
+accessing additional blocks. It is also economical, since it allocates only
+an inode. The length of the pathname is stored in the <Literal remap="tt">i&lowbar;size</Literal>
+variable.
+</Para>
+
+</Sect3>
+
+<Sect3>
+<Title>Slow symbolic links</Title>
+
+<Para>
+Starting from 65 bytes, additional block is allocated (by the use of
+<Literal remap="tt">i&lowbar;block[0]</Literal>) and the pathname is stored in it. It is called slow
+because the kernel needs to read additional block to resolve the pathname.
+The length is again saved in <Literal remap="tt">i&lowbar;size</Literal>.
+</Para>
+
+</Sect3>
+
+</Sect2>
+
+<Sect2>
+<Title>i&lowbar;version</Title>
+
+<Para>
+<Literal remap="tt">i&lowbar;version</Literal> is used with regard to Network File System. I don't know
+its exact use.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Reserved variables</Title>
+
+<Para>
+As far as I know, the variables which are connected to ACL and fragments
+are not currently used. They will be supported in future versions.
+</Para>
+
+<Para>
+Ext2fs is being ported to other operating systems. As far as I know,
+at least in linux, the os dependent variables are also not used.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Special reserved inodes</Title>
+
+<Para>
+The first ten inodes on the filesystem are special inodes:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Inode 1 is the <Literal remap="tt">bad blocks inode</Literal> - I believe that its data
+blocks contain a list of the bad blocks in the filesystem, which
+should not be allocated.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Inode 2 is the <Literal remap="tt">root inode</Literal> - The inode of the root directory.
+It is the starting point for reaching a known path in the filesystem.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Inode 3 is the <Literal remap="tt">acl index inode</Literal>. Access control lists are
+currently not supported by the ext2 filesystem, so I believe this
+inode is not used.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Inode 4 is the <Literal remap="tt">acl data inode</Literal>. Of course, the above applies
+here too.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Inode 5 is the <Literal remap="tt">boot loader inode</Literal>. I don't know its
+usage.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Inode 6 is the <Literal remap="tt">undelete directory inode</Literal>. It is also a
+foundation for future enhancements, and is currently not used.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Inodes 7-10 are <Literal remap="tt">reserved</Literal> and currently not used.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>Directories</Title>
+
+<Para>
+A directory is implemented in the same way as files are implemented (with
+the direct blocks, indirect blocks, etc) - It is just a file which is
+formatted with a special format - A list of directory entries.
+</Para>
+
+<Para>
+Follows the definition of a directory entry:
+</Para>
+
+<Para>
+
+<ProgramListing>
+struct ext2_dir_entry {
+	__u32	inode;			/* Inode number */
+	__u16	rec_len;		/* Directory entry length */
+	__u16	name_len;		/* Name length */
+	char	name[EXT2_NAME_LEN];	/* File name */
+};
+</ProgramListing>
+
+</Para>
+
+<Para>
+Ext2fs supports file names of varying lengths, up to 255 bytes. The
+<Literal remap="tt">name</Literal> field above just contains the file name. Note that it is
+<Literal remap="tt">not zero terminated</Literal>; Instead, the variable <Literal remap="tt">name&lowbar;len</Literal> contains
+the length of the file name.
+</Para>
+
+<Para>
+The variable <Literal remap="tt">rec&lowbar;len</Literal> is provided because the directory entries are
+padded with zeroes so that the next entry will be in an offset which is
+a multiplition of 4. The resulting directory entry size is stored in
+<Literal remap="tt">rec&lowbar;len</Literal>. If the directory entry is the last in the block, it is
+padded with zeroes till the end of the block, and rec&lowbar;len is updated
+accordingly.
+</Para>
+
+<Para>
+The <Literal remap="tt">inode</Literal> variable points to the inode of the above file.
+</Para>
+
+<Para>
+Deletion of directory entries is done by appending of the deleted entry
+space to the previous (or next, I am not sure) entry.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>The superblock</Title>
+
+<Para>
+The <Literal remap="tt">superblock</Literal> is a block which contains information which describes
+the state of the internal filesystem.
+</Para>
+
+<Para>
+The superblock is located at the <Literal remap="tt">fixed offset 1024</Literal> in the device. Its
+length is 1024 bytes also.
+</Para>
+
+<Para>
+The superblock, like the group descriptors, is copied on each blocks group
+boundary for backup purposes. However, only the main copy is used by the
+kernel.
+</Para>
+
+<Para>
+The superblock contain three types of information:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Filesystem parameters which are fixed and which were determined when
+this specific filesystem was created. Some of those parameters can
+be different in different installations of the ext2 filesystem, but
+can not be changed once the filesystem was created.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Filesystem parameters which are tunable - Can always be changed.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Information about the current filesystem state.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+Follows the superblock definition:
+</Para>
+
+<Para>
+
+<ProgramListing>
+struct ext2_super_block {
+	__u32	s_inodes_count;		/* Inodes count */
+	__u32	s_blocks_count;		/* Blocks count */
+	__u32	s_r_blocks_count;	/* Reserved blocks count */
+	__u32	s_free_blocks_count;	/* Free blocks count */
+	__u32	s_free_inodes_count;	/* Free inodes count */
+	__u32	s_first_data_block;	/* First Data Block */
+	__u32	s_log_block_size;	/* Block size */
+	__s32	s_log_frag_size;	/* Fragment size */
+	__u32	s_blocks_per_group;	/* # Blocks per group */
+	__u32	s_frags_per_group;	/* # Fragments per group */
+	__u32	s_inodes_per_group;	/* # Inodes per group */
+	__u32	s_mtime;		/* Mount time */
+	__u32	s_wtime;		/* Write time */
+	__u16	s_mnt_count;		/* Mount count */
+	__s16	s_max_mnt_count;	/* Maximal mount count */
+	__u16	s_magic;		/* Magic signature */
+	__u16	s_state;		/* File system state */
+	__u16	s_errors;		/* Behaviour when detecting errors */
+	__u16	s_pad;
+	__u32	s_lastcheck;		/* time of last check */
+	__u32	s_checkinterval;	/* max. time between checks */
+	__u32	s_creator_os;		/* OS */
+	__u32	s_rev_level;		/* Revision level */
+	__u16	s_def_resuid;		/* Default uid for reserved blocks */
+	__u16	s_def_resgid;		/* Default gid for reserved blocks */
+	__u32	s_reserved[235];	/* Padding to the end of the block */
+};
+</ProgramListing>
+
+</Para>
+
+<Sect2>
+<Title>superblock identification</Title>
+
+<Para>
+The ext2 filesystem's superblock is identified by the <Literal remap="tt">s&lowbar;magic</Literal> field.
+The current ext2 magic number is 0xEF53. I presume that "EF" means "Extended
+Filesystem". In versions of the ext2 filesystem prior to 0.2B, the magic
+number was 0xEF51. Those filesystems are not compatible with the current
+versions; Specifically, the group descriptors definition is different. I
+doubt if there still exists such a installation.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Filesystem fixed parameters</Title>
+
+<Para>
+By using the word <Literal remap="tt">fixed</Literal>, I mean fixed with respect to a particular
+installation. Those variables are usually not fixed with respect to
+different installations.
+</Para>
+
+<Para>
+The <Literal remap="tt">block size</Literal> is determined by using the <Literal remap="tt">s&lowbar;log&lowbar;block&lowbar;size</Literal>
+variable. The block size is 1024*pow (2,s&lowbar;log&lowbar;block&lowbar;size) and should be
+between 1024 and 4096. The available options are 1024, 2048 and 4096.
+</Para>
+
+<Para>
+<Literal remap="tt">s&lowbar;inodes&lowbar;count</Literal> contains the total number of available inodes.
+</Para>
+
+<Para>
+<Literal remap="tt">s&lowbar;blocks&lowbar;count</Literal> contains the total number of available blocks.
+</Para>
+
+<Para>
+<Literal remap="tt">s&lowbar;first&lowbar;data&lowbar;block</Literal> specifies in which of the <Literal remap="tt">device block</Literal> the
+<Literal remap="tt">superblock</Literal> is present. The superblock is always present at the fixed
+offset 1024, but the device block numbering can differ. For example, if the
+block size is 1024, the superblock will be at <Literal remap="tt">block 1</Literal> with respect to
+the device. However, if the block size is 4096, offset 1024 is included in
+<Literal remap="tt">block 0</Literal> of the device, and in that case <Literal remap="tt">s&lowbar;first&lowbar;data&lowbar;block</Literal>
+will contain 0. At least this is how I understood this variable.
+</Para>
+
+<Para>
+<Literal remap="tt">s&lowbar;blocks&lowbar;per&lowbar;group</Literal> contains the number of blocks which are grouped
+together as a blocks group.
+</Para>
+
+<Para>
+<Literal remap="tt">s&lowbar;inodes&lowbar;per&lowbar;group</Literal> contains the number of inodes available in a group
+block. I think that this is always the total number of inodes divided by the
+number of blocks groups.
+</Para>
+
+<Para>
+<Literal remap="tt">s&lowbar;creator&lowbar;os</Literal> contains a code number which specifies the operating
+system which created this specific filesystem:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Linux</Literal> :-) is specified by the value <Literal remap="tt">0</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Hurd</Literal> is specified by the value <Literal remap="tt">1</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Masix</Literal> is specified by the value <Literal remap="tt">2</Literal>.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+<Literal remap="tt">s&lowbar;rev&lowbar;level</Literal> contains the major version of the ext2 filesystem.
+Currently this is always <Literal remap="tt">0</Literal>, as the most recent version is 0.5B. It
+will probably take some time until we reach version 1.0.
+</Para>
+
+<Para>
+As far as I know, fragments (sub-block allocations) are currently not
+supported and hence a block is equal to a fragment. As a result,
+<Literal remap="tt">s&lowbar;log&lowbar;frag&lowbar;size</Literal> and <Literal remap="tt">s&lowbar;frags&lowbar;per&lowbar;group</Literal> are always equal to
+<Literal remap="tt">s&lowbar;log&lowbar;block&lowbar;size</Literal> and <Literal remap="tt">s&lowbar;blocks&lowbar;per&lowbar;group</Literal>, respectively.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Ext2fs error handling</Title>
+
+<Para>
+The ext2 filesystem error handling is based on the following philosophy:
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	Identification of problems is done by the kernel code.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The correction task is left to an external utility, such as
+<Literal remap="tt">e2fsck by Theodore Ts'o</Literal> for <Literal remap="tt">automatic</Literal> analysis and
+correction, or perhaps <Literal remap="tt">debugfs by Theodore Ts'o</Literal> and
+<Literal remap="tt">EXT2ED by myself</Literal>, for <Literal remap="tt">hand</Literal> analysis and correction.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+</Para>
+
+<Para>
+The <Literal remap="tt">s&lowbar;state</Literal> variable is used by the kernel to pass the identification
+result to third party utilities:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">bit 0</Literal> of s&lowbar;state is reset when the partition is mounted and
+set when the partition is unmounted. Thus, a value of 0 on an
+unmounted filesystem means that the filesystem was not unmounted
+properly - The filesystem is not "clean" and probably contains
+errors.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">bit 1</Literal> of s&lowbar;state is set by the kernel when it detects an
+error in the filesystem. A value of 0 doesn't mean that there isn't
+an error in the filesystem, just that the kernel didn't find any.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+The kernel behavior when an error is found is determined by the user tunable
+parameter <Literal remap="tt">s&lowbar;errors</Literal>:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	The kernel will ignore the error and continue if <Literal remap="tt">s&lowbar;errors=1</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The kernel will remount the filesystem in read-only mode if
+<Literal remap="tt">s&lowbar;errors=2</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	A kernel panic will be issued if <Literal remap="tt">s&lowbar;errors=3</Literal>.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+The default behavior is to ignore the error.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Additional parameters used by e2fsck</Title>
+
+<Para>
+Of-course, <Literal remap="tt">e2fsck</Literal> will check the filesystem if errors were detected
+or if the filesystem is not clean.
+</Para>
+
+<Para>
+In addition, each time the filesystem is mounted, <Literal remap="tt">s&lowbar;mnt&lowbar;count</Literal> is
+incremented. When s&lowbar;mnt&lowbar;count reaches <Literal remap="tt">s&lowbar;max&lowbar;mnt&lowbar;count</Literal>, <Literal remap="tt">e2fsck</Literal>
+will force a check on the filesystem even though it may be clean. It will
+then zero s&lowbar;mnt&lowbar;count. <Literal remap="tt">s&lowbar;max&lowbar;mnt&lowbar;count</Literal> is a tunable parameter.
+</Para>
+
+<Para>
+E2fsck also records the last time in which the file system was checked in
+the <Literal remap="tt">s&lowbar;lastcheck</Literal> variable. The user tunable parameter
+<Literal remap="tt">s&lowbar;checkinterval</Literal> will contain the number of seconds which are allowed
+to pass since <Literal remap="tt">s&lowbar;lastcheck</Literal> until a check is reforced. A value of
+<Literal remap="tt">0</Literal> disables time-based check.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Additional user tunable parameters</Title>
+
+<Para>
+<Literal remap="tt">s&lowbar;r&lowbar;blocks&lowbar;count</Literal> contains the number of disk blocks which are
+reserved for root, the user whose id number is <Literal remap="tt">s&lowbar;def&lowbar;resuid</Literal> and the
+group whose id number is <Literal remap="tt">s&lowbar;deg&lowbar;resgid</Literal>. The kernel will refuse to
+allocate those last <Literal remap="tt">s&lowbar;r&lowbar;blocks&lowbar;count</Literal> if the user is not one of the
+above. This is done so that the filesystem will usually not be 100&percnt; full,
+since 100&percnt; full filesystems can affect various aspects of operation.
+</Para>
+
+<Para>
+<Literal remap="tt">s&lowbar;def&lowbar;resuid</Literal> and <Literal remap="tt">s&lowbar;def&lowbar;resgid</Literal> contain the id of the user and
+of the group who can use the reserved blocks in addition to root.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Filesystem current state</Title>
+
+<Para>
+<Literal remap="tt">s&lowbar;free&lowbar;blocks&lowbar;count</Literal> contains the current number of free blocks
+in the filesystem.
+</Para>
+
+<Para>
+<Literal remap="tt">s&lowbar;free&lowbar;inodes&lowbar;count</Literal> contains the current number of free inodes in the
+filesystem.
+</Para>
+
+<Para>
+<Literal remap="tt">s&lowbar;mtime</Literal> contains the time at which the system was last mounted.
+</Para>
+
+<Para>
+<Literal remap="tt">s&lowbar;wtime</Literal> contains the last time at which something was changed in the
+filesystem.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>Copyright</Title>
+
+<Para>
+This document contains source code which was taken from the Linux ext2
+kernel source code, mainly from <FILENAME>/usr/include/linux/ext2&lowbar;fs.h</FILENAME>. Follows
+the original copyright:
+</Para>
+
+<Para>
+
+<ProgramListing>
+/*
+ *  linux/include/linux/ext2_fs.h
+ *
+ * Copyright (C) 1992, 1993, 1994, 1995
+ * Remy Card (card@masi.ibp.fr)
+ * Laboratoire MASI - Institut Blaise Pascal
+ * Universite Pierre et Marie Curie (Paris VI)
+ *
+ *  from
+ *
+ *  linux/include/linux/minix_fs.h
+ *
+ *  Copyright (C) 1991, 1992  Linus Torvalds
+ */
+
+</ProgramListing>
+
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Acknowledgments</Title>
+
+<Para>
+I would like to thank the following people, who were involved in the
+design and implementation of the ext2 filesystem kernel code and support
+utilities:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Remy Card</Literal>
+
+Who designed, implemented and maintains the ext2 filesystem kernel
+code, and some of the ext2 utilities. <Literal remap="tt">Remy Card</Literal> is also the
+author 	of several helpful slides concerning the ext2 filesystem.
+Specifically, he is the author of <Literal remap="tt">File Management in the Linux
+Kernel</Literal> and of <Literal remap="tt">The Second Extended File System - Current
+State, Future Development</Literal>.
+
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Wayne Davison</Literal>
+
+Who designed the ext2 filesystem.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Stephen Tweedie</Literal>
+
+Who helped designing the ext2 filesystem kernel code and wrote the
+slides <Literal remap="tt">Optimizations in File Systems</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Theodore Ts'o</Literal>
+
+Who is the author of several ext2 utilities and of the ext2 library
+<Literal remap="tt">libext2fs</Literal> (which I didn't use, simply because I didn't know
+it exists when I started to work on my project).
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+Lastly, I would like to thank, of-course, <Literal remap="tt">Linus Torvalds</Literal> and the
+<Literal remap="tt">Linux community</Literal> for providing all of us with such a great operating
+system.
+</Para>
+
+<Para>
+Please contact me in a case of an error report, suggestions, or just about
+anything concerning this document.
+</Para>
+
+<Para>
+Enjoy,
+</Para>
+
+<Para>
+Gadi Oxman &lt;tgud@tochnapc2.technion.ac.il&gt;
+</Para>
+
+<Para>
+Haifa, August 95
+</Para>
+
+</Sect1>
+
+</Article>

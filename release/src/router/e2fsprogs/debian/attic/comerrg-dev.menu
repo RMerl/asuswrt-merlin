@@ -1,0 +1,7 @@
+?package(comerrg-dev):needs="dwww" section="Apps/Programming"\
+  title="The com_err library" \
+  longtitle="The Common Error Description library"\
+  description="libcomerr is an attempt to present a common error-handling mechanism to \
+	manipulate the most common form of error code in a fashion that does not \
+	have the problems identified with mechanisms commonly in use." \
+  command="/usr/doc/comerrg-dev/html-info/com_err_toc.html"

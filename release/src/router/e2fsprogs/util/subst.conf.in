@@ -1,0 +1,19 @@
+AWK			@AWK@
+SED			@SED@
+ET_DIR			@ET_DIR@
+SS_DIR			@SS_DIR@
+E2FSPROGS_MONTH		@E2FSPROGS_MONTH@
+E2FSPROGS_YEAR		@E2FSPROGS_YEAR@
+E2FSPROGS_VERSION	@E2FSPROGS_VERSION@
+SIZEOF_LONG_LONG	@SIZEOF_LONG_LONG@
+SIZEOF_LONG		@SIZEOF_LONG@
+SIZEOF_INT		@SIZEOF_INT@
+SIZEOF_SHORT		@SIZEOF_SHORT@
+datarootdir		@datarootdir@
+datadir			@datadir@
+root_sysconfdir		@root_sysconfdir@
+$root_prefix		@root_prefix@
+$prefix			@prefix@
+# Enable the documentation for the journal device mke2fs, tune2fs, and
+# e2fsck's man page
+JDEV			

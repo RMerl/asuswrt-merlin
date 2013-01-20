@@ -1,0 +1,78 @@
+#
+# Makefile for the doc directory
+#
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+top_builddir = ..
+my_dir = doc
+INSTALL = @INSTALL@
+
+@MCONFIG@
+
+DVI=texi2dvi
+DVIPS=dvips -o "$@"
+INFO=@MAKEINFO@
+HTML=texi2html -split_chapter
+
+all:: libext2fs.info libext2fs.dvi
+
+install-doc-libs: libext2fs.info libext2fs.dvi
+	$(Q) $(RM) -rf $(DESTDIR)$(infodir)/libext2fs.info*
+	$(E) "	MKINSTALLDIRS $(infodir)"
+	$(Q) $(MKINSTALLDIRS) $(DESTDIR)$(infodir)
+	-$(Q) for i in libext2fs.info* ; do \
+		echo "	INSTALL_DATA $(infodir)/$$i" ; \
+		$(INSTALL_DATA) $$i $(DESTDIR)$(infodir)/$$i ; \
+	done
+	$(E) "	GZIP $(infodir)/libext2fs.info*"
+	-$(Q) gzip -9 $(DESTDIR)$(infodir)/libext2fs.info*
+
+uninstall-doc-libs:
+	$(RM) -rf $(DESTDIR)$(infodir)/libext2fs.info*
+
+libext2fs.info: $(srcdir)/libext2fs.texinfo
+	$(E) "	MAKEINFO $@"
+	-$(Q) $(INFO) $(srcdir)/libext2fs.texinfo
+
+libext2fs.dvi: $(srcdir)/libext2fs.texinfo
+	$(E) "	TEXI2DVI $@"
+	-$(Q) $(DVI) $(srcdir)/libext2fs.texinfo
+
+libext2fs_abt.html: $(srcdir)/libext2fs.texinfo
+	$(E) "	TEXI2HTML $@"
+	-$(Q) $(HTML) $(srcdir)/libext2fs.texinfo
+	-$(Q) if test -d libext2fs ; then \
+		mv libext2fs/* . ; rmdir libext2fs ; \
+		fi
+
+.PHONY: distclean
+distclean:: clean
+	$(RM) -f Makefile
+
+.PHONY: clean
+clean:: clean-all
+
+.PHONY: clean-all
+clean-all:: clean-tex clean-backup clean-final clean-tarfiles clean-html
+
+.PHONY: clean-final
+clean-final::
+	$(RM) -f *.ps *.info *.info-? *.html
+
+.PHONY: clean-tex
+clean-tex::
+	$(RM) -f *.aux *.cp *.dvi *.fn *.ky *.log *.pg *.toc *.tp *.vr *.fns
+
+.PHONY: clean-backup
+clean-backup::
+	$(RM) -f *~ #*
+
+.PHONY: clean-tarfiles
+clean-tarfiles::
+	$(RM) -f *.tar *.tar.gz *.tgz
+
+clean-html::
+	$(RM) -f *.html
+

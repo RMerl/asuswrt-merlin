@@ -1,0 +1,554 @@
+.\" -*- nroff -*-
+.\" Copyright 1993, 1994, 1995 by Theodore Ts'o.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\" 
+.TH DEBUGFS 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+debugfs \- ext2/ext3/ext4 file system debugger
+.SH SYNOPSIS
+.B debugfs
+[
+.B \-DVwci
+]
+[
+.B \-b
+blocksize
+]
+[
+.B \-s
+superblock
+]
+[
+.B \-f 
+cmd_file
+]
+[
+.B \-R
+request
+]
+[
+.B \-d
+data_source_device
+]
+[
+device
+]
+.SH DESCRIPTION
+The 
+.B debugfs 
+program is an interactive file system debugger. It can be used to
+examine and change the state of an ext2, ext3, or ext4 file system.
+.br
+.I device
+is the special file corresponding to the device containing the
+file system (e.g /dev/hdXX).
+.SH OPTIONS
+.TP
+.I \-w
+Specifies that the file system should be opened in read-write mode.
+Without this option, the file system is opened in read-only mode.
+.TP
+.I \-c
+Specifies that the file system should be opened in catastrophic mode, in
+which the inode and group bitmaps are not read initially.  This can be
+useful for filesystems with significant corruption, but because of this,
+catastrophic mode forces the filesystem to be opened read-only.
+.TP
+.I \-i
+Specifies that 
+.I device
+represents an ext2 image file created by the
+.B e2image
+program.  Since the ext2 image file only contains the superblock, block
+group descriptor, block and inode allocation bitmaps, and 
+the inode table, many
+.B debugfs
+commands will not function properly.  
+.B Warning:
+no safety checks are in place, and 
+.B debugfs 
+may fail in interesting ways if commands such as
+.IR ls ", " dump ", " 
+etc. are tried without specifying the 
+.I data_source_device
+using the 
+.I \-d
+option.
+.B debugfs 
+is a debugging tool.  It has rough edges!
+.TP
+.I -d data_source_device
+Used with the 
+.I \-i
+option, specifies that
+.I data_source_device
+should be used when reading blocks not found in the ext2 image file.
+This includes data, directory, and indirect blocks.
+.TP
+.I -b blocksize
+Forces the use of the given block size for the file system, rather than
+detecting the correct block size as normal.
+.TP
+.I -s superblock
+Causes the file system superblock to be read from the given block
+number, instead of using the primary superblock (located at an offset of
+1024 bytes from the beginning of the filesystem).  If you specify the
+.I -s
+option, you must also provide the blocksize of the filesystem via the
+.I -b
+option.
+.TP
+.I -f cmd_file
+Causes 
+.B debugfs
+to read in commands from 
+.IR cmd_file , 
+and execute them.  When 
+.B debugfs
+is finished executing those commands, it will exit.
+.TP
+.I -D
+Causes
+.B debugfs
+to open the device using Direct I/O, bypassing the buffer cache.  Note
+that some Linux devices, notably device mapper as of this writing, do
+not support Direct I/O.
+.TP
+.I -R request
+Causes 
+.B debugfs
+to execute the single command 
+.IR request ,
+and then exit.
+.TP
+.I -V
+print the version number of 
+.B debugfs
+and exit.
+.SH SPECIFYING FILES
+Many
+.B debugfs
+commands take a
+.I filespec
+as an argument to specify an inode (as opposed to a pathname) 
+in the filesystem which is currently opened by 
+.BR debugfs . 
+The
+.I filespec
+argument may be specified in two forms.  The first form is an inode 
+number surrounded by angle brackets, e.g., 
+.IR <2> .
+The second form is a pathname; if the pathname is prefixed by a forward slash
+('/'), then it is interpreted relative to the root of the filesystem 
+which is currently opened by 
+.BR debugfs .
+If not, the pathname is 
+interpreted relative to the current working directory as maintained by 
+.BR debugfs .  
+This may be modified by using the 
+.B debugfs
+command
+.IR cd .
+.\" 
+.\"
+.\"
+.SH COMMANDS
+This is a list of the commands which 
+.B debugfs
+supports.
+.TP
+.I bmap filespec logical_block
+Print the physical block number corresponding to the logical block number
+.I logical_block
+in the inode
+.IR filespec .
+.TP
+.I cat filespec
+Dump the contents of the inode 
+.I filespec
+to stdout.
+.TP
+.I cd filespec
+Change the current working directory to 
+.IR filespec .
+.TP
+.I chroot filespec
+Change the root directory to be the directory 
+.IR filespec .
+.TP
+.I close [-a]
+Close the currently open file system.  If the 
+.I -a
+option is specified, write out any changes to the superblock and block
+group descriptors to all of the backup superblocks, not just to the
+master superblock.
+.TP
+.I clri file
+Clear the contents of the inode 
+.IR file .
+.TP
+.I dump [-p] filespec out_file
+Dump the contents of the inode 
+.I filespec
+to the output file 
+.IR out_file .  
+If the 
+.I -p 
+option is given set the owner, group and permissions information on 
+.I out_file 
+to match 
+.IR filespec .
+.TP
+.I dump_extents [-n] [-l] filespec
+Dump the the extent tree of the inode
+.IR filespec .
+The 
+.I -n
+flag will cause
+.I dump_extents
+to only display the interior nodes in the extent tree.   The
+.I  -l
+flag cause
+.I dump_extents
+to only display the leaf nodes in the extent tree.
+.IP
+(Please note that the length and range of blocks for the last extent in
+an interior node is an estimate by the extents library functions, and is
+not stored in file esystem data structures.   Hence, the values displayed
+may not necessarily by accurate and does not indicate a problem or 
+corruption in the file system.)
+.TP
+.I expand_dir filespec
+Expand the directory
+.IR filespec .
+.TP
+.I feature [fs_feature] [-fs_feature] ...
+Set or clear various filesystem features in the superblock.  After setting
+or clearing any filesystem features that were requested, print the current
+state of the filesystem feature set.
+.TP
+.I find_free_block [count [goal]]
+Find the first 
+.I count
+free blocks, starting from
+.I goal
+and allocate it.
+.TP
+.I find_free_inode [dir [mode]]
+Find a free inode and allocate it.  If present, 
+.I dir
+specifies the inode number of the directory 
+which the inode is to be located.  The second 
+optional argument
+.I mode
+specifies the permissions of the new inode.  (If the directory bit is set
+on the mode, the allocation routine will function differently.)
+.TP
+.I freeb block [count]
+Mark the block number
+.I block
+as not allocated.
+If the optional argument 
+.I count 
+is present, then 
+.I count
+blocks starting at block number
+.I block
+will be marked as not allocated.
+.TP
+.I freei filespec
+Free the inode specified by 
+.IR filespec .
+.TP
+.I help
+Print a list of commands understood by 
+.BR debugfs .
+.TP
+.I icheck block ...
+Print a listing of the inodes which use the one or more blocks specified
+on the command line.
+.TP
+.I imap filespec
+Print the location of the inode data structure (in the inode table) 
+of the inode
+.IR filespec .
+.TP
+.I init_filesys device blocksize
+Create an ext2 file system on
+.I device
+with device size
+.IR blocksize .
+Note that this does not fully initialize all of the data structures; 
+to do this, use the 
+.BR mke2fs (8)
+program.  This is just a call to the low-level library, which sets up
+the superblock and block descriptors.
+.TP
+.I kill_file filespec
+Deallocate the inode 
+.I filespec
+and its blocks.  Note that this does not remove any directory
+entries (if any) to this inode.  See the 
+.BR rm (1)
+command if you wish to unlink a file.
+.TP
+.I lcd directory
+Change the current working directory of the
+.B debugfs
+process to
+.I directory
+on the native filesystem.
+.TP
+.I ln filespec dest_file
+Create a link named 
+.I dest_file
+which is a link to 
+.IR filespec .
+Note this does not adjust the inode reference counts.
+.TP
+.I logdump [-acs] [-b<block>] [-i<filespec>] [-f<journal_file>] [output_file]
+Dump the contents of the ext3 journal.  By default, the journal inode as
+specified in the superblock.  However, this can be overridden with the 
+.I \-i
+option, which uses an inode specifier to specify the journal to be
+used.  A file containing journal data can be specified using the
+.I \-f
+option.   Finally, the 
+.I \-s
+option utilizes the backup information in the superblock to locate the
+journal.
+.IP
+The 
+.I \-a
+option causes the 
+.I logdump
+program to print the contents of all of the descriptor blocks.
+The 
+.I \-b
+option causes 
+.I logdump
+to print all journal records that are refer to the specified block. 
+The 
+.I \-c
+option will print out the contents of all of the data blocks selected by
+the 
+.I \-a
+and 
+.I \-b
+options.
+.TP
+.I ls [-l] [-d] [-p] filespec
+Print a listing of the files in the directory
+.IR filespec .
+The 
+.I \-l
+flag will list files using a more verbose format.
+The
+.I \-d
+flag will list deleted entries in the directory.
+The 
+.I \-p
+flag will list the files in a format which is more easily parsable by
+scripts, as well as making it more clear when there are spaces or other
+non-printing characters at the end of filenames.
+.TP
+.I modify_inode filespec
+Modify the contents of the inode structure in the inode
+.IR filespec .
+.TP
+.I mkdir filespec
+Make a directory.
+.TP
+.I mknod filespec [p|[[c|b] major minor]]
+Create a special device file (a named pipe, character or block device).
+If a character or block device is to be made, the 
+.I major
+and
+.I minor
+device numbers must be specified.
+.TP
+.I ncheck inode_num ...
+Take the requested list of inode numbers, and print a listing of pathnames
+to those inodes.
+.TP
+.I open [-w] [-e] [-f] [-i] [-c] [-D] [-b blocksize] [-s superblock] device
+Open a filesystem for editing.  The 
+.I -f 
+flag forces the filesystem to be opened even if there are some unknown 
+or incompatible filesystem features which would normally 
+prevent the filesystem from being opened.  The
+.I -e
+flag causes the filesystem to be opened in exclusive mode.  The
+.IR -b ", " -c ", " -i ", " -s ", " -w ", and " -D
+options behave the same as the command-line options to 
+.BR debugfs .
+.TP
+.I pwd
+Print the current working directory.
+.TP
+.I quit
+Quit
+.B debugfs
+.TP
+.I rdump directory destination
+Recursively dump
+.I directory
+and all its contents (including regular files, symbolic links, and other
+directories) into the named
+.I destination
+which should be an existing directory on the native filesystem.
+.TP
+.I rm pathname
+Unlink 
+.IR pathname .
+If this causes the inode pointed to by 
+.I pathname
+to have no other references, deallocate the file.  This command functions
+as the unlink() system call.
+.I 
+.TP
+.I rmdir filespec
+Remove the directory
+.IR filespec .
+.TP
+.I setb block [count]
+Mark the block number
+.I block
+as allocated.
+If the optional argument 
+.I count 
+is present, then 
+.I count
+blocks starting at block number
+.I block
+will be marked as allocated.
+.TP
+.I set_block_group bgnum field value
+Modify the block group descriptor specified by
+.I bgnum
+so that the block group descriptor field
+.I field
+has value
+.I value.
+.TP
+.I seti filespec
+Mark inode 
+.I filespec
+as in use in the inode bitmap.
+.TP
+.I set_inode_field filespec field value
+Modify the inode specified by 
+.I filespec
+so that the inode field
+.I field
+has value 
+.I value.
+The list of valid inode fields which can be set via this command 
+can be displayed by using the command:
+.B set_inode_field -l
+.TP
+.I set_super_value field value
+Set the superblock field
+.I field
+to 
+.I value.
+The list of valid superblock fields which can be set via this command 
+can be displayed by using the command:
+.B set_super_value -l
+.TP
+.I show_super_stats [-h]
+List the contents of the super block and the block group descriptors.  If the
+.I -h
+flag is given, only print out the superblock contents.
+.TP
+.I stat filespec
+Display the contents of the inode structure of the inode
+.IR filespec .
+.TP
+.I testb block [count]
+Test if the block number
+.I block
+is marked as allocated in the block bitmap.
+If the optional argument 
+.I count 
+is present, then 
+.I count
+blocks starting at block number
+.I block
+will be tested.
+.TP
+.I testi filespec
+Test if the inode 
+.I filespec
+is marked as allocated in the inode bitmap.
+.TP
+.I undel <inode num> [pathname]
+Undelete the specified inode number (which must be surrounded by angle
+brackets) so that it and its blocks are marked in use, and optionally
+link the recovered inode to the specified pathname.  The 
+.B e2fsck
+command should always be run after using the 
+.B undel
+command to recover deleted files.
+.IP
+Note that if you are recovering a large number of deleted files, linking
+the inode to a directory may require the directory to be expanded, which
+could allocate a block that had been used by one of the
+yet-to-be-undeleted files.  So it is safer to undelete all of the 
+inodes without specifying a destination pathname, and then in a separate
+pass, use the debugfs
+.B link
+command to link the inode to the destination pathname, or use 
+.B e2fsck
+to check the filesystem and link all of the recovered inodes to the
+lost+found directory.
+.TP
+.I unlink pathname
+Remove the link specified by 
+.I pathname 
+to an inode.  Note this does not adjust the inode reference counts.
+.TP
+.I write source_file out_file
+Create a file in the filesystem named
+.IR out_file ,
+and copy the contents of
+.I source_file
+into the destination file.
+.SH ENVIRONMENT VARIABLES
+.TP
+.B DEBUGFS_PAGER, PAGER
+The
+.B debugfs
+program always pipes the output of the some commands through a
+pager program.  These commands include: 
+.IR show_super_stats ,
+.IR list_directory ,
+.IR show_inode_info ,
+.IR list_deleted_inodes ,
+and
+.IR htree_dump .
+The specific pager can explicitly specified by the
+.B DEBUGFS_PAGER
+environment variable, and if it is not set, by the
+.B PAGER
+environment variable.  
+.IP
+Note that since a pager is always used, the 
+.BR less (1)
+pager is not particularly appropriate, since it clears the screen before
+displaying the output of the command and clears the output the screen
+when the pager is exited.  Many users prefer to use the 
+.BR less (1)
+pager for most purposes, which is why the 
+.B DEBUGFS_PAGER 
+environment variable is available to override the more general
+.B PAGER
+environment variable.
+.SH AUTHOR
+.B debugfs
+was written by Theodore Ts'o <tytso@mit.edu>.
+.SH SEE ALSO
+.BR dumpe2fs (8),
+.BR tune2fs (8),
+.BR e2fsck (8),
+.BR mke2fs (8)

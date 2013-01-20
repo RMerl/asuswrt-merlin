@@ -1,0 +1,55 @@
+#! /bin/sh -e
+### BEGIN INIT INFO
+# Provides:          uuidd
+# Required-Start:    $time $local_fs
+# Required-Stop:     $time $local_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: uuidd daemon
+# Description:       Init script for the uuid generation daemon
+### END INIT INFO
+#
+# Author:	"Theodore Ts'o" <tytso@mit.edu>
+#
+set -e
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+DAEMON=/usr/sbin/uuidd
+PIDFILE=/var/run/uuidd/uuidd.pid
+
+test -x $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+case "$1" in
+    start)
+	log_daemon_msg "Starting uuid generator" "uuidd"
+	start_daemon -p $PIDFILE $DAEMON
+	log_end_msg $?
+    ;;
+  stop)
+	log_daemon_msg "Stopping uuidd generator" "uuidd"
+	killproc -p $PIDFILE $DAEMON
+	log_end_msg $?
+    ;;
+  status)
+	if pidofproc -p $PIDFILE $DAEMON >& /dev/null ; then
+	    echo "$DAEMON is running";
+	    exit 0;
+	else
+	    echo "$DAEMON is NOT running";
+	    if test -f /var/run/uuidd.pid; then exit 2; fi
+	    exit 3;
+	fi
+	;;
+  force-reload|restart)
+    $0 stop
+    $0 start
+    ;;
+  *)
+    echo "Usage: /etc/init.d/uuidd {start|stop|restart|force-reload}"
+    exit 1
+    ;;
+esac
+
+exit 0

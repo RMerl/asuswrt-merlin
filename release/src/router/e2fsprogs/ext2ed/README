@@ -1,0 +1,160 @@
+ext2ed - The extended-2 filesystem editor, version e2fsprogs
+
+
+This version of ext2ed has been modified and updated by Theodore Ts'o
+for inclusion with the e2fsprogs package.  It now builds with modern
+ncurses and I've fixed various small bugs, particular in the redrawing
+and resizing functions.
+
+It is currently not built by default -- the top-level e2fsprogs
+Makefile doesn't recurse into this directory.  This is because ext2ed
+has a number of VERY SERIOUS shortcomings:
+
+1)  It doesn't work on filesystems bigger than 2GB
+
+2)  It assumes that all's the world an Intel, and assumes that
+	everything is in Intel (little-endian) byte order.
+
+Fixing either of these problems would be non-trivial, and so I at this
+point DO NOT RECOMMEND that distributions try to include this program,
+even as modified and updated in e2fsprogs.  This especially goes for
+Debian, where the Debian maintainer for e2fsprogs has a history of
+making authorized changes to e2fsprogs to include programs that aren't
+supported, and then starts bugging me with bug reports.  YES I KNOW.
+THIS PROGRAM HAS HORRIBLE SHORTCOMINGS.  IT IS INCLUDED HERE ONLY
+BECAUSE IT'S A CONVENIENT WAY FOR (FOR E2FSPROGS DEVELOPERS ON INTEL
+MACHINES) TO GENERATE TEST CASES BY SELECTIVELY CORRUPTING
+FILESYSTEMS.  I WILL NOT SUPPORT THIS PROGRAM FOR USE BY GENERAL USERS
+SO PLEASE DO NOT INCLUDE IT IN A DISTRIBUTION.
+
+I have currently disabled the use of GNU Readline in this program,
+because readline and ncurses really don't play well together at all.
+Readline assumes that it can write arbitrary text to the screen
+(especially when it tries to print out a completion list), which just
+doesn't work with ncurses.  Fixing this so they would work together
+would require wholesale changes to readline.   
+
+				Theodore Ts'o
+				tytso@MIT.EDU
+				May 12, 2001
+
+----------------------------------------------------------------------------
+
+ext2ed - The extended-2 filesystem editor, version 0.2
+------------------------------------------------------
+
+This is version 0.2 of ext2ed - The extended-2 filesystem editor.
+
+Modifications on Apr 5 2001
+This is minor bug fixes to ext2ed, as of April 2001.
+It supports modern ext2 version that has file type in directory structure
+and fixes the missunderstanding between ncurses and
+readline.
+
+I first applied patches from Redhat except the one for readline that 
+rewrote a readline behavior.
+
+Globals diffs between version 0.1 and 0.2 is stored in file :
+	diff-ext2ed.1.2
+
+Christian Bac <Christian.Bac@nt-evry.fr>
+
+----------------------------------------------------------------------------
+
+Documentation
+-------------
+
+ext2ed's documentation consists of three documents:
+
+1.	The user's guide.
+2.	Technical overview of the ext2 filesystem.
+3.	The EXT2ED design and implementation document.
+
+Those documents are available in the doc directory, in linuxdoc-sgml and
+postscript formats.
+
+The documentation is also available online at:
+
+http://tochnapc2.technion.ac.il
+
+under the ext2ed section.
+
+Installation
+------------
+
+ext2ed requires the kernel sources and the readline and ncurses packages.
+Please edit the makefile if you are using an "old" version of ncurses (See the
+details below) or if gcc can't find the various header files and libraries.
+
+To install, simply issue a 'make' command to compile and a 'make install'
+command to install. I have also included an already compiled linux a.out
+binary.
+
+ext2ed and ncurses
+------------------
+
+ext2ed uses the ncurses library for terminal output. It is very important
+that ncurses will be properly installed on your system:
+
+1.	Old versions of ncurses (around 1.8.5) need the OLD_NCURSES compile
+	time option in EXT2ED.
+
+	At least from 1.9.2c, this flag should not be used. I would recommend
+	upgrading the ncurses library to the newer versions.
+
+2.	ncurses uses its own terminfo database rather then the termcap file.
+	It is important that the terminfo database will be found by ncurses.
+	If this is not the case, you will see on startup some lines which
+	refer to /etc/termcap. This will mean that there is a problem with
+	the terminfo database.
+
+3.	Newer versions of ncurses (and the 1.3 series of the kernel) describe
+	the linux console in the entry 'linux' and not 'console', as it was
+	before. If you run ext2ed in the linux console, you should either
+	set your TERM environment variable to 'linux' or link
+	l/linux to c/console in the terminfo database.
+
+4.	The percompiled binary was linked with ncurses 1.9.4 and will search
+	for the terminfo database on /usr/local/lib/terminfo. If you are
+	using it, and your 1.9.4 compatible terminfo database is not on the
+	directory above, use the TERMINFO environment variable to specify
+	an alternate location.
+
+Running ext2ed
+--------------
+
+For those of you who don't like reading lengthy articles, here are a few
+basic guidelines:
+
+1.	Don't use ext2ed to change a mounted filesystem !
+
+	Using ext2ed in read-only mode on a mounted filesystem can be allowed
+	by using the configuration file option 'AllowMountedRead on'. However,
+	note that the displayed data will be unreliable.
+
+2.	ext2ed currently can't handle filesystems bigger than 2 GB. I am
+	sorry for the inconvenience. This will hopefully be fixed in future
+	releases.
+
+3. 	Before running ext2ed, edit the configuration file
+	/var/lib/ext2ed/ext2ed.conf to suit your needs. The various
+	configuration options are documented there.
+
+4.	Use the 'setdevice' command to open an ext2 filesystem.
+	e.g. 'setdevice /dev/hda1'.
+
+5.	If the filesystem is an ext2 filesystem and ext2ed fails to
+	autodetect this, use the 'ForceExt2 on' configuration file option.
+
+6.	The filesystem will always be opened in read-only mode. Feel free to
+	experiment, but take care with the 'enablewrite' command.
+
+-----------------------------------------------------------------------------
+
+Feel free to send me feedback with anything regarding to ext2ed.
+
+Enjoy,
+
+Gadi Oxman <tgud@tochnapc2.technion.ac.il>
+Haifa, August 23 1995
+

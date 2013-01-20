@@ -1,0 +1,237 @@
+# Beginning of file MCONFIG
+
+all::
+
+check::
+
+SHELL = /bin/sh
+
+COMPRESS_EXT = gz bz2 bz Z
+
+prefix = @prefix@
+root_prefix = @root_prefix@
+exec_prefix = @exec_prefix@
+root_bindir = @root_bindir@
+root_sbindir = @root_sbindir@
+root_libdir = @root_libdir@
+datarootdir = @datarootdir@
+bindir = @bindir@
+sbindir = @sbindir@
+libdir = @libdir@
+datadir= @datadir@
+localedir = $(datadir)/locale
+root_sysconfdir= @root_sysconfdir@
+includedir = @includedir@
+mandir = @mandir@
+man1dir = $(mandir)/man1
+man3dir = $(mandir)/man3
+man5dir = $(mandir)/man5
+man8dir = $(mandir)/man8
+infodir = @infodir@
+datadir = @datadir@
+
+@SET_MAKE@
+
+@ifGNUmake@ V =
+@ifGNUmake@ ifeq ($(strip $(V)),)
+@ifGNUmake@ #  E = @echo
+@ifGNUmake@ #  Q = @
+@ifGNUmake@    E = @E@
+@ifGNUmake@    Q = @Q@
+@ifGNUmake@ else
+@ifGNUmake@    E = @\#
+@ifGNUmake@    Q =
+@ifGNUmake@ endif
+
+@ifNotGNUmake@ E = @E@
+@ifNotGNUmake@ Q = @Q@
+
+CC = @CC@
+BUILD_CC = @BUILD_CC@
+DEFS = -DLOCALEDIR=\"$(localedir)\" -DROOT_SYSCONFDIR=\"$(root_sysconfdir)\" @DEFS@
+CFLAGS = @CFLAGS@
+CPPFLAGS =  -I$(top_builddir)/lib -I$(top_srcdir)/lib @CPPFLAGS@
+INTL_FLAGS = @INTL_FLAGS@
+ALL_CFLAGS = $(CPPFLAGS) $(DEFS) $(USE_WFLAGS) $(CFLAGS) $(XTRA_CFLAGS) \
+	$(INTL_FLAGS) $(LINUX_INCLUDE) 
+LDFLAGS = @LDFLAGS@
+ALL_LDFLAGS = $(LDFLAGS) @LDFLAG_DYNAMIC@
+LDFLAGS_STATIC = $(LDFLAGS) @LDFLAG_STATIC@
+BUILD_CFLAGS = @BUILD_CFLAGS@
+BUILD_LDFLAGS = @BUILD_LDFLAGS@
+LINK_BUILD_FLAGS = @LINK_BUILD_FLAGS@
+LINK_INSTALL_FLAGS = @LINK_INSTALL_FLAGS@
+RM = @RM@
+LN = @LN@
+LN_S = @LN_S@
+MV = @MV@
+CP = @CP@
+CHMOD = @CHMOD@
+AR = @AR@
+AWK = @AWK@
+SED = @SED@
+PERL = @PERL@
+RANLIB = @RANLIB@
+STRIP = @STRIP@
+LD = $(PURE) @CC@
+ARUPD = $(AR) r
+ARGEN = $(AR) rc
+LDCONFIG = @LDCONFIG@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+MKINSTALLDIRS = @MKINSTALLDIRS@
+
+#
+# Library definitions
+#
+LIB = $(top_builddir)/lib
+LIBSS = $(LIB)/libss@LIB_EXT@ @PRIVATE_LIBS_CMT@ @DLOPEN_LIB@
+LIBCOM_ERR = $(LIB)/libcom_err@LIB_EXT@ @PRIVATE_LIBS_CMT@ @SEM_INIT_LIB@
+LIBE2P = $(LIB)/libe2p@LIB_EXT@
+LIBEXT2FS = $(LIB)/libext2fs@LIB_EXT@
+LIBUUID = @LIBUUID@ @SOCKET_LIB@
+LIBBLKID = @LIBBLKID@ @PRIVATE_LIBS_CMT@ $(LIBUUID)
+LIBINTL = @LIBINTL@
+DEPLIBSS = $(LIB)/libss@LIB_EXT@
+DEPLIBCOM_ERR = $(LIB)/libcom_err@LIB_EXT@
+DEPLIBUUID = @DEPLIBUUID@
+DEPLIBBLKID = @DEPLIBBLKID@ @PRIVATE_LIBS_CMT@ $(DEPLIBUUID)
+
+STATIC_LIBSS = $(LIB)/libss@STATIC_LIB_EXT@ @DLOPEN_LIB@
+STATIC_LIBCOM_ERR = $(LIB)/libcom_err@STATIC_LIB_EXT@ @SEM_INIT_LIB@
+STATIC_LIBE2P = $(LIB)/libe2p@STATIC_LIB_EXT@
+STATIC_LIBEXT2FS = $(LIB)/libext2fs@STATIC_LIB_EXT@
+STATIC_LIBUUID = @STATIC_LIBUUID@ @SOCKET_LIB@
+STATIC_LIBBLKID = @STATIC_LIBBLKID@ $(STATIC_LIBUUID)
+DEPSTATIC_LIBSS = $(LIB)/libss@STATIC_LIB_EXT@
+DEPSTATIC_LIBCOM_ERR = $(LIB)/libcom_err@STATIC_LIB_EXT@
+DEPSTATIC_LIBUUID = @DEPSTATIC_LIBUUID@
+DEPSTATIC_LIBBLKID = @DEPSTATIC_LIBBLKID@ $(DEPSTATIC_LIBUUID)
+
+PROFILED_LIBSS = $(LIB)/libss@PROFILED_LIB_EXT@ @DLOPEN_LIB@
+PROFILED_LIBCOM_ERR = $(LIB)/libcom_err@PROFILED_LIB_EXT@ @SEM_INIT_LIB@
+PROFILED_LIBE2P = $(LIB)/libe2p@PROFILED_LIB_EXT@
+PROFILED_LIBEXT2FS = $(LIB)/libext2fs@PROFILED_LIB_EXT@
+PROFILED_LIBUUID = @PROFILED_LIBUUID@ @SOCKET_LIB@
+PROFILED_LIBBLKID = @PROFILED_LIBBLKID@ $(PROFILED_LIBUUID)
+DEPPROFILED_LIBSS = $(LIB)/libss@PROFILED_LIB_EXT@
+DEPPROFILED_LIBCOM_ERR = $(LIB)/libcom_err@PROFILED_LIB_EXT@
+DEPPROFILED_LIBUUID = @PROFILED_LIBUUID@
+DEPPROFILED_LIBBLKID = @PROFILED_LIBBLKID@ $(DEPPROFILED_LIBUUID)
+
+# An include directive pointing to a directory holding enough linux-like
+# include files to satisfy some programs here
+LINUX_INCLUDE=@LINUX_INCLUDE@
+
+#
+# A fast substitution command for fixing up man pages, shell scripts, etc.
+#
+SUBST_CONF=$(top_builddir)/util/subst.conf
+SUBSTITUTE= $(top_builddir)/util/subst -f $(SUBST_CONF)
+SUBSTITUTE_UPTIME= $(top_builddir)/util/subst -t -f $(SUBST_CONF)
+DEP_SUBSTITUTE= $(top_builddir)/util/subst $(SUBST_CONF)
+
+$(top_builddir)/util/subst:
+	cd $(top_builddir)/util ; $(MAKE) subst
+
+#
+# Warning flags
+#
+# Run make gcc-wall to do a build with warning messages.
+#
+#
+WFLAGS=		-std=c99 -D_XOPEN_SOURCE=600 -D_GNU_SOURCE \
+			-pedantic $(WFLAGS_EXTRA) \
+			-Wall -W -Wwrite-strings -Wpointer-arith \
+			-Wcast-qual -Wcast-align -Wno-variadic-macros \
+			-Wstrict-prototypes -Wmissing-prototypes \
+			-Wformat-security  -Wformat-nonliteral \
+			-Wmissing-format-attribute -O2 -Wstrict-aliasing \
+			-Wnested-externs -Winline -DNO_INLINE_FUNCS -Wshadow \
+			-UENABLE_NLS
+
+gcc-wall-new:
+	(make USE_WFLAGS="$(WFLAGS)" > /dev/null) 2>&1 | sed -f $(top_srcdir)/util/gcc-wall-cleanup 
+
+gcc-wall:
+	make clean > /dev/null
+	make gcc-wall-new
+
+#
+# Installation user and groups
+#
+BINGRP=		bin
+BINOWN=		bin
+BINMODE=	555
+INCGRP=		bin
+INCOWN=		bin
+INCMODE=	444
+LIBOWN=		bin
+LIBGRP=		bin
+LIBMODE=	444
+MANGRP=		bin
+MANOWN=		bin
+MANMODE=	444
+
+#
+# Autoconf magic...
+#
+
+DEP_LIB_MAKEFILES = $(top_srcdir)/lib/Makefile.library \
+	$(top_srcdir)/lib/Makefile.elf-lib  \
+	$(top_srcdir)/lib/Makefile.bsd-lib $(top_srcdir)/lib/Makefile.darwin-lib \
+	$(top_srcdir)/lib/Makefile.solaris-lib $(top_srcdir)/lib/Makefile.checker \
+	$(top_srcdir)/lib/Makefile.profile
+
+$(top_builddir)/config.status: $(top_srcdir)/configure
+	cd $(top_builddir); ./config.status --recheck
+
+$(top_builddir)/MCONFIG: $(top_srcdir)/MCONFIG.in $(top_builddir)/config.status
+	cd $(top_builddir); CONFIG_FILES=MCONFIG ./config.status
+
+$(top_builddir)/lib/substitute_sh: $(top_srcdir)/lib/substitute_sh.in \
+		$(top_builddir)/config.status
+	cd $(top_builddir); CONFIG_FILES=lib/substitute_sh ./config.status
+
+$(top_builddir)/util/subst.conf: $(top_srcdir)/util/subst.conf.in \
+		$(top_builddir)/config.status
+	cd $(top_builddir); CONFIG_FILES=util/subst.conf ./config.status
+
+Makefile: $(srcdir)/Makefile.in $(top_builddir)/MCONFIG \
+		$(DEP_MAKEFILE) $(top_builddir)/config.status
+	cd $(top_builddir); CONFIG_FILES=$(my_dir)/Makefile ./config.status
+
+@MAINTAINER_CMT@$(top_srcdir)/configure: $(top_srcdir)/configure.in
+@MAINTAINER_CMT@	cd $(top_srcdir) && autoconf
+
+#
+# Make depend magic...
+#
+
+.depend: Makefile $(SRCS) $(top_srcdir)/depfix.sed $(top_srcdir)/wordwrap.pl
+	if test -n "$(SRCS)" ; then \
+		$(CC) -M $(ALL_CFLAGS) $(SRCS) | \
+			$(SED) -f $(top_srcdir)/depfix.sed \
+			    -e 's; $(srcdir)/; $$(srcdir)/;g' \
+			    -e 's; $(top_srcdir)/; $$(top_srcdir)/;g' \
+			    -e 's; $(top_builddir)/; $$(top_builddir)/;g' \
+			    -e 's; \./; ;g' \
+			    -e '/^#/d' \
+			    -e '/^ *\\$$/d' | \
+			$(PERL) $(top_srcdir)/wordwrap.pl > .depend; \
+	else :; fi
+
+depend:: .depend
+	if test -n "$(SRCS)" ; then \
+		sed -e '/^# +++ Dependency line eater +++/,$$d' \
+			< $(srcdir)/Makefile.in | cat - .depend \
+			> $(srcdir)/Makefile.in.new; \
+	if cmp -s $(srcdir)/Makefile.in $(srcdir)/Makefile.in.new ; then \
+		$(RM) $(srcdir)/Makefile.in.new ; \
+	else \
+		$(MV) $(srcdir)/Makefile.in $(srcdir)/Makefile.in.old; \
+		$(MV) $(srcdir)/Makefile.in.new $(srcdir)/Makefile.in; \
+	fi ; else :; fi
+
+# End of file MCONFIG

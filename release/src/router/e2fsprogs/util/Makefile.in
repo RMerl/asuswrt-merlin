@@ -1,0 +1,56 @@
+#
+# Standard e2fsprogs prologue....
+#
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+top_builddir = ..
+my_dir = util
+INSTALL = @INSTALL@
+
+SRCS = $(srcdir)/subst.c
+
+@MCONFIG@
+
+.c.o:
+	$(E) "	CC $<"
+	$(Q) $(BUILD_CC) -c $(BUILD_CFLAGS) $< -o $@
+
+PROGS=		subst
+
+all:: $(PROGS) gen-tarball
+
+subst: subst.o
+	$(E) "	LD $@"
+	$(Q) $(BUILD_CC) $(BUILD_LDFLAGS) -o subst subst.o
+
+copy_sparse: copy_sparse.o
+	$(E) "	LD $@"
+	$(Q) $(BUILD_CC) $(BUILD_LDFLAGS) -o copy_sparse copy_sparse.o
+
+gen-tarball: $(srcdir)/gen-tarball.in $(top_builddir)/config.status
+	$(E) "	CONFIG.STATUS $@"
+	$(Q) cd $(top_builddir); CONFIG_FILES=util/gen-tarball ./config.status
+	$(Q) chmod +x gen-tarball
+
+tarballs: gen-tarball
+	sh gen-tarball debian
+	sh gen-tarball all
+	sh gen-tarball subset
+
+clean:
+	$(RM) -f $(PROGS) \#* *.s *.o *.a *~ core *.tar.gz gen-tarball \
+		copy-sparse
+
+mostlyclean: clean
+
+distclean: clean
+	$(RM) -f .depend Makefile $(srcdir)/TAGS $(srcdir)/Makefile.in.old
+
+# +++ Dependency line eater +++
+# 
+# Makefile dependencies follow.  This must be the last section in
+# the Makefile.in file
+#
+subst.o: $(srcdir)/subst.c

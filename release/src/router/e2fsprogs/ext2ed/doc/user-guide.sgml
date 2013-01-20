@@ -1,0 +1,2258 @@
+<!DOCTYPE Article PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
+
+<Article>
+
+<ArticleInfo>
+
+<Title>EXT2ED - The Extended-2 filesystem editor - User's guide</Title>
+<AUTHOR>
+<FirstName>Gadi Oxman, tgud@tochnapc2.technion.ac.il</FirstName>
+</AUTHOR>
+<PubDate>v0.1, August 3 1995</PubDate>
+
+<Abstract>
+
+<Para>
+This is only the initial version of this document. It may be unclear at
+some places. Please send me feedback with anything regarding to it.
+</Para>
+
+</Abstract>
+
+</ArticleInfo>
+
+<Sect1>
+<Title>About EXT2ED documentation</Title>
+
+<Para>
+The EXT2ED documentation consists of three parts:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	The ext2 filesystem overview.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The EXT2ED user's guide.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The EXT2ED design and implementation.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+If you intend to used EXT2ED, I strongly suggest that you would be familiar
+with the material presented in the <Literal remap="tt">ext2 filesystem overview</Literal> as well.
+</Para>
+
+<Para>
+If you also intend to browse and modify the source code, I suggest that you
+will also read the article <Literal remap="tt">The EXT2ED design and implementation</Literal>, as it
+provides a general overview of the structure of my source code.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Introduction</Title>
+
+<Para>
+EXT2ED is a "disk editor" for the ext2 filesystem. Its purpose is to show
+you the internal structures of the ext2 filesystem in an rather intuitive
+and logical way, so that it will be easier to "travel" between the various
+internal filesystem structures. 
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Basic concepts in EXT2ED</Title>
+
+<Para>
+Two basic concepts in EXT2ED are <Literal remap="tt">commands</Literal> and <Literal remap="tt">types</Literal>.
+</Para>
+
+<Para>
+EXT2ED is object-oriented in the sense that it defines objects in the
+filesystem, like a <Literal remap="tt">super-block</Literal> or a <Literal remap="tt">directory</Literal>. An object is
+something which "knows" how to handle some aspect of the filesystem.
+</Para>
+
+<Para>
+Your interaction with EXT2ED is done through <Literal remap="tt">commands</Literal> which EXT2ED
+accepts. There are three levels of commands:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	General Commands
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Extended-2 Filesystem general commands
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Type specific commands
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+The General commands are always available.
+</Para>
+
+<Para>
+The ext2 general commands are available only when editing an ext2 filesystem.
+</Para>
+
+<Para>
+The Type specific commands are available when editing a specific object in the
+filesystem. Each object typically comes with its own set of internal
+variables, and its own set of commands, which are fine tuned handle the
+corresponding structure in the filesystem.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Running EXT2ED</Title>
+
+<Para>
+Running EXT2ED is as simple as typing <Literal remap="tt">ext2ed</Literal> from the shell prompt.
+There are no command line switches.
+</Para>
+
+<Para>
+When first run, EXT2ED parses its configuration file, <Literal remap="tt">ext2ed.conf</Literal>.
+This file must exist.
+</Para>
+
+<Para>
+When the configuration file processing is done, EXT2ED screen should appear
+on the screen, with the command prompt <Literal remap="tt">ext2ed&#62;</Literal> displayed.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>EXT2ED user interface</Title>
+
+<Para>
+EXT2ED uses the <Emphasis>ncurses</Emphasis> library for screen management. Your screen
+will be divided into four parts, from top to bottom:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+ Title window
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+ Status window
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+ Main editing window
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+ Command window
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+The title window just displays the current version of EXT2ED.
+</Para>
+
+<Para>
+The status window will display various information regarding the state of
+the editing at this point.
+</Para>
+
+<Para>
+The main editing window is the place at which the actual data will be shown.
+Almost every command will cause some display at this window. This window, as
+opposed to the three others, is of variable length - You always look at one
+page of it. The current page and the total numbers of pages at this moment
+is displayed at the status window. Moving between pages is done by the use
+of the <Command>pgdn</Command> and <Command>pgup</Command> commands.
+</Para>
+
+<Para>
+The command window is at the bottom of the screen. It always displays a
+command prompt <Literal remap="tt">ext2ed&#62;</Literal> and allows you to type a command. Feedback
+about the commands entered is displayed to this window also.
+</Para>
+
+<Para>
+EXT2ED uses the <Emphasis>readline</Emphasis> library while processing a command line. All
+the usual editing keys are available. Each entered command is placed into a
+history of commands, and can be recalled later. Command Completion is also
+supported - Just start to type a command, and press the completion key.
+</Para>
+
+<Para>
+Pressing <Literal remap="tt">enter</Literal> at the command window, without entering a command,
+recalls the last command. This is useful when moving between close entries,
+in the <Command>next</Command> command, for example.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Getting started</Title>
+
+<Sect2>
+<Title>A few precautions</Title>
+
+<Para>
+EXT2ED is a tool for filesystem <Literal remap="tt">editing</Literal>. As such, it can be
+<Literal remap="tt">dangerous</Literal>. The summary to the subsections below is that
+<Literal remap="tt">You must know what you are doing</Literal>.
+</Para>
+
+<Sect3 id="mounted-ref">
+<Title>A mounted filesystem</Title>
+
+<Para>
+EXT2ED is not designed to work on a mounted filesystem - It is complicated
+enough as it is; I didn't even try to think of handling the various race
+conditions. As such, please respect the following advice:
+</Para>
+
+<Para>
+<Literal remap="tt">Do not use EXT2ED on a mounted filesystem !</Literal>
+</Para>
+
+<Para>
+EXT2ED will not allow write access to a mounted filesystem. Although it is
+fairly easy to change EXT2ED so that it will be allowed, I hereby request
+again- EXT2ED is not designed for that action, and will most likely corrupt
+data if used that way. Please don't do that.
+</Para>
+
+<Para>
+Concerning read access, I chose to leave the decision for the user through
+the configuration file option <Literal remap="tt">AllowMountedRead</Literal>. Although read access
+on a mounted partition will not do any damage to the filesystem, the data
+displayed to you will not be reliable, and showing you incorrect information
+may be as bad as corrupting the filesystem. However, you may still wish to
+do that.
+</Para>
+
+</Sect3>
+
+<Sect3>
+<Title>Write access</Title>
+
+<Para>
+Considering the obvious sensitivity of the subject, I took the following
+actions:
+</Para>
+
+<Para>
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	EXT2ED will always start with a read-only access. Write access mode
+needs to be specifically entered by the <Command>enablewrite</Command> command.
+Until this is done, no write will be allowed. Write access can be
+disabled at any time with <Command>disablewrite</Command>. When
+<Command>enablewrite</Command> is issued, the device is reopened in read-write
+mode. Needless to say, the device permissions should allow that.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	As a second level of protection, you can disallow write access in
+the configuration file by using the <Literal remap="tt">AllowChanges off</Literal>
+configuration option. In this case, the <Command>enablewrite</Command> command
+will be refused.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	When write access is enabled, the data will never change
+immediately. Rather, a specific <Command>writedata</Command> command is needed
+to update the object in the disk with the changed object in memory.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	In addition, A logging option is provided through the configuration
+file options <Literal remap="tt">LogChanges</Literal> and <Literal remap="tt">LogFile</Literal>. With logging
+enabled, each change to the disk will be logged at a very primitive
+level - A hex dump of the original data and of the new written data.
+The log file will be a text file which is easily readable, and you
+can make use of it to undo any changes which you made (EXT2ED doesn't
+make use of the log file for that purpose, it just logs the changes).
+</Para>
+</ListItem>
+
+</OrderedList>
+
+Please remember that this is only the initial release of EXT2ED, and it is
+not very much tested - It is reasonable to assume that <Literal remap="tt">there are
+bugs</Literal>.
+However, the logging option above can offer protection even from this
+unfortunate case. Therefor, I highly recommend that at least when first
+working with EXT2ED, the logging option will be enabled, despite the disk
+space which it consumes.
+</Para>
+
+</Sect3>
+
+</Sect2>
+
+<Sect2 id="help-ref">
+<Title>The help command</Title>
+
+<Para>
+When loaded, EXT2ED will show a short help screen. This help screen can
+always be retrieved by the command <Command>help</Command>. The help screen displays a
+list of all the commands which are available at this point. At startup, only
+the <Literal remap="tt">General commands</Literal> are available.
+This will change with time, since each object has its own commands. Thus,
+commands which are available now may not be available later.
+Using <Command>help</Command> <Emphasis>command</Emphasis> will display additional information about
+the specific command <Emphasis>command</Emphasis>.
+</Para>
+
+</Sect2>
+
+<Sect2 id="setdevice-ref">
+<Title>The setdevice command</Title>
+
+<Para>
+The first command that is usually entered to EXT2ED is the <Command>setdevice</Command>
+command. This command simply tells EXT2ED on which device the filesystem is
+present. For example, suppose my ext2 filesystem is on the first partition
+of my ide disk. The command will be:
+
+<Screen>
+setdevice /dev/hda1
+</Screen>
+
+The following actions will take place in the following order:
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	EXT2ED will check if the partition is mounted.
+If the partition is mounted (<Literal remap="tt">highly not recommended</Literal>),
+the accept/reject behavior will be decided by the configuration
+file. Cross reference section <XRef LinkEnd="mounted-ref">.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The specified device will be opened in read-only mode. The
+permissions of the device should be set in a way that allows
+you to open the device for read access.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Autodetection of an ext2 filesystem will be made by searching for
+the ext2 magic number in the main superblock.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	In the case of a successful recognition of an ext2 filesystem, the
+ext2 filesystem specific commands and the ext2 specific object
+definitions will be registered. The object definitions will be read
+at run time from a file specified by the configuration file.
+
+In case of a corrupted ext2 filesystem, it is quite possible that
+the main superblock is damaged and autodetection will fail. In that
+case, use the configuration option <Literal remap="tt">ForceExt2 on</Literal>. This is not
+the default case since EXT2ED can be used at a lower level to edit a
+non-ext2 filesystem.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	In a case of a successful autodetection, essential information about
+the filesystem such as the block size will be read from the
+superblock, unless the used overrides this behavior with an
+configuration option (not recommended). In that case, the parameters
+will be read from the configuration file.
+
+In a case of an autodetection failure, the essential parameters
+will be read from the configuration file.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+Assuming that you are editing an ext2 filesystem and that everything goes
+well, you will notice that additional commands are now available in the help
+screen, under the section <Literal remap="tt">ext2 filesystem general commands</Literal>. In
+addition, EXT2ED now recognizes a few objects which are essential to the
+editing of an ext2 filesystem.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>Two levels of usage</Title>
+
+<Sect2>
+<Title>Low level usage</Title>
+
+<Para>
+This section explains what EXT2ED provides even when not editing an ext2
+filesystem.
+</Para>
+
+<Para>
+Even at this level, EXT2ED is more than just a hex editor. It still allows
+definition of objects and variables in run time through a user file,
+although of-course the objects will not have special fine tuned functions
+connected to them. EXT2ED will allow you to move in the filesystem using
+<Command>setoffset</Command>, and to apply an object definition on a specific place
+using <Command>settype</Command> <Emphasis>type</Emphasis>. From this point and on, the object will
+be shown <Literal remap="tt">in its native form</Literal> - You will see a list of the
+variables rather than just a hex dump, and you will be able to change each
+variable in the intuitive form <Command>set variable=value</Command>.
+</Para>
+
+<Para>
+To define objects, use the configuration option <Literal remap="tt">AlternateDescriptors</Literal>.
+</Para>
+
+<Para>
+There are now two forms of editing:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Editing without a type. In this case, the disk block will be shown
+as a text+hex dump, and you will be able to move along and change it.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Editing with a type. In this case, the object's variables will be
+shown, and you will be able to change each variable in its native form.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>High level usage</Title>
+
+<Para>
+EXT2ED was designed for the editing of the ext2 filesystem. As such, it
+"understands" the filesystem structure to some extent. Each object now has
+special fine tuned 'C' functions connected to it, which knows how to display
+it in an intuitive form, and how the object fits in the general design of
+the ext2 filesystem. It is of-course much easier to use this type of
+editing. For example:
+
+<Screen>
+Issue <Emphasis>group 2</Emphasis> to look at the main copy of the third group block
+descriptor. With <Emphasis>gocopy 1</Emphasis> you can move to its first backup copy,
+and with <Emphasis>inode</Emphasis> you can start editing the inode table of the above
+group block. From here, if the inode corresponds to a file, you can
+use <Emphasis>file</Emphasis> to edit the file in a "continuous" way, using
+<Emphasis>nextblock</Emphasis> to pass to its next block, letting EXT2ED following by
+itself the direct blocks, indirect blocks, ..., while still preserving the
+actual view of the exact block usage of the file.
+</Screen>
+
+The point is that the "tour" of the filesystem will now be synchronic rather
+than asynchronic - Each object has the "links" to pass between connected
+logical structures, and special fine-tuned functions to deal with it.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>General commands</Title>
+
+<Para>
+I will now start with a systematic explanation of the general commands.
+Please feel free to experiment, but take care when using the
+<Literal remap="tt">enablewrite</Literal> command.
+</Para>
+
+<Para>
+Whenever a command syntax is specified, arguments which are optional are
+enclosed with square brackets.
+</Para>
+
+<Para>
+Please note that in EXT2ED, each command can be overridden by a specific
+object to provide special fine-tuned functionality. In general, I was
+attempting to preserve the similarity between those functions, which are
+accessible by the same name.
+</Para>
+
+<Sect2 id="disablewrite-ref">
+<Title>disablewrite</Title>
+
+<Para>
+
+<Screen>
+Syntax: disablewrite
+</Screen>
+
+<Command>disablewrite</Command> is used to reopen the device with read-only access. When
+first running EXT2ED, the device is opened in read-only mode, and an
+explicit <Command>enablewrite</Command> is required for write access. When finishing
+with changing, a <Command>disablewrite</Command> is recommended for safety. Cross
+reference section <XRef LinkEnd="disablewrite-ref">.
+</Para>
+
+</Sect2>
+
+<Sect2 id="enablewrite-ref">
+<Title>enablewrite</Title>
+
+<Para>
+
+<Screen>
+Syntax: enablewrite
+</Screen>
+
+<Command>enablewrite</Command> is used to reopen the device with read-write access.
+When first running EXT2ED, the device is opened in read-only mode, and an
+explicit <Command>enablewrite</Command> is required for write access.
+<Command>enablewrite</Command> will fail if write access is disabled from the
+configuration file by the <Literal remap="tt">AllowChanges off</Literal> configuration option.
+Even after <Command>enablewrite</Command>, an explicit <Command>writedata</Command>
+is required to actually write the new data to the disk.
+When finishing with changing, a <Command>disablewrite</Command> is recommended for safety.
+Cross reference section <XRef LinkEnd="enablewrite-ref">.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>help</Title>
+
+<Para>
+
+<Screen>
+Syntax: help [command]
+</Screen>
+
+The <Command>help</Command> command is described at section <XRef LinkEnd="help-ref">. 
+</Para>
+
+</Sect2>
+
+<Sect2 id="next-ref">
+<Title>next</Title>
+
+<Para>
+
+<Screen>
+Syntax: next [number]
+</Screen>
+
+This section describes the <Emphasis>general command</Emphasis> <Command>next</Command>. <Command>next</Command>
+is overridden by several types in EXT2ED, to provide fine-tuned
+functionality.
+</Para>
+
+<Para>
+The <Literal remap="tt">next general command</Literal> behavior is depended on whether you are editing a
+specific object, or none.
+</Para>
+
+<Para>
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	In the case where Type is <Literal remap="tt">none</Literal> (The current type is showed
+on the status window by the <Command>show</Command> command), <Literal remap="tt">next</Literal>
+passes to the next <Emphasis>number</Emphasis> bytes in the current edited block.
+If <Emphasis>number</Emphasis> is not specified, <Emphasis>number=1</Emphasis> is assumed.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+ 	In the case where Type is defined, the <Command>next</Command> commands assumes
+that you are editing an array of objects of that type, and the
+<Command>next</Command> command will just pass to the next entry in the array.
+If <Emphasis>number</Emphasis> is defined, it will pass <Emphasis>number</Emphasis> entries
+ahead.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+</Sect2>
+
+<Sect2 id="pgdn-ref">
+<Title>pgdn</Title>
+
+<Para>
+
+<Screen>
+Syntax: pgdn
+</Screen>
+
+Usually the edited data doesn't fit into the visible main window. In this
+case, the status window will indicate that there is more to see "below" by
+the message <Literal remap="tt">Page x of y</Literal>. This means that there are <Emphasis>y</Emphasis> pages
+total, and you are currently viewing the <Emphasis>x</Emphasis> page. With the <Command>pgdn</Command>
+command, you can pass to the next available page.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>pgup</Title>
+
+<Para>
+
+<Screen>
+Syntax: pgup
+</Screen>
+
+</Para>
+
+<Para>
+<Command>pgup</Command> is the opposite of <Command>pgdn</Command> - It will pass to the previous
+page. Cross reference section <XRef LinkEnd="pgdn-ref">.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>prev</Title>
+
+<Para>
+
+<Screen>
+Syntax: prev [number]
+</Screen>
+
+</Para>
+
+<Para>
+<Command>prev</Command> is the opposite of <Command>next</Command>. Cross reference section
+<XRef LinkEnd="next-ref">.
+</Para>
+
+</Sect2>
+
+<Sect2 id="recall-ref">
+<Title>recall</Title>
+
+<Para>
+
+<Screen>
+Syntax: recall object
+</Screen>
+
+<Command>recall</Command> is the opposite of <Command>remember</Command>. It will place you at the
+place you where when saving the object position and type information. Cross
+reference section <XRef LinkEnd="remember-ref">.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>redraw</Title>
+
+<Para>
+
+<Screen>
+Syntax: redraw
+</Screen>
+
+Sometimes the screen display gets corrupted. I still have problems with
+this. The <Command>redraw</Command> command simply redraws the entire display screen.
+</Para>
+
+</Sect2>
+
+<Sect2 id="remember-ref">
+<Title>remember</Title>
+
+<Para>
+
+<Screen>
+Syntax: remember object
+</Screen>
+
+EXT2ED provides you <Literal remap="tt">memory</Literal> of objects; While editing, you may reach an
+object which you will like to return to later. The <Command>remember</Command> command
+will store in memory the current place and type of the object. You can
+return to the object by using the <Command>recall</Command> command. Cross reference
+section <XRef LinkEnd="recall-ref">.
+</Para>
+
+<Para>
+<Literal remap="tt">Note:</Literal>
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	When remembering a <Literal remap="tt">file</Literal> or a <Literal remap="tt">directory</Literal>, the
+corresponding inode will be saved in memory. The basic reason is that
+the inode is essential for finding the blocks of the file or the
+directory.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>set</Title>
+
+<Para>
+
+<Screen>
+Syntax: set [text || hex] arg1 [arg2 arg3 ...]
+
+or
+
+Syntax: set variable=value
+</Screen>
+
+The <Command>set</Command> command is used to modify the current data.
+The <Command>set general command</Command> behavior is depended on whether you are editing a
+specific object, or none.
+</Para>
+
+<Para>
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	In the case where Type is <Command>none</Command>, the first syntax should be
+used. The set command affects the data starting at the current 
+highlighted position in the edited block.
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	When using the <Command>set hex</Command> command, a list of
+hexadecimal bytes should follow.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	When using the <Command>set text</Command> command, it should be followed
+by a text string.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+Examples:
+
+<Screen>
+	set hex 09 0a 0b 0c 0d 0e 0f
+	set text Linux is just great !
+	
+</Screen>
+
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+ 	In the case where Type is defined, the second syntax should be used.
+The set commands just sets the variable <Emphasis>variable</Emphasis> with the
+value <Emphasis>value</Emphasis>.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+In any case, the data is only changed in memory. For an actual update to the
+disk, use the <Command>writedata</Command> command.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>setdevice</Title>
+
+<Para>
+
+<Screen>
+Syntax: setdevice device
+</Screen>
+
+The <Command>setdevice</Command> command is described at section <XRef LinkEnd="setdevice-ref">. 
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>setoffset</Title>
+
+<Para>
+
+<Screen>
+Syntax: setoffset [block || type] [+|-]offset
+</Screen>
+
+The <Command>setoffset</Command> command is used to move asynchronically inside the file
+system. It is considered a low level command, and usually should not be used
+when editing an ext2 filesystem, simply because movement is better
+utilized through the specific ext2 commands.
+</Para>
+
+<Para>
+The <Command>offset</Command> is in bytes, and meanwhile should be positive and smaller
+than 2GB.
+</Para>
+
+<Para>
+Use of the <Command>block</Command> modifier changes the counting unit to block.
+</Para>
+
+<Para>
+Use of the <Literal remap="tt">+ or -</Literal> modifiers signals that the offset is relative to
+the current position.
+</Para>
+
+<Para>
+use of the <Literal remap="tt">type</Literal> modifier is allowed only with relative offset. This
+modifier will multiply the offset by the size of the current type.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>settype</Title>
+
+<Para>
+
+<Screen>
+Syntax: settype type || [none | hex]
+</Screen>
+
+The <Command>settype</Command> command is used to move apply the object definitions of
+the type <Emphasis>type</Emphasis> on the current position. It is considered a low level
+command and usually should not be used when editing an ext2 filesystem since
+EXT2ED provides better tools. It is of-course very useful when editing a
+non-ext2 filesystem and using user-defined objects.
+</Para>
+
+<Para>
+When <Emphasis>type</Emphasis> is <Emphasis>hex</Emphasis> or <Emphasis>none</Emphasis>, the data will be displayed as
+a hex and text dump.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>show</Title>
+
+<Para>
+
+<Screen>
+Syntax: show
+</Screen>
+
+The <Command>show</Command> command will show the data of the current object at the
+current position on the main display window. It will also update the status
+window with type specific information. It may be necessary to use
+<Command>pgdn</Command> and <Command>pgup</Command> to view the entire data.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>writedata</Title>
+
+<Para>
+
+<Screen>
+Syntax: writedata
+</Screen>
+
+The <Command>writedata</Command> command will update the disk with the object data that
+is currently in memory. This is the point at which actual change is made to
+the filesystem. Without this command, the edited data will not have any
+effect. Write access should be allowed for a successful update.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>Editing an ext2 filesystem</Title>
+
+<Para>
+In order to edit an ext2 filesystem, you should, of course, know the structure
+of the ext2 filesystem. If you feel that you lack some knowledge in this
+area, I suggest that you do some of the following:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Read the supplied ext2 technical information. I tried to summarize
+the basic information which is needed to get you started.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Get the slides that Remy Card (The author of the ext2 filesystem)
+prepared concerning the ext2 filesystem.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Read the kernel sources.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+At this point, you should be familiar with the following terms:
+<Literal remap="tt">block, inode, superblock, block groups, block allocation bitmap, inode
+allocation bitmap, group descriptors, file, directory.</Literal>Most of the above
+are objects in EXT2ED.
+</Para>
+
+<Para>
+When editing an ext2 filesystem it is recommended that you use the ext2
+specific commands, rather then the general commands  <Command>setoffset</Command> and
+<Command>settype</Command>, mainly because:
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	In most cases it will be unreliable, and will display incorrect
+information.
+
+Sometimes in order to edit an object, EXT2ED needs the information
+of some other related objects. For example, when editing a
+directory, EXT2ED needs access to the inode of the edited directory.
+Simply setting the type to a directory <Literal remap="tt">will be unreliable</Literal>,
+since the object assumes that you passed through its inode to reach
+it, and expects this information, which isn't initialized if you
+directly set the type to a directory.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	EXT2ED offers far better tools for handling the ext2 filesystem
+using the ext2 specific commands.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>ext2 general commands</Title>
+
+<Para>
+The <Literal remap="tt">ext2 general commands</Literal> are available only when you are editing an
+ext2 filesystem. They are <Literal remap="tt">general</Literal> in the sense that they are not
+specific to some object, and can be invoked anytime.
+</Para>
+
+<Sect2 id="general-superblock">
+<Title>super</Title>
+
+<Para>
+
+<Screen>
+Syntax: super
+</Screen>
+
+The <Command>super</Command> command will "bring you" to the main superblock copy. It
+will automatically set the object type to <Literal remap="tt">ext2&lowbar;super&lowbar;block</Literal>. Then you
+will be able to view and edit the superblock. When you are in the
+superblock, other commands will be available.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>group</Title>
+
+<Para>
+
+<Screen>
+Syntax: group [number]
+</Screen>
+
+The <Command>group</Command> command will "bring you" to the main copy of the
+<Emphasis>number</Emphasis> group descriptor. It will automatically set the object type to
+<Literal remap="tt">ext2&lowbar;group&lowbar;desc</Literal>. Then you will be able to view and edit the group
+descriptor entry. When you are there, other commands will be available.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>cd</Title>
+
+<Para>
+
+<Screen>
+Syntax: cd path
+</Screen>
+
+The <Command>cd</Command> command will let you travel in the filesystem in the nice way
+that the mounted filesystem would have let you.
+</Para>
+
+<Para>
+The <Command>cd</Command> command is a complicated command. Although it may sound
+simple at first, an implementation of a typical cd requires passing through
+the group descriptors, inodes, directory entries, etc. For example:
+</Para>
+
+<Para>
+The innocent cd /usr command can be done by using more primitive
+EXT2ED commands in the following way (It is implemented exactly this way):
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	Using <Command>group 0</Command> to go to the first group descriptor.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Using <Command>inode</Command> to get to the Bad blocks inode.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Using <Command>next</Command> to pass to the root directory inode.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Using <Command>dir</Command> to see the directory.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Using <Command>next</Command> until we find the directory usr.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Using <Command>followinode</Command> to pass to the inode corresponding to usr.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Using <Command>dir</Command> to see the directory of /usr.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+And those commands aren't that primitive; For example, the tracing of the
+blocks which belong to the root directory is done automatically by the dir
+command behind the scenes, and the followinode command will automatically
+"run" to the correct group descriptor in order to find the required inode.
+</Para>
+
+<Para>
+The path to the <Command>general cd</Command> command needs to be a full pathname -
+Starting from <Filename>/</Filename>. The <Command>cd</Command> command stops at the last reachable
+point, which can be a directory entry, in which case the type will be set to
+<Literal remap="tt">dir</Literal>, or an inode, in which case the type will be set to
+<Literal remap="tt">ext2&lowbar;inode</Literal>. Symbolic links (Only fast symbolic links, meanwhile) are
+automatically followed (if they are not across filesystems, of-course). If
+the type is set to <Literal remap="tt">dir</Literal>, you can use a path relative to the 
+"current directory".
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The superblock</Title>
+
+<Para>
+The superblock can always be reached by the ext2 general command
+<Command>super</Command>. Cross reference section <XRef LinkEnd="general-superblock">.
+</Para>
+
+<Para>
+The status window will show you which copy of the superblock copies you are
+currently editing.
+</Para>
+
+<Para>
+The main data window will show you the values of the various superblock
+variables, along with some interpretation of the values.
+</Para>
+
+<Para>
+Data can be changed with the <Command>set</Command> and <Command>writedata</Command> commands.
+
+<Screen>
+For example, set s_r_blocks_count=1400 will reserve 1400 blocks for root.
+</Screen>
+
+</Para>
+
+<Sect2>
+<Title>gocopy</Title>
+
+<Para>
+
+<Screen>
+Syntax: gocopy number
+</Screen>
+
+The <Command>gocopy</Command> command will "bring you" to the backup copy <Emphasis>number</Emphasis>
+of the superblock copies. <Command>gocopy 0</Command>, for example, will bring you to
+the main copy.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>setactivecopy</Title>
+
+<Para>
+
+<Screen>
+Syntax: setactivecopy
+</Screen>
+
+The <Command>setactivecopy</Command> command will copy the contents of the current
+superblock copy onto the contents of the main copy. It will also switch to
+editing of the main copy. No actual data is written to disk, of-course,
+until you issue the <Command>writedata</Command> command.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The group descriptors</Title>
+
+<Para>
+The group descriptors can be edited by the <Command>group</Command> command.
+</Para>
+
+<Para>
+The status window will indicate the current group descriptor, the total
+number of group descriptors (and hence of group blocks), and the backup copy
+number.
+</Para>
+
+<Para>
+The main data window will just show you the values of the various variables.
+</Para>
+
+<Para>
+Basically, you can use the <Command>next</Command> and <Command>prev</Command> commands, along with the
+<Command>set</Command> command, to modify the group descriptors.
+</Para>
+
+<Para>
+The group descriptors object is a junction, from which you can reach:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	The inode table of the corresponding block group (the <Literal remap="tt">inode</Literal>
+command)
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The block allocation bitmap (the <Literal remap="tt">blockbitmap</Literal> command)
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The inode allocation bitmap (the <Literal remap="tt">inodebitmap</Literal> command)
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Sect2>
+<Title>blockbitmap</Title>
+
+<Para>
+
+<Screen>
+Syntax: blockbitmap
+</Screen>
+
+The <Command>blockbitmap</Command> command will let you edit the block bitmap allocation
+block of the current group block.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>entry</Title>
+
+<Para>
+
+<Screen>
+Syntax: entry number
+</Screen>
+
+The <Command>entry</Command> command will move you to the <Emphasis>number</Emphasis> group descriptor in the
+group descriptors table.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>inode</Title>
+
+<Para>
+
+<Screen>
+Syntax: inode
+</Screen>
+
+The <Command>inode</Command> command will pass you to the first inode in the current
+group block.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>inodebitmap</Title>
+
+<Para>
+
+<Screen>
+Syntax: inodebitmap
+</Screen>
+
+The <Command>inodebitmap</Command> command will let you edit the inode bitmap allocation
+block of the current group block.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>next</Title>
+
+<Para>
+
+<Screen>
+Syntax: next [number]
+</Screen>
+
+The <Command>next</Command> command will pass to the next <Emphasis>number</Emphasis> group
+descriptor. If <Emphasis>number</Emphasis> is omitted, <Emphasis>number=1</Emphasis> is assumed.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>prev</Title>
+
+<Para>
+
+<Screen>
+Syntax: prev [number]
+</Screen>
+
+The <Command>prev</Command> command will pass to the previous <Emphasis>number</Emphasis> group
+descriptor. If <Emphasis>number</Emphasis> is omitted, <Emphasis>number=1</Emphasis> is assumed.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>setactivecopy</Title>
+
+<Para>
+
+<Screen>
+Syntax: setactivecopy
+</Screen>
+
+The <Command>setactivecopy</Command> command copies the contents of the current group
+descriptor, to its main copy. The updated main copy will then be shown. No
+actual change is made to the disk until you issue the <Command>writedata</Command>
+command.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The inode</Title>
+
+<Para>
+An inode can be reached by the following two ways:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Using <Command>inode</Command> from the corresponding group descriptor.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Using <Command>followinode</Command> from a directory entry.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Using the <Command>cd</Command> command with the pathname to the file.
+
+For example, <Command>cd /usr/src/ext2ed/ext2ed.h</Command>
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+The status window will indicate:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	The current global inode number.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The total total number of inodes.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	On which block group the inode is allocated.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The total number of inodes in this group block.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The index of the current inode in the current group block.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The type of the inode (file, directory, special, etc).
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+The main data window, in addition to the list of variables, will contain
+some interpretations on the right side.
+</Para>
+
+<Para>
+If the inode corresponds to a file, you can use the <Command>file</Command> command to
+edit the file.
+</Para>
+
+<Para>
+If the inode is an inode of a directory, you can use the <Command>dir</Command> command
+to edit the directory.
+</Para>
+
+<Sect2>
+<Title>dir</Title>
+
+<Para>
+
+<Screen>
+Syntax: dir
+</Screen>
+
+If the inode mode corresponds to a directory (shown on the status window),
+you can enter directory mode editing by using <Literal remap="tt">dir</Literal>.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>entry</Title>
+
+<Para>
+
+<Screen>
+Syntax: entry number
+</Screen>
+
+The <Command>entry</Command> command will move you to the <Emphasis>number</Emphasis> inode in the
+current inode table.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>file</Title>
+
+<Para>
+
+<Screen>
+Syntax: file
+</Screen>
+
+If the inode mode corresponds to a file (shown on the status window),
+you can enter file mode editing by using <Command>file</Command>.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>group</Title>
+
+<Para>
+
+<Screen>
+Syntax: group
+</Screen>
+
+The <Command>group</Command> command is used to go to the group descriptor of the
+current group block.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>next</Title>
+
+<Para>
+
+<Screen>
+Syntax: next [number]
+</Screen>
+
+The <Command>next</Command> command will pass to the next <Emphasis>number</Emphasis> inode.
+If <Emphasis>number</Emphasis> is omitted, <Emphasis>number=1</Emphasis> is assumed.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>prev</Title>
+
+<Para>
+
+<Screen>
+Syntax: prev [number]
+</Screen>
+
+The <Command>prev</Command> command will pass to the previous <Emphasis>number</Emphasis> inode.
+If <Emphasis>number</Emphasis> is omitted, <Emphasis>number=1</Emphasis> is assumed.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The file</Title>
+
+<Para>
+When editing a file, EXT2ED offers you a both a continuous and a true
+fragmented view of the file - The file is still shown block by block with
+the true block number at each stage and EXT2ED offers you commands which
+allow you to move between the <Literal remap="tt">file blocks</Literal>, while finding the
+allocated blocks by using the inode information behind the scenes.
+</Para>
+
+<Para>
+Aside from this, the editing is just a <Literal remap="tt">hex editing</Literal> - You move the
+cursor in the current block of the file by using <Command>next</Command> and
+<Command>prev</Command>, move between blocks by <Command>nextblock</Command> and <Command>prevblock</Command>,
+and make changes by the <Command>set</Command> command. Note that the set command is
+overridden here - There are no variables. The <Command>writedata</Command> command will
+update the current block to the disk.
+</Para>
+
+<Para>
+Reaching a file can be done by using the <Command>file</Command> command from its inode.
+The inode can be reached by any other means, for example, by the
+<Command>cd</Command> command, if you know the file name.
+</Para>
+
+<Para>
+The status window will indicate:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	The global block number.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The internal file block number.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The file offset.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The file size.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The file inode number.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The indirection level - Whether it is a direct block (0), indirect
+(1), etc.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+The main data window will display the file either in hex mode or in text
+mode, select-able by the <Command>display</Command> command.
+</Para>
+
+<Para>
+In hex mode, EXT2ED will display offsets in the current block, along with a
+text and hex dump of the current block.
+</Para>
+
+<Para>
+In either case the <Literal remap="tt">current place</Literal> will be highlighted. In the hex mode
+it will be always highlighted, while in the text mode it will be highlighted
+if the character is display-able.
+</Para>
+
+<Sect2>
+<Title>block</Title>
+
+<Para>
+
+<Screen>
+Syntax: block block_num
+</Screen>
+
+The <Command>block</Command> command is used to move inside the file. The
+<Emphasis>block&lowbar;num</Emphasis> argument is the requested internal file block number. A
+value of 0 will reach the beginning of the file.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>display</Title>
+
+<Para>
+
+<Screen>
+Syntax: display [text || hex]
+</Screen>
+
+The <Command>display</Command> command changes the display mode of the file. 
+<Command>display
+hex</Command> will switch to <Command>hex mode</Command>, while <Command>display text</Command> will switch
+to text mode. The default mode when no <Command>display</Command> command is issued is
+<Command>hex mode</Command>.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>inode</Title>
+
+<Para>
+
+<Screen>
+Syntax: inode
+</Screen>
+
+The <Command>inode</Command> command will return to the inode of the current file.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>next</Title>
+
+<Para>
+
+<Screen>
+Syntax: next [num]
+</Screen>
+
+The <Command>next</Command> command will pass to the next byte in the file. If
+<Emphasis>num</Emphasis> is supplied, it will pass to the next <Emphasis>num</Emphasis> bytes.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>nextblock</Title>
+
+<Para>
+
+<Screen>
+Syntax: nextblock [num]
+</Screen>
+
+The <Command>nextblock</Command> command will pass to the next block in the file. If
+<Emphasis>num</Emphasis> is supplied, it will pass to the next <Emphasis>num</Emphasis> blocks.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>prev</Title>
+
+<Para>
+
+<Screen>
+Syntax: prev [num]
+</Screen>
+
+The <Command>prev</Command> command will pass to the previous byte in the file. If
+<Emphasis>num</Emphasis> is supplied, it will pass to the previous <Emphasis>num</Emphasis> bytes.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>prevblock</Title>
+
+<Para>
+
+<Screen>
+Syntax: prevblock [num]
+</Screen>
+
+The <Command>nextblock</Command> command will pass to the previous block in the file. If
+<Emphasis>num</Emphasis> is supplied, it will pass to the previous <Emphasis>num</Emphasis> blocks.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>offset</Title>
+
+<Para>
+
+<Screen>
+Syntax: offset file_offset
+</Screen>
+
+The <Command>offset</Command> command will move to the specified offset in the file.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>set</Title>
+
+<Para>
+
+<Screen>
+Syntax: set [text || hex] arg1 [arg2 arg3 ...]
+</Screen>
+
+The <Command>file set</Command> command is working like the <Literal remap="tt">general set command</Literal>,
+with <Literal remap="tt">type=none</Literal>. There are no variables.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>writedata</Title>
+
+<Para>
+
+<Screen>
+Syntax: writedata
+</Screen>
+
+The <Command>writedata</Command> command will update the current file block in the disk.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The directory</Title>
+
+<Para>
+When editing a file, EXT2ED analyzes for you both the allocation blocks of
+the directory entries, and the directory entries.
+</Para>
+
+<Para>
+Each directory entry is displayed on one row. You can move the highlighted
+entry with the usual <Command>next</Command> and <Command>prev</Command> commands, and "dive in"
+with the <Command>followinode</Command> command.
+</Para>
+
+<Para>
+The status window will indicate:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	The directory entry number.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The total number of directory entries in this directory.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The current global block number.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The current offset in the entire directory - When viewing the
+directory as a continuous file.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The inode number of the directory itself.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The indirection level - Whether it is a direct block (0), indirect
+(1), etc.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Sect2>
+<Title>cd</Title>
+
+<Para>
+
+<Screen>
+Syntax: cd [path]
+</Screen>
+
+The <Command>cd</Command> command is used in the usual meaning, like the global cd
+command.
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	If <Emphasis>path</Emphasis> is not specified, the current directory entry is
+followed.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Emphasis>path</Emphasis> can be relative to the current directory.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Emphasis>path</Emphasis> can also end up in a file, in which case the file inode
+will be reached.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Symbolic link (fast only, meanwhile) is automatically followed.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>entry</Title>
+
+<Para>
+
+<Screen>
+Syntax: entry [entry_num]
+</Screen>
+
+The <Command>entry</Command> command sets <Emphasis>entry&lowbar;num</Emphasis> as the current directory
+entry.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>followinode</Title>
+
+<Para>
+
+<Screen>
+Syntax: followinode
+</Screen>
+
+The <Command>followinode</Command> command will move you to the inode pointed by the
+current directory entry.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>inode</Title>
+
+<Para>
+
+<Screen>
+Syntax: inode
+</Screen>
+
+The <Command>inode</Command> command will return you to the parent inode of the whole
+directory listing.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>next</Title>
+
+<Para>
+
+<Screen>
+Syntax: next [num]
+</Screen>
+
+The <Command>next</Command> command will pass to the next directory entry.
+If <Emphasis>num</Emphasis> is supplied, it will pass to the next <Emphasis>num</Emphasis> entries.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>prev</Title>
+
+<Para>
+
+<Screen>
+Syntax: prev [num]
+</Screen>
+
+The <Command>prev</Command> command will pass to the previous directory entry.
+If <Emphasis>num</Emphasis> is supplied, it will pass to the previous <Emphasis>num</Emphasis> entries.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>writedata</Title>
+
+<Para>
+
+<Screen>
+Syntax: writedata
+</Screen>
+
+The <Command>writedata</Command> command will write the current directory entry to the
+disk.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1 id="block-bitmap">
+<Title>The block allocation bitmap</Title>
+
+<Para>
+The <Literal remap="tt">block allocation bitmap</Literal> of any block group can be reached from
+the corresponding group descriptor.
+</Para>
+
+<Para>
+You will be offered a bit listing of the entire blocks in the group. The
+current block will be highlighted and its number will be displayed in the
+status window.
+</Para>
+
+<Para>
+A value of "1" means that the block is allocated, while a value of "0"
+signals that it is free. The value is also interpreted in the status
+window. You can use the usual <Command>next/prev</Command> commands, along with the
+<Command>allocate/deallocate</Command> commands.
+</Para>
+
+<Sect2>
+<Title>allocate</Title>
+
+<Para>
+
+<Screen>
+Syntax: allocate [num]
+</Screen>
+
+The <Command>allocate</Command> command allocates <Emphasis>num</Emphasis> blocks, starting from the
+highlighted position. If <Emphasis>num</Emphasis> is not specified, <Emphasis>num=1</Emphasis> is assumed.
+Of-course, no actual change is made until you issue a <Command>writedata</Command> command. 
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>deallocate</Title>
+
+<Para>
+
+<Screen>
+Syntax: deallocate [num]
+</Screen>
+
+The <Command>deallocate</Command> command deallocates <Emphasis>num</Emphasis> blocks, starting from the
+highlighted position. If <Emphasis>num</Emphasis> is not specified, <Emphasis>num=1</Emphasis> is assumed.
+Of-course, no actual change is made until you issue a <Command>writedata</Command> command. 
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>entry</Title>
+
+<Para>
+
+<Screen>
+Syntax: entry [entry_num]
+</Screen>
+
+The <Command>entry</Command> command sets the current highlighted block to
+<Emphasis>entry&lowbar;num</Emphasis>.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>next</Title>
+
+<Para>
+
+<Screen>
+Syntax: next [num]
+</Screen>
+
+The <Command>next</Command> command will pass to the next bit, which corresponds to the
+next block. If <Emphasis>num</Emphasis> is supplied, it will pass to the next <Emphasis>num</Emphasis>
+bits.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>prev</Title>
+
+<Para>
+
+<Screen>
+Syntax: prev [num]
+</Screen>
+
+The <Command>prev</Command> command will pass to the previous bit, which corresponds to the
+previous block. If <Emphasis>num</Emphasis> is supplied, it will pass to the previous
+<Emphasis>num</Emphasis> bits.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The inode allocation bitmap</Title>
+
+<Para>
+The <Literal remap="tt">inode allocation bitmap</Literal> is very similar to the block allocation
+bitmap explained above. It is also reached from the corresponding group
+descriptor. Please refer to section <XRef LinkEnd="block-bitmap">.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Filesystem size limitation</Title>
+
+<Para>
+While an ext2 filesystem has a size limit of <Literal remap="tt">4 TB</Literal>, EXT2ED currently
+<Literal remap="tt">can't</Literal> handle filesystems which are <Literal remap="tt">bigger than 2 GB</Literal>.
+</Para>
+
+<Para>
+I am sorry for the inconvenience. This will hopefully be fixed in future
+releases.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Copyright</Title>
+
+<Para>
+EXT2ED is Copyright (C) 1995 Gadi Oxman.
+</Para>
+
+<Para>
+EXT2ED is hereby placed under the GPL - Gnu Public License. You are free and
+welcome to copy, view and modify the sources. My only wish is that my
+copyright presented above will be left and that a list of the bug fixes,
+added features, etc, will be provided.
+</Para>
+
+<Para>
+The entire EXT2ED project is based, of-course, on the kernel sources. The
+<Literal remap="tt">ext2.descriptors</Literal> distributed with EXT2ED is a slightly modified
+version of the main ext2 include file, /usr/include/linux/ext2&lowbar;fs.h. Follows
+the original copyright:
+</Para>
+
+<Para>
+
+<Screen>
+/*
+ *  linux/include/linux/ext2_fs.h
+ *
+ * Copyright (C) 1992, 1993, 1994, 1995
+ * Remy Card (card@masi.ibp.fr)
+ * Laboratoire MASI - Institut Blaise Pascal
+ * Universite Pierre et Marie Curie (Paris VI)
+ *
+ *  from
+ *
+ *  linux/include/linux/minix_fs.h
+ *
+ *  Copyright (C) 1991, 1992  Linus Torvalds
+ */
+
+</Screen>
+
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Acknowledgments</Title>
+
+<Para>
+EXT2ED was constructed as a student project in the software
+laboratory of the faculty of electrical-engineering in the
+<Literal remap="tt">Technion - Israel's institute of technology</Literal>.
+</Para>
+
+<Para>
+At first, I would like to thank <PersonName><FirstName>Avner</FirstName> <SurName>Lottem</SurName></PersonName> and <PersonName><Honorific>Doctor</Honorific> <FirstName>Ilana</FirstName> <SurName>David</Surname></PersonName> for their interest and assistance in this project.
+</Para>
+
+<Para>
+I would also like to thank the following people, who were involved in the
+design and implementation of the ext2 filesystem kernel code and support
+utilities:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+<PersonName><FirstName>Remy</FirstName> <SurName>Card</SurName></PersonName>
+
+Who designed, implemented and maintains the ext2 filesystem kernel
+code, and some of the ext2 utilities. Remy Card is also the author
+of several helpful slides concerning the ext2 filesystem.
+Specifically, he is the author of <Literal remap="tt">File Management in the Linux
+Kernel</Literal> and of <Literal remap="tt">The Second Extended File System - Current State,
+Future Development</Literal>.
+
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+<PersonName><FirstName>Wayne</FirstName> <SurName>Davison</SurName></PersonName>
+
+Who designed the ext2 filesystem.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+<PersonName><FirstName>Stephen</FirstName> <Surname>Tweedie</SurName></PersonName>
+
+Who helped designing the ext2 filesystem kernel code and wrote the
+slides <Literal remap="tt">Optimizations in File Systems</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+<PersonName><FirstName>Theodore</FirstName> <SurName>Ts'o</SurName></PersonName>
+
+Who is the author of several ext2 utilities and of the ext2 library
+<Literal remap="tt">libext2fs</Literal> (which I didn't use, simply because I didn't know
+it exists when I started to work on my project).
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+Lastly, I would like to thank, of-course, <PersonName><FirstName>Linus</FirstName> <SurName>Torvalds</SurName></PersonName> and the
+Linux community for providing all of us with such a great operating
+system.
+</Para>
+
+<Para>
+Please contact me in a case of bug report, suggestions, or just about
+anything concerning EXT2ED.
+</Para>
+
+<Para>
+Enjoy,
+</Para>
+
+<Para>
+Gadi Oxman &lt;tgud@tochnapc2.technion.ac.il&gt;
+</Para>
+
+<Para>
+Haifa, August 95
+</Para>
+
+</Sect1>
+
+</Article>

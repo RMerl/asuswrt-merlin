@@ -1,0 +1,78 @@
+#!/bin/sh
+#  Make /etc/fstab standard compliant.
+#  M.Weller (eowmob@exp-math.uni-essen.de) 13.11.1994.
+#  This script is public domain. Still if only slightly
+#  modified a credit to me might be nice.
+
+ROOT_PASS=1		# Pass for root file system
+NON_ROOT_PASS=2		# Pass for non root file systems
+DEF_FLAGS="defaults"	# Default filesysflags
+DEF_DUMP=0		# Default dumpfreq.
+	
+while read LINE
+do
+  set -- $LINE
+  if [ $# != 0 ]
+  then
+    case $1 in
+      \#* | !* )
+	echo "$LINE"
+	#  Actually there are no comments allowed in /etc/fstab
+	echo "Warning: comment in /etc/fstab detected." >&2
+	echo "Please remove it by hand." >&2
+	;;
+      * )
+	if [ $# -gt 6 ] || [ $# -lt 3 ]
+	then
+	  echo "Don't have a clue about \"$LINE\"." >&2
+	  echo "$LINE"
+	else
+	  case $2 in
+	    / )
+	      PASS=$ROOT_PASS
+	      ;;
+	    none )
+	      PASS=0
+	      ;;
+	    * )
+	      PASS=$NON_ROOT_PASS
+	      ;;
+	  esac
+	  DUMP=$DEF_DUMP
+	  case $3 in
+	    ignore | iso9660 | msdos | hpfs | sysv | \
+		  xenix | coherent | nfs | proc | sw | swap )
+	      DUMP=0;
+	      PASS=0;
+	      ;;
+	  esac
+	  case $# in
+	    3 )
+	      echo "$LINE	$DEF_FLAGS	$DUMP	$PASS"
+	      ;;
+	    4 )
+	      echo "$LINE	$DUMP	$PASS"
+	      ;;
+	    5 )
+	      echo "$LINE	$PASS"
+	      ;;
+	    6)
+	      echo "$LINE"
+	      ;;
+	  esac
+	fi
+	;;
+    esac
+  else
+    echo "Warning: One empty line removed." >&2
+  fi
+done </etc/fstab >/tmp/newfstab.$$
+mv -f /etc/fstab /etc/fstab.bak
+mv -f /tmp/newfstab.$$ /etc/fstab
+if [ $? != 0 ]
+then
+  echo "Installation of patched /etc/fstab failed."
+  echo "It would have been:"
+  cat /tmp/newfstab.$$
+  rm -f /tmp/newfstab.$$
+fi

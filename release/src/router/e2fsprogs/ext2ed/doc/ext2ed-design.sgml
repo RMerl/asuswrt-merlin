@@ -1,0 +1,3459 @@
+<!DOCTYPE Article PUBLIC "-//Davenport//DTD DocBook V3.0//EN">
+
+<Article>
+
+<ArtHeader>
+
+<Title>EXT2ED - The Extended-2 filesystem editor - Design and implementation</Title>
+<AUTHOR
+>
+<FirstName>Programmed by Gadi Oxman, with the guide of Avner Lottem</FirstName>
+</AUTHOR
+>
+<PubDate>v0.1, August 3 1995</PubDate>
+
+</ArtHeader>
+
+<Sect1>
+<Title>About EXT2ED documentation</Title>
+
+<Para>
+The EXT2ED documentation consists of three parts:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	The ext2 filesystem overview.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The EXT2ED user's guide.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The EXT2ED design and implementation.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+This document is not the user's guide. If you just intend to use EXT2ED, you
+may not want to read it.
+</Para>
+
+<Para>
+However, if you intend to browse and modify the source code, this document is
+for you.
+</Para>
+
+<Para>
+In any case, If you intend to read this article, I strongly suggest that you
+will be familiar with the material presented in the other two articles as well.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Preface</Title>
+
+<Para>
+In this document I will try to explain how EXT2ED is constructed.
+At this time of writing, the initial version is finished and ready
+for distribution; It is fully functional. However, this was not always the
+case.
+</Para>
+
+<Para>
+At first, I didn't know much about Unix, much less about Unix filesystems,
+and even less about Linux and the extended-2 filesystem. While working
+on this project, I gradually acquired knowledge about all of the above
+subjects. I can think of two ways in which I could have made my project:
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	The "Engineer" way
+
+Learn the subject throughly before I get to the programming itself.
+Then, I could easily see the entire picture and select the best
+course of action, taking all the factors into account.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The "Explorer - Progressive" way.
+
+Jump immediately into the cold water - Start programming and
+learning the material parallelly.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+</Para>
+
+<Para>
+I guess that the above dilemma is typical and appears all through science and
+technology.
+</Para>
+
+<Para>
+However, I didn't have the luxury of choice when I started my project -
+Linux is a relatively new (and great!) operating system. The extended-2
+filesystem is even newer - Its first release lies somewhere in 1993 - Only
+passed two years until I started working on my project.
+</Para>
+
+<Para>
+The situation I found myself at the beginning was that I didn't have a fully
+detailed document which describes the ext2 filesystem. In fact, I didn't
+have any ext2 document at all. When I asked Avner about documentation, he
+suggested two references:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	A general Unix book - THE DESIGN OF THE UNIX OPERATING SYSTEM, by
+Maurice J. Bach.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The kernel sources.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+I read the relevant parts of the book before I started my project - It is a
+bit old now, but the principles are still the same. However, I needed
+more than just the principles.
+</Para>
+
+<Para>
+The kernel sources are a rare bonus! You don't get everyday the full
+sources of the operating system. There is so much that can be learned from
+them, and it is the ultimate source - The exact answer how the kernel
+works is there, with all the fine details. At the first week I started to
+look at random at the relevant parts of the sources. However, it is difficult
+to understand the global picture from direct reading of over one hundred
+page sources. Then, I started to do some programming. I didn't know
+yet what I was looking for, and I started to work on the project like a kid
+who starts to build a large puzzle.
+</Para>
+
+<Para>
+However, this was exactly the interesting part! It is frustrating to know
+it all from advance - I think that the discovery itself, bit by bit, is the
+key to a true learning and understanding.
+</Para>
+
+<Para>
+Now, in this document, I am trying to present the subject. Even though I
+developed EXT2ED progressively, I now can see the entire subject much
+brighter than I did before, and though I do have the option of presenting it
+only in the "engineer" way. However, I will not do that.
+</Para>
+
+<Para>
+My presentation will be mixed - Sometimes I will present a subject with an
+incremental perspective, and sometimes from a "top down" view. I'll leave
+you to decide if my presentation choice was wise :-)
+</Para>
+
+<Para>
+In addition, you'll notice that the sections tend to get shorter as we get
+closer to the end. The reason is simply that I started to feel that I was
+repeating myself so I decided to present only the new ideas.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Getting started ...</Title>
+
+<Para>
+Getting started is almost always the most difficult task. Once you get
+started, things start "running" ...
+</Para>
+
+<Sect2>
+<Title>Before the actual programming</Title>
+
+<Para>
+From mine talking with Avner, I understood that Linux, like any other Unix
+system, provides accesses to the entire disk as though it were a general
+file - Accessing the device. It is surely a nice idea. Avner suggested two
+ways of action:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Opening the device like a regular file in the user space.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Constructing a device driver which will run in the kernel space and
+provide hooks for the user space program. The advantage is that it
+will be a part of the kernel, and would be able to use the ext2
+kernel functions to do some of the work.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+I chose the first way. I think that the basic reason was simplicity - Learning
+the ext2 filesystem was complicated enough, and adding to it the task of
+learning how to program in the kernel space was too much. I still don't know
+how to program a device driver, and this is perhaps the bad part, but
+concerning the project in a back-perspective, I think that the first way is
+superior to the second; Ironically, because of the very reason I chose it -
+Simplicity. EXT2ED can now run entirely in the user space (which I think is
+a point in favor, because it doesn't require the user to recompile its
+kernel), and the entire hard work is mine, which fitted nicely into the
+learning experience - I didn't use other code to do the job (aside from
+looking at the sources, of-course).
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Jumping into the cold water</Title>
+
+<Para>
+I didn't know almost anything of the structure of the ext2 filesystem.
+Reading the sources was not enough - I needed to experiment. However, a tool
+for experiments in the ext2 filesystem was exactly my project! - Kind of a
+paradox.
+</Para>
+
+<Para>
+I started immediately with constructing a simple <Literal remap="tt">hex editor</Literal> - It would
+open the device as a regular file, provide means of moving inside the
+filesystem with a simple <Literal remap="tt">offset</Literal> method, and just show a
+<Literal remap="tt"> hex dump</Literal> of the contents at this point. Programming this was trivially
+simple of-course. At this point, the user-interface didn't matter to me - I
+wanted a fast way to interact. As a result, I chose a simple command line
+parser. Of course, there where no windows at this point.
+</Para>
+
+<Para>
+A hex editor is nice, but is not enough. It indeed enabled me to see each part
+of the filesystem, but the format of the viewed data was difficult to
+analyze. I wanted to see the data in a more intuitive way.
+</Para>
+
+<Para>
+At this point of time, the most helpful file in the sources was the ext2
+main include file - <Literal remap="tt">/usr/include/linux/ext2&lowbar;fs.h</Literal>. Among its contents
+there were various structures which I assumed they are disk images - Appear
+exactly like that on the disk.
+</Para>
+
+<Para>
+I wanted a <Literal remap="tt">quick</Literal> way to get going. I didn't have the patience to learn
+each of the structures use in the code. Rather, I wanted to see them in action,
+so that I could explore the connections between them - Test my assumptions,
+and reach other assumptions.
+</Para>
+
+<Para>
+So after the <Literal remap="tt">hex editor</Literal>, EXT2ED progressed into a tool which has some
+elements of a compiler. I programmed EXT2ED to <Literal remap="tt">dynamically read the kernel
+ext2 main include file in run time</Literal>, and process the information. The goal
+was to <Literal remap="tt">imply a structure-definition on the current offset at the
+filesystem</Literal>. EXT2ED would then display the structure as a list of its
+variables names and contents, instead of a meaningless hex dump.
+</Para>
+
+<Para>
+The format of the include file is not very complicated - The structures
+are mostly <Literal remap="tt">flat</Literal> - Didn't contain a lot of recursive structure; Only a
+global structure definition, and some variables. There were cases of
+structures inside structures, I treated them in a somewhat non-elegant way - I
+made all the structures flat, and expanded the arrays. As a result, the parser
+was very simple. After all, this was not an exercise in compiling, and I
+wanted to quickly get some results.
+</Para>
+
+<Para>
+To handle the task, I constructed the <Literal remap="tt">struct&lowbar;descriptor</Literal> structure.
+Each <Literal remap="tt">struct&lowbar;descriptor instance</Literal> contained information which is needed
+in order to format a block of data according to the C structure contained in 
+the kernel source. The information contained:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	The descriptor name, used to reference to the structure in EXT2ED.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The name of each variable.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The relative offset of the each variable in the data block.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The length, in bytes, of each variable.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+Since I didn't want to limit the number of structures, I chose a simple
+double linked list to store the information. One variable contained the
+<Literal remap="tt">current structure type</Literal> - A pointer to the relevant
+<Literal remap="tt">struct&lowbar;descriptor</Literal>.
+</Para>
+
+<Para>
+Now EXT2ED contained basically three command line operations:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	setdevice
+
+Used to open a device for reading only. Write access was postponed
+to a very advanced state in the project, simply because I didn't
+know a thing of the filesystem structure, and I believed that
+making actual changes would do nothing but damage :-)
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	setoffset
+
+Used to move in the device.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	settype
+
+Used to imply a structure definition on the current place.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	show
+
+Used to display the data. It displayed the data in a simple hex dump
+if there was no type set, or in a nice formatted way - As a list of
+the variable contents, if there was.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+Command line analyzing was primitive back then - A simple switch, as far as
+I can remember - Nothing alike the current flow control, but it was enough
+at the time.
+</Para>
+
+<Para>
+At the end, I had something to start working with. It knew to format many
+structures - None of which I understood - and provided me, without too much
+work, something to start with.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>Starting to explore</Title>
+
+<Para>
+With the above tool in my pocket, I started to explore the ext2 filesystem
+structure. From the brief reading in Bach's book, I got familiar to some
+basic concepts - The <Literal remap="tt">superblock</Literal>, for example. It seems that the
+superblock is an important part of the filesystem. I decided to start
+exploring with that.
+</Para>
+
+<Para>
+I realized that the superblock should be at a fixed location in the
+filesystem - Probably near the beginning. There can be no other way -
+The kernel should start at some place to find it. A brief looking in
+the kernel sources revealed that the superblock is signed by a special
+signature - A <Literal remap="tt">magic number</Literal> - EXT2&lowbar;SUPER&lowbar;MAGIC (0xEF53 - EF probably
+stands for Extended Filesystem). I quickly found the superblock at the
+fixed offset 1024 in the filesystem - The <Literal remap="tt">s&lowbar;magic</Literal> variable in the
+superblock was set exactly to the above value.
+</Para>
+
+<Para>
+It seems that starting with the <Literal remap="tt">superblock</Literal> was a good bet - Just from
+the list of variables, one can learn a lot. I didn't understand all of them
+at the time, but it seemed that the following keywords were repeating themself
+in various variables:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	block
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	inode
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	group
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+At this point, I started to explore the block groups. I will not detail here
+the technical design of the ext2 filesystem. I have written a special
+article which explains just that, in the "engineering" way. Please refer to it
+if you feel that you are lacking knowledge in the structure of the ext2
+filesystem.
+</Para>
+
+<Para>
+I was exploring the filesystem in this way for some time, along with reading
+the sources. This lead naturally to the next step.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Object specific commands</Title>
+
+<Para>
+What has become clear is that the above way of exploring is not powerful
+enough - I found myself doing various calculations manually in order to pass
+between related structures. I needed to replace some tasks with an automated
+procedure.
+</Para>
+
+<Para>
+In addition, it also became clear that (of-course) each key object in the
+filesystem has its special place in regard to the overall ext2 filesystem
+design, and needs a <Literal remap="tt">fine tuned handling</Literal>. It is at this point that the
+structure definitions <Literal remap="tt">came to life</Literal> - They became <Literal remap="tt">object
+definitions</Literal>, making EXT2ED <Literal remap="tt">object oriented</Literal>.
+</Para>
+
+<Para>
+The actual meaning of the breathtaking words above, is that each structure
+now had a list of <Literal remap="tt">private commands</Literal>, which ended up in
+<Literal remap="tt">calling special fine-tuned C functions</Literal>. This approach was
+found to be very powerful and is <Literal remap="tt">the heart of EXT2ED even now</Literal>.
+</Para>
+
+<Para>
+In order to implement the above concepts, I added the structure
+<Literal remap="tt">struct&lowbar;commands</Literal>. The role of this structure is to group together a
+group of commands, which can be later assigned to a specific type. Each
+structure had:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	A list of command names.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	A list of pointers to functions, which binds each command to its
+special fine-tuned C function.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+In order to relate a list of commands to a type definition, each
+<Literal remap="tt">struct&lowbar;descriptor</Literal> structure (explained earlier) was added a private
+<Literal remap="tt">struct&lowbar;commands</Literal> structure.
+</Para>
+
+<Para>
+Follows the current definitions of <Literal remap="tt">struct&lowbar;descriptor</Literal> and of
+<Literal remap="tt">struct&lowbar;command</Literal>:
+
+<ProgramListing>
+struct struct_descriptor {
+        unsigned long length;
+        unsigned char name [60];
+        unsigned short fields_num;
+        unsigned char field_names [MAX_FIELDS][80];
+        unsigned short field_lengths [MAX_FIELDS];
+        unsigned short field_positions [MAX_FIELDS];
+        struct struct_commands type_commands;
+        struct struct_descriptor *prev,*next;
+};
+
+typedef void (*PF) (char *);
+
+struct struct_commands {
+        int last_command;
+        char *names [MAX_COMMANDS_NUM];
+        char *descriptions [MAX_COMMANDS_NUM];
+        PF callback [MAX_COMMANDS_NUM];
+};
+</ProgramListing>
+
+
+</Para>
+
+</Sect1>
+
+<Sect1 id="flow-control">
+<Title>Program flow control</Title>
+
+<Para>
+Obviously the above approach lead to a major redesign of EXT2ED. The
+main engine of the resulting design is basically the same even now.
+</Para>
+
+<Para>
+I redesigned the program flow control. Up to now, I analyzed the user command
+line with the simple switch method. Now I used the far superior callback
+method.
+</Para>
+
+<Para>
+I divided the available user commands into two groups:
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	General commands.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Type specific commands.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+As a result, at each point in time, the user was able to enter a
+<Literal remap="tt">general command</Literal>, selectable from a list of general commands which was
+always available, or a <Literal remap="tt">type specific command</Literal>, selectable from a list of
+commands which <Literal remap="tt">changed in time</Literal> according to the current type that the
+user was editing. The special <Literal remap="tt">type specific command</Literal> "knew" how to
+handle the object in the best possible way - It was "fine tuned" for the
+object's place in the ext2 filesystem design.
+</Para>
+
+<Para>
+In order to implement the above idea, I constructed a global variable of
+type <Literal remap="tt">struct&lowbar;commands</Literal>, which contained the <Literal remap="tt">general commands</Literal>.
+The <Literal remap="tt">type specific commands</Literal> were accessible through the <Literal remap="tt">struct
+descriptors</Literal>, as explained earlier.
+</Para>
+
+<Para>
+The program flow was now done according to the following algorithm:
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	Ask the user for a command line.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Analyze the user command - Separate it into <Literal remap="tt">command</Literal> and
+<Literal remap="tt">arguments</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Trace the list of known objects to match the command name to a type.
+If the type is found, call the callback function, with the arguments
+as a parameter. Then go back to step (1).
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	If the command is not type specific, try to find it in the general
+commands, and call it if found. Go back to step (1).
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	If the command is not found, issue a short error message, and return
+to step (1).
+</Para>
+</ListItem>
+
+</OrderedList>
+
+Note the <Literal remap="tt">order</Literal> of the above steps. In particular, note that a command
+is first assumed to be a type-specific command and only if this fails, a
+general command is searched. The "<Literal remap="tt">side-effect</Literal>" (main effect, actually)
+is that when we have two commands with the <Literal remap="tt">same name</Literal> - One that is a 
+type specific command, and one that is a general command, the dispatching
+algorithm will call the <Literal remap="tt">type specific command</Literal>. This allows
+<Literal remap="tt">overriding</Literal> of a command to provide <Literal remap="tt">fine-tuned</Literal> operation.
+For example, the <Literal remap="tt">show</Literal> command is overridden nearly everywhere,
+to accommodate for the different ways in which different objects are displayed,
+in order to provide an intuitive fine-tuned display.
+</Para>
+
+<Para>
+The above is done in the <Literal remap="tt">dispatch</Literal> function, in <Literal remap="tt">main.c</Literal>. Since
+it is a very important function in EXT2ED, and it is relatively short, I will
+list it entirely here. Note that a redesign was made since then - Another
+level was added between the two described, but I'll elaborate more on this
+later. However, the basic structure follows the explanation described above.
+
+<ProgramListing>
+int dispatch (char *command_line)
+
+{
+	int i,found=0;
+	char command [80];
+
+	parse_word (command_line,command);
+			
+	if (strcmp (command,"quit")==0) return (1);	
+
+	/* 1. Search for type specific commands FIRST - Allows overriding of a general command */
+
+	if (current_type != NULL)
+		for (i=0;i&#60;=current_type-&#62;type_commands.last_command &#38;&#38; !found;i++) {
+			if (strcmp (command,current_type-&#62;type_commands.names [i])==0) {
+				(*current_type-&#62;type_commands.callback [i]) (command_line);
+				found=1;
+			}
+		}
+
+	/* 2. Now search for ext2 filesystem general commands */
+
+	if (!found)
+		for (i=0;i&#60;=ext2_commands.last_command &#38;&#38; !found;i++) {
+			if (strcmp (command,ext2_commands.names [i])==0) {
+				(*ext2_commands.callback [i]) (command_line);
+				found=1;
+			}
+		}
+
+	
+	/* 3. If not found, search the general commands */
+	
+	if (!found)
+		for (i=0;i&#60;=general_commands.last_command &#38;&#38; !found;i++) {
+			if (strcmp (command,general_commands.names [i])==0) {
+				(*general_commands.callback [i]) (command_line);
+				found=1;
+			}
+		}
+
+	if (!found) {
+		wprintw (command_win,"Error: Unknown command\n");
+		refresh_command_win ();
+	}
+	
+	return (0);
+}
+</ProgramListing>
+
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Source files in EXT2ED</Title>
+
+<Para>
+The project was getting large enough to be splitted into several source
+files. I splitted the source as much as I could into self-contained
+source files. The source files consist of the following blocks:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Main include file - ext2ed.h</Literal>
+
+This file contains the definitions of the various structures,
+variables and functions used in EXT2ED. It is included by all source
+files in EXT2ED.
+
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Main block - main.c</Literal>
+
+<Literal remap="tt">main.c</Literal> handles the upper level of the program flow control.
+It contains the <Literal remap="tt">parser</Literal> and the <Literal remap="tt">dispatcher</Literal>. Its task is
+to ask the user for a required action, and to pass control to other
+lower level functions in order to do the actual job.
+
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Initialization - init.c</Literal>
+
+The init source is responsible for the various initialization
+actions which need to be done through the program. For example,
+auto detection of an ext2 filesystem when selecting a device and
+initialization of the filesystem-specific structures described
+earlier.
+
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Disk activity - disk.c</Literal>
+
+<Literal remap="tt">disk.c</Literal> is handles the lower level interaction with the
+device. All disk activity is passed through this file - The various
+functions through the source code request disk actions from the
+functions in this file. In this way, for example, we can easily block
+the write access to the device.
+
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Display output activity - win.c</Literal>
+	
+In a similar way to <Literal remap="tt">disk.c</Literal>, the user-interface functions and
+most of the interaction with the <Literal remap="tt">ncurses library</Literal> are done
+here. Nothing will be actually written to a specific window without
+calling a function from this file.
+
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Commands available through dispatching - *&lowbar;com.c </Literal>
+
+The above file name is generic - Each file which ends with
+<Literal remap="tt">&lowbar;com.c</Literal> contains a group of related commands which can be
+called through <Literal remap="tt">the dispatching function</Literal>.
+
+Each object typically has its own file. A separate file is also
+available for the general commands.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+The entire list of source files available at this time is:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	blockbitmap&lowbar;com.c
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	dir&lowbar;com.c
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	disk.c
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	ext2&lowbar;com.c
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	file&lowbar;com.c
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	general&lowbar;com.c
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	group&lowbar;com.c
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	init.c
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	inode&lowbar;com.c
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	inodebitmap&lowbar;com.c
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	main.c
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	super&lowbar;com.c
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	win.c
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>User interface</Title>
+
+<Para>
+The user interface is text-based only and is based on the following
+libraries:
+</Para>
+
+<Para>
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	The <Literal remap="tt">ncurses</Literal> library, developed by <Literal remap="tt">Zeyd Ben-Halim</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The <Literal remap="tt">GNU readline</Literal> library.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+The user interaction is command line based - The user enters a command
+line, which consists of a <Literal remap="tt">command</Literal> and of <Literal remap="tt">arguments</Literal>. This fits
+nicely with the program flow control described earlier - The <Literal remap="tt">command</Literal>
+is used by <Literal remap="tt">dispatch</Literal> to select the right function, and the
+<Literal remap="tt">arguments</Literal> are interpreted by the function itself.
+</Para>
+
+<Sect2>
+<Title>The ncurses library</Title>
+
+<Para>
+The <Literal remap="tt">ncurses</Literal> library enables me to divide the screen into "windows".
+The main advantage is that I treat the "window" in a virtual way, asking
+the ncurses library to "write to a window". However, the ncurses
+library internally buffers the requests, and nothing is actually passed to the
+terminal until an explicit refresh is requested. When the refresh request is
+made, ncurses compares the current terminal state (as known in the last time
+that a refresh was done) with the new to be shown state, and passes to the
+terminal the minimal information required to update the display. As a
+result, the display output is optimized behind the scenes by the
+<Literal remap="tt">ncurses</Literal> library, while I can still treat it in a virtual way.
+</Para>
+
+<Para>
+There are two basic concepts in the <Literal remap="tt">ncurses</Literal> library:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	A window.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	A pad.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+A window can be no bigger than the actual terminal size. A pad, however, is
+not limited in its size.
+</Para>
+
+<Para>
+The user screen is divided by EXT2ED into three windows and one pad:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Title window.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Status window.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Main display pad.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Command window.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+The <Literal remap="tt">title window</Literal> is static - It just displays the current version
+of EXT2ED.
+</Para>
+
+<Para>
+The user interaction is done in the <Literal remap="tt">command window</Literal>. The user enters a
+<Literal remap="tt">command line</Literal>, feedback is usually displayed there, and then relevant
+data is usually displayed in the main display and in the status window.
+</Para>
+
+<Para>
+The <Literal remap="tt">main display</Literal> is using a <Literal remap="tt">pad</Literal> instead of a window because
+the amount of information which is written to it is not known in advance.
+Therefor, the user treats the main display as a "window" into a bigger
+display and can <Literal remap="tt">scroll vertically</Literal> using the <Literal remap="tt">pgdn</Literal> and <Literal remap="tt">pgup</Literal>
+commands. Although the <Literal remap="tt">pad</Literal> mechanism enables me to use horizontal
+scrolling, I have not utilized this.
+</Para>
+
+<Para>
+When I need to show something to the user, I use the ncurses <Literal remap="tt">wprintw</Literal>
+command. Then an explicit refresh command is required. As explained before,
+the refresh commands is piped through <Literal remap="tt">win.c</Literal>. For example, to update
+the command window, <Literal remap="tt">refresh&lowbar;command&lowbar;win ()</Literal> is used.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The readline library</Title>
+
+<Para>
+Avner suggested me to integrate the GNU <Literal remap="tt">readline</Literal> library in my project.
+The <Literal remap="tt">readline</Literal> library is designed specifically for programs which use
+command line interface. It provides a nice package of <Literal remap="tt">command line editing
+tools</Literal> - Inserting, deleting words, and the whole package of editing tools
+which are normally available in the <Literal remap="tt">bash</Literal> shell (Refer to the readline
+documentation for details). In addition, I utilized the <Literal remap="tt">history</Literal>
+feature of the readline library - The entered commands are saved in a
+<Literal remap="tt">command history</Literal>, and can be called later by whatever means that the
+readline package provides. Command completion is also supported - When the
+user enters a partial command name, EXT2ED will provide the readline library
+with the possible completions.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>Possible support of other filesystems</Title>
+
+<Para>
+The entire ext2 layer is provided through specific objects. Given another
+set of objects, support of other filesystem can be provided using the same
+dispatching mechanism. In order to prepare the surface for this option, I
+added yet another layer to the two-layer structure presented earlier. EXT2ED
+commands now consist of three layers:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	The general commands.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The ext2 general commands.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The ext2 object specific commands.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+The general commands are provided by the <Literal remap="tt">general&lowbar;com.c</Literal> source file,
+and are always available. The two other levels are not present when EXT2ED
+loads - They are dynamically added by <Literal remap="tt">init.c</Literal> when EXT2ED detects an
+ext2 filesystem on the device.
+</Para>
+
+<Para>
+The abstraction levels presented above helps to extend EXT2ED to fully
+support a new filesystem, with its own specific type commands. 
+</Para>
+
+<Para>
+Even without any source code modification, the user is free to add structure
+definitions in a separate file (specified in the configuration file), 
+which will be added to the list of available objects. The added objects will
+consist only of variables, of-course, and will be used through the more
+primitive <Literal remap="tt">setoffset</Literal> and <Literal remap="tt">settype</Literal> commands.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>On the implementation of the various commands</Title>
+
+<Para>
+This section points out some typical programming style that I used in many
+places at the code.
+</Para>
+
+<Sect2>
+<Title>The explicit use of the dispatch function</Title>
+
+<Para>
+The various commands are reached by the user through the <Literal remap="tt">dispatch</Literal>
+function. This is not surprising. The fact that can be surprising, at least in
+a first look, is that <Literal remap="tt">you'll find the dispatch call in many of my
+own functions!</Literal>.
+</Para>
+
+<Para>
+I am in fact using my own implemented functions to construct higher
+level operations. I am heavily using the fact that the dispatching mechanism
+is object oriented ant that the <Literal remap="tt">overriding</Literal> principle takes place and
+selects the proper function to call when several commands with the same name
+are accessible.
+</Para>
+
+<Para>
+Sometimes, however, I call the explicit command directly, without passing
+through <Literal remap="tt">dispatch</Literal>. This is typically done when I want to bypass the
+<Literal remap="tt">overriding</Literal> effect.
+</Para>
+
+<Para>
+
+This is used, for example, in the interaction between the global cd command
+and the dir object specific cd command. You will see there that in order
+to implement the "entire" cd command, the type specific cd command uses both
+a dispatching mechanism to call itself recursively if a relative path is
+used, or a direct call of the general cd handling function if an explicit path
+is used.
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Passing information between handling functions</Title>
+
+<Para>
+Typically, every source code file which handles one object type has a global
+structure specifically designed for it which is used by most of the
+functions in that file. This is used to pass information between the various
+functions there, and to physically provide the link to other related
+objects, typically for initialization use.
+</Para>
+
+<Para>
+
+For example, in order to edit a file, information about the
+inode is needed - The file command is available only when editing an
+inode. When the file command is issued, the handling function (found,
+according to the source division outlined above, in inode_com.c) will
+store the necessary information about the inode in a specific structure
+of type struct_file_info which will be available for use by the file_com.c
+functions. Only then it will set the type to file. This is also the reason
+that a direct asynchronic set of the object type to a file through a settype
+command will fail - The above data structure will not be initialized
+properly because the user never was at the inode of the file. 
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>A very simplified overview of a typical command handling function</Title>
+
+<Para>
+This is a very simplified overview. Detailed information will follow
+where appropriate.
+</Para>
+
+<Sect3>
+<Title>The prototype of a typical handling function</Title>
+
+<Para>
+
+<OrderedList>
+<ListItem>
+
+<Para>
+ 	I chose a unified <Literal remap="tt">naming convention</Literal> for the various object
+specific commands. It is perhaps best showed with an example:
+
+The prototype of the handling function of the command <Literal remap="tt">next</Literal> of
+the type <Literal remap="tt">file</Literal> is:
+
+<Screen>
+		extern void type_file___next (char *command_line);
+	
+</Screen>
+
+
+For other types and commands, the words <Literal remap="tt">file</Literal> and <Literal remap="tt">next</Literal>
+should 	be replaced accordingly.
+
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The ext2 general commands syntax is similar. For example, the ext2
+general command <Literal remap="tt">super</Literal> results in calling:
+
+<Screen>
+		extern void type_ext2___super (char *command_line);
+	
+</Screen>
+
+Those functions are available in <Literal remap="tt">ext2&lowbar;com.c</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The general commands syntax is even simpler - The name of the
+handling function is exactly the name of the commands. Those
+functions are available in <Literal remap="tt">general&lowbar;com.c</Literal>.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+</Para>
+
+</Sect3>
+
+<Sect3>
+<Title>"Typical" algorithm</Title>
+
+<Para>
+This section can't of-course provide meaningful information - Each
+command is handled differently, but the following frame is typical:
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	Parse command line arguments and analyze them. Return with an error
+message if the syntax is wrong.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	"Act accordingly", perhaps making use of the global variable available
+to this type.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Use some <Literal remap="tt">dispatch / direct </Literal> calls in order to pass control to
+other lower-level user commands.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Sometimes <Literal remap="tt">dispatch</Literal> to the object's <Literal remap="tt">show</Literal> command to
+display the resulting data to the user.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+I told you it is meaningless :-)
+</Para>
+
+</Sect3>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>Initialization overview</Title>
+
+<Para>
+In this section I will discuss some aspects of the various initialization
+routines available in the source file <Literal remap="tt">init.c</Literal>.
+</Para>
+
+<Sect2>
+<Title>Upon startup</Title>
+
+<Para>
+Follows the function <Literal remap="tt">main</Literal>, appearing of-course in <Literal remap="tt">main.c</Literal>:
+
+
+<ProgramListing>
+int main (void)
+
+{
+	if (!init ()) return (0);	/* Perform some initial initialization */
+					/* Quit if failed */
+
+	parser ();			/* Get and parse user commands */
+	
+	prepare_to_close ();		/* Do some cleanup */
+	printf ("Quitting ...\n");
+	return (1);			/* And quit */
+}
+</ProgramListing>
+
+</Para>
+
+<Para>
+The two initialization functions, which are called by <Literal remap="tt">main</Literal>, are:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	init
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	prepare&lowbar;to&lowbar;close
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Sect3>
+<Title>The init function</Title>
+
+<Para>
+<Literal remap="tt">init</Literal> is called from <Literal remap="tt">main</Literal> upon startup. It initializes the
+following tasks / subsystems:
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	Processing of the <Literal remap="tt">user configuration file</Literal>, by using the
+<Literal remap="tt">process&lowbar;configuration&lowbar;file</Literal> function. Failing to complete the
+configuration file processing is considered a <Literal remap="tt">fatal error</Literal>,
+and EXT2ED is aborted. I did it this way because the configuration
+file has some sensitive user options like write access behavior, and
+I wanted to be sure that the user is aware of them.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Registration of the <Literal remap="tt">general commands</Literal> through the use of
+the <Literal remap="tt">add&lowbar;general&lowbar;commands</Literal> function.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Reset of the object memory rotating lifo structure.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Reset of the device parameters and of the current type.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Initialization of the windows subsystem - The interface between the
+ncurses library and EXT2ED, through the use of the <Literal remap="tt">init&lowbar;windows</Literal>
+function, available in <Literal remap="tt">win.c</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Initialization of the interface between the readline library and
+EXT2ED, through <Literal remap="tt">init&lowbar;readline</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Initialization of the <Literal remap="tt">signals</Literal> subsystem, through
+<Literal remap="tt">init&lowbar;signals</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Disabling write access. Write access needs to be explicitly enabled
+using a user command, to prevent accidental user mistakes.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+When <Literal remap="tt">init</Literal> is finished, it dispatches the <Literal remap="tt">help</Literal> command in order
+to show the available commands to the user. Note that the ext2 layer is still
+not added; It will be added if and when EXT2ED will detect an ext2
+filesystem on a device.
+</Para>
+
+</Sect3>
+
+<Sect3>
+<Title>The prepare&lowbar;to&lowbar;close function</Title>
+
+<Para>
+The <Literal remap="tt">prepare&lowbar;to&lowbar;close</Literal> function reverses some of the actions done
+earlier in EXT2ED and freeing the dynamically allocated memory.
+Specifically, it:
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	Closes the open device, if any.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Removes the first level - Removing the general commands, through
+the use of <Literal remap="tt">free&lowbar;user&lowbar;commands</Literal>, with a pointer to the
+general&lowbar;commands structure as a parameter.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Removes of the second level - Removing the ext2 ext2 general
+commands, in much the same way.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Removes of the third level - Removing the objects and the object
+specific commands, by using <Literal remap="tt">free&lowbar;struct&lowbar;descriptors</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Closes the window subsystem, and deattaches EXT2ED from the ncurses
+library, through the use of the <Literal remap="tt">close&lowbar;windows</Literal> function,
+available in <Literal remap="tt">win.c</Literal>.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+</Para>
+
+</Sect3>
+
+</Sect2>
+
+<Sect2>
+<Title>Registration of commands</Title>
+
+<Para>
+Addition of a user command is done through the <Literal remap="tt">add&lowbar;user&lowbar;command</Literal>
+function. The prototype is:
+
+<Screen>
+void add_user_command (struct struct_commands *ptr,char *name,char
+*description,PF callback);
+</Screen>
+
+The function receives a pointer to a structure of type
+<Literal remap="tt">struct&lowbar;commands</Literal>, a desired name for the command which will be used by
+the user to identify the command, a short description which is utilized by the
+<Literal remap="tt">help</Literal> subsystem, and a pointer to a C function which will be called if
+<Literal remap="tt">dispatch</Literal> decides that this command was requested.
+</Para>
+
+<Para>
+The <Literal remap="tt">add&lowbar;user&lowbar;command</Literal> is a <Literal remap="tt">low level function</Literal> used in the three
+levels to add user commands. For example, addition of the <Literal remap="tt">ext2
+general commands is done by:</Literal>
+
+<ProgramListing>
+void add_ext2_general_commands (void)
+
+{
+	add_user_command (&amp;ext2_commands,"super","Moves to the superblock of the filesystem",type_ext2___super);
+	add_user_command (&amp;ext2_commands,"group","Moves to the first group descriptor",type_ext2___group);
+	add_user_command (&amp;ext2_commands,"cd","Moves to the directory specified",type_ext2___cd);
+}
+</ProgramListing>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Registration of objects</Title>
+
+<Para>
+Registration of objects is based, as explained earlier, on the "compilation"
+of an external user file, which has a syntax similar to the C language
+<Literal remap="tt">struct</Literal> keyword. The primitive parser I have implemented detects the
+definition of structures, and calls some lower level functions to actually
+register the new detected object. The parser's prototype is:
+
+<Screen>
+int set_struct_descriptors (char *file_name)
+</Screen>
+
+It opens the given file name, and calls, when appropriate:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	add&lowbar;new&lowbar;descriptor
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	add&lowbar;new&lowbar;variable
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+<Literal remap="tt">add&lowbar;new&lowbar;descriptor</Literal> is a low level function which adds a new descriptor
+to the doubly linked list of the available objects. It will then call
+<Literal remap="tt">fill&lowbar;type&lowbar;commands</Literal>, which will add specific commands to the object,
+if the object is known.
+</Para>
+
+<Para>
+<Literal remap="tt">add&lowbar;new&lowbar;variable</Literal> will add a new variable of the requested length to the
+specified descriptor.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Initialization upon specification of a device</Title>
+
+<Para>
+When the general command <Literal remap="tt">setdevice</Literal> is used to open a device, some
+initialization sequence takes place, which is intended to determine two
+factors:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Are we dealing with an ext2 filesystem ?
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	What are the basic filesystem parameters, such as its total size and
+its block size ?
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+This questions are answered by the <Literal remap="tt">set&lowbar;file&lowbar;system&lowbar;info</Literal>, possibly
+using some <Literal remap="tt">help from the user</Literal>, through the configuration file.
+The answers are placed in the <Literal remap="tt">file&lowbar;system&lowbar;info</Literal> structure, which is of
+type <Literal remap="tt">struct&lowbar;file&lowbar;system&lowbar;info</Literal>:
+
+<ProgramListing>
+struct struct_file_system_info {
+	unsigned long file_system_size;
+	unsigned long super_block_offset;
+	unsigned long first_group_desc_offset;
+	unsigned long groups_count;
+	unsigned long inodes_per_block;
+	unsigned long blocks_per_group;		/* The name is misleading; beware */
+	unsigned long no_blocks_in_group;
+	unsigned short block_size;
+	struct ext2_super_block super_block;
+};
+</ProgramListing>
+
+</Para>
+
+<Para>
+Autodetection of an ext2 filesystem is usually recommended. However, on a damaged
+filesystem I can't assure a success. That's were the user comes in - He can
+<Literal remap="tt">override</Literal> the auto detection procedure and force an ext2 filesystem, by
+selecting the proper options in the configuration file.
+</Para>
+
+<Para>
+If auto detection succeeds, the second question above is automatically
+answered - I get all the information I need from the filesystem itself. In
+any case, default parameters can be supplied in the configuration file and
+the user can select the required behavior.
+</Para>
+
+<Para>
+If we decide to treat the filesystem as an ext2 filesystem, <Literal remap="tt">registration of
+the ext2 specific objects</Literal> is done at this point, by calling the
+<Literal remap="tt">set&lowbar;struct&lowbar;descriptors</Literal> outlined earlier, with the name of the file
+which describes the ext2 objects, and is basically based on the ext2 sources
+main include file. At this point, EXT2ED can be fully used by the user.
+</Para>
+
+<Para>
+If we do not register the ext2 specific objects, the user can still provide
+object definitions in a separate file, and will be able to use EXT2ED in a
+<Literal remap="tt">limited form</Literal>, but more sophisticated than a simple hex editor.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>main.c</Title>
+
+<Para>
+As described earlier, <Literal remap="tt">main.c</Literal> is used as a front-head to the entire
+program. <Literal remap="tt">main.c</Literal> contains the following elements:
+</Para>
+
+<Sect2>
+<Title>The main routine</Title>
+
+<Para>
+The <Literal remap="tt">main</Literal> routine was displayed above. Its task is to pass control to
+the initialization routines and to the parser.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The parser</Title>
+
+<Para>
+The parser consists of the following functions:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	The <Literal remap="tt">parser</Literal> function, which reads the command line from the
+user and saves it in readline's history buffer and in the internal
+last-command buffer.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The <Literal remap="tt">parse&lowbar;word</Literal> function, which receives a string and parses
+the first word from it, ignoring whitespaces, and returns a pointer
+to the rest of the string.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The <Literal remap="tt">complete&lowbar;command</Literal> function, which is used by the readline
+library for command completion. It scans the available commands at
+this point and determines the possible completions.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The dispatcher</Title>
+
+<Para>
+The dispatcher was already explained in the flow control section - section
+<XRef LinkEnd="flow-control">. Its task is to pass control to the proper command
+handling function, based on the command line's command.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The self-sanity control</Title>
+
+<Para>
+This is not fully implemented.
+</Para>
+
+<Para>
+The general idea was to provide a control system which will supervise the
+internal work of EXT2ED. Since I am pretty sure that bugs exist, I have
+double checked myself in a few instances, and issued an <Literal remap="tt">internal
+error</Literal> warning if I reached the conclusion that something is not logical.
+The internal error is reported by the function <Literal remap="tt">internal&lowbar;error</Literal>,
+available in <Literal remap="tt">main.c</Literal>. 
+</Para>
+
+<Para>
+The self sanity check is compiled only if the compile time option
+<Literal remap="tt">DEBUG</Literal> is selected.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The windows interface</Title>
+
+<Para>
+Screen handling and interfacing to the <Literal remap="tt">ncurses</Literal> library is done in
+<Literal remap="tt">win.c</Literal>.
+</Para>
+
+<Sect2>
+<Title>Initialization</Title>
+
+<Para>
+Opening of the windows is done in <Literal remap="tt">init&lowbar;windows</Literal>. In
+<Literal remap="tt">close&lowbar;windows</Literal>, we just close our windows. The various window lengths
+with an exception to the <Literal remap="tt">show pad</Literal> are defined in the main header file.
+The rest of the display will be used by the <Literal remap="tt">show pad</Literal>.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Display output</Title>
+
+<Para>
+Each actual refreshing of the terminal monitor is done by using the
+appropriate refresh function from this file: <Literal remap="tt">refresh&lowbar;title&lowbar;win</Literal>,
+<Literal remap="tt">refresh&lowbar;show&lowbar;win</Literal>, <Literal remap="tt">refresh&lowbar;show&lowbar;pad</Literal> and
+<Literal remap="tt">refresh&lowbar;command&lowbar;win</Literal>.
+</Para>
+
+<Para>
+With the exception of the <Literal remap="tt">show pad</Literal>, each function simply calls the
+<Literal remap="tt">ncurses refresh command</Literal>. In order to provide to <Literal remap="tt">scrolling</Literal> in
+the <Literal remap="tt">show pad</Literal>, some information about its status is constantly updated
+by the various functions which display output in it. <Literal remap="tt">refresh&lowbar;show&lowbar;pad</Literal>
+passes this information to <Literal remap="tt">ncurses</Literal> so that the correct part of the pad
+is actually copied to the display.
+</Para>
+
+<Para>
+The above information is saved in a global variable of type <Literal remap="tt">struct
+struct&lowbar;pad&lowbar;info</Literal>:
+</Para>
+
+<Para>
+
+<ProgramListing>
+struct struct_pad_info {
+	int display_lines,display_cols;
+	int line,col;
+	int max_line,max_col;
+	int disable_output;
+};
+</ProgramListing>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Screen redraw</Title>
+
+<Para>
+The <Literal remap="tt">redraw&lowbar;all</Literal> function will just reopen the windows. This action is
+necessary if the display gets garbled from some reason.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The disk interface</Title>
+
+<Para>
+All the disk activity with regard to the filesystem passes through the file
+<Literal remap="tt">disk.c</Literal>. This is done that way to provide additional levels of safety
+concerning the disk access. This way, global decisions considering the disk
+can be easily accomplished. The benefits of this isolation will become even
+clearer in the next sections.
+</Para>
+
+<Sect2>
+<Title>Low level functions</Title>
+
+<Para>
+Read requests are ultimately handled by <Literal remap="tt">low&lowbar;read</Literal> and write requests
+are handled by <Literal remap="tt">low&lowbar;write</Literal>. They just receive the length of the data
+block, the offset in the filesystem and a pointer to the buffer and pass the
+request to the <Literal remap="tt">fread</Literal> or <Literal remap="tt">fwrite</Literal> standard library functions.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Mounted filesystems</Title>
+
+<Para>
+EXT2ED design assumes that the edited filesystem is not mounted. Even if
+a <Literal remap="tt">reasonably simple</Literal> way to handle mounted filesystems exists, it is
+probably <Literal remap="tt">too complicated</Literal> :-)
+</Para>
+
+<Para>
+Write access to a mounted filesystem will be denied. Read access can be
+allowed by using a configuration file option. The mount status is determined
+by reading the file /etc/mtab.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Write access</Title>
+
+<Para>
+Write access is the most sensitive part in the program. This program is
+intended for <Literal remap="tt">editing filesystems</Literal>. It is obvious that a small mistake
+in this regard can make the filesystem not usable anymore.
+</Para>
+
+<Para>
+The following safety measures are added, of-course, to the general Unix
+permission protection - The user can always disable write access on the
+device file itself.
+</Para>
+
+<Para>
+Considering the user, the following safety measures were taken:
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	The filesystem is <Literal remap="tt">never</Literal> opened with write-access enables.
+Rather, the user must explicitly request to enable write-access.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The user can <Literal remap="tt">disable</Literal> write access entirely by using a
+<Literal remap="tt">configuration file option</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Changes are never done automatically - Whenever the user makes
+changes, they are done in memory. An explicit <Literal remap="tt">writedata</Literal>
+command should be issued to make the changes active in the disk.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+Considering myself, I tried to protect against my bugs by:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	Opening the device in read-only mode until a write request is
+issued by the user.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Limiting <Literal remap="tt">actual</Literal> filesystem access to two functions only -
+<Literal remap="tt">low&lowbar;read</Literal> for reading, and <Literal remap="tt">low&lowbar;write</Literal> for writing. Those
+functions were programmed carefully, and I added the self
+sanity checks there. In addition, this is the only place in which I
+need to check the user options described above - There can be no
+place in which I can "forget" to check them.
+
+Note that The disabling of write-access through the configuration file
+is double checked here only as a <Literal remap="tt">self-sanity</Literal> check - If
+<Literal remap="tt">DEBUG</Literal> is selected, since write enable should have been refused
+and write-access is always disabled at startup, hence finding
+<Literal remap="tt">here</Literal> that the user has write access disabled through the
+configuration file clearly indicates that I have a bug somewhere.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+The following safety measure can provide protection against <Literal remap="tt">both</Literal> user
+mistakes and my own bugs:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	I added a <Literal remap="tt">logging option</Literal>, which logs every actual write
+access to the disk in the lowest level - In <Literal remap="tt">low&lowbar;write</Literal> itself.
+
+The logging has nothing to do with the current type and the various
+other higher level operations of EXT2ED - It is simply a hex dump of
+the contents which will be overwritten; Both the original contents
+and the new written data.
+
+In that case, even if the user makes a 	mistake, the original data
+can be retrieved.
+
+Even If I have a bug somewhere which causes incorrect data to be
+written to the disk, the logging option will still log exactly the
+original contents at the place were data was incorrectly overwritten.
+(This assumes, of-course, that <Literal remap="tt">low-write</Literal> and the <Literal remap="tt">logging
+itself</Literal> work correctly. I have done my best to verify that this is
+indeed the case).
+
+The <Literal remap="tt">logging</Literal> option is implemented in the <Literal remap="tt">log&lowbar;changes</Literal>
+function.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Reading / Writing objects</Title>
+
+<Para>
+Usually <Literal remap="tt">(not always)</Literal>, the current object data is available in the
+global variable <Literal remap="tt">type&lowbar;data</Literal>, which is of the type:
+
+<ProgramListing>
+struct struct_type_data {
+	long offset_in_block;
+
+	union union_type_data {
+		char buffer [EXT2_MAX_BLOCK_SIZE];
+		struct ext2_acl_header t_ext2_acl_header;
+		struct ext2_acl_entry t_ext2_acl_entry;
+		struct ext2_old_group_desc t_ext2_old_group_desc;
+		struct ext2_group_desc t_ext2_group_desc;
+		struct ext2_inode t_ext2_inode;
+		struct ext2_super_block t_ext2_super_block;
+		struct ext2_dir_entry t_ext2_dir_entry;
+	} u;
+};
+</ProgramListing>
+
+The above union enables me, in the program, to treat the data as raw data or
+as a meaningful filesystem object.
+</Para>
+
+<Para>
+The reading and writing, if done to this global variable, are done through
+the functions <Literal remap="tt">load&lowbar;type&lowbar;data</Literal> and <Literal remap="tt">write&lowbar;type&lowbar;data</Literal>, available in
+<Literal remap="tt">disk.c</Literal>.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The general commands</Title>
+
+<Para>
+The <Literal remap="tt">general commands</Literal> are handled in the file <Literal remap="tt">general&lowbar;com.c</Literal>.
+</Para>
+
+<Sect2>
+<Title>The help system</Title>
+
+<Para>
+The help command is handled by the function <Literal remap="tt">help</Literal>. The algorithm is as
+follows:
+</Para>
+
+<Para>
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	Check the command line arguments. If there is an argument, pass
+control to the <Literal remap="tt">detailed&lowbar;help</Literal> function, in order to provide
+help on the specific command.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	If general help was requested, display a list of the available
+commands at this point. The three levels are displayed in reverse
+order - First the commands which are specific to the current type
+(If a current type is defined), then the ext2 general commands (If
+we decided that the filesystem should be treated like an ext2
+filesystem), then the general commands.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Display information about EXT2ED - Current version, general
+information about the project, etc.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The setdevice command</Title>
+
+<Para>
+The <Literal remap="tt">setdevice</Literal> commands result in calling the <Literal remap="tt">set&lowbar;device</Literal>
+function. The algorithm is:
+</Para>
+
+<Para>
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	Parse the command line argument. If it isn't available report the
+error and return.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Close the current open device, if there is one.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Open the new device in read-only mode. Update the global variables
+<Literal remap="tt">device&lowbar;name</Literal> and <Literal remap="tt">device&lowbar;handle</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Disable write access.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Empty the object memory.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Unregister the ext2 general commands, using
+<Literal remap="tt">free&lowbar;user&lowbar;commands</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Unregister the current objects, using <Literal remap="tt">free&lowbar;struct&lowbar;descriptors</Literal>
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Call <Literal remap="tt">set&lowbar;file&lowbar;system&lowbar;info</Literal> to auto-detect an ext2 filesystem
+and set the basic filesystem values.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Add the <Literal remap="tt">alternate descriptors</Literal>, supplied by the user.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Set the device offset to the filesystem start by dispatching
+<Literal remap="tt">setoffset 0</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	Show the new available commands by dispatching the <Literal remap="tt">help</Literal>
+command.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Basic maneuvering</Title>
+
+<Para>
+Basic maneuvering is done using the <Literal remap="tt">setoffset</Literal> and the <Literal remap="tt">settype</Literal>
+user commands.
+</Para>
+
+<Para>
+<Literal remap="tt">set&lowbar;offset</Literal> accepts some alternative forms of specifying the new
+offset. They all ultimately lead to changing the <Literal remap="tt">device&lowbar;offset</Literal>
+global variable and seeking to the new position. <Literal remap="tt">set&lowbar;offset</Literal> also
+calls <Literal remap="tt">load&lowbar;type&lowbar;data</Literal> to read a block ahead of the new position into
+the <Literal remap="tt">type&lowbar;data</Literal> global variable.
+</Para>
+
+<Para>
+<Literal remap="tt">set&lowbar;type</Literal> will point the global variable <Literal remap="tt">current&lowbar;type</Literal> to the
+correct entry in the double linked list of the known objects. If the
+requested type is <Literal remap="tt">hex</Literal> or <Literal remap="tt">none</Literal>, <Literal remap="tt">current&lowbar;type</Literal> will be
+initialized to <Literal remap="tt">NULL</Literal>. <Literal remap="tt">set&lowbar;type</Literal> will also dispatch <Literal remap="tt">show</Literal>,
+so that the object data will be re-formatted in the new format.
+</Para>
+
+<Para>
+When editing an ext2 filesystem, it is not intended that those commands will
+be used directly, and it is usually not required. My implementation of the
+ext2 layer, on the other hand, uses this lower level commands on countless
+occasions.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The display functions</Title>
+
+<Para>
+The general command version of <Literal remap="tt">show</Literal> is handled by the <Literal remap="tt">show</Literal>
+function. This command is overridden by various objects to provide a display
+which is better suited to the object.
+</Para>
+
+<Para>
+The general show command will format the data in <Literal remap="tt">type&lowbar;data</Literal> according
+to the structure definition of the current type and show it on the <Literal remap="tt">show
+pad</Literal>. If there is no current type, the data will be shown as a simple hex
+dump; Otherwise, the list of variables, along with their values will be shown.
+</Para>
+
+<Para>
+A call to <Literal remap="tt">show&lowbar;info</Literal> is also made - <Literal remap="tt">show&lowbar;info</Literal> will provide
+<Literal remap="tt">general statistics</Literal> on the <Literal remap="tt">show&lowbar;window</Literal>, such as the current
+block, current type, current offset and current page.
+</Para>
+
+<Para>
+The <Literal remap="tt">pgup</Literal> and <Literal remap="tt">pgdn</Literal> general commands just update the
+<Literal remap="tt">show&lowbar;pad&lowbar;info</Literal> global variable - We just increment
+<Literal remap="tt">show&lowbar;pad&lowbar;info.line</Literal> with the number of lines in the screen -
+<Literal remap="tt">show&lowbar;pad&lowbar;info.display&lowbar;lines</Literal>, which was initialized in
+<Literal remap="tt">init&lowbar;windows</Literal>.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Changing data</Title>
+
+<Para>
+Data change is done in memory only. An update to the disk if followed by an
+explicit <Literal remap="tt">writedata</Literal> command to the disk. The <Literal remap="tt">write&lowbar;data</Literal>
+function simple calls the <Literal remap="tt">write&lowbar;type&lowbar;data</Literal> function, outlined earlier.
+</Para>
+
+<Para>
+The <Literal remap="tt">set</Literal> command is used for changing the data.
+</Para>
+
+<Para>
+If there is no current type, control is passed to the <Literal remap="tt">hex&lowbar;set</Literal> function,
+which treats the data as a block of bytes and uses the
+<Literal remap="tt">type&lowbar;data.offset&lowbar;in&lowbar;block</Literal> variable to write the new text or hex string
+to the correct place in the block.
+</Para>
+
+<Para>
+If a current type is defined, the requested variable is searched in the
+current object, and the desired new valued is entered.
+</Para>
+
+<Para>
+The <Literal remap="tt">enablewrite</Literal> commands just sets the global variable
+<Literal remap="tt">write&lowbar;access</Literal> to <Literal remap="tt">1</Literal> and re-opens the filesystem in read-write
+mode, if possible.
+</Para>
+
+<Para>
+If the current type is NULL, a hex-mode is assumed - The <Literal remap="tt">next</Literal> and
+<Literal remap="tt">prev</Literal> commands will just update <Literal remap="tt">type&lowbar;data.offset&lowbar;in&lowbar;block</Literal>.
+</Para>
+
+<Para>
+If the current type is not NULL, the The <Literal remap="tt">next</Literal> and <Literal remap="tt">prev</Literal> command
+are usually overridden anyway. If they are not overridden, it will be assumed
+that the user is editing an array of such objects, and they will just pass
+to the next / prev element by dispatching to <Literal remap="tt">setoffset</Literal> using the
+<Literal remap="tt">setoffset type + / - X</Literal> syntax.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The ext2 general commands</Title>
+
+<Para>
+The ext2 general commands are contained in the <Literal remap="tt">ext2&lowbar;general&lowbar;commands</Literal>
+global variable (which is of type <Literal remap="tt">struct struct&lowbar;commands</Literal>).
+</Para>
+
+<Para>
+The handling functions are implemented in the source file <Literal remap="tt">ext2&lowbar;com.c</Literal>.
+I will include the entire source code since it is relatively short.
+</Para>
+
+<Sect2>
+<Title>The super command</Title>
+
+<Para>
+The super command just "brings the user" to the main superblock and set the
+type to ext2&lowbar;super&lowbar;block. The implementation is trivial:
+</Para>
+
+<Para>
+
+<ProgramListing>
+void type_ext2___super (char *command_line)
+
+{
+	char buffer [80];
+	
+	super_info.copy_num=0;
+	sprintf (buffer,"setoffset %ld",file_system_info.super_block_offset);dispatch (buffer);
+	sprintf (buffer,"settype ext2_super_block");dispatch (buffer);
+}
+</ProgramListing>
+
+It involves only setting the <Literal remap="tt">copy&lowbar;num</Literal> variable to indicate the main
+copy, dispatching a <Literal remap="tt">setoffset</Literal> command to reach the superblock, and
+dispatching a <Literal remap="tt">settype</Literal> to enable the superblock specific commands.
+This last command will also call the <Literal remap="tt">show</Literal> command of the
+<Literal remap="tt">ext2&lowbar;super&lowbar;block</Literal> type, through dispatching at the general command
+<Literal remap="tt">settype</Literal>.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The group command</Title>
+
+<Para>
+The group command will bring the user to the specified group descriptor in
+the main copy of the group descriptors. The type will be set to
+<Literal remap="tt">ext2&lowbar;group&lowbar;desc</Literal>:
+
+<ProgramListing>
+void type_ext2___group (char *command_line)
+
+{
+	long group_num=0;
+	char *ptr,buffer [80];
+	
+	ptr=parse_word (command_line,buffer);
+	if (*ptr!=0) {
+		ptr=parse_word (ptr,buffer);
+		group_num=atol (buffer);
+	}
+
+	group_info.copy_num=0;group_info.group_num=0;
+	sprintf (buffer,"setoffset %ld",file_system_info.first_group_desc_offset);dispatch (buffer);
+	sprintf (buffer,"settype ext2_group_desc");dispatch (buffer);
+	sprintf (buffer,"entry %ld",group_num);dispatch (buffer);
+}
+</ProgramListing>
+
+The implementation is as trivial as the <Literal remap="tt">super</Literal> implementation. Note
+the use of the <Literal remap="tt">entry</Literal> command, which is a command of the
+<Literal remap="tt">ext2&lowbar;group&lowbar;desc</Literal> object, to pass to the correct group descriptor.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The cd command</Title>
+
+<Para>
+The <Literal remap="tt">cd</Literal> command performs the usual cd function. The path to the global
+cd command is a path from <Literal remap="tt">/</Literal>.
+</Para>
+
+<Para>
+<Literal remap="tt">This is one of the best examples of the power of the object oriented
+design and of the dispatching mechanism. The operation is complicated, yet the
+implementation is surprisingly short!</Literal>
+</Para>
+
+<Para>
+
+<ProgramListing>
+void type_ext2___cd (char *command_line)
+
+{
+	char temp [80],buffer [80],*ptr;
+	
+	ptr=parse_word (command_line,buffer);
+	if (*ptr==0) {
+		wprintw (command_win,"Error - No argument specified\n");
+		refresh_command_win ();return;
+	}
+	ptr=parse_word (ptr,buffer);
+	
+	if (buffer [0] != '/') {
+		wprintw (command_win,"Error - Use a full pathname (begin with '/')\n");
+		refresh_command_win ();return;
+	}
+
+	dispatch ("super");dispatch ("group");dispatch ("inode");
+	dispatch ("next");dispatch ("dir");
+	if (buffer [1] != 0) {
+		sprintf (temp,"cd %s",buffer+1);dispatch (temp);
+	}
+}
+</ProgramListing>
+
+</Para>
+
+<Para>
+Note the number of the dispatch calls! 
+</Para>
+
+<Para>
+<Literal remap="tt">super</Literal> is used to get to the superblock. <Literal remap="tt">group</Literal> to get to the
+first group descriptor. <Literal remap="tt">inode</Literal> brings us to the first inode - The bad
+blocks inode. A <Literal remap="tt">next</Literal> is command to pass to the root directory inode,
+a <Literal remap="tt">dir</Literal> command "enters" the directory, and then we let the <Literal remap="tt">object
+specific cd command</Literal> to take us from there (The object is <Literal remap="tt">dir</Literal>, so
+that <Literal remap="tt">dispatch</Literal> will call the <Literal remap="tt">cd</Literal> command of the <Literal remap="tt">dir</Literal> type).
+Note that a symbolic link following could bring us back to the root directory,
+thus the innocent calls above treats nicely such a recursive case!
+</Para>
+
+<Para>
+I feel that the above is <Literal remap="tt">intuitive</Literal> - I was expressing myself "in the
+language" of the ext2 filesystem - (Go to the inode, etc), and the code was
+written exactly in this spirit!
+</Para>
+
+<Para>
+I can write more at this point, but I guess I am already a bit carried
+away with the self compliments :-)
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The superblock</Title>
+
+<Para>
+This section details the handling of the superblock.
+</Para>
+
+<Sect2>
+<Title>The superblock variables</Title>
+
+<Para>
+The superblock object is <Literal remap="tt">ext2&lowbar;super&lowbar;block</Literal>. The definition is just
+taken from the kernel ext2 main include file - /usr/include/linux/ext2&lowbar;fs.h.
+<FOOTNOTE>
+
+<Para>
+Those lines of source are copyrighted by <Literal remap="tt">Remy Card</Literal> - The author of the
+ext2 filesystem, and by <Literal remap="tt">Linus Torvalds</Literal> - The first author of the Linux
+operating system. Please cross reference the section Acknowledgments for the
+full copyright.
+</Para>
+
+</FOOTNOTE>
+
+
+
+<ProgramListing>
+struct ext2_super_block {
+	__u32	s_inodes_count;		/* Inodes count */
+	__u32	s_blocks_count;		/* Blocks count */
+	__u32	s_r_blocks_count;	/* Reserved blocks count */
+	__u32	s_free_blocks_count;	/* Free blocks count */
+	__u32	s_free_inodes_count;	/* Free inodes count */
+	__u32	s_first_data_block;	/* First Data Block */
+	__u32	s_log_block_size;	/* Block size */
+	__s32	s_log_frag_size;	/* Fragment size */
+	__u32	s_blocks_per_group;	/* # Blocks per group */
+	__u32	s_frags_per_group;	/* # Fragments per group */
+	__u32	s_inodes_per_group;	/* # Inodes per group */
+	__u32	s_mtime;		/* Mount time */
+	__u32	s_wtime;		/* Write time */
+	__u16	s_mnt_count;		/* Mount count */
+	__s16	s_max_mnt_count;	/* Maximal mount count */
+	__u16	s_magic;		/* Magic signature */
+	__u16	s_state;		/* File system state */
+	__u16	s_errors;		/* Behavior when detecting errors */
+	__u16	s_pad;
+	__u32	s_lastcheck;		/* time of last check */
+	__u32	s_checkinterval;	/* max. time between checks */
+	__u32	s_creator_os;		/* OS */
+	__u32	s_rev_level;		/* Revision level */
+	__u16	s_def_resuid;		/* Default uid for reserved blocks */
+	__u16	s_def_resgid;		/* Default gid for reserved blocks */
+	__u32	s_reserved[0];		/* Padding to the end of the block */
+	__u32	s_reserved[1];		/* Padding to the end of the block */
+	.
+	.
+	.
+	__u32	s_reserved[234];	/* Padding to the end of the block */
+};
+</ProgramListing>
+
+</Para>
+
+<Para>
+Note that I <Literal remap="tt">expanded</Literal> the array due to my primitive parser
+implementation. The various fields are described in the <Literal remap="tt">technical
+document</Literal>.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The superblock commands</Title>
+
+<Para>
+This section explains the commands available in the <Literal remap="tt">ext2&lowbar;super&lowbar;block</Literal>
+type. They all appear in <Literal remap="tt">super&lowbar;com.c</Literal>
+</Para>
+
+<Sect3>
+<Title>The show command</Title>
+
+<Para>
+The <Literal remap="tt">show</Literal> command is overridden here in order to provide more
+information than just the list of variables. A <Literal remap="tt">show</Literal> command will end
+up in calling <Literal remap="tt">type&lowbar;super&lowbar;block&lowbar;&lowbar;&lowbar;show</Literal>.
+</Para>
+
+<Para>
+The first thing that we do is calling the <Literal remap="tt">general show command</Literal> in
+order to display the list of variables.
+</Para>
+
+<Para>
+We then add some interpretation to the various lines to make the data
+somewhat more intuitive (Expansion of the time variables and the creator
+operating system code, for example).
+</Para>
+
+<Para>
+We also display the <Literal remap="tt">backup copy number</Literal> of the superblock in the status
+window. This copy number is saved in the <Literal remap="tt">super&lowbar;info</Literal> global variable -
+<Literal remap="tt">super&lowbar;info.copy&lowbar;num</Literal>. Currently, this is the only variable there ...
+but this type of internal variable saving is typical through my
+implementation.
+</Para>
+
+</Sect3>
+
+<Sect3>
+<Title>The backup copies handling commands</Title>
+
+<Para>
+The <Literal remap="tt">current copy number</Literal> is available in <Literal remap="tt">super&lowbar;info.copy&lowbar;num</Literal>. It
+was initialized in the ext2 command <Literal remap="tt">super</Literal>, and is used by the various
+superblock routines.
+</Para>
+
+<Para>
+The <Literal remap="tt">gocopy</Literal> routine will pass to another copy of the superblock. The
+new device offset will be computed with the aid of the variables in the
+<Literal remap="tt">file&lowbar;system&lowbar;info</Literal> structure. Then the routine will <Literal remap="tt">dispatch</Literal> to
+the <Literal remap="tt">setoffset</Literal> and the <Literal remap="tt">show</Literal> routines.
+</Para>
+
+<Para>
+The <Literal remap="tt">setactivecopy</Literal> routine will just save the current superblock data
+in a temporary variable of type <Literal remap="tt">ext2&lowbar;super&lowbar;block</Literal>, and will dispatch
+<Literal remap="tt">gocopy 0</Literal> to pass to the main superblock. Then it will place the saved
+data in place of the actual data.
+</Para>
+
+<Para>
+The above two commands can be used if the main superblock is corrupted.
+</Para>
+
+</Sect3>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The group descriptors</Title>
+
+<Para>
+The group descriptors handling mechanism allows the user to take a tour in
+the group descriptors table, stopping at each point, and examining the
+relevant inode table, block allocation map or inode allocation map through
+dispatching to the relevant objects.
+</Para>
+
+<Para>
+Some information about the group descriptors is available in the global
+variable <Literal remap="tt">group&lowbar;info</Literal>, which is of type <Literal remap="tt">struct&lowbar;group&lowbar;info</Literal>:
+</Para>
+
+<Para>
+
+<ProgramListing>
+struct struct_group_info {
+	unsigned long copy_num;
+	unsigned long group_num;
+};
+</ProgramListing>
+
+</Para>
+
+<Para>
+<Literal remap="tt">group&lowbar;num</Literal> is the index of the current descriptor in the table.
+</Para>
+
+<Para>
+<Literal remap="tt">copy&lowbar;num</Literal> is the number of the current backup copy.
+</Para>
+
+<Sect2>
+<Title>The group descriptor's variables</Title>
+
+<Para>
+
+<ProgramListing>
+struct ext2_group_desc
+{
+	__u32	bg_block_bitmap;		/* Blocks bitmap block */
+	__u32	bg_inode_bitmap;		/* Inodes bitmap block */
+	__u32	bg_inode_table;			/* Inodes table block */
+	__u16	bg_free_blocks_count;		/* Free blocks count */
+	__u16	bg_free_inodes_count;		/* Free inodes count */
+	__u16	bg_used_dirs_count;		/* Directories count */
+	__u16	bg_pad;
+	__u32	bg_reserved[3];
+};
+</ProgramListing>
+
+</Para>
+
+<Para>
+The first three variables are used to provide the links to the
+<Literal remap="tt">blockbitmap, inodebitmap and inode</Literal> objects.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Movement in the table</Title>
+
+<Para>
+Movement in the group descriptors table is done using the <Literal remap="tt">next, prev and
+entry</Literal> commands. Note that the first two commands <Literal remap="tt">override</Literal> the
+general commands of the same name. The <Literal remap="tt">next and prev</Literal> command are just
+calling the <Literal remap="tt">entry</Literal> function to do the job. I will show <Literal remap="tt">next</Literal>,
+for example:
+</Para>
+
+<Para>
+
+<ProgramListing>
+void type_ext2_group_desc___next (char *command_line)
+ 
+{
+	long entry_offset=1;
+	char *ptr,buffer [80];
+	
+	ptr=parse_word (command_line,buffer);
+	if (*ptr!=0) {
+		ptr=parse_word (ptr,buffer);
+		entry_offset=atol (buffer);
+	}
+
+	sprintf (buffer,"entry %ld",group_info.group_num+entry_offset);
+	dispatch (buffer);
+}
+</ProgramListing>
+
+The <Literal remap="tt">entry</Literal> function is also simple - It just calculates the offset
+using the information in <Literal remap="tt">group&lowbar;info</Literal> and in <Literal remap="tt">file&lowbar;system&lowbar;info</Literal>,
+and uses the usual <Literal remap="tt">setoffset / show</Literal> pair. 
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The show command</Title>
+
+<Para>
+As usual, the <Literal remap="tt">show</Literal> command is overridden. The implementation is
+similar to the superblock's show implementation - We just call the general
+show command, and add some information in the status window - The contents of
+the <Literal remap="tt">group&lowbar;info</Literal> structure.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Moving between backup copies</Title>
+
+<Para>
+This is done exactly like the superblock case. Please refer to explanation
+there.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Links to the available friends</Title>
+
+<Para>
+From a group descriptor, one typically wants to reach an <Literal remap="tt">inode</Literal>, or
+one of the <Literal remap="tt">allocation bitmaps</Literal>. This is done using the <Literal remap="tt">inode,
+blockbitmap or inodebitmap</Literal> commands. The implementation is again trivial
+- Get the necessary information from the group descriptor, initialize the
+structures of the next type, and issue the <Literal remap="tt">setoffset / settype</Literal> pair.
+</Para>
+
+<Para>
+For example, here is the implementation of the <Literal remap="tt">blockbitmap</Literal> command:
+</Para>
+
+<Para>
+
+<ProgramListing>
+void type_ext2_group_desc___blockbitmap (char *command_line)
+
+{
+	long block_bitmap_offset;
+	char buffer [80];
+	
+	block_bitmap_info.entry_num=0;
+	block_bitmap_info.group_num=group_info.group_num;
+
+	block_bitmap_offset=type_data.u.t_ext2_group_desc.bg_block_bitmap;
+	sprintf (buffer,"setoffset block %ld",block_bitmap_offset);dispatch (buffer);
+	sprintf (buffer,"settype block_bitmap");dispatch (buffer);
+}
+</ProgramListing>
+
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The inode table</Title>
+
+<Para>
+The inode handling enables the user to move in the inode table, edit the
+various attributes of the inode, and follow to the next stage - A file or a
+directory.
+</Para>
+
+<Sect2>
+<Title>The inode variables</Title>
+
+<Para>
+
+<ProgramListing>
+struct ext2_inode {
+	__u16	i_mode;		/* File mode */
+	__u16	i_uid;		/* Owner Uid */
+	__u32	i_size;		/* Size in bytes */
+	__u32	i_atime;	/* Access time */
+	__u32	i_ctime;	/* Creation time */
+	__u32	i_mtime;	/* Modification time */
+	__u32	i_dtime;	/* Deletion Time */
+	__u16	i_gid;		/* Group Id */
+	__u16	i_links_count;	/* Links count */
+	__u32	i_blocks;	/* Blocks count */
+	__u32	i_flags;	/* File flags */
+	union {
+		struct {
+			__u32  l_i_reserved1;
+		} linux1;
+		struct {
+			__u32  h_i_translator;
+		} hurd1;
+	} osd1;				/* OS dependent 1 */
+	__u32	i_block[EXT2_N_BLOCKS];	/* Pointers to blocks */
+	__u32	i_version;		/* File version (for NFS) */
+	__u32	i_file_acl;		/* File ACL */
+	__u32	i_dir_acl;		/* Directory ACL */
+	__u32	i_faddr;		/* Fragment address */
+	union {
+		struct {
+			__u8	l_i_frag;	/* Fragment number */
+			__u8	l_i_fsize;	/* Fragment size */
+			__u16	i_pad1;
+			__u32	l_i_reserved2[2];
+		} linux2;
+		struct {
+			__u8	h_i_frag;	/* Fragment number */
+			__u8	h_i_fsize;	/* Fragment size */
+			__u16	h_i_mode_high;
+			__u16	h_i_uid_high;
+			__u16	h_i_gid_high;
+			__u32	h_i_author;
+		} hurd2;
+	} osd2;				/* OS dependent 2 */
+};
+</ProgramListing>
+
+</Para>
+
+<Para>
+The above is the original source code definition. We can see that the inode
+supports <Literal remap="tt">Operating systems specific structures</Literal>. In addition to the
+expansion of the arrays, I have <Literal remap="tt">"flattened</Literal> the inode to support only
+the <Literal remap="tt">Linux</Literal> declaration. It seemed that this one occasion of multiple
+variable aliases didn't justify the complication of generally supporting
+aliases. In any case, the above system specific variables are not used
+internally by EXT2ED, and the user is free to change the definition in
+<Literal remap="tt">ext2.descriptors</Literal> to accommodate for his needs.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The handling functions</Title>
+
+<Para>
+The user interface to <Literal remap="tt">movement</Literal> is the usual <Literal remap="tt">next / prev /
+entry</Literal> interface. There is really nothing special in those functions - The
+size of the inode is fixed, the total number of inodes is known from the
+superblock information, and the current entry can be figured up from the
+device offset and the inode table start offset, which is known from the
+corresponding group descriptor. Those functions are a bit older then some
+other implementations of <Literal remap="tt">next</Literal> and <Literal remap="tt">prev</Literal>, and they do not save
+information in a special structure. Rather, they recompute it when
+necessary.
+</Para>
+
+<Para>
+The <Literal remap="tt">show</Literal> command is overridden here, and provides a lot of additional
+information about the inode - Its type, interpretation of the permissions,
+special ext2 attributes (Immutable file, for example), and a lot more.
+Again, the <Literal remap="tt">general show</Literal> is called first, and then the additional
+information is written.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Accessing files and directories</Title>
+
+<Para>
+From the inode, a <Literal remap="tt">file</Literal> or a <Literal remap="tt">directory</Literal> can typically be reached.
+In order to treat a file, for example, its inode needs to be constantly
+accessed. To satisfy that need, when editing a file or a directory, the
+inode is still saved in memory - <Literal remap="tt">type&lowbar;data</Literal> is not overwritten.
+Rather, the following takes place:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	An internal global structure which is used by the types <Literal remap="tt">file</Literal>
+and <Literal remap="tt">dir</Literal> handling functions is initialized by calling the
+appropriate function.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The type is changed accordingly.
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+The result is that a <Literal remap="tt">settype ext2&lowbar;inode</Literal> is the only action necessary
+to return to the inode - We actually never left it.
+</Para>
+
+<Para>
+Follows the implementation of the inode's <Literal remap="tt">file</Literal> command:
+</Para>
+
+<Para>
+
+<ProgramListing>
+void type_ext2_inode___file (char *command_line)
+
+{
+	char buffer [80];
+	
+	if (!S_ISREG (type_data.u.t_ext2_inode.i_mode)) {
+		wprintw (command_win,"Error - Inode type is not file\n");
+		refresh_command_win ();	return;		
+	}
+	
+	if (!init_file_info ()) {
+		wprintw (command_win,"Error - Unable to show file\n");
+		refresh_command_win ();return;
+	}
+	
+	sprintf (buffer,"settype file");dispatch (buffer);
+}
+</ProgramListing>
+
+</Para>
+
+<Para>
+As we can see - We just call <Literal remap="tt">init&lowbar;file&lowbar;info</Literal> to get the necessary
+information from the inode, and set the type to <Literal remap="tt">file</Literal>. The next call
+to <Literal remap="tt">show</Literal>, will dispatch to the <Literal remap="tt">file's show</Literal> implementation.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>Viewing a file</Title>
+
+<Para>
+There isn't an ext2 kernel structure which corresponds to a file - A file is
+just a series of blocks which are determined by its inode. As explained in
+the last section, the inode is never actually left - The type is changed to
+<Literal remap="tt">file</Literal> - A type which contains no variables, and a special structure is
+initialized:
+</Para>
+
+<Para>
+
+<ProgramListing>
+struct struct_file_info {
+
+	struct ext2_inodes *inode_ptr;
+	
+	long inode_offset;
+	long global_block_num,global_block_offset;
+	long block_num,blocks_count;
+	long file_offset,file_length;
+	long level;
+	unsigned char buffer [EXT2_MAX_BLOCK_SIZE];
+	long offset_in_block;
+
+	int display;
+	/* The following is used if the file is a directory */
+	
+	long dir_entry_num,dir_entries_count;
+	long dir_entry_offset;
+};
+</ProgramListing>
+
+</Para>
+
+<Para>
+The <Literal remap="tt">inode&lowbar;ptr</Literal> will just point to the inode in <Literal remap="tt">type&lowbar;data</Literal>, which
+is not overwritten while the user is editing the file, as the
+<Literal remap="tt">setoffset</Literal> command is not internally used. The <Literal remap="tt">buffer</Literal>
+will contain the current viewed block of the file. The other variables
+contain information about the current place in the file. For example,
+<Literal remap="tt">global&lowbar;block&lowbar;num</Literal> just contains the current block number.
+</Para>
+
+<Para>
+The general idea is that the above data structure will provide the file
+handling functions all the accurate information which is needed to accomplish
+their task.
+</Para>
+
+<Para>
+The global structure of the above type, <Literal remap="tt">file&lowbar;info</Literal>, is initialized by
+<Literal remap="tt">init&lowbar;file&lowbar;info</Literal> in <Literal remap="tt">file&lowbar;com.c</Literal>, which is called by the
+<Literal remap="tt">type&lowbar;ext2&lowbar;inode&lowbar;&lowbar;&lowbar;file</Literal> function when the user requests to watch the
+file. <Literal remap="tt">It is updated as necessary to provide accurate information as long as
+the file is edited.</Literal>
+</Para>
+
+<Sect2>
+<Title>Returning to the file's inode</Title>
+
+<Para>
+Concerning the method I used to handle files, the above task is trivial:
+
+<ProgramListing>
+void type_file___inode (char *command_line)
+
+{
+	dispatch ("settype ext2_inode");
+}
+</ProgramListing>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>File movement</Title>
+
+<Para>
+EXT2ED keeps track of the current position in the file. Movement inside the
+current block is done using <Literal remap="tt">next, prev and offset</Literal> - They just change
+<Literal remap="tt">file&lowbar;info.offset&lowbar;in&lowbar;block</Literal>.
+</Para>
+
+<Para>
+Movement between blocks is done using <Literal remap="tt">nextblock, prevblock and block</Literal>.
+To accomplish this, the direct blocks, indirect blocks, etc, need to be
+traced. This is done by <Literal remap="tt">file&lowbar;block&lowbar;to&lowbar;global&lowbar;block</Literal>, which accepts a
+file's internal block number, and converts it to the actual filesystem block
+number.
+</Para>
+
+<Para>
+
+<ProgramListing>
+long file_block_to_global_block (long file_block,struct struct_file_info *file_info_ptr)
+
+{
+	long last_direct,last_indirect,last_dindirect;
+	long f_indirect,s_indirect;
+	
+	last_direct=EXT2_NDIR_BLOCKS-1;
+	last_indirect=last_direct+file_system_info.block_size/4;
+	last_dindirect=last_indirect+(file_system_info.block_size/4) \
+		*(file_system_info.block_size/4);
+
+	if (file_block &#60;= last_direct) {
+		file_info_ptr-&#62;level=0;
+		return (file_info_ptr-&#62;inode_ptr-&#62;i_block [file_block]);
+	}
+	
+	if (file_block &#60;= last_indirect) {
+		file_info_ptr-&#62;level=1;
+		file_block=file_block-last_direct-1;
+		return (return_indirect (file_info_ptr-&#62;inode_ptr-&#62; \
+			i_block [EXT2_IND_BLOCK],file_block));
+	}
+
+	if (file_block &#60;= last_dindirect) {
+		file_info_ptr-&#62;level=2;
+		file_block=file_block-last_indirect-1;
+		return (return_dindirect (file_info_ptr-&#62;inode_ptr-&#62; \
+			i_block [EXT2_DIND_BLOCK],file_block));
+	}
+
+	file_info_ptr-&#62;level=3;
+	file_block=file_block-last_dindirect-1;
+	return (return_tindirect (file_info_ptr-&#62;inode_ptr-&#62; \
+		i_block [EXT2_TIND_BLOCK],file_block));
+}
+</ProgramListing>
+
+<Literal remap="tt">last&lowbar;direct, last&lowbar;indirect, etc</Literal>, contain the last internal block number
+which is accessed by this method - If the requested block is smaller then
+<Literal remap="tt">last&lowbar;direct</Literal>, for example, it is a direct block.
+</Para>
+
+<Para>
+If the block is a direct block, its number is just taken from the inode.
+A non-direct block is handled by <Literal remap="tt">return&lowbar;indirect, return&lowbar;dindirect and
+return&lowbar;tindirect</Literal>, which correspond to indirect, double-indirect and
+triple-indirect. Each of the above functions is constructed using the lower
+level functions. For example, <Literal remap="tt">return&lowbar;dindirect</Literal> is constructed as
+follows:
+</Para>
+
+<Para>
+
+<ProgramListing>
+long return_dindirect (long table_block,long block_num)
+
+{
+	long f_indirect;
+	
+	f_indirect=block_num/(file_system_info.block_size/4);
+	f_indirect=return_indirect (table_block,f_indirect);
+	return (return_indirect (f_indirect,block_num%(file_system_info.block_size/4)));
+}
+</ProgramListing>
+
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Object memory</Title>
+
+<Para>
+The <Literal remap="tt">remember</Literal> command is overridden here and in the <Literal remap="tt">dir</Literal> type -
+We just remember the inode of the file. It is just simpler to implement, and
+doesn't seem like a big limitation.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Changing data</Title>
+
+<Para>
+The <Literal remap="tt">set</Literal> command is overridden, and provides the same functionality
+like the usage of the <Literal remap="tt">general set</Literal> command with no type declared. The
+<Literal remap="tt">writedata</Literal> is overridden so that we'll write the edited block
+(file&lowbar;info.buffer) and not <Literal remap="tt">type&lowbar;data</Literal> (Which contains the inode).
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>Directories</Title>
+
+<Para>
+A directory is just a file which is formatted according to a special format.
+As such, EXT2ED handles directories and files quite alike. Specifically, the
+same variable of type <Literal remap="tt">struct&lowbar;file&lowbar;info</Literal> which is used in the
+<Literal remap="tt">file</Literal>, is used here.
+</Para>
+
+<Para>
+The <Literal remap="tt">dir</Literal> type uses all the variables in the above structure, as
+opposed to the <Literal remap="tt">file</Literal> type, which didn't use the last ones.
+</Para>
+
+<Sect2>
+<Title>The search&lowbar;dir&lowbar;entries function</Title>
+
+<Para>
+The entire situation is similar to that which was described in the
+<Literal remap="tt">file</Literal> type, with one main change:
+</Para>
+
+<Para>
+The main function in <Literal remap="tt">dir&lowbar;com.c</Literal> is <Literal remap="tt">search&lowbar;dir&lowbar;entries</Literal>. This
+function will <Literal remap="tt">"run"</Literal> on the entire entries in the directory, and will
+call a client's function each time. The client's function is supplied as an
+argument, and will check the current entry for a match, based on its own
+criterion. It will then signal <Literal remap="tt">search&lowbar;dir&lowbar;entries</Literal> whether to
+<Literal remap="tt">ABORT</Literal> the search, whether it <Literal remap="tt">FOUND</Literal> the entry it was looking
+for, or that the entry is still not found, and we should <Literal remap="tt">CONTINUE</Literal>
+searching. Follows the declaration:
+
+<ProgramListing>
+struct struct_file_info search_dir_entries \ 
+	(int (*action) (struct struct_file_info *info),int *status)
+
+/*
+	This routine runs on all directory entries in the current directory.
+	For each entry, action is called. The return code of action is one of
+	the following:
+	
+		ABORT		-	Current dir entry is returned.
+		CONTINUE	-	Continue searching.
+		FOUND		-	Current dir entry is returned.
+		
+	If the last entry is reached, it is returned, along with an ABORT status.
+	
+	status is updated to the returned code of action.	
+*/
+</ProgramListing>
+
+</Para>
+
+<Para>
+With the above tool in hand, many operations are simple to perform - Here is
+the way I counted the entries in the current directory:
+</Para>
+
+<Para>
+
+<ProgramListing>
+long count_dir_entries (void)
+
+{
+	int status;
+	
+	return (search_dir_entries (&amp;action_count,&amp;status).dir_entry_num);
+}
+
+int action_count (struct struct_file_info *info)
+
+{
+	return (CONTINUE);
+}
+</ProgramListing>
+
+It will just <Literal remap="tt">CONTINUE</Literal> until the last entry. The returned structure
+(of type <Literal remap="tt">struct&lowbar;file&lowbar;info</Literal>) will have its number in the
+<Literal remap="tt">dir&lowbar;entry&lowbar;num</Literal> field, and this is exactly the required number!
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The cd command</Title>
+
+<Para>
+The <Literal remap="tt">cd</Literal> command accepts a relative path, and moves there ...
+The implementation is of-course a bit more complicated:
+
+<OrderedList>
+<ListItem>
+
+<Para>
+	The path is checked that it is not an absolute path (from <Literal remap="tt">/</Literal>).
+If it is, we let the <Literal remap="tt">general cd</Literal> to do the job by calling
+directly <Literal remap="tt">type&lowbar;ext2&lowbar;&lowbar;&lowbar;cd</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	The path is divided into the nearest path and the rest of the path.
+For example, cd 1/2/3/4 is divided into <Literal remap="tt">1</Literal> and into
+<Literal remap="tt">2/3/4</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	It is the first part of the path that we need to search for in the
+current directory. We search for it using <Literal remap="tt">search&lowbar;dir&lowbar;entries</Literal>,
+which accepts the <Literal remap="tt">action&lowbar;name</Literal> function as the user defined
+function.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">search&lowbar;dir&lowbar;entries</Literal> will scan the entire entries and will call
+our <Literal remap="tt">action&lowbar;name</Literal> function for each entry. In
+<Literal remap="tt">action&lowbar;name</Literal>, the required name will be checked against the
+name of the current entry, and <Literal remap="tt">FOUND</Literal> will be returned when a
+match occurs.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	If the required entry is found, we dispatch a <Literal remap="tt">remember</Literal>
+command to insert the current <Literal remap="tt">inode</Literal> into the object memory.
+This is required to easily support <Literal remap="tt">symbolic links</Literal> - If we
+find later that the inode pointed by the entry is actually a
+symbolic link, we'll need to return to this point, and the above
+inode doesn't have (and can't have, because of <Literal remap="tt">hard links</Literal>) the
+information necessary to "move back".
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	We then dispatch a <Literal remap="tt">followinode</Literal> command to reach the inode
+pointed by the required entry. This command will automatically
+change the type to <Literal remap="tt">ext2&lowbar;inode</Literal> - We are now at an inode, and
+all the inode commands are available.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	We check the inode's type to see if it is a directory. If it is, we
+dispatch a <Literal remap="tt">dir</Literal> command to "enter the directory", and
+recursively call ourself (The type is <Literal remap="tt">dir</Literal> again) by
+dispatching a <Literal remap="tt">cd</Literal> command, with the rest of the path as an
+argument.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	If the inode's type is a symbolic link (only fast symbolic link were
+meanwhile implemented. I guess this is typically the case.), we note
+the path it is pointing at, the	saved inode is recalled, we dispatch
+<Literal remap="tt">dir</Literal> to get back to the original directory, and we call
+ourself again with the <Literal remap="tt">link path/rest of the path</Literal> argument.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	In any other case, we just stop at the resulting inode.
+</Para>
+</ListItem>
+
+</OrderedList>
+
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>The block and inode allocation bitmaps</Title>
+
+<Para>
+The block allocation bitmap is reached by the corresponding group descriptor.
+The group descriptor handling functions will save the necessary information
+into a structure of the <Literal remap="tt">struct&lowbar;block&lowbar;bitmap&lowbar;info</Literal> type:
+</Para>
+
+<Para>
+
+<ProgramListing>
+struct struct_block_bitmap_info {
+	unsigned long entry_num;
+	unsigned long group_num;
+};
+</ProgramListing>
+
+</Para>
+
+<Para>
+The <Literal remap="tt">show</Literal> command is overridden, and will show the block as a series of
+bits, each bit corresponding to a block. The main variable is the
+<Literal remap="tt">entry&lowbar;num</Literal> variable, declared above, which is just the current block
+number in this block group. The current entry is highlighted, and the
+<Literal remap="tt">next, prev and entry</Literal> commands just change the above variable.
+</Para>
+
+<Para>
+The <Literal remap="tt">allocate and deallocate</Literal> change the specified bits. Nothing
+special about them - They just contain code which converts between bit and
+byte locations.
+</Para>
+
+<Para>
+The <Literal remap="tt">inode allocation bitmap</Literal> is treated in much the same fashion, with
+the same commands available.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Filesystem size limitation</Title>
+
+<Para>
+While an ext2 filesystem has a size limit of <Literal remap="tt">4 TB</Literal>, EXT2ED currently
+<Literal remap="tt">can't</Literal> handle filesystems which are <Literal remap="tt">bigger than 2 GB</Literal>.
+</Para>
+
+<Para>
+This limitation results from my usage of <Literal remap="tt">32 bit long variables</Literal> and
+of the <Literal remap="tt">fseek</Literal> filesystem call, which can't seek up to 4 TB.
+</Para>
+
+<Para>
+By looking in the <Literal remap="tt">ext2 library</Literal> source code by <Literal remap="tt">Theodore Ts'o</Literal>,
+I discovered the <Literal remap="tt">llseek</Literal> system call which can seek to a
+<Literal remap="tt">64 bit unsigned long long</Literal> offset. Correcting the situation is not
+difficult in concept - I need to change long into unsigned long long where
+appropriate and modify <Literal remap="tt">disk.c</Literal> to use the llseek system call.
+</Para>
+
+<Para>
+However, fixing the above limitation involves making changes in many places
+in the code and will obviously make the entire code less stable. For that
+reason, I chose to release EXT2ED as it is now and to postpone the above fix
+to the next release.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Conclusion</Title>
+
+<Para>
+Had I known in advance the structure of the ext2 filesystem, I feel that
+the resulting design would have been quite different from the presented
+design above.
+</Para>
+
+<Para>
+EXT2ED has now two levels of abstraction - A <Literal remap="tt">general</Literal> filesystem, and an
+<Literal remap="tt">ext2</Literal> filesystem, and the surface is more or less prepared for additions
+of other filesystems. Had I approached the design in the "engineering" way,
+I guess that the first level above would not have existed.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Copyright</Title>
+
+<Para>
+EXT2ED is Copyright (C) 1995 Gadi Oxman.
+</Para>
+
+<Para>
+EXT2ED is hereby placed under the GPL - Gnu Public License. You are free and
+welcome to copy, view and modify the sources. My only wish is that my
+copyright presented above will be left and that a list of the bug fixes,
+added features, etc, will be provided.
+</Para>
+
+<Para>
+The entire EXT2ED project is based, of-course, on the kernel sources. The
+<Literal remap="tt">ext2.descriptors</Literal> distributed with EXT2ED is a slightly modified
+version of the main ext2 include file, /usr/include/linux/ext2&lowbar;fs.h. Follows
+the original copyright:
+</Para>
+
+<Para>
+
+<ProgramListing>
+/*
+ *  linux/include/linux/ext2_fs.h
+ *
+ * Copyright (C) 1992, 1993, 1994, 1995
+ * Remy Card (card@masi.ibp.fr)
+ * Laboratoire MASI - Institut Blaise Pascal
+ * Universite Pierre et Marie Curie (Paris VI)
+ *
+ *  from
+ *
+ *  linux/include/linux/minix_fs.h
+ *
+ *  Copyright (C) 1991, 1992  Linus Torvalds
+ */
+
+</ProgramListing>
+
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Acknowledgments</Title>
+
+<Para>
+EXT2ED was constructed as a student project in the software
+laboratory of the faculty of electrical-engineering in the
+<Literal remap="tt">Technion - Israel's institute of technology</Literal>.
+</Para>
+
+<Para>
+At first, I would like to thank <Literal remap="tt">Avner Lottem</Literal> and <Literal remap="tt">Doctor Ilana
+David</Literal> for their interest and assistance in this project.
+</Para>
+
+<Para>
+I would also like to thank the following people, who were involved in the
+design and implementation of the ext2 filesystem kernel code and support
+utilities:
+
+<ItemizedList>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Remy Card</Literal>
+
+Who designed, implemented and maintains the ext2 filesystem kernel
+code, and some of the ext2 utilities. <Literal remap="tt">Remy Card</Literal> is also the
+author 	of several helpful slides concerning the ext2 filesystem.
+Specifically, he is the author of <Literal remap="tt">File Management in the Linux
+Kernel</Literal> and of <Literal remap="tt">The Second Extended File System - Current
+State, Future Development</Literal>.
+
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Wayne Davison</Literal>
+
+Who designed the ext2 filesystem.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Stephen Tweedie</Literal>
+
+Who helped designing the ext2 filesystem kernel code and wrote the
+slides <Literal remap="tt">Optimizations in File Systems</Literal>.
+</Para>
+</ListItem>
+<ListItem>
+
+<Para>
+	<Literal remap="tt">Theodore Ts'o</Literal>
+
+Who is the author of several ext2 utilities and of the ext2 library
+<Literal remap="tt">libext2fs</Literal> (which I didn't use, simply because I didn't know
+it exists when I started to work on my project).
+</Para>
+</ListItem>
+
+</ItemizedList>
+
+</Para>
+
+<Para>
+Lastly, I would like to thank, of-course, <Literal remap="tt">Linus Torvalds</Literal> and the
+<Literal remap="tt">Linux community</Literal> for providing all of us with such a great operating
+system.
+</Para>
+
+<Para>
+Please contact me in a case of bug report, suggestions, or just about
+anything concerning EXT2ED.
+</Para>
+
+<Para>
+Enjoy,
+</Para>
+
+<Para>
+Gadi Oxman &lt;tgud@tochnapc2.technion.ac.il&gt;
+</Para>
+
+<Para>
+Haifa, August 95
+</Para>
+
+</Sect1>
+
+</Article>

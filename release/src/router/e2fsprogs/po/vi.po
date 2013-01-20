@@ -1,0 +1,5298 @@
+# Vietnamese translation for e2fsprogs.
+# Copyright © 2010 Theodore Tso (msgids)
+# This file is distributed under the same license as the e2fsprogs package.
+# Clytie Siddall <clytie@riverland.net.au>, 2006-2010.
+#
+#. The strings in e2fsck's problem.c can be very hard to translate,
+#. since the strings are expanded in two different ways.  First of all,
+#. there is an @-expansion, where strings like "@i" are expanded to
+#. "inode", and so on.  In order to make it easier for translators, the
+#. e2fsprogs po template file has been enhanced with comments that show
+#. the @-expansion, for the strings in the problem.c file.
+#.
+#. Translators are free to use the @-expansion facility if they so
+#. choose, by providing translations for strings in e2fsck/message.c.
+#. These translation can completely replace an expansion; for example,
+#. if "bblock" (which indicated that "@b" would be expanded to "block")
+#. is translated as "ddatenverlust", then "@d" will be expanded to
+#. "datenverlust".  Alternatively, translators can simply not use the
+#. @-expansion facility at all.
+#.
+#. The second expansion which is done for e2fsck's problem.c messages is
+#. a dynamic %-expansion, which expands %i as an inode number, and so
+#. on.  A table of these expansions can be found below.  Note that
+#. %-expressions that begin with "%D" and "%I" are two-character
+#. expansions; so for example, "%Iu" expands to the inode's user id
+#. ownership field (inode->i_uid).
+#.  
+#. 	%b	<blk>			block number
+#. 	%B	<blkcount>		integer
+#. 	%c	<blk2>			block number
+#. 	%Di	<dirent> -> ino		inode number
+#. 	%Dn	<dirent> -> name	string
+#. 	%Dr	<dirent> -> rec_len
+#. 	%Dl	<dirent> -> name_len
+#. 	%Dt	<dirent> -> filetype
+#. 	%d	<dir> 			inode number
+#. 	%g	<group>			integer
+#. 	%i	<ino>			inode number
+#. 	%Is	<inode> -> i_size
+#. 	%IS	<inode> -> i_extra_isize
+#. 	%Ib	<inode> -> i_blocks
+#. 	%Il	<inode> -> i_links_count
+#. 	%Im	<inode> -> i_mode
+#. 	%IM	<inode> -> i_mtime
+#. 	%IF	<inode> -> i_faddr
+#. 	%If	<inode> -> i_file_acl
+#. 	%Id	<inode> -> i_dir_acl
+#. 	%Iu	<inode> -> i_uid
+#. 	%Ig	<inode> -> i_gid
+#. 	%j	<ino2>			inode number
+#. 	%m	<com_err error message>
+#. 	%N	<num>
+#. 	%p		ext2fs_get_pathname of directory <ino>
+#. 	%P		ext2fs_get_pathname of <dirent>->ino with <ino2> as
+#. 				the containing directory.  (If dirent is NULL
+#. 				then return the pathname of directory <ino2>)
+#. 	%q		ext2fs_get_pathname of directory <dir>
+#. 	%Q		ext2fs_get_pathname of directory <ino> with <dir> as
+#. 				the containing directory.
+#. 	%s	<str>			miscellaneous string
+#. 	%S		backup superblock
+#. 	%X	<num>	hexadecimal format
+#.
+msgid ""
+msgstr ""
+"Project-Id-Version: e2fsprogs 1.41.11\n"
+"Report-Msgid-Bugs-To: tytso@alum.mit.edu\n"
+"POT-Creation-Date: 2010-05-17 23:05-0400\n"
+"PO-Revision-Date: 2010-04-13 19:48+0930\n"
+"Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
+"Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: LocFactoryEditor 1.8\n"
+
+#: e2fsck/badblocks.c:22 misc/mke2fs.c:169
+#, c-format
+msgid "Bad block %u out of range; ignored.\n"
+msgstr "Khối hỏng %u ở ngoại phạm vi nên bị bỏ qua.\n"
+
+#: e2fsck/badblocks.c:45
+msgid "while sanity checking the bad blocks inode"
+msgstr "trong khi kiểm tra sự đúng mực nút thông tin khối hỏng"
+
+#: e2fsck/badblocks.c:57
+msgid "while reading the bad blocks inode"
+msgstr "trong khi đọc nút thông tin khối hỏng"
+
+#: e2fsck/badblocks.c:71 e2fsck/iscan.c:112 e2fsck/scantest.c:109
+#: e2fsck/unix.c:1083 e2fsck/unix.c:1166 misc/badblocks.c:1155
+#: misc/badblocks.c:1163 misc/badblocks.c:1177 misc/badblocks.c:1189
+#: misc/dumpe2fs.c:552 misc/e2image.c:583 misc/e2image.c:679
+#: misc/e2image.c:695 misc/mke2fs.c:185 misc/tune2fs.c:1573 resize/main.c:310
+#, c-format
+msgid "while trying to open %s"
+msgstr "trong khi thử mở %s"
+
+#: e2fsck/badblocks.c:82
+#, c-format
+msgid "while trying popen '%s'"
+msgstr "trong khi thử mở popen « %s »"
+
+#: e2fsck/badblocks.c:93 misc/mke2fs.c:192
+msgid "while reading in list of bad blocks from file"
+msgstr "trong khi đọc vào danh sách các khối hỏng từ tập tin"
+
+#: e2fsck/badblocks.c:104
+msgid "while updating bad block inode"
+msgstr "trong khi cập nhật nút thông tin khối hỏng"
+
+#: e2fsck/badblocks.c:130
+#, c-format
+msgid "Warning: illegal block %u found in bad block inode.  Cleared.\n"
+msgstr ""
+"Cảnh báo : tìm thấy khối cấm %u trong nút thông tin khối hỏng nên bị xoá.\n"
+
+#: e2fsck/ehandler.c:54
+#, c-format
+msgid "Error reading block %lu (%s) while %s.  "
+msgstr "Gặp lỗi khi đọc khối %lu (%s) trong khi %s.  "
+
+#: e2fsck/ehandler.c:57
+#, c-format
+msgid "Error reading block %lu (%s).  "
+msgstr "Gặp lỗi khi đọc khối %lu (%s).  "
+
+#: e2fsck/ehandler.c:60 e2fsck/ehandler.c:109
+msgid "Ignore error"
+msgstr "Bỏ qua lỗi"
+
+#: e2fsck/ehandler.c:61
+msgid "Force rewrite"
+msgstr "Buộc ghi lại"
+
+#: e2fsck/ehandler.c:103
+#, c-format
+msgid "Error writing block %lu (%s) while %s.  "
+msgstr "Găp lỗi khi ghi khối %lu (%s) trong khi %s.  "
+
+#: e2fsck/ehandler.c:106
+#, c-format
+msgid "Error writing block %lu (%s).  "
+msgstr "Gặp lỗi khi ghi khối %lu (%s).  "
+
+#: e2fsck/emptydir.c:56
+msgid "empty dirblocks"
+msgstr "khối thư mục rỗng"
+
+#: e2fsck/emptydir.c:61
+msgid "empty dir map"
+msgstr "sơ đồ thư mục rỗng"
+
+#: e2fsck/emptydir.c:97
+#, c-format
+msgid "Empty directory block %u (#%d) in inode %u\n"
+msgstr "Khối thư mục rỗng %u (#%d) trong nút thông tin %u\n"
+
+#: e2fsck/extend.c:21
+#, c-format
+msgid "%s: %s filename nblocks blocksize\n"
+msgstr "%s: %s tên tập tin  số khối  cỡ khối\n"
+
+#: e2fsck/extend.c:43
+#, c-format
+msgid "Illegal number of blocks!\n"
+msgstr "Không cho phép số khối đó.\n"
+
+#: e2fsck/extend.c:49
+#, c-format
+msgid "Couldn't allocate block buffer (size=%d)\n"
+msgstr "Không thể cấp phát bộ đệm khối (cỡ=%d)\n"
+
+#: e2fsck/flushb.c:34
+#, c-format
+msgid "Usage: %s disk\n"
+msgstr "Sử dụng: %s đĩa\n"
+
+#: e2fsck/flushb.c:63
+#, c-format
+msgid "BLKFLSBUF ioctl not supported!  Can't flush buffers.\n"
+msgstr "BLKFLSBUF ioctl không được hỗ trợ. Không thể xoá sạch các bộ đệm.\n"
+
+#: e2fsck/iscan.c:46
+#, c-format
+msgid "Usage: %s [-F] [-I inode_buffer_blocks] device\n"
+msgstr ""
+"Sử dụng: %s [-F] [-I KĐN] thiết_bị\n"
+"\n"
+"[KĐN: các khối đệm nút thông tin]\n"
+"\n"
+
+#: e2fsck/iscan.c:83 e2fsck/unix.c:838
+#, c-format
+msgid "while opening %s for flushing"
+msgstr "trong khi mở %s để xoá sạch"
+
+#: e2fsck/iscan.c:88 e2fsck/unix.c:844 resize/main.c:286
+#, c-format
+msgid "while trying to flush %s"
+msgstr "trong khi thử xoá sạch %s"
+
+#: e2fsck/iscan.c:121 e2fsck/scantest.c:116 misc/e2image.c:489
+msgid "while opening inode scan"
+msgstr "trong khi mở việc quét nút thông tin"
+
+#: e2fsck/iscan.c:129 misc/e2image.c:507
+msgid "while getting next inode"
+msgstr "trong khi lấy nút thông tin kế tiếp"
+
+#: e2fsck/iscan.c:138
+#, c-format
+msgid "%u inodes scanned.\n"
+msgstr "%u nút thông tin đã được quét.\n"
+
+#: e2fsck/journal.c:507
+msgid "reading journal superblock\n"
+msgstr "đang đọc siêu khối nhật ký\n"
+
+#: e2fsck/journal.c:564
+#, c-format
+msgid "%s: no valid journal superblock found\n"
+msgstr "%s: không tìm thấy siêu khối nhật ký hợp lệ\n"
+
+#: e2fsck/journal.c:573
+#, c-format
+msgid "%s: journal too short\n"
+msgstr "%s: nhật ký quá ngắn\n"
+
+#: e2fsck/journal.c:860
+#, c-format
+msgid "%s: recovering journal\n"
+msgstr "%s: đang phục hồi nhật ký\n"
+
+#: e2fsck/journal.c:862
+#, c-format
+msgid "%s: won't do journal recovery while read-only\n"
+msgstr "%s: sẽ không phục hồi nhật ký trong khi có tình trạng chỉ đọc\n"
+
+#: e2fsck/journal.c:887
+#, c-format
+msgid "while trying to re-open %s"
+msgstr "trong khi thử mở lại %s"
+
+#: e2fsck/message.c:111
+msgid "aextended attribute"
+msgstr "athuộc tính đã mở rộng"
+
+#: e2fsck/message.c:112
+msgid "Aerror allocating"
+msgstr "Agặp lỗi khi cấp phát"
+
+#: e2fsck/message.c:113
+msgid "bblock"
+msgstr "bkhối"
+
+#: e2fsck/message.c:114
+msgid "Bbitmap"
+msgstr "Bmảng ảnh"
+
+#: e2fsck/message.c:115
+msgid "ccompress"
+msgstr "cnén"
+
+#: e2fsck/message.c:116
+msgid "Cconflicts with some other fs @b"
+msgstr "Cxung đột với @b của hệ thống tập tin khác"
+
+#: e2fsck/message.c:117
+msgid "iinode"
+msgstr "inút thông tin"
+
+#: e2fsck/message.c:118
+msgid "Iillegal"
+msgstr "Icấm"
+
+#: e2fsck/message.c:119
+msgid "jjournal"
+msgstr "jnhật ký"
+
+#: e2fsck/message.c:120
+msgid "Ddeleted"
+msgstr "Dbị xoá"
+
+#: e2fsck/message.c:121
+msgid "ddirectory"
+msgstr "dthư mục"
+
+#: e2fsck/message.c:122
+msgid "eentry"
+msgstr "emục nhập"
+
+#: e2fsck/message.c:123
+msgid "E@e '%Dn' in %p (%i)"
+msgstr "E@e '%Dn' trong %p (%i)"
+
+#: e2fsck/message.c:124
+msgid "ffilesystem"
+msgstr "fhệ thống tập tin"
+
+#: e2fsck/message.c:125
+msgid "Ffor @i %i (%Q) is"
+msgstr "Fcho @i %i (%Q) là"
+
+#: e2fsck/message.c:126
+msgid "ggroup"
+msgstr "gnhóm"
+
+#: e2fsck/message.c:127
+msgid "hHTREE @d @i"
+msgstr "hHCÂY @d @i"
+
+#: e2fsck/message.c:128
+msgid "llost+found"
+msgstr "lmất+tìm"
+
+#: e2fsck/message.c:129
+msgid "Lis a link"
+msgstr "Llà liên kết"
+
+#: e2fsck/message.c:130
+msgid "mmultiply-claimed"
+msgstr "mđa tuyên bố"
+
+#: e2fsck/message.c:131
+msgid "ninvalid"
+msgstr "nkhông hợp lệ"
+
+#: e2fsck/message.c:132
+msgid "oorphaned"
+msgstr "othừa"
+
+#: e2fsck/message.c:133
+msgid "pproblem in"
+msgstr "pvấn đề trong"
+
+#: e2fsck/message.c:134
+msgid "rroot @i"
+msgstr "r@i gốc"
+
+#: e2fsck/message.c:135
+msgid "sshould be"
+msgstr "snên là"
+
+#: e2fsck/message.c:136
+msgid "Ssuper@b"
+msgstr "Ssiêu @b"
+
+#: e2fsck/message.c:137
+msgid "uunattached"
+msgstr "uchưa gắn nối"
+
+#: e2fsck/message.c:138
+msgid "vdevice"
+msgstr "vthiết bị"
+
+#: e2fsck/message.c:139
+msgid "xextent"
+msgstr "xphạm vi"
+
+#: e2fsck/message.c:140
+msgid "zzero-length"
+msgstr "zdài bằng không"
+
+#: e2fsck/message.c:151
+msgid "<The NULL inode>"
+msgstr "<nút thông tin vô giá trị>"
+
+#: e2fsck/message.c:152
+msgid "<The bad blocks inode>"
+msgstr "<nút thông tin khối hỏng>"
+
+#: e2fsck/message.c:154
+msgid "<The ACL index inode>"
+msgstr "<nút thông tin chỉ mục ACL>"
+
+#: e2fsck/message.c:155
+msgid "<The ACL data inode>"
+msgstr "<nút thông tin dữ liệu ACL>"
+
+#: e2fsck/message.c:156
+msgid "<The boot loader inode>"
+msgstr "<nút thông tin bộ nạp khởi động>"
+
+#: e2fsck/message.c:157
+msgid "<The undelete directory inode>"
+msgstr "<nút thông tin hủy xoá thư mục>"
+
+#: e2fsck/message.c:158
+msgid "<The group descriptor inode>"
+msgstr "<nút thông tin mô tả nhóm>"
+
+#: e2fsck/message.c:159
+msgid "<The journal inode>"
+msgstr "<nút thông tin nhật ký>"
+
+#: e2fsck/message.c:160
+msgid "<Reserved inode 9>"
+msgstr "<nút thông tin được dành riêng 9>"
+
+#: e2fsck/message.c:161
+msgid "<Reserved inode 10>"
+msgstr "<nút thông tin được dành riêng 10>"
+
+#: e2fsck/message.c:330
+#, c-format
+msgid "regular file"
+msgstr "tập tin chuẩn"
+
+#: e2fsck/message.c:332
+#, c-format
+msgid "directory"
+msgstr "thư mục"
+
+#: e2fsck/message.c:334
+#, c-format
+msgid "character device"
+msgstr "thiết bị ký tự"
+
+#: e2fsck/message.c:336
+#, c-format
+msgid "block device"
+msgstr "thiết bị khối"
+
+#: e2fsck/message.c:338
+#, c-format
+msgid "named pipe"
+msgstr "ống dẫn có tên"
+
+#: e2fsck/message.c:340
+#, c-format
+msgid "symbolic link"
+msgstr "liên kết tượng trưng"
+
+#: e2fsck/message.c:342
+#, c-format
+msgid "socket"
+msgstr "ổ cắm"
+
+#: e2fsck/message.c:344
+#, c-format
+msgid "unknown file type with mode 0%o"
+msgstr "kiểu tập tin không rõ với chế độ 0%o"
+
+#: e2fsck/message.c:422
+msgid "indirect block"
+msgstr "khối gián tiếp"
+
+#: e2fsck/message.c:424
+msgid "double indirect block"
+msgstr "khối gián tiếp đôi"
+
+#: e2fsck/message.c:426
+msgid "triple indirect block"
+msgstr "khối gián tiếp gấp ba"
+
+#: e2fsck/message.c:428
+msgid "translator block"
+msgstr "khối dịch"
+
+#: e2fsck/message.c:430
+msgid "block #"
+msgstr "khối #"
+
+#: e2fsck/pass1b.c:220
+msgid "multiply claimed inode map"
+msgstr "sơ đồ nút thông tin đa tuyên bố"
+
+#: e2fsck/pass1b.c:581 e2fsck/pass1b.c:714
+#, c-format
+msgid "internal error: can't find dup_blk for %u\n"
+msgstr "lỗi nội bộ : không tìm thấy khối trùng (dup_blk) cho %u\n"
+
+#: e2fsck/pass1b.c:757
+msgid "returned from clone_file_block"
+msgstr "đã trả lại từ khối tập tin nhái (clone_file_block)"
+
+#: e2fsck/pass1b.c:776
+#, c-format
+msgid "internal error: couldn't lookup EA block record for %u"
+msgstr "lỗi nội bộ : không thể tra tìm mục ghi khối EA cho %u"
+
+#: e2fsck/pass1b.c:788
+#, c-format
+msgid "internal error: couldn't lookup EA inode record for %u"
+msgstr "lỗi nội bộ : không thể tra tìm mục ghi nút thông tin EA cho %u"
+
+#: e2fsck/pass1.c:475 e2fsck/pass2.c:776
+msgid "reading directory block"
+msgstr "đang đọc khối thư mục"
+
+#: e2fsck/pass1.c:597
+msgid "in-use inode map"
+msgstr "sơ đồ nút thông tin đang được dùng"
+
+#: e2fsck/pass1.c:606
+msgid "directory inode map"
+msgstr "sơ đồ nút thông tin thư mục"
+
+#: e2fsck/pass1.c:614
+msgid "regular file inode map"
+msgstr "sơ đồ nút thông tin tập tin chuẩn"
+
+#: e2fsck/pass1.c:621
+msgid "in-use block map"
+msgstr "sơ đồ khối đang được dùng"
+
+#: e2fsck/pass1.c:675
+msgid "opening inode scan"
+msgstr "đang mở bản quét nút thông tin"
+
+#: e2fsck/pass1.c:699
+msgid "getting next inode from scan"
+msgstr "đang lấy nút thông tin kế tiếp từ bản quét"
+
+#: e2fsck/pass1.c:1173
+msgid "Pass 1"
+msgstr "Lần qua 1"
+
+#: e2fsck/pass1.c:1230
+#, c-format
+msgid "reading indirect blocks of inode %u"
+msgstr "đang đọc khối gián tiếp của nút thông tin %u"
+
+#: e2fsck/pass1.c:1274
+msgid "bad inode map"
+msgstr "sơ đồ nút thông tin sai"
+
+#: e2fsck/pass1.c:1296
+msgid "inode in bad block map"
+msgstr "nút thông tin trong sơ đồ khối sai"
+
+#: e2fsck/pass1.c:1316
+msgid "imagic inode map"
+msgstr "sơ đồ nút thông tin ma thuật imagic"
+
+#: e2fsck/pass1.c:1343
+msgid "multiply claimed block map"
+msgstr "sơ đồ khối đa tuyên bố"
+
+#: e2fsck/pass1.c:1443
+msgid "ext attr block map"
+msgstr "sơ đồ khối ext attr (thuộc tính thêm?)"
+
+#: e2fsck/pass1.c:2181
+#, c-format
+msgid "%6lu(%c): expecting %6lu got phys %6lu (blkcnt %lld)\n"
+msgstr "%6lu (%c): mong đợi %6lu còn nhận %6lu vật lý (đếm khối %lld)\n"
+
+#: e2fsck/pass1.c:2533
+msgid "block bitmap"
+msgstr "mảng ảnh khối"
+
+#: e2fsck/pass1.c:2537
+msgid "inode bitmap"
+msgstr "mảng ảnh nút thông tin"
+
+#: e2fsck/pass1.c:2541
+msgid "inode table"
+msgstr "bảng nút thông tin"
+
+#: e2fsck/pass2.c:277
+msgid "Pass 2"
+msgstr "Lần qua 2"
+
+#: e2fsck/pass2.c:799
+msgid "Can not continue."
+msgstr "Không thể tiếp tục."
+
+#: e2fsck/pass3.c:76
+msgid "inode done bitmap"
+msgstr "mảng ảnh nút thông tin hoàn tất"
+
+#: e2fsck/pass3.c:84
+msgid "Peak memory"
+msgstr "Bộ nhớ cao điểm"
+
+#: e2fsck/pass3.c:134
+msgid "Pass 3"
+msgstr "Lần qua 3"
+
+#: e2fsck/pass3.c:320
+msgid "inode loop detection bitmap"
+msgstr "mảng ảnh phát hiện vòng lặp nút thông tin"
+
+#: e2fsck/pass4.c:191
+msgid "Pass 4"
+msgstr "Lần qua 4"
+
+#: e2fsck/pass5.c:64
+msgid "Pass 5"
+msgstr "Lần qua 5"
+
+#: e2fsck/problem.c:50
+msgid "(no prompt)"
+msgstr "(không có dấu nhắc)"
+
+#: e2fsck/problem.c:51
+msgid "Fix"
+msgstr "Sửa chữa"
+
+#: e2fsck/problem.c:52
+msgid "Clear"
+msgstr "Xoá sạch"
+
+#: e2fsck/problem.c:53
+msgid "Relocate"
+msgstr "Định vị lại"
+
+#: e2fsck/problem.c:54
+msgid "Allocate"
+msgstr "Cấp phát"
+
+#: e2fsck/problem.c:55
+msgid "Expand"
+msgstr "Mở rộng"
+
+#: e2fsck/problem.c:56
+msgid "Connect to /lost+found"
+msgstr "Kết nối đến /mất+tìm"
+
+#: e2fsck/problem.c:57
+msgid "Create"
+msgstr "Tạo"
+
+#: e2fsck/problem.c:58
+msgid "Salvage"
+msgstr "Cứu vớt"
+
+#: e2fsck/problem.c:59
+msgid "Truncate"
+msgstr "Cắt ngắn"
+
+#: e2fsck/problem.c:60
+msgid "Clear inode"
+msgstr "Xoá sạch nút thông tin"
+
+#: e2fsck/problem.c:61
+msgid "Abort"
+msgstr "Hủy bỏ"
+
+#: e2fsck/problem.c:62
+msgid "Split"
+msgstr "Chia tách"
+
+#: e2fsck/problem.c:63
+msgid "Continue"
+msgstr "Tiếp tục"
+
+#: e2fsck/problem.c:64
+msgid "Clone multiply-claimed blocks"
+msgstr "Nhái theo các khối đa tuyên bố"
+
+#: e2fsck/problem.c:65
+msgid "Delete file"
+msgstr "Xoá tập tin"
+
+#: e2fsck/problem.c:66
+msgid "Suppress messages"
+msgstr "Thu hồi thông điệp"
+
+#: e2fsck/problem.c:67
+msgid "Unlink"
+msgstr "Bỏ liên kết"
+
+#: e2fsck/problem.c:68
+msgid "Clear HTree index"
+msgstr "Xoá sạch chỉ mục HCây"
+
+#: e2fsck/problem.c:69
+msgid "Recreate"
+msgstr "Tạo lại"
+
+#: e2fsck/problem.c:78
+msgid "(NONE)"
+msgstr "(KHÔNG CÓ)"
+
+#: e2fsck/problem.c:79
+msgid "FIXED"
+msgstr "ĐÃ SỬA CHỮA"
+
+#: e2fsck/problem.c:80
+msgid "CLEARED"
+msgstr "ĐÃ XOÁ SẠCH"
+
+#: e2fsck/problem.c:81
+msgid "RELOCATED"
+msgstr "ĐÃ ĐỊNH VỊ LẠI"
+
+#: e2fsck/problem.c:82
+msgid "ALLOCATED"
+msgstr "ĐÃ CẤP PHÁT"
+
+#: e2fsck/problem.c:83
+msgid "EXPANDED"
+msgstr "ĐÃ MỞ RỘNG"
+
+#: e2fsck/problem.c:84
+msgid "RECONNECTED"
+msgstr "ĐÃ KẾT NỐI LẠI"
+
+#: e2fsck/problem.c:85
+msgid "CREATED"
+msgstr "ĐÃ TẠO"
+
+#: e2fsck/problem.c:86
+msgid "SALVAGED"
+msgstr "ĐÃ CỨU VỚT"
+
+#: e2fsck/problem.c:87
+msgid "TRUNCATED"
+msgstr "ĐÃ CẮT NGẮN"
+
+#: e2fsck/problem.c:88
+msgid "INODE CLEARED"
+msgstr "NÚT THÔNG TIN ĐÃ XOÁ SẠCH"
+
+#: e2fsck/problem.c:89
+msgid "ABORTED"
+msgstr "BỊ HỦY BỎ"
+
+#: e2fsck/problem.c:90
+msgid "SPLIT"
+msgstr "ĐÃ CHIA TÁCH"
+
+#: e2fsck/problem.c:91
+msgid "CONTINUING"
+msgstr "ĐANG TIẾP TỤC"
+
+#: e2fsck/problem.c:92
+msgid "MULTIPLY-CLAIMED BLOCKS CLONED"
+msgstr "CÁC KHỐI ĐA TUYÊN BỐ ĐÃ ĐƯỢC NHÁI"
+
+#: e2fsck/problem.c:93
+msgid "FILE DELETED"
+msgstr "TẬP TIN ĐÃ BỊ XÓA"
+
+#: e2fsck/problem.c:94
+msgid "SUPPRESSED"
+msgstr "BỊ THU HỒI"
+
+#: e2fsck/problem.c:95
+msgid "UNLINKED"
+msgstr "BỊ BỎ LIÊN KẾT"
+
+#: e2fsck/problem.c:96
+msgid "HTREE INDEX CLEARED"
+msgstr "CHỈ MỤC HCÂY ĐÃ ĐƯỢC XOÁ SẠCH"
+
+#: e2fsck/problem.c:97
+msgid "WILL RECREATE"
+msgstr "SẼ TẠO LẠI"
+
+#. @-expanded: block bitmap for group %g is not in group.  (block %b)\n
+#: e2fsck/problem.c:106
+msgid "@b @B for @g %g is not in @g.  (@b %b)\n"
+msgstr "@b @B cho @g %g không phải trong @g.  (@b %b)\n"
+
+#. @-expanded: inode bitmap for group %g is not in group.  (block %b)\n
+#: e2fsck/problem.c:110
+msgid "@i @B for @g %g is not in @g.  (@b %b)\n"
+msgstr "@i @B cho @g %g không phải trong @g.  (@b %b)\n"
+
+#. @-expanded: inode table for group %g is not in group.  (block %b)\n
+#. @-expanded: WARNING: SEVERE DATA LOSS POSSIBLE.\n
+#: e2fsck/problem.c:115
+msgid ""
+"@i table for @g %g is not in @g.  (@b %b)\n"
+"WARNING: SEVERE DATA LOSS POSSIBLE.\n"
+msgstr ""
+"Bảng @i cho @g %g không phải trong @g.  (@b %b)\n"
+"CẢNH BÁO : CÓ THỂ MẤT DỮ LIỆU NHIỀU.\n"
+
+#. @-expanded: \n
+#. @-expanded: The superblock could not be read or does not describe a correct ext2\n
+#. @-expanded: filesystem.  If the device is valid and it really contains an ext2\n
+#. @-expanded: filesystem (and not swap or ufs or something else), then the superblock\n
+#. @-expanded: is corrupt, and you might try running e2fsck with an alternate superblock:\n
+#. @-expanded:     e2fsck -b %S <device>\n
+#. @-expanded: \n
+#: e2fsck/problem.c:121
+#, c-format
+msgid ""
+"\n"
+"The @S could not be read or does not describe a correct ext2\n"
+"@f.  If the @v is valid and it really contains an ext2\n"
+"@f (and not swap or ufs or something else), then the @S\n"
+"is corrupt, and you might try running e2fsck with an alternate @S:\n"
+"    e2fsck -b %S <@v>\n"
+"\n"
+msgstr ""
+"\n"
+"@S không thể đọc được hoặc không diễn tả @f kiểu ext2 đúng.\n"
+"@v hợp lệ và thật chứa @f ext2 (không phải vùng trao đổi hay gì khác)\n"
+"thì @S bị hỏng: đề nghị bạn thử chạy e2fsck với @S xen kẽ:\n"
+"    e2fsck -b %S <@v>\n"
+"\n"
+
+#. @-expanded: The filesystem size (according to the superblock) is %b blocks\n
+#. @-expanded: The physical size of the device is %c blocks\n
+#. @-expanded: Either the superblock or the partition table is likely to be corrupt!\n
+#: e2fsck/problem.c:130
+msgid ""
+"The @f size (according to the @S) is %b @bs\n"
+"The physical size of the @v is %c @bs\n"
+"Either the @S or the partition table is likely to be corrupt!\n"
+msgstr ""
+"Kích cỡ @f (tùy theo @S) là %b @b\n"
+"Kích cỡ vật lý của @v là %c @b\n"
+"Hoặc @S hoặc bảng phân vùng rất có thể bị hỏng.\n"
+
+#. @-expanded: superblock block_size = %b, fragsize = %c.\n
+#. @-expanded: This version of e2fsck does not support fragment sizes different\n
+#. @-expanded: from the block size.\n
+#: e2fsck/problem.c:137
+msgid ""
+"@S @b_size = %b, fragsize = %c.\n"
+"This version of e2fsck does not support fragment sizes different\n"
+"from the @b size.\n"
+msgstr ""
+"@S kích cỡ @b = %b, kích cỡ đoạn = %c.\n"
+"Phiên bản e2fsck này không hỗ trợ kích cỡ đoạn\n"
+"khác với kích cỡ @b.\n"
+
+#. @-expanded: superblock blocks_per_group = %b, should have been %c\n
+#: e2fsck/problem.c:144
+msgid "@S @bs_per_group = %b, should have been %c\n"
+msgstr "@S @b mỗi nhóm = %b, còn nên là %c\n"
+
+#. @-expanded: superblock first_data_block = %b, should have been %c\n
+#: e2fsck/problem.c:149
+msgid "@S first_data_@b = %b, should have been %c\n"
+msgstr "@S @b dữ liệu thứ nhất = %b, còn nên là %c\n"
+
+#. @-expanded: filesystem did not have a UUID; generating one.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:154
+msgid ""
+"@f did not have a UUID; generating one.\n"
+"\n"
+msgstr ""
+"@f không có UUID nên đang tạo ra nó.\n"
+"\n"
+
+#: e2fsck/problem.c:159
+#, c-format
+msgid ""
+"Note: if several inode or block bitmap blocks or part\n"
+"of the inode table require relocation, you may wish to try\n"
+"running e2fsck with the '-b %S' option first.  The problem\n"
+"may lie only with the primary block group descriptors, and\n"
+"the backup block group descriptors may be OK.\n"
+"\n"
+msgstr ""
+"Ghi chú : nếu vài khối nút thông tin hay khối mảng ảnh khối\n"
+"hay phần của bảng nút thông tin cần thiết được định vị lại,\n"
+"đề nghị bạn thử chạy e2fsck với tùy chọn « -b %S »\n"
+"trước tiên. Vấn đề có thể nằm chỉ trong các mô tả nhóm\n"
+"khối chính, thì các mô tả nhóm khối dự trữ có thể là đúng.\n"
+"\n"
+
+#. @-expanded: Corruption found in superblock.  (%s = %N).\n
+#: e2fsck/problem.c:168
+msgid "Corruption found in @S.  (%s = %N).\n"
+msgstr "Tìm sự bị hỏng trong @S.  (%s = %N).\n"
+
+#. @-expanded: Error determining size of the physical device: %m\n
+#: e2fsck/problem.c:173
+#, c-format
+msgid "Error determining size of the physical @v: %m\n"
+msgstr "Gặp lỗi khi xác định kích cỡ của @v vật lý: %m\n"
+
+#. @-expanded: inode count in superblock is %i, should be %j.\n
+#: e2fsck/problem.c:178
+msgid "@i count in @S is %i, @s %j.\n"
+msgstr "Số đếm @i trong @S là %i, @s %j.\n"
+
+#: e2fsck/problem.c:182
+msgid "The Hurd does not support the filetype feature.\n"
+msgstr "Hurd không hỗ trợ tính năng kiểu tập tin.\n"
+
+#. @-expanded: superblock has an invalid journal (inode %i).\n
+#: e2fsck/problem.c:187
+#, c-format
+msgid "@S has an @n @j (@i %i).\n"
+msgstr "@S có một @n @j (@i %i).\n"
+
+#. @-expanded: External journal has multiple filesystem users (unsupported).\n
+#: e2fsck/problem.c:192
+msgid "External @j has multiple @f users (unsupported).\n"
+msgstr "@j bên ngoài có nhiều người dùng @f (không được hỗ trợ).\n"
+
+#. @-expanded: Can't find external journal\n
+#: e2fsck/problem.c:197
+msgid "Can't find external @j\n"
+msgstr "Không tìm thấy @j bên ngoài\n"
+
+#. @-expanded: External journal has bad superblock\n
+#: e2fsck/problem.c:202
+msgid "External @j has bad @S\n"
+msgstr "@j bên ngoài có @S sai\n"
+
+#. @-expanded: External journal does not support this filesystem\n
+#: e2fsck/problem.c:207
+msgid "External @j does not support this @f\n"
+msgstr "@j bên ngoài không hỗ trợ @f này\n"
+
+#. @-expanded: filesystem journal superblock is unknown type %N (unsupported).\n
+#. @-expanded: It is likely that your copy of e2fsck is old and/or doesn't support this journal 
+#. @-expanded: format.\n
+#. @-expanded: It is also possible the journal superblock is corrupt.\n
+#: e2fsck/problem.c:212
+msgid ""
+"@f @j @S is unknown type %N (unsupported).\n"
+"It is likely that your copy of e2fsck is old and/or doesn't support this @j "
+"format.\n"
+"It is also possible the @j @S is corrupt.\n"
+msgstr ""
+"@S @j @f có kiểu lạ %N (không được hỗ trợ).\n"
+"Rất có thể là bạn có một bản sao e2fsck cũ mà/hay không hỗ trợ định dạng @j "
+"này.\n"
+"Cũng có thể là @S @j bị hỏng.\n"
+
+#. @-expanded: journal superblock is corrupt.\n
+#: e2fsck/problem.c:220
+msgid "@j @S is corrupt.\n"
+msgstr "@S @j bị hỏng.\n"
+
+#. @-expanded: superblock has_journal flag is clear, but a journal %s is present.\n
+#: e2fsck/problem.c:225
+#, c-format
+msgid "@S has_@j flag is clear, but a @j %s is present.\n"
+msgstr "Cờ @S has_@j vẫn tốt, mà cũng có một @j %s.\n"
+
+#. @-expanded: superblock needs_recovery flag is set, but no journal is present.\n
+#: e2fsck/problem.c:230
+msgid "@S needs_recovery flag is set, but no @j is present.\n"
+msgstr "@S đặt cờ needs_recovery, còn không có @j.\n"
+
+#. @-expanded: superblock needs_recovery flag is clear, but journal has data.\n
+#: e2fsck/problem.c:235
+msgid "@S needs_recovery flag is clear, but @j has data.\n"
+msgstr "Cờ @S needs_recovery vẫn tốt, còn @j có dữ liệu.\n"
+
+#. @-expanded: Clear journal
+#: e2fsck/problem.c:240
+msgid "Clear @j"
+msgstr "Xoá sạch @j"
+
+#. @-expanded: filesystem has feature flag(s) set, but is a revision 0 filesystem.  
+#: e2fsck/problem.c:245 e2fsck/problem.c:664
+msgid "@f has feature flag(s) set, but is a revision 0 @f.  "
+msgstr "@f đặt (các) cờ tính năng, còn là @f bản sửa đổi 0."
+
+#. @-expanded: %s orphaned inode %i (uid=%Iu, gid=%Ig, mode=%Im, size=%Is)\n
+#: e2fsck/problem.c:250
+msgid "%s @o @i %i (uid=%Iu, gid=%Ig, mode=%Im, size=%Is)\n"
+msgstr "@i @o %s %i (uid=%Iu, gid=%Ig, chế độ=%Im, cỡ=%Is)\n"
+
+#. @-expanded: illegal %B (%b) found in orphaned inode %i.\n
+#: e2fsck/problem.c:255
+msgid "@I %B (%b) found in @o @i %i.\n"
+msgstr "%B (%b) @l được tìm trong @i @o %i.\n"
+
+#. @-expanded: Already cleared %B (%b) found in orphaned inode %i.\n
+#: e2fsck/problem.c:260
+msgid "Already cleared %B (%b) found in @o @i %i.\n"
+msgstr "Đã xoá sạch %B (%b) được tìm trong @i @o %i.\n"
+
+#. @-expanded: illegal orphaned inode %i in superblock.\n
+#: e2fsck/problem.c:265
+#, c-format
+msgid "@I @o @i %i in @S.\n"
+msgstr "@i @o %i @l trong @S.\n"
+
+#. @-expanded: illegal inode %i in orphaned inode list.\n
+#: e2fsck/problem.c:270
+#, c-format
+msgid "@I @i %i in @o @i list.\n"
+msgstr "@I @i %i in @o @i list.\n"
+
+#. @-expanded: journal superblock has an unknown read-only feature flag set.\n
+#: e2fsck/problem.c:275
+msgid "@j @S has an unknown read-only feature flag set.\n"
+msgstr "@S @j đặt một cờ tính năng chỉ đọc không rõ.\n"
+
+#. @-expanded: journal superblock has an unknown incompatible feature flag set.\n
+#: e2fsck/problem.c:280
+msgid "@j @S has an unknown incompatible feature flag set.\n"
+msgstr "@S @j đặt một cờ tính năng không tương thích không rõ.\n"
+
+#. @-expanded: journal version not supported by this e2fsck.\n
+#: e2fsck/problem.c:285
+msgid "@j version not supported by this e2fsck.\n"
+msgstr "Phiên bản @j không hỗ trợ trong e2fsck này.\n"
+
+#. @-expanded: Moving journal from /%s to hidden inode.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:290
+#, c-format
+msgid ""
+"Moving @j from /%s to hidden @i.\n"
+"\n"
+msgstr ""
+"Đang di chuyển @j từ /%s sang @i bị ẩn.\n"
+"\n"
+
+#. @-expanded: Error moving journal: %m\n
+#. @-expanded: \n
+#: e2fsck/problem.c:295
+#, c-format
+msgid ""
+"Error moving @j: %m\n"
+"\n"
+msgstr ""
+"Gặp lỗi khi di chuyển @j: %m\n"
+"\n"
+
+#. @-expanded: Found invalid V2 journal superblock fields (from V1 journal).\n
+#. @-expanded: Clearing fields beyond the V1 journal superblock...\n
+#. @-expanded: \n
+#: e2fsck/problem.c:300
+msgid ""
+"Found @n V2 @j @S fields (from V1 @j).\n"
+"Clearing fields beyond the V1 @j @S...\n"
+"\n"
+msgstr ""
+"Tìm thấy các trường @S @j pb2 @n (từ @j pb1).\n"
+"Đang xoá sạch các trường nằm ở bên kia @S @j pb1...\n"
+"\n"
+
+#. @-expanded: Run journal anyway
+#: e2fsck/problem.c:306
+msgid "Run @j anyway"
+msgstr "Vẫn chạy @j"
+
+#. @-expanded: Recovery flag not set in backup superblock, so running journal anyway.\n
+#: e2fsck/problem.c:311
+msgid "Recovery flag not set in backup @S, so running @j anyway.\n"
+msgstr "Chưa đặt cờ phục hồi trong @S dự trữ nên vẫn chạy @j.\n"
+
+#. @-expanded: Backing up journal inode block information.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:316
+msgid ""
+"Backing up @j @i @b information.\n"
+"\n"
+msgstr ""
+"Đang sao lưu thông tin @b @i @j.\n"
+"\n"
+
+#. @-expanded: filesystem does not have resize_inode enabled, but s_reserved_gdt_blocks\n
+#. @-expanded: is %N; should be zero.  
+#: e2fsck/problem.c:321
+msgid ""
+"@f does not have resize_@i enabled, but s_reserved_gdt_@bs\n"
+"is %N; @s zero.  "
+msgstr ""
+"@f không bật resize_@i, còn s_reserved_gdt_@bs là %N;\n"
+"@s số không.  "
+
+#. @-expanded: Resize_inode not enabled, but the resize inode is non-zero.  
+#: e2fsck/problem.c:327
+msgid "Resize_@i not enabled, but the resize @i is non-zero.  "
+msgstr "Không bật resize_@i, còn @i thay đổi kích cỡ không phải số không..  "
+
+#. @-expanded: Resize inode not valid.  
+#: e2fsck/problem.c:332
+msgid "Resize @i not valid.  "
+msgstr "@i thay đổi kích cỡ không phải hợp lệ.  "
+
+#. @-expanded: superblock last mount time (%t,\n
+#. @-expanded: \tnow = %T) is in the future.\n
+#: e2fsck/problem.c:337
+msgid ""
+"@S last mount time (%t,\n"
+"\tnow = %T) is in the future.\n"
+msgstr ""
+"Giờ gắn kết @S cuối cùng\n"
+"(%t, bây giờ = %T) nằm trong tương lai.\n"
+
+#. @-expanded: superblock last write time (%t,\n
+#. @-expanded: \tnow = %T) is in the future.\n
+#: e2fsck/problem.c:342
+msgid ""
+"@S last write time (%t,\n"
+"\tnow = %T) is in the future.\n"
+msgstr "Giờ ghi nhớ @S cuối cùng(%t, bây giờ = %T) nằm trong tương lai.\n"
+
+#. @-expanded: superblock hint for external superblock should be %X.  
+#: e2fsck/problem.c:346
+#, c-format
+msgid "@S hint for external superblock @s %X.  "
+msgstr "Lời gợi ý @S cho siêu khối bên ngoài @s %X.  "
+
+#. @-expanded: Adding dirhash hint to filesystem.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:351
+msgid ""
+"Adding dirhash hint to @f.\n"
+"\n"
+msgstr ""
+"Đang thêm mẹo dirhash vào @f.\n"
+"\n"
+
+#. @-expanded: group descriptor %g checksum is invalid.  
+#: e2fsck/problem.c:356
+#, c-format
+msgid "@g descriptor %g checksum is invalid.  "
+msgstr "Mô tả @g %g có tổng kiểm sai.  "
+
+#. @-expanded: group descriptor %g marked uninitialized without feature set.\n
+#: e2fsck/problem.c:361
+#, c-format
+msgid "@g descriptor %g marked uninitialized without feature set.\n"
+msgstr "Mô tả @g %g có nhãn là chưa sơ khởi mà không có tập tính năng.\n"
+
+#. @-expanded: group %g block bitmap uninitialized but inode bitmap in use.\n
+#: e2fsck/problem.c:366
+#, c-format
+msgid "@g %g @b @B uninitialized but @i @B in use.\n"
+msgstr "@B @b của @g %g chưa sơ khởi nhưng đang dùng @B @i.\n"
+
+#. @-expanded: group descriptor %g has invalid unused inodes count %b.  
+#: e2fsck/problem.c:371
+msgid "@g descriptor %g has invalid unused inodes count %b.  "
+msgstr "Mô tả @g %g sai đếm các nút thông tin chưa dùng %b.  "
+
+#. @-expanded: Last group block bitmap uninitialized.  
+#: e2fsck/problem.c:376
+msgid "Last @g @b @B uninitialized.  "
+msgstr "Chưa sơ khởi @B @b @g cuối cùng.  "
+
+#: e2fsck/problem.c:381
+#, c-format
+msgid "Journal transaction %i was corrupt, replay was aborted.\n"
+msgstr "Giao dịch nhật ký %i bị hỏng nên hủy bỏ tiến trình phát lại.\n"
+
+#: e2fsck/problem.c:385
+msgid "The test_fs flag is set (and ext4 is available).  "
+msgstr "Cờ « test_fs » được đặt (và ext4 sẵn sàng)"
+
+#. @-expanded: superblock last mount time is in the future.\n
+#. @-expanded: \t(by less than a day, probably due to the hardware clock being incorrectly 
+#. @-expanded: set)  
+#: e2fsck/problem.c:390
+msgid ""
+"@S last mount time is in the future.\n"
+"\t(by less than a day, probably due to the hardware clock being incorrectly "
+"set)  "
+msgstr ""
+"Giờ gắn kết @S cuối cùng nằm trong tương lai\n"
+"\t(theo ít nhất một ngày, rất có thể do đồng hồ phần cứng bị sai lập)."
+
+#. @-expanded: superblock last write time is in the future.\n
+#. @-expanded: \t(by less than a day, probably due to the hardware clock being incorrectly 
+#. @-expanded: set).  
+#: e2fsck/problem.c:396
+msgid ""
+"@S last write time is in the future.\n"
+"\t(by less than a day, probably due to the hardware clock being incorrectly "
+"set).  "
+msgstr ""
+"Giờ ghi nhớ @S cuối cùng nằm trong tương lai\n"
+"\t(theo ít nhất một ngày, rất có thể do đồng hồ phần cứng bị sai lập)."
+
+#. @-expanded: One or more block group descriptor checksums are invalid.  
+#: e2fsck/problem.c:402
+msgid "One or more @b @g descriptor checksums are invalid.  "
+msgstr "Lỗi: một hay nhiều tổng kiểm bộ mô tả @g @b không phải hợp lệ.  "
+
+#. @-expanded: Pass 1: Checking inodes, blocks, and sizes\n
+#: e2fsck/problem.c:409
+msgid "Pass 1: Checking @is, @bs, and sizes\n"
+msgstr "Lần qua 1: đang kiểm tra các @i, @b và kích cỡ\n"
+
+#. @-expanded: root inode is not a directory.  
+#: e2fsck/problem.c:413
+msgid "@r is not a @d.  "
+msgstr "@r không phải @d.  "
+
+#. @-expanded: root inode has dtime set (probably due to old mke2fs).  
+#: e2fsck/problem.c:418
+msgid "@r has dtime set (probably due to old mke2fs).  "
+msgstr "@r đặt dtime (rất có thể do mkd2fs cũ).  "
+
+#. @-expanded: Reserved inode %i (%Q) has invalid mode.  
+#: e2fsck/problem.c:423
+msgid "Reserved @i %i (%Q) has @n mode.  "
+msgstr "@i %i đã dành riêng (%Q) có chế độ @n."
+
+#. @-expanded: deleted inode %i has zero dtime.  
+#: e2fsck/problem.c:428
+#, c-format
+msgid "@D @i %i has zero dtime.  "
+msgstr "@i @D %i có dtime bằng không.  "
+
+#. @-expanded: inode %i is in use, but has dtime set.  
+#: e2fsck/problem.c:433
+#, c-format
+msgid "@i %i is in use, but has dtime set.  "
+msgstr "@i %i đang được dùng, còn đặt dtime.  "
+
+#. @-expanded: inode %i is a zero-length directory.  
+#: e2fsck/problem.c:438
+#, c-format
+msgid "@i %i is a @z @d.  "
+msgstr "@i %i là @d @z"
+
+#. @-expanded: group %g's block bitmap at %b conflicts with some other fs block.\n
+#: e2fsck/problem.c:443
+msgid "@g %g's @b @B at %b @C.\n"
+msgstr "@B @b của @g %g tại %b @C.\n"
+
+#. @-expanded: group %g's inode bitmap at %b conflicts with some other fs block.\n
+#: e2fsck/problem.c:448
+msgid "@g %g's @i @B at %b @C.\n"
+msgstr "@B @i của @g %g ở %b @c.\n"
+
+#. @-expanded: group %g's inode table at %b conflicts with some other fs block.\n
+#: e2fsck/problem.c:453
+msgid "@g %g's @i table at %b @C.\n"
+msgstr "Bảng @i của @g %g ở %b @C.\n"
+
+#. @-expanded: group %g's block bitmap (%b) is bad.  
+#: e2fsck/problem.c:458
+msgid "@g %g's @b @B (%b) is bad.  "
+msgstr "@b @B (%b) của @g %g là sai"
+
+#. @-expanded: group %g's inode bitmap (%b) is bad.  
+#: e2fsck/problem.c:463
+msgid "@g %g's @i @B (%b) is bad.  "
+msgstr "@B @i (%b) của @g %g là sai."
+
+#. @-expanded: inode %i, i_size is %Is, should be %N.  
+#: e2fsck/problem.c:468
+msgid "@i %i, i_size is %Is, @s %N.  "
+msgstr "@i %i, i_size là %Is, @s %N.  "
+
+#. @-expanded: inode %i, i_blocks is %Ib, should be %N.  
+#: e2fsck/problem.c:473
+msgid "@i %i, i_@bs is %Ib, @s %N.  "
+msgstr "@i %i, i_@bs là %Ib, @s %N.  "
+
+#. @-expanded: illegal %B (%b) in inode %i.  
+#: e2fsck/problem.c:478
+msgid "@I %B (%b) in @i %i.  "
+msgstr "%B (%b) @l nằm trong @i %i.  "
+
+#. @-expanded: %B (%b) overlaps filesystem metadata in inode %i.  
+#: e2fsck/problem.c:483
+msgid "%B (%b) overlaps @f metadata in @i %i.  "
+msgstr "%B (%b) đè lên siêu dữ liệu @f trong @i %i.  "
+
+#. @-expanded: inode %i has illegal block(s).  
+#: e2fsck/problem.c:488
+#, c-format
+msgid "@i %i has illegal @b(s).  "
+msgstr "@i %i có @b cấm.  "
+
+#. @-expanded: Too many illegal blocks in inode %i.\n
+#: e2fsck/problem.c:493
+#, c-format
+msgid "Too many illegal @bs in @i %i.\n"
+msgstr "Quá nhiều @b cấm trong @i %i.\n"
+
+#. @-expanded: illegal %B (%b) in bad block inode.  
+#: e2fsck/problem.c:498
+msgid "@I %B (%b) in bad @b @i.  "
+msgstr "%B (%b) @l nằm trong @i @b sai. "
+
+#. @-expanded: Bad block inode has illegal block(s).  
+#: e2fsck/problem.c:503
+msgid "Bad @b @i has illegal @b(s).  "
+msgstr "@i @b sai có @b cấm. "
+
+#. @-expanded: Duplicate or bad block in use!\n
+#: e2fsck/problem.c:508
+msgid "Duplicate or bad @b in use!\n"
+msgstr "@b trùng hay sai đang được dùng.\n"
+
+#. @-expanded: Bad block %b used as bad block inode indirect block.  
+#: e2fsck/problem.c:513
+msgid "Bad @b %b used as bad @b @i indirect @b.  "
+msgstr "@b sai %b được dùng làm @b gián tiếp của @i @b.  "
+
+#. @-expanded: \n
+#. @-expanded: The bad block inode has probably been corrupted.  You probably\n
+#. @-expanded: should stop now and run e2fsck -c to scan for bad blocks\n
+#. @-expanded: in the filesystem.\n
+#: e2fsck/problem.c:518
+msgid ""
+"\n"
+"The bad @b @i has probably been corrupted.  You probably\n"
+"should stop now and run e2fsck -c to scan for bad blocks\n"
+"in the @f.\n"
+msgstr ""
+"\n"
+"@i @n rất có thể bị hỏng. Đề nghị bạn thôi ngay bây giờ\n"
+"và chạy lệnh « e2fsck -c » để quét tìm khối sai trong @f.\n"
+
+#. @-expanded: \n
+#. @-expanded: If the block is really bad, the filesystem can not be fixed.\n
+#: e2fsck/problem.c:525
+msgid ""
+"\n"
+"If the @b is really bad, the @f can not be fixed.\n"
+msgstr ""
+"\n"
+"@b thật sai thì không thể sửa chữa @f.\n"
+
+#. @-expanded: You can remove this block from the bad block list and hope\n
+#. @-expanded: that the block is really OK.  But there are no guarantees.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:530
+msgid ""
+"You can remove this @b from the bad @b list and hope\n"
+"that the @b is really OK.  But there are no guarantees.\n"
+"\n"
+msgstr ""
+"Bạn có thể gỡ bỏ @b này khỏi danh sách các @b sai\n"
+"và mong @b thật đúng. Nhưng mà không bảo hành gì.\n"
+"\n"
+
+#. @-expanded: The primary superblock (%b) is on the bad block list.\n
+#: e2fsck/problem.c:536
+msgid "The primary @S (%b) is on the bad @b list.\n"
+msgstr "@S chính (%b) nằm trên danh sách các @b sai.\n"
+
+#. @-expanded: Block %b in the primary group descriptors is on the bad block list\n
+#: e2fsck/problem.c:541
+msgid "Block %b in the primary @g descriptors is on the bad @b list\n"
+msgstr ""
+"Khối %b trong những mô tả @g chính có nằm trong danh sách các @b sai.\n"
+
+#. @-expanded: Warning: Group %g's superblock (%b) is bad.\n
+#: e2fsck/problem.c:547
+msgid "Warning: Group %g's @S (%b) is bad.\n"
+msgstr "Cảnh báo : @S của @g %g (%b) là sai.\n"
+
+#. @-expanded: Warning: Group %g's copy of the group descriptors has a bad block (%b).\n
+#: e2fsck/problem.c:552
+msgid "Warning: Group %g's copy of the @g descriptors has a bad @b (%b).\n"
+msgstr "Cảnh báo : bản sao các mô tả @g của nhóm %g có một @b sai (%b).\n"
+
+#. @-expanded: Programming error?  block #%b claimed for no reason in process_bad_block.\n
+#: e2fsck/problem.c:558
+msgid "Programming error?  @b #%b claimed for no reason in process_bad_@b.\n"
+msgstr ""
+"Lỗi lập trình ? @b %b được tuyên bố, không có lý do, trong process_bad_@b\n"
+
+#. @-expanded: error allocating %N contiguous block(s) in block group %g for %s: %m\n
+#: e2fsck/problem.c:564
+msgid "@A %N contiguous @b(s) in @b @g %g for %s: %m\n"
+msgstr "@A %N @b kề nhau trong @g @b %g cho %s: %m\n"
+
+#. @-expanded: error allocating block buffer for relocating %s\n
+#: e2fsck/problem.c:569
+#, c-format
+msgid "@A @b buffer for relocating %s\n"
+msgstr "@A bộ đệm @b để định vị lại %s\n"
+
+#. @-expanded: Relocating group %g's %s from %b to %c...\n
+#: e2fsck/problem.c:574
+msgid "Relocating @g %g's %s from %b to %c...\n"
+msgstr "Đang định vị lại %s của @g %g từ %b sang %c...\n"
+
+#. @-expanded: Relocating group %g's %s to %c...\n
+#: e2fsck/problem.c:579
+#, c-format
+msgid "Relocating @g %g's %s to %c...\n"
+msgstr "Đang định vị lại %2$s của @g %1$g sang %3$c...\n"
+
+#. @-expanded: Warning: could not read block %b of %s: %m\n
+#: e2fsck/problem.c:584
+msgid "Warning: could not read @b %b of %s: %m\n"
+msgstr "Cảnh báo : không thể đọc @b %b trên %s: %m\n"
+
+#. @-expanded: Warning: could not write block %b for %s: %m\n
+#: e2fsck/problem.c:589
+msgid "Warning: could not write @b %b for %s: %m\n"
+msgstr "Cảnh báo : không thể ghi @b %b cho %s: %m\n"
+
+#. @-expanded: error allocating inode bitmap (%N): %m\n
+#: e2fsck/problem.c:594 e2fsck/problem.c:1405
+msgid "@A @i @B (%N): %m\n"
+msgstr "@A @B @i (%N): %m\n"
+
+#. @-expanded: error allocating block bitmap (%N): %m\n
+#: e2fsck/problem.c:599
+msgid "@A @b @B (%N): %m\n"
+msgstr "@A @B @b (%N): %m\n"
+
+#. @-expanded: error allocating icount link information: %m\n
+#: e2fsck/problem.c:604
+#, c-format
+msgid "@A icount link information: %m\n"
+msgstr "@A thông tin liên kết icount: %m\n"
+
+#. @-expanded: error allocating directory block array: %m\n
+#: e2fsck/problem.c:609
+#, c-format
+msgid "@A @d @b array: %m\n"
+msgstr "@A mảng @d @d: %m\n"
+
+#. @-expanded: Error while scanning inodes (%i): %m\n
+#: e2fsck/problem.c:614
+#, c-format
+msgid "Error while scanning @is (%i): %m\n"
+msgstr "Gặp lỗi khi quét các @i (%i): %m\n"
+
+#. @-expanded: Error while iterating over blocks in inode %i: %m\n
+#: e2fsck/problem.c:619
+#, c-format
+msgid "Error while iterating over @bs in @i %i: %m\n"
+msgstr "Gặp lỗi khi lặp lại trên các @b trong @i %i: %m\n"
+
+#. @-expanded: Error storing inode count information (inode=%i, count=%N): %m\n
+#: e2fsck/problem.c:624
+msgid "Error storing @i count information (@i=%i, count=%N): %m\n"
+msgstr "Gặp lỗi khi cất giữ thông tin đếm @i (@i=%i, đếm=%N): %m\n"
+
+#. @-expanded: Error storing directory block information (inode=%i, block=%b, num=%N): %m\n
+#: e2fsck/problem.c:629
+msgid "Error storing @d @b information (@i=%i, @b=%b, num=%N): %m\n"
+msgstr "Gặp lỗi khi cất giữ thông tin @d @b (@i=%i, @b=%b, số=%N): %m\n"
+
+#. @-expanded: Error reading inode %i: %m\n
+#: e2fsck/problem.c:635
+#, c-format
+msgid "Error reading @i %i: %m\n"
+msgstr "Gặp lỗi khi đọc @i %i: %m\n"
+
+#. @-expanded: inode %i has imagic flag set.  
+#: e2fsck/problem.c:643
+#, c-format
+msgid "@i %i has imagic flag set.  "
+msgstr "@i %i đặt cờ ma thuật imagic.  "
+
+#. @-expanded: Special (device/socket/fifo/symlink) file (inode %i) has immutable\n
+#. @-expanded: or append-only flag set.  
+#: e2fsck/problem.c:648
+#, c-format
+msgid ""
+"Special (@v/socket/fifo/symlink) file (@i %i) has immutable\n"
+"or append-only flag set.  "
+msgstr ""
+"Tập tin (@vị/ổ cắm/FIFO/liên kết tượng trưng) đặc biệt\n"
+"(@i %i) đặt cờ không thay đổi (immutable) hay\n"
+"chỉ phu thêm (append-only)."
+
+#. @-expanded: inode %i has compression flag set on filesystem without compression support.  
+#: e2fsck/problem.c:654
+#, c-format
+msgid "@i %i has @cion flag set on @f without @cion support.  "
+msgstr "@i %i đặt cờ @c trên @f mà không hỗ trợ khả năng @c."
+
+#. @-expanded: Special (device/socket/fifo) inode %i has non-zero size.  
+#: e2fsck/problem.c:659
+#, c-format
+msgid "Special (@v/socket/fifo) @i %i has non-zero size.  "
+msgstr "@i (@v/ổ cắm/FIFO) %i có kích cỡ không phải số không."
+
+#. @-expanded: journal inode is not in use, but contains data.  
+#: e2fsck/problem.c:669
+msgid "@j @i is not in use, but contains data.  "
+msgstr "@i @j không đang được dùng, còn chứa dữ liệu."
+
+#. @-expanded: journal is not regular file.  
+#: e2fsck/problem.c:674
+msgid "@j is not regular file.  "
+msgstr "@j không phải tập tin chuẩn.  "
+
+#. @-expanded: inode %i was part of the orphaned inode list.  
+#: e2fsck/problem.c:679
+#, c-format
+msgid "@i %i was part of the @o @i list.  "
+msgstr "@i %i đã thuộc về sanh sách @i @o.  "
+
+#. @-expanded: inodes that were part of a corrupted orphan linked list found.  
+#: e2fsck/problem.c:685
+msgid "@is that were part of a corrupted orphan linked list found.  "
+msgstr "Tìm thấy các @i đã thuộc về danh sách đã liên kết thừa bị hỏng."
+
+#. @-expanded: error allocating refcount structure (%N): %m\n
+#: e2fsck/problem.c:690
+msgid "@A refcount structure (%N): %m\n"
+msgstr "@A cấu trúc refcount (%N): %m\n"
+
+#. @-expanded: Error reading extended attribute block %b for inode %i.  
+#: e2fsck/problem.c:695
+msgid "Error reading @a @b %b for @i %i.  "
+msgstr "Gặp lỗi khi đọc @b @a %b cho @i %i.  "
+
+#. @-expanded: inode %i has a bad extended attribute block %b.  
+#: e2fsck/problem.c:700
+msgid "@i %i has a bad @a @b %b.  "
+msgstr "@i %i có một @b @a %b.  "
+
+#. @-expanded: Error reading extended attribute block %b (%m).  
+#: e2fsck/problem.c:705
+msgid "Error reading @a @b %b (%m).  "
+msgstr "Gặp lỗi khi đọc @b @a %b (%m).  "
+
+#. @-expanded: extended attribute block %b has reference count %r, should be %N.  
+#: e2fsck/problem.c:710
+msgid "@a @b %b has reference count %r, @s %N.  "
+msgstr "@b @a %b có số đếm tham chiếu %r, @s %N.  "
+
+#. @-expanded: Error writing extended attribute block %b (%m).  
+#: e2fsck/problem.c:715
+msgid "Error writing @a @b %b (%m).  "
+msgstr "Gặp lỗi khi ghi @b @a %b (%m).  "
+
+#. @-expanded: extended attribute block %b has h_blocks > 1.  
+#: e2fsck/problem.c:720
+msgid "@a @b %b has h_@bs > 1.  "
+msgstr "@b @a %b có h_@b > 1.  "
+
+#. @-expanded: error allocating extended attribute block %b.  
+#: e2fsck/problem.c:725
+msgid "@A @a @b %b.  "
+msgstr "@A @b @a %b.  "
+
+#. @-expanded: extended attribute block %b is corrupt (allocation collision).  
+#: e2fsck/problem.c:730
+msgid "@a @b %b is corrupt (allocation collision).  "
+msgstr "@b @a %b bị hỏng (xung đột cấp phát)."
+
+#. @-expanded: extended attribute block %b is corrupt (invalid name).  
+#: e2fsck/problem.c:735
+msgid "@a @b %b is corrupt (@n name).  "
+msgstr "@b @a %b bị hỏng (tên @n).  "
+
+#. @-expanded: extended attribute block %b is corrupt (invalid value).  
+#: e2fsck/problem.c:740
+msgid "@a @b %b is corrupt (@n value).  "
+msgstr "@b @a %b bị hỏng (giá trị @n).  "
+
+#. @-expanded: inode %i is too big.  
+#: e2fsck/problem.c:745
+#, c-format
+msgid "@i %i is too big.  "
+msgstr "@i %i quá lớn.  "
+
+#. @-expanded: %B (%b) causes directory to be too big.  
+#: e2fsck/problem.c:749
+msgid "%B (%b) causes @d to be too big.  "
+msgstr "%B (%b) gây ra @d quá lớn.  "
+
+#: e2fsck/problem.c:754
+msgid "%B (%b) causes file to be too big.  "
+msgstr "%B (%b) gây ra tập tin quá lớn.  "
+
+#: e2fsck/problem.c:759
+msgid "%B (%b) causes symlink to be too big.  "
+msgstr "%B (%b) gây ra liên kết tượng trưng quá lớn.  "
+
+#. @-expanded: inode %i has INDEX_FL flag set on filesystem without htree support.\n
+#: e2fsck/problem.c:764
+#, c-format
+msgid "@i %i has INDEX_FL flag set on @f without htree support.\n"
+msgstr "@i %i đặt cờ INDEX_FL trên @f không có hỗ trợ htree.\n"
+
+#. @-expanded: inode %i has INDEX_FL flag set but is not a directory.\n
+#: e2fsck/problem.c:769
+#, c-format
+msgid "@i %i has INDEX_FL flag set but is not a @d.\n"
+msgstr "@i %i đặt cờ INDEX_FL nhưng không phải @d.\n"
+
+#. @-expanded: HTREE directory inode %i has an invalid root node.\n
+#: e2fsck/problem.c:774
+#, c-format
+msgid "@h %i has an @n root node.\n"
+msgstr "@h %i có một nút gốc @n.\n"
+
+#. @-expanded: HTREE directory inode %i has an unsupported hash version (%N)\n
+#: e2fsck/problem.c:779
+msgid "@h %i has an unsupported hash version (%N)\n"
+msgstr "@h %i có một phiên bản băm không được hỗ trợ (%N)\n"
+
+#. @-expanded: HTREE directory inode %i uses an incompatible htree root node flag.\n
+#: e2fsck/problem.c:784
+#, c-format
+msgid "@h %i uses an incompatible htree root node flag.\n"
+msgstr "@h %i dùng cờ nút gốc htree không tương thích.\n"
+
+#. @-expanded: HTREE directory inode %i has a tree depth (%N) which is too big\n
+#: e2fsck/problem.c:789
+msgid "@h %i has a tree depth (%N) which is too big\n"
+msgstr "@h %i có độ sâu cây (%N) quá lớn\n"
+
+#. @-expanded: Bad block inode has an indirect block (%b) that conflicts with\n
+#. @-expanded: filesystem metadata.  
+#: e2fsck/problem.c:794
+msgid ""
+"Bad @b @i has an indirect @b (%b) that conflicts with\n"
+"@f metadata.  "
+msgstr ""
+"@i @b sai có một @b gián tiếp (%b) xung đột với\n"
+"siêu dữ liệu @f.  "
+
+#. @-expanded: Resize inode (re)creation failed: %m.
+#: e2fsck/problem.c:800
+#, c-format
+msgid "Resize @i (re)creation failed: %m."
+msgstr "Việc tạo (lại) sự thay đổi kích cỡ @i bị lỗi: %m."
+
+#. @-expanded: inode %i has a extra size (%IS) which is invalid\n
+#: e2fsck/problem.c:805
+msgid "@i %i has a extra size (%IS) which is @n\n"
+msgstr "@i %i có một kích cỡ thêm (%IS) @n\n"
+
+#. @-expanded: extended attribute in inode %i has a namelen (%N) which is invalid\n
+#: e2fsck/problem.c:810
+msgid "@a in @i %i has a namelen (%N) which is @n\n"
+msgstr "@a trong @i %i có một namelen (%N) @n\n"
+
+#. @-expanded: extended attribute in inode %i has a value offset (%N) which is invalid\n
+#: e2fsck/problem.c:815
+msgid "@a in @i %i has a value offset (%N) which is @n\n"
+msgstr "@a trong @i %i có một hiệu giá trị (%N) @n\n"
+
+#. @-expanded: extended attribute in inode %i has a value block (%N) which is invalid (must be 0)\n
+#: e2fsck/problem.c:820
+msgid "@a in @i %i has a value @b (%N) which is @n (must be 0)\n"
+msgstr "@a trong @i %i có một giá trị @b (%N) @n (phải là 0)\n"
+
+#. @-expanded: extended attribute in inode %i has a value size (%N) which is invalid\n
+#: e2fsck/problem.c:825
+msgid "@a in @i %i has a value size (%N) which is @n\n"
+msgstr "@a trong @i %i có một kích cỡ giá trị (%N) @n\n"
+
+#. @-expanded: extended attribute in inode %i has a hash (%N) which is invalid\n
+#: e2fsck/problem.c:830
+msgid "@a in @i %i has a hash (%N) which is @n\n"
+msgstr "@a trong @i %i có một chuỗi duy nhất (%N) mà @n\n"
+
+#. @-expanded: inode %i is a %It but it looks like it is really a directory.\n
+#: e2fsck/problem.c:835
+msgid "@i %i is a %It but it looks like it is really a directory.\n"
+msgstr "@i %i là %It nhưng hình như nó thực sự là thư mục.\n"
+
+#. @-expanded: Error while reading over extent tree in inode %i: %m\n
+#: e2fsck/problem.c:840
+#, c-format
+msgid "Error while reading over @x tree in @i %i: %m\n"
+msgstr "Gặp lỗi khi đọc qua cây @x trong @i %i: %m\n"
+
+#. @-expanded: Failed to iterate extents in inode %i\n
+#. @-expanded: \t(op %s, blk %b, lblk %c): %m\n
+#: e2fsck/problem.c:845
+msgid ""
+"Failed to iterate extents in @i %i\n"
+"\t(op %s, blk %b, lblk %c): %m\n"
+msgstr ""
+"Không lặp lại tầm trong @i %i\n"
+"\t(op %s, blk %b, lblk %c): %m\n"
+
+#. @-expanded: inode %i has an invalid extent\n
+#. @-expanded: \t(logical block %c, invalid physical block %b, len %N)\n
+#: e2fsck/problem.c:851
+msgid ""
+"@i %i has an @n extent\n"
+"\t(logical @b %c, @n physical @b %b, len %N)\n"
+msgstr ""
+"@i %i có một phạm vi @n\n"
+"\t(@b hợp lý %c, @b vật lý @n %b, dài %N)\n"
+
+#. @-expanded: inode %i has an invalid extent\n
+#. @-expanded: \t(logical block %c, physical block %b, invalid len %N)\n
+#: e2fsck/problem.c:856
+msgid ""
+"@i %i has an @n extent\n"
+"\t(logical @b %c, physical @b %b, @n len %N)\n"
+msgstr ""
+"@i %i có một phạm vi @n\n"
+"\t(@b hợp lý %c, @b vật lý %b, dài @n %N)\n"
+
+#. @-expanded: inode %i has EXTENTS_FL flag set on filesystem without extents support.\n
+#: e2fsck/problem.c:861
+#, c-format
+msgid "@i %i has EXTENTS_FL flag set on @f without extents support.\n"
+msgstr "@i %i đặt cờ EXTENTS_FL trên @f mà không hỗ trợ phạm vi.\n"
+
+#. @-expanded: inode %i is in extent format, but superblock is missing EXTENTS feature\n
+#: e2fsck/problem.c:866
+#, c-format
+msgid "@i %i is in extent format, but @S is missing EXTENTS feature\n"
+msgstr ""
+"@i %i theo định dạng phạm vi, còn @S thiếu tính năng phạm vi (EXTENTS)\n"
+
+#. @-expanded: inode %i missing EXTENT_FL, but is in extents format\n
+#: e2fsck/problem.c:871
+#, c-format
+msgid "@i %i missing EXTENT_FL, but is in extents format\n"
+msgstr "@i %i thiếu EXTENTS_FL, nhưng theo định dạng phạm vi\n"
+
+#: e2fsck/problem.c:876
+#, c-format
+msgid "Fast symlink %i has EXTENT_FL set.  "
+msgstr "Liên kết tượng trưng nhanh %i đã đặt EXTENTS_FL.  "
+
+#. @-expanded: inode %i has out of order extents\n
+#. @-expanded: \t(invalid logical block %c, physical block %b, len %N)\n
+#: e2fsck/problem.c:881
+msgid ""
+"@i %i has out of order extents\n"
+"\t(@n logical @b %c, physical @b %b, len %N)\n"
+msgstr ""
+"@i %i có các phạm vi sai thứ tự\n"
+"\t(@b hợp lý %c, @b vật lý %b, dài %N)\n"
+
+#. @-expanded: inode %i has an invalid extent node (blk %b, lblk %c)\n
+#: e2fsck/problem.c:885
+msgid "@i %i has an invalid extent node (blk %b, lblk %c)\n"
+msgstr "@i %i có một nút tầm không hợp lệ (blk %b, lblk %c)\n"
+
+#. @-expanded: inode %i should not have EOFBLOCKS_FL set (size %Is, lblk %r)\n
+#: e2fsck/problem.c:889
+msgid "@i %i should not have EOFBLOCKS_FL set (size %Is, lblk %r)\n"
+msgstr ""
+
+#. @-expanded: \n
+#. @-expanded: Running additional passes to resolve blocks claimed by more than one inode...\n
+#. @-expanded: Pass 1B: Rescanning for multiply-claimed blocks\n
+#: e2fsck/problem.c:897
+msgid ""
+"\n"
+"Running additional passes to resolve @bs claimed by more than one @i...\n"
+"Pass 1B: Rescanning for @m @bs\n"
+msgstr ""
+"\n"
+"Đạng chạy một số lần qua thêm để tháo gỡ các @b đã tuyên bố\n"
+"bởi nhiều @i...\n"
+"Lần qua 1B: đang quét lại tìm @b @m.\n"
+
+#. @-expanded: multiply-claimed block(s) in inode %i:
+#: e2fsck/problem.c:903
+#, c-format
+msgid "@m @b(s) in @i %i:"
+msgstr "@b @m trong @i %i:"
+
+#: e2fsck/problem.c:918
+#, c-format
+msgid "Error while scanning inodes (%i): %m\n"
+msgstr "Gặp lỗi khi quét các nút thông tin (%i): %m\n"
+
+#. @-expanded: error allocating inode bitmap (inode_dup_map): %m\n
+#: e2fsck/problem.c:923
+#, c-format
+msgid "@A @i @B (@i_dup_map): %m\n"
+msgstr "@A @B @i (@i_dup_map): %m\n"
+
+#. @-expanded: Error while iterating over blocks in inode %i (%s): %m\n
+#: e2fsck/problem.c:928
+#, c-format
+msgid "Error while iterating over @bs in @i %i (%s): %m\n"
+msgstr "Gặp lỗi khi lặp lại trên các @b trong @i %i (%s): %m\n"
+
+#. @-expanded: Error adjusting refcount for extended attribute block %b (inode %i): %m\n
+#: e2fsck/problem.c:933 e2fsck/problem.c:1249
+msgid "Error adjusting refcount for @a @b %b (@i %i): %m\n"
+msgstr "Gặp lỗi khi điều chỉnh số đếm tham chiếu cho @b @a %b (@i %i): %m\n"
+
+#. @-expanded: Pass 1C: Scanning directories for inodes with multiply-claimed blocks\n
+#: e2fsck/problem.c:939
+msgid "Pass 1C: Scanning directories for @is with @m @bs\n"
+msgstr "Lần qua 1C: đang quét các thư mục tìm @i có @b @m\n"
+
+#. @-expanded: Pass 1D: Reconciling multiply-claimed blocks\n
+#: e2fsck/problem.c:945
+msgid "Pass 1D: Reconciling @m @bs\n"
+msgstr "Lần qua 1D: đang điều hoà các @b @m\n"
+
+#. @-expanded: File %Q (inode #%i, mod time %IM) \n
+#. @-expanded:   has %r multiply-claimed block(s), shared with %N file(s):\n
+#: e2fsck/problem.c:950
+msgid ""
+"File %Q (@i #%i, mod time %IM) \n"
+"  has %r @m @b(s), shared with %N file(s):\n"
+msgstr ""
+"Tập tin %Q (@i #%i, giờ sửa đổi %IM) \n"
+"  có %r @b @m, chia sẻ với %N tập tin:\n"
+
+#. @-expanded: \t%Q (inode #%i, mod time %IM)\n
+#: e2fsck/problem.c:956
+msgid "\t%Q (@i #%i, mod time %IM)\n"
+msgstr "\t%Q (@i #%i, giờ sửa đổi %IM)\n"
+
+#. @-expanded: \t<filesystem metadata>\n
+#: e2fsck/problem.c:961
+msgid "\t<@f metadata>\n"
+msgstr "\t<siêu dữ liệu @f>\n"
+
+#. @-expanded: (There are %N inodes containing multiply-claimed blocks.)\n
+#. @-expanded: \n
+#: e2fsck/problem.c:966
+msgid ""
+"(There are %N @is containing @m @bs.)\n"
+"\n"
+msgstr ""
+"(Có %N @is chứa @b @m.)\n"
+"\n"
+
+#. @-expanded: multiply-claimed blocks already reassigned or cloned.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:971
+msgid ""
+"@m @bs already reassigned or cloned.\n"
+"\n"
+msgstr ""
+"@b @m đã được gán lại hay nhái.\n"
+"\n"
+
+#: e2fsck/problem.c:984
+#, c-format
+msgid "Couldn't clone file: %m\n"
+msgstr "Không thể nhái theo tập tin: %m\n"
+
+#. @-expanded: Pass 2: Checking directory structure\n
+#: e2fsck/problem.c:990
+msgid "Pass 2: Checking @d structure\n"
+msgstr "Lần qua 2: đang kiểm tra cấu trúc @d\n"
+
+#. @-expanded: invalid inode number for '.' in directory inode %i.\n
+#: e2fsck/problem.c:995
+#, c-format
+msgid "@n @i number for '.' in @d @i %i.\n"
+msgstr "Con số @i @n cho dấu chấm « . » trong @i @d %i.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has invalid inode #: %Di.\n
+#: e2fsck/problem.c:1000
+msgid "@E has @n @i #: %Di.\n"
+msgstr "@E có số hiệu @i @n: %Di.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has deleted/unused inode %Di.  
+#: e2fsck/problem.c:1005
+msgid "@E has @D/unused @i %Di.  "
+msgstr "@E có @i @D/chưa dùng %Di.  "
+
+#. @-expanded: entry '%Dn' in %p (%i) is a link to '.'  
+#: e2fsck/problem.c:1010
+msgid "@E @L to '.'  "
+msgstr "@E @L đến « . »  "
+
+#. @-expanded: entry '%Dn' in %p (%i) points to inode (%Di) located in a bad block.\n
+#: e2fsck/problem.c:1015
+msgid "@E points to @i (%Di) located in a bad @b.\n"
+msgstr "@E chỉ tới @i (%Di) nằm trong @b sai.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) is a link to directory %P (%Di).\n
+#: e2fsck/problem.c:1020
+msgid "@E @L to @d %P (%Di).\n"
+msgstr "@E @L đến @d %P (%Di).\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) is a link to the root inode.\n
+#: e2fsck/problem.c:1025
+msgid "@E @L to the @r.\n"
+msgstr "@E @L tới @r.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has illegal characters in its name.\n
+#: e2fsck/problem.c:1030
+msgid "@E has illegal characters in its name.\n"
+msgstr "@E có tên chứa ký tự cấm.\n"
+
+#. @-expanded: Missing '.' in directory inode %i.\n
+#: e2fsck/problem.c:1035
+#, c-format
+msgid "Missing '.' in @d @i %i.\n"
+msgstr "Thiếu « . » trong @i @d %i.\n"
+
+#. @-expanded: Missing '..' in directory inode %i.\n
+#: e2fsck/problem.c:1040
+#, c-format
+msgid "Missing '..' in @d @i %i.\n"
+msgstr "Thiếu « .. » trong @i @d %i.\n"
+
+#. @-expanded: First entry '%Dn' (inode=%Di) in directory inode %i (%p) should be '.'\n
+#: e2fsck/problem.c:1045
+msgid "First @e '%Dn' (@i=%Di) in @d @i %i (%p) @s '.'\n"
+msgstr "@e '%Dn' thứ nhất (@i=%Di) trong @i @d %i (%p) @s « . »\n"
+
+#. @-expanded: Second entry '%Dn' (inode=%Di) in directory inode %i should be '..'\n
+#: e2fsck/problem.c:1050
+msgid "Second @e '%Dn' (@i=%Di) in @d @i %i @s '..'\n"
+msgstr "@e '%Dn' thứ hai (@i=%Di) trong @i @d %i @s « .. »\n"
+
+#. @-expanded: i_faddr for inode %i (%Q) is %IF, should be zero.\n
+#: e2fsck/problem.c:1055
+msgid "i_faddr @F %IF, @s zero.\n"
+msgstr "Địa chỉ i_faddr cho nút injode %i (%Q) là %IF, còn nên là số không.\n"
+
+#. @-expanded: i_file_acl for inode %i (%Q) is %If, should be zero.\n
+#: e2fsck/problem.c:1060
+msgid "i_file_acl @F %If, @s zero.\n"
+msgstr "i_file_acl @F %If, @s số không.\n"
+
+#. @-expanded: i_dir_acl for inode %i (%Q) is %Id, should be zero.\n
+#: e2fsck/problem.c:1065
+msgid "i_dir_acl @F %Id, @s zero.\n"
+msgstr "i_dir_acl @F %Id, @s số không.\n"
+
+#. @-expanded: i_frag for inode %i (%Q) is %N, should be zero.\n
+#: e2fsck/problem.c:1070
+msgid "i_frag @F %N, @s zero.\n"
+msgstr "i_frag @F %N, @s số không.\n"
+
+#. @-expanded: i_fsize for inode %i (%Q) is %N, should be zero.\n
+#: e2fsck/problem.c:1075
+msgid "i_fsize @F %N, @s zero.\n"
+msgstr "i_fsize @F %N, @s số không.\n"
+
+#. @-expanded: inode %i (%Q) has invalid mode (%Im).\n
+#: e2fsck/problem.c:1080
+msgid "@i %i (%Q) has @n mode (%Im).\n"
+msgstr "@i %i (%Q) có chế độ @n (%Im).\n"
+
+#. @-expanded: directory inode %i, %B, offset %N: directory corrupted\n
+#: e2fsck/problem.c:1085
+msgid "@d @i %i, %B, offset %N: @d corrupted\n"
+msgstr "@i @d %i, %B, hiệu %N: @d bị hỏng\n"
+
+#. @-expanded: directory inode %i, %B, offset %N: filename too long\n
+#: e2fsck/problem.c:1090
+msgid "@d @i %i, %B, offset %N: filename too long\n"
+msgstr "@i @d %i, %B, hiệu %N: tên tập tin quá dài\n"
+
+#. @-expanded: directory inode %i has an unallocated %B.  
+#: e2fsck/problem.c:1095
+msgid "@d @i %i has an unallocated %B.  "
+msgstr "@i @d %i có một %B chưa cấp phát.  "
+
+#. @-expanded: '.' directory entry in directory inode %i is not NULL terminated\n
+#: e2fsck/problem.c:1100
+#, c-format
+msgid "'.' @d @e in @d @i %i is not NULL terminated\n"
+msgstr "@e @d « . » trong @i @d %i không được chấm dứt bằng NULL (vô giá trị)\n"
+
+#. @-expanded: '..' directory entry in directory inode %i is not NULL terminated\n
+#: e2fsck/problem.c:1105
+#, c-format
+msgid "'..' @d @e in @d @i %i is not NULL terminated\n"
+msgstr ""
+"@e @d « .. » trong @i @d %i không được chấm dứt bằng NULL (vô giá trị)\n"
+
+#. @-expanded: inode %i (%Q) is an illegal character device.\n
+#: e2fsck/problem.c:1110
+msgid "@i %i (%Q) is an @I character @v.\n"
+msgstr "@i %i (%Q) là @v ký tự @I.\n"
+
+#. @-expanded: inode %i (%Q) is an illegal block device.\n
+#: e2fsck/problem.c:1115
+msgid "@i %i (%Q) is an @I @b @v.\n"
+msgstr "@i %i (%Q) là @v @b @I.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) is duplicate '.' entry.\n
+#: e2fsck/problem.c:1120
+msgid "@E is duplicate '.' @e.\n"
+msgstr "@E là @e « . » trùng.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) is duplicate '..' entry.\n
+#: e2fsck/problem.c:1125
+msgid "@E is duplicate '..' @e.\n"
+msgstr "@E là @e « .. » trùng.\n"
+
+#: e2fsck/problem.c:1130 e2fsck/problem.c:1430
+#, c-format
+msgid "Internal error: couldn't find dir_info for %i.\n"
+msgstr "Lỗi nội bộ : không tìm thấy thông tin thư mục (dir_info) về %i.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has rec_len of %Dr, should be %N.\n
+#: e2fsck/problem.c:1135
+msgid "@E has rec_len of %Dr, @s %N.\n"
+msgstr "@E có rec_len %Dr, @s %N.\n"
+
+#. @-expanded: error allocating icount structure: %m\n
+#: e2fsck/problem.c:1140
+#, c-format
+msgid "@A icount structure: %m\n"
+msgstr "@A cấu trúc icount: %m\n"
+
+#. @-expanded: Error iterating over directory blocks: %m\n
+#: e2fsck/problem.c:1145
+#, c-format
+msgid "Error iterating over @d @bs: %m\n"
+msgstr "Gặp lỗi khi lặp lại trên các @b @d: %m\n"
+
+#. @-expanded: Error reading directory block %b (inode %i): %m\n
+#: e2fsck/problem.c:1150
+msgid "Error reading @d @b %b (@i %i): %m\n"
+msgstr "Gặp lỗi khi đọc @b @d %b (@i %i): %m\n"
+
+#. @-expanded: Error writing directory block %b (inode %i): %m\n
+#: e2fsck/problem.c:1155
+msgid "Error writing @d @b %b (@i %i): %m\n"
+msgstr "Gặp lỗi khi ghi @b @d %b (@i %i): %m\n"
+
+#. @-expanded: error allocating new directory block for inode %i (%s): %m\n
+#: e2fsck/problem.c:1160
+#, c-format
+msgid "@A new @d @b for @i %i (%s): %m\n"
+msgstr "@A @b @d mới cho @i %i (%s): %m\n"
+
+#. @-expanded: Error deallocating inode %i: %m\n
+#: e2fsck/problem.c:1165
+#, c-format
+msgid "Error deallocating @i %i: %m\n"
+msgstr "Gặp lỗi khi hủy cấp phát @i %i: %m\n"
+
+#. @-expanded: directory entry for '.' in %p (%i) is big.\n
+#: e2fsck/problem.c:1170
+#, c-format
+msgid "@d @e for '.' in %p (%i) is big.\n"
+msgstr "@d @e đối với '.' trong %p (%i) quá lớn.\n"
+
+#. @-expanded: inode %i (%Q) is an illegal FIFO.\n
+#: e2fsck/problem.c:1175
+msgid "@i %i (%Q) is an @I FIFO.\n"
+msgstr "@i %i (%Q) là một FIFO @I.\n"
+
+#. @-expanded: inode %i (%Q) is an illegal socket.\n
+#: e2fsck/problem.c:1180
+msgid "@i %i (%Q) is an @I socket.\n"
+msgstr "@i %i (%Q) là một ổ cắm @I.\n"
+
+#. @-expanded: Setting filetype for entry '%Dn' in %p (%i) to %N.\n
+#: e2fsck/problem.c:1185
+msgid "Setting filetype for @E to %N.\n"
+msgstr "Đăng đặt kiểu tập tin cho @E thành %N.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has an incorrect filetype (was %Dt, should be %N).\n
+#: e2fsck/problem.c:1190
+msgid "@E has an incorrect filetype (was %Dt, @s %N).\n"
+msgstr "@E có kiểu tập tin không đúng (đã %Dt, @s %N).\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has filetype set.\n
+#: e2fsck/problem.c:1195
+msgid "@E has filetype set.\n"
+msgstr "@E đặt kiểu tập tin.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) has a zero-length name.\n
+#: e2fsck/problem.c:1200
+msgid "@E has a @z name.\n"
+msgstr "@E có tên @z.\n"
+
+#. @-expanded: Symlink %Q (inode #%i) is invalid.\n
+#: e2fsck/problem.c:1205
+msgid "Symlink %Q (@i #%i) is @n.\n"
+msgstr "Liên kết tượng trưng %Q (@i #%i) @n.\n"
+
+#. @-expanded: extended attribute block for inode %i (%Q) is invalid (%If).\n
+#: e2fsck/problem.c:1210
+msgid "@a @b @F @n (%If).\n"
+msgstr "@a @b @F @n (%If).\n"
+
+#. @-expanded: filesystem contains large files, but lacks LARGE_FILE flag in superblock.\n
+#: e2fsck/problem.c:1215
+msgid "@f contains large files, but lacks LARGE_FILE flag in @S.\n"
+msgstr "@f chứa các tập tin lớn còn thiếu cờ LARGE_FILE trong @S.\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B not referenced\n
+#: e2fsck/problem.c:1220
+msgid "@p @h %d: %B not referenced\n"
+msgstr "@p @h %d: %B không được tham chiếu\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B referenced twice\n
+#: e2fsck/problem.c:1225
+msgid "@p @h %d: %B referenced twice\n"
+msgstr "@p @h %d: %B được tham chiếu hai lần\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B has bad min hash\n
+#: e2fsck/problem.c:1230
+msgid "@p @h %d: %B has bad min hash\n"
+msgstr "@p @h %d: %B có chuỗi duy nhất tối thiểu sai\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B has bad max hash\n
+#: e2fsck/problem.c:1235
+msgid "@p @h %d: %B has bad max hash\n"
+msgstr "@p @h %d: %B có chuỗi duy nhất tối đa sai\n"
+
+#. @-expanded: invalid HTREE directory inode %d (%q).  
+#: e2fsck/problem.c:1240
+msgid "@n @h %d (%q).  "
+msgstr "@h @n %d (%q).  "
+
+#. @-expanded: problem in HTREE directory inode %d (%q): bad block number %b.\n
+#: e2fsck/problem.c:1244
+msgid "@p @h %d (%q): bad @b number %b.\n"
+msgstr "@p @h %d (%q): số @b sai %b.\n"
+
+#. @-expanded: problem in HTREE directory inode %d: root node is invalid\n
+#: e2fsck/problem.c:1254
+#, c-format
+msgid "@p @h %d: root node is @n\n"
+msgstr "@p @h %d: nút gốc @n\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B has invalid limit (%N)\n
+#: e2fsck/problem.c:1259
+msgid "@p @h %d: %B has @n limit (%N)\n"
+msgstr "@p @h %d: %B có giới hạn @n (%N)\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B has invalid count (%N)\n
+#: e2fsck/problem.c:1264
+msgid "@p @h %d: %B has @n count (%N)\n"
+msgstr "@p @h %d: %B có số đếm @n (%N)\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B has an unordered hash table\n
+#: e2fsck/problem.c:1269
+msgid "@p @h %d: %B has an unordered hash table\n"
+msgstr "@p @h %d: %B có một bảng chuỗi duy nhất không đặt thứ tự\n"
+
+#. @-expanded: problem in HTREE directory inode %d: %B has invalid depth (%N)\n
+#: e2fsck/problem.c:1274
+msgid "@p @h %d: %B has @n depth (%N)\n"
+msgstr "@p @h %d: %B có chiều sâu @n (%N)\n"
+
+#. @-expanded: Duplicate entry '%Dn' in %p (%i) found.  
+#: e2fsck/problem.c:1279
+msgid "Duplicate @E found.  "
+msgstr "Tìm thấy @E trùng.  "
+
+#. @-expanded: entry '%Dn' in %p (%i) has a non-unique filename.\n
+#. @-expanded: Rename to %s
+#: e2fsck/problem.c:1284
+#, no-c-format
+msgid ""
+"@E has a non-unique filename.\n"
+"Rename to %s"
+msgstr ""
+"@E có tên tập tin không duy nhất.\n"
+"Thay đổi tên thành %s"
+
+#. @-expanded: Duplicate entry '%Dn' found.\n
+#. @-expanded: \tMarking %p (%i) to be rebuilt.\n
+#. @-expanded: \n
+#: e2fsck/problem.c:1289
+msgid ""
+"Duplicate @e '%Dn' found.\n"
+"\tMarking %p (%i) to be rebuilt.\n"
+"\n"
+msgstr ""
+"Tìm thấy @e '%Dn' trùng\n"
+"\tnên nhãn %p (%i) cần được xây dựng lại.\n"
+"\n"
+
+#. @-expanded: i_blocks_hi for inode %i (%Q) is %N, should be zero.\n
+#: e2fsck/problem.c:1294
+msgid "i_blocks_hi @F %N, @s zero.\n"
+msgstr "i_blocks_hi @F %N, @s số không.\n"
+
+#. @-expanded: Unexpected block in HTREE directory inode %d (%q).\n
+#: e2fsck/problem.c:1299
+msgid "Unexpected @b in @h %d (%q).\n"
+msgstr "Gặp @b bất thường trong @h %d (%q).\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) references inode %Di in group %g where _INODE_UNINIT is set.\n
+#: e2fsck/problem.c:1303
+msgid "@E references @i %Di in @g %g where _INODE_UNINIT is set.\n"
+msgstr "@E tham chiếu đến @i %Di trong @g %g ở vị trí đặt _INODE_UNINIT.\n"
+
+#. @-expanded: entry '%Dn' in %p (%i) references inode %Di found in group %g's unused inodes area.\n
+#: e2fsck/problem.c:1308
+msgid "@E references @i %Di found in @g %g's unused inodes area.\n"
+msgstr ""
+"@E tham chiếu đến @i %Di được tìm trong vùng nút thông tin không dùng của @g "
+"%g.\n"
+
+#. @-expanded: i_file_acl_hi for inode %i (%Q) is %N, should be zero.\n
+#: e2fsck/problem.c:1313
+msgid "i_file_acl_hi @F %N, @s zero.\n"
+msgstr "i_file_acl_hi @F %N, @s số không.\n"
+
+#. @-expanded: Pass 3: Checking directory connectivity\n
+#: e2fsck/problem.c:1320
+msgid "Pass 3: Checking @d connectivity\n"
+msgstr "Lần qua 3: đang kiểm tra khả năng kết nối của @d\n"
+
+#. @-expanded: root inode not allocated.  
+#: e2fsck/problem.c:1325
+msgid "@r not allocated.  "
+msgstr "Chưa cấp phát @r."
+
+#. @-expanded: No room in lost+found directory.  
+#: e2fsck/problem.c:1330
+msgid "No room in @l @d.  "
+msgstr "Không có chỗ còn rảnh trong @d @l."
+
+#. @-expanded: Unconnected directory inode %i (%p)\n
+#: e2fsck/problem.c:1335
+#, c-format
+msgid "Unconnected @d @i %i (%p)\n"
+msgstr "@i @d %i không được kết nối (%p)\n"
+
+#. @-expanded: /lost+found not found.  
+#: e2fsck/problem.c:1340
+msgid "/@l not found.  "
+msgstr "/@l không tìm thấy."
+
+#. @-expanded: '..' in %Q (%i) is %P (%j), should be %q (%d).\n
+#: e2fsck/problem.c:1345
+msgid "'..' in %Q (%i) is %P (%j), @s %q (%d).\n"
+msgstr "« .. » trong %Q (%i) là %P (%j), @s %q (%d).\n"
+
+#. @-expanded: Bad or non-existent /lost+found.  Cannot reconnect.\n
+#: e2fsck/problem.c:1350
+msgid "Bad or non-existent /@l.  Cannot reconnect.\n"
+msgstr "Có /@l sai hay không tồn tại nên không thể kết nối lại.\n"
+
+#. @-expanded: Could not expand /lost+found: %m\n
+#: e2fsck/problem.c:1355
+#, c-format
+msgid "Could not expand /@l: %m\n"
+msgstr "Không thể mở rộng /@l: %m\n"
+
+#: e2fsck/problem.c:1360
+#, c-format
+msgid "Could not reconnect %i: %m\n"
+msgstr "Không thể kết nối lại %i: %m\n"
+
+#. @-expanded: Error while trying to find /lost+found: %m\n
+#: e2fsck/problem.c:1365
+#, c-format
+msgid "Error while trying to find /@l: %m\n"
+msgstr "Gặp lỗi khi thử tìm /@l: %m\n"
+
+#. @-expanded: ext2fs_new_block: %m while trying to create /lost+found directory\n
+#: e2fsck/problem.c:1370
+#, c-format
+msgid "ext2fs_new_@b: %m while trying to create /@l @d\n"
+msgstr "ext2fs_new_@b: %m trong khi thử tạo @d /@l\n"
+
+#. @-expanded: ext2fs_new_inode: %m while trying to create /lost+found directory\n
+#: e2fsck/problem.c:1375
+#, c-format
+msgid "ext2fs_new_@i: %m while trying to create /@l @d\n"
+msgstr "ext2fs_new_@i: %m trong khi thử tạo @d /@l\n"
+
+#. @-expanded: ext2fs_new_dir_block: %m while creating new directory block\n
+#: e2fsck/problem.c:1380
+#, c-format
+msgid "ext2fs_new_dir_@b: %m while creating new @d @b\n"
+msgstr "ext2fs_new_dir_@b: %m trong khi thử tạo @b @d mới\n"
+
+#. @-expanded: ext2fs_write_dir_block: %m while writing the directory block for /lost+found\n
+#: e2fsck/problem.c:1385
+#, c-format
+msgid "ext2fs_write_dir_@b: %m while writing the @d @b for /@l\n"
+msgstr "ext2fs_write_dir_@b: %m trong khi ghi @b @d cho /@l\n"
+
+#. @-expanded: Error while adjusting inode count on inode %i\n
+#: e2fsck/problem.c:1390
+#, c-format
+msgid "Error while adjusting @i count on @i %i\n"
+msgstr "Gặp lỗi khi điều chỉnh số đếm @i trên @i %i\n"
+
+#. @-expanded: Couldn't fix parent of inode %i: %m\n
+#. @-expanded: \n
+#: e2fsck/problem.c:1395
+#, c-format
+msgid ""
+"Couldn't fix parent of @i %i: %m\n"
+"\n"
+msgstr ""
+"Không thể sửa chữa nút cha của @i %i: %m\n"
+"\n"
+
+#. @-expanded: Couldn't fix parent of inode %i: Couldn't find parent directory entry\n
+#. @-expanded: \n
+#: e2fsck/problem.c:1400
+#, c-format
+msgid ""
+"Couldn't fix parent of @i %i: Couldn't find parent @d @e\n"
+"\n"
+msgstr ""
+"Không thể sửa chữa nút cha của @i %i: không tìm thấy @e @d cha\n"
+"\n"
+
+#. @-expanded: Error creating root directory (%s): %m\n
+#: e2fsck/problem.c:1410
+#, c-format
+msgid "Error creating root @d (%s): %m\n"
+msgstr "Gặp lỗi khi tạo @d gốc (%s): %m\n"
+
+#. @-expanded: Error creating /lost+found directory (%s): %m\n
+#: e2fsck/problem.c:1415
+#, c-format
+msgid "Error creating /@l @d (%s): %m\n"
+msgstr "Gặp lỗi khi tạo @d /@l (%s): %m\n"
+
+#. @-expanded: root inode is not a directory; aborting.\n
+#: e2fsck/problem.c:1420
+msgid "@r is not a @d; aborting.\n"
+msgstr "@r không phải @d nên hủy bỏ.\n"
+
+#. @-expanded: Cannot proceed without a root inode.\n
+#: e2fsck/problem.c:1425
+msgid "Cannot proceed without a @r.\n"
+msgstr "Không thể tiếp tục khi không có @r.\n"
+
+#. @-expanded: /lost+found is not a directory (ino=%i)\n
+#: e2fsck/problem.c:1435
+#, c-format
+msgid "/@l is not a @d (ino=%i)\n"
+msgstr "/@l không phải @d (ino=%i)\n"
+
+#: e2fsck/problem.c:1442
+msgid "Pass 3A: Optimizing directories\n"
+msgstr "Lần qua 3A: đang tối ưu hoá các thư mục\n"
+
+#: e2fsck/problem.c:1447
+#, c-format
+msgid "Failed to create dirs_to_hash iterator: %m\n"
+msgstr "Lỗi tạo bộ lặp lại thư mục tới băm (dirs_to_hash): %m\n"
+
+#: e2fsck/problem.c:1452
+msgid "Failed to optimize directory %q (%d): %m\n"
+msgstr "Lỗi tối ưu hoá thư mục %q (%d): %m\n"
+
+#: e2fsck/problem.c:1457
+msgid "Optimizing directories: "
+msgstr "Đang tối ưu hoá các thư mục: "
+
+#: e2fsck/problem.c:1474
+msgid "Pass 4: Checking reference counts\n"
+msgstr "Lần qua 4: đang kiểm tra các số đếm tham chiếu\n"
+
+#. @-expanded: unattached zero-length inode %i.  
+#: e2fsck/problem.c:1479
+#, c-format
+msgid "@u @z @i %i.  "
+msgstr "@i @u @z %i.  "
+
+#. @-expanded: unattached inode %i\n
+#: e2fsck/problem.c:1484
+#, c-format
+msgid "@u @i %i\n"
+msgstr "@i @u %i\n"
+
+#. @-expanded: inode %i ref count is %Il, should be %N.  
+#: e2fsck/problem.c:1489
+msgid "@i %i ref count is %Il, @s %N.  "
+msgstr "@i %i có số đếm tham chiếu %Il, @s %N.  "
+
+#. @-expanded: WARNING: PROGRAMMING BUG IN E2FSCK!\n
+#. @-expanded: \tOR SOME BONEHEAD (YOU) IS CHECKING A MOUNTED (LIVE) FILESYSTEM.\n
+#. @-expanded: inode_link_info[%i] is %N, inode.i_links_count is %Il.  They should be the same!\n
+#: e2fsck/problem.c:1493
+msgid ""
+"WARNING: PROGRAMMING BUG IN E2FSCK!\n"
+"\tOR SOME BONEHEAD (YOU) IS CHECKING A MOUNTED (LIVE) FILESYSTEM.\n"
+"@i_link_info[%i] is %N, @i.i_links_count is %Il.  They @s the same!\n"
+msgstr ""
+"CẢNH BÁO : GẶP LỖI LẬP TRÌNH TRONG E2FSCK!\n"
+"\tHOẶC NGƯỜI NAO ĐANG KIỂM TRA MỘT HỆ THỐNG TẬP TIN ĐÃ LẮP (ĐỘNG).\n"
+"@i_link_info[%i] là %N, @i.i_links_count là %Il: @s trùng.\n"
+
+#. @-expanded: Pass 5: Checking group summary information\n
+#: e2fsck/problem.c:1503
+msgid "Pass 5: Checking @g summary information\n"
+msgstr "Lần qua 5: đang kiểm tra thông tin tóm tắt nhóm\n"
+
+#. @-expanded: Padding at end of inode bitmap is not set. 
+#: e2fsck/problem.c:1508
+msgid "Padding at end of @i @B is not set. "
+msgstr "Chưa đặt độ đệm tại kết thúc của @B @I."
+
+#. @-expanded: Padding at end of block bitmap is not set. 
+#: e2fsck/problem.c:1513
+msgid "Padding at end of @b @B is not set. "
+msgstr "Chưa đặt độ đệm tại kết thúc của @B @b."
+
+#. @-expanded: block bitmap differences: 
+#: e2fsck/problem.c:1518
+msgid "@b @B differences: "
+msgstr "Hiệu @B @b:"
+
+#. @-expanded: inode bitmap differences: 
+#: e2fsck/problem.c:1538
+msgid "@i @B differences: "
+msgstr "Hiệu @B @i:"
+
+#. @-expanded: Free inodes count wrong for group #%g (%i, counted=%j).\n
+#: e2fsck/problem.c:1558
+msgid "Free @is count wrong for @g #%g (%i, counted=%j).\n"
+msgstr "Số đếm các @i rảnh không đúng cho @g #%g (%i, đã đếm=%j).\n"
+
+#. @-expanded: Directories count wrong for group #%g (%i, counted=%j).\n
+#: e2fsck/problem.c:1563
+msgid "Directories count wrong for @g #%g (%i, counted=%j).\n"
+msgstr "Số đếm các thư mục không đúng cho @g #%g (%i, đã đếm=%j).\n"
+
+#. @-expanded: Free inodes count wrong (%i, counted=%j).\n
+#: e2fsck/problem.c:1568
+msgid "Free @is count wrong (%i, counted=%j).\n"
+msgstr "Số đếm các @i rảnh không đúng (%i, đã đếm=%j).\n"
+
+#. @-expanded: Free blocks count wrong for group #%g (%b, counted=%c).\n
+#: e2fsck/problem.c:1573
+msgid "Free @bs count wrong for @g #%g (%b, counted=%c).\n"
+msgstr "Số đếm các @b rảnh không đúng cho @g #%g (%b, đã đếm=%c).\n"
+
+#. @-expanded: Free blocks count wrong (%b, counted=%c).\n
+#: e2fsck/problem.c:1578
+msgid "Free @bs count wrong (%b, counted=%c).\n"
+msgstr "Số đếm các @b rảnh không đúng (%b, đã đếm=%c).\n"
+
+#. @-expanded: PROGRAMMING ERROR: filesystem (#%N) bitmap endpoints (%b, %c) don't match calculated bitmap 
+#. @-expanded: endpoints (%i, %j)\n
+#: e2fsck/problem.c:1583
+msgid ""
+"PROGRAMMING ERROR: @f (#%N) @B endpoints (%b, %c) don't match calculated @B "
+"endpoints (%i, %j)\n"
+msgstr ""
+"LỖI LẬP TRÌNH: trong @f (#%N) có các điểm cuối @B (%b, %c) không tương ứng "
+"với các điểm cuối @B đã tính (%i, %j)\n"
+
+#: e2fsck/problem.c:1589
+msgid "Internal error: fudging end of bitmap (%N)\n"
+msgstr "Lỗi nội bộ : đang làm quấy quá kết thúc của mảng ảnh (%N)\n"
+
+#. @-expanded: Error copying in replacement inode bitmap: %m\n
+#: e2fsck/problem.c:1594
+#, c-format
+msgid "Error copying in replacement @i @B: %m\n"
+msgstr "Gặp lỗi khi sao chép vào @B @i thay thế: %m\n"
+
+#. @-expanded: Error copying in replacement block bitmap: %m\n
+#: e2fsck/problem.c:1599
+#, c-format
+msgid "Error copying in replacement @b @B: %m\n"
+msgstr "Gặp lỗi khi sao chép vào @B @b thay thế: %m\n"
+
+#. @-expanded: group %g block(s) in use but group is marked BLOCK_UNINIT\n
+#: e2fsck/problem.c:1624
+#, c-format
+msgid "@g %g @b(s) in use but @g is marked BLOCK_UNINIT\n"
+msgstr "Các @b của @g %g đang được dùng, còn @g có nhãn là BLOCK_UNINIT\n"
+
+#. @-expanded: group %g inode(s) in use but group is marked INODE_UNINIT\n
+#: e2fsck/problem.c:1629
+#, c-format
+msgid "@g %g @i(s) in use but @g is marked INODE_UNINIT\n"
+msgstr "Các @i của @g %g đang được dùng, còn @g có nhãn là INODE_UNINIT\n"
+
+#. @-expanded: Recreate journal
+#: e2fsck/problem.c:1636
+msgid "Recreate @j"
+msgstr "Tạo lại @j"
+
+#: e2fsck/problem.c:1755
+#, c-format
+msgid "Unhandled error code (0x%x)!\n"
+msgstr "Mã lỗi chưa quản lý (0x%x)!\n"
+
+#: e2fsck/problem.c:1850
+msgid "IGNORED"
+msgstr "BỊ BỎ QUA"
+
+#: e2fsck/scantest.c:81
+#, c-format
+msgid "Memory used: %d, elapsed time: %6.3f/%6.3f/%6.3f\n"
+msgstr "Bộ nhớ đã chiếm: %d, thời gian đã qua: %6.3f/%6.3f/%6.3f\n"
+
+#: e2fsck/scantest.c:100
+#, c-format
+msgid "size of inode=%d\n"
+msgstr "kích cỡ nút thông tin=%d\n"
+
+#: e2fsck/scantest.c:121
+msgid "while starting inode scan"
+msgstr "trong khi khởi chạy tiến trình quét nút thông tin"
+
+#: e2fsck/scantest.c:132
+msgid "while doing inode scan"
+msgstr "trong khi chạy tiến trình quét nút thông tin"
+
+#: e2fsck/super.c:187
+#, c-format
+msgid "while calling ext2fs_block_iterate for inode %d"
+msgstr ""
+"trong khi gọi hàm lặp lại khối « ext2fs_block_iterate » cho nút thông tin %d"
+
+#: e2fsck/super.c:209
+#, c-format
+msgid "while calling ext2fs_adjust_ea_refcount for inode %d"
+msgstr ""
+"trong khi gọi hàm điều chỉnh số đếm tham chiếu « ext2fs_adjust_ea_refcount »\n"
+"cho nút thông tin %d"
+
+#: e2fsck/super.c:267
+msgid "Truncating"
+msgstr "Đang cắt ngắn"
+
+#: e2fsck/super.c:268
+msgid "Clearing"
+msgstr "Đang xoá sạch"
+
+#: e2fsck/unix.c:76
+#, c-format
+msgid ""
+"Usage: %s [-panyrcdfvtDFV] [-b superblock] [-B blocksize]\n"
+"\t\t[-I inode_buffer_blocks] [-P process_inode_size]\n"
+"\t\t[-l|-L bad_blocks_file] [-C fd] [-j external_journal]\n"
+"\t\t[-E extended-options] device\n"
+msgstr ""
+"Sử dụng: %s [-panyrcdfvtDFV] [-b siêu_khối] [-B cỡ_khối]\n"
+"\t\t[-I khối_đệm_inode] [-P cỡ_inode_xử_lý]\n"
+"\t\t[-l|-L tập_tin_khối_sai] [-C fd] [-j nhật_ký_ngoài]\n"
+"\t\t[-E tùy_chọn_đã_mở_rộng] thiết_bị\n"
+
+#: e2fsck/unix.c:82
+#, c-format
+msgid ""
+"\n"
+"Emergency help:\n"
+" -p                   Automatic repair (no questions)\n"
+" -n                   Make no changes to the filesystem\n"
+" -y                   Assume \"yes\" to all questions\n"
+" -c                   Check for bad blocks and add them to the badblock "
+"list\n"
+" -f                   Force checking even if filesystem is marked clean\n"
+msgstr ""
+"\n"
+"Trợ giúp khẩn cấp:\n"
+" -p                   Sửa chữa tự động (không có câu hỏi)\n"
+" -n                   Không thay đổi hệ thống tập tin\n"
+" -y                   Giả sử trả lời « Có » mọi câu hỏi\n"
+" -c                   Kiểm tra tìm khối sai: thêm vào danh sách khối sai\n"
+" -f                   Buộc kiểm tra ngay cả khi hệ thống tập tin có nhãn là "
+"sạch\n"
+
+#: e2fsck/unix.c:88
+#, c-format
+msgid ""
+" -v                   Be verbose\n"
+" -b superblock        Use alternative superblock\n"
+" -B blocksize         Force blocksize when looking for superblock\n"
+" -j external_journal  Set location of the external journal\n"
+" -l bad_blocks_file   Add to badblocks list\n"
+" -L bad_blocks_file   Set badblocks list\n"
+msgstr ""
+" -v                   \t\tXuất chi tiết\n"
+" -b siêu_khối        \t\tDùng siêu khối xen kẽ\n"
+" -B cỡ_khối         \t\tBuộc kích cỡ của khối khi tìm siêu khối\n"
+" -j nhật_ký_bên_ngoài  \tĐặt địa điểm của nhật ký bên ngoài\n"
+" -l tập_tin_khối_sai    Thêm vào danh sách các khối sai\n"
+" -L tập_tin_khối_sai   Đặt danh sách các khối sai\n"
+
+#: e2fsck/unix.c:132
+#, c-format
+msgid "%s: %u/%u files (%0d.%d%% non-contiguous), %u/%u blocks\n"
+msgstr "%s: %u/%u tập tin (%0d.%d%% không kề nhau), %u/%u khối\n"
+
+#: e2fsck/unix.c:150
+#, c-format
+msgid "         # of inodes with ind/dind/tind blocks: %u/%u/%u\n"
+msgstr "         số inode có khối ind/dind/tind: %u/%u/%u\n"
+
+#: e2fsck/unix.c:157
+#, c-format
+msgid "         Extent depth histogram: "
+msgstr "         Đồ thị độ sâu : "
+
+#: e2fsck/unix.c:207 misc/badblocks.c:928 misc/tune2fs.c:1625 misc/util.c:151
+#: resize/main.c:249
+#, c-format
+msgid "while determining whether %s is mounted."
+msgstr "trong khi quyết định nếu %s đã gắn kết chưa."
+
+#: e2fsck/unix.c:225
+#, c-format
+msgid "Warning!  %s is mounted.\n"
+msgstr "Cảnh báo : %s đã gắn kết.\n"
+
+#: e2fsck/unix.c:229
+#, c-format
+msgid "%s is mounted.  "
+msgstr "%s đã gắn kết.  "
+
+#: e2fsck/unix.c:231
+msgid ""
+"Cannot continue, aborting.\n"
+"\n"
+msgstr ""
+"Không thể tiếp tục nên hủy bỏ.\n"
+"\n"
+
+#: e2fsck/unix.c:232
+#, c-format
+msgid ""
+"\n"
+"\n"
+"\a\a\a\aWARNING!!!  The filesystem is mounted.   If you continue you "
+"***WILL***\n"
+"cause ***SEVERE*** filesystem damage.\a\a\a\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"\a\a\a\aCẢNH BÁO !!!  Hệ thống tập tin đã gắn kết. Vẫn tiếp tục thì\n"
+"bạn ***CÓ PHẢI***\n"
+"***LÀM HỎNG NẶNG*** hệ thống tập tin.\a\a\a\n"
+"\n"
+
+#: e2fsck/unix.c:235
+msgid "Do you really want to continue"
+msgstr "Bạn thực sự muốn tiếp tục"
+
+#: e2fsck/unix.c:237
+#, c-format
+msgid "check aborted.\n"
+msgstr "kiểm tra bị hủy bỏ.\n"
+
+#: e2fsck/unix.c:315
+msgid " contains a file system with errors"
+msgstr " chứa hệ thống tập tin có lỗi"
+
+#: e2fsck/unix.c:317
+msgid " was not cleanly unmounted"
+msgstr " chưa tháo gắn kết sạch"
+
+#: e2fsck/unix.c:319
+msgid " primary superblock features different from backup"
+msgstr "các tính năng của siêu khối chính khác với bản sao lưu"
+
+#: e2fsck/unix.c:323
+#, c-format
+msgid " has been mounted %u times without being checked"
+msgstr " đã được gắn kết %u lần mà không được kiểm tra"
+
+#: e2fsck/unix.c:330
+msgid " has filesystem last checked time in the future"
+msgstr "có giờ kiểm tra hệ thống tập tin lần cuối cùng trong tương lai"
+
+#: e2fsck/unix.c:336
+#, c-format
+msgid " has gone %u days without being checked"
+msgstr " đã chạy trong %u ngày mà không được kiểm tra"
+
+#: e2fsck/unix.c:345
+msgid ", check forced.\n"
+msgstr ", kiểm tra bị ép buộc.\n"
+
+#: e2fsck/unix.c:348
+#, c-format
+msgid "%s: clean, %u/%u files, %u/%u blocks"
+msgstr "%s: sạch, %u/%u tập tin, %u/%u khối"
+
+#: e2fsck/unix.c:365
+msgid " (check deferred; on battery)"
+msgstr " (kiểm tra bị hoãn; chạy bằng pin)"
+
+#: e2fsck/unix.c:368
+msgid " (check after next mount)"
+msgstr " (kiểm tra sau lần kế tiếp gắn kết)"
+
+#: e2fsck/unix.c:370
+#, c-format
+msgid " (check in %ld mounts)"
+msgstr " (kiểm tra sau %ld lần gắn kết)"
+
+#: e2fsck/unix.c:517
+#, c-format
+msgid "ERROR: Couldn't open /dev/null (%s)\n"
+msgstr "LỖI: không thể mở « /dev/null » (%s)\n"
+
+#: e2fsck/unix.c:587
+#, c-format
+msgid "Invalid EA version.\n"
+msgstr "Phiên bản EA không hợp lệ.\n"
+
+#: e2fsck/unix.c:596
+#, c-format
+msgid "Unknown extended option: %s\n"
+msgstr "Tùy chọn đã mở rộng lạ : %s\n"
+
+#: e2fsck/unix.c:618
+#, c-format
+msgid ""
+"Syntax error in e2fsck config file (%s, line #%d)\n"
+"\t%s\n"
+msgstr ""
+"Gặp lỗi cú pháp trong tập tin cấu hình e2fsck (%s, dòng số %d)\n"
+"\t%s\n"
+
+#: e2fsck/unix.c:686
+#, c-format
+msgid "Error validating file descriptor %d: %s\n"
+msgstr "Gặp lỗi khi hợp lệ hóa mô tả tập tin %d: %s\n"
+
+#: e2fsck/unix.c:690
+msgid "Invalid completion information file descriptor"
+msgstr "Mô tả tập tin thông tin hoà chỉnh không hợp lệ"
+
+#: e2fsck/unix.c:705
+msgid "Only one of the options -p/-a, -n or -y may be specified."
+msgstr "Có thể xác định chỉ một của những tùy chọn -p/-a, -n và -y."
+
+#: e2fsck/unix.c:726
+#, c-format
+msgid "The -t option is not supported on this version of e2fsck.\n"
+msgstr "Tùy chọn « -t » không được hỗ trợ trong phiên bản e2fsck này.\n"
+
+#: e2fsck/unix.c:801
+msgid "The -n and -D options are incompatible."
+msgstr "Hai tùy chọn « -n » và « -D » không tương thích với nhau."
+
+#: e2fsck/unix.c:806
+msgid "The -n and -c options are incompatible."
+msgstr "Hai tùy chọn « -n » và « -c » không tương thích với nhau."
+
+#: e2fsck/unix.c:811
+msgid "The -n and -l/-L options are incompatible."
+msgstr "Hai tùy chọn « -n » và « -l/-L » không tương thích với nhau."
+
+#: e2fsck/unix.c:822 misc/tune2fs.c:550 misc/tune2fs.c:835 misc/tune2fs.c:853
+#, c-format
+msgid "Unable to resolve '%s'"
+msgstr "Không thể quyết định « %s »"
+
+#: e2fsck/unix.c:851
+#, c-format
+msgid "The -c and the -l/-L options may not be both used at the same time.\n"
+msgstr "Không cho phép sử dụng đồng thời cả hai tùy chọn « --c » và « --l/L ».\n"
+
+#: e2fsck/unix.c:899
+#, c-format
+msgid ""
+"E2FSCK_JBD_DEBUG \"%s\" not an integer\n"
+"\n"
+msgstr ""
+"E2FSCK_JBD_DEBUG « %s » không phải số nguyên\n"
+"\n"
+
+#: e2fsck/unix.c:908
+#, c-format
+msgid ""
+"\n"
+"Invalid non-numeric argument to -%c (\"%s\")\n"
+"\n"
+msgstr ""
+"\n"
+"Đối số không thuộc số không hợp lệ đối với -%c (« %s »)\n"
+"\n"
+
+#: e2fsck/unix.c:982
+#, c-format
+msgid "Error: ext2fs library version out of date!\n"
+msgstr "Lỗi: phiên bản thư viện ext2fs quá cũ.\n"
+
+#: e2fsck/unix.c:990
+msgid "while trying to initialize program"
+msgstr "trong khi thử sở khởi chương trình"
+
+#: e2fsck/unix.c:1001
+#, c-format
+msgid "\tUsing %s, %s\n"
+msgstr "\tDùng %s, %s\n"
+
+#: e2fsck/unix.c:1013
+msgid "need terminal for interactive repairs"
+msgstr "cần thiết thiết bị cuối để sửa chữa tương tác"
+
+#: e2fsck/unix.c:1046
+#, c-format
+msgid "%s: %s trying backup blocks...\n"
+msgstr "%s %s đang thử các khối dự trữ...\n"
+
+#: e2fsck/unix.c:1048
+msgid "Superblock invalid,"
+msgstr "Siêu khối không hợp lệ,"
+
+#: e2fsck/unix.c:1049
+msgid "Group descriptors look bad..."
+msgstr "Có vẻ là các mô tả nhóm sai..."
+
+#: e2fsck/unix.c:1059
+#, c-format
+msgid "%s: going back to original superblock\n"
+msgstr "%s: đang trở về siêu khối gốc\n"
+
+#: e2fsck/unix.c:1086
+#, c-format
+msgid ""
+"The filesystem revision is apparently too high for this version of e2fsck.\n"
+"(Or the filesystem superblock is corrupt)\n"
+"\n"
+msgstr ""
+"Có vẻ là bản sửa đổi hệ thống tập tin quá cao cho phiên bản e2fsck này\n"
+"(hoặc siêu khối hệ thống tập tin bị hỏng).\n"
+"\n"
+
+#: e2fsck/unix.c:1092
+#, c-format
+msgid "Could this be a zero-length partition?\n"
+msgstr "Phân vùng này có thể có độ dài bằng không ?\n"
+
+#: e2fsck/unix.c:1094
+#, c-format
+msgid "You must have %s access to the filesystem or be root\n"
+msgstr ""
+"Bạn phải có quyền truy cập %s vào hệ thống tập tin, hoặc là người chủ "
+"(root)\n"
+
+#: e2fsck/unix.c:1099
+#, c-format
+msgid "Possibly non-existent or swap device?\n"
+msgstr "Có thể là thiết bị không tồn tại, hoặc thiết bị trao đổi ?\n"
+
+#: e2fsck/unix.c:1101
+#, c-format
+msgid "Filesystem mounted or opened exclusively by another program?\n"
+msgstr ""
+"Hệ thống tập tin đã được gắn kết hay mở hoàn toàn bởi chương trình khác ?\n"
+
+#: e2fsck/unix.c:1105
+#, c-format
+msgid ""
+"Disk write-protected; use the -n option to do a read-only\n"
+"check of the device.\n"
+msgstr ""
+"Đĩa bị chống ghi; hãy dùng tùy chọn « -n » để chạy\n"
+"việc kiểm tra chỉ đọc trên thiết bị đó.\n"
+
+#: e2fsck/unix.c:1169
+msgid "Get a newer version of e2fsck!"
+msgstr "Lấy phiên bản e2fsck mới hơn."
+
+#: e2fsck/unix.c:1199
+#, c-format
+msgid "while checking ext3 journal for %s"
+msgstr "trong khi kiểm tra nhật ký ext3 tìm %s"
+
+#: e2fsck/unix.c:1210
+#, c-format
+msgid ""
+"Warning: skipping journal recovery because doing a read-only filesystem "
+"check.\n"
+msgstr ""
+"Cảnh báo : đang bỏ qua việc phục hồi nhật ký vì đang kiểm tra hệ thống tập "
+"tin một cách chỉ đọc.\n"
+
+#: e2fsck/unix.c:1223
+#, c-format
+msgid "unable to set superblock flags on %s\n"
+msgstr "không thể đặt cờ siêu khối trên %s\n"
+
+#: e2fsck/unix.c:1229
+#, c-format
+msgid "while recovering ext3 journal of %s"
+msgstr "trong khi phục hồi nhật ký ext3 của %s"
+
+#: e2fsck/unix.c:1254
+#, c-format
+msgid "%s has unsupported feature(s):"
+msgstr "%s có tính năng không được hỗ trợ :"
+
+#: e2fsck/unix.c:1270
+msgid "Warning: compression support is experimental.\n"
+msgstr "Cảnh báo : sự hỗ trợ khả năng nén là thực nghiệm.\n"
+
+#: e2fsck/unix.c:1275
+#, c-format
+msgid ""
+"E2fsck not compiled with HTREE support,\n"
+"\tbut filesystem %s has HTREE directories.\n"
+msgstr ""
+"E2fsck không được biên dịch với khả năng hỗ trợ HCÂY,\n"
+"nhưng hệ thống tập tin %s có thư mục HCÂY.\n"
+
+#: e2fsck/unix.c:1328
+msgid "while reading bad blocks inode"
+msgstr "trong khi đọc nút thông tin khối sai"
+
+#: e2fsck/unix.c:1330
+#, c-format
+msgid "This doesn't bode well, but we'll try to go on...\n"
+msgstr ""
+"Đây không phải báo trước điềm hay, nhưng tiến trình này sẽ thử tiếp tục...\n"
+
+#: e2fsck/unix.c:1356
+msgid "Couldn't determine journal size"
+msgstr "Không thể quyết định kích cỡ nhật ký"
+
+#: e2fsck/unix.c:1359
+#, c-format
+msgid "Creating journal (%d blocks): "
+msgstr "Đang tạo nhật ký (%d khối): "
+
+#: e2fsck/unix.c:1366 misc/mke2fs.c:2248
+msgid ""
+"\n"
+"\twhile trying to create journal"
+msgstr ""
+"\n"
+"trong khi thử tạo nhật ký"
+
+#: e2fsck/unix.c:1369
+#, c-format
+msgid " Done.\n"
+msgstr " Hoàn tất\n"
+
+#: e2fsck/unix.c:1370
+#, c-format
+msgid ""
+"\n"
+"*** journal has been re-created - filesystem is now ext3 again ***\n"
+msgstr ""
+"\n"
+"••• nhật ký đã được tạo lại — hệ thống tập tin lúc này là ext3 lại •••\n"
+
+#: e2fsck/unix.c:1377
+#, c-format
+msgid "Restarting e2fsck from the beginning...\n"
+msgstr "Đang khởi chạy lại hoàn toàn e2fsck...\n"
+
+#: e2fsck/unix.c:1381
+msgid "while resetting context"
+msgstr "trong khi đặt lại ngữ cảnh"
+
+#: e2fsck/unix.c:1388
+#, c-format
+msgid "%s: e2fsck canceled.\n"
+msgstr "%s: e2fsck bị thôi.\n"
+
+#: e2fsck/unix.c:1393
+msgid "aborted"
+msgstr "bị hủy bỏ"
+
+#: e2fsck/unix.c:1405
+#, c-format
+msgid ""
+"\n"
+"%s: ***** FILE SYSTEM WAS MODIFIED *****\n"
+msgstr ""
+"\n"
+"%s: ••••• HỆ THỐNG TẬP TIN BỊ SỬA ĐỔI •••••\n"
+
+#: e2fsck/unix.c:1408
+#, c-format
+msgid "%s: ***** REBOOT LINUX *****\n"
+msgstr "%s: ••••• HÃY KHỞI ĐỘNG LẠI LINUX •••••\n"
+
+#: e2fsck/unix.c:1416
+#, c-format
+msgid ""
+"\n"
+"%s: ********** WARNING: Filesystem still has errors **********\n"
+"\n"
+msgstr ""
+"\n"
+"%s: •••••••••• CẢNH BÁO : hệ thống tập tin vẫn còn có lỗi ••••••••••\n"
+"\n"
+
+#: e2fsck/unix.c:1454
+msgid "while setting block group checksum info"
+msgstr "trong khi đặt thông tin tổng kiểm nhóm khối"
+
+#: e2fsck/util.c:138 misc/util.c:68
+msgid "yY"
+msgstr "cC"
+
+#: e2fsck/util.c:139
+msgid "nN"
+msgstr "kK"
+
+#: e2fsck/util.c:153
+msgid "<y>"
+msgstr "<c>"
+
+#: e2fsck/util.c:155
+msgid "<n>"
+msgstr "<k>"
+
+#: e2fsck/util.c:157
+msgid " (y/n)"
+msgstr " (c/k)"
+
+#: e2fsck/util.c:172
+msgid "cancelled!\n"
+msgstr "bị thôi !\n"
+
+#: e2fsck/util.c:187
+msgid "yes\n"
+msgstr "có\n"
+
+#: e2fsck/util.c:189
+msgid "no\n"
+msgstr "không\n"
+
+#: e2fsck/util.c:199
+#, c-format
+msgid ""
+"%s? no\n"
+"\n"
+msgstr ""
+"%s? không\n"
+"\n"
+
+#: e2fsck/util.c:203
+#, c-format
+msgid ""
+"%s? yes\n"
+"\n"
+msgstr ""
+"%s? có\n"
+"\n"
+
+#: e2fsck/util.c:207
+msgid "yes"
+msgstr "có"
+
+#: e2fsck/util.c:207
+msgid "no"
+msgstr "không"
+
+#: e2fsck/util.c:221
+#, c-format
+msgid "e2fsck_read_bitmaps: illegal bitmap block(s) for %s"
+msgstr "e2fsck_read_bitmaps: khối mảng ảnh cấm cho %s"
+
+#: e2fsck/util.c:226
+msgid "reading inode and block bitmaps"
+msgstr "đang đọc mảng ảnh kiểu cả hai nút thông tin và khối"
+
+#: e2fsck/util.c:231
+#, c-format
+msgid "while retrying to read bitmaps for %s"
+msgstr "trong khi thử đọc mảng ảnh cho %s"
+
+#: e2fsck/util.c:243
+msgid "writing block and inode bitmaps"
+msgstr "đang ghi các mảng ảnh kiểu khối và nút thông tin"
+
+#: e2fsck/util.c:248
+#, c-format
+msgid "while rewriting block and inode bitmaps for %s"
+msgstr "trong khi ghi lại các mảng ảnh kiểu khối và nút thông tin cho %s"
+
+#: e2fsck/util.c:260
+#, c-format
+msgid ""
+"\n"
+"\n"
+"%s: UNEXPECTED INCONSISTENCY; RUN fsck MANUALLY.\n"
+"\t(i.e., without -a or -p options)\n"
+msgstr ""
+"\n"
+"\n"
+"%s: MÂU THUẪN BẤT THƯỜNG : HÃY TỰ CHẠY fsck.\n"
+"\t(tức là không có tùy chọn « -a » hay « -p »).\n"
+
+#: e2fsck/util.c:341
+#, c-format
+msgid "Memory used: %luk/%luk (%luk/%luk), "
+msgstr "Vùng nhớ được dùng: %luk/%luk (%luk/%luk), "
+
+#: e2fsck/util.c:345
+#, c-format
+msgid "Memory used: %lu, "
+msgstr "Vùng nhớ được dùng: %lu, "
+
+#: e2fsck/util.c:352
+#, c-format
+msgid "time: %5.2f/%5.2f/%5.2f\n"
+msgstr "thời gian: %5.2f/%5.2f/%5.2f\n"
+
+#: e2fsck/util.c:357
+#, c-format
+msgid "elapsed time: %6.3f\n"
+msgstr "thời gian đã qua: %6.3f\n"
+
+#: e2fsck/util.c:391 e2fsck/util.c:405
+#, c-format
+msgid "while reading inode %lu in %s"
+msgstr "trong khi đọc nút thông tin %lu trong %s"
+
+#: e2fsck/util.c:419 e2fsck/util.c:432
+#, c-format
+msgid "while writing inode %lu in %s"
+msgstr "trong khi ghi nút thông tin %lu trong %s"
+
+#: e2fsck/util.c:581
+msgid "while allocating zeroizing buffer"
+msgstr "trong khi cấp phát bộ đếm làm số không"
+
+#: misc/badblocks.c:66
+msgid "done                                \n"
+msgstr "hoàn tất                                \n"
+
+#: misc/badblocks.c:89
+#, c-format
+msgid ""
+"Usage: %s [-b block_size] [-i input_file] [-o output_file] [-svwnf]\n"
+"       [-c blocks_at_once] [-d delay_factor_between_reads] [-e "
+"max_bad_blocks]\n"
+"       [-p num_passes] [-t test_pattern [-t test_pattern [...]]]\n"
+"       device [last_block [first_block]]\n"
+msgstr ""
+"Sử dụng: %s [-b cỡ_khối] [-i tập_tin_nhập] [-o tập_tin_xuất] [-svwnf]\n"
+"       [-c số_khối_cùng_lúc] [-d hệ_số_đợi_đọc] [-e số_tối_đa_khối_xấu]\n"
+"       [-p số_lần_qua] [-t mẫu_thử [-t mẫu_thử [...]]]\n"
+"       thiết_bị [khối_cuối [khối_đầu]]\n"
+
+#: misc/badblocks.c:100
+#, c-format
+msgid ""
+"%s: The -n and -w options are mutually exclusive.\n"
+"\n"
+msgstr ""
+"%s: hai tùy chọn « -n » và « -w » loại từ lẫn nhau.\n"
+"\n"
+
+#: misc/badblocks.c:202
+#, c-format
+msgid "%6.2f%% done, %s elapsed"
+msgstr "%6.2f%% hoàn tất, %s đã trôi qua"
+
+#: misc/badblocks.c:293
+msgid "Testing with random pattern: "
+msgstr "Đang thử ra bằng mẫu ngẫu nhiên: "
+
+#: misc/badblocks.c:311
+msgid "Testing with pattern 0x"
+msgstr "Đang thử ra bằng mẫu 0x"
+
+#: misc/badblocks.c:339 misc/badblocks.c:408
+msgid "during seek"
+msgstr "trong khi tìm nơi"
+
+#: misc/badblocks.c:350
+#, c-format
+msgid "Weird value (%ld) in do_read\n"
+msgstr "Giá trị lạ (%ld) trong việc đọc « do_read »\n"
+
+#: misc/badblocks.c:428
+msgid "during ext2fs_sync_device"
+msgstr "trong khi đồng bộ hoá thiết bị « ext2fs_sync_device »"
+
+#: misc/badblocks.c:447 misc/badblocks.c:711
+msgid "while beginning bad block list iteration"
+msgstr "trong khi bắt đầu lặp lại danh sách các khối sai"
+
+#: misc/badblocks.c:461 misc/badblocks.c:563 misc/badblocks.c:721
+msgid "while allocating buffers"
+msgstr "trong khi cấp phát bộ đệm"
+
+#: misc/badblocks.c:465
+#, c-format
+msgid "Checking blocks %lu to %lu\n"
+msgstr "Đang kiểm tra khối trong phạm vi %lu đến %lu\n"
+
+#: misc/badblocks.c:470
+msgid "Checking for bad blocks in read-only mode\n"
+msgstr "Đang kiểm tra tìm khối sai trong chế độ chỉ đọc\n"
+
+#: misc/badblocks.c:479
+msgid "Checking for bad blocks (read-only test): "
+msgstr "Đang kiểm tra tìm khối sai (thử ra chỉ đọc): "
+
+#: misc/badblocks.c:487 misc/badblocks.c:595 misc/badblocks.c:640
+#: misc/badblocks.c:784
+msgid "Too many bad blocks, aborting test\n"
+msgstr "Quá nhiều khối sai nên hủy bỏ phép thử\n"
+
+#: misc/badblocks.c:570
+msgid "Checking for bad blocks in read-write mode\n"
+msgstr "Đang kiểm tra tìm khối sai trong chế độ đọc-ghi\n"
+
+#: misc/badblocks.c:572 misc/badblocks.c:734
+#, c-format
+msgid "From block %lu to %lu\n"
+msgstr "Phạm vi khối %lu đến %lu\n"
+
+#: misc/badblocks.c:630
+msgid "Reading and comparing: "
+msgstr "Đang đọc và so sánh: "
+
+#: misc/badblocks.c:733
+msgid "Checking for bad blocks in non-destructive read-write mode\n"
+msgstr "Đang kiểm tra tìm khối sai trong chế độ đọc-ghi không hủy\n"
+
+#: misc/badblocks.c:739
+msgid "Checking for bad blocks (non-destructive read-write test)\n"
+msgstr "Đang kiểm tra tìm khối sai (thử ra đọc-ghi không hủy)\n"
+
+#: misc/badblocks.c:746
+msgid ""
+"\n"
+"Interrupt caught, cleaning up\n"
+msgstr ""
+"\n"
+"Mới bắt tín hiệu ngắt nên làm sạch\n"
+
+#: misc/badblocks.c:822
+#, c-format
+msgid "during test data write, block %lu"
+msgstr "trong khi thử ra ghi dữ liệu, khối %lu"
+
+#: misc/badblocks.c:933 misc/util.c:156
+#, c-format
+msgid "%s is mounted; "
+msgstr "%s đã gắn kết; "
+
+#: misc/badblocks.c:935
+msgid "badblocks forced anyway.  Hope /etc/mtab is incorrect.\n"
+msgstr ""
+"tùy chọn khối sai (badblocks) vẫn bị ép buộc.\n"
+"Mong « /etc/mtab » không đúng.\n"
+
+#: misc/badblocks.c:940
+msgid "it's not safe to run badblocks!\n"
+msgstr "Không an toàn khi chạy badblocks.\n"
+
+#: misc/badblocks.c:945 misc/util.c:167
+#, c-format
+msgid "%s is apparently in use by the system; "
+msgstr "Có vẻ là %s đang bị hệ thống dùng; "
+
+#: misc/badblocks.c:948
+msgid "badblocks forced anyway.\n"
+msgstr "vẫn ép buộc badblocks (khối sai).\n"
+
+#: misc/badblocks.c:968
+#, c-format
+msgid "invalid %s - %s"
+msgstr "%s không hợp lệ — %s"
+
+#: misc/badblocks.c:1077
+#, c-format
+msgid "can't allocate memory for test_pattern - %s"
+msgstr "không thể cấp phát bộ nhớ cho mẫu thử (test_pattern) — %s"
+
+#: misc/badblocks.c:1104
+msgid "Maximum of one test_pattern may be specified in read-only mode"
+msgstr ""
+"Trong chế độ chỉ đọc, có thể xác định tối đa một mẫu thử (test_pattern)"
+
+#: misc/badblocks.c:1110
+msgid "Random test_pattern is not allowed in read-only mode"
+msgstr "Không cho phẹp mẫu thử (test_pattern) ngẫu nhiên trong chế độ chỉ đọc"
+
+#: misc/badblocks.c:1124
+msgid ""
+"Couldn't determine device size; you must specify\n"
+"the size manually\n"
+msgstr ""
+"Không thể quyết định kích cỡ của thiết bị;\n"
+"bạn cần phải tự xác định kích cỡ đó.\n"
+
+#: misc/badblocks.c:1130
+msgid "while trying to determine device size"
+msgstr "trong khi thử quyết định kích cỡ của thiết bị"
+
+#: misc/badblocks.c:1135
+msgid "last block"
+msgstr "khối cuối"
+
+#: misc/badblocks.c:1141
+msgid "first block"
+msgstr "khối đầu"
+
+#: misc/badblocks.c:1144
+#, c-format
+msgid "invalid starting block (%lu): must be less than %lu"
+msgstr "khối đầu không hợp lệ (%lu): phải nhỏ hơn %lu"
+
+#: misc/badblocks.c:1200
+msgid "while creating in-memory bad blocks list"
+msgstr "trong khi tạo danh sách các khối hỏng trong bộ nhớ"
+
+#: misc/badblocks.c:1215
+msgid "while adding to in-memory bad block list"
+msgstr "trong khi thêm vào danh sách các khối hỏng trong bộ nhớ"
+
+#: misc/badblocks.c:1239
+#, c-format
+msgid "Pass completed, %u bad blocks found.\n"
+msgstr "Qua xong, tìm thấy %u khối sai.\n"
+
+#: misc/chattr.c:85
+#, c-format
+msgid "Usage: %s [-RVf] [-+=AacDdeijsSu] [-v version] files...\n"
+msgstr "Sử dụng: %s [-RVf] [-+=AacDdeijsSu] [-v phiên_bản] tập_tin...\n"
+
+#: misc/chattr.c:153
+#, c-format
+msgid "bad version - %s\n"
+msgstr "phiên bản sai — %s\n"
+
+#: misc/chattr.c:200 misc/lsattr.c:115
+#, c-format
+msgid "while trying to stat %s"
+msgstr "trong khi thử lấy các thông tin về %s"
+
+#: misc/chattr.c:207
+#, c-format
+msgid "while reading flags on %s"
+msgstr "trong khi đọc các cờ trên %s"
+
+#: misc/chattr.c:216 misc/chattr.c:235
+#, c-format
+msgid "Clearing extent flag not supported on %s"
+msgstr "Chức năng xoá sạch cờ tầm không được hỗ trợ trên %s"
+
+#: misc/chattr.c:221 misc/chattr.c:240
+#, c-format
+msgid "Flags of %s set as "
+msgstr "Các cờ của %s đã đặt thành "
+
+#: misc/chattr.c:249
+#, c-format
+msgid "while setting flags on %s"
+msgstr "trong khi đặt các cờ trên %s"
+
+#: misc/chattr.c:257
+#, c-format
+msgid "Version of %s set as %lu\n"
+msgstr "Phiên bản %s được đặt thành %lu\n"
+
+#: misc/chattr.c:261
+#, c-format
+msgid "while setting version on %s"
+msgstr "trong khi đặt phiên bản trên %s"
+
+#: misc/chattr.c:281
+#, c-format
+msgid "Couldn't allocate path variable in chattr_dir_proc"
+msgstr "Không thể cấp phát biến đường dẫn trong chattr_dir_proc"
+
+#: misc/chattr.c:320
+msgid "= is incompatible with - and +\n"
+msgstr "= không tương thích với « - » và « + »\n"
+
+#: misc/chattr.c:328
+msgid "Must use '-v', =, - or +\n"
+msgstr "Phải dùng « -v », « = », « - » hay « + »\n"
+
+#: misc/dumpe2fs.c:53
+#, c-format
+msgid "Usage: %s [-bfhixV] [-o superblock=<num>] [-o blocksize=<num>] device\n"
+msgstr "Sử dụng: %s [-bfhixV] [-o siêu_khối=<số>] [-o cỡ_khối=<số>] thiết_bị\n"
+
+#: misc/dumpe2fs.c:168
+#, c-format
+msgid "Group %lu: (Blocks "
+msgstr "Nhóm %lu: (Khối "
+
+#: misc/dumpe2fs.c:173
+#, c-format
+msgid "  Checksum 0x%04x, unused inodes %d\n"
+msgstr "  Tổng kiểm 0x%04x, Nút không dùng %d\n"
+
+#: misc/dumpe2fs.c:178
+#, c-format
+msgid "  %s superblock at "
+msgstr "  %s siêu khối tại "
+
+#: misc/dumpe2fs.c:179
+msgid "Primary"
+msgstr "Chính"
+
+#: misc/dumpe2fs.c:179
+msgid "Backup"
+msgstr "Sao lưu"
+
+#: misc/dumpe2fs.c:183
+#, c-format
+msgid ", Group descriptors at "
+msgstr ", Mô tả nhóm tại "
+
+#: misc/dumpe2fs.c:187
+#, c-format
+msgid ""
+"\n"
+"  Reserved GDT blocks at "
+msgstr ""
+"\n"
+"  Các khối GDT đã dành riêng tại "
+
+#: misc/dumpe2fs.c:194
+#, c-format
+msgid " Group descriptor at "
+msgstr " Mô tả nhóm tại "
+
+#: misc/dumpe2fs.c:200
+msgid "  Block bitmap at "
+msgstr " Mảng ảnh khối tại "
+
+#: misc/dumpe2fs.c:205
+msgid ", Inode bitmap at "
+msgstr ", Mảng ảnh nút thông tin tại "
+
+#: misc/dumpe2fs.c:210
+msgid ""
+"\n"
+"  Inode table at "
+msgstr ""
+"\n"
+"  Bảng nút thông tin tại "
+
+#: misc/dumpe2fs.c:217
+#, c-format
+msgid ""
+"\n"
+"  %u free blocks, %u free inodes, %u directories%s"
+msgstr ""
+"\n"
+"  %u khối rảnh, %u nút rảnh, %u thư mục%s"
+
+#: misc/dumpe2fs.c:224
+#, c-format
+msgid ", %u unused inodes\n"
+msgstr ", %u nút không dùng\n"
+
+#: misc/dumpe2fs.c:227
+msgid "  Free blocks: "
+msgstr "  Khối rảnh: "
+
+#: misc/dumpe2fs.c:237
+msgid "  Free inodes: "
+msgstr "  Nút rảnh: "
+
+#: misc/dumpe2fs.c:268
+msgid "while printing bad block list"
+msgstr "trong khi in ra danh sách các khối sai"
+
+#: misc/dumpe2fs.c:274
+#, c-format
+msgid "Bad blocks: %u"
+msgstr "Khối sai: %u"
+
+#: misc/dumpe2fs.c:301 misc/tune2fs.c:281
+msgid "while reading journal inode"
+msgstr "trong khi đọc nút thông tin nhật ký"
+
+#: misc/dumpe2fs.c:307
+msgid "while opening journal inode"
+msgstr "trong khi mở nút thông tin nhật ký"
+
+#: misc/dumpe2fs.c:313
+msgid "while reading journal super block"
+msgstr "trong khi đọc siêu khối nhật ký"
+
+#: misc/dumpe2fs.c:323
+#, c-format
+msgid "Journal features:        "
+msgstr "Tính năng nhật ký:        "
+
+#: misc/dumpe2fs.c:336
+msgid "Journal size:             "
+msgstr "Kích cỡ nhật ký:             "
+
+#: misc/dumpe2fs.c:347
+#, c-format
+msgid ""
+"Journal length:           %u\n"
+"Journal sequence:         0x%08x\n"
+"Journal start:            %u\n"
+msgstr ""
+"Chiều dài nhật ký:         %u\n"
+"Dãy nhật ký:               0x%08x\n"
+"Đầu nhật ký:               %u\n"
+
+#: misc/dumpe2fs.c:366 misc/tune2fs.c:202
+msgid "while reading journal superblock"
+msgstr "trong khi đọc siêu khối nhật ký"
+
+#: misc/dumpe2fs.c:374
+msgid "Couldn't find journal superblock magic numbers"
+msgstr "Không tìm thấy các số ma thuật siêu khối nhật ký"
+
+#: misc/dumpe2fs.c:378
+#, c-format
+msgid ""
+"\n"
+"Journal block size:       %u\n"
+"Journal length:           %u\n"
+"Journal first block:      %u\n"
+"Journal sequence:         0x%08x\n"
+"Journal start:            %u\n"
+"Journal number of users:  %u\n"
+msgstr ""
+"\n"
+"Kích cỡ khối nhật ký:       \t%u\n"
+"Độ dài nhật ký:         \t\t%u\n"
+"Khối đầu nhật ký:      \t\t%u\n"
+"Dãy nhật ký:         \t\t\t0x%08x\n"
+"Đầu nhật ký:            \t\t%u\n"
+"Số người dùng nhật ký:  \t%u\n"
+
+#: misc/dumpe2fs.c:391
+#, c-format
+msgid "Journal users:            %s\n"
+msgstr "Người dùng nhật ký:            %s\n"
+
+#: misc/dumpe2fs.c:407 misc/mke2fs.c:699 misc/tune2fs.c:872
+#, c-format
+msgid "Couldn't allocate memory to parse options!\n"
+msgstr "Không thể cấp phát bộ nhớ để phân tách tùy chọn !\n"
+
+#: misc/dumpe2fs.c:433
+#, c-format
+msgid "Invalid superblock parameter: %s\n"
+msgstr "Tham số siêu khối không hợp lệ: %s\n"
+
+#: misc/dumpe2fs.c:448
+#, c-format
+msgid "Invalid blocksize parameter: %s\n"
+msgstr "Tham số kích cỡ khối không hợp lệ: %s\n"
+
+#: misc/dumpe2fs.c:459
+#, c-format
+msgid ""
+"\n"
+"Bad extended option(s) specified: %s\n"
+"\n"
+"Extended options are separated by commas, and may take an argument which\n"
+"\tis set off by an equals ('=') sign.\n"
+"\n"
+"Valid extended options are:\n"
+"\tsuperblock=<superblock number>\n"
+"\tblocksize=<blocksize>\n"
+msgstr ""
+"\n"
+"Sai xác định tùy chọn đã mở rộng: %s\n"
+"\n"
+"Các tùy chọn đã mở rộng cũng định giới bằng dấu phẩy, có thể chấp nhận\n"
+"đối số được ngụ ý với dấu bằng « = ».\n"
+"\n"
+"Tùy chọn đã mở rộng hợp lệ:\n"
+"\tsuperblock=<số thứ tự siêu khối>\n"
+"\tblocksize=<kích cỡ khối>\n"
+
+#: misc/dumpe2fs.c:518 misc/mke2fs.c:1406
+#, c-format
+msgid "\tUsing %s\n"
+msgstr "\tDùng %s\n"
+
+#: misc/dumpe2fs.c:554 misc/e2image.c:681 misc/tune2fs.c:1576
+#: resize/main.c:312
+#, c-format
+msgid "Couldn't find valid filesystem superblock.\n"
+msgstr "Không tìm thấy siêu khối hệ thống tập tin hợp lệ.\n"
+
+#: misc/dumpe2fs.c:579
+#, c-format
+msgid ""
+"\n"
+"%s: %s: error reading bitmaps: %s\n"
+msgstr ""
+"\n"
+"%s: %s: gặp lỗi khi đọc mảng ảnh: %s\n"
+
+#: misc/e2image.c:52
+#, c-format
+msgid "Usage: %s [-rsI] device image_file\n"
+msgstr "Sử dụng: %s [-rsI] thiết_bị tập_tin_ảnh\n"
+
+#: misc/e2image.c:64
+msgid "Couldn't allocate header buffer\n"
+msgstr "Không thể cấp phát bộ đệm phần đầu\n"
+
+#: misc/e2image.c:83
+#, c-format
+msgid "short write (only %d bytes) for writing image header"
+msgstr "ghi ngắn (chỉ %d byte) để ghi phần đầu ảnh"
+
+#: misc/e2image.c:102
+msgid "while writing superblock"
+msgstr "trong khi ghi siêu khối"
+
+#: misc/e2image.c:110
+msgid "while writing inode table"
+msgstr "trong khi ghi bảng nút thông tin"
+
+#: misc/e2image.c:117
+msgid "while writing block bitmap"
+msgstr "trong khi ghi mảng ảnh khối"
+
+#: misc/e2image.c:124
+msgid "while writing inode bitmap"
+msgstr "trong khi ghi mảng ảnh nút thông tin"
+
+#: misc/e2label.c:57
+#, c-format
+msgid "e2label: cannot open %s\n"
+msgstr "e2label: không thể mở %s\n"
+
+#: misc/e2label.c:62
+#, c-format
+msgid "e2label: cannot seek to superblock\n"
+msgstr "e2label: không thể tìm nơi tới siêu khối\n"
+
+#: misc/e2label.c:67
+#, c-format
+msgid "e2label: error reading superblock\n"
+msgstr "e2label: gặp lỗi khi đọc siêu khối\n"
+
+#: misc/e2label.c:71
+#, c-format
+msgid "e2label: not an ext2 filesystem\n"
+msgstr "e2label: không phải hệ thống tập tin kiểu ext2\n"
+
+#: misc/e2label.c:96 misc/tune2fs.c:1711
+#, c-format
+msgid "Warning: label too long, truncating.\n"
+msgstr "Cảnh báo : nhãn quá dài nên cắt ngắn.\n"
+
+#: misc/e2label.c:99
+#, c-format
+msgid "e2label: cannot seek to superblock again\n"
+msgstr "e2label: không thể tìm nơi lại tới siêu khối\n"
+
+#: misc/e2label.c:104
+#, c-format
+msgid "e2label: error writing superblock\n"
+msgstr "e2label: gặp lỗi khi ghi siêu khối\n"
+
+#: misc/e2label.c:116 misc/tune2fs.c:542
+#, c-format
+msgid "Usage: e2label device [newlabel]\n"
+msgstr "Sử dụng: e2label thiết_bị [nhãn_mới]\n"
+
+#: misc/e2undo.c:35
+#, c-format
+msgid "Usage: %s <transaction file> <filesystem>\n"
+msgstr "Sử dụng: %s <tập tin giao dịch> <hệ thống tập tin>\n"
+
+#: misc/e2undo.c:52
+msgid "Failed to read the file system data \n"
+msgstr "Lỗi đọc dữ liệu hệ thống tập tin \n"
+
+#: misc/e2undo.c:62 misc/e2undo.c:83 misc/e2undo.c:108 misc/e2undo.c:205
+#, c-format
+msgid "Failed tdb_fetch %s\n"
+msgstr "Lỗi tdb_fetch %s\n"
+
+#: misc/e2undo.c:70
+#, c-format
+msgid "The file system Mount time didn't match %u\n"
+msgstr "Giờ gắn kết hệ thống tập tin không tương ứng với %u\n"
+
+#: misc/e2undo.c:89
+msgid "The file system UUID didn't match \n"
+msgstr "UUID hệ thống tập tin không tương ứng \n"
+
+#: misc/e2undo.c:162
+#, c-format
+msgid "Failed tdb_open %s\n"
+msgstr "Lỗi tdb_open %s\n"
+
+#: misc/e2undo.c:168
+#, c-format
+msgid "Error while determining whether %s is mounted.\n"
+msgstr "Gặp lỗi trong khi quyết định nếu %s đã gắn kết chưa.\n"
+
+#: misc/e2undo.c:174
+msgid "e2undo should only be run on unmounted file system\n"
+msgstr "e2undo chỉ nên chạy trên một hệ thống tập tin chưa gắn kết\n"
+
+#: misc/e2undo.c:183
+#, c-format
+msgid "Failed to open %s\n"
+msgstr "Lỗi mở %s\n"
+
+#: misc/e2undo.c:209
+#, c-format
+msgid "Replayed transaction of size %zd at location %ld\n"
+msgstr "Đã chạy lại giao dịch có kích cỡ %zd ở vị trí %ld\n"
+
+#: misc/e2undo.c:215
+#, c-format
+msgid "Failed write %s\n"
+msgstr "Lỗi ghi %s\n"
+
+#: misc/fsck.c:343
+#, c-format
+msgid "WARNING: couldn't open %s: %s\n"
+msgstr "CẢNH BÁO : không thể mở %s: %s\n"
+
+#: misc/fsck.c:353
+#, c-format
+msgid "WARNING: bad format on line %d of %s\n"
+msgstr "CẢNH BÁO : gặp định dạng sai trên dòng %d trên %s\n"
+
+#: misc/fsck.c:368
+msgid ""
+"\a\a\aWARNING: Your /etc/fstab does not contain the fsck passno\n"
+"\tfield.  I will kludge around things for you, but you\n"
+"\tshould fix your /etc/fstab file as soon as you can.\n"
+"\n"
+msgstr ""
+"\a\a\aCẢNH BÁO : « /etc/fstab » của bạn không chứa trường\n"
+"\tpassno fsck. Trình này sẽ làm quấy quá trường hợp này, nhưng\n"
+"\tbạn nên sửa chữa tập tin « /etc/fstab » càng sớm càng có thể.\n"
+"\n"
+
+#: misc/fsck.c:477
+#, c-format
+msgid "fsck: %s: not found\n"
+msgstr "fsck: %s: không tìm thấy\n"
+
+#: misc/fsck.c:593
+#, c-format
+msgid "%s: wait: No more child process?!?\n"
+msgstr "%s: đợi: không có tiến trình con nữa ?!?\n"
+
+#: misc/fsck.c:615
+#, c-format
+msgid "Warning... %s for device %s exited with signal %d.\n"
+msgstr "Cảnh báo... %s cho thiết bị %s đã thoát với tín hiệu %d.\n"
+
+#: misc/fsck.c:621
+#, c-format
+msgid "%s %s: status is %x, should never happen.\n"
+msgstr "%s %s: trạng thái là %x, không bao giờ nên xảy ra.\n"
+
+#: misc/fsck.c:660
+#, c-format
+msgid "Finished with %s (exit status %d)\n"
+msgstr "%s hoàn tất (trạng thái thoát %d)\n"
+
+#: misc/fsck.c:720
+#, c-format
+msgid "%s: Error %d while executing fsck.%s for %s\n"
+msgstr "%s: Gặp lỗi %d trong khi thực hiện fsck.%s cho %s\n"
+
+#: misc/fsck.c:741
+msgid ""
+"Either all or none of the filesystem types passed to -t must be prefixed\n"
+"with 'no' or '!'.\n"
+msgstr ""
+"Hoặc tất cả hoặc không có kiểu hệ thống tập tin được gửi qua\n"
+"cho tùy chọn « -t » phải có tiền tố « no » hay « ! ».\n"
+
+#: misc/fsck.c:760
+msgid "Couldn't allocate memory for filesystem types\n"
+msgstr "Không thể cấp phát bộ nhớ cho kiểu hế thống tập tin\n"
+
+#: misc/fsck.c:883
+#, c-format
+msgid ""
+"%s: skipping bad line in /etc/fstab: bind mount with nonzero fsck pass "
+"number\n"
+msgstr ""
+"%s: đang bỏ qua dòng sai trong « /etc/fstab »: đóng kết lắp với số gửi qua "
+"fsck khác số không\n"
+
+#: misc/fsck.c:910
+#, c-format
+msgid "fsck: cannot check %s: fsck.%s not found\n"
+msgstr "fsck: không thể kiểm tra %s: fsck.%s không tìm thấy\n"
+
+#: misc/fsck.c:966
+msgid "Checking all file systems.\n"
+msgstr "Đang kiểm tra mọi hệ thống tập tin.\n"
+
+#: misc/fsck.c:1057
+#, c-format
+msgid "--waiting-- (pass %d)\n"
+msgstr "--đang đợi-- (lần qua %d)\n"
+
+#: misc/fsck.c:1077
+msgid ""
+"Usage: fsck [-AMNPRTV] [ -C [ fd ] ] [-t fstype] [fs-options] [filesys ...]\n"
+msgstr ""
+"Sử dụng: fsck [-AMNPRTV] [ -C [ fd ] ] [-t kiểu_HTT] [fs-options] [HTT ...]\n"
+"\n"
+"HTT: hệ thống tập tin\n"
+
+#: misc/fsck.c:1119
+#, c-format
+msgid "%s: too many devices\n"
+msgstr "%s: quá nhiều thiết bị\n"
+
+#: misc/fsck.c:1152 misc/fsck.c:1238
+#, c-format
+msgid "%s: too many arguments\n"
+msgstr "%s: quá nhiều đối số\n"
+
+#: misc/lsattr.c:73
+#, c-format
+msgid "Usage: %s [-RVadlv] [files...]\n"
+msgstr "Sử dụng: %s [-RVadlv] [tập_tin...]\n"
+
+#: misc/lsattr.c:83
+#, c-format
+msgid "While reading flags on %s"
+msgstr "Trong khi đọc các cờ trên %s"
+
+#: misc/lsattr.c:90
+#, c-format
+msgid "While reading version on %s"
+msgstr "Trong khi đọc phiên bản trên %s"
+
+#: misc/mke2fs.c:108
+#, c-format
+msgid ""
+"Usage: %s [-c|-l filename] [-b block-size] [-f fragment-size]\n"
+"\t[-i bytes-per-inode] [-I inode-size] [-J journal-options]\n"
+"\t[-G meta group size] [-N number-of-inodes]\n"
+"\t[-m reserved-blocks-percentage] [-o creator-os]\n"
+"\t[-g blocks-per-group] [-L volume-label] [-M last-mounted-directory]\n"
+"\t[-O feature[,...]] [-r fs-revision] [-E extended-option[,...]]\n"
+"\t[-T fs-type] [-U UUID] [-jnqvFKSV] device [blocks-count]\n"
+msgstr ""
+"Sử dụng: %s [-c|-l tên_tập_tin] [-b cỡ_khối] [-f cỡ_đoạn]\n"
+"\t[-i byte_mỗi_inode] [-I cỡ_inode] [-J tùy_chọn_nhật_ký]\n"
+"\t[-G cỡ_siêu_nhóm] [-N số_các_inode] [-m phần_trăm_khối_dành_riêng]\n"
+"\t[-o HĐH_tạo] [-g khối_mỗi_nhóm] [-L nhãn_khối_tin]\n"
+"\t[-M thư_mục_lắp_cuối] [-O tính_năng[,...]] [-r bản_sửa_đổi_HTT]\n"
+"\t[-E tùy_chọn_mở_rộng] [-T kiểu_HTT] [-U UUID]\n"
+"\t[-jnqvFKSV] thiết_bị [số_đếm_khối]\n"
+"\n"
+"HĐH: hệ điều hành\n"
+"HTT: hệ thống tập tin\n"
+
+#: misc/mke2fs.c:210
+#, c-format
+msgid "Running command: %s\n"
+msgstr "Đang chạy lệnh: %s\n"
+
+#: misc/mke2fs.c:214
+#, c-format
+msgid "while trying to run '%s'"
+msgstr "trong khi thử chạy « %s »"
+
+#: misc/mke2fs.c:221
+msgid "while processing list of bad blocks from program"
+msgstr "trong khi xử lý danh sách các khối sai từ chương trình"
+
+#: misc/mke2fs.c:248
+#, c-format
+msgid "Block %d in primary superblock/group descriptor area bad.\n"
+msgstr "Khối %d sai trong vùng mô tả nhóm/siêu khối chính.\n"
+
+#: misc/mke2fs.c:250
+#, c-format
+msgid "Blocks %u through %u must be good in order to build a filesystem.\n"
+msgstr ""
+"Các khối trong phạm vi %u đến %u phải là tốt\n"
+"để xây dựng được hệ thống tập tin.\n"
+
+#: misc/mke2fs.c:253
+msgid "Aborting....\n"
+msgstr "Đang hủy bỏ...\n"
+
+#: misc/mke2fs.c:273
+#, c-format
+msgid ""
+"Warning: the backup superblock/group descriptors at block %u contain\n"
+"\tbad blocks.\n"
+"\n"
+msgstr ""
+"Cảnh báo : các mô tả nhóm/siêu khối dự trữ tại khối %u chứa khối sai.\n"
+"\n"
+
+#: misc/mke2fs.c:292
+msgid "while marking bad blocks as used"
+msgstr "trong khi đánh dấu các khối sai đã được dùng"
+
+#: misc/mke2fs.c:350
+msgid "done                            \n"
+msgstr "hoàn tất                         \n"
+
+#: misc/mke2fs.c:364
+msgid "Writing inode tables: "
+msgstr "Đang ghi các bảng nút thông tin: "
+
+#: misc/mke2fs.c:387
+#, c-format
+msgid ""
+"\n"
+"Could not write %d blocks in inode table starting at %u: %s\n"
+msgstr ""
+"\n"
+"Không thể ghi %d khối trong bảng nút thông tin, bắt đầu tại %u: %s\n"
+
+#: misc/mke2fs.c:411
+msgid "while creating root dir"
+msgstr "trong khi tạo thư mục gốc"
+
+#: misc/mke2fs.c:418
+msgid "while reading root inode"
+msgstr "trong khi đọc nút thông tin gốc"
+
+#: misc/mke2fs.c:432
+msgid "while setting root inode ownership"
+msgstr "trong khi đặt quyền sở hữu nút thông tin gốc"
+
+#: misc/mke2fs.c:450
+msgid "while creating /lost+found"
+msgstr "trong khi tạo /mất+tìm"
+
+#: misc/mke2fs.c:457
+msgid "while looking up /lost+found"
+msgstr "trong khi tra tìm /mất+tìm"
+
+#: misc/mke2fs.c:470
+msgid "while expanding /lost+found"
+msgstr "trong khi mở rộng /mất+tìm"
+
+#: misc/mke2fs.c:485
+msgid "while setting bad block inode"
+msgstr "trong khi đặt nút thông tin khối sai"
+
+#: misc/mke2fs.c:512
+#, c-format
+msgid "Out of memory erasing sectors %d-%d\n"
+msgstr "Hết bộ nhớ nên xoá các rãnh ghi trong phạm vi %d đến %d\n"
+
+#: misc/mke2fs.c:522
+#, c-format
+msgid "Warning: could not read block 0: %s\n"
+msgstr "Cảnh báo : không thể đọc khối 0: %s\n"
+
+#: misc/mke2fs.c:538
+#, c-format
+msgid "Warning: could not erase sector %d: %s\n"
+msgstr "Cảnh báo : không thể xoá rãnh ghi %d: %s\n"
+
+#: misc/mke2fs.c:554
+msgid "while initializing journal superblock"
+msgstr "trong khi sở khởi siêu khối nhật ký"
+
+#: misc/mke2fs.c:560
+msgid "Zeroing journal device: "
+msgstr "Đang làm số không thiết bị nhật ký: "
+
+#: misc/mke2fs.c:573
+#, c-format
+msgid "while zeroing journal device (block %u, count %d)"
+msgstr "trong khi làm số không thiết bị nhật ký (khối %u, số đếm %d)"
+
+#: misc/mke2fs.c:589
+msgid "while writing journal superblock"
+msgstr "trong khi ghi siêu khối nhật ký"
+
+#: misc/mke2fs.c:605
+#, c-format
+msgid ""
+"warning: %u blocks unused.\n"
+"\n"
+msgstr ""
+"cảnh báo : %u khối chưa dùng.\n"
+"\n"
+
+#: misc/mke2fs.c:610
+#, c-format
+msgid "Filesystem label=%s\n"
+msgstr "Nhãn hệ thống tập tin=%s\n"
+
+#: misc/mke2fs.c:611
+msgid "OS type: "
+msgstr "Kiểu HĐH: "
+
+#: misc/mke2fs.c:616
+#, c-format
+msgid "Block size=%u (log=%u)\n"
+msgstr "Cỡ khối=%u (bản ghi=%u)\n"
+
+#: misc/mke2fs.c:618
+#, c-format
+msgid "Fragment size=%u (log=%u)\n"
+msgstr "Cỡ đoạn=%u (bản ghi=%u)\n"
+
+#: misc/mke2fs.c:620
+#, c-format
+msgid "Stride=%u blocks, Stripe width=%u blocks\n"
+msgstr "Bước=%u khối, Độ rộng sọc=%u khối\n"
+
+#: misc/mke2fs.c:622
+#, c-format
+msgid "%u inodes, %u blocks\n"
+msgstr "%u nút thông tin, %u khối\n"
+
+#: misc/mke2fs.c:624
+#, c-format
+msgid "%u blocks (%2.2f%%) reserved for the super user\n"
+msgstr "%u khối (%2.2f%%) được dành riêng cho siêu người dùng\n"
+
+#: misc/mke2fs.c:627
+#, c-format
+msgid "First data block=%u\n"
+msgstr "Khối dữ liệu đầu=%u\n"
+
+#: misc/mke2fs.c:629
+#, c-format
+msgid "Maximum filesystem blocks=%lu\n"
+msgstr "Khối hệ thống tập tin tối đa=%lu\n"
+
+#: misc/mke2fs.c:633
+#, c-format
+msgid "%u block groups\n"
+msgstr "%u nhóm khối\n"
+
+#: misc/mke2fs.c:635
+#, c-format
+msgid "%u block group\n"
+msgstr "%u nhóm khối\n"
+
+#: misc/mke2fs.c:636
+#, c-format
+msgid "%u blocks per group, %u fragments per group\n"
+msgstr "%u khối trên mỗi nhóm, %u đoạn trên mỗi nhóm\n"
+
+#: misc/mke2fs.c:638
+#, c-format
+msgid "%u inodes per group\n"
+msgstr "%u nút thông tin trên mỗi nhóm\n"
+
+#: misc/mke2fs.c:645
+#, c-format
+msgid "Superblock backups stored on blocks: "
+msgstr "Siêu khối dự trữ được cất giữ trên khối: "
+
+#: misc/mke2fs.c:724
+#, c-format
+msgid "Invalid stride parameter: %s\n"
+msgstr "Tham số stride không hợp lệ: %s\n"
+
+#: misc/mke2fs.c:739
+#, c-format
+msgid "Invalid stripe-width parameter: %s\n"
+msgstr "Tham số stride không hợp lệ: %s\n"
+
+#: misc/mke2fs.c:761
+#, c-format
+msgid "Invalid resize parameter: %s\n"
+msgstr "Tham số thay đổi kích cỡ không hợp lệ: %s\n"
+
+#: misc/mke2fs.c:768
+#, c-format
+msgid "The resize maximum must be greater than the filesystem size.\n"
+msgstr ""
+"Số thay đổi kích cỡ tối đa phải lớn hơn kích cỡ của hệ thống tập tin.\n"
+
+#: misc/mke2fs.c:792
+#, c-format
+msgid "On-line resizing not supported with revision 0 filesystems\n"
+msgstr ""
+"Tính năng thay đổi kích cỡ một cách trực tuyến không được hỗ trợ\n"
+"trên hệ thống tập tin bản sửa đổi 0\n"
+
+#: misc/mke2fs.c:814
+#, c-format
+msgid ""
+"\n"
+"Bad option(s) specified: %s\n"
+"\n"
+"Extended options are separated by commas, and may take an argument which\n"
+"\tis set off by an equals ('=') sign.\n"
+"\n"
+"Valid extended options are:\n"
+"\tstride=<RAID per-disk data chunk in blocks>\n"
+"\tstripe-width=<RAID stride * data disks in blocks>\n"
+"\tresize=<resize maximum size in blocks>\n"
+"\tlazy_itable_init=<0 to disable, 1 to enable>\n"
+"\ttest_fs\n"
+"\n"
+msgstr ""
+"\n"
+"Sai xác định tùy chọn: %s\n"
+"\n"
+"Các tùy chọn đã mở rộng cũng định giới bằng dấu phẩy, có thể chấp nhận\n"
+"đối số được ngụ ý với dấu bằng « = ».\n"
+"\n"
+"Tùy chọn đã mở rộng hợp lệ:\n"
+"\tstride=<đoạn dữ liệu RAID mỗi đĩa theo khối>\n"
+"\tstripe-width=<RAID stride * các đĩa dữ liệu theo khối>\n"
+"\tresize=<kích cỡ thay đổi kích cỡ tối đa theo khối>\n"
+"\tlazy_itable_init=<0 để tắt, 1 để bật>\n"
+"\ttest_fs\n"
+"\n"
+
+#: misc/mke2fs.c:830
+#, c-format
+msgid ""
+"\n"
+"Warning: RAID stripe-width %u not an even multiple of stride %u.\n"
+"\n"
+msgstr ""
+"\n"
+"Cảnh báo : chiều rộng sọc (stripe-width) RAID %u không phải là một bội số "
+"dương của %u.\n"
+"\n"
+
+#: misc/mke2fs.c:862
+#, c-format
+msgid ""
+"Syntax error in mke2fs config file (%s, line #%d)\n"
+"\t%s\n"
+msgstr ""
+"Gặp lỗi cú pháp trong tập tin cấu hình mke2fs (%s, dòng số %d)\n"
+"\t%s\n"
+
+#: misc/mke2fs.c:875 misc/tune2fs.c:355
+#, c-format
+msgid "Invalid filesystem option set: %s\n"
+msgstr "Đặt tùy chọn hệ thống tập tin không hợp lệ: %s\n"
+
+#: misc/mke2fs.c:985
+#, c-format
+msgid ""
+"\n"
+"Warning!  Your mke2fs.conf file does not define the %s filesystem type.\n"
+msgstr ""
+"\n"
+"Cảnh báo !  Tập tin « mke2fs.conf » của bạn không xác định kiểu hệ thống tập "
+"tin %s.\n"
+
+#: misc/mke2fs.c:988
+#, c-format
+msgid ""
+"You probably need to install an updated mke2fs.conf file.\n"
+"\n"
+msgstr ""
+"Rất có thể là bạn cần phải cài đặt một tập tin « mke2fs.conf » mới.\n"
+"\n"
+
+#: misc/mke2fs.c:1224
+#, c-format
+msgid "invalid block size - %s"
+msgstr "cỡ khối không hợp lệ — %s"
+
+#: misc/mke2fs.c:1228
+#, c-format
+msgid "Warning: blocksize %d not usable on most systems.\n"
+msgstr "Cảnh báo : kích cỡ khối %d vô ích trên phần lớn hệ thống.\n"
+
+#: misc/mke2fs.c:1244
+#, c-format
+msgid "invalid fragment size - %s"
+msgstr "cỡ đoạn không hợp lệ — %s"
+
+#: misc/mke2fs.c:1250
+#, c-format
+msgid "Warning: fragments not supported.  Ignoring -f option\n"
+msgstr "Cảnh báo : không hỗ trợ đoạn nên bỏ qua tùy chọn « -f »\n"
+
+#: misc/mke2fs.c:1257
+msgid "Illegal number for blocks per group"
+msgstr "Số cấm cho số khối trên mỗi nhóm"
+
+#: misc/mke2fs.c:1262
+msgid "blocks per group must be multiple of 8"
+msgstr "số khối trên mỗi nhóm phải là bội số cho 8"
+
+#: misc/mke2fs.c:1270
+msgid "Illegal number for flex_bg size"
+msgstr "Kích cỡ flex_bg có số không được phép"
+
+#: misc/mke2fs.c:1276
+msgid "flex_bg size must be a power of 2"
+msgstr "Kích cỡ flex_bg phải là lũy thừa 2"
+
+#: misc/mke2fs.c:1286
+#, c-format
+msgid "invalid inode ratio %s (min %d/max %d)"
+msgstr "tỷ lệ nút thông tin không hợp lệ %s (thiểu %d/đa %d)"
+
+#: misc/mke2fs.c:1306
+msgid "in malloc for bad_blocks_filename"
+msgstr ""
+"trong hàm cấp phát bộ nhớ malloc cho tên tập tin khối sai\n"
+"« bad_blocks_filename »"
+
+#: misc/mke2fs.c:1316
+#, c-format
+msgid "invalid reserved blocks percent - %s"
+msgstr "phần trăm khối được dành riêng không hợp lệ — %s"
+
+#: misc/mke2fs.c:1334
+#, c-format
+msgid "bad revision level - %s"
+msgstr "cấp bản sửa đổi sai — %s"
+
+#: misc/mke2fs.c:1346
+#, c-format
+msgid "invalid inode size - %s"
+msgstr "kích cỡ nút thông tin không hợp lệ — %s"
+
+#: misc/mke2fs.c:1366
+#, c-format
+msgid "bad num inodes - %s"
+msgstr "số (num) nút thông tin sai — %s"
+
+#: misc/mke2fs.c:1431 misc/mke2fs.c:2203
+#, c-format
+msgid "while trying to open journal device %s\n"
+msgstr "trong khi thử mở thiết bị nhật ký %s\n"
+
+#: misc/mke2fs.c:1437
+#, c-format
+msgid "Journal dev blocksize (%d) smaller than minimum blocksize %d\n"
+msgstr "Kích cỡ của thiết bị nhật ký (%d) nhỏ hơn kích cỡ tối thiểu %d\n"
+
+#: misc/mke2fs.c:1443
+#, c-format
+msgid "Using journal device's blocksize: %d\n"
+msgstr "Đang dùng kích cỡ khối của thiết bị nhật ký: %d\n"
+
+#: misc/mke2fs.c:1452
+#, c-format
+msgid "%d-byte blocks too big for system (max %d)"
+msgstr "Khối %d-byte quá lớn đối với hệ thống (tối đa %d)"
+
+#: misc/mke2fs.c:1456
+#, c-format
+msgid ""
+"Warning: %d-byte blocks too big for system (max %d), forced to continue\n"
+msgstr ""
+"Cảnh báo : khối %d-byte quá lớn đối với hệ thống (tối đa %d)\n"
+"nên bị buộc tiếp tục\n"
+
+#: misc/mke2fs.c:1464
+#, c-format
+msgid "invalid blocks count - %s"
+msgstr "số đếm khối không hợp lệ — %s"
+
+#: misc/mke2fs.c:1474
+msgid "filesystem"
+msgstr "hệ thống tập tin"
+
+#: misc/mke2fs.c:1510
+#, c-format
+msgid ""
+"%s: Size of device %s too big to be expressed in 32 bits\n"
+"\tusing a blocksize of %d.\n"
+msgstr ""
+"%s: thiết bị %s có kích cỡ quá lớn để đại diện theo 32 bit\n"
+"\tdùng kích cỡ khối %d.\n"
+
+#: misc/mke2fs.c:1519 resize/main.c:382
+msgid "while trying to determine filesystem size"
+msgstr "trong khi thử quyết định kích cỡ của hệ thống tập tin"
+
+#: misc/mke2fs.c:1526
+msgid ""
+"Couldn't determine device size; you must specify\n"
+"the size of the filesystem\n"
+msgstr ""
+"Không thể quyết định kích cỡ của thiết bị;\n"
+"bạn cần phải xác định kích cỡ của hệ thống tập tin\n"
+
+#: misc/mke2fs.c:1533
+msgid ""
+"Device size reported to be zero.  Invalid partition specified, or\n"
+"\tpartition table wasn't reread after running fdisk, due to\n"
+"\ta modified partition being busy and in use.  You may need to reboot\n"
+"\tto re-read your partition table.\n"
+msgstr ""
+"Kích cỡ của thiết bị được thông báo là số không.\n"
+"\tPhân vùng không hợp lệ được xác định,\n"
+"\thoặc bảng phân vùng không được đọc lại\n"
+"\tsau khi chạy tiến trình fdisk,\n"
+"\tdo phân vùng đã sửa đổi đang bận và đang được dùng.\n"
+"Có lẽ bạn cần phải khởi động lại máy để đọc lại bảng phân vùng.\n"
+
+#: misc/mke2fs.c:1551
+msgid "Filesystem larger than apparent device size."
+msgstr "Hệ thống tập tin lớn hơn kích cỡ thiết bị biểu kiến."
+
+#: misc/mke2fs.c:1557
+#, c-format
+msgid "Failed to parse fs types list\n"
+msgstr "Lỗi phân tích danh sách các kiểu hệ thống tập tin\n"
+
+#: misc/mke2fs.c:1591
+msgid "fs_types for mke2fs.conf resolution: "
+msgstr "fs_types để giải quyết mke2fs.conf: "
+
+#: misc/mke2fs.c:1598
+#, c-format
+msgid "Filesystem features not supported with revision 0 filesystems\n"
+msgstr ""
+"Tính năng hệ thống tập tin không được hỗ trợ trên hệ thống tập tin\n"
+"bản sửa đổi 0\n"
+
+#: misc/mke2fs.c:1605
+#, c-format
+msgid "Sparse superblocks not supported with revision 0 filesystems\n"
+msgstr ""
+"Tính năng siêu khối thưa thớt không được hỗ trợ\n"
+"trên hệ thống tập tin bản sửa đổi 0\n"
+
+#: misc/mke2fs.c:1617
+#, c-format
+msgid "Journals not supported with revision 0 filesystems\n"
+msgstr ""
+"Tính năng nhật ký không được hỗ trợ trên hệ thống tập tin\n"
+"bản sửa đổi 0\n"
+
+#: misc/mke2fs.c:1635
+#, c-format
+msgid ""
+"The resize_inode and meta_bg features are not compatible.\n"
+"They can not be both enabled simultaneously.\n"
+msgstr ""
+"Hai tính năng thay đổi kích cỡ nút (resize_inode) và siêu nền (meta_bg) "
+"không tương thích với nhau.\n"
+"Do đó không thể hiệu lực đồng thời cả hai.\n"
+
+#: misc/mke2fs.c:1652
+msgid "while trying to determine hardware sector size"
+msgstr "trong khi thử quyết định kích cỡ của rãnh ghi phần cứng"
+
+#: misc/mke2fs.c:1658
+#, fuzzy
+msgid "while trying to determine physical sector size"
+msgstr "trong khi thử quyết định kích cỡ của rãnh ghi phần cứng"
+
+#: misc/mke2fs.c:1687
+#, fuzzy
+msgid "while setting blocksize; too small for device\n"
+msgstr "trong khi đặt thông tin tổng kiểm nhóm khối"
+
+#: misc/mke2fs.c:1691
+#, fuzzy, c-format
+msgid ""
+"Warning: specified blocksize %d is less than device physical sectorsize %d, "
+"forced to continue\n"
+msgstr ""
+"Cảnh báo : khối %d-byte quá lớn đối với hệ thống (tối đa %d)\n"
+"nên bị buộc tiếp tục\n"
+
+#: misc/mke2fs.c:1712
+#, c-format
+msgid "warning: Unable to get device geometry for %s\n"
+msgstr "cảnh báo : không thể lấy dạng hình thiết bị cho %s\n"
+
+#: misc/mke2fs.c:1715
+#, c-format
+msgid "%s alignment is offset by %lu bytes.\n"
+msgstr "Khoảng sắp hàng %s bị bù theo %lu byte.\n"
+
+#: misc/mke2fs.c:1717
+#, c-format
+msgid ""
+"This may result in very poor performance, (re)-partitioning suggested.\n"
+msgstr ""
+"Trường hợp này có thể gây ra hiệu suất rất yếu thì khuyên bạn phân vùng "
+"(lại).\n"
+
+#: misc/mke2fs.c:1745
+msgid "reserved online resize blocks not supported on non-sparse filesystem"
+msgstr ""
+"khối thay đổi kích cỡ trực tuyến được dành riêng không được hỗ trợ\n"
+"trên hệ thống tập tin không thưa thớt"
+
+#: misc/mke2fs.c:1754
+msgid "blocks per group count out of range"
+msgstr "số khối trên mỗi nhóm ở ngoài phạm vi"
+
+#: misc/mke2fs.c:1769
+msgid "Flex_bg feature not enabled, so flex_bg size may not be specified"
+msgstr "Chưa hiệu lực tính năng Flex_bg thì không thể ghi rõ kích cỡ Flex_bg"
+
+#: misc/mke2fs.c:1781
+#, c-format
+msgid "invalid inode size %d (min %d/max %d)"
+msgstr "kích cỡ nút thông tin không hợp lệ %d (thiểu %d/đa %d)"
+
+#: misc/mke2fs.c:1795
+#, c-format
+msgid "too many inodes (%llu), raise inode ratio?"
+msgstr "quá nhiều nút thông tin (%llu), tăng tỷ lệ nút thông tin không?"
+
+#: misc/mke2fs.c:1800
+#, c-format
+msgid "too many inodes (%llu), specify < 2^32 inodes"
+msgstr "quá nhiều nút thông tin (%llu), xác định <2³² nút thông tin"
+
+#: misc/mke2fs.c:1815
+#, c-format
+msgid ""
+"inode_size (%u) * inodes_count (%u) too big for a\n"
+"\tfilesystem with %lu blocks, specify higher inode_ratio (-i)\n"
+"\tor lower inode count (-N).\n"
+msgstr ""
+"cỡ_nút_thông_tin (%u) * số_đếm_nút_thông_tin (%u) quá lớn\n"
+"\tcho hệ thống tập tin có %lu khối, hãy xác định\n"
+"\ttỷ_lệ_nút_thông_tin (-i) cao hơn cho số đếm nút thông tin\n"
+"(-N) thấp hơn\n"
+
+#: misc/mke2fs.c:1908 misc/tune2fs.c:1494
+msgid "Couldn't allocate memory for tdb filename\n"
+msgstr "Không thể cấp phát bộ nhớ cho tên tập tin tdb\n"
+
+#: misc/mke2fs.c:1921 misc/tune2fs.c:1516
+#, c-format
+msgid "while trying to delete %s"
+msgstr "trong khi thử xoá %s"
+
+#: misc/mke2fs.c:1931
+#, c-format
+msgid ""
+"Overwriting existing filesystem; this can be undone using the command:\n"
+"    e2undo %s %s\n"
+"\n"
+msgstr ""
+"Đang ghi đè lên hệ thống tập tin đã có ; có thể làm việc này dùng câu lệnh:\n"
+"    e2undo %s %s\n"
+"\n"
+
+#: misc/mke2fs.c:1968
+#, c-format
+msgid "Calling BLKDISCARD from %llu to %llu "
+msgstr "Đang gọi BLKDISCARD từ %llu đến %llu "
+
+#: misc/mke2fs.c:1972
+#, c-format
+msgid "failed.\n"
+msgstr "bị lỗi.\n"
+
+#: misc/mke2fs.c:1974
+#, c-format
+msgid "succeeded.\n"
+msgstr "đã thành công.\n"
+
+# Item in the main menu to select this package
+#: misc/mke2fs.c:2023
+msgid "while setting up superblock"
+msgstr "trong khi thiết lập siêu khối"
+
+#: misc/mke2fs.c:2087
+#, c-format
+msgid "unknown os - %s"
+msgstr "hệ điều hành lạ — %s"
+
+#: misc/mke2fs.c:2141
+msgid "while trying to allocate filesystem tables"
+msgstr "trong khi thử cấp phát các bảng hệ thống tập tin"
+
+#: misc/mke2fs.c:2172
+#, c-format
+msgid "while zeroing block %u at end of filesystem"
+msgstr "trong khi làm số không khối %u tại kết thúc của hệ thống tập tin"
+
+#: misc/mke2fs.c:2185
+msgid "while reserving blocks for online resize"
+msgstr "trong khi dành riêng các khối để thay đổi kích cỡ trực tuyến"
+
+#: misc/mke2fs.c:2196 misc/tune2fs.c:479
+msgid "journal"
+msgstr "nhật ký"
+
+#: misc/mke2fs.c:2208
+#, c-format
+msgid "Adding journal to device %s: "
+msgstr "Đang thêm nhật ký vào thiết bị %s: "
+
+#: misc/mke2fs.c:2215
+#, c-format
+msgid ""
+"\n"
+"\twhile trying to add journal to device %s"
+msgstr ""
+"\n"
+"trong khi thử thêm nhật ký vào thiết bị %s"
+
+#: misc/mke2fs.c:2220 misc/mke2fs.c:2252 misc/tune2fs.c:508 misc/tune2fs.c:522
+#, c-format
+msgid "done\n"
+msgstr "hoàn tất\n"
+
+#: misc/mke2fs.c:2229
+#, c-format
+msgid "Skipping journal creation in super-only mode\n"
+msgstr "Đang bỏ qua bước tạo nhật ký trong chế độ chỉ siêu\n"
+
+#: misc/mke2fs.c:2240
+#, c-format
+msgid "Creating journal (%u blocks): "
+msgstr "Đang tạo nhật ký (%u khối): "
+
+#: misc/mke2fs.c:2257
+#, c-format
+msgid "Writing superblocks and filesystem accounting information: "
+msgstr "Đang ghi siêu khối và thông tin kế toán hệ thống tập tin: "
+
+#: misc/mke2fs.c:2262
+#, c-format
+msgid ""
+"\n"
+"Warning, had trouble writing out superblocks."
+msgstr ""
+"\n"
+"Cảnh báo : gặp khó khăn trong việc ghi ra các siêu khối."
+
+#: misc/mke2fs.c:2265
+#, c-format
+msgid ""
+"done\n"
+"\n"
+msgstr ""
+"hoàn tất\n"
+"\n"
+
+#: misc/mklost+found.c:49
+#, c-format
+msgid "Usage: mklost+found\n"
+msgstr "Sử dụng: mklost+found\n"
+
+#: misc/partinfo.c:39
+#, c-format
+msgid ""
+"Usage:  %s device...\n"
+"\n"
+"Prints out the partition information for each given device.\n"
+"For example: %s /dev/hda\n"
+"\n"
+msgstr ""
+"Sử dụng:  %s thiết bị...\n"
+"\n"
+"In ra thông tin về phân vùng đối với mỗi thiết bị được cho.\n"
+"Ví dụ: %s /dev/hda\n"
+"\n"
+
+#: misc/partinfo.c:49
+#, c-format
+msgid "Cannot open %s: %s"
+msgstr "Không thể mở %s: %s"
+
+#: misc/partinfo.c:55
+#, c-format
+msgid "Cannot get geometry of %s: %s"
+msgstr "Không thể lấy dạng hình của %s: %s"
+
+#: misc/partinfo.c:63
+#, c-format
+msgid "Cannot get size of %s: %s"
+msgstr "Không thể lấy kích cỡ của %s: %s"
+
+#: misc/partinfo.c:69
+#, c-format
+msgid "%s: h=%3d s=%3d c=%4d   start=%8d size=%8lu end=%8d\n"
+msgstr "%s: h=%3d s=%3d c=%4d   đầu=%8d cỡ=%8lu cuối=%8d\n"
+
+#: misc/tune2fs.c:96
+msgid "Please run e2fsck on the filesystem.\n"
+msgstr "Hãy chạy tiến trình e2fsck trên hệ thống tập tin.\n"
+
+#: misc/tune2fs.c:105
+#, c-format
+msgid ""
+"Usage: %s [-c max_mounts_count] [-e errors_behavior] [-g group]\n"
+"\t[-i interval[d|m|w]] [-j] [-J journal_options] [-l]\n"
+"\t[-m reserved_blocks_percent] [-o [^]mount_options[,...]] \n"
+"\t[-r reserved_blocks_count] [-u user] [-C mount_count] [-L volume_label]\n"
+"\t[-M last_mounted_dir] [-O [^]feature[,...]]\n"
+"\t[-E extended-option[,...]] [-T last_check_time] [-U UUID]\n"
+"\t[ -I new_inode_size ] device\n"
+msgstr ""
+"Sử dụng: %s [-c số_đếm_lắp_tối_đa] [-e ứng_xử_lỗi] [-g nhóm]\n"
+"\t[-i khoảng[d|m|w]] [-j] [-J tùy_chọn_nhật_ký] [-l]\n"
+"\t[-m phần_trăm_khối_dành_riêng] [-o [^]tùy_chọn_lắp[,...]]\n"
+"\t[-r số_đếm_khối_dành_riêng] [-u người_dùng]\n"
+"\t[-C số_đếm_lắp] [-L nhãn_khối_tin]\n"
+"\t[-M thư_mục_lắp_cuối] [-O [^]tính_năng[,...]]\n"
+"\t[-E tùy_chọn_đã_mở_rộng[,...] [-T giờ_kiểm_tra_cuối]\n"
+"\t[-U UUID] [-l cỡ_nút_mới] thiết_bị\n"
+
+#: misc/tune2fs.c:190
+msgid "while trying to open external journal"
+msgstr "trong khi thử mở nhật ký bên ngoài"
+
+#: misc/tune2fs.c:194
+#, c-format
+msgid "%s is not a journal device.\n"
+msgstr "%s không phải thiết bị nhật ký.\n"
+
+#: misc/tune2fs.c:209
+msgid "Journal superblock not found!\n"
+msgstr "Không tìm thấy siêu khối nhật ký !\n"
+
+#: misc/tune2fs.c:221
+msgid "Filesystem's UUID not found on journal device.\n"
+msgstr "Không tìm thấy UUID của hệ thống tập tin trên thiết bị nhật ký.\n"
+
+#: misc/tune2fs.c:242
+msgid "Journal NOT removed\n"
+msgstr "CHƯA gỡ bỏ nhật ký\n"
+
+#: misc/tune2fs.c:248
+msgid "Journal removed\n"
+msgstr "Nhật ký đã gỡ bỏ\n"
+
+#: misc/tune2fs.c:288
+msgid "while reading bitmaps"
+msgstr "trong khi đọc các mảng ảnh"
+
+#: misc/tune2fs.c:296
+msgid "while clearing journal inode"
+msgstr "trong khi xoá sạch nút thông tin nhật ký"
+
+#: misc/tune2fs.c:307
+msgid "while writing journal inode"
+msgstr "trong khi ghi nút thông tin nhật ký"
+
+#: misc/tune2fs.c:322
+#, c-format
+msgid "Invalid mount option set: %s\n"
+msgstr "Đặt tùy chọn lắp không hợp lệ: %s\n"
+
+#: misc/tune2fs.c:358
+#, c-format
+msgid "Clearing filesystem feature '%s' not supported.\n"
+msgstr "Tính năng xoá sạch hệ thống tập tin « %s » không được hỗ trợ.\n"
+
+#: misc/tune2fs.c:364
+#, c-format
+msgid "Setting filesystem feature '%s' not supported.\n"
+msgstr "Tính năng đặt hệ thống tập tin « %s » không được hỗ trợ.\n"
+
+#: misc/tune2fs.c:373
+msgid ""
+"The has_journal feature may only be cleared when the filesystem is\n"
+"unmounted or mounted read-only.\n"
+msgstr ""
+"Tính năng có nhật ký (has_journal) có thể được xoá sạch\n"
+"chỉ khi hệ thống tập tin được tháo gắn kết\n"
+"hay được gắn kết một cách chỉ đọc.\n"
+
+#: misc/tune2fs.c:381
+msgid ""
+"The needs_recovery flag is set.  Please run e2fsck before clearing\n"
+"the has_journal flag.\n"
+msgstr ""
+"Đặt cờ cần thiết phục hồi (needs_recovery).\n"
+"Hãy chạy tiến trình e2fsck trước khi xoá sạch cờ có nhật ký (has_journal).\n"
+
+#: misc/tune2fs.c:414
+msgid ""
+"Clearing the flex_bg flag would cause the the filesystem to be\n"
+"inconsistent.\n"
+msgstr "Gỡ bỏ cờ flex_bg thì gây ra hệ thống tập tin không thống nhất.\n"
+
+#: misc/tune2fs.c:425
+msgid ""
+"The huge_file feature may only be cleared when the filesystem is\n"
+"unmounted or mounted read-only.\n"
+msgstr ""
+"Tính năng tập tin rất lớn (huge_file) có thể được xoá sạch\n"
+"chỉ khi hệ thống tập tin được tháo gắn kết\n"
+"hay được gắn kết một cách chỉ đọc.\n"
+
+#: misc/tune2fs.c:453
+#, c-format
+msgid "(and reboot afterwards!)\n"
+msgstr "(và khởi động lại sau !)\n"
+
+#: misc/tune2fs.c:474
+msgid "The filesystem already has a journal.\n"
+msgstr "Hệ thống tập tin đã có nhật ký.\n"
+
+#: misc/tune2fs.c:492
+#, c-format
+msgid ""
+"\n"
+"\twhile trying to open journal on %s\n"
+msgstr ""
+"\n"
+"trong khi thử mở nhật ký trên %s\n"
+
+#: misc/tune2fs.c:496
+#, c-format
+msgid "Creating journal on device %s: "
+msgstr "Đang tạo nhật ký trên thiết bị %s: "
+
+#: misc/tune2fs.c:504
+#, c-format
+msgid "while adding filesystem to journal on %s"
+msgstr "trong khi thêm hệ thống tập tin vào nhật ký trên %s"
+
+#: misc/tune2fs.c:510
+msgid "Creating journal inode: "
+msgstr "Đang tạo nút thông tin nhật ký: "
+
+#: misc/tune2fs.c:519
+msgid ""
+"\n"
+"\twhile trying to create journal file"
+msgstr ""
+"\n"
+"trong khi thử tạo tập tin nhật ký"
+
+#: misc/tune2fs.c:585
+#, c-format
+msgid "Couldn't parse date/time specifier: %s"
+msgstr "Không thể phân tách toán tử ngày/giờ : %s"
+
+#: misc/tune2fs.c:609 misc/tune2fs.c:622
+#, c-format
+msgid "bad mounts count - %s"
+msgstr "số đếm lắp sai — %s"
+
+#: misc/tune2fs.c:638
+#, c-format
+msgid "bad error behavior - %s"
+msgstr "ứng xử lỗi sai — %s"
+
+#: misc/tune2fs.c:665
+#, c-format
+msgid "bad gid/group name - %s"
+msgstr "GID/tên nhóm sai — %s"
+
+#: misc/tune2fs.c:698
+#, c-format
+msgid "bad interval - %s"
+msgstr "khoảng sai - %s"
+
+#: misc/tune2fs.c:727
+#, c-format
+msgid "bad reserved block ratio - %s"
+msgstr "tỷ lệ khối dành riêng sai — %s"
+
+#: misc/tune2fs.c:742
+msgid "-o may only be specified once"
+msgstr "có thể xác định tùy chọn « -o » chỉ một lần"
+
+#: misc/tune2fs.c:752
+msgid "-O may only be specified once"
+msgstr "có thể xác định tùy chọn « -O » chỉ một lần"
+
+#: misc/tune2fs.c:762
+#, c-format
+msgid "bad reserved blocks count - %s"
+msgstr "số đếm khối dành riêng sai — %s"
+
+#: misc/tune2fs.c:791
+#, c-format
+msgid "bad uid/user name - %s"
+msgstr "UID/tên người dùng sai — %s"
+
+#: misc/tune2fs.c:808
+#, c-format
+msgid "bad inode size - %s"
+msgstr "kích cỡ nút sai — %s"
+
+#: misc/tune2fs.c:815
+#, c-format
+msgid "Inode size must be a power of two- %s"
+msgstr "Kích cỡ nút phải là lũy thừa 2 — %s"
+
+#: misc/tune2fs.c:904
+#, c-format
+msgid "Invalid RAID stride: %s\n"
+msgstr "Tham số stride RAID không hợp lệ: %s\n"
+
+#: misc/tune2fs.c:919
+#, c-format
+msgid "Invalid RAID stripe-width: %s\n"
+msgstr "Tham số chiều rộng sọc (stripe-width) RAID không hợp lệ: %s\n"
+
+#: misc/tune2fs.c:934
+#, c-format
+msgid "Invalid hash algorithm: %s\n"
+msgstr "Thuật toán tạo mẫu duy nhất vẫn không hợp lệ: %s\n"
+
+#: misc/tune2fs.c:940
+#, c-format
+msgid "Setting default hash algorithm to %s (%d)\n"
+msgstr "Đang đặt thuật toán tạo mẫu duy nhất thành %s (%d)\n"
+
+#: misc/tune2fs.c:948
+#, c-format
+msgid ""
+"\n"
+"Bad options specified.\n"
+"\n"
+"Extended options are separated by commas, and may take an argument which\n"
+"\tis set off by an equals ('=') sign.\n"
+"\n"
+"Valid extended options are:\n"
+"\tstride=<RAID per-disk chunk size in blocks>\n"
+"\tstripe_width=<RAID stride*data disks in blocks>\n"
+"\thash_alg=<hash algorithm>\n"
+"\ttest_fs\n"
+"\t^test_fs\n"
+msgstr ""
+"\n"
+"Sai xác định tùy chọn.\n"
+"\n"
+"Các tùy chọn đã mở rộng cũng định giới bằng dấu phẩy, có thể chấp nhận\n"
+"đối số được ngụ ý với dấu bằng « = ».\n"
+"\n"
+"Tùy chọn đã mở rộng hợp lệ:\n"
+"\tstride=<RAID cho mỗi kích cỡ đoạn đĩa theo khối>\n"
+"\tstripe-width=<RAID stride*các đĩa dữ liệu theo khối>\n"
+"\thash_alg=<thuật toán tạo mẫu duy nhất>\n"
+"\ttest_fs\n"
+"\t^test_fs\n"
+
+#: misc/tune2fs.c:1421 resize/resize2fs.c:790
+msgid "blocks to be moved"
+msgstr "khối cần di chuyển"
+
+#: misc/tune2fs.c:1424
+msgid "Failed to allocate block bitmap when increasing inode size\n"
+msgstr "Lỗi cấp phát ảnh mảng khối khi tăng kích cỡ inode\n"
+
+#: misc/tune2fs.c:1430
+msgid "Not enough space to increase inode size \n"
+msgstr "Không đủ sức chứa để tăng kích cỡ inode\n"
+
+#: misc/tune2fs.c:1435
+msgid "Failed to relocate blocks during inode resize \n"
+msgstr "Lỗi định vị lại khối trong khi thay đổi kích cỡ inode \n"
+
+#: misc/tune2fs.c:1467
+msgid ""
+"Error in resizing the inode size.\n"
+"Run e2undo to undo the file system changes. \n"
+msgstr ""
+"Gặp lỗi khi thay đổi kích cỡ nút.\n"
+"Hãy chạy lệnh « e2undo » để hủy các bước thay đổi hệ thống tập tin. \n"
+
+#: misc/tune2fs.c:1526
+#, c-format
+msgid ""
+"To undo the tune2fs operation please run the command\n"
+"    e2undo %s %s\n"
+"\n"
+msgstr ""
+"Để hoàn lại thao tác tune2fs, hãy chạy câu lệnh\n"
+"    e2undo %s %s\n"
+"\n"
+
+#: misc/tune2fs.c:1587
+#, c-format
+msgid "The inode size is already %lu\n"
+msgstr "Kích cỡ nút thông tin đã %lu\n"
+
+#: misc/tune2fs.c:1592
+#, c-format
+msgid "Shrinking the inode size is not supported\n"
+msgstr "Không hỗ trợ tính năng thu nhỏ kích cỡ nút thông tin\n"
+
+#: misc/tune2fs.c:1635
+#, c-format
+msgid "Setting maximal mount count to %d\n"
+msgstr "Đang đặt số đếm lắp tối đa thành %d\n"
+
+#: misc/tune2fs.c:1641
+#, c-format
+msgid "Setting current mount count to %d\n"
+msgstr "Đang đặt số đếm lắp hiện thời thành %d\n"
+
+#: misc/tune2fs.c:1646
+#, c-format
+msgid "Setting error behavior to %d\n"
+msgstr "Đang đặt ứng xử lỗi thành %d\n"
+
+#: misc/tune2fs.c:1651
+#, c-format
+msgid "Setting reserved blocks gid to %lu\n"
+msgstr "Đang đặt GID khối dành riêng thành %lu\n"
+
+#: misc/tune2fs.c:1656
+#, c-format
+msgid "Setting interval between checks to %lu seconds\n"
+msgstr "Đang đặt khoảng giữa hai lần kiểm tra thành %lu giây\n"
+
+#: misc/tune2fs.c:1663
+#, c-format
+msgid "Setting reserved blocks percentage to %g%% (%u blocks)\n"
+msgstr "Đang đặt phần trăm khối dành riêng thành %g%% (%u khối)\n"
+
+#: misc/tune2fs.c:1670
+#, c-format
+msgid "reserved blocks count is too big (%lu)"
+msgstr "số đếm khối dành riêng quá lớn (%lu)"
+
+#: misc/tune2fs.c:1676
+#, c-format
+msgid "Setting reserved blocks count to %lu\n"
+msgstr "Đang đặt số đếm khối dành riêng thành %lu\n"
+
+#: misc/tune2fs.c:1682
+msgid ""
+"\n"
+"The filesystem already has sparse superblocks.\n"
+msgstr ""
+"\n"
+"Hệ thống tập tin đã có siêu khối thưa thớt.\n"
+
+#: misc/tune2fs.c:1689
+#, c-format
+msgid ""
+"\n"
+"Sparse superblock flag set.  %s"
+msgstr ""
+"\n"
+"Đặt cờ siêu khối thưa thớt.  %s"
+
+#: misc/tune2fs.c:1694
+msgid ""
+"\n"
+"Clearing the sparse superflag not supported.\n"
+msgstr ""
+"\n"
+"Tính năng xoá sạch siêu cờ sparse không được hỗ trợ.\n"
+
+#: misc/tune2fs.c:1701
+#, c-format
+msgid "Setting time filesystem last checked to %s\n"
+msgstr "Đang đặt giờ kiểm tra hệ thống tập tin lần cuối cùng thành %s\n"
+
+#: misc/tune2fs.c:1707
+#, c-format
+msgid "Setting reserved blocks uid to %lu\n"
+msgstr "Đang đặt UID khối dành riêng thành %lu\n"
+
+#: misc/tune2fs.c:1758
+msgid "Invalid UUID format\n"
+msgstr "Định dạng UUID không hợp lệ\n"
+
+#: misc/tune2fs.c:1770
+msgid "The inode size may only be changed when the filesystem is unmounted.\n"
+msgstr ""
+"Kích cỡ nút chỉ có thể thay đổi khi hệ thống tập tin không được gắn kết.\n"
+
+#: misc/tune2fs.c:1777
+msgid ""
+"Changing the inode size not supported for filesystems with the flex_bg\n"
+"feature enabled.\n"
+msgstr ""
+"Chức năng thay đổi kích cỡ nút thông tin không phải được hỗ trợ đối với hệ "
+"thống tập tin đã bật tính năng « flex_bg ».\n"
+
+#: misc/tune2fs.c:1789
+#, c-format
+msgid "Setting inode size %lu\n"
+msgstr "Đang đặt kích cỡ nút %lu\n"
+
+#: misc/tune2fs.c:1799
+#, c-format
+msgid "Setting stride size to %d\n"
+msgstr "Đang đặt kích cỡ stride thành %d\n"
+
+#: misc/tune2fs.c:1804
+#, c-format
+msgid "Setting stripe width to %d\n"
+msgstr "Đang đặt chiều rộng sọc (stripe width) thành %d\n"
+
+#: misc/util.c:72
+msgid "Proceed anyway? (y,n) "
+msgstr "Vẫn còn tiếp tục không? (c,k)"
+
+#: misc/util.c:93
+#, c-format
+msgid "Could not stat %s --- %s\n"
+msgstr "Không thể lấy các thông tin về %s — %s\n"
+
+#: misc/util.c:96
+msgid ""
+"\n"
+"The device apparently does not exist; did you specify it correctly?\n"
+msgstr ""
+"\n"
+"Có vẻ là thiết bị không tồn tại; bạn có xác định đúng chưa?\n"
+
+#: misc/util.c:107
+#, c-format
+msgid "%s is not a block special device.\n"
+msgstr "%s không phải thiết bị đặc biệt khối.\n"
+
+#: misc/util.c:136
+#, c-format
+msgid "%s is entire device, not just one partition!\n"
+msgstr "%s là toàn bộ thiết bị, không phải chỉ một phân vùng !\n"
+
+#: misc/util.c:158
+msgid "mke2fs forced anyway.  Hope /etc/mtab is incorrect.\n"
+msgstr "Tiến trình mke2fs vẫn còn bị ép buộc. Mong « /etc/mtab » không đúng.\n"
+
+#: misc/util.c:163
+#, c-format
+msgid "will not make a %s here!\n"
+msgstr "sẽ không làm %s ở đây !\n"
+
+#: misc/util.c:170
+msgid "mke2fs forced anyway.\n"
+msgstr "Tiến trình mke2fs vẫn còn bị ép buộc.\n"
+
+#: misc/util.c:186
+msgid "Couldn't allocate memory to parse journal options!\n"
+msgstr "Không thể cấp phát bộ nhớ để phân tách các tùy chọn nhật ký !\n"
+
+#: misc/util.c:211
+#, fuzzy, c-format
+msgid ""
+"\n"
+"Could not find journal device matching %s\n"
+msgstr "Không tìm thấy các số ma thuật siêu khối nhật ký"
+
+#: misc/util.c:232
+msgid ""
+"\n"
+"Bad journal options specified.\n"
+"\n"
+"Journal options are separated by commas, and may take an argument which\n"
+"\tis set off by an equals ('=') sign.\n"
+"\n"
+"Valid journal options are:\n"
+"\tsize=<journal size in megabytes>\n"
+"\tdevice=<journal device>\n"
+"\n"
+"The journal size must be between 1024 and 10240000 filesystem blocks.\n"
+"\n"
+msgstr ""
+"\n"
+"Sai xác định tùy chọn nhật ký.\n"
+"\n"
+"Các tùy chọn nhật ký cũng định giới bằng dấu phẩy, có thể chấp nhận\n"
+"đối số được ngụ ý với dấu bằng « = ».\n"
+"\n"
+"Tùy chọn nhật ký hợp lệ:\n"
+"\tsize=<kích cỡ nhật ký theo MB>\n"
+"\tdevice=<thiết bị nhật ký>\n"
+"\n"
+"Kích cỡ của nhật ký phải nằm trong phạm vi\n"
+"1024 đến 10240000 khối hệ thống tập tin.\n"
+"\n"
+
+#: misc/util.c:262
+msgid ""
+"\n"
+"Filesystem too small for a journal\n"
+msgstr ""
+"\n"
+"Hệ thống tập tin quá nhỏ đối với nhật ký\n"
+
+#: misc/util.c:269
+#, c-format
+msgid ""
+"\n"
+"The requested journal size is %d blocks; it must be\n"
+"between 1024 and 10240000 blocks.  Aborting.\n"
+msgstr ""
+"\n"
+"Kích cỡ nhật ký đã yêu cầu là %d khối;\n"
+"nó phải nằm trong phạm vi 1024 đến 10240000 khối\n"
+"nên hủy bỏ.\n"
+
+#: misc/util.c:277
+msgid ""
+"\n"
+"Journal size too big for filesystem.\n"
+msgstr ""
+"\n"
+"Kích cỡ nhật ký quá lớn đối với hệ thống tập tin.\n"
+
+#: misc/util.c:287
+#, c-format
+msgid ""
+"This filesystem will be automatically checked every %d mounts or\n"
+"%g days, whichever comes first.  Use tune2fs -c or -i to override.\n"
+msgstr ""
+"Hệ thống tập tin này sẽ được kiểm tra tự động mỗi %d lần gắn kết\n"
+"hay mỗi %g ngày, điều nào xảy ra trước. Hãy dùng tùy chọn\n"
+"« tune2fs -c » hay « tune2fs -i » để ghi đè lên nó.\n"
+
+#: misc/uuidgen.c:31
+#, c-format
+msgid "Usage: %s [-r] [-t]\n"
+msgstr "Sử dụng: %s [-r] [-t]\n"
+
+#: resize/extent.c:196
+msgid "# Extent dump:\n"
+msgstr "# Đổ khoảng:\n"
+
+#: resize/extent.c:197
+#, c-format
+msgid "#\tNum=%d, Size=%d, Cursor=%d, Sorted=%d\n"
+msgstr "#\tSố=%d, Cỡ=%d, Con trỏ=%d, Sắp xếp=%d\n"
+
+#: resize/extent.c:200
+#, c-format
+msgid "#\t\t %u -> %u (%d)\n"
+msgstr "#\t\t %u -> %u (%d)\n"
+
+#: resize/main.c:42
+#, c-format
+msgid ""
+"Usage: %s [-d debug_flags] [-f] [-F] [-M] [-P] [-p] device [new_size]\n"
+"\n"
+msgstr ""
+"Sử dụng: %s [-d cờ_gỡ_lỗi] [-f] [-F] [-M] [-P] [-p] thiết_bị [kích_cỡ_mới]\n"
+"\n"
+
+#: resize/main.c:64
+msgid "Extending the inode table"
+msgstr "Đang mở rộng bảng nút thông tin"
+
+#: resize/main.c:67
+msgid "Relocating blocks"
+msgstr "Đang định vị lại các khối"
+
+#: resize/main.c:70
+msgid "Scanning inode table"
+msgstr "Đang quét bảng nút thông tin"
+
+#: resize/main.c:73
+msgid "Updating inode references"
+msgstr "Đang cập nhật các tham chiếu nút thông tin"
+
+#: resize/main.c:76
+msgid "Moving inode table"
+msgstr "Đang di chuyển bảng nút thông tin"
+
+#: resize/main.c:79
+msgid "Unknown pass?!?"
+msgstr "Lần qua lạ ?!?"
+
+#: resize/main.c:82
+#, c-format
+msgid "Begin pass %d (max = %lu)\n"
+msgstr "Khởi chạy lần qua %d (tối đa = %lu)\n"
+
+#: resize/main.c:265
+#, c-format
+msgid "while opening %s"
+msgstr "trong khi mở %s"
+
+#: resize/main.c:277
+#, c-format
+msgid "while getting stat information for %s"
+msgstr "trong khi lấy các thông tin về %s"
+
+#: resize/main.c:338
+#, c-format
+msgid ""
+"%s: The combination of flex_bg and\n"
+"\t!resize_inode features is not supported by resize2fs.\n"
+msgstr ""
+"%s: tổ hợp hai tính năng flex_bg và !resize_inode\n"
+"đều không được resize2fs hỗ trợ.\n"
+
+#: resize/main.c:352 resize/main.c:452
+#, c-format
+msgid ""
+"Please run 'e2fsck -f %s' first.\n"
+"\n"
+msgstr "Trước tiên hãy chạy tiến trình « e2fsck -f %s ».\n"
+
+#: resize/main.c:356
+#, c-format
+msgid "Estimated minimum size of the filesystem: %u\n"
+msgstr "Kích cỡ hệ thống tập tin tối thiểu được ước tính: %u\n"
+
+#: resize/main.c:392
+#, c-format
+msgid "Invalid new size: %s\n"
+msgstr "Kích cỡ mới không hợp lệ: %s\n"
+
+#: resize/main.c:404
+#, c-format
+msgid "New size smaller than minimum (%u)\n"
+msgstr "Kích cỡ mới vẫn nhỏ hơn tối thiểu (%u)\n"
+
+#: resize/main.c:410
+msgid "Invalid stride length"
+msgstr "Độ dài stride không hợp lệ"
+
+#: resize/main.c:434
+#, c-format
+msgid ""
+"The containing partition (or device) is only %u (%dk) blocks.\n"
+"You requested a new size of %u blocks.\n"
+"\n"
+msgstr ""
+"Phân vùng (hay thiết bị) chứa chỉ có kích cỡ %u (%dk) khối.\n"
+"Bạn đã yêu cầu kích cỡ mới %u khối.\n"
+"\n"
+
+#: resize/main.c:441
+#, c-format
+msgid ""
+"The filesystem is already %u blocks long.  Nothing to do!\n"
+"\n"
+msgstr ""
+"Hệ thống tập tin đã có độ dài %u khối. Không có gì cần làm !\n"
+"\n"
+
+#: resize/main.c:456
+#, c-format
+msgid "Resizing the filesystem on %s to %u (%dk) blocks.\n"
+msgstr ""
+"Đang thay đổi kích cỡ của hệ thống tập tin trên %s thành %u (%dk) khối.\n"
+
+#: resize/main.c:465
+#, c-format
+msgid "while trying to resize %s"
+msgstr "trong khi thử thay đổi kích cỡ %s"
+
+#: resize/main.c:468
+#, c-format
+msgid ""
+"Please run 'e2fsck -fy %s' to fix the filesystem\n"
+"after the aborted resize operation.\n"
+msgstr ""
+"Hãy chạy câu lệnh « e2fsck -fy %s » để sửa chữa hệ thống tập tin\n"
+"đằng sau thao tác thay đổi kích cỡ bị hủy bỏ.\n"
+
+#: resize/main.c:474
+#, c-format
+msgid ""
+"The filesystem on %s is now %u blocks long.\n"
+"\n"
+msgstr ""
+"Hệ thống tập tin nằm trên %s giờ có độ dài %u khối.\n"
+"\n"
+
+#: resize/main.c:489
+#, c-format
+msgid "while trying to truncate %s"
+msgstr "trong khi thử cắt ngắn %s"
+
+#: resize/online.c:37
+#, c-format
+msgid "Filesystem at %s is mounted on %s; on-line resizing required\n"
+msgstr ""
+"Hệ thống tập tin ở %s được gắn kết vào %s; cần thiết thay đổi kích cỡ trực "
+"tuyến\n"
+
+#: resize/online.c:41
+#, c-format
+msgid "On-line shrinking from %u to %u not supported.\n"
+msgstr "Tính năng thu nhỏ từ %u xuống %u không được hỗ trợ.\n"
+
+#: resize/online.c:61
+msgid "Filesystem does not support online resizing"
+msgstr "Hệ thống tập tin không hỗ trợ tính năng thay đổi kích cỡ trực tuyến"
+
+#: resize/online.c:68
+#, c-format
+msgid "while trying to open mountpoint %s"
+msgstr "trong khi thử mở điểm lắp %s"
+
+#: resize/online.c:76
+msgid "Permission denied to resize filesystem"
+msgstr "Không đủ quyền để thay đổi kích cỡ của hệ thống tập tin"
+
+#: resize/online.c:79
+msgid "Kernel does not support online resizing"
+msgstr "Hạt nhân không hỗ trợ tính năng thay đổi kích cỡ trực tuyến"
+
+#: resize/online.c:82
+msgid "While checking for on-line resizing support"
+msgstr "Trong khi kiểm tra có hỗ trợ thay đổi kích cỡ trực tuyến"
+
+#: resize/online.c:111
+#, c-format
+msgid "Performing an on-line resize of %s to %u (%dk) blocks.\n"
+msgstr ""
+"Đang thực hiện một công việc thay đổi kích cỡ %s trực tuyến xuống %u (%dk) "
+"khối.\n"
+
+#: resize/online.c:121
+msgid "While trying to extend the last group"
+msgstr "Trong khi thử mở rộng nhóm cuối cùng"
+
+#: resize/online.c:180
+#, c-format
+msgid "While trying to add group #%d"
+msgstr "Trong khi thử thêm nhóm số %d"
+
+#: resize/online.c:191
+#, c-format
+msgid ""
+"Filesystem at %s is mounted on %s, and on-line resizing is not supported on "
+"this system.\n"
+msgstr ""
+"Hệ thống tập tin ở %s được gắn kết vào %s, và tính năng thay đổi kích cỡ "
+"trên dòng không được hỗ trợ trên hệ thống này.\n"
+
+#: resize/resize2fs.c:350
+#, c-format
+msgid "inodes (%llu) must be less than %u"
+msgstr "nút thông tin (%llu) phải nhỏ hơn %u"
+
+#: resize/resize2fs.c:582
+msgid "reserved blocks"
+msgstr "khối dành riêng"
+
+#: resize/resize2fs.c:795
+msgid "meta-data blocks"
+msgstr "khối siêu dữ liệu"
+
+#: resize/resize2fs.c:1752
+#, c-format
+msgid "Should never happen: resize inode corrupt!\n"
+msgstr "Không bao giờ nên xảy ra: nút thông tin thay đổi kích cỡ bị hỏng !\n"

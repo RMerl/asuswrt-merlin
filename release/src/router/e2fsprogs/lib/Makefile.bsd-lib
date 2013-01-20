@@ -1,0 +1,47 @@
+#
+# This is a Makefile stub which handles the creation of BSD shared
+# libraries.
+#
+# In order to use this stub, the following makefile variables must be defined.
+# 
+# BSDLIB_VERSION = 1.0
+# BSDLIB_IMAGE = libce
+# BSDLIB_MYDIR = et
+# BSDLIB_INSTALL_DIR = $(SHLIBDIR)
+#
+
+all:: image
+
+real-subdirs:: Makefile
+	@echo "	MKDIR pic"
+	@mkdir -p pic
+
+BSD_LIB = $(BSDLIB_IMAGE).so.$(BSDLIB_VERSION)
+BSDLIB_PIC_FLAG = -fpic
+
+image:		$(BSD_LIB)
+
+$(BSD_LIB): $(OBJS)
+	(cd pic; ld -Bshareable -o $(BSD_LIB) $(OBJS))
+	$(MV) pic/$(BSD_LIB) .
+	$(RM) -f ../$(BSD_LIB)
+	(cd ..; $(LN) $(LINK_BUILD_FLAGS) \
+		`echo $(my_dir) | sed -e 's;lib/;;'`/$(BSD_LIB) $(BSD_LIB))
+
+install-shlibs install:: $(BSD_LIB)
+	@echo "	INSTALL_PROGRAM $(BSDLIB_INSTALL_DIR)/$(BSD_LIB)"
+	@$(INSTALL_PROGRAM) $(BSD_LIB) \
+		$(DESTDIR)$(BSDLIB_INSTALL_DIR)/$(BSD_LIB)
+	@-$(LDCONFIG)
+
+install-strip: install
+
+install-shlibs-strip: install-shlibs
+
+uninstall-shlibs uninstall::
+	$(RM) -f $(DESTDIR)$(BSDLIB_INSTALL_DIR)/$(BSD_LIB)
+
+clean::
+	$(RM) -rf pic
+	$(RM) -f $(BSD_LIB)
+	$(RM) -f ../$(BSD_LIB)

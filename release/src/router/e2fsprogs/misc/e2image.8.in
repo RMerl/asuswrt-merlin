@@ -1,0 +1,142 @@
+.\" -*- nroff -*-
+.\" Copyright 2001 by Theodore Ts'o.  All Rights Reserved.
+.\" This file may be copied under the terms of the GNU Public License.
+.\" 
+.TH E2IMAGE 8 "@E2FSPROGS_MONTH@ @E2FSPROGS_YEAR@" "E2fsprogs version @E2FSPROGS_VERSION@"
+.SH NAME
+e2image \- Save critical ext2/ext3/ext4 filesystem metadata to a file
+.SH SYNOPSIS
+.B e2image
+[
+.B \-rsI
+]
+.I device
+.I image-file
+.SH DESCRIPTION
+The
+.B e2image
+program will save critical ext2, ext3, or ext4 filesystem metadata located on 
+.I device  
+to a file specified by 
+.IR image-file .
+The image file may be examined by 
+.B dumpe2fs
+and
+.BR  debugfs ,
+by using the
+.B \-i
+option to those programs.  This can assist an expert in
+recovering catastrophically corrupted filesystems.  In the future,
+e2fsck will be enhanced to be able to use the image file to help
+recover a badly damaged filesystem.
+.PP
+If  
+.I image-file
+is \-, then the output of 
+.B e2image
+will be sent to standard output, so that the output can be piped to
+another program, such as 
+.BR gzip (1).  
+(Note that this is currently only supported when
+creating a raw image file using the 
+.B \-r
+option, since the process of creating a normal image file currently
+requires random access to the file, which cannot be done using a
+pipe.  This restriction will hopefully be lifted in a future version of
+.BR e2image .)
+.PP
+It is a very good idea to create image files for all of
+filesystems on a system and save the partition
+layout (which can be generated using the 
+.B fdisk \-l
+command) at regular intervals --- at boot time, and/or every week or so.
+The image file should be stored on some filesystem other than
+the filesystem whose data it contains, to ensure that this data is
+accessible in the case where the filesystem has been badly damaged.
+.PP
+To save disk space, 
+.B e2image
+creates the image file as a sparse file.  
+Hence, if the image file
+needs to be copied to another location, it should
+either be compressed first or copied using the 
+.B \-\-sparse=always
+option to the GNU version of 
+.BR cp .  
+.PP
+The size of an ext2 image file depends primarily on the size of the
+filesystems and how many inodes are in use.  For a typical 10 gigabyte
+filesystem, with 200,000 inodes in use out of 1.2 million inodes, the
+image file will be approximately 35 megabytes; a 4 gigabyte filesystem with
+15,000 inodes in use out of 550,000 inodes will result in a 3 megabyte
+image file.  Image files tend to be quite
+compressible; an image file taking up 32 megabytes of space on
+disk will generally compress down to 3 or 4 megabytes.
+.PP
+.SH RESTORING FILESYSTEM METADATA USING AN IMAGE FILE
+.PP
+The 
+.B \-I 
+option will cause e2image to install the metadata stored in the image
+file back to the device.    It can be used to restore the filesystem metadata
+back to the device in emergency situations.
+.PP
+.B WARNING!!!!
+The
+.B \-I 
+option should only be used as a desperation measure when other
+alternatives have failed.  If the filesystem has changed since the image
+file was created, data
+.B will
+be lost.  In general, you should make a full image
+backup of the filesystem first, in case you wish to try other recovery
+strategies afterwards.
+.PP
+.SH RAW IMAGE FILES
+The 
+.B \-r
+option will create a raw image file instead of a normal image file.  
+A raw image file differs
+from a normal image file in two ways.  First, the filesystem metadata is
+placed in the proper position so that e2fsck, dumpe2fs, debugfs,
+etc. can be run directly on the raw image file.  In order to minimize
+the amount of disk space consumed by a raw image file, the file is
+created as a sparse file.  (Beware of copying or
+compressing/decompressing this file with utilities that don't understand
+how to create sparse files; the file will become as large as the
+filesystem itself!)  Secondly, the raw image file also includes indirect
+blocks and directory blocks, which the standard image file does not have,
+although this may change in the future.
+.PP
+Raw image files are sometimes used when sending filesystems to the maintainer
+as part of bug reports to e2fsprogs.  When used in this capacity, the
+recommended command is as follows (replace hda1 with the appropriate device):
+.PP
+.br
+\	\fBe2image \-r /dev/hda1 \- | bzip2 > hda1.e2i.bz2\fR
+.PP
+This will only send the metadata information, without any data blocks.  
+However, the filenames in the directory blocks can still reveal
+information about the contents of the filesystem that the bug reporter
+may wish to keep confidential.  To address this concern, the
+.B \-s
+option can be specified.  This will cause
+.B e2image 
+to scramble directory entries and zero out any unused portions
+of the directory blocks before writing the image file.  However,
+the 
+.B \-s
+option will prevent analysis of problems related to hash-tree indexed
+directories.
+.PP
+.SH AUTHOR
+.B e2image 
+was written by Theodore Ts'o (tytso@mit.edu).
+.SH AVAILABILITY
+.B e2image
+is part of the e2fsprogs package and is available from 
+http://e2fsprogs.sourceforge.net.
+.SH SEE ALSO
+.BR dumpe2fs (8),
+.BR debugfs (8)
+
