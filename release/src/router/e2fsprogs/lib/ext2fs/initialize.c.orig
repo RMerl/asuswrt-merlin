@@ -283,8 +283,6 @@ ipg_retry:
 	 * multiple of 8.  This is needed to simplify the bitmap
 	 * splicing code.
 	 */
-	if (super->s_inodes_per_group < 8)
-		super->s_inodes_per_group = 8;
 	super->s_inodes_per_group &= ~7;
 	fs->inode_blocks_per_group = (((super->s_inodes_per_group *
 					EXT2_INODE_SIZE(super)) +

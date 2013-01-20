@@ -177,7 +177,7 @@ int ext2fs_u32_list_find(ext2_u32_list bb, __u32 blk)
 		return high;
 
 	while (low < high) {
-		mid = (low+high)/2;
+		mid = ((unsigned)low + (unsigned)high)/2;
 		if (mid == low || mid == high)
 			break;
 		if (blk == bb->list[mid])

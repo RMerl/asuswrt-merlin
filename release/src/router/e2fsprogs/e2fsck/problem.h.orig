@@ -520,9 +520,6 @@ struct problem_context {
 /* EOFBLOCKS flag set when not necessary */
 #define PR_1_EOFBLOCKS_FL_SET		0x010060
 
-/* Invalid bad inode */
-#define PR_1_INVALID_BAD_INODE		0x010065
-
 /*
  * Pass 1b errors
  */

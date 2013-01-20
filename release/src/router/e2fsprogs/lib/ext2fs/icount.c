@@ -363,31 +363,7 @@ static struct ext2_icount_el *get_icount_el(ext2_icount_t icount,
 	low = 0;
 	high = (int) icount->count-1;
 	while (low <= high) {
-#if 0
-		mid = (low+high)/2;
-#else
-		if (low == high)
-			mid = low;
-		else {
-			/* Interpolate for efficiency */
-			lowval = icount->list[low].ino;
-			highval = icount->list[high].ino;
-
-			if (ino < lowval)
-				range = 0;
-			else if (ino > highval)
-				range = 1;
-			else {
-				range = ((float) (ino - lowval)) /
-					(highval - lowval);
-				if (range > 0.9)
-					range = 0.9;
-				if (range < 0.1)
-					range = 0.1;
-			}
-			mid = low + ((int) (range * (high-low)));
-		}
-#endif
+		mid = ((unsigned)low + (unsigned)high) >> 1;
 		if (ino == icount->list[mid].ino) {
 			icount->cursor = mid+1;
 			return &icount->list[mid];

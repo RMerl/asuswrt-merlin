@@ -31,6 +31,9 @@ errcode_t ext2fs_iblk_add_blocks(ext2_filsys fs, struct ext2_inode *inode,
 {
 	unsigned long long b = inode->i_blocks;
 
+	if (fs->super->s_feature_ro_compat & EXT4_FEATURE_RO_COMPAT_HUGE_FILE)
+		b += ((long long) inode->osd2.linux2.l_i_blocks_hi) << 32;
+
 	if (!(fs->super->s_feature_ro_compat &
 	      EXT4_FEATURE_RO_COMPAT_HUGE_FILE) ||
 	    !(inode->i_flags & EXT4_HUGE_FILE_FL))
@@ -38,11 +41,9 @@ errcode_t ext2fs_iblk_add_blocks(ext2_filsys fs, struct ext2_inode *inode,
 
 	b += num_blocks;
 
-	if (fs->super->s_feature_ro_compat &
-	    EXT4_FEATURE_RO_COMPAT_HUGE_FILE) {
-		b += ((long long) inode->osd2.linux2.l_i_blocks_hi) << 32;
+	if (fs->super->s_feature_ro_compat & EXT4_FEATURE_RO_COMPAT_HUGE_FILE)
 		inode->osd2.linux2.l_i_blocks_hi = b >> 32;
-	} else if (b > 0xFFFFFFFF)
+	else if (b > 0xFFFFFFFF)
 		return EOVERFLOW;
 	inode->i_blocks = b & 0xFFFFFFFF;
 	return 0;
@@ -52,6 +53,9 @@ errcode_t ext2fs_iblk_sub_blocks(ext2_filsys fs, struct ext2_inode *inode,
 				 blk64_t num_blocks)
 {
 	unsigned long long b = inode->i_blocks;
+
+	if (fs->super->s_feature_ro_compat & EXT4_FEATURE_RO_COMPAT_HUGE_FILE)
+		b += ((long long) inode->osd2.linux2.l_i_blocks_hi) << 32;
 
 	if (!(fs->super->s_feature_ro_compat &
 	      EXT4_FEATURE_RO_COMPAT_HUGE_FILE) ||
@@ -63,11 +67,8 @@ errcode_t ext2fs_iblk_sub_blocks(ext2_filsys fs, struct ext2_inode *inode,
 
 	b -= num_blocks;
 
-	if (fs->super->s_feature_ro_compat &
-	    EXT4_FEATURE_RO_COMPAT_HUGE_FILE) {
-		b += ((long long) inode->osd2.linux2.l_i_blocks_hi) << 32;
+	if (fs->super->s_feature_ro_compat & EXT4_FEATURE_RO_COMPAT_HUGE_FILE)
 		inode->osd2.linux2.l_i_blocks_hi = b >> 32;
-	}
 	inode->i_blocks = b & 0xFFFFFFFF;
 	return 0;
 }

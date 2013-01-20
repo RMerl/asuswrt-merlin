@@ -545,7 +545,7 @@ void e2fsck_pass1(e2fsck_t ctx)
 	int	i;
 	__u64	max_sizes;
 	ext2_filsys fs = ctx->fs;
-	ext2_ino_t	ino = 0;
+	ext2_ino_t	ino;
 	struct ext2_inode *inode;
 	ext2_inode_scan	scan;
 	char		*block_buf;
@@ -801,14 +801,6 @@ void e2fsck_pass1(e2fsck_t ctx)
 
 		if (ino == EXT2_BAD_INO) {
 			struct process_block_struct pb;
-
-			if ((inode->i_mode || inode->i_uid || inode->i_gid ||
-			     inode->i_links_count || inode->i_file_acl) &&
-			    fix_problem(ctx, PR_1_INVALID_BAD_INODE, &pctx)) {
-				memset(inode, 0, sizeof(struct ext2_inode));
-				e2fsck_write_inode(ctx, ino, inode,
-						   "clear bad inode");
-			}
 
 			pctx.errcode = ext2fs_copy_bitmap(ctx->block_found_map,
 							  &pb.fs_meta_blocks);
@@ -1675,9 +1667,6 @@ void e2fsck_clear_inode(e2fsck_t ctx, ext2_ino_t ino,
 	 */
 	ctx->flags |= restart_flag;
 
-	if (ino == EXT2_BAD_INO)
-		memset(inode, 0, sizeof(struct ext2_inode));
-
 	e2fsck_write_inode(ctx, ino, inode, source);
 }
 
@@ -2055,7 +2044,7 @@ static void check_blocks(e2fsck_t ctx, struct problem_context *pctx,
 		pctx->num = pb.num_blocks;
 		if (fix_problem(ctx, PR_1_BAD_I_BLOCKS, pctx)) {
 			inode->i_blocks = pb.num_blocks;
-			inode->osd2.linux2.l_i_blocks_hi = pb.num_blocks >> 32;
+			inode->osd2.linux2.l_i_blocks_hi = 0;
 			dirty_inode++;
 		}
 		pctx->num = 0;
