@@ -354,6 +354,8 @@ History
 3.0.0.4.266.24:
    - NEW: Report CTF (HW Acceleration) state on Sysinfo page.
    - NEW: Display Ethernet port states on the Sysinfo page.
+   - NEW: Replaced Busybox fsck/mkfs tools with those from e2fsprogs, should
+          be more reliable.
    - CHANGED: Improved name resolution on traffic monitor page, now uses
               a device's hostname if it reported one.
    - CHANGED: Client List now uses our improved name resolution code,
