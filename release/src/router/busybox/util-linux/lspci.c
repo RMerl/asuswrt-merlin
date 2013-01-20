@@ -4,8 +4,17 @@
  *
  * Copyright (C) 2009  Malek Degachi <malek-degachi@laposte.net>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define lspci_trivial_usage
+//usage:       "[-mk]"
+//usage:#define lspci_full_usage "\n\n"
+//usage:       "List all PCI devices"
+//usage:     "\n"
+//usage:     "\n	-m	Parsable output"
+//usage:     "\n	-k	Show driver"
+
 #include "libbb.h"
 
 enum {

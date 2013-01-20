@@ -14,9 +14,9 @@ config PASSWORD_MINLEN
 	help
 	  Minimum allowable password length.
 
-config MD5_SIZE_VS_SPEED
+config MD5_SMALL
 	int "MD5: Trade bytes for speed (0:fast, 3:slow)"
-	default 2
+	default 1
 	range 0 3
 	help
 	  Trade binary size versus speed for the md5sum algorithm.
@@ -42,6 +42,17 @@ config FEATURE_ETC_NETWORKS
 	  Enable support for network names in /etc/networks. This is
 	  a rarely used feature which allows you to use names
 	  instead of IP/mask pairs in route command.
+
+config FEATURE_USE_TERMIOS
+	bool "Use termios to manipulate the screen"
+	default y
+	depends on MORE || TOP || POWERTOP
+	help
+	  This option allows utilities such as 'more' and 'top' to determine
+	  the size of the screen. If you leave this disabled, your utilities
+	  that display things on the screen will be especially primitive and
+	  will be unable to determine the current screen size, and will be
+	  unable to move the cursor.
 
 config FEATURE_EDITING
 	bool "Command line editing"
@@ -69,18 +80,34 @@ config FEATURE_EDITING_VI
 
 config FEATURE_EDITING_HISTORY
 	int "History size"
-	range 0 99999
+	# Don't allow way too big values here, code uses fixed "char *history[N]" struct member
+	range 0 9999
 	default 255
 	depends on FEATURE_EDITING
 	help
-	  Specify command history size.
+	  Specify command history size (0 - disable).
 
 config FEATURE_EDITING_SAVEHISTORY
 	bool "History saving"
 	default y
-	depends on ASH && FEATURE_EDITING
+	depends on FEATURE_EDITING
 	help
-	  Enable history saving in ash shell.
+	  Enable history saving in shells.
+
+config FEATURE_EDITING_SAVE_ON_EXIT
+	bool "Save history on shell exit, not after every command"
+	default n
+	depends on FEATURE_EDITING_SAVEHISTORY
+	help
+	  Save history on shell exit, not after every command.
+
+config FEATURE_REVERSE_SEARCH
+	bool "Reverse history search"
+	default y
+	depends on FEATURE_EDITING_SAVEHISTORY
+	help
+	  Enable readline-like Ctrl-R combination for reverse history search.
+	  Increases code by about 0.5k.
 
 config FEATURE_TAB_COMPLETION
 	bool "Tab completion"
@@ -124,7 +151,7 @@ config FEATURE_NON_POSIX_CP
 	  and create a regular file. This does not conform to POSIX,
 	  but prevents a symlink attack.
 	  Similarly, "cp file device" will not send file's data
-	  to the device.
+	  to the device. (To do that, use "cat file >device")
 
 config FEATURE_VERBOSE_CP_MESSAGE
 	bool "Give more precise messages when copy fails (cp, mv etc)"
@@ -145,14 +172,34 @@ config FEATURE_COPYBUF_KB
 	range 1 1024
 	default 4
 	help
-	  Size of buffer used by cp, mv, install etc.
+	  Size of buffer used by cp, mv, install, wget etc.
 	  Buffers which are 4 kb or less will be allocated on stack.
 	  Bigger buffers will be allocated with mmap, with fallback to 4 kb
 	  stack buffer if mmap fails.
 
+config FEATURE_SKIP_ROOTFS
+	bool "Skip rootfs in mount table"
+	default y
+	help
+	  Ignore rootfs entry in mount table.
+
+	  In Linux, kernel has a special filesystem, rootfs, which is initially
+	  mounted on /. It contains initramfs data, if kernel is configured
+	  to have one. Usually, another file system is mounted over / early
+	  in boot process, and therefore most tools which manipulate
+	  mount table, such as df, will skip rootfs entry.
+
+	  However, some systems do not mount anything on /.
+	  If you need to configure busybox for one of these systems,
+	  you may find it useful to turn this option off to make df show
+	  initramfs statistics.
+
+	  Otherwise, choose Y.
+
 config MONOTONIC_SYSCALL
 	bool "Use clock_gettime(CLOCK_MONOTONIC) syscall"
 	default n
+	select PLATFORM_LINUX
 	help
 	  Use clock_gettime(CLOCK_MONOTONIC) syscall for measuring
 	  time intervals (time, ping, traceroute etc need this).

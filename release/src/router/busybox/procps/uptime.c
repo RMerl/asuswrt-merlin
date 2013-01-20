@@ -4,31 +4,59 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under the GPL version 2, see the file LICENSE in this tarball.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
-/* This version of uptime doesn't display the number of users on the system,
- * since busybox init doesn't mess with utmp.  For folks using utmp that are
- * just dying to have # of users reported, feel free to write it as some type
- * of CONFIG_FEATURE_UTMP_SUPPORT #define
+/* 2011		Pere Orga <gotrunks@gmail.com>
+ *
+ * Added FEATURE_UPTIME_UTMP_SUPPORT flag.
  */
 
 /* getopt not needed */
 
+//config:config UPTIME
+//config:	bool "uptime"
+//config:	default y
+//config:	select PLATFORM_LINUX #sysinfo()
+//config:	help
+//config:	  uptime gives a one line display of the current time, how long
+//config:	  the system has been running, how many users are currently logged
+//config:	  on, and the system load averages for the past 1, 5, and 15 minutes.
+//config:
+//config:config FEATURE_UPTIME_UTMP_SUPPORT
+//config:	bool "Support for showing the number of users"
+//config:	default y
+//config:	depends on UPTIME && FEATURE_UTMP
+//config:	help
+//config:	  Makes uptime display the number of users currently logged on.
+
+//usage:#define uptime_trivial_usage
+//usage:       ""
+//usage:#define uptime_full_usage "\n\n"
+//usage:       "Display the time since the last boot"
+//usage:
+//usage:#define uptime_example_usage
+//usage:       "$ uptime\n"
+//usage:       "  1:55pm  up  2:30, load average: 0.09, 0.04, 0.00\n"
+
 #include "libbb.h"
+#ifdef __linux__
+# include <sys/sysinfo.h>
+#endif
+
 
 #ifndef FSHIFT
 # define FSHIFT 16              /* nr of bits of precision */
 #endif
-#define FIXED_1         (1<<FSHIFT)     /* 1.0 as fixed-point */
-#define LOAD_INT(x) ((x) >> FSHIFT)
-#define LOAD_FRAC(x) LOAD_INT(((x) & (FIXED_1-1)) * 100)
+#define FIXED_1      (1 << FSHIFT)     /* 1.0 as fixed-point */
+#define LOAD_INT(x)  (unsigned)((x) >> FSHIFT)
+#define LOAD_FRAC(x) LOAD_INT(((x) & (FIXED_1 - 1)) * 100)
 
 
 int uptime_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int uptime_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 {
-	int updays, uphours, upminutes;
+	unsigned updays, uphours, upminutes;
 	struct sysinfo info;
 	struct tm *current_time;
 	time_t current_secs;
@@ -38,20 +66,32 @@ int uptime_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 
 	sysinfo(&info);
 
-	printf(" %02d:%02d:%02d up ",
+	printf(" %02u:%02u:%02u up ",
 			current_time->tm_hour, current_time->tm_min, current_time->tm_sec);
-	updays = (int) info.uptime / (60*60*24);
+	updays = (unsigned) info.uptime / (unsigned)(60*60*24);
 	if (updays)
-		printf("%d day%s, ", updays, (updays != 1) ? "s" : "");
-	upminutes = (int) info.uptime / 60;
-	uphours = (upminutes / 60) % 24;
+		printf("%u day%s, ", updays, (updays != 1) ? "s" : "");
+	upminutes = (unsigned) info.uptime / (unsigned)60;
+	uphours = (upminutes / (unsigned)60) % (unsigned)24;
 	upminutes %= 60;
 	if (uphours)
-		printf("%2d:%02d, ", uphours, upminutes);
+		printf("%2u:%02u", uphours, upminutes);
 	else
-		printf("%d min, ", upminutes);
+		printf("%u min", upminutes);
 
-	printf("load average: %ld.%02ld, %ld.%02ld, %ld.%02ld\n",
+#if ENABLE_FEATURE_UPTIME_UTMP_SUPPORT
+	{
+		struct utmp *ut;
+		unsigned users = 0;
+		while ((ut = getutent()) != NULL) {
+			if ((ut->ut_type == USER_PROCESS) && (ut->ut_name[0] != '\0'))
+				users++;
+		}
+		printf(",  %u users", users);
+	}
+#endif
+
+	printf(",  load average: %u.%02u, %u.%02u, %u.%02u\n",
 			LOAD_INT(info.loads[0]), LOAD_FRAC(info.loads[0]),
 			LOAD_INT(info.loads[1]), LOAD_FRAC(info.loads[1]),
 			LOAD_INT(info.loads[2]), LOAD_FRAC(info.loads[2]));

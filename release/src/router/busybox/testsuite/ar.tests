@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright 2010 Nokia Corporation
 # Written by Alexander Shishkin
-# Licensed under GPL v2 or later, see file LICENSE for details
+# Licensed under GPLv2 or later, see file LICENSE in this source tree.
 
 . ./testing.sh
 

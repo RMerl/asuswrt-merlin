@@ -1,7 +1,14 @@
 /* mini man implementation for busybox
  * Copyright (C) 2008 Denys Vlasenko <vda.linux@googlemail.com>
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define man_trivial_usage
+//usage:       "[-aw] [MANPAGE]..."
+//usage:#define man_full_usage "\n\n"
+//usage:       "Format and display manual page\n"
+//usage:     "\n	-a	Display all pages"
+//usage:     "\n	-w	Show page locations"
 
 #include "libbb.h"
 
@@ -22,16 +29,6 @@ echo ".pl \n(nlu+10"
 ) | gtbl | nroff -Tlatin1 -mandoc | less
 
 */
-
-#if ENABLE_FEATURE_SEAMLESS_LZMA
-#define Z_SUFFIX ".lzma"
-#elif ENABLE_FEATURE_SEAMLESS_BZ2
-#define Z_SUFFIX ".bz2"
-#elif ENABLE_FEATURE_SEAMLESS_GZ
-#define Z_SUFFIX ".gz"
-#else
-#define Z_SUFFIX ""
-#endif
 
 static int show_manpage(const char *pager, char *man_filename, int man, int level);
 
@@ -95,7 +92,7 @@ static int run_pipe(const char *pager, char *man_filename, int man, int level)
 
 		/* Links do not have .gz extensions, even if manpage
 		 * is compressed */
-		man_filename = xasprintf("%s/%s" Z_SUFFIX, man_filename, linkname);
+		man_filename = xasprintf("%s/%s", man_filename, linkname);
 		free(line);
 		/* Note: we leak "new" man_filename string as well... */
 		if (show_manpage(pager, man_filename, man, level + 1))
@@ -117,37 +114,36 @@ static int run_pipe(const char *pager, char *man_filename, int man, int level)
 	return 1;
 }
 
-/* man_filename is of the form "/dir/dir/dir/name.s" Z_SUFFIX */
+/* man_filename is of the form "/dir/dir/dir/name.s" */
 static int show_manpage(const char *pager, char *man_filename, int man, int level)
 {
-#if ENABLE_FEATURE_SEAMLESS_LZMA
-	if (run_pipe(pager, man_filename, man, level))
-		return 1;
+#if SEAMLESS_COMPRESSION
+	/* We leak this allocation... */
+	char *filename_with_zext = xasprintf("%s.lzma", man_filename);
+	char *ext = strrchr(filename_with_zext, '.') + 1;
 #endif
 
+#if ENABLE_FEATURE_SEAMLESS_LZMA
+	if (run_pipe(pager, filename_with_zext, man, level))
+		return 1;
+#endif
+#if ENABLE_FEATURE_SEAMLESS_XZ
+	strcpy(ext, "xz");
+	if (run_pipe(pager, filename_with_zext, man, level))
+		return 1;
+#endif
 #if ENABLE_FEATURE_SEAMLESS_BZ2
-#if ENABLE_FEATURE_SEAMLESS_LZMA
-	strcpy(strrchr(man_filename, '.') + 1, "bz2");
-#endif
-	if (run_pipe(pager, man_filename, man, level))
+	strcpy(ext, "bz2");
+	if (run_pipe(pager, filename_with_zext, man, level))
 		return 1;
 #endif
-
 #if ENABLE_FEATURE_SEAMLESS_GZ
-#if ENABLE_FEATURE_SEAMLESS_LZMA || ENABLE_FEATURE_SEAMLESS_BZ2
-	strcpy(strrchr(man_filename, '.') + 1, "gz");
-#endif
-	if (run_pipe(pager, man_filename, man, level))
+	strcpy(ext, "gz");
+	if (run_pipe(pager, filename_with_zext, man, level))
 		return 1;
 #endif
 
-#if ENABLE_FEATURE_SEAMLESS_LZMA || ENABLE_FEATURE_SEAMLESS_BZ2 || ENABLE_FEATURE_SEAMLESS_GZ
-	*strrchr(man_filename, '.') = '\0';
-#endif
-	if (run_pipe(pager, man_filename, man, level))
-		return 1;
-
-	return 0;
+	return run_pipe(pager, man_filename, man, level);
 }
 
 int man_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
@@ -182,16 +178,21 @@ int man_main(int argc UNUSED_PARAM, char **argv)
 			pager = "more";
 	}
 
-	/* Parse man.conf[ig] */
+	/* Parse man.conf[ig] or man_db.conf */
 	/* man version 1.6f uses man.config */
+	/* man-db implementation of man uses man_db.conf */
 	parser = config_open2("/etc/man.config", fopen_for_read);
 	if (!parser)
 		parser = config_open2("/etc/man.conf", fopen_for_read);
+	if (!parser)
+		parser = config_open2("/etc/man_db.conf", fopen_for_read);
 
 	while (config_read(parser, token, 2, 0, "# \t", PARSE_NORMAL)) {
 		if (!token[1])
 			continue;
-		if (strcmp("MANPATH", token[0]) == 0) {
+		if (strcmp("MANDATORY_MANPATH"+10, token[0]) == 0 /* "MANPATH"? */
+		 || strcmp("MANDATORY_MANPATH", token[0]) == 0
+		) {
 			char *path = token[1];
 			while (*path) {
 				char *next_path;
@@ -250,7 +251,7 @@ int man_main(int argc UNUSED_PARAM, char **argv)
 				/* Search for cat, then man page */
 				while (cat0man1 < 2) {
 					int found_here;
-					man_filename = xasprintf("%s/%s%.*s/%s.%.*s" Z_SUFFIX,
+					man_filename = xasprintf("%s/%s%.*s/%s.%.*s",
 							cur_path,
 							"cat\0man" + (cat0man1 * 4),
 							sect_len, cur_sect,

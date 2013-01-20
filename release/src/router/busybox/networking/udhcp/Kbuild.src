@@ -17,5 +17,12 @@ lib-$(CONFIG_UDHCPD)     += dhcpd.o arpping.o files.o leases.o static_leases.o
 lib-$(CONFIG_DUMPLEASES) += dumpleases.o
 lib-$(CONFIG_DHCPRELAY)  += dhcprelay.o
 
+lib-$(CONFIG_DHCP6C)     += common6.o common.o
+
+lib-$(CONFIG_DHCP6C)     += dhcp6c.o config6.o dhcp6c_script.o dhcp6c_ia.o if6.o timer.o
+lib-$(CONFIG_DHCP6RELAY) += dhcp6relay.o domain_codec.o
+
+lib-$(CONFIG_FEATURE_DHCP6_AUTH)    += auth6.o
+
 lib-$(CONFIG_FEATURE_UDHCPC_ARPING) += arpping.o
 lib-$(CONFIG_FEATURE_UDHCP_RFC3397) += domain_codec.o

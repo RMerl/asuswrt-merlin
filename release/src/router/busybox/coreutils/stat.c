@@ -10,8 +10,68 @@
  * Written by Michael Meskes
  * Taken from coreutils and turned into a busybox applet by Mike Frysinger
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define stat_trivial_usage
+//usage:       "[OPTIONS] FILE..."
+//usage:#define stat_full_usage "\n\n"
+//usage:       "Display file (default) or filesystem status\n"
+//usage:	IF_FEATURE_STAT_FORMAT(
+//usage:     "\n	-c fmt	Use the specified format"
+//usage:	)
+//usage:     "\n	-f	Display filesystem status"
+//usage:     "\n	-L	Follow links"
+//usage:     "\n	-t	Display info in terse form"
+//usage:	IF_SELINUX(
+//usage:     "\n	-Z	Print security context"
+//usage:	)
+//usage:	IF_FEATURE_STAT_FORMAT(
+//usage:       "\n\nValid format sequences for files:\n"
+//usage:       " %a	Access rights in octal\n"
+//usage:       " %A	Access rights in human readable form\n"
+//usage:       " %b	Number of blocks allocated (see %B)\n"
+//usage:       " %B	The size in bytes of each block reported by %b\n"
+//usage:       " %d	Device number in decimal\n"
+//usage:       " %D	Device number in hex\n"
+//usage:       " %f	Raw mode in hex\n"
+//usage:       " %F	File type\n"
+//usage:       " %g	Group ID of owner\n"
+//usage:       " %G	Group name of owner\n"
+//usage:       " %h	Number of hard links\n"
+//usage:       " %i	Inode number\n"
+//usage:       " %n	File name\n"
+//usage:       " %N	File name, with -> TARGET if symlink\n"
+//usage:       " %o	I/O block size\n"
+//usage:       " %s	Total size, in bytes\n"
+//usage:       " %t	Major device type in hex\n"
+//usage:       " %T	Minor device type in hex\n"
+//usage:       " %u	User ID of owner\n"
+//usage:       " %U	User name of owner\n"
+//usage:       " %x	Time of last access\n"
+//usage:       " %X	Time of last access as seconds since Epoch\n"
+//usage:       " %y	Time of last modification\n"
+//usage:       " %Y	Time of last modification as seconds since Epoch\n"
+//usage:       " %z	Time of last change\n"
+//usage:       " %Z	Time of last change as seconds since Epoch\n"
+//usage:       "\nValid format sequences for file systems:\n"
+//usage:       " %a	Free blocks available to non-superuser\n"
+//usage:       " %b	Total data blocks in file system\n"
+//usage:       " %c	Total file nodes in file system\n"
+//usage:       " %d	Free file nodes in file system\n"
+//usage:       " %f	Free blocks in file system\n"
+//usage:	IF_SELINUX(
+//usage:       " %C	Security context in selinux\n"
+//usage:	)
+//usage:       " %i	File System ID in hex\n"
+//usage:       " %l	Maximum length of filenames\n"
+//usage:       " %n	File name\n"
+//usage:       " %s	Block size (for faster transfer)\n"
+//usage:       " %S	Fundamental block size (for block counts)\n"
+//usage:       " %t	Type in hex\n"
+//usage:       " %T	Type in human readable form"
+//usage:	)
+
 #include "libbb.h"
 
 #define OPT_FILESYS     (1 << 0)
@@ -469,7 +529,7 @@ static bool do_statfs(const char *filename, const char *format)
 	if (scontext)
 		freecon(scontext);
 # endif
-#endif	/* FEATURE_STAT_FORMAT */
+#endif  /* FEATURE_STAT_FORMAT */
 	return 1;
 }
 
@@ -630,12 +690,11 @@ static bool do_stat(const char *filename, const char *format)
 # if ENABLE_SELINUX
 		printf("   S_Context: %lc\n", *scontext);
 # endif
-		printf("Access: %s\n" "Modify: %s\n" "Change: %s\n",
-		       human_time(statbuf.st_atime),
-		       human_time(statbuf.st_mtime),
-		       human_time(statbuf.st_ctime));
+		printf("Access: %s\n", human_time(statbuf.st_atime));
+		printf("Modify: %s\n", human_time(statbuf.st_mtime));
+		printf("Change: %s\n", human_time(statbuf.st_ctime));
 	}
-#endif	/* FEATURE_STAT_FORMAT */
+#endif  /* FEATURE_STAT_FORMAT */
 	return 1;
 }
 

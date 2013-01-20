@@ -4,15 +4,24 @@
  *
  * Copyright 2003 Tito Ragusa <farmatito@tiscali.it>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define strings_trivial_usage
+//usage:       "[-afo] [-n LEN] [FILE]..."
+//usage:#define strings_full_usage "\n\n"
+//usage:       "Display printable strings in a binary file\n"
+//usage:     "\n	-a	Scan whole file (default)"
+//usage:     "\n	-f	Precede strings with filenames"
+//usage:     "\n	-n LEN	At least LEN characters form a string (default 4)"
+//usage:     "\n	-o	Precede strings with decimal offsets"
 
 #include "libbb.h"
 
-#define WHOLE_FILE		1
-#define PRINT_NAME		2
-#define PRINT_OFFSET	4
-#define SIZE			8
+#define WHOLE_FILE    1
+#define PRINT_NAME    2
+#define PRINT_OFFSET  4
+#define SIZE          8
 
 int strings_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int strings_main(int argc UNUSED_PARAM, char **argv)

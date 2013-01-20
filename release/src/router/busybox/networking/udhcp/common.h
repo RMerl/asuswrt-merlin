@@ -198,7 +198,7 @@ uint8_t *udhcp_get_option(struct dhcp_packet *packet, int code) FAST_FUNC;
 int udhcp_end_option(uint8_t *optionptr) FAST_FUNC;
 void udhcp_add_binary_option(struct dhcp_packet *packet, uint8_t *addopt) FAST_FUNC;
 void udhcp_add_simple_option(struct dhcp_packet *packet, uint8_t code, uint32_t data) FAST_FUNC;
-#if ENABLE_FEATURE_UDHCP_RFC3397
+#if ENABLE_FEATURE_UDHCP_RFC3397 || ENABLE_DHCP6RELAY
 char *dname_dec(const uint8_t *cstr, int clen, const char *pre) FAST_FUNC;
 uint8_t *dname_enc(const uint8_t *cstr, int clen, const char *src, int *retlen) FAST_FUNC;
 #endif
@@ -279,6 +279,8 @@ void udhcp_dump_packet(struct dhcp_packet *packet) FAST_FUNC;
 
 
 /*** Other shared functions ***/
+
+int FAST_FUNC sprint_nip6(char *, const uint8_t *);
 
 /* 2nd param is "uint32_t*" */
 int FAST_FUNC udhcp_str2nip(const char *str, void *arg);

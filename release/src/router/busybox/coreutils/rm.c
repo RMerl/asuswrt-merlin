@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2001 Matt Kraai <kraai@alumni.carnegiemellon.edu>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* BB_AUDIT SUSv3 compliant */
@@ -14,6 +14,17 @@
  *
  * Size reduction.
  */
+
+//usage:#define rm_trivial_usage
+//usage:       "[-irf] FILE..."
+//usage:#define rm_full_usage "\n\n"
+//usage:       "Remove (unlink) FILEs\n"
+//usage:     "\n	-i	Always prompt before removing"
+//usage:     "\n	-f	Never prompt"
+//usage:     "\n	-R,-r	Recurse"
+//usage:
+//usage:#define rm_example_usage
+//usage:       "$ rm -rf /tmp/foo\n"
 
 #include "libbb.h"
 

@@ -13,10 +13,12 @@
  * endian = 1: big-endian
  * endian = 0: little-endian
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
+
+uint32_t *global_crc32_table;
 
 uint32_t* FAST_FUNC crc32_filltable(uint32_t *crc_table, int endian)
 {
@@ -39,4 +41,26 @@ uint32_t* FAST_FUNC crc32_filltable(uint32_t *crc_table, int endian)
 	}
 
 	return crc_table - 256;
+}
+
+uint32_t FAST_FUNC crc32_block_endian1(uint32_t val, const void *buf, unsigned len, uint32_t *crc_table)
+{
+	const void *end = (uint8_t*)buf + len;
+
+	while (buf != end) {
+		val = (val << 8) ^ crc_table[(val >> 24) ^ *(uint8_t*)buf];
+		buf = (uint8_t*)buf + 1;
+	}
+	return val;
+}
+
+uint32_t FAST_FUNC crc32_block_endian0(uint32_t val, const void *buf, unsigned len, uint32_t *crc_table)
+{
+	const void *end = (uint8_t*)buf + len;
+
+	while (buf != end) {
+		val = crc_table[(uint8_t)val ^ *(uint8_t*)buf] ^ (val >> 8);
+		buf = (uint8_t*)buf + 1;
+	}
+	return val;
 }

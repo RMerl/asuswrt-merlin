@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2003  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* Mar 5, 2003    Manuel Novoa III
@@ -44,7 +44,7 @@ int FAST_FUNC bb_make_directory(char *path, long mode, int flags)
 	while (1) {
 		c = '\0';
 
-		if (flags & FILEUTILS_RECUR) {	/* Get the parent */
+		if (flags & FILEUTILS_RECUR) {  /* Get the parent */
 			/* Bypass leading non-'/'s and then subsequent '/'s */
 			while (*s) {
 				if (*s == '/') {
@@ -86,7 +86,7 @@ int FAST_FUNC bb_make_directory(char *path, long mode, int flags)
 		if (mkdir(path, 0777) < 0) {
 			/* If we failed for any other reason than the directory
 			 * already exists, output a diagnostic and return -1 */
-			if (errno != EEXIST
+			if ((errno != EEXIST && errno != EISDIR)
 			 || !(flags & FILEUTILS_RECUR)
 			 || ((stat(path, &st) < 0) || !S_ISDIR(st.st_mode))
 			) {

@@ -12,7 +12,7 @@
  *   Copyright (C) 1996-1999 Guy Maor <maor@debian.org>
  *
  *
- * Licensed under GPL v2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* This is my first attempt to write a program in C (well, this is my first
@@ -30,6 +30,31 @@
  * -u MASK      umask. Set the umask of the program executed to MASK.
  */
 
+//usage:#define run_parts_trivial_usage
+//usage:       "[-t] "IF_FEATURE_RUN_PARTS_FANCY("[-l] ")"[-a ARG] [-u MASK] DIRECTORY"
+//usage:#define run_parts_full_usage "\n\n"
+//usage:       "Run a bunch of scripts in DIRECTORY\n"
+//usage:     "\n	-t	Print what would be run, but don't actually run anything"
+//usage:     "\n	-a ARG	Pass ARG as argument for every program"
+//usage:     "\n	-u MASK	Set the umask to MASK before running every program"
+//usage:	IF_FEATURE_RUN_PARTS_FANCY(
+//usage:     "\n	-l	Print names of all matching files even if they are not executable"
+//usage:	)
+//usage:
+//usage:#define run_parts_example_usage
+//usage:       "$ run-parts -a start /etc/init.d\n"
+//usage:       "$ run-parts -a stop=now /etc/init.d\n\n"
+//usage:       "Let's assume you have a script foo/dosomething:\n"
+//usage:       "#!/bin/sh\n"
+//usage:       "for i in $*; do eval $i; done; unset i\n"
+//usage:       "case \"$1\" in\n"
+//usage:       "start*) echo starting something;;\n"
+//usage:       "stop*) set -x; shutdown -h $stop;;\n"
+//usage:       "esac\n\n"
+//usage:       "Running this yields:\n"
+//usage:       "$run-parts -a stop=+4m foo/\n"
+//usage:       "+ shutdown -h +4m"
+
 #include "libbb.h"
 
 struct globals {
@@ -41,6 +66,7 @@ struct globals {
 #define names (G.names)
 #define cur   (G.cur  )
 #define cmd   (G.cmd  )
+#define INIT_G() do { } while (0)
 
 enum { NUM_CMD = (COMMON_BUFSIZE - sizeof(G)) / sizeof(cmd[0]) - 1 };
 
@@ -117,6 +143,8 @@ int run_parts_main(int argc UNUSED_PARAM, char **argv)
 	llist_t *arg_list = NULL;
 	unsigned n;
 	int ret;
+
+	INIT_G();
 
 #if ENABLE_FEATURE_RUN_PARTS_LONG_OPTIONS
 	applet_long_options = runparts_longopts;

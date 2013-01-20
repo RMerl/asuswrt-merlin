@@ -72,7 +72,7 @@ int FAST_FUNC volume_id_probe_linux_swap(struct volume_id *id /*,uint64_t off*/)
 
 found:
 //	volume_id_set_usage(id, VOLUME_ID_OTHER);
-//	id->type = "swap";
+	IF_FEATURE_BLKID_TYPE(id->type = "swap";)
 
 	return 0;
 }

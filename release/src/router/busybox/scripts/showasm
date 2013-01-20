@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Copyright 2006 Rob Landley <rob@landley.net>
-# Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+# Licensed under GPLv2 or later, see file LICENSE in this source tree.
 
 # Dumb little utility function to print out the assembly dump of a single
 # function, or list the functions so dumpable in an executable.  You'd think
@@ -18,4 +18,3 @@ then
 fi
 
 objdump -d $1 | sed -n -e '/./{H;$!d}' -e "x;/^.[0-9a-fA-F]* <$2>:/p"
-

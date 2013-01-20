@@ -26,26 +26,51 @@
 #      - Retain lines that begin with "# CONFIG_"
 #      - lines that use double-quotes must \\-escape-quote them
 
-config="$1"
-if [ $# -lt 1 ]
-then
-	config=.config
-fi
+config=.config
 
+{
 echo "\
 #ifndef _BBCONFIGOPTS_H
 #define _BBCONFIGOPTS_H
 /*
  * busybox configuration settings.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * This file is generated automatically by scripts/mkconfigs.
  * Do not edit.
  */
-static const char bbconfig_config[] ="
+static const char bbconfig_config[] ALIGN1 ="
 
-sed 's/\"/\\\"/g' $config | grep "^#\? \?CONFIG_" | awk '{print "\"" $0 "\\n\"";}'
+grep -e '^# CONFIG_' -e '^CONFIG_' "$config" \
+| sed -e 's/\"/\\\"/g' -e 's/^/"/' -e 's/$/\\n"/'
 
 echo ";"
-echo "#endif /* _BBCONFIGOPTS_H */"
+echo "#endif"
+} >"$1"
+
+{
+echo "\
+#ifndef _BBCONFIGOPTS_BZ2_H
+#define _BBCONFIGOPTS_BZ2_H
+/*
+ * busybox configuration settings.
+ *
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ *
+ * This file is generated automatically by scripts/mkconfigs.
+ * Do not edit.
+ */
+static const char bbconfig_config_bz2[] ALIGN1 = {"
+
+grep -e '^# CONFIG_' -e '^CONFIG_' "$config" \
+| bzip2 -1 | dd bs=2 skip=1 2>/dev/null \
+| od -v -t x1 \
+| sed -e 's/^[^ ]*//' \
+        -e 's/ //g' \
+        -e '/^$/d' \
+        -e 's/\(..\)/0x\1,/g'
+
+echo "};"
+echo "#endif"
+} >"$2"

@@ -47,8 +47,11 @@ the only commands busybox can find are the built-in ones.
 
 Note that the standalone shell requires CONFIG_BUSYBOX_EXEC_PATH
 to be set appropriately, depending on whether or not /proc/self/exe is
-available or not. If you do not have /proc, then point that config option
+available. If you do not have /proc, then point that config option
 to the location of your busybox binary, usually /bin/busybox.
+Another solution is to patch the kernel (see
+examples/linux-*_proc_self_exe.patch) to make exec("/proc/self/exe")
+always work.
 
 Configuring Busybox:
 ====================
@@ -70,7 +73,9 @@ create a known starting point.
 Other starting configurations (mostly used for testing purposes) include
 "make allbareconfig" (enables all applets but disables all optional features),
 "make allyesconfig" (enables absolutely everything including debug features),
-and "make randconfig" (produce a random configuration).
+and "make randconfig" (produce a random configuration).  The configs/ directory
+contains a number of additional configuration files ending in _defconfig which
+are useful in specific cases.  "make help" will list them.
 
 Configuring BusyBox produces a file ".config", which can be saved for future
 use.  Run "make oldconfig" to bring a .config file from an older version of
@@ -97,7 +102,7 @@ first argument to determine which applet to behave as, for example
 "./busybox cat LICENSE".  (Running the busybox applet with no arguments gives
 a list of all enabled applets.) The standalone shell can also call busybox
 applets without links to busybox under other names in the filesystem.  You can
-also configure a standaone install capability into the busybox base applet,
+also configure a standalone install capability into the busybox base applet,
 and then install such links at runtime with one of "busybox --install" (for
 hardlinks) or "busybox --install -s" (for symlinks).
 

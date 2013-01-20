@@ -1,8 +1,20 @@
 /* vi: set sw=4 ts=4: */
 /* Ported to busybox from mtd-utils.
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define flash_lock_trivial_usage
+//usage:       "MTD_DEVICE OFFSET SECTORS"
+//usage:#define flash_lock_full_usage "\n\n"
+//usage:       "Lock part or all of an MTD device. If SECTORS is -1, then all sectors\n"
+//usage:       "will be locked, regardless of the value of OFFSET"
+//usage:
+//usage:#define flash_unlock_trivial_usage
+//usage:       "MTD_DEVICE"
+//usage:#define flash_unlock_full_usage "\n\n"
+//usage:       "Unlock an MTD device"
+
 #include "libbb.h"
 #include <mtd/mtd-user.h>
 

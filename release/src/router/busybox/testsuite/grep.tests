@@ -1,13 +1,13 @@
 #!/bin/sh
 
 # Copyright 2005 by Rob Landley <rob@landley.net>
-# Licensed under GPL v2, see file LICENSE for details.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 # AUDIT:
 
 . ./testing.sh
 
-# testing "test name" "options" "expected result" "file input" "stdin"
+# testing "test name" "commands" "expected result" "file input" "stdin"
 #   file input will be file called "input"
 #   test can create a file "actual" instead of writing to stdout
 
@@ -102,5 +102,21 @@ testing "grep -o does not loop forever on zero-length match" \
 	'grep -o "" | head -n1' \
 	"" \
 	"" "test\n"
+
+testing "grep -f EMPTY_FILE" \
+	"grep -f input" \
+	"" \
+	"" \
+	"test\n"
+
+testing "grep -v -f EMPTY_FILE" \
+	"grep -v -f input" \
+	"test\n" \
+	"" \
+	"test\n"
+
+# testing "test name" "commands" "expected result" "file input" "stdin"
+#   file input will be file called "input"
+#   test can create a file "actual" instead of writing to stdout
 
 exit $FAILCOUNT

@@ -4,9 +4,15 @@
  *
  * pascal.bellard@ads-lu.com
  *
- * Licensed under GPLv2 or later, see file License in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  */
+
+//usage:#define scriptreplay_trivial_usage
+//usage:       "timingfile [typescript [divisor]]"
+//usage:#define scriptreplay_full_usage "\n\n"
+//usage:       "Play back typescripts, using timing information"
+
 #include "libbb.h"
 
 int scriptreplay_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;

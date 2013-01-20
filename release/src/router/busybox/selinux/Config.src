@@ -122,4 +122,3 @@ config SESTATUS
 	  Displays the status of SELinux.
 
 endmenu
-

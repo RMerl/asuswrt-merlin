@@ -7,7 +7,7 @@
  * iso-format handling added by Robert Griebl <griebl@gmx.de>
  * bugfixes and cleanup by Bernhard Reutner-Fischer
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
 */
 
 /* This 'date' command supports only 2 time setting formats,
@@ -19,7 +19,49 @@
 /* Input parsing code is always bulky - used heavy duty libc stuff as
    much as possible, missed out a lot of bounds checking */
 
-/* Default input handling to save surprising some people */
+//applet:IF_DATE(APPLET(date, BB_DIR_BIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_DATE) += date.o
+
+//config:config DATE
+//config:	bool "date"
+//config:	default y
+//config:	help
+//config:	  date is used to set the system date or display the
+//config:	  current time in the given format.
+//config:
+//config:config FEATURE_DATE_ISOFMT
+//config:	bool "Enable ISO date format output (-I)"
+//config:	default y
+//config:	depends on DATE
+//config:	help
+//config:	  Enable option (-I) to output an ISO-8601 compliant
+//config:	  date/time string.
+//config:
+//config:# defaults to "no": stat's nanosecond field is a bit non-portable
+//config:config FEATURE_DATE_NANO
+//config:	bool "Support %[num]N nanosecond format specifier"
+//config:	default n
+//config:	depends on DATE  # syscall(__NR_clock_gettime)
+//config:	select PLATFORM_LINUX
+//config:	help
+//config:	  Support %[num]N format specifier. Adds ~250 bytes of code.
+//config:
+//config:config FEATURE_DATE_COMPAT
+//config:	bool "Support weird 'date MMDDhhmm[[YY]YY][.ss]' format"
+//config:	default y
+//config:	depends on DATE
+//config:	help
+//config:	  System time can be set by 'date -s DATE' and simply 'date DATE',
+//config:	  but formats of DATE string are different. 'date DATE' accepts
+//config:	  a rather weird MMDDhhmm[[YY]YY][.ss] format with completely
+//config:	  unnatural placement of year between minutes and seconds.
+//config:	  date -s (and other commands like touch -d) use more sensible
+//config:	  formats (for one, ISO format YYYY-MM-DD hh:mm:ss.ssssss).
+//config:
+//config:	  With this option off, 'date DATE' is 'date -s DATE' support
+//config:	  the same format. With it on, 'date DATE' additionally supports
+//config:	  MMDDhhmm[[YY]YY][.ss] format.
 
 /* GNU coreutils 6.9 man page:
  * date [OPTION]... [+FORMAT]
@@ -52,45 +94,48 @@
  * -D FMT is a bbox extension for _input_ conversion of -d DATE
  */
 
-//kbuild:lib-$(CONFIG_DATE) += date.o
-
-//config:config DATE
-//config:	bool "date"
-//config:	default y
-//config:	help
-//config:	  date is used to set the system date or display the
-//config:	  current time in the given format.
-//config:
-//config:config FEATURE_DATE_ISOFMT
-//config:	bool "Enable ISO date format output (-I)"
-//config:	default y
-//config:	depends on DATE
-//config:	help
-//config:	  Enable option (-I) to output an ISO-8601 compliant
-//config:	  date/time string.
-//config:
-//config:config FEATURE_DATE_NANO
-//config:	bool "Support %[num]N nanosecond format specifier"
-//config:	default n
-//config:	depends on DATE
-//config:	help
-//config:	  Support %[num]N format specifier. Adds ~250 bytes of code.
-//config:
-//config:config FEATURE_DATE_COMPAT
-//config:	bool "Support weird 'date MMDDhhmm[[YY]YY][.ss]' format"
-//config:	default y
-//config:	depends on DATE
-//config:	help
-//config:	  System time can be set by 'date -s DATE' and simply 'date DATE',
-//config:	  but formats of DATE string are different. 'date DATE' accepts
-//config:	  a rather weird MMDDhhmm[[YY]YY][.ss] format with completely
-//config:	  unnatural placement of year between minutes and seconds.
-//config:	  date -s (and other commands like touch -d) use more sensible
-//config:	  formats (for one, ISO format YYYY-MM-DD hh:mm:ss.ssssss).
-//config:
-//config:	  With this option off, 'date DATE' is 'date -s DATE' support
-//config:	  the same format. With it on, 'date DATE' additionally supports
-//config:	  MMDDhhmm[[YY]YY][.ss] format.
+//usage:#define date_trivial_usage
+//usage:       "[OPTIONS] [+FMT] [TIME]"
+//usage:#define date_full_usage "\n\n"
+//usage:       "Display time (using +FMT), or set time\n"
+//usage:	IF_NOT_LONG_OPTS(
+//usage:     "\n	[-s] TIME	Set time to TIME"
+//usage:     "\n	-u		Work in UTC (don't convert to local time)"
+//usage:     "\n	-R		Output RFC-2822 compliant date string"
+//usage:	) IF_LONG_OPTS(
+//usage:     "\n	[-s,--set] TIME	Set time to TIME"
+//usage:     "\n	-u,--utc	Work in UTC (don't convert to local time)"
+//usage:     "\n	-R,--rfc-2822	Output RFC-2822 compliant date string"
+//usage:	)
+//usage:	IF_FEATURE_DATE_ISOFMT(
+//usage:     "\n	-I[SPEC]	Output ISO-8601 compliant date string"
+//usage:     "\n			SPEC='date' (default) for date only,"
+//usage:     "\n			'hours', 'minutes', or 'seconds' for date and"
+//usage:     "\n			time to the indicated precision"
+//usage:	)
+//usage:	IF_NOT_LONG_OPTS(
+//usage:     "\n	-r FILE		Display last modification time of FILE"
+//usage:     "\n	-d TIME		Display TIME, not 'now'"
+//usage:	) IF_LONG_OPTS(
+//usage:     "\n	-r,--reference FILE	Display last modification time of FILE"
+//usage:     "\n	-d,--date TIME	Display TIME, not 'now'"
+//usage:	)
+//usage:	IF_FEATURE_DATE_ISOFMT(
+//usage:     "\n	-D FMT		Use FMT for -d TIME conversion"
+//usage:	)
+//usage:     "\n"
+//usage:     "\nRecognized TIME formats:"
+//usage:     "\n	hh:mm[:ss]"
+//usage:     "\n	[YYYY.]MM.DD-hh:mm[:ss]"
+//usage:     "\n	YYYY-MM-DD hh:mm[:ss]"
+//usage:     "\n	[[[[[YY]YY]MM]DD]hh]mm[.ss]"
+//usage:	IF_FEATURE_DATE_COMPAT(
+//usage:     "\n	'date TIME' form accepts MMDDhhmm[[YY]YY][.ss] instead"
+//usage:	)
+//usage:
+//usage:#define date_example_usage
+//usage:       "$ date\n"
+//usage:       "Wed Apr 12 18:52:41 MDT 2000\n"
 
 #include "libbb.h"
 #if ENABLE_FEATURE_DATE_NANO
@@ -208,6 +253,10 @@ int date_main(int argc UNUSED_PARAM, char **argv)
 		ts.tv_sec = statbuf.st_mtime;
 #if ENABLE_FEATURE_DATE_NANO
 		ts.tv_nsec = statbuf.st_mtim.tv_nsec;
+		/* Some toolchains use .st_mtimensec instead of st_mtim.tv_nsec.
+		 * If you need #define _SVID_SOURCE 1 to enable st_mtim.tv_nsec,
+		 * drop a mail to project mailing list please
+		 */
 #endif
 	} else {
 #if ENABLE_FEATURE_DATE_NANO
@@ -236,7 +285,9 @@ int date_main(int argc UNUSED_PARAM, char **argv)
 		}
 
 		/* Correct any day of week and day of year etc. fields */
-		tm_time.tm_isdst = -1;	/* Be sure to recheck dst */
+		/* Be sure to recheck dst (but not if date is time_t format) */
+		if (date_str[0] != '@')
+			tm_time.tm_isdst = -1;
 		ts.tv_sec = validate_tm_time(date_str, &tm_time);
 
 		maybe_set_utc(opt);
@@ -300,7 +351,7 @@ int date_main(int argc UNUSED_PARAM, char **argv)
 			scale = 1;
 			pres = 9;
 			if (n) {
-				pres = xatoi_u(p);
+				pres = xatoi_positive(p);
 				if (pres == 0)
 					pres = 9;
 				m = 9 - pres;

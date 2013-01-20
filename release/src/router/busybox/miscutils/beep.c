@@ -4,9 +4,19 @@
  *
  * Copyright (C) 2009 Bernhard Reutner-Fischer
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  */
+
+//usage:#define beep_trivial_usage
+//usage:       "-f FREQ -l LEN -d DELAY -r COUNT -n"
+//usage:#define beep_full_usage "\n\n"
+//usage:       "	-f	Frequency in Hz"
+//usage:     "\n	-l	Length in ms"
+//usage:     "\n	-d	Delay in ms"
+//usage:     "\n	-r	Repetitions"
+//usage:     "\n	-n	Start new tone"
+
 #include "libbb.h"
 
 #include <linux/kd.h>

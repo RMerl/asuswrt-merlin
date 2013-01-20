@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2008 by Timo Teras <timo.teras@iki.fi>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #ifndef MODUTILS_H
@@ -21,7 +21,7 @@ void replace(char *s, char what, char with) FAST_FUNC;
 char *replace_underscores(char *s) FAST_FUNC;
 int string_to_llist(char *string, llist_t **llist, const char *delim) FAST_FUNC;
 char *filename2modname(const char *filename, char *modname) FAST_FUNC;
-char *parse_cmdline_module_options(char **argv) FAST_FUNC;
+char *parse_cmdline_module_options(char **argv, int quote_spaces) FAST_FUNC;
 
 /* insmod for 2.4 and modprobe's options (insmod 2.6 has no options at all): */
 #define INSMOD_OPTS \

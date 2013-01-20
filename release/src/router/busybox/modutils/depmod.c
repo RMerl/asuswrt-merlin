@@ -5,8 +5,10 @@
  * Copyrihgt (c) 2008 Timo Teras <timo.teras@iki.fi>
  * Copyright (c) 2008 Vladimir Dronnikov
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//applet:IF_DEPMOD(APPLET(depmod, BB_DIR_SBIN, BB_SUID_DROP))
 
 #include "libbb.h"
 #include "modutils.h"
@@ -124,7 +126,16 @@ static void xfreopen_write(const char *file, FILE *f)
 		bb_perror_msg_and_die("can't open '%s'", file);
 }
 
-/* Usage:
+//usage:#if !ENABLE_MODPROBE_SMALL
+//usage:#define depmod_trivial_usage "[-n] [-b BASE] [VERSION] [MODFILES]..."
+//usage:#define depmod_full_usage "\n\n"
+//usage:       "Generate modules.dep, alias, and symbols files"
+//usage:     "\n"
+//usage:     "\n	-b BASE	Use BASE/lib/modules/VERSION"
+//usage:     "\n	-n	Dry run: print files to stdout"
+//usage:#endif
+
+/* Upstream usage:
  * [-aAenv] [-C FILE or DIR] [-b BASE] [-F System.map] [VERSION] [MODFILES]...
  *	-a --all
  *		Probe all modules. Default if no MODFILES.
@@ -135,7 +146,7 @@ static void xfreopen_write(const char *file, FILE *f)
  *	-C --config FILE or DIR
  *		Path to /etc/depmod.conf or /etc/depmod.d/
  *	-e --errsyms
- *		When combined with the -F option, this reports any symbols which
+ *		When combined with the -F option, this reports any symbols
  *		which are not supplied by other modules or kernel.
  *	-F --filesyms System.map
  *	-n --dry-run
@@ -144,9 +155,16 @@ static void xfreopen_write(const char *file, FILE *f)
  *		Print to stdout all the symbols each module depends on
  *		and the module's file name which provides that symbol.
  *	-r	No-op
+ *	-u	No-op
+ *	-q	No-op
  *
- * So far we only support: [-rn] [-b BASE] [VERSION] [MODFILES]...
- * -aAeF are accepted but ignored. -vC are not accepted.
+ * So far we only support: [-n] [-b BASE] [VERSION] [MODFILES]...
+ * Accepted but ignored:
+ * -aAe
+ * -F System.map
+ * -C FILE/DIR
+ *
+ * Not accepted: -v
  */
 enum {
 	//OPT_a = (1 << 0), /* All modules, ignore mods in argv */
@@ -155,7 +173,10 @@ enum {
 	//OPT_e = (1 << 3), /* with -F, print unresolved symbols */
 	//OPT_F = (1 << 4), /* System.map that contains the symbols */
 	OPT_n = (1 << 5), /* dry-run, print to stdout only */
-	OPT_r = (1 << 6)  /* Compat dummy. Linux Makefile uses it */
+	OPT_r = (1 << 6), /* Compat dummy. Linux Makefile uses it */
+	OPT_u = (1 << 7), /* -u,--unresolved-error: ignored */
+	OPT_q = (1 << 8), /* -q,--quiet: ignored */
+	OPT_C = (1 << 9), /* -C,--config etc_modules_conf: ignored */
 };
 
 int depmod_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
@@ -167,7 +188,7 @@ int depmod_main(int argc UNUSED_PARAM, char **argv)
 	struct utsname uts;
 	int tmp;
 
-	getopt32(argv, "aAb:eF:nr", &moddir_base, NULL);
+	getopt32(argv, "aAb:eF:nruqC:", &moddir_base, NULL, NULL);
 	argv += optind;
 
 	/* goto modules location */

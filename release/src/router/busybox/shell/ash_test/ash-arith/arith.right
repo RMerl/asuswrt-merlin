@@ -55,28 +55,28 @@ Format: 'expected actual'
 30 30
 20 20
 30 30
-./arith.tests: line 117: syntax error: 1 ? 20 : x+=2
+./arith.tests: line 117: arithmetic syntax error
 6 6
 6,5,3 6,5,3
 263 263
 255 255
 40 40
-./arith.tests: line 163: syntax error:  7 = 43 
+./arith.tests: line 163: arithmetic syntax error
 ./arith.tests: line 165: divide by zero
-./arith.tests: let: line 166: syntax error: jv += $iv
-./arith.tests: line 167: syntax error:  jv += $iv 
-./arith.tests: let: line 168: syntax error: rv = 7 + (43 * 6
+./arith.tests: let: line 166: arithmetic syntax error
+./arith.tests: line 167: arithmetic syntax error
+./arith.tests: let: line 168: arithmetic syntax error
 abc
 def
 ghi
-./arith.tests: line 191: syntax error:  ( 4 + A ) + 4 
+./arith.tests: line 191: arithmetic syntax error
 16 16
-./arith.tests: line 196: syntax error:  4 ? : 3 + 5 
-./arith.tests: line 197: syntax error:  1 ? 20 
-./arith.tests: line 198: syntax error:  4 ? 20 : 
+./arith.tests: line 196: arithmetic syntax error
+./arith.tests: line 197: malformed ?: operator
+./arith.tests: line 198: arithmetic syntax error
 9 9
-./arith.tests: line 205: syntax error:  0 && B=42 
-./arith.tests: line 208: syntax error:  1 || B=88 
+./arith.tests: line 205: arithmetic syntax error
+./arith.tests: line 208: arithmetic syntax error
 9 9
 9 9
 9 9
@@ -97,18 +97,18 @@ ghi
 3 3
 4 4
 4 4
-./arith.tests: line 257: syntax error:  7-- 
-./arith.tests: line 259: syntax error:  --x=7 
-./arith.tests: line 260: syntax error:  ++x=7 
-./arith.tests: line 262: syntax error:  x++=7 
-./arith.tests: line 263: syntax error:  x--=7 
+./arith.tests: line 257: arithmetic syntax error
+./arith.tests: line 259: arithmetic syntax error
+./arith.tests: line 260: arithmetic syntax error
+./arith.tests: line 262: arithmetic syntax error
+./arith.tests: line 263: arithmetic syntax error
 4 4
 7 7
 -7 -7
-./arith1.sub: line 2: syntax error:  4-- 
-./arith1.sub: line 3: syntax error:  4++ 
-./arith1.sub: line 4: syntax error:  4 -- 
-./arith1.sub: line 5: syntax error:  4 ++ 
+./arith1.sub: line 2: arithmetic syntax error
+./arith1.sub: line 3: arithmetic syntax error
+./arith1.sub: line 4: arithmetic syntax error
+./arith1.sub: line 5: arithmetic syntax error
 6 6
 3 3
 7 7
@@ -119,19 +119,19 @@ ghi
 2 2
 -2 -2
 1 1
-./arith1.sub: line 37: syntax error:  +++7 
-./arith2.sub: line 2: syntax error:  --7 
-./arith2.sub: line 3: syntax error:  ++7 
-./arith2.sub: line 4: syntax error:  -- 7 
-./arith2.sub: line 5: syntax error:  ++ 7 
+./arith1.sub: line 37: arithmetic syntax error
+./arith2.sub: line 2: arithmetic syntax error
+./arith2.sub: line 3: arithmetic syntax error
+./arith2.sub: line 4: arithmetic syntax error
+./arith2.sub: line 5: arithmetic syntax error
 5 5
 1 1
 4 4
 0 0
-./arith2.sub: line 42: syntax error:  -- - 7 
-./arith2.sub: line 47: syntax error:  ++ + 7 
+./arith2.sub: line 42: arithmetic syntax error
+./arith2.sub: line 47: arithmetic syntax error
 8 12
-./arith.tests: line 290: syntax error: a b
+./arith.tests: line 290: arithmetic syntax error
 42
 42
 42

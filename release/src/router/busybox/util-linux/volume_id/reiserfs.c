@@ -107,7 +107,7 @@ int FAST_FUNC volume_id_probe_reiserfs(struct volume_id *id /*,uint64_t off*/)
 
  found:
 //	volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
-//	id->type = "reiserfs";
+	IF_FEATURE_BLKID_TYPE(id->type = "reiserfs";)
 
 	return 0;
 }

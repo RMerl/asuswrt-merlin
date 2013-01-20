@@ -1,0 +1,11 @@
+# This testcase checks whether slashes in ${v/a/b} are parsed before
+# or after expansions
+
+v='a/b/c'
+s='b/c'
+r='e/f'
+echo "${v/$s}"
+echo "${v/$s/d}"
+echo "${v/$s/$r}"
+
+echo Done: $?

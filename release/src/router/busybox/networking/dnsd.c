@@ -6,7 +6,7 @@
  * Copyright (C) 2005 Odd Arild Olsen (oao at fibula dot no)
  * Copyright (C) 2003 Paul Sheer
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Odd Arild Olsen started out with the sheerdns [1] of Paul Sheer and rewrote
  * it into a shape which I believe is both easier to understand and maintain.
@@ -16,6 +16,21 @@
  * Some bugfix and minor changes was applied by Roberto A. Foglietta who made
  * the first porting of oao' scdns to busybox also.
  */
+
+//usage:#define dnsd_trivial_usage
+//usage:       "[-dvs] [-c CONFFILE] [-t TTL_SEC] [-p PORT] [-i ADDR]"
+//usage:#define dnsd_full_usage "\n\n"
+//usage:       "Small static DNS server daemon\n"
+//usage:     "\n	-c FILE	Config file"
+//usage:     "\n	-t SEC	TTL"
+//usage:     "\n	-p PORT	Listen on PORT"
+//usage:     "\n	-i ADDR	Listen on ADDR"
+//usage:     "\n	-d	Daemonize"
+//usage:     "\n	-v	Verbose"
+//usage:     "\n	-s	Send successful replies only. Use this if you want"
+//usage:     "\n		to use /etc/resolv.conf with two nameserver lines:"
+//usage:     "\n			nameserver DNSD_SERVER"
+//usage:     "\n			nameserver NORMAL_DNS_SERVER"
 
 #include "libbb.h"
 #include <syslog.h>

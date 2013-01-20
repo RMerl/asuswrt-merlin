@@ -2,7 +2,7 @@
 #
 # Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
 #
-# Licensed under the GPL v2, see the file LICENSE in this tarball.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 lib-y:=
 
@@ -11,7 +11,6 @@ lib-$(CONFIG_FREE)	+= free.o
 lib-$(CONFIG_FUSER)	+= fuser.o
 lib-$(CONFIG_KILL)	+= kill.o
 lib-$(CONFIG_ASH)	+= kill.o  # used for built-in kill by ash
-lib-$(CONFIG_NMETER)    += nmeter.o
 lib-$(CONFIG_PGREP)	+= pgrep.o
 lib-$(CONFIG_PKILL)	+= pgrep.o
 lib-$(CONFIG_PIDOF)	+= pidof.o

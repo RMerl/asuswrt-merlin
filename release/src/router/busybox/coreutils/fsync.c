@@ -4,8 +4,15 @@
  *
  * Copyright (C) 2008 Nokia Corporation. All rights reserved.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define fsync_trivial_usage
+//usage:       "[-d] FILE..."
+//usage:#define fsync_full_usage "\n\n"
+//usage:       "Write files' buffered blocks to disk\n"
+//usage:     "\n	-d	Avoid syncing metadata"
+
 #include "libbb.h"
 #ifndef O_NOATIME
 # define O_NOATIME 0
@@ -27,7 +34,7 @@ int fsync_main(int argc UNUSED_PARAM, char **argv)
 
 	status = EXIT_SUCCESS;
 	do {
-		int fd = open3_or_warn(*argv, O_NOATIME | O_NOCTTY | O_RDONLY, 0);
+		int fd = open_or_warn(*argv, O_NOATIME | O_NOCTTY | O_RDONLY);
 
 		if (fd == -1) {
 			status = EXIT_FAILURE;

@@ -4,15 +4,34 @@
  *
  * Copyright (C) 2003  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* BB_AUDIT SUSv3 N/A -- Matches GNU behavior. */
+
+//usage:#define mknod_trivial_usage
+//usage:       "[-m MODE] " IF_SELINUX("[-Z] ") "NAME TYPE MAJOR MINOR"
+//usage:#define mknod_full_usage "\n\n"
+//usage:       "Create a special file (block, character, or pipe)\n"
+//usage:     "\n	-m MODE	Creation mode (default a=rw)"
+//usage:	IF_SELINUX(
+//usage:     "\n	-Z	Set security context"
+//usage:	)
+//usage:     "\nTYPE:"
+//usage:     "\n	b	Block device"
+//usage:     "\n	c or u	Character device"
+//usage:     "\n	p	Named pipe (MAJOR and MINOR are ignored)"
+//usage:
+//usage:#define mknod_example_usage
+//usage:       "$ mknod /dev/fd0 b 2 0\n"
+//usage:       "$ mknod -m 644 /tmp/pipe p\n"
 
 #include <sys/sysmacros.h>  // For makedev
 
 #include "libbb.h"
 #include "libcoreutils/coreutils.h"
+
+/* This is a NOEXEC applet. Be very careful! */
 
 static const char modes_chars[] ALIGN1 = { 'p', 'c', 'u', 'b', 0, 1, 1, 2 };
 static const mode_t modes_cubp[] = { S_IFIFO, S_IFCHR, S_IFBLK };

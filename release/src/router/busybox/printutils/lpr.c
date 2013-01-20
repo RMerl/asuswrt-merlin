@@ -7,10 +7,29 @@
  * Original idea and code:
  *      Walter Harms <WHarms@bfs.de>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  *
  * See RFC 1179 for protocol description.
  */
+
+//usage:#define lpr_trivial_usage
+//usage:       "-P queue[@host[:port]] -U USERNAME -J TITLE -Vmh [FILE]..."
+/* -C CLASS exists too, not shown.
+ * CLASS is supposed to be printed on banner page, if one is requested */
+//usage:#define lpr_full_usage "\n\n"
+//usage:       "	-P	lp service to connect to (else uses $PRINTER)"
+//usage:     "\n	-m	Send mail on completion"
+//usage:     "\n	-h	Print banner page too"
+//usage:     "\n	-V	Verbose"
+//usage:
+//usage:#define lpq_trivial_usage
+//usage:       "[-P queue[@host[:port]]] [-U USERNAME] [-d JOBID]... [-fs]"
+//usage:#define lpq_full_usage "\n\n"
+//usage:       "	-P	lp service to connect to (else uses $PRINTER)"
+//usage:     "\n	-d	Delete jobs"
+//usage:     "\n	-f	Force any waiting job to be printed"
+//usage:     "\n	-s	Short display"
+
 #include "libbb.h"
 
 /*
@@ -159,9 +178,7 @@ int lpqr_main(int argc UNUSED_PARAM, char *argv[])
 		// if data file is stdin, we need to dump it first
 		if (LONE_DASH(*argv)) {
 			strcpy(tempfile, "/tmp/lprXXXXXX");
-			dfd = mkstemp(tempfile);
-			if (dfd < 0)
-				bb_perror_msg_and_die("mkstemp");
+			dfd = xmkstemp(tempfile);
 			bb_copyfd_eof(STDIN_FILENO, dfd);
 			xlseek(dfd, 0, SEEK_SET);
 			*argv = (char*)bb_msg_standard_input;

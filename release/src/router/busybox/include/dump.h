@@ -45,7 +45,7 @@ typedef struct FS {			/* format strings */
 typedef struct dumper_t {
 	off_t dump_skip;                /* bytes to skip */
 	int dump_length;                /* max bytes to read */
-	smallint dump_vflag; /*enum dump_vflag_t*/
+	smallint dump_vflag;            /*enum dump_vflag_t*/
 	FS *fshead;
 } dumper_t;
 

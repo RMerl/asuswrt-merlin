@@ -10,56 +10,78 @@
  *
  * MAINTAINER: Rob Landley <rob@landley.net>
  *
- * Licensed under GPL version 2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 /* Code overview.
+ *
+ * Files are laid out to avoid unnecessary function declarations.  So for
+ * example, every function add_cmd calls occurs before add_cmd in this file.
+ *
+ * add_cmd() is called on each line of sed command text (from a file or from
+ * the command line).  It calls get_address() and parse_cmd_args().  The
+ * resulting sed_cmd_t structures are appended to a linked list
+ * (G.sed_cmd_head/G.sed_cmd_tail).
+ *
+ * add_input_file() adds a FILE* to the list of input files.  We need to
+ * know all input sources ahead of time to find the last line for the $ match.
+ *
+ * process_files() does actual sedding, reading data lines from each input FILE*
+ * (which could be stdin) and applying the sed command list (sed_cmd_head) to
+ * each of the resulting lines.
+ *
+ * sed_main() is where external code calls into this, with a command line.
+ */
 
-  Files are laid out to avoid unnecessary function declarations.  So for
-  example, every function add_cmd calls occurs before add_cmd in this file.
+/* Supported features and commands in this version of sed:
+ *
+ * - comments ('#')
+ * - address matching: num|/matchstr/[,num|/matchstr/|$]command
+ * - commands: (p)rint, (d)elete, (s)ubstitue (with g & I flags)
+ * - edit commands: (a)ppend, (i)nsert, (c)hange
+ * - file commands: (r)ead
+ * - backreferences in substitution expressions (\0, \1, \2...\9)
+ * - grouped commands: {cmd1;cmd2}
+ * - transliteration (y/source-chars/dest-chars/)
+ * - pattern space hold space storing / swapping (g, h, x)
+ * - labels / branching (: label, b, t, T)
+ *
+ * (Note: Specifying an address (range) to match is *optional*; commands
+ * default to the whole pattern space if no specific address match was
+ * requested.)
+ *
+ * Todo:
+ * - Create a wrapper around regex to make libc's regex conform with sed
+ *
+ * Reference http://www.opengroup.org/onlinepubs/007904975/utilities/sed.html
+ */
 
-  add_cmd() is called on each line of sed command text (from a file or from
-  the command line).  It calls get_address() and parse_cmd_args().  The
-  resulting sed_cmd_t structures are appended to a linked list
-  (G.sed_cmd_head/G.sed_cmd_tail).
-
-  add_input_file() adds a FILE* to the list of input files.  We need to
-  know all input sources ahead of time to find the last line for the $ match.
-
-  process_files() does actual sedding, reading data lines from each input FILE *
-  (which could be stdin) and applying the sed command list (sed_cmd_head) to
-  each of the resulting lines.
-
-  sed_main() is where external code calls into this, with a command line.
-*/
-
-
-/*
-	Supported features and commands in this version of sed:
-
-	 - comments ('#')
-	 - address matching: num|/matchstr/[,num|/matchstr/|$]command
-	 - commands: (p)rint, (d)elete, (s)ubstitue (with g & I flags)
-	 - edit commands: (a)ppend, (i)nsert, (c)hange
-	 - file commands: (r)ead
-	 - backreferences in substitution expressions (\0, \1, \2...\9)
-	 - grouped commands: {cmd1;cmd2}
-	 - transliteration (y/source-chars/dest-chars/)
-	 - pattern space hold space storing / swapping (g, h, x)
-	 - labels / branching (: label, b, t, T)
-
-	 (Note: Specifying an address (range) to match is *optional*; commands
-	 default to the whole pattern space if no specific address match was
-	 requested.)
-
-	Todo:
-	 - Create a wrapper around regex to make libc's regex conform with sed
-
-	Reference http://www.opengroup.org/onlinepubs/007904975/utilities/sed.html
-*/
+//usage:#define sed_trivial_usage
+//usage:       "[-inr] [-f FILE]... [-e CMD]... [FILE]...\n"
+//usage:       "or: sed [-inr] CMD [FILE]..."
+//usage:#define sed_full_usage "\n\n"
+//usage:       "	-e CMD	Add CMD to sed commands to be executed"
+//usage:     "\n	-f FILE	Add FILE contents to sed commands to be executed"
+//usage:     "\n	-i	Edit files in-place (else sends result to stdout)"
+//usage:     "\n	-n	Suppress automatic printing of pattern space"
+//usage:     "\n	-r	Use extended regex syntax"
+//usage:     "\n"
+//usage:     "\nIf no -e or -f, the first non-option argument is the sed command string."
+//usage:     "\nRemaining arguments are input files (stdin if none)."
+//usage:
+//usage:#define sed_example_usage
+//usage:       "$ echo \"foo\" | sed -e 's/f[a-zA-Z]o/bar/g'\n"
+//usage:       "bar\n"
 
 #include "libbb.h"
 #include "xregex.h"
+
+#if 0
+# define dbg(...) bb_error_msg(__VA_ARGS__)
+#else
+# define dbg(...) ((void)0)
+#endif
+
 
 enum {
 	OPT_in_place = 1 << 0,
@@ -75,6 +97,7 @@ typedef struct sed_cmd_s {
 	regex_t *end_match;     /* sed -e '/match/,/end_match/cmd' */
 	regex_t *sub_match;     /* For 's/sub_match/string/' */
 	int beg_line;           /* 'sed 1p'   0 == apply commands to all lines */
+	int beg_line_orig;      /* copy of the above, needed for -i */
 	int end_line;           /* 'sed 1,3p' 0 == one line only. -1 = last line ($) */
 
 	FILE *sw_file;          /* File (sw) command writes to, -1 for none. */
@@ -109,7 +132,7 @@ struct globals {
 	regex_t *previous_regex_ptr;
 
 	/* linked list of sed commands */
-	sed_cmd_t sed_cmd_head, *sed_cmd_tail;
+	sed_cmd_t *sed_cmd_head, **sed_cmd_tail;
 
 	/* Linked list of append lines */
 	llist_t *append_head;
@@ -117,14 +140,14 @@ struct globals {
 	char *add_cmd_line;
 
 	struct pipeline {
-		char *buf;	/* Space to hold string */
-		int idx;	/* Space used */
-		int len;	/* Space allocated */
+		char *buf;  /* Space to hold string */
+		int idx;    /* Space used */
+		int len;    /* Space allocated */
 	} pipeline;
 } FIX_ALIASING;
 #define G (*(struct globals*)&bb_common_bufsiz1)
 struct BUG_G_too_big {
-        char BUG_G_too_big[sizeof(G) <= COMMON_BUFSIZE ? 1 : -1];
+	char BUG_G_too_big[sizeof(G) <= COMMON_BUFSIZE ? 1 : -1];
 };
 #define INIT_G() do { \
 	G.sed_cmd_tail = &G.sed_cmd_head; \
@@ -134,7 +157,7 @@ struct BUG_G_too_big {
 #if ENABLE_FEATURE_CLEAN_UP
 static void sed_free_and_close_stuff(void)
 {
-	sed_cmd_t *sed_cmd = G.sed_cmd_head.next;
+	sed_cmd_t *sed_cmd = G.sed_cmd_head;
 
 	llist_free(G.append_head, free);
 
@@ -200,11 +223,16 @@ static void parse_escapes(char *dest, const char *string, int len, char from, ch
 
 static char *copy_parsing_escapes(const char *string, int len)
 {
+	const char *s;
 	char *dest = xmalloc(len + 1);
 
-	parse_escapes(dest, string, len, 'n', '\n');
-	/* GNU sed also recognizes \t */
-	parse_escapes(dest, dest, strlen(dest), 't', '\t');
+	/* sed recognizes \n */
+	/* GNU sed also recognizes \t and \r */
+	for (s = "\nn\tt\rr"; *s; s += 2) {
+		parse_escapes(dest, string, len, s[1], s[0]);
+		string = dest;
+		len = strlen(dest);
+	}
 	return dest;
 }
 
@@ -227,11 +255,13 @@ static int index_of_next_unescaped_regexp_delim(int delimiter, const char *str)
 		delimiter = -delimiter;
 	}
 
-	for (; (ch = str[idx]); idx++) {
+	for (; (ch = str[idx]) != '\0'; idx++) {
 		if (bracket >= 0) {
-			if (ch == ']' && !(bracket == idx - 1 || (bracket == idx - 2
-					&& str[idx - 1] == '^')))
+			if (ch == ']'
+			 && !(bracket == idx - 1 || (bracket == idx - 2 && str[idx - 1] == '^'))
+			) {
 				bracket = -1;
+			}
 		} else if (escaped)
 			escaped = 0;
 		else if (ch == '\\')
@@ -252,7 +282,7 @@ static int index_of_next_unescaped_regexp_delim(int delimiter, const char *str)
 static int parse_regex_delim(const char *cmdstr, char **match, char **replace)
 {
 	const char *cmdstr_ptr = cmdstr;
-	char delimiter;
+	unsigned char delimiter;
 	int idx = 0;
 
 	/* verify that the 's' or 'y' is followed by something.  That something
@@ -267,7 +297,7 @@ static int parse_regex_delim(const char *cmdstr, char **match, char **replace)
 
 	/* save the replacement string */
 	cmdstr_ptr += idx + 1;
-	idx = index_of_next_unescaped_regexp_delim(-delimiter, cmdstr_ptr);
+	idx = index_of_next_unescaped_regexp_delim(- (int)delimiter, cmdstr_ptr);
 	*replace = copy_parsing_escapes(cmdstr_ptr, idx);
 
 	return ((cmdstr_ptr - cmdstr) + idx);
@@ -292,10 +322,11 @@ static int get_address(const char *my_str, int *linenum, regex_t ** regex)
 		char *temp;
 
 		delimiter = '/';
-		if (*my_str == '\\') delimiter = *++pos;
+		if (*my_str == '\\')
+			delimiter = *++pos;
 		next = index_of_next_unescaped_regexp_delim(delimiter, ++pos);
 		temp = copy_parsing_escapes(pos, next);
-		*regex = xmalloc(sizeof(regex_t));
+		*regex = xzalloc(sizeof(regex_t));
 		xregcomp(*regex, temp, G.regex_type|REG_NEWLINE);
 		free(temp);
 		/* Move position to next character after last delimiter */
@@ -404,8 +435,10 @@ static int parse_subst_cmd(sed_cmd_t *sed_cmd, const char *substr)
 	/* compile the match string into a regex */
 	if (*match != '\0') {
 		/* If match is empty, we use last regex used at runtime */
-		sed_cmd->sub_match = xmalloc(sizeof(regex_t));
+		sed_cmd->sub_match = xzalloc(sizeof(regex_t));
+		dbg("xregcomp('%s',%x)", match, cflags);
 		xregcomp(sed_cmd->sub_match, match, cflags);
+		dbg("regcomp ok");
 	}
 	free(match);
 
@@ -417,11 +450,47 @@ static int parse_subst_cmd(sed_cmd_t *sed_cmd, const char *substr)
  */
 static const char *parse_cmd_args(sed_cmd_t *sed_cmd, const char *cmdstr)
 {
+	static const char cmd_letters[] = "saicrw:btTydDgGhHlnNpPqx={}";
+	enum {
+		IDX_s = 0,
+		IDX_a,
+		IDX_i,
+		IDX_c,
+		IDX_r,
+		IDX_w,
+		IDX_colon,
+		IDX_b,
+		IDX_t,
+		IDX_T,
+		IDX_y,
+		IDX_d,
+		IDX_D,
+		IDX_g,
+		IDX_G,
+		IDX_h,
+		IDX_H,
+		IDX_l,
+		IDX_n,
+		IDX_N,
+		IDX_p,
+		IDX_P,
+		IDX_q,
+		IDX_x,
+		IDX_equal,
+		IDX_lbrace,
+		IDX_rbrace,
+		IDX_nul
+	};
+	struct chk { char chk[sizeof(cmd_letters)-1 == IDX_nul ? 1 : -1]; };
+
+	unsigned idx = strchrnul(cmd_letters, sed_cmd->cmd) - cmd_letters;
+
 	/* handle (s)ubstitution command */
-	if (sed_cmd->cmd == 's')
+	if (idx == IDX_s) {
 		cmdstr += parse_subst_cmd(sed_cmd, cmdstr);
+	}
 	/* handle edit cmds: (a)ppend, (i)nsert, and (c)hange */
-	else if (strchr("aic", sed_cmd->cmd)) {
+	else if (idx <= IDX_c) { /* a,i,c */
 		if ((sed_cmd->end_line || sed_cmd->end_match) && sed_cmd->cmd != 'c')
 			bb_error_msg_and_die("only a beginning address can be specified for edit commands");
 		for (;;) {
@@ -437,8 +506,9 @@ static const char *parse_cmd_args(sed_cmd_t *sed_cmd, const char *cmdstr)
 		/* "\anychar" -> "anychar" */
 		parse_escapes(sed_cmd->string, sed_cmd->string, strlen(cmdstr), '\0', '\0');
 		cmdstr += strlen(cmdstr);
+	}
 	/* handle file cmds: (r)ead */
-	} else if (strchr("rw", sed_cmd->cmd)) {
+	else if (idx <= IDX_w) { /* r,w */
 		if (sed_cmd->end_line || sed_cmd->end_match)
 			bb_error_msg_and_die("command only uses one address");
 		cmdstr += parse_file_cmd(/*sed_cmd,*/ cmdstr, &sed_cmd->string);
@@ -446,8 +516,9 @@ static const char *parse_cmd_args(sed_cmd_t *sed_cmd, const char *cmdstr)
 			sed_cmd->sw_file = xfopen_for_write(sed_cmd->string);
 			sed_cmd->sw_last_char = '\n';
 		}
+	}
 	/* handle branch commands */
-	} else if (strchr(":btT", sed_cmd->cmd)) {
+	else if (idx <= IDX_T) { /* :,b,t,T */
 		int length;
 
 		cmdstr = skip_whitespace(cmdstr);
@@ -458,7 +529,7 @@ static const char *parse_cmd_args(sed_cmd_t *sed_cmd, const char *cmdstr)
 		}
 	}
 	/* translation command */
-	else if (sed_cmd->cmd == 'y') {
+	else if (idx == IDX_y) {
 		char *match, *replace;
 		int i = cmdstr[0];
 
@@ -478,7 +549,7 @@ static const char *parse_cmd_args(sed_cmd_t *sed_cmd, const char *cmdstr)
 	/* if it wasnt a single-letter command that takes no arguments
 	 * then it must be an invalid command.
 	 */
-	else if (strchr("dDgGhHlnNpPqx={}", sed_cmd->cmd) == 0) {
+	else if (idx >= IDX_nul) { /* not d,D,g,G,h,H,l,n,N,p,P,q,x,=,{,} */
 		bb_error_msg_and_die("unsupported command %c", sed_cmd->cmd);
 	}
 
@@ -540,6 +611,7 @@ static void add_cmd(const char *cmdstr)
 
 		/* first part (if present) is an address: either a '$', a number or a /regex/ */
 		cmdstr += get_address(cmdstr, &sed_cmd->beg_line, &sed_cmd->beg_match);
+		sed_cmd->beg_line_orig = sed_cmd->beg_line;
 
 		/* second part (if present) will begin with a comma */
 		if (*cmdstr == ',') {
@@ -571,8 +643,8 @@ static void add_cmd(const char *cmdstr)
 		cmdstr = parse_cmd_args(sed_cmd, cmdstr);
 
 		/* Add the command to the command array */
-		G.sed_cmd_tail->next = sed_cmd;
-		G.sed_cmd_tail = G.sed_cmd_tail->next;
+		*G.sed_cmd_tail = sed_cmd;
+		G.sed_cmd_tail = &sed_cmd->next;
 	}
 
 	/* If we glued multiple lines together, free the memory. */
@@ -600,7 +672,7 @@ static void do_subst_w_backrefs(char *line, char *replace)
 
 	/* go through the replacement string */
 	for (i = 0; replace[i]; i++) {
-		/* if we find a backreference (\1, \2, etc.) print the backref'ed * text */
+		/* if we find a backreference (\1, \2, etc.) print the backref'ed text */
 		if (replace[i] == '\\') {
 			unsigned backref = replace[++i] - '0';
 			if (backref <= 9) {
@@ -634,8 +706,10 @@ static void do_subst_w_backrefs(char *line, char *replace)
 static int do_subst_command(sed_cmd_t *sed_cmd, char **line_p)
 {
 	char *line = *line_p;
-	int altered = 0;
 	unsigned match_count = 0;
+	bool altered = 0;
+	bool prev_match_empty = 1;
+	bool tried_at_eol = 0;
 	regex_t *current_regex;
 
 	current_regex = sed_cmd->sub_match;
@@ -648,8 +722,12 @@ static int do_subst_command(sed_cmd_t *sed_cmd, char **line_p)
 	G.previous_regex_ptr = current_regex;
 
 	/* Find the first match */
-	if (REG_NOMATCH == regexec(current_regex, line, 10, G.regmatch, 0))
+	dbg("matching '%s'", line);
+	if (REG_NOMATCH == regexec(current_regex, line, 10, G.regmatch, 0)) {
+		dbg("no match");
 		return 0;
+	}
+	dbg("match");
 
 	/* Initialize temporary output buffer. */
 	G.pipeline.buf = xmalloc(PIPE_GROW);
@@ -658,47 +736,76 @@ static int do_subst_command(sed_cmd_t *sed_cmd, char **line_p)
 
 	/* Now loop through, substituting for matches */
 	do {
+		int start = G.regmatch[0].rm_so;
+		int end = G.regmatch[0].rm_eo;
 		int i;
-
-		/* Work around bug in glibc regexec, demonstrated by:
-		   echo " a.b" | busybox sed 's [^ .]* x g'
-		   The match_count check is so not to break
-		   echo "hi" | busybox sed 's/^/!/g' */
-		if (!G.regmatch[0].rm_so && !G.regmatch[0].rm_eo && match_count) {
-			pipe_putc(*line++);
-			continue;
-		}
 
 		match_count++;
 
 		/* If we aren't interested in this match, output old line to
-		   end of match and continue */
+		 * end of match and continue */
 		if (sed_cmd->which_match
 		 && (sed_cmd->which_match != match_count)
 		) {
-			for (i = 0; i < G.regmatch[0].rm_eo; i++)
+			for (i = 0; i < end; i++)
 				pipe_putc(*line++);
-			continue;
+			/* Null match? Print one more char */
+			if (start == end && *line)
+				pipe_putc(*line++);
+			goto next;
 		}
 
-		/* print everything before the match */
-		for (i = 0; i < G.regmatch[0].rm_so; i++)
+		/* Print everything before the match */
+		for (i = 0; i < start; i++)
 			pipe_putc(line[i]);
 
-		/* then print the substitution string */
-		do_subst_w_backrefs(line, sed_cmd->string);
+		/* Then print the substitution string,
+		 * unless we just matched empty string after non-empty one.
+		 * Example: string "cccd", pattern "c*", repl "R":
+		 * result is "RdR", not "RRdR": first match "ccc",
+		 * second is "" before "d", third is "" after "d".
+		 * Second match is NOT replaced!
+		 */
+		if (prev_match_empty || start != 0 || start != end) {
+			//dbg("%d %d %d", prev_match_empty, start, end);
+			dbg("inserting replacement at %d in '%s'", start, line);
+			do_subst_w_backrefs(line, sed_cmd->string);
+			/* Flag that something has changed */
+			altered = 1;
+		} else {
+			dbg("NOT inserting replacement at %d in '%s'", start, line);
+		}
 
-		/* advance past the match */
-		line += G.regmatch[0].rm_eo;
-		/* flag that something has changed */
-		altered++;
+		/* If matched string is empty (f.e. "c*" pattern),
+		 * copy verbatim one char after it before attempting more matches
+		 */
+		prev_match_empty = (start == end);
+		if (prev_match_empty) {
+			if (!line[end]) {
+				tried_at_eol = 1;
+			} else {
+				pipe_putc(line[end]);
+				end++;
+			}
+		}
+
+		/* Advance past the match */
+		dbg("line += %d", end);
+		line += end;
 
 		/* if we're not doing this globally, get out now */
-		if (sed_cmd->which_match)
+		if (sed_cmd->which_match != 0)
 			break;
+ next:
+		/* Exit if we are at EOL and already tried matching at it */
+		if (*line == '\0') {
+			if (tried_at_eol)
+				break;
+			tried_at_eol = 1;
+		}
 
-//maybe (G.regmatch[0].rm_eo ? REG_NOTBOL : 0) instead of unconditional REG_NOTBOL?
-	} while (*line && regexec(current_regex, line, 10, G.regmatch, REG_NOTBOL) != REG_NOMATCH);
+//maybe (end ? REG_NOTBOL : 0) instead of unconditional REG_NOTBOL?
+	} while (regexec(current_regex, line, 10, G.regmatch, REG_NOTBOL) != REG_NOMATCH);
 
 	/* Copy rest of string into output pipeline */
 	while (1) {
@@ -718,7 +825,7 @@ static sed_cmd_t *branch_to(char *label)
 {
 	sed_cmd_t *sed_cmd;
 
-	for (sed_cmd = G.sed_cmd_head.next; sed_cmd; sed_cmd = sed_cmd->next) {
+	for (sed_cmd = G.sed_cmd_head; sed_cmd; sed_cmd = sed_cmd->next) {
 		if (sed_cmd->cmd == ':' && sed_cmd->string && !strcmp(sed_cmd->string, label)) {
 			return sed_cmd;
 		}
@@ -894,24 +1001,24 @@ static void process_files(void)
 
 	/* For every line, go through all the commands */
  restart:
-	for (sed_cmd = G.sed_cmd_head.next; sed_cmd; sed_cmd = sed_cmd->next) {
+	for (sed_cmd = G.sed_cmd_head; sed_cmd; sed_cmd = sed_cmd->next) {
 		int old_matched, matched;
 
 		old_matched = sed_cmd->in_match;
 
 		/* Determine if this command matches this line: */
 
-		//bb_error_msg("match1:%d", sed_cmd->in_match);
-		//bb_error_msg("match2:%d", (!sed_cmd->beg_line && !sed_cmd->end_line
-		//		&& !sed_cmd->beg_match && !sed_cmd->end_match));
-		//bb_error_msg("match3:%d", (sed_cmd->beg_line > 0
-		//	&& (sed_cmd->end_line || sed_cmd->end_match
-		//	    ? (sed_cmd->beg_line <= linenum)
-		//	    : (sed_cmd->beg_line == linenum)
-		//	    )
-		//	)
-		//bb_error_msg("match4:%d", (beg_match(sed_cmd, pattern_space)));
-		//bb_error_msg("match5:%d", (sed_cmd->beg_line == -1 && next_line == NULL));
+		dbg("match1:%d", sed_cmd->in_match);
+		dbg("match2:%d", (!sed_cmd->beg_line && !sed_cmd->end_line
+				&& !sed_cmd->beg_match && !sed_cmd->end_match));
+		dbg("match3:%d", (sed_cmd->beg_line > 0
+			&& (sed_cmd->end_line || sed_cmd->end_match
+			    ? (sed_cmd->beg_line <= linenum)
+			    : (sed_cmd->beg_line == linenum)
+			    )
+			));
+		dbg("match4:%d", (beg_match(sed_cmd, pattern_space)));
+		dbg("match5:%d", (sed_cmd->beg_line == -1 && next_line == NULL));
 
 		/* Are we continuing a previous multi-line match? */
 		sed_cmd->in_match = sed_cmd->in_match
@@ -922,7 +1029,14 @@ static void process_files(void)
 			|| (sed_cmd->beg_line > 0
 			    && (sed_cmd->end_line || sed_cmd->end_match
 				  /* note: even if end is numeric and is < linenum too,
-				   * GNU sed matches! We match too */
+				   * GNU sed matches! We match too, therefore we don't
+				   * check here that linenum <= end.
+				   * Example:
+				   * printf '1\n2\n3\n4\n' | sed -n '1{N;N;d};1p;2,3p;3p;4p'
+				   * first three input lines are deleted;
+				   * 4th line is matched and printed
+				   * by "2,3" (!) and by "4" ranges
+				   */
 				? (sed_cmd->beg_line <= linenum)    /* N,end */
 				: (sed_cmd->beg_line == linenum)    /* N */
 				)
@@ -935,30 +1049,29 @@ static void process_files(void)
 		/* Snapshot the value */
 		matched = sed_cmd->in_match;
 
-		//bb_error_msg("cmd:'%c' matched:%d beg_line:%d end_line:%d linenum:%d",
-		//sed_cmd->cmd, matched, sed_cmd->beg_line, sed_cmd->end_line, linenum);
+		dbg("cmd:'%c' matched:%d beg_line:%d end_line:%d linenum:%d",
+			sed_cmd->cmd, matched, sed_cmd->beg_line, sed_cmd->end_line, linenum);
 
 		/* Is this line the end of the current match? */
 
 		if (matched) {
 			/* once matched, "n,xxx" range is dead, disabling it */
-			if (sed_cmd->beg_line > 0
-			 && !(option_mask32 & OPT_in_place) /* but not for -i */
-			) {
+			if (sed_cmd->beg_line > 0) {
 				sed_cmd->beg_line = -2;
 			}
 			sed_cmd->in_match = !(
 				/* has the ending line come, or is this a single address command? */
-				(sed_cmd->end_line ?
-					sed_cmd->end_line == -1 ?
-						!next_line
+				(sed_cmd->end_line
+					? sed_cmd->end_line == -1
+						? !next_line
 						: (sed_cmd->end_line <= linenum)
 					: !sed_cmd->end_match
 				)
 				/* or does this line matches our last address regex */
 				|| (sed_cmd->end_match && old_matched
 				     && (regexec(sed_cmd->end_match,
-				                 pattern_space, 0, NULL, 0) == 0))
+				                 pattern_space, 0, NULL, 0) == 0)
+				)
 			);
 		}
 
@@ -992,8 +1105,8 @@ static void process_files(void)
 		}
 
 		/* actual sedding */
-		//bb_error_msg("pattern_space:'%s' next_line:'%s' cmd:%c",
-		//pattern_space, next_line, sed_cmd->cmd);
+		dbg("pattern_space:'%s' next_line:'%s' cmd:%c",
+				pattern_space, next_line, sed_cmd->cmd);
 		switch (sed_cmd->cmd) {
 
 		/* Print line number */
@@ -1040,6 +1153,7 @@ static void process_files(void)
 		case 's':
 			if (!do_subst_command(sed_cmd, &pattern_space))
 				break;
+			dbg("do_subst_command succeeded:'%s'", pattern_space);
 			substituted |= 1;
 
 			/* handle p option */
@@ -1348,11 +1462,12 @@ int sed_main(int argc UNUSED_PARAM, char **argv)
 		add_input_file(stdin);
 	} else {
 		int i;
-		FILE *file;
 
 		for (i = 0; argv[i]; i++) {
 			struct stat statbuf;
 			int nonstdoutfd;
+			FILE *file;
+			sed_cmd_t *sed_cmd;
 
 			if (LONE_DASH(argv[i]) && !(opt & OPT_in_place)) {
 				add_input_file(stdin);
@@ -1364,15 +1479,15 @@ int sed_main(int argc UNUSED_PARAM, char **argv)
 				status = EXIT_FAILURE;
 				continue;
 			}
+			add_input_file(file);
 			if (!(opt & OPT_in_place)) {
-				add_input_file(file);
 				continue;
 			}
 
+			/* -i: process each FILE separately: */
+
 			G.outname = xasprintf("%sXXXXXX", argv[i]);
-			nonstdoutfd = mkstemp(G.outname);
-			if (-1 == nonstdoutfd)
-				bb_perror_msg_and_die("can't create temp file %s", G.outname);
+			nonstdoutfd = xmkstemp(G.outname);
 			G.nonstdout = xfdopen_for_write(nonstdoutfd);
 
 			/* Set permissions/owner of output file */
@@ -1381,15 +1496,20 @@ int sed_main(int argc UNUSED_PARAM, char **argv)
 			 * but GNU sed 4.2.1 does not preserve them either */
 			fchmod(nonstdoutfd, statbuf.st_mode);
 			fchown(nonstdoutfd, statbuf.st_uid, statbuf.st_gid);
-			add_input_file(file);
+
 			process_files();
 			fclose(G.nonstdout);
-
 			G.nonstdout = stdout;
+
 			/* unlink(argv[i]); */
 			xrename(G.outname, argv[i]);
 			free(G.outname);
 			G.outname = NULL;
+
+			/* Re-enable disabled range matches */
+			for (sed_cmd = G.sed_cmd_head; sed_cmd; sed_cmd = sed_cmd->next) {
+				sed_cmd->beg_line = sed_cmd->beg_line_orig;
+			}
 		}
 		/* Here, to handle "sed 'cmds' nonexistent_file" case we did:
 		 * if (G.current_input_file >= G.input_file_count)

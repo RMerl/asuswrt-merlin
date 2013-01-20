@@ -4,10 +4,25 @@
  *
  * Copyright (C) 2005 Bernhard Reutner-Fischer
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Based on sysvinit's mountpoint
  */
+
+//usage:#define mountpoint_trivial_usage
+//usage:       "[-q] <[-dn] DIR | -x DEVICE>"
+//usage:#define mountpoint_full_usage "\n\n"
+//usage:       "Check if the directory is a mountpoint\n"
+//usage:     "\n	-q	Quiet"
+//usage:     "\n	-d	Print major/minor device number of the filesystem"
+//usage:     "\n	-n	Print device name of the filesystem"
+//usage:     "\n	-x	Print major/minor device number of the blockdevice"
+//usage:
+//usage:#define mountpoint_example_usage
+//usage:       "$ mountpoint /proc\n"
+//usage:       "/proc is not a mountpoint\n"
+//usage:       "$ mountpoint /sys\n"
+//usage:       "/sys is a mountpoint\n"
 
 #include "libbb.h"
 

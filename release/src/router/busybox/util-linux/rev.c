@@ -3,10 +3,10 @@
  *
  * Copyright (C) 2010 Marek Polacek <mmpolacek@gmail.com>
  *
- * Licensed under GPLv2, see file License in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
-//applet:IF_REV(APPLET(rev, _BB_DIR_BIN, _BB_SUID_DROP))
+//applet:IF_REV(APPLET(rev, BB_DIR_BIN, BB_SUID_DROP))
 
 //kbuild:lib-$(CONFIG_REV) += rev.o
 

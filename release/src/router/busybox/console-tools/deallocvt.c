@@ -5,10 +5,15 @@
  * Copyright (C) 2003 by Tito Ragusa <farmatito@tiscali.it>
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* no options, no getopt */
+
+//usage:#define deallocvt_trivial_usage
+//usage:       "[N]"
+//usage:#define deallocvt_full_usage "\n\n"
+//usage:       "Deallocate unused virtual terminal /dev/ttyN"
 
 #include "libbb.h"
 

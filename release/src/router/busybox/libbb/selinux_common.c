@@ -4,7 +4,7 @@
  *
  * Copyright 2007 KaiGai Kohei <kaigai@kaigai.gr.jp>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #include "libbb.h"
 #include <selinux/context.h>
@@ -53,4 +53,3 @@ void FAST_FUNC selinux_preserve_fcontext(int fdesc)
 	setfscreatecon_or_die(context);
 	freecon(context);
 }
-

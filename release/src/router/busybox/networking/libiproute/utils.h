@@ -17,14 +17,14 @@ extern smallint oneline;
 extern char _SL_;
 
 #ifndef IPPROTO_ESP
-#define IPPROTO_ESP	50
+#define IPPROTO_ESP  50
 #endif
 #ifndef IPPROTO_AH
-#define IPPROTO_AH	51
+#define IPPROTO_AH  51
 #endif
 
 #define SPRINT_BSIZE 64
-#define SPRINT_BUF(x)	char x[SPRINT_BSIZE]
+#define SPRINT_BUF(x)  char x[SPRINT_BSIZE]
 
 extern void incomplete_command(void) NORETURN;
 
@@ -58,9 +58,9 @@ struct ipx_addr {
 
 extern uint32_t get_addr32(char *name);
 extern int get_addr_1(inet_prefix *dst, char *arg, int family);
-/*extern int get_prefix_1(inet_prefix *dst, char *arg, int family);*/
+/*extern void get_prefix_1(inet_prefix *dst, char *arg, int family);*/
 extern int get_addr(inet_prefix *dst, char *arg, int family);
-extern int get_prefix(inet_prefix *dst, char *arg, int family);
+extern void get_prefix(inet_prefix *dst, char *arg, int family);
 
 extern unsigned get_unsigned(char *arg, const char *errmsg);
 extern uint32_t get_u32(char *arg, const char *errmsg);
@@ -77,7 +77,7 @@ extern const char *format_host(int af, int len, void *addr, char *buf, int bufle
 void invarg(const char *, const char *) NORETURN;
 void duparg(const char *, const char *) NORETURN;
 void duparg2(const char *, const char *) NORETURN;
-int inet_addr_match(inet_prefix *a, inet_prefix *b, int bits);
+int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits);
 
 const char *dnet_ntop(int af, const void *addr, char *str, size_t len);
 int dnet_pton(int af, const char *src, void *addr);

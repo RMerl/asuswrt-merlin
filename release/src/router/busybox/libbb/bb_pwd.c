@@ -5,7 +5,7 @@
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  * Copyright (C) 2008 by Tito Ragusa <farmatito@tiscali.it>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
@@ -72,13 +72,13 @@ char* FAST_FUNC gid2group(gid_t gid)
 	return (gr) ? gr->gr_name : NULL;
 }
 
-char* FAST_FUNC uid2uname_utoa(long uid)
+char* FAST_FUNC uid2uname_utoa(uid_t uid)
 {
 	char *name = uid2uname(uid);
 	return (name) ? name : utoa(uid);
 }
 
-char* FAST_FUNC gid2group_utoa(long gid)
+char* FAST_FUNC gid2group_utoa(gid_t gid)
 {
 	char *name = gid2group(gid);
 	return (name) ? name : utoa(gid);

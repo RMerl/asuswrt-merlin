@@ -6,10 +6,22 @@
  *
  * Based on code from util-linux v 2.12r
  * Copyright (c) 1980
- *	The Regents of the University of California.  All rights reserved.
+ * The Regents of the University of California.  All rights reserved.
  *
- * Licensed under GPLv2 or later, see file License in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define script_trivial_usage
+//usage:       "[-afq" IF_SCRIPTREPLAY("t") "] [-c PROG] [OUTFILE]"
+//usage:#define script_full_usage "\n\n"
+//usage:       "	-a	Append output"
+//usage:     "\n	-c PROG	Run PROG, not shell"
+//usage:     "\n	-f	Flush output after each write"
+//usage:     "\n	-q	Quiet"
+//usage:	IF_SCRIPTREPLAY(
+//usage:     "\n	-t	Send timing to stderr"
+//usage:	)
+
 #include "libbb.h"
 
 int script_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
@@ -65,10 +77,7 @@ int script_main(int argc UNUSED_PARAM, char **argv)
 	if (!(opt & OPT_q)) {
 		printf("Script started, file is %s\n", fname);
 	}
-	shell = getenv("SHELL");
-	if (shell == NULL) {
-		shell = DEFAULT_SHELL;
-	}
+	shell = get_shell_name();
 
 	pty = xgetpty(pty_line);
 

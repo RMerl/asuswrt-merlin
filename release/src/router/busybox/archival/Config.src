@@ -32,10 +32,10 @@ config FEATURE_SEAMLESS_GZ
 	  Make tar, rpm, modprobe etc understand .gz data.
 
 config FEATURE_SEAMLESS_Z
-	bool "Make tar and gunzip understand .Z data"
+	bool "tar, rpm, modprobe etc understand .Z data"
 	default n
 	help
-	  Make tar and gunzip understand .Z data.
+	  Make tar, rpm, modprobe etc understand .Z data.
 
 config AR
 	bool "ar"
@@ -187,6 +187,18 @@ config FEATURE_GZIP_LONG_OPTIONS
 	help
 	  Enable use of long options, increases size by about 106 Bytes
 
+config GZIP_FAST
+	int "Trade memory for gzip speed (0:small,slow - 2:fast,big)"
+	default 0
+	range 0 2
+	depends on GZIP
+	help
+	  Enable big memory options for gzip.
+	  0: small buffers, small hash-tables
+	  1: larger buffers, larger hash-tables
+	  2: larger buffers, largest hash-tables
+	  Larger models may give slightly better compression
+
 config LZOP
 	bool "lzop"
 	default y
@@ -194,7 +206,7 @@ config LZOP
 	  Lzop compression/decompresion.
 
 config LZOP_COMPR_HIGH
-	bool "lzop complession levels 7,8,9 (not very useful)"
+	bool "lzop compression levels 7,8,9 (not very useful)"
 	default n
 	depends on LZOP
 	help
@@ -206,7 +218,7 @@ config RPM2CPIO
 	bool "rpm2cpio"
 	default y
 	help
-	  Converts an RPM file into a CPIO archive.
+	  Converts a RPM file into a CPIO archive.
 
 config RPM
 	bool "rpm"
@@ -330,15 +342,12 @@ config UNLZMA
 	  is generally considerably better than that achieved by the bzip2
 	  compressors.
 
-	  The BusyBox unlzma applet is limited to de-compression only.
+	  The BusyBox unlzma applet is limited to decompression only.
 	  On an x86 system, this applet adds about 4K.
-
-	  Unless you have a specific application which requires unlzma, you
-	  should probably say N here.
 
 config FEATURE_LZMA_FAST
 	bool "Optimize unlzma for speed"
-	default y
+	default n
 	depends on UNLZMA
 	help
 	  This option reduces decompression time by about 25% at the cost of

@@ -5,8 +5,22 @@
  * Copyright (C) 1999 by Lineo, inc. and John Beppu
  * Copyright (C) 1999,2000,2001 by John Beppu <beppu@codepoet.org>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define adduser_trivial_usage
+//usage:       "[OPTIONS] USER"
+//usage:#define adduser_full_usage "\n\n"
+//usage:       "Add a user\n"
+//usage:     "\n	-h DIR		Home directory"
+//usage:     "\n	-g GECOS	GECOS field"
+//usage:     "\n	-s SHELL	Login shell"
+//usage:     "\n	-G GRP		Add user to existing group"
+//usage:     "\n	-S		Create a system user"
+//usage:     "\n	-D		Don't assign a password"
+//usage:     "\n	-H		Don't create home directory"
+//usage:     "\n	-u UID		User id"
+
 #include "libbb.h"
 
 #if CONFIG_LAST_SYSTEM_ID < CONFIG_FIRST_SYSTEM_ID
@@ -52,6 +66,7 @@ static void passwd_study(struct passwd *p)
 		}
 		if (p->pw_uid == max) {
 			bb_error_msg_and_die("no %cids left", 'u');
+			/* this format string is reused in adduser and addgroup */
 		}
 		p->pw_uid++;
 	}
@@ -67,22 +82,42 @@ static void passwd_study(struct passwd *p)
 
 static void addgroup_wrapper(struct passwd *p, const char *group_name)
 {
-	char *cmd;
+	char *argv[6];
 
-	if (group_name) /* Add user to existing group */
-		cmd = xasprintf("addgroup '%s' '%s'", p->pw_name, group_name);
-	else    /* Add user to his own group with the first free gid found in passwd_study */
-		cmd = xasprintf("addgroup -g %u '%s'", (unsigned)p->pw_gid, p->pw_name);
-	/* Warning: to be compatible with external addgroup programs we should use --gid instead */
-	system(cmd);
-	free(cmd);
+	argv[0] = (char*)"addgroup";
+	if (group_name) {
+		/* Add user to existing group */
+		argv[1] = (char*)"--";
+		argv[2] = p->pw_name;
+		argv[3] = (char*)group_name;
+		argv[4] = NULL;
+	} else {
+		/* Add user to his own group with the first free gid
+		 * found in passwd_study.
+		 */
+#if ENABLE_FEATURE_ADDGROUP_LONG_OPTIONS || !ENABLE_ADDGROUP
+		/* We try to use --gid, not -g, because "standard" addgroup
+		 * has no short option -g, it has only long --gid.
+		 */
+		argv[1] = (char*)"--gid";
+#else
+		/* Breaks if system in fact does NOT use busybox addgroup */
+		argv[1] = (char*)"-g";
+#endif
+		argv[2] = utoa(p->pw_gid);
+		argv[3] = (char*)"--";
+		argv[4] = p->pw_name;
+		argv[5] = NULL;
+	}
+
+	spawn_and_wait(argv);
 }
 
-static void passwd_wrapper(const char *login) NORETURN;
+static void passwd_wrapper(const char *login_name) NORETURN;
 
-static void passwd_wrapper(const char *login)
+static void passwd_wrapper(const char *login_name)
 {
-	BB_EXECLP("passwd", "passwd", login, NULL);
+	BB_EXECLP("passwd", "passwd", "--", login_name, NULL);
 	bb_error_msg_and_die("can't execute passwd, you must set password manually");
 }
 
@@ -123,7 +158,8 @@ int adduser_main(int argc UNUSED_PARAM, char **argv)
 	}
 
 	pw.pw_gecos = (char *)"Linux User,,,";
-	pw.pw_shell = (char *)DEFAULT_SHELL;
+	/* We assume that newly created users "inherit" root's shell setting */
+	pw.pw_shell = (char *)get_shell_name();
 	pw.pw_dir = NULL;
 
 	/* exactly one non-option arg */
@@ -203,9 +239,11 @@ int adduser_main(int argc UNUSED_PARAM, char **argv)
 		if (mkdir_err == 0) {
 			/* New home. Copy /etc/skel to it */
 			const char *args[] = {
-				"chown", "-R",
+				"chown",
+				"-R",
 				xasprintf("%u:%u", (int)pw.pw_uid, (int)pw.pw_gid),
-				pw.pw_dir, NULL
+				pw.pw_dir,
+				NULL
 			};
 			/* Be silent on any errors (like: no /etc/skel) */
 			logmode = LOGMODE_NONE;

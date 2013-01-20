@@ -2,7 +2,7 @@
 /*
  * ether-wake.c - Send a magic packet to wake up sleeping machines.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Author:      Donald Becker, http://www.scyld.com/"; http://www.scyld.com/wakeonlan.html
  * Busybox port: Christian Volkmann <haveaniceday@online.de>
@@ -64,13 +64,20 @@
  *   filter.  That configuration consumes more power.
 */
 
-
-#include <netpacket/packet.h>
-#include <net/ethernet.h>
-#include <netinet/ether.h>
-#include <linux/if.h>
+//usage:#define ether_wake_trivial_usage
+//usage:       "[-b] [-i iface] [-p aa:bb:cc:dd[:ee:ff]] MAC"
+//usage:#define ether_wake_full_usage "\n\n"
+//usage:       "Send a magic packet to wake up sleeping machines.\n"
+//usage:       "MAC must be a station address (00:11:22:33:44:55) or\n"
+//usage:       "a hostname with a known 'ethers' entry.\n"
+//usage:     "\n	-b		Send wake-up packet to the broadcast address"
+//usage:     "\n	-i iface	Interface to use (default eth0)"
+//usage:     "\n	-p pass		Append four or six byte password PW to the packet"
 
 #include "libbb.h"
+#include <netpacket/packet.h>
+#include <netinet/ether.h>
+#include <linux/if.h>
 
 /* Note: PF_INET, SOCK_DGRAM, IPPROTO_UDP would allow SIOCGIFHWADDR to
  * work as non-root, but we need SOCK_PACKET to specify the Ethernet
@@ -189,12 +196,12 @@ int ether_wake_main(int argc UNUSED_PARAM, char **argv)
 	unsigned flags;
 	unsigned char wol_passwd[6];
 	int wol_passwd_sz = 0;
-	int s;						/* Raw socket */
+	int s;  /* Raw socket */
 	int pktsize;
 	unsigned char outpack[1000];
 
 	struct ether_addr eaddr;
-	struct whereto_t whereto;	/* who to wake up */
+	struct whereto_t whereto;  /* who to wake up */
 
 	/* handle misc user options */
 	opt_complementary = "=1";

@@ -1,9 +1,44 @@
 /*
-** Licensed under the GPL v2, see the file LICENSE in this tarball
-**
-** Based on nanotop.c from floppyfw project
-**
-** Contact me: vda.linux@googlemail.com */
+ * Licensed under GPLv2, see file LICENSE in this source tree.
+ *
+ * Based on nanotop.c from floppyfw project
+ *
+ * Contact me: vda.linux@googlemail.com
+ */
+
+//config:config NMETER
+//config:	bool "nmeter"
+//config:	default y
+//config:	help
+//config:	  Prints selected system stats continuously, one line per update.
+
+//applet:IF_NMETER(APPLET(nmeter, BB_DIR_USR_BIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_NMETER) += nmeter.o
+
+//usage:#define nmeter_trivial_usage
+//usage:       "[-d MSEC] FORMAT_STRING"
+//usage:#define nmeter_full_usage "\n\n"
+//usage:       "Monitor system in real time"
+//usage:     "\n"
+//usage:     "\n -d MSEC	Milliseconds between updates (default:1000)"
+//usage:     "\n"
+//usage:     "\nFormat specifiers:"
+//usage:     "\n %Nc or %[cN]	CPU. N - bar size (default:10)"
+//usage:     "\n		(displays: S:system U:user N:niced D:iowait I:irq i:softirq)"
+//usage:     "\n %[nINTERFACE]	Network INTERFACE"
+//usage:     "\n %m		Allocated memory"
+//usage:     "\n %[mf]		Free memory"
+//usage:     "\n %[mt]		Total memory"
+//usage:     "\n %s		Allocated swap"
+//usage:     "\n %f		Number of used file descriptors"
+//usage:     "\n %Ni		Total/specific IRQ rate"
+//usage:     "\n %x		Context switch rate"
+//usage:     "\n %p		Forks"
+//usage:     "\n %[pn]		# of processes"
+//usage:     "\n %b		Block io"
+//usage:     "\n %Nt		Time (with N decimal points)"
+//usage:     "\n %r		Print <cr> instead of <lf> at EOL"
 
 //TODO:
 // simplify code
@@ -239,30 +274,56 @@ static int rdval_loadavg(const char* p, ullong *vec, ...)
 //   1  2 3   4	 5        6(rd)  7      8     9     10(wr) 11     12 13     14
 //   3  0 hda 51292 14441 841783 926052 25717 79650 843256 3029804 0 148459 3956933
 //   3  1 hda1 0 0 0 0 <- ignore if only 4 fields
+// Linux 3.0 (maybe earlier) started printing full stats for hda1 too.
+// Had to add code which skips such devices.
 static int rdval_diskstats(const char* p, ullong *vec)
 {
-	ullong rd = rd; // for compiler
-	int indexline = 0;
+	char devname[32];
+	unsigned devname_len = 0;
+	int value_idx = 0;
+
 	vec[0] = 0;
 	vec[1] = 0;
 	while (1) {
-		indexline++;
-		while (*p == ' ' || *p == '\t') p++;
-		if (*p == '\0') break;
+		value_idx++;
+		while (*p == ' ' || *p == '\t')
+			p++;
+		if (*p == '\0')
+			break;
 		if (*p == '\n') {
-			indexline = 0;
+			value_idx = 0;
 			p++;
 			continue;
 		}
-		if (indexline == 6) {
-			rd = strtoull(p, NULL, 10);
-		} else if (indexline == 10) {
-			vec[0] += rd;  // TODO: *sectorsize (don't know how to find out sectorsize)
+		if (value_idx == 3) {
+			char *end = strchrnul(p, ' ');
+			/* If this a hda1-like device (same prefix as last one + digit)? */
+			if (devname_len && strncmp(devname, p, devname_len) == 0 && isdigit(p[devname_len])) {
+				p = end;
+				goto skip_line; /* skip entire line */
+			}
+			/* It is not. Remember the name for future checks */
+			devname_len = end - p;
+			if (devname_len > sizeof(devname)-1)
+				devname_len = sizeof(devname)-1;
+			strncpy(devname, p, devname_len);
+			/* devname[devname_len] = '\0'; - not really needed */
+			p = end;
+		} else
+		if (value_idx == 6) {
+			// TODO: *sectorsize (don't know how to find out sectorsize)
+			vec[0] += strtoull(p, NULL, 10);
+		} else
+		if (value_idx == 10) {
+			// TODO: *sectorsize (don't know how to find out sectorsize)
 			vec[1] += strtoull(p, NULL, 10);
-			while (*p != '\n' && *p != '\0') p++;
+ skip_line:
+			while (*p != '\n' && *p != '\0')
+				p++;
 			continue;
 		}
-		while (*p > ' ') p++; // skip over value
+		while ((unsigned char)(*p) > ' ') // skip over value
+			p++;
 	}
 	return 0;
 }
@@ -422,7 +483,7 @@ static s_stat* init_int(const char *param)
 	if (param[0] == '\0') {
 		s->no = 1;
 	} else {
-		int n = xatoi_u(param);
+		int n = xatoi_positive(param);
 		s->no = n + 2;
 	}
 	return (s_stat*)s;
@@ -768,6 +829,7 @@ static void FAST_FUNC collect_info(s_stat *s)
 
 typedef s_stat* init_func(const char *param);
 
+// Deprecated %NNNd is to be removed, -d MSEC supersedes it
 static const char options[] ALIGN1 = "ncmsfixptbdr";
 static init_func *const init_functions[] = {
 	init_if,
@@ -791,23 +853,28 @@ int nmeter_main(int argc UNUSED_PARAM, char **argv)
 	s_stat *first = NULL;
 	s_stat *last = NULL;
 	s_stat *s;
+	char *opt_d;
 	char *cur, *prev;
 
 	INIT_G();
 
 	xchdir("/proc");
 
-	if (!argv[1])
-		bb_show_usage();
-
 	if (open_read_close("version", buf, sizeof(buf)-1) > 0) {
 		buf[sizeof(buf)-1] = '\0';
 		is26 = (strstr(buf, " 2.4.") == NULL);
 	}
 
-	// Can use argv[1] directly, but this will mess up
+	if (getopt32(argv, "d:", &opt_d))
+		init_delay(opt_d);
+	argv += optind;
+
+	if (!argv[0])
+		bb_show_usage();
+
+	// Can use argv[0] directly, but this will mess up
 	// parameters as seen by e.g. ps. Making a copy...
-	cur = xstrdup(argv[1]);
+	cur = xstrdup(argv[0]);
 	while (1) {
 		char *param, *p;
 		prev = cur;

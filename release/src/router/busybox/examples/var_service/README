@@ -1,0 +1,59 @@
+In many cases, network configuration makes it necessary to run several daemons:
+dhcp, zeroconf, ppp, openvpn and such. They need to be controlled,
+and in many cases you also want to babysit them. runsvdir is a good tool for this.
+examples/var_service directory provides a few examples. It is meant to be used
+this way: copy it somewhere (say, /var/service) and run something like
+
+env - PATH=... <other vars=...> runsvdir /var/service &
+
+from one of system startup scripts. (Google "man runsvdir" and "man runsv"
+for more info about these tools).
+
+Some existing examples:
+
+var_service/dhcp_if -
+controls a udhcpc instance which provides dhpc-assigned IP
+address on interface named "if". Copy/rename this directory as needed to run
+udhcpc on other interfaces (var_service/dhcp_if/run script uses _foo suffix
+of the parent directory as interface name). When IP address is obtained or lost,
+var_service/dhcp_if/dhcp_handler is run. It saves new config data to
+/var/run/service/fw/dhcp_if.ipconf and (re)starts /var/service/fw service.
+This example can be used as a template for other dynamic network link services
+(ppp/vpn/zcip).
+
+var_service/ifplugd_if -
+watches link status of interface if. Downs and ups /var/service/dhcp_if
+service accordingly. In effect, it allows you to unplug/plug-to-different-network
+and have your IP properly re-negotiated at once.
+
+var_service/dhcp_if_pinger -
+Uses var_service/dhcp_if's data (/var/service/dhcp_if/dhcp_if.out file)
+to determine router IP. Pings it. If ping fails, restarts /var/service/dhcp_if
+service. Basically, an example of watchdog service for networks
+which are not reliable and need babysitting.
+
+var_service/fw -
+A *one-shot* service which reconfigures network based on current known state
+of ALL interfaces. Uses conf/*.ipconf (static config) and /var/run/service/fw/*.ipconf
+(dynamic config from dhcp/ppp/vpn/etc) to determine what to do.
+One-shot-ness of this service means that it shuts itself off after single run.
+IOW: it is not a constantly running daemon sort of thing.
+It starts, it configures the network, it shuts down, all done
+(unlike infamous NetworkManagers which sit in RAM forever, doing hell knows what).
+
+However, any dhcp/ppp/vpn or similar service can restart it anytime
+when it senses the change in network configuration.
+This even works while fw service runs: if dhcp signals fw to (re)start
+while fw runs, fw will not stop after its execution, but will re-execute once,
+picking up dhcp's new configuration.
+This is achieved very simply by having
+# Make ourself one-shot
+sv o .
+at the very beginning of fw/run script, not at the end.
+Therefore, any "sv u /var/run/service/fw" command by any other
+script "undoes" o(ne-shot) command if fw still runs, thus
+runsv will rerun it; or start it in a normal way if fw is not running.
+
+System administrators are expected to edit fw/run script, since
+network configuration needs are likely to be very complex and different
+for non-trivial installations.

@@ -1,8 +1,10 @@
 #!/bin/sh
 # Copyright 2008 by Denys Vlasenko
-# Licensed under GPL v2, see file LICENSE for details.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 . ./testing.sh
+
+umask 022
 
 # ls -ln shows date. Need to remove that, it's variable.
 # sed: coalesce spaces
@@ -114,6 +116,16 @@ link
 " "" ""
 SKIP=
 
+# avoid 'not created: newer or same age file exists' message for directories
+rm -rf cpio.testdir cpio.testdir2 2>/dev/null
+mkdir cpio.testdir
+testing "cpio extracts in existing directory" \
+"$ECHO -ne '$hexdump' | bzcat | cpio -id 2>&1; echo \$?" \
+"\
+1 blocks
+0
+" "" ""
+SKIP=
 
 # Clean up
 rm -rf cpio.testdir cpio.testdir2 2>/dev/null

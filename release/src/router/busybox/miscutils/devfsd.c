@@ -1,6 +1,6 @@
 /* vi: set sw=4 ts=4: */
 /*
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /*
@@ -53,6 +53,21 @@
     The postal address is:
       Richard Gooch, c/o ATNF, P. O. Box 76, Epping, N.S.W., 2121, Australia.
 */
+
+//usage:#define devfsd_trivial_usage
+//usage:       "mntpnt [-v]" IF_DEVFSD_FG_NP("[-fg][-np]")
+//usage:#define devfsd_full_usage "\n\n"
+//usage:       "Manage devfs permissions and old device name symlinks\n"
+//usage:     "\n	mntpnt	The mount point where devfs is mounted"
+//usage:     "\n	-v	Print the protocol version numbers for devfsd"
+//usage:     "\n		and the kernel-side protocol version and exit"
+//usage:	IF_DEVFSD_FG_NP(
+//usage:     "\n	-fg	Run in foreground"
+//usage:     "\n	-np	Exit after parsing the configuration file"
+//usage:     "\n		and processing synthetic REGISTER events,"
+//usage:     "\n		don't poll for events"
+//usage:	)
+
 #include "libbb.h"
 #include "xregex.h"
 #include <syslog.h>
@@ -75,7 +90,7 @@
 
 /* Various defines taken from linux/devfs_fs.h */
 #define DEVFSD_PROTOCOL_REVISION_KERNEL  5
-#define	DEVFSD_IOCTL_BASE	'd'
+#define DEVFSD_IOCTL_BASE	'd'
 /*  These are the various ioctls  */
 #define DEVFSDIOC_GET_PROTO_REV         _IOR(DEVFSD_IOCTL_BASE, 0, int)
 #define DEVFSDIOC_SET_EVENT_MASK        _IOW(DEVFSD_IOCTL_BASE, 2, int)

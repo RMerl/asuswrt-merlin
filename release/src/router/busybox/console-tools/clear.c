@@ -4,8 +4,14 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define clear_trivial_usage
+//usage:       ""
+//usage:#define clear_full_usage "\n\n"
+//usage:       "Clear screen"
+
 #include "libbb.h"
 
 int clear_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;

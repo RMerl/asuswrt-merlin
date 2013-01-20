@@ -28,8 +28,69 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Busyboxed by Denys Vlasenko <vda.linux@googlemail.com> */
 /* Dependencies on runit_lib.c removed */
 
+//usage:#define chpst_trivial_usage
+//usage:       "[-vP012] [-u USER[:GRP]] [-U USER[:GRP]] [-e DIR]\n"
+//usage:       "	[-/ DIR] [-n NICE] [-m BYTES] [-d BYTES] [-o N]\n"
+//usage:       "	[-p N] [-f BYTES] [-c BYTES] PROG ARGS"
+//usage:#define chpst_full_usage "\n\n"
+//usage:       "Change the process state, run PROG\n"
+//usage:     "\n	-u USER[:GRP]	Set uid and gid"
+//usage:     "\n	-U USER[:GRP]	Set $UID and $GID in environment"
+//usage:     "\n	-e DIR		Set environment variables as specified by files"
+//usage:     "\n			in DIR: file=1st_line_of_file"
+//usage:     "\n	-/ DIR		Chroot to DIR"
+//usage:     "\n	-n NICE		Add NICE to nice value"
+//usage:     "\n	-m BYTES	Same as -d BYTES -s BYTES -l BYTES"
+//usage:     "\n	-d BYTES	Limit data segment"
+//usage:     "\n	-o N		Limit number of open files per process"
+//usage:     "\n	-p N		Limit number of processes per uid"
+//usage:     "\n	-f BYTES	Limit output file sizes"
+//usage:     "\n	-c BYTES	Limit core file size"
+//usage:     "\n	-v		Verbose"
+//usage:     "\n	-P		Create new process group"
+//usage:     "\n	-0		Close stdin"
+//usage:     "\n	-1		Close stdout"
+//usage:     "\n	-2		Close stderr"
+//usage:
+//usage:#define envdir_trivial_usage
+//usage:       "DIR PROG ARGS"
+//usage:#define envdir_full_usage "\n\n"
+//usage:       "Set various environment variables as specified by files\n"
+//usage:       "in the directory DIR, run PROG"
+//usage:
+//usage:#define envuidgid_trivial_usage
+//usage:       "USER PROG ARGS"
+//usage:#define envuidgid_full_usage "\n\n"
+//usage:       "Set $UID to USER's uid and $GID to USER's gid, run PROG"
+//usage:
+//usage:#define setuidgid_trivial_usage
+//usage:       "USER PROG ARGS"
+//usage:#define setuidgid_full_usage "\n\n"
+//usage:       "Set uid and gid to USER's uid and gid, drop supplementary group ids,\n"
+//usage:       "run PROG"
+//usage:
+//usage:#define softlimit_trivial_usage
+//usage:       "[-a BYTES] [-m BYTES] [-d BYTES] [-s BYTES] [-l BYTES]\n"
+//usage:       "	[-f BYTES] [-c BYTES] [-r BYTES] [-o N] [-p N] [-t N]\n"
+//usage:       "	PROG ARGS"
+//usage:#define softlimit_full_usage "\n\n"
+//usage:       "Set soft resource limits, then run PROG\n"
+//usage:     "\n	-a BYTES	Limit total size of all segments"
+//usage:     "\n	-m BYTES	Same as -d BYTES -s BYTES -l BYTES -a BYTES"
+//usage:     "\n	-d BYTES	Limit data segment"
+//usage:     "\n	-s BYTES	Limit stack segment"
+//usage:     "\n	-l BYTES	Limit locked memory size"
+//usage:     "\n	-o N		Limit number of open files per process"
+//usage:     "\n	-p N		Limit number of processes per uid"
+//usage:     "\nOptions controlling file sizes:"
+//usage:     "\n	-f BYTES	Limit output file sizes"
+//usage:     "\n	-c BYTES	Limit core file size"
+//usage:     "\nEfficiency opts:"
+//usage:     "\n	-r BYTES	Limit resident set size"
+//usage:     "\n	-t N		Limit CPU time, process receives"
+//usage:     "\n			a SIGXCPU after N seconds"
+
 #include "libbb.h"
-#include <dirent.h>
 
 /*
 Five applets here: chpst, envdir, envuidgid, setuidgid, softlimit.
@@ -123,10 +184,10 @@ static NOINLINE void edir(const char *directory_name)
 			if ((errno == EISDIR) && directory_name) {
 				if (option_mask32 & OPT_v)
 					bb_perror_msg("warning: %s/%s is a directory",
-						directory_name,	d->d_name);
+						directory_name, d->d_name);
 				continue;
-			} else
-				bb_perror_msg_and_die("open %s/%s",
+			}
+			bb_perror_msg_and_die("open %s/%s",
 						directory_name, d->d_name);
 		}
 		size = full_read(fd, buf, sizeof(buf)-1);
@@ -344,22 +405,19 @@ int chpst_main(int argc UNUSED_PARAM, char **argv)
 	if (opt & OPT_e)
 		edir(env_dir);
 
-	// FIXME: chrooted jail must have /etc/passwd if we move this after chroot!
-	// OTOH chroot fails for non-roots!
-	// SOLUTION: cache uid/gid before chroot, apply uid/gid after
+	if (opt & (OPT_u|OPT_U))
+		xget_uidgid(&ugid, set_user);
+
+	// chrooted jail must have /etc/passwd if we move this after chroot.
+	// OTOH chroot fails for non-roots.
+	// Solution: cache uid/gid before chroot, apply uid/gid after.
 	if (opt & OPT_U) {
-		xget_uidgid(&ugid, env_user);
 		xsetenv("GID", utoa(ugid.gid));
 		xsetenv("UID", utoa(ugid.uid));
 	}
 
-	if (opt & OPT_u) {
-		xget_uidgid(&ugid, set_user);
-	}
-
 	if (opt & OPT_root) {
-		xchdir(root);
-		xchroot(".");
+		xchroot(root);
 	}
 
 	if (opt & OPT_u) {

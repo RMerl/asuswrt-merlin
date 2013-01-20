@@ -7,8 +7,14 @@
  *
  * Copyright (C) 2007 by Denys Vlasenko <vda.linux@googlemail.com>
  *
- * Licensed under the GPL v2, see the file LICENSE in this tarball.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define ttysize_trivial_usage
+//usage:       "[w] [h]"
+//usage:#define ttysize_full_usage "\n\n"
+//usage:       "Print dimension(s) of stdin's terminal, on error return 80x25"
+
 #include "libbb.h"
 
 int ttysize_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;

@@ -1,2 +1,1 @@
 test x$(basename $(pwd)) = x$(busybox basename $(pwd))
-

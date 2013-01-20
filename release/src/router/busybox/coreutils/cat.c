@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2003  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under GPLv2, see file License in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 /* BB_AUDIT SUSv3 compliant */
@@ -21,6 +21,15 @@
 //config:	help
 //config:	  cat is used to concatenate files and print them to the standard
 //config:	  output. Enable this option if you wish to enable the 'cat' utility.
+
+//usage:#define cat_trivial_usage
+//usage:       "[FILE]..."
+//usage:#define cat_full_usage "\n\n"
+//usage:       "Concatenate FILEs and print them to stdout"
+//usage:
+//usage:#define cat_example_usage
+//usage:       "$ cat /proc/uptime\n"
+//usage:       "110716.72 17.67"
 
 #include "libbb.h"
 

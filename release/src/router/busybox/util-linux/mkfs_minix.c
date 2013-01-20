@@ -4,7 +4,7 @@
  *
  * (C) 1991 Linus Torvalds.
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 /*
@@ -62,6 +62,16 @@
  * Modified for BusyBox by Erik Andersen <andersen@debian.org> --
  *	removed getopt based parser and added a hand rolled one.
  */
+
+//usage:#define mkfs_minix_trivial_usage
+//usage:       "[-c | -l FILE] [-nXX] [-iXX] BLOCKDEV [KBYTES]"
+//usage:#define mkfs_minix_full_usage "\n\n"
+//usage:       "Make a MINIX filesystem\n"
+//usage:     "\n	-c		Check device for bad blocks"
+//usage:     "\n	-n [14|30]	Maximum length of filenames"
+//usage:     "\n	-i INODES	Number of inodes for the filesystem"
+//usage:     "\n	-l FILE		Read bad blocks list from FILE"
+//usage:     "\n	-v		Make version 2 filesystem"
 
 #include "libbb.h"
 #include <mntent.h>
@@ -686,8 +696,7 @@ int mkfs_minix_main(int argc UNUSED_PARAM, char **argv)
 		bb_error_msg_and_die("can't format mounted filesystem");
 
 	xmove_fd(xopen(G.device_name, O_RDWR), dev_fd);
-	if (fstat(dev_fd, &statbuf) < 0)
-		bb_error_msg_and_die("can't stat '%s'", G.device_name);
+	xfstat(dev_fd, &statbuf, G.device_name);
 	if (!S_ISBLK(statbuf.st_mode))
 		opt &= ~1; // clear -c (check)
 

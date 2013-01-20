@@ -4,7 +4,7 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
@@ -27,9 +27,10 @@ static int i64c(int i)
 	return ('a' - 38 + i);
 }
 
-int FAST_FUNC crypt_make_salt(char *p, int cnt, int x)
+int FAST_FUNC crypt_make_salt(char *p, int cnt /*, int x */)
 {
-	x += getpid() + time(NULL);
+	/* was: x += ... */
+	int x = getpid() + monotonic_us();
 	do {
 		/* x = (x*1664525 + 1013904223) % 2^32 generator is lame
 		 * (low-order bit is not "random", etc...),
@@ -45,6 +46,26 @@ int FAST_FUNC crypt_make_salt(char *p, int cnt, int x)
 	} while (--cnt);
 	*p = '\0';
 	return x;
+}
+
+char* FAST_FUNC crypt_make_pw_salt(char salt[MAX_PW_SALT_LEN], const char *algo)
+{
+	int len = 2/2;
+	char *salt_ptr = salt;
+	if (algo[0] != 'd') { /* not des */
+		len = 8/2; /* so far assuming md5 */
+		*salt_ptr++ = '$';
+		*salt_ptr++ = '1';
+		*salt_ptr++ = '$';
+#if !ENABLE_USE_BB_CRYPT || ENABLE_USE_BB_CRYPT_SHA
+		if (algo[0] == 's') { /* sha */
+			salt[1] = '5' + (strcmp(algo, "sha512") == 0);
+			len = 16/2;
+		}
+#endif
+	}
+	crypt_make_salt(salt_ptr, len);
+	return salt_ptr;
 }
 
 #if ENABLE_USE_BB_CRYPT

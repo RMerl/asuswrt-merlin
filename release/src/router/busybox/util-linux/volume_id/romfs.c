@@ -47,7 +47,7 @@ int FAST_FUNC volume_id_probe_romfs(struct volume_id *id /*,uint64_t off*/)
 		}
 
 //		volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
-//		id->type = "romfs";
+		IF_FEATURE_BLKID_TYPE(id->type = "romfs";)
 		return 0;
 	}
 

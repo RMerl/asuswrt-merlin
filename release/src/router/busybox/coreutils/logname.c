@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2000  Edward Betts <edward@debian.org>.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* BB_AUDIT SUSv3 compliant */
@@ -19,6 +19,15 @@
  * correct course of action wrt SUSv3 for a failing getlogin() is
  * a diagnostic message and an error return.
  */
+
+//usage:#define logname_trivial_usage
+//usage:       ""
+//usage:#define logname_full_usage "\n\n"
+//usage:       "Print the name of the current user"
+//usage:
+//usage:#define logname_example_usage
+//usage:       "$ logname\n"
+//usage:       "root\n"
 
 #include "libbb.h"
 

@@ -11,7 +11,7 @@
  * Modified to be able to add or delete users, groups and users to/from groups
  * by Tito Ragusa <farmatito@tiscali.it>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #include "libbb.h"
 
@@ -22,7 +22,7 @@ static void check_selinux_update_passwd(const char *username)
 	char *seuser;
 
 	if (getuid() != (uid_t)0 || is_selinux_enabled() == 0)
-		return;		/* No need to check */
+		return;  /* No need to check */
 
 	if (getprevcon_raw(&context) < 0)
 		bb_perror_msg_and_die("getprevcon failed");
@@ -58,7 +58,7 @@ static void check_selinux_update_passwd(const char *username)
  6) delete a user from a group: update_passwd(FILE, GROUP, NULL, MEMBER)
     only if CONFIG_FEATURE_DEL_USER_FROM_GROUP=y and member != NULL
 
- 7) change user's passord: update_passwd(FILE, USER, NEW_PASSWD, NULL)
+ 7) change user's password: update_passwd(FILE, USER, NEW_PASSWD, NULL)
     only if CONFIG_PASSWD=y and applet_name[0] == 'p' like in passwd
     or if CONFIG_CHPASSWD=y and applet_name[0] == 'c' like in chpasswd
 
@@ -133,7 +133,7 @@ int FAST_FUNC update_passwd(const char *filename,
 	goto close_old_fp;
 
  created:
-	if (!fstat(old_fd, &sb)) {
+	if (fstat(old_fd, &sb) == 0) {
 		fchmod(new_fd, sb.st_mode & 0777); /* ignore errors */
 		fchown(new_fd, sb.st_uid, sb.st_gid);
 	}

@@ -5,8 +5,44 @@
  * Copyright (C) 1995, 1996 by Bruce Perens <bruce@pixar.com>.
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define kill_trivial_usage
+//usage:       "[-l] [-SIG] PID..."
+//usage:#define kill_full_usage "\n\n"
+//usage:       "Send a signal (default: TERM) to given PIDs\n"
+//usage:     "\n	-l	List all signal names and numbers"
+/* //usage:  "\n	-s SIG	Yet another way of specifying SIG" */
+//usage:
+//usage:#define kill_example_usage
+//usage:       "$ ps | grep apache\n"
+//usage:       "252 root     root     S [apache]\n"
+//usage:       "263 www-data www-data S [apache]\n"
+//usage:       "264 www-data www-data S [apache]\n"
+//usage:       "265 www-data www-data S [apache]\n"
+//usage:       "266 www-data www-data S [apache]\n"
+//usage:       "267 www-data www-data S [apache]\n"
+//usage:       "$ kill 252\n"
+//usage:
+//usage:#define killall_trivial_usage
+//usage:       "[-l] [-q] [-SIG] PROCESS_NAME..."
+//usage:#define killall_full_usage "\n\n"
+//usage:       "Send a signal (default: TERM) to given processes\n"
+//usage:     "\n	-l	List all signal names and numbers"
+/* //usage:  "\n	-s SIG	Yet another way of specifying SIG" */
+//usage:     "\n	-q	Don't complain if no processes were killed"
+//usage:
+//usage:#define killall_example_usage
+//usage:       "$ killall apache\n"
+//usage:
+//usage:#define killall5_trivial_usage
+//usage:       "[-l] [-SIG] [-o PID]..."
+//usage:#define killall5_full_usage "\n\n"
+//usage:       "Send a signal (default: TERM) to all processes outside current session\n"
+//usage:     "\n	-l	List all signal names and numbers"
+//usage:     "\n	-o PID	Don't signal this PID"
+/* //usage:  "\n	-s SIG	Yet another way of specifying SIG" */
 
 #include "libbb.h"
 
@@ -127,15 +163,18 @@ int kill_main(int argc, char **argv)
 		/* Find out our session id */
 		sid = getsid(pid);
 		/* Stop all processes */
-		kill(-1, SIGSTOP);
+		if (signo != SIGSTOP && signo != SIGCONT)
+			kill(-1, SIGSTOP);
 		/* Signal all processes except those in our session */
-		while ((p = procps_scan(p, PSSCAN_PID|PSSCAN_SID))) {
+		while ((p = procps_scan(p, PSSCAN_PID|PSSCAN_SID)) != NULL) {
 			int i;
 
 			if (p->sid == (unsigned)sid
 			 || p->pid == (unsigned)pid
-			 || p->pid == 1)
+			 || p->pid == 1
+			) {
 				continue;
+			}
 
 			/* All remaining args must be -o PID options.
 			 * Check p->pid against them. */
@@ -153,7 +192,7 @@ int kill_main(int argc, char **argv)
 					arg = argv[i];
 				omit = bb_strtoi(arg, NULL, 10);
 				if (errno) {
-					bb_error_msg("bad pid '%s'", arg);
+					bb_error_msg("invalid number '%s'", arg);
 					ret = 1;
 					goto resume;
 				}
@@ -165,7 +204,8 @@ int kill_main(int argc, char **argv)
 		}
  resume:
 		/* And let them continue */
-		kill(-1, SIGCONT);
+		if (signo != SIGSTOP && signo != SIGCONT)
+			kill(-1, SIGCONT);
 		return ret;
 	}
 
@@ -206,17 +246,38 @@ int kill_main(int argc, char **argv)
 
 	/* Looks like they want to do a kill. Do that */
 	while (arg) {
-		/* Support shell 'space' trick */
-		if (arg[0] == ' ')
-			arg++;
+#if ENABLE_ASH || ENABLE_HUSH
+		/*
+		 * We need to support shell's "hack formats" of
+		 * " -PRGP_ID" (yes, with a leading space)
+		 * and " PID1 PID2 PID3" (with degenerate case "")
+		 */
+		while (*arg != '\0') {
+			char *end;
+			if (*arg == ' ')
+				arg++;
+			pid = bb_strtoi(arg, &end, 10);
+			if (errno && (errno != EINVAL || *end != ' ')) {
+				bb_error_msg("invalid number '%s'", arg);
+				errors++;
+				break;
+			}
+			if (kill(pid, signo) != 0) {
+				bb_perror_msg("can't kill pid %d", (int)pid);
+				errors++;
+			}
+			arg = end; /* can only point to ' ' or '\0' now */
+		}
+#else
 		pid = bb_strtoi(arg, NULL, 10);
 		if (errno) {
-			bb_error_msg("bad pid '%s'", arg);
+			bb_error_msg("invalid number '%s'", arg);
 			errors++;
 		} else if (kill(pid, signo) != 0) {
 			bb_perror_msg("can't kill pid %d", (int)pid);
 			errors++;
 		}
+#endif
 		arg = *++argv;
 	}
 	return errors;

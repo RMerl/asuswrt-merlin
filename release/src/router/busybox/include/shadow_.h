@@ -37,11 +37,6 @@ struct spwd {
 	unsigned long sp_flag;  /* Reserved */
 };
 
-/* Paths to the user database files */
-#ifndef _PATH_SHADOW
-#define _PATH_SHADOW "/etc/shadow"
-#endif
-
 #define setspent    bb_internal_setspent
 #define endspent    bb_internal_endspent
 #define getspent    bb_internal_getspent

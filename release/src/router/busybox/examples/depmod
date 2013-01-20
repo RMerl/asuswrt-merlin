@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2008 by Vladimir Dronnikov <dronnikov@gmail.com>
 #
-# Licensed under GPLv2
+# Licensed under GPLv2, see file LICENSE in this source tree.
 #
 
 local BASE="${1:-/usr/lib/modules}"

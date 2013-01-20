@@ -1,15 +1,85 @@
 /* vi: set sw=4 ts=4: */
 /*
- * "ip" utility frontend.
- *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Authors: Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
  * Changes:
- * Rani Assaf <rani@magic.metawire.com> 980929:	resolve addresses
+ * Rani Assaf <rani@magic.metawire.com> 980929: resolve addresses
  * Bernhard Reutner-Fischer rewrote to use index_in_substr_array
  */
+
+/* would need to make the " | " optional depending on more than one selected: */
+//usage:#define ip_trivial_usage
+//usage:       "[OPTIONS] {"
+//usage:	IF_FEATURE_IP_ADDRESS("address | ")
+//usage:	IF_FEATURE_IP_ROUTE("route | ")
+//usage:	IF_FEATURE_IP_LINK("link | ")
+//usage:	IF_FEATURE_IP_TUNNEL("tunnel | ")
+//usage:	IF_FEATURE_IP_RULE("rule")
+//usage:       "} {COMMAND}"
+//usage:#define ip_full_usage "\n\n"
+//usage:       "ip [OPTIONS] OBJECT {COMMAND}\n"
+//usage:       "where OBJECT := {"
+//usage:	IF_FEATURE_IP_ADDRESS("address | ")
+//usage:	IF_FEATURE_IP_ROUTE("route | ")
+//usage:	IF_FEATURE_IP_LINK("link | ")
+//usage:	IF_FEATURE_IP_TUNNEL("tunnel | ")
+//usage:	IF_FEATURE_IP_RULE("rule")
+//usage:       "}\n"
+//usage:       "OPTIONS := { -f[amily] { inet | inet6 | link } | -o[neline] }"
+//usage:
+//usage:#define ipaddr_trivial_usage
+//usage:       "{ {add|del} IFADDR dev STRING | {show|flush}\n"
+//usage:       "		[dev STRING] [to PREFIX] }"
+//usage:#define ipaddr_full_usage "\n\n"
+//usage:       "ipaddr {add|delete} IFADDR dev STRING\n"
+//usage:       "ipaddr {show|flush} [dev STRING] [scope SCOPE-ID]\n"
+//usage:       "	[to PREFIX] [label PATTERN]\n"
+//usage:       "	IFADDR := PREFIX | ADDR peer PREFIX\n"
+//usage:       "	[broadcast ADDR] [anycast ADDR]\n"
+//usage:       "	[label STRING] [scope SCOPE-ID]\n"
+//usage:       "	SCOPE-ID := [host | link | global | NUMBER]"
+//usage:
+//usage:#define iplink_trivial_usage
+//usage:       "{ set DEVICE { up | down | arp { on | off } | show [DEVICE] }"
+//usage:#define iplink_full_usage "\n\n"
+//usage:       "iplink set DEVICE { up | down | arp | multicast { on | off } |\n"
+//usage:       "			dynamic { on | off } |\n"
+//usage:       "			mtu MTU }\n"
+//usage:       "iplink show [DEVICE]"
+//usage:
+//usage:#define iproute_trivial_usage
+//usage:       "{ list | flush | add | del | change | append |\n"
+//usage:       "		replace | test } ROUTE"
+//usage:#define iproute_full_usage "\n\n"
+//usage:       "iproute { list | flush } SELECTOR\n"
+//usage:       "iproute get ADDRESS [from ADDRESS iif STRING]\n"
+//usage:       "	[oif STRING] [tos TOS]\n"
+//usage:       "iproute { add | del | change | append | replace | test } ROUTE\n"
+//usage:       "	SELECTOR := [root PREFIX] [match PREFIX] [proto RTPROTO]\n"
+//usage:       "	ROUTE := [TYPE] PREFIX [tos TOS] [proto RTPROTO] [metric METRIC]"
+//usage:
+//usage:#define iprule_trivial_usage
+//usage:       "{[list | add | del] RULE}"
+//usage:#define iprule_full_usage "\n\n"
+//usage:       "iprule [list | add | del] SELECTOR ACTION\n"
+//usage:       "	SELECTOR := [from PREFIX] [to PREFIX] [tos TOS] [fwmark FWMARK]\n"
+//usage:       "			[dev STRING] [pref NUMBER]\n"
+//usage:       "	ACTION := [table TABLE_ID] [nat ADDRESS]\n"
+//usage:       "			[prohibit | reject | unreachable]\n"
+//usage:       "			[realms [SRCREALM/]DSTREALM]\n"
+//usage:       "	TABLE_ID := [local | main | default | NUMBER]"
+//usage:
+//usage:#define iptunnel_trivial_usage
+//usage:       "{ add | change | del | show } [NAME]\n"
+//usage:       "	[mode { ipip | gre | sit }]\n"
+//usage:       "	[remote ADDR] [local ADDR] [ttl TTL]"
+//usage:#define iptunnel_full_usage "\n\n"
+//usage:       "iptunnel { add | change | del | show } [NAME]\n"
+//usage:       "	[mode { ipip | gre | sit }] [remote ADDR] [local ADDR]\n"
+//usage:       "	[[i|o]seq] [[i|o]key KEY] [[i|o]csum]\n"
+//usage:       "	[ttl TTL] [tos TOS] [[no]pmtudisc] [dev PHYS_DEV]"
 
 #include "libbb.h"
 
@@ -22,12 +92,12 @@
  || ENABLE_FEATURE_IP_TUNNEL \
  || ENABLE_FEATURE_IP_RULE
 
-static int ip_print_help(char **argv UNUSED_PARAM)
+static int FAST_FUNC ip_print_help(char **argv UNUSED_PARAM)
 {
 	bb_show_usage();
 }
 
-typedef int (*ip_func_ptr_t)(char**);
+typedef int FAST_FUNC (*ip_func_ptr_t)(char**);
 
 static int ip_do(ip_func_ptr_t ip_func, char **argv)
 {

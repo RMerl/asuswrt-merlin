@@ -5,8 +5,19 @@
  *
  * Copyright (C) 2008 by Vladimir Dronnikov <dronnikov@gmail.com>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define microcom_trivial_usage
+//usage:       "[-d DELAY] [-t TIMEOUT] [-s SPEED] [-X] TTY"
+//usage:#define microcom_full_usage "\n\n"
+//usage:       "Copy bytes for stdin to TTY and from TTY to stdout\n"
+//usage:     "\n	-d	Wait up to DELAY ms for TTY output before sending every"
+//usage:     "\n		next byte to it"
+//usage:     "\n	-t	Exit if both stdin and TTY are silent for TIMEOUT ms"
+//usage:     "\n	-s	Set serial line to SPEED"
+//usage:     "\n	-X	Disable special meaning of NUL and Ctrl-X from stdin"
+
 #include "libbb.h"
 
 // set raw tty mode

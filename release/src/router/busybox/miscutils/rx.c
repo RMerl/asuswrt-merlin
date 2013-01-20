@@ -10,10 +10,18 @@
  *
  * Copyright (C) 2001 Hewlett-Packard Laboratories
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * This was originally written for blob and then adapted for busybox.
  */
+
+//usage:#define rx_trivial_usage
+//usage:       "FILE"
+//usage:#define rx_full_usage "\n\n"
+//usage:       "Receive a file using the xmodem protocol"
+//usage:
+//usage:#define rx_example_usage
+//usage:       "$ rx /tmp/foo\n"
 
 #include "libbb.h"
 
@@ -100,12 +108,10 @@ static int receive(/*int read_fd, */int file_fd)
 			}
 		}
 		/* Write previously received block */
-		if (blockLength) {
-			errno = 0;
-			if (full_write(file_fd, blockBuf, blockLength) != blockLength) {
-				bb_perror_msg("can't write to file");
-				goto fatal;
-			}
+		errno = 0;
+		if (full_write(file_fd, blockBuf, blockLength) != blockLength) {
+			bb_perror_msg(bb_msg_write_error);
+			goto fatal;
 		}
 
 		timeout = TIMEOUT;
@@ -147,15 +153,11 @@ static int receive(/*int read_fd, */int file_fd)
 			blockBuf[i] = cc;
 		}
 
+		cksum_or_crc = read_byte(TIMEOUT);
+		if (cksum_or_crc < 0)
+			goto timeout;
 		if (do_crc) {
-			cksum_or_crc = read_byte(TIMEOUT);
-			if (cksum_or_crc < 0)
-				goto timeout;
 			cksum_or_crc = (cksum_or_crc << 8) | read_byte(TIMEOUT);
-			if (cksum_or_crc < 0)
-				goto timeout;
-		} else {
-			cksum_or_crc = read_byte(TIMEOUT);
 			if (cksum_or_crc < 0)
 				goto timeout;
 		}
@@ -164,6 +166,7 @@ static int receive(/*int read_fd, */int file_fd)
 			/* a repeat of the last block is ok, just ignore it. */
 			/* this also ignores the initial block 0 which is */
 			/* meta data. */
+			blockLength = 0;
 			goto next;
 		}
 		if (blockNo != (wantBlockNo & 0xff)) {
@@ -204,6 +207,7 @@ static int receive(/*int read_fd, */int file_fd)
 		continue;
  error:
  timeout:
+		blockLength = 0;
 		errors++;
 		if (errors == MAXERRORS) {
 			/* Abort */

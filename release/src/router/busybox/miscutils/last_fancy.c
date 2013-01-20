@@ -4,11 +4,10 @@
  *
  * Copyright (C) 2008 by Patricia Muscalu <patricia.muscalu@axis.com>
  *
- * Licensed under the GPLv2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
-#include <utmp.h>
 
 /* NB: ut_name and ut_user are the same field, use only one name (ut_user)
  * to reduce confusion */
@@ -162,11 +161,10 @@ int last_main(int argc UNUSED_PARAM, char **argv)
 	time_t boot_time;
 	time_t down_time;
 	int file;
-	unsigned opt;
 	smallint going_down;
 	smallint boot_down;
 
-	opt = getopt32(argv, "Wf:" /* "H" */, &filename);
+	/*opt =*/ getopt32(argv, "Wf:" /* "H" */, &filename);
 #ifdef BUT_UTIL_LINUX_LAST_HAS_NO_SUCH_OPT
 	if (opt & LAST_OPT_H) {
 		/* Print header line */

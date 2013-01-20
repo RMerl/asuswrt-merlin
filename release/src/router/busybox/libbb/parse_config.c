@@ -4,9 +4,31 @@
  *
  * Copyright (C) 2008 by Vladimir Dronnikov <dronnikov@gmail.com>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  * Also for use in uClibc (http://uclibc.org/) licensed under LGPLv2.1 or later.
  */
+
+/* Uncomment to enable test applet */
+////config:config PARSE
+////config:	bool "Uniform config file parser debugging applet: parse"
+////config:	default n
+////config:	help
+////config:	  Typical usage of parse API:
+////config:		char *t[3];
+////config:		parser_t *p = config_open(filename);
+////config:		while (config_read(p, t, 3, 0, delimiters, flags)) { // 1..3 tokens
+////config:			bb_error_msg("TOKENS: '%s''%s''%s'", t[0], t[1], t[2]);
+////config:		}
+////config:		config_close(p);
+
+////applet:IF_PARSE(APPLET(parse, BB_DIR_USR_BIN, BB_SUID_DROP))
+
+//kbuild:lib-y += parse_config.o
+
+//usage:#define parse_trivial_usage
+//usage:       "[-x] [-n MAXTOKENS] [-m MINTOKENS] [-d DELIMS] [-f FLAGS] FILE..."
+//usage:#define parse_full_usage "\n\n"
+//usage:       "	-x	Suppress output (for benchmarking)"
 
 #include "libbb.h"
 
@@ -15,51 +37,33 @@ int parse_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int parse_main(int argc UNUSED_PARAM, char **argv)
 {
 	const char *delims = "# \t";
+	char **t;
 	unsigned flags = PARSE_NORMAL;
 	int mintokens = 0, ntokens = 128;
+	unsigned noout;
 
 	opt_complementary = "-1:n+:m+:f+";
-	getopt32(argv, "n:m:d:f:", &ntokens, &mintokens, &delims, &flags);
+	noout = 1 & getopt32(argv, "xn:m:d:f:", &ntokens, &mintokens, &delims, &flags);
 	//argc -= optind;
 	argv += optind;
+
+	t = xmalloc(sizeof(t[0]) * ntokens);
 	while (*argv) {
+		int n;
 		parser_t *p = config_open(*argv);
-		if (p) {
-			int n;
-			char **t = xmalloc(sizeof(char *) * ntokens);
-			while ((n = config_read(p, t, ntokens, mintokens, delims, flags)) != 0) {
+		while ((n = config_read(p, t, ntokens, mintokens, delims, flags)) != 0) {
+			if (!noout) {
 				for (int i = 0; i < n; ++i)
 					printf("[%s]", t[i]);
 				puts("");
 			}
-			config_close(p);
 		}
+		config_close(p);
 		argv++;
 	}
 	return EXIT_SUCCESS;
 }
 #endif
-
-/*
-
-Typical usage:
-
------ CUT -----
-	char *t[3];	// tokens placeholder
-	parser_t *p = config_open(filename);
-	if (p) {
-		// parse line-by-line
-		while (config_read(p, t, 3, 0, delimiters, flags)) { // 1..3 tokens
-			// use tokens
-			bb_error_msg("TOKENS: [%s][%s][%s]", t[0], t[1], t[2]);
-		}
-		...
-		// free parser
-		config_close(p);
-	}
------ CUT -----
-
-*/
 
 parser_t* FAST_FUNC config_open2(const char *filename, FILE* FAST_FUNC (*fopen_func)(const char *path))
 {
@@ -79,24 +83,57 @@ parser_t* FAST_FUNC config_open(const char *filename)
 	return config_open2(filename, fopen_or_warn_stdin);
 }
 
-static void config_free_data(parser_t *parser)
-{
-	free(parser->line);
-	parser->line = NULL;
-	if (PARSE_KEEP_COPY) { /* compile-time constant */
-		free(parser->data);
-		parser->data = NULL;
-	}
-}
-
 void FAST_FUNC config_close(parser_t *parser)
 {
 	if (parser) {
-		config_free_data(parser);
+		if (PARSE_KEEP_COPY) /* compile-time constant */
+			free(parser->data);
 		fclose(parser->fp);
+		free(parser->line);
+		free(parser->nline);
 		free(parser);
 	}
 }
+
+/* This function reads an entire line from a text file,
+ * up to a newline, exclusive.
+ * Trailing '\' is recognized as line continuation.
+ * Returns -1 if EOF/error.
+ */
+static int get_line_with_continuation(parser_t *parser)
+{
+	ssize_t len, nlen;
+	char *line;
+
+	len = getline(&parser->line, &parser->line_alloc, parser->fp);
+	if (len <= 0)
+		return len;
+
+	line = parser->line;
+	for (;;) {
+		parser->lineno++;
+		if (line[len - 1] == '\n')
+			len--;
+		if (len == 0 || line[len - 1] != '\\')
+			break;
+		len--;
+
+		nlen = getline(&parser->nline, &parser->nline_alloc, parser->fp);
+		if (nlen <= 0)
+			break;
+
+		if (parser->line_alloc < len + nlen + 1) {
+			parser->line_alloc = len + nlen + 1;
+			line = parser->line = xrealloc(line, parser->line_alloc);
+		}
+		memcpy(&line[len], parser->nline, nlen);
+		len += nlen;
+	}
+
+	line[len] = '\0';
+	return len;
+}
+
 
 /*
 0. If parser is NULL return 0.
@@ -126,27 +163,22 @@ int FAST_FUNC config_read(parser_t *parser, char **tokens, unsigned flags, const
 {
 	char *line;
 	int ntokens, mintokens;
-	int t, len;
+	int t;
+
+	if (!parser)
+		return 0;
 
 	ntokens = (uint8_t)flags;
 	mintokens = (uint8_t)(flags >> 8);
 
-	if (parser == NULL)
-		return 0;
-
-again:
+ again:
 	memset(tokens, 0, sizeof(tokens[0]) * ntokens);
-	config_free_data(parser);
 
 	/* Read one line (handling continuations with backslash) */
-	line = bb_get_chunk_with_continuation(parser->fp, &len, &parser->lineno);
-	if (line == NULL)
+	if (get_line_with_continuation(parser) < 0)
 		return 0;
-	parser->line = line;
 
-	/* Strip trailing line-feed if any */
-	if (len && line[len-1] == '\n')
-		line[len-1] = '\0';
+	line = parser->line;
 
 	/* Skip token in the start of line? */
 	if (flags & PARSE_TRIM)
@@ -155,8 +187,10 @@ again:
 	if (line[0] == '\0' || line[0] == delims[0])
 		goto again;
 
-	if (flags & PARSE_KEEP_COPY)
+	if (flags & PARSE_KEEP_COPY) {
+		free(parser->data);
 		parser->data = xstrdup(line);
+	}
 
 	/* Tokenize the line */
 	t = 0;
@@ -170,7 +204,7 @@ again:
 			line += strcspn(line, delims[0] ? delims : delims + 1);
 		} else {
 			/* Combining, find comment char if any */
-			line = strchrnul(line, delims[0]);
+			line = strchrnul(line, PARSE_EOL_COMMENTS ? delims[0] : '\0');
 
 			/* Trim any extra delimiters from the end */
 			if (flags & PARSE_TRIM) {
@@ -187,19 +221,7 @@ again:
 
 #if 0 /* unused so far */
 		if (flags & PARSE_ESCAPE) {
-			const char *from;
-			char *to;
-
-			from = to = tokens[t];
-			while (*from) {
-				if (*from == '\\') {
-					from++;
-					*to++ = bb_process_escape_sequence(&from);
-				} else {
-					*to++ = *from++;
-				}
-			}
-			*to = '\0';
+			strcpy_and_process_escape_sequences(tokens[t], tokens[t]);
 		}
 #endif
 		/* Skip possible delimiters */
@@ -214,8 +236,6 @@ again:
 				parser->lineno, t, mintokens);
 		if (flags & PARSE_MIN_DIE)
 			xfunc_die();
-		if (flags & PARSE_KEEP_COPY)
-			free(parser->data);
 		goto again;
 	}
 

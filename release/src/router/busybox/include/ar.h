@@ -1,6 +1,6 @@
 /*
  * busybox ar archive data structures
- * Licensed under the GPL v2 or later, see the file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 #ifndef AR_H
 #define AR_H

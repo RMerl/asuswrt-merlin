@@ -87,7 +87,7 @@ endif
 	$(MTIME_IS_COARSE) && sleep 1
 
 %_defconfig: $(obj)/conf
-	$(Q)$< -D $@ Config.in
+	$(Q)$< -D configs/$@ Config.in
 	$(MTIME_IS_COARSE) && sleep 1
 
 # Help text used by make help

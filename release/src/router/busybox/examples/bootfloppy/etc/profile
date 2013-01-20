@@ -5,4 +5,3 @@ echo -n "Processing /etc/profile... "
 # no-op
 echo "Done"
 echo
-

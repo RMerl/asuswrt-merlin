@@ -228,4 +228,3 @@ kconf_id_lookup (register const char *str, register unsigned int len)
     }
   return 0;
 }
-

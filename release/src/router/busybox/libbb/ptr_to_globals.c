@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2008 by Denys Vlasenko <vda.linux@googlemail.com>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 #include <errno.h>

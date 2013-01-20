@@ -26,9 +26,30 @@
  * Port to busybox: KaiGai Kohei <kaigai@kaigai.gr.jp>
  *                  - based on coreutils-5.97 (in Fedora Core 6)
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
-#include <getopt.h>
+
+//usage:#define runcon_trivial_usage
+//usage:       "[-c] [-u USER] [-r ROLE] [-t TYPE] [-l RANGE] PROG ARGS\n"
+//usage:       "runcon CONTEXT PROG ARGS"
+//usage:#define runcon_full_usage "\n\n"
+//usage:       "Run PROG in a different security context\n"
+//usage:     "\n	CONTEXT		Complete security context\n"
+//usage:	IF_FEATURE_RUNCON_LONG_OPTIONS(
+//usage:     "\n	-c,--compute	Compute process transition context before modifying"
+//usage:     "\n	-t,--type=TYPE	Type (for same role as parent)"
+//usage:     "\n	-u,--user=USER	User identity"
+//usage:     "\n	-r,--role=ROLE	Role"
+//usage:     "\n	-l,--range=RNG	Levelrange"
+//usage:	)
+//usage:	IF_NOT_FEATURE_RUNCON_LONG_OPTIONS(
+//usage:     "\n	-c	Compute process transition context before modifying"
+//usage:     "\n	-t TYPE	Type (for same role as parent)"
+//usage:     "\n	-u USER	User identity"
+//usage:     "\n	-r ROLE	Role"
+//usage:     "\n	-l RNG	Levelrange"
+//usage:	)
+
 #include <selinux/context.h>
 #include <selinux/flask.h>
 
@@ -132,6 +153,5 @@ int runcon_main(int argc UNUSED_PARAM, char **argv)
 		bb_error_msg_and_die("can't set up security context '%s'",
 				     context_str(con));
 
-	execvp(argv[0], argv);
-	bb_perror_msg_and_die("can't execute '%s'", argv[0]);
+	BB_EXECVP_or_die(argv);
 }

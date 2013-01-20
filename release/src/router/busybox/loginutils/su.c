@@ -1,12 +1,21 @@
 /* vi: set sw=4 ts=4: */
 /*
- *  Mini su implementation for busybox
+ * Mini su implementation for busybox
  *
- *  Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
 #include <syslog.h>
+
+//usage:#define su_trivial_usage
+//usage:       "[OPTIONS] [-] [USER]"
+//usage:#define su_full_usage "\n\n"
+//usage:       "Run shell under USER (by default, root)\n"
+//usage:     "\n	-,-l	Clear environment, run shell as login shell"
+//usage:     "\n	-p,-m	Do not set new $HOME, $SHELL, $USER, $LOGNAME"
+//usage:     "\n	-c CMD	Command to pass to 'sh -c'"
+//usage:     "\n	-s SH	Shell to use instead of user's default"
 
 #if ENABLE_FEATURE_SU_CHECKS_SHELLS
 /* Return 1 if SHELL is a restricted shell (one not returned by
@@ -42,7 +51,9 @@ int su_main(int argc UNUSED_PARAM, char **argv)
 	struct passwd *pw;
 	uid_t cur_uid = getuid();
 	const char *tty;
+#if ENABLE_FEATURE_UTMP
 	char user_buf[64];
+#endif
 	const char *old_user;
 
 	flags = getopt32(argv, "mplc:s:", &opt_command, &opt_shell);
@@ -102,20 +113,14 @@ int su_main(int argc UNUSED_PARAM, char **argv)
 		opt_shell = getenv("SHELL");
 	}
 
-	/* Make sure pw->pw_shell is non-NULL.  It may be NULL when NEW_USER
-	 * is a username that is retrieved via NIS (YP), that doesn't have
-	 * a default shell listed.  */
-	if (!pw->pw_shell || !pw->pw_shell[0])
-		pw->pw_shell = (char *)DEFAULT_SHELL;
-
 #if ENABLE_FEATURE_SU_CHECKS_SHELLS
-	if (opt_shell && cur_uid != 0 && restricted_shell(pw->pw_shell)) {
+	if (opt_shell && cur_uid != 0 && pw->pw_shell && restricted_shell(pw->pw_shell)) {
 		/* The user being su'd to has a nonstandard shell, and so is
 		 * probably a uucp account or has restricted access.  Don't
 		 * compromise the account by allowing access with a standard
 		 * shell.  */
 		bb_error_msg("using restricted shell");
-		opt_shell = NULL;
+		opt_shell = NULL; /* ignore -s PROG */
 	}
 	/* else: user can run whatever he wants via "su -s PROG USER".
 	 * This is safe since PROG is run under user's uid/gid. */

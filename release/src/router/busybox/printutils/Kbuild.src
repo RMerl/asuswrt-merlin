@@ -1,6 +1,6 @@
 # Makefile for busybox
 #
-# Licensed under the GPL v2, see the file LICENSE in this tarball.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 lib-y :=
 

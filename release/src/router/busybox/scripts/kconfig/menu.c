@@ -394,4 +394,3 @@ struct menu *menu_get_parent_menu(struct menu *menu)
 	}
 	return menu;
 }
-

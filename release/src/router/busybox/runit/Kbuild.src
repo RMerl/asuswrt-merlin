@@ -2,16 +2,16 @@
 #
 # Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
 #
-# Licensed under the GPL v2, see the file LICENSE in this tarball.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 lib-y:=
 
 INSERT
 
-lib-$(CONFIG_RUNSV) += runsv.o runit_lib.o
-lib-$(CONFIG_RUNSVDIR) += runsvdir.o runit_lib.o
-lib-$(CONFIG_SV) += sv.o runit_lib.o
-lib-$(CONFIG_SVLOGD) += svlogd.o runit_lib.o
+lib-$(CONFIG_RUNSV) += runsv.o
+lib-$(CONFIG_RUNSVDIR) += runsvdir.o
+lib-$(CONFIG_SV) += sv.o
+lib-$(CONFIG_SVLOGD) += svlogd.o
 lib-$(CONFIG_CHPST) += chpst.o
 
 lib-$(CONFIG_ENVDIR) += chpst.o

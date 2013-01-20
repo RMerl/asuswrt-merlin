@@ -4,17 +4,38 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under the GPL version 2, see the file LICENSE in this tarball.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define swapon_trivial_usage
+//usage:       "[-a]" IF_FEATURE_SWAPON_PRI(" [-p PRI]") " [DEVICE]"
+//usage:#define swapon_full_usage "\n\n"
+//usage:       "Start swapping on DEVICE\n"
+//usage:     "\n	-a	Start swapping on all swap devices"
+//usage:	IF_FEATURE_SWAPON_PRI(
+//usage:     "\n	-p PRI	Set swap device priority"
+//usage:	)
+//usage:
+//usage:#define swapoff_trivial_usage
+//usage:       "[-a] [DEVICE]"
+//usage:#define swapoff_full_usage "\n\n"
+//usage:       "Stop swapping on DEVICE\n"
+//usage:     "\n	-a	Stop swapping on all swap devices"
 
 #include "libbb.h"
 #include <mntent.h>
-#include <sys/swap.h>
+#ifndef __BIONIC__
+# include <sys/swap.h>
+#endif
 
 #if ENABLE_FEATURE_MOUNT_LABEL
 # include "volume_id.h"
 #else
 # define resolve_mount_spec(fsname) ((void)0)
+#endif
+
+#ifndef MNTTYPE_SWAP
+# define MNTTYPE_SWAP "swap"
 #endif
 
 #if ENABLE_FEATURE_SWAPON_PRI
@@ -26,6 +47,7 @@ struct globals {
 #else
 #define g_flags 0
 #endif
+#define INIT_G() do { } while (0)
 
 static int swap_enable_disable(char *device)
 {
@@ -92,10 +114,13 @@ int swap_on_off_main(int argc UNUSED_PARAM, char **argv)
 {
 	int ret;
 
+	INIT_G();
+
 #if !ENABLE_FEATURE_SWAPON_PRI
 	ret = getopt32(argv, "a");
 #else
-	opt_complementary = "p+";
+	if (applet_name[5] == 'n')
+		opt_complementary = "p+";
 	ret = getopt32(argv, (applet_name[5] == 'n') ? "ap:" : "a", &g_flags);
 
 	if (ret & 2) { // -p

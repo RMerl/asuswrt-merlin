@@ -80,4 +80,3 @@ been enabled, more detailed usage information will also be available.
 =head1 COMMANDS
 
 Currently available applets include:
-

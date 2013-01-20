@@ -8,6 +8,8 @@
  * i18n, 2005, Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#define _XOPEN_SOURCE 700
+
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <ctype.h>
@@ -18,6 +20,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h> /* for strcasecmp */
 #include <termios.h>
 #include <unistd.h>
 #include <locale.h>
@@ -256,7 +259,7 @@ search_help[] = N_(
 	"          USB$ => find all CONFIG_ symbols ending with USB\n"
 	"\n");
 
-static char buf[4096], *bufptr = buf;
+static char buf[4096*10], *bufptr = buf;
 static char input_buf[4096];
 static const char filename[] = ".config";
 static char *args[1024], **argptr = args;

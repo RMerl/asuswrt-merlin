@@ -5,8 +5,16 @@
  * Copyright (C) 2006 by Jason Schoon <floydpink@gmail.com>
  * Some portions cribbed from e2fsprogs, util-linux, dosfstools
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define findfs_trivial_usage
+//usage:       "LABEL=label or UUID=uuid"
+//usage:#define findfs_full_usage "\n\n"
+//usage:       "Find a filesystem device based on a label or UUID"
+//usage:
+//usage:#define findfs_example_usage
+//usage:       "$ findfs LABEL=MyDevice"
 
 #include "libbb.h"
 #include "volume_id.h"

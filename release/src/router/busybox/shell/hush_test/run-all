@@ -48,8 +48,9 @@ do_test()
 			*.orig|*~) ;;
 			#*) echo $x ; sh $x ;;
 			*)
+			echo -n "$1/$x:"
 			sh "$x" >"../$1-$x.fail" 2>&1 && \
-			{ echo "$1/$x: ok"; rm "../$1-$x.fail"; } || echo "$1/$x: fail";
+			{ { echo " ok"; rm "../$1-$x.fail"; } || echo " fail"; }
 			;;
 		esac
 	done
@@ -60,6 +61,7 @@ do_test()
 	name="${x%%.tests}"
 	test -f "$name.right" || continue
 #	echo Running test: "$x"
+	echo -n "$1/$x:"
 	(
 		"$THIS_SH" "./$x" >"$name.xx" 2>&1
 		# filter C library differences
@@ -70,9 +72,9 @@ do_test()
 		diff -u "$name.xx" "$name.right" >"../$1-$x.fail" && rm -f "$name.xx" "../$1-$x.fail"
 	)
 	case $? in
-		0)  echo "$1/$x: ok";;
-		77) echo "$1/$x: skip (feature disabled)";;
-		*)  echo "$1/$x: fail"; tret=1;;
+		0)  echo " ok";;
+		77) echo " skip (feature disabled)";;
+		*)  echo " fail"; tret=1;;
 	esac
 	done
 	exit ${tret}

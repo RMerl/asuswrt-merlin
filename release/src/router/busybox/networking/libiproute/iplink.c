@@ -1,15 +1,13 @@
 /* vi: set sw=4 ts=4: */
 /*
- * iplink.c "ip link".
- *
  * Authors: Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 #include <net/if.h>
 #include <net/if_packet.h>
 #include <netpacket/packet.h>
-#include <net/ethernet.h>
+#include <netinet/if_ether.h>
 
 #include "ip_common.h"  /* #include "libbb.h" is inside */
 #include "rt_names.h"
@@ -21,7 +19,7 @@
 #endif
 
 /* taken from linux/sockios.h */
-#define SIOCSIFNAME	0x8923		/* set interface name */
+#define SIOCSIFNAME  0x8923  /* set interface name */
 
 /* Exits on error */
 static int get_ctl_fd(void)
@@ -296,9 +294,9 @@ static int do_change(char **argv, const unsigned rtm)
 	};
 	struct rtnl_handle rth;
 	struct {
-		struct nlmsghdr		n;
-		struct ifinfomsg	i;
-		char			buf[1024];
+		struct nlmsghdr  n;
+		struct ifinfomsg i;
+		char             buf[1024];
 	} req;
 	smalluint arg;
 	char *name_str = NULL, *link_str = NULL, *type_str = NULL, *dev_str = NULL;
@@ -367,7 +365,7 @@ static int do_change(char **argv, const unsigned rtm)
 }
 
 /* Return value becomes exitcode. It's okay to not return at all */
-int do_iplink(char **argv)
+int FAST_FUNC do_iplink(char **argv)
 {
 	static const char keywords[] ALIGN1 =
 		"add\0""delete\0""set\0""show\0""lst\0""list\0";

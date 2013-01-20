@@ -9,7 +9,7 @@
  * Sat Mar 20 EST 1999 Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  *      Internationalization
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 #if ENABLE_FEATURE_SUN_LABEL
@@ -654,7 +654,7 @@ sun_list_table(int xtra)
 			uint32_t start = SUN_SSWAP32(sunlabel->partitions[i].start_cylinder) * g_heads * g_sectors;
 			uint32_t len = SUN_SSWAP32(sunlabel->partitions[i].num_sectors);
 			printf("%s %c%c %9lu %9lu %9lu%c  %2x  %s\n",
-				partname(disk_device, i+1, w),			/* device */
+				partname(disk_device, i+1, w),                  /* device */
 				(sunlabel->infos[i].flags & 0x01) ? 'u' : ' ',  /* flags */
 				(sunlabel->infos[i].flags & 0x10) ? 'r' : ' ',
 				(long) scround(start),                          /* start */

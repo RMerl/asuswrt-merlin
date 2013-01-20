@@ -4,8 +4,36 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under the GPL version 2, see the file LICENSE in this tarball.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#if (ENABLE_FEATURE_PIDOF_SINGLE || ENABLE_FEATURE_PIDOF_OMIT)
+//usage:#define pidof_trivial_usage
+//usage:       "[OPTIONS] [NAME]..."
+//usage:#define USAGE_PIDOF "\n"
+//usage:#else
+//usage:#define pidof_trivial_usage
+//usage:       "[NAME]..."
+//usage:#define USAGE_PIDOF /* none */
+//usage:#endif
+//usage:#define pidof_full_usage "\n\n"
+//usage:       "List PIDs of all processes with names that match NAMEs"
+//usage:	USAGE_PIDOF
+//usage:	IF_FEATURE_PIDOF_SINGLE(
+//usage:     "\n	-s	Show only one PID"
+//usage:	)
+//usage:	IF_FEATURE_PIDOF_OMIT(
+//usage:     "\n	-o PID	Omit given pid"
+//usage:     "\n		Use %PPID to omit pid of pidof's parent"
+//usage:	)
+//usage:
+//usage:#define pidof_example_usage
+//usage:       "$ pidof init\n"
+//usage:       "1\n"
+//usage:	IF_FEATURE_PIDOF_OMIT(
+//usage:       "$ pidof /bin/sh\n20351 5973 5950\n")
+//usage:	IF_FEATURE_PIDOF_OMIT(
+//usage:       "$ pidof /bin/sh -o %PPID\n20351 5950")
 
 #include "libbb.h"
 

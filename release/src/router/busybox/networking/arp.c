@@ -13,6 +13,24 @@
  * modified for getopt32 by Arne Bernin <arne [at] alamut.de>
  */
 
+//usage:#define arp_trivial_usage
+//usage:     "\n[-vn]	[-H HWTYPE] [-i IF] -a [HOSTNAME]"
+//usage:     "\n[-v]		    [-i IF] -d HOSTNAME [pub]"
+//usage:     "\n[-v]	[-H HWTYPE] [-i IF] -s HOSTNAME HWADDR [temp]"
+//usage:     "\n[-v]	[-H HWTYPE] [-i IF] -s HOSTNAME HWADDR [netmask MASK] pub"
+//usage:     "\n[-v]	[-H HWTYPE] [-i IF] -Ds HOSTNAME IFACE [netmask MASK] pub"
+//usage:#define arp_full_usage "\n\n"
+//usage:       "Manipulate ARP cache\n"
+//usage:       "\n	-a		Display (all) hosts"
+//usage:       "\n	-s		Set new ARP entry"
+//usage:       "\n	-d		Delete a specified entry"
+//usage:       "\n	-v		Verbose"
+//usage:       "\n	-n		Don't resolve names"
+//usage:       "\n	-i IF		Network interface"
+//usage:       "\n	-D		Read <hwaddr> from given device"
+//usage:       "\n	-A,-p AF	Protocol family"
+//usage:       "\n	-H HWTYPE	Hardware address type"
+
 #include "libbb.h"
 #include "inet_common.h"
 

@@ -114,7 +114,7 @@ int FAST_FUNC volume_id_probe_iso9660(struct volume_id *id /*,uint64_t off*/)
 
  found:
 //	volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
-//	id->type = "iso9660";
+	IF_FEATURE_BLKID_TYPE(id->type = "iso9660";)
 
 	return 0;
 }

@@ -25,7 +25,7 @@
  *      Some code to omit the decimal point and tenths digit is sketched out
  *      and "#if 0"'d below.
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
@@ -53,8 +53,8 @@ const char* FAST_FUNC make_human_readable_str(unsigned long long val,
 	u = unit_chars;
 
 	if (display_unit) {
-		val += display_unit/2;	/* Deal with rounding */
-		val /= display_unit;	/* Don't combine with the line above! */
+		val += display_unit/2;  /* Deal with rounding */
+		val /= display_unit;    /* Don't combine with the line above! */
 		/* will just print it as ulonglong (below) */
 	} else {
 		while ((val >= 1024)
@@ -94,7 +94,7 @@ const char* FAST_FUNC make_human_readable_str(unsigned long long val,
 
 /* Convert unsigned long long value into compact 5-char representation.
  * String is not terminated (buf[5] is untouched) */
-void FAST_FUNC smart_ulltoa5(unsigned long long ul, char buf[6], const char *scale)
+void FAST_FUNC smart_ulltoa5(unsigned long long ul, char buf[5], const char *scale)
 {
 	const char *fmt;
 	char c;
@@ -150,7 +150,7 @@ void FAST_FUNC smart_ulltoa5(unsigned long long ul, char buf[6], const char *sca
 /* Convert unsigned long long value into compact 4-char
  * representation. Examples: "1234", "1.2k", " 27M", "123T"
  * String is not terminated (buf[4] is untouched) */
-void FAST_FUNC smart_ulltoa4(unsigned long long ul, char buf[5], const char *scale)
+void FAST_FUNC smart_ulltoa4(unsigned long long ul, char buf[4], const char *scale)
 {
 	const char *fmt;
 	char c;

@@ -5,7 +5,7 @@
  * Copyright (C) many different people.
  * If you wrote this, please acknowledge your work.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* Concatenate path and filename to new allocated buffer.

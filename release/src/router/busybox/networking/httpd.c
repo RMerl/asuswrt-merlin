@@ -5,32 +5,33 @@
  * Copyright (C) 2002,2003 Glenn Engel <glenne@engel.org>
  * Copyright (C) 2003-2006 Vladimir Oleynik <dzo@simtreas.ru>
  *
- * simplify patch stolen from libbb without using strdup
- *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  *****************************************************************************
  *
  * Typical usage:
- *   for non root user
- * httpd -p 8080 -h $HOME/public_html
- *   or for daemon start from rc script with uid=0:
- * httpd -u www
- * This is equivalent if www user have uid=80 to
- * httpd -p 80 -u 80 -h /www -c /etc/httpd.conf -r "Web Server Authentication"
+ * For non root user:
+ *      httpd -p 8080 -h $HOME/public_html
+ * For daemon start from rc script with uid=0:
+ *      httpd -u www
+ * which is equivalent to (assuming user www has uid 80):
+ *      httpd -p 80 -u 80 -h $PWD -c /etc/httpd.conf -r "Web Server Authentication"
  *
- *
- * When an url starts by "/cgi-bin/" it is assumed to be a cgi script.  The
- * server changes directory to the location of the script and executes it
+ * When an url starts with "/cgi-bin/" it is assumed to be a cgi script.
+ * The server changes directory to the location of the script and executes it
  * after setting QUERY_STRING and other environment variables.
+ *
+ * If directory URL is given, no index.html is found and CGI support is enabled,
+ * cgi-bin/index.cgi will be run. Directory to list is ../$QUERY_STRING.
+ * See httpd_indexcgi.c for an example GCI code.
  *
  * Doc:
  * "CGI Environment Variables": http://hoohoo.ncsa.uiuc.edu/cgi/env.html
  *
  * The applet can also be invoked as an url arg decoder and html text encoder
  * as follows:
- *  foo=`httpd -d $foo`           # decode "Hello%20World" as "Hello World"
- *  bar=`httpd -e "<Hello World>"`  # encode as "&#60Hello&#32World&#62"
+ *      foo=`httpd -d $foo`             # decode "Hello%20World" as "Hello World"
+ *      bar=`httpd -e "<Hello World>"`  # encode as "&#60Hello&#32World&#62"
  * Note that url encoding for arguments is not the same as html encoding for
  * presentation.  -d decodes an url-encoded argument while -e encodes in html
  * for page display.
@@ -53,6 +54,8 @@
  * /cgi-bin:foo:bar  # Require user foo, pwd bar on urls starting with /cgi-bin/
  * /adm:admin:setup  # Require user admin, pwd setup on urls starting with /adm/
  * /adm:toor:PaSsWd  # or user toor, pwd PaSsWd on urls starting with /adm/
+ * /adm:root:*       # or user root, pwd from /etc/passwd on urls starting with /adm/
+ * /wiki:*:*         # or any user from /etc/passwd with according pwd on urls starting with /wiki/
  * .au:audio/basic   # additional mime type for audio.au files
  * *.php:/path/php   # run xxx.php through an interpreter
  *
@@ -74,7 +77,7 @@
  *     D:2.3.4.        # deny from 2.3.4.0 - 2.3.4.255
  *     A:*             # (optional line added for clarity)
  *
- * If a sub directory contains a config file it is parsed and merged with
+ * If a sub directory contains config file, it is parsed and merged with
  * any existing settings as if it was appended to the original configuration.
  *
  * subdir paths are relative to the containing subdir and thus cannot
@@ -96,19 +99,51 @@
  */
  /* TODO: use TCP_CORK, parse_config() */
 
+//usage:#define httpd_trivial_usage
+//usage:       "[-ifv[v]]"
+//usage:       " [-c CONFFILE]"
+//usage:       " [-p [IP:]PORT]"
+//usage:	IF_FEATURE_HTTPD_SETUID(" [-u USER[:GRP]]")
+//usage:	IF_FEATURE_HTTPD_BASIC_AUTH(" [-r REALM]")
+//usage:       " [-h HOME]\n"
+//usage:       "or httpd -d/-e" IF_FEATURE_HTTPD_AUTH_MD5("/-m") " STRING"
+//usage:#define httpd_full_usage "\n\n"
+//usage:       "Listen for incoming HTTP requests\n"
+//usage:     "\n	-i		Inetd mode"
+//usage:     "\n	-f		Don't daemonize"
+//usage:     "\n	-v[v]		Verbose"
+//usage:     "\n	-p [IP:]PORT	Bind to IP:PORT (default *:80)"
+//usage:	IF_FEATURE_HTTPD_SETUID(
+//usage:     "\n	-u USER[:GRP]	Set uid/gid after binding to port")
+//usage:	IF_FEATURE_HTTPD_BASIC_AUTH(
+//usage:     "\n	-r REALM	Authentication Realm for Basic Authentication")
+//usage:     "\n	-h HOME		Home directory (default .)"
+//usage:     "\n	-c FILE		Configuration file (default {/etc,HOME}/httpd.conf)"
+//usage:	IF_FEATURE_HTTPD_AUTH_MD5(
+//usage:     "\n	-m STRING	MD5 crypt STRING")
+//usage:     "\n	-e STRING	HTML encode STRING"
+//usage:     "\n	-d STRING	URL decode STRING"
+
 #include "libbb.h"
+#if ENABLE_PAM
+/* PAM may include <locale.h>. We may need to undefine bbox's stub define: */
+# undef setlocale
+/* For some obscure reason, PAM is not in pam/xxx, but in security/xxx.
+ * Apparently they like to confuse people. */
+# include <security/pam_appl.h>
+# include <security/pam_misc.h>
+#endif
 #if ENABLE_FEATURE_HTTPD_USE_SENDFILE
 # include <sys/sendfile.h>
 #endif
-
-#define DEBUG 0
-
-#define IOBUF_SIZE 8192    /* IO buffer */
-
 /* amount of buffering in a pipe */
 #ifndef PIPE_BUF
 # define PIPE_BUF 4096
 #endif
+
+#define DEBUG 0
+
+#define IOBUF_SIZE 8192
 #if PIPE_BUF >= IOBUF_SIZE
 # error "PIPE_BUF >= IOBUF_SIZE"
 #endif
@@ -118,6 +153,7 @@
 static const char DEFAULT_PATH_HTTPD_CONF[] ALIGN1 = "/etc";
 static const char HTTPD_CONF[] ALIGN1 = "httpd.conf";
 static const char HTTP_200[] ALIGN1 = "HTTP/1.0 200 OK\r\n";
+static const char index_html[] ALIGN1 = "index.html";
 
 typedef struct has_next_ptr {
 	struct has_next_ptr *next;
@@ -170,7 +206,6 @@ enum {
 	HTTP_PAYMENT_REQUIRED = 402,
 	HTTP_BAD_GATEWAY = 502,
 	HTTP_SERVICE_UNAVAILABLE = 503, /* overload, maintenance */
-	HTTP_RESPONSE_SETSIZE = 0xffffffff
 #endif
 };
 
@@ -231,14 +266,11 @@ static const struct {
 #endif
 };
 
-static const char index_html[] ALIGN1 = "index.html";
-
-
 struct globals {
 	int verbose;            /* must be int (used by getopt32) */
 	smallint flg_deny_all;
 
-	unsigned rmt_ip;	/* used for IP-based allow/deny rules */
+	unsigned rmt_ip;        /* used for IP-based allow/deny rules */
 	time_t last_mod;
 	char *rmt_ip_str;       /* for $REMOTE_ADDR and $REMOTE_PORT */
 	const char *bind_addr_or_port;
@@ -274,7 +306,7 @@ struct globals {
 #if ENABLE_FEATURE_HTTPD_CONFIG_WITH_SCRIPT_INTERPR
 	Htaccess *script_i;     /* config script interpreters */
 #endif
-	char *iobuf;	        /* [IOBUF_SIZE] */
+	char *iobuf;            /* [IOBUF_SIZE] */
 #define hdr_buf bb_common_bufsiz1
 	char *hdr_ptr;
 	int hdr_cnt;
@@ -283,6 +315,10 @@ struct globals {
 #endif
 #if ENABLE_FEATURE_HTTPD_PROXY
 	Htaccess_Proxy *proxy;
+#endif
+#if ENABLE_FEATURE_HTTPD_GZIP
+	/* client can handle gzip / we are going to send gzip */
+	smallint content_gzip;
 #endif
 };
 #define G (*ptr_to_globals)
@@ -312,7 +348,7 @@ struct globals {
 #define range_len         (G.range_len        )
 #else
 enum {
-	range_start = 0,
+	range_start = -1,
 	range_end = MAXINT(off_t) - 1,
 	range_len = MAXINT(off_t),
 };
@@ -326,9 +362,15 @@ enum {
 #define hdr_cnt           (G.hdr_cnt          )
 #define http_error_page   (G.http_error_page  )
 #define proxy             (G.proxy            )
+#if ENABLE_FEATURE_HTTPD_GZIP
+# define content_gzip     (G.content_gzip     )
+#else
+# define content_gzip     0
+#endif
 #define INIT_G() do { \
 	SET_PTR_TO_GLOBALS(xzalloc(sizeof(G))); \
 	IF_FEATURE_HTTPD_BASIC_AUTH(g_realm = "Web Server Authentication";) \
+	IF_FEATURE_HTTPD_RANGES(range_start = -1;) \
 	bind_addr_or_port = "80"; \
 	index_page = index_html; \
 	file_size = -1; \
@@ -777,7 +819,7 @@ static char *encodeString(const char *string)
 	char *p = out;
 	char ch;
 
-	while ((ch = *string++)) {
+	while ((ch = *string++) != '\0') {
 		/* very simple check for what to encode */
 		if (isalnum(ch))
 			*p++ = ch;
@@ -787,79 +829,7 @@ static char *encodeString(const char *string)
 	*p = '\0';
 	return out;
 }
-#endif          /* FEATURE_HTTPD_ENCODE_URL_STR */
-
-/*
- * Given a URL encoded string, convert it to plain ascii.
- * Since decoding always makes strings smaller, the decode is done in-place.
- * Thus, callers should xstrdup() the argument if they do not want the
- * argument modified.  The return is the original pointer, allowing this
- * function to be easily used as arguments to other functions.
- *
- * string    The first string to decode.
- * option_d  1 if called for httpd -d
- *
- * Returns a pointer to the decoded string (same as input).
- */
-static unsigned hex_to_bin(unsigned char c)
-{
-	unsigned v;
-
-	v = c - '0';
-	if (v <= 9)
-		return v;
-	/* c | 0x20: letters to lower case, non-letters
-	 * to (potentially different) non-letters */
-	v = (unsigned)(c | 0x20) - 'a';
-	if (v <= 5)
-		return v + 10;
-	return ~0;
-}
-/* For testing:
-void t(char c) { printf("'%c'(%u) %u\n", c, c, hex_to_bin(c)); }
-int main() { t(0x10); t(0x20); t('0'); t('9'); t('A'); t('F'); t('a'); t('f');
-t('0'-1); t('9'+1); t('A'-1); t('F'+1); t('a'-1); t('f'+1); return 0; }
-*/
-static char *decodeString(char *orig, int option_d)
-{
-	/* note that decoded string is always shorter than original */
-	char *string = orig;
-	char *ptr = string;
-	char c;
-
-	while ((c = *ptr++) != '\0') {
-		unsigned v;
-
-		if (option_d && c == '+') {
-			*string++ = ' ';
-			continue;
-		}
-		if (c != '%') {
-			*string++ = c;
-			continue;
-		}
-		v = hex_to_bin(ptr[0]);
-		if (v > 15) {
- bad_hex:
-			if (!option_d)
-				return NULL;
-			*string++ = '%';
-			continue;
-		}
-		v = (v * 16) | hex_to_bin(ptr[1]);
-		if (v > 255)
-			goto bad_hex;
-		if (!option_d && (v == '/' || v == '\0')) {
-			/* caller takes it as indication of invalid
-			 * (dangerous wrt exploits) chars */
-			return orig + 1;
-		}
-		*string++ = v;
-		ptr += 2;
-	}
-	*string = '\0';
-	return orig;
-}
+#endif
 
 #if ENABLE_FEATURE_HTTPD_BASIC_AUTH
 /*
@@ -1034,10 +1004,14 @@ static void send_headers(int responseNum)
 #endif
 			"Last-Modified: %s\r\n%s %"OFF_FMT"u\r\n",
 				tmp_str,
-				"Content-length:",
+				content_gzip ? "Transfer-length:" : "Content-length:",
 				file_size
 		);
 	}
+
+	if (content_gzip)
+		len += sprintf(iobuf + len, "Content-Encoding: gzip\r\n");
+
 	iobuf[len++] = '\r';
 	iobuf[len++] = '\n';
 	if (infoString) {
@@ -1059,6 +1033,7 @@ static void send_headers(int responseNum)
 static void send_headers_and_exit(int responseNum) NORETURN;
 static void send_headers_and_exit(int responseNum)
 {
+	IF_FEATURE_HTTPD_GZIP(content_gzip = 0;)
 	send_headers(responseNum);
 	log_and_exit();
 }
@@ -1291,18 +1266,21 @@ static void setenv1(const char *name, const char *value)
  *
  * Parameters:
  * const char *url              The requested URL (with leading /).
+ * const char *orig_uri         The original URI before rewriting (if any)
  * int post_len                 Length of the POST body.
  * const char *cookie           For set HTTP_COOKIE.
  * const char *content_type     For set CONTENT_TYPE.
  */
 static void send_cgi_and_exit(
 		const char *url,
+		const char *orig_uri,
 		const char *request,
 		int post_len,
 		const char *cookie,
 		const char *content_type) NORETURN;
 static void send_cgi_and_exit(
 		const char *url,
+		const char *orig_uri,
 		const char *request,
 		int post_len,
 		const char *cookie,
@@ -1310,7 +1288,7 @@ static void send_cgi_and_exit(
 {
 	struct fd_pair fromCgi;  /* CGI -> httpd pipe */
 	struct fd_pair toCgi;    /* httpd -> CGI pipe */
-	char *script;
+	char *script, *last_slash;
 	int pid;
 
 	/* Make a copy. NB: caller guarantees:
@@ -1324,22 +1302,25 @@ static void send_cgi_and_exit(
 	 */
 
 	/* Check for [dirs/]script.cgi/PATH_INFO */
-	script = (char*)url;
+	last_slash = script = (char*)url;
 	while ((script = strchr(script + 1, '/')) != NULL) {
+		int dir;
 		*script = '\0';
-		if (!is_directory(url + 1, 1, NULL)) {
+		dir = is_directory(url + 1, /*followlinks:*/ 1);
+		*script = '/';
+		if (!dir) {
 			/* not directory, found script.cgi/PATH_INFO */
-			*script = '/';
 			break;
 		}
-		*script = '/'; /* is directory, find next '/' */
+		/* is directory, find next '/' */
+		last_slash = script;
 	}
 	setenv1("PATH_INFO", script);   /* set to /PATH_INFO or "" */
 	setenv1("REQUEST_METHOD", request);
 	if (g_query) {
-		putenv(xasprintf("%s=%s?%s", "REQUEST_URI", url, g_query));
+		putenv(xasprintf("%s=%s?%s", "REQUEST_URI", orig_uri, g_query));
 	} else {
-		setenv1("REQUEST_URI", url);
+		setenv1("REQUEST_URI", orig_uri);
 	}
 	if (script != NULL)
 		*script = '\0';         /* cut off /PATH_INFO */
@@ -1413,7 +1394,7 @@ static void send_cgi_and_exit(
 		log_and_exit();
 	}
 
-	if (!pid) {
+	if (pid == 0) {
 		/* Child process */
 		char *argv[3];
 
@@ -1429,7 +1410,7 @@ static void send_cgi_and_exit(
 		/* dup2(1, 2); */
 
 		/* Chdiring to script's dir */
-		script = strrchr(url, '/');
+		script = last_slash;
 		if (script != url) { /* paranoia */
 			*script = '\0';
 			if (chdir(url + 1) != 0) {
@@ -1507,7 +1488,23 @@ static NOINLINE void send_file_and_exit(const char *url, int what)
 	int fd;
 	ssize_t count;
 
-	fd = open(url, O_RDONLY);
+	if (content_gzip) {
+		/* does <url>.gz exist? Then use it instead */
+		char *gzurl = xasprintf("%s.gz", url);
+		fd = open(gzurl, O_RDONLY);
+		free(gzurl);
+		if (fd != -1) {
+			struct stat sb;
+			fstat(fd, &sb);
+			file_size = sb.st_size;
+			last_mod = sb.st_mtime;
+		} else {
+			IF_FEATURE_HTTPD_GZIP(content_gzip = 0;)
+			fd = open(url, O_RDONLY);
+		}
+	} else {
+		fd = open(url, O_RDONLY);
+	}
 	if (fd < 0) {
 		if (DEBUG)
 			bb_perror_msg("can't open '%s'", url);
@@ -1590,18 +1587,21 @@ static NOINLINE void send_file_and_exit(const char *url, int what)
 			url, found_mime_type);
 
 #if ENABLE_FEATURE_HTTPD_RANGES
-	if (what == SEND_BODY)
-		range_start = 0; /* err pages and ranges don't mix */
+	if (what == SEND_BODY /* err pages and ranges don't mix */
+	 || content_gzip /* we are sending compressed page: can't do ranges */  ///why?
+	) {
+		range_start = -1;
+	}
 	range_len = MAXINT(off_t);
-	if (range_start) {
-		if (!range_end) {
+	if (range_start >= 0) {
+		if (!range_end || range_end > file_size - 1) {
 			range_end = file_size - 1;
 		}
 		if (range_end < range_start
 		 || lseek(fd, range_start, SEEK_SET) != range_start
 		) {
 			lseek(fd, 0, SEEK_SET);
-			range_start = 0;
+			range_start = -1;
 		} else {
 			range_len = range_end - range_start + 1;
 			send_headers(HTTP_PARTIAL_CONTENT);
@@ -1624,7 +1624,7 @@ static NOINLINE void send_file_and_exit(const char *url, int what)
 					break; /* fall back to read/write loop */
 				goto fin;
 			}
-			IF_FEATURE_HTTPD_RANGES(range_len -= sz;)
+			IF_FEATURE_HTTPD_RANGES(range_len -= count;)
 			if (count == 0 || range_len == 0)
 				log_and_exit();
 		}
@@ -1675,6 +1675,56 @@ static int checkPermIP(void)
 }
 
 #if ENABLE_FEATURE_HTTPD_BASIC_AUTH
+
+# if ENABLE_PAM
+struct pam_userinfo {
+	const char *name;
+	const char *pw;
+};
+
+static int pam_talker(int num_msg,
+		const struct pam_message **msg,
+		struct pam_response **resp,
+		void *appdata_ptr)
+{
+	int i;
+	struct pam_userinfo *userinfo = (struct pam_userinfo *) appdata_ptr;
+	struct pam_response *response;
+
+	if (!resp || !msg || !userinfo)
+		return PAM_CONV_ERR;
+
+	/* allocate memory to store response */
+	response = xzalloc(num_msg * sizeof(*response));
+
+	/* copy values */
+	for (i = 0; i < num_msg; i++) {
+		const char *s;
+
+		switch (msg[i]->msg_style) {
+		case PAM_PROMPT_ECHO_ON:
+			s = userinfo->name;
+			break;
+		case PAM_PROMPT_ECHO_OFF:
+			s = userinfo->pw;
+			break;
+	        case PAM_ERROR_MSG:
+        	case PAM_TEXT_INFO:
+        		s = "";
+			break;
+		default:
+			free(response);
+			return PAM_CONV_ERR;
+		}
+		response[i].resp = xstrdup(s);
+		if (PAM_SUCCESS != 0)
+			response[i].resp_retcode = PAM_SUCCESS;
+	}
+	*resp = response;
+	return PAM_SUCCESS;
+}
+# endif
+
 /*
  * Config file entries are of the form "/<path>:<user>:<passwd>".
  * If config file has no prefix match for path, access is allowed.
@@ -1684,7 +1734,7 @@ static int checkPermIP(void)
  *
  * Returns 1 if user_and_passwd is OK.
  */
-static int check_user_passwd(const char *path, const char *user_and_passwd)
+static int check_user_passwd(const char *path, char *user_and_passwd)
 {
 	Htaccess *cur;
 	const char *prev = NULL;
@@ -1692,6 +1742,7 @@ static int check_user_passwd(const char *path, const char *user_and_passwd)
 	for (cur = g_auth; cur; cur = cur->next) {
 		const char *dir_prefix;
 		size_t len;
+		int r;
 
 		dir_prefix = cur->before_colon;
 
@@ -1707,7 +1758,8 @@ static int check_user_passwd(const char *path, const char *user_and_passwd)
 		len = strlen(dir_prefix);
 		if (len != 1 /* dir_prefix "/" matches all, don't need to check */
 		 && (strncmp(dir_prefix, path, len) != 0
-		    || (path[len] != '/' && path[len] != '\0'))
+		    || (path[len] != '/' && path[len] != '\0')
+		    )
 		) {
 			continue;
 		}
@@ -1716,38 +1768,105 @@ static int check_user_passwd(const char *path, const char *user_and_passwd)
 		prev = dir_prefix;
 
 		if (ENABLE_FEATURE_HTTPD_AUTH_MD5) {
-			char *md5_passwd;
+			char *colon_after_user;
+			const char *passwd;
+# if ENABLE_FEATURE_SHADOWPASSWDS && !ENABLE_PAM
+			char sp_buf[256];
+# endif
 
-			md5_passwd = strchr(cur->after_colon, ':');
-			if (md5_passwd && md5_passwd[1] == '$' && md5_passwd[2] == '1'
-			 && md5_passwd[3] == '$' && md5_passwd[4]
+			colon_after_user = strchr(user_and_passwd, ':');
+			if (!colon_after_user)
+				goto bad_input;
+
+			/* compare "user:" */
+			if (cur->after_colon[0] != '*'
+			 && strncmp(cur->after_colon, user_and_passwd,
+					colon_after_user - user_and_passwd + 1) != 0
 			) {
-				char *encrypted;
-				int r, user_len_p1;
-
-				md5_passwd++;
-				user_len_p1 = md5_passwd - cur->after_colon;
-				/* comparing "user:" */
-				if (strncmp(cur->after_colon, user_and_passwd, user_len_p1) != 0) {
-					continue;
-				}
-
-				encrypted = pw_encrypt(
-					user_and_passwd + user_len_p1 /* cleartext pwd from user */,
-					md5_passwd /*salt */, 1 /* cleanup */);
-				r = strcmp(encrypted, md5_passwd);
-				free(encrypted);
-				if (r == 0)
-					goto set_remoteuser_var; /* Ok */
 				continue;
 			}
-		}
+			/* this cfg entry is '*' or matches username from peer */
 
+			passwd = strchr(cur->after_colon, ':');
+			if (!passwd)
+				goto bad_input;
+			passwd++;
+			if (passwd[0] == '*') {
+# if ENABLE_PAM
+				struct pam_userinfo userinfo;
+				struct pam_conv conv_info = { &pam_talker, (void *) &userinfo };
+				pam_handle_t *pamh;
+
+				*colon_after_user = '\0';
+				userinfo.name = user_and_passwd;
+				userinfo.pw = colon_after_user + 1;
+				r = pam_start("httpd", user_and_passwd, &conv_info, &pamh) != PAM_SUCCESS;
+				if (r == 0) {
+					r = pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK) != PAM_SUCCESS
+					 || pam_acct_mgmt(pamh, PAM_DISALLOW_NULL_AUTHTOK)    != PAM_SUCCESS
+					;
+					pam_end(pamh, PAM_SUCCESS);
+				}
+				*colon_after_user = ':';
+				goto end_check_passwd;
+# else
+#  if ENABLE_FEATURE_SHADOWPASSWDS
+				/* Using _r function to avoid pulling in static buffers */
+				struct spwd spw;
+#  endif
+				struct passwd *pw;
+
+				*colon_after_user = '\0';
+				pw = getpwnam(user_and_passwd);
+				*colon_after_user = ':';
+				if (!pw || !pw->pw_passwd)
+					continue;
+				passwd = pw->pw_passwd;
+#  if ENABLE_FEATURE_SHADOWPASSWDS
+				if ((passwd[0] == 'x' || passwd[0] == '*') && !passwd[1]) {
+					/* getspnam_r may return 0 yet set result to NULL.
+					 * At least glibc 2.4 does this. Be extra paranoid here. */
+					struct spwd *result = NULL;
+					r = getspnam_r(pw->pw_name, &spw, sp_buf, sizeof(sp_buf), &result);
+					if (r == 0 && result)
+						passwd = result->sp_pwdp;
+				}
+#  endif
+				/* In this case, passwd is ALWAYS encrypted:
+				 * it came from /etc/passwd or /etc/shadow!
+				 */
+				goto check_encrypted;
+# endif /* ENABLE_PAM */
+			}
+			/* Else: passwd is from httpd.conf, it is either plaintext or encrypted */
+
+			if (passwd[0] == '$' && isdigit(passwd[1])) {
+				char *encrypted;
+# if !ENABLE_PAM
+ check_encrypted:
+# endif
+				/* encrypt pwd from peer and check match with local one */
+				encrypted = pw_encrypt(
+					/* pwd (from peer): */  colon_after_user + 1,
+					/* salt: */ passwd,
+					/* cleanup: */ 0
+				);
+				r = strcmp(encrypted, passwd);
+				free(encrypted);
+			} else {
+				/* local passwd is from httpd.conf and it's plaintext */
+				r = strcmp(colon_after_user + 1, passwd);
+			}
+			goto end_check_passwd;
+		}
+ bad_input:
 		/* Comparing plaintext "user:pass" in one go */
-		if (strcmp(cur->after_colon, user_and_passwd) == 0) {
- set_remoteuser_var:
+		r = strcmp(cur->after_colon, user_and_passwd);
+ end_check_passwd:
+		if (r == 0) {
 			remoteuser = xstrndup(user_and_passwd,
-					strchrnul(user_and_passwd, ':') - user_and_passwd);
+				strchrnul(user_and_passwd, ':') - user_and_passwd
+			);
 			return 1; /* Ok */
 		}
 	} /* for */
@@ -1886,7 +2005,7 @@ static void handle_incoming_and_exit(const len_and_sockaddr *fromAddr)
 	/* NB: urlcopy ptr is never changed after this */
 
 	/* Extract url args if present */
-	g_query = NULL;
+	/* g_query = NULL; - already is */
 	tptr = strchr(urlcopy, '?');
 	if (tptr) {
 		*tptr++ = '\0';
@@ -1894,7 +2013,7 @@ static void handle_incoming_and_exit(const len_and_sockaddr *fromAddr)
 	}
 
 	/* Decode URL escape sequences */
-	tptr = decodeString(urlcopy, 0);
+	tptr = percent_decode_in_place(urlcopy, /*strict:*/ 1);
 	if (tptr == NULL)
 		send_headers_and_exit(HTTP_BAD_REQUEST);
 	if (tptr == urlcopy + 1) {
@@ -1906,34 +2025,40 @@ static void handle_incoming_and_exit(const len_and_sockaddr *fromAddr)
 	/* Algorithm stolen from libbb bb_simplify_path(),
 	 * but don't strdup, retain trailing slash, protect root */
 	urlp = tptr = urlcopy;
-	do {
+	for (;;) {
 		if (*urlp == '/') {
 			/* skip duplicate (or initial) slash */
 			if (*tptr == '/') {
-				continue;
+				goto next_char;
 			}
 			if (*tptr == '.') {
-				/* skip extra "/./" */
-				if (tptr[1] == '/' || !tptr[1]) {
-					continue;
-				}
-				/* "..": be careful */
-				if (tptr[1] == '.' && (tptr[2] == '/' || !tptr[2])) {
-					++tptr;
-					if (urlp == urlcopy) /* protect root */
+				if (tptr[1] == '.' && (tptr[2] == '/' || tptr[2] == '\0')) {
+					/* "..": be careful */
+					/* protect root */
+					if (urlp == urlcopy)
 						send_headers_and_exit(HTTP_BAD_REQUEST);
-					while (*--urlp != '/') /* omit previous dir */;
+					/* omit previous dir */
+					while (*--urlp != '/')
 						continue;
+					/* skip to "./" or ".<NUL>" */
+					tptr++;
+				}
+				if (tptr[1] == '/' || tptr[1] == '\0') {
+					/* skip extra "/./" */
+					goto next_char;
 				}
 			}
 		}
 		*++urlp = *tptr;
-	} while (*++tptr);
-	*++urlp = '\0';       /* terminate after last character */
+		if (*urlp == '\0')
+			break;
+ next_char:
+		tptr++;
+	}
 
 	/* If URL is a directory, add '/' */
 	if (urlp[-1] != '/') {
-		if (is_directory(urlcopy + 1, 1, NULL)) {
+		if (is_directory(urlcopy + 1, /*followlinks:*/ 1)) {
 			found_moved_temporarily = urlcopy;
 		}
 	}
@@ -1947,7 +2072,7 @@ static void handle_incoming_and_exit(const len_and_sockaddr *fromAddr)
 	while (ip_allowed && (tptr = strchr(tptr + 1, '/')) != NULL) {
 		/* have path1/path2 */
 		*tptr = '\0';
-		if (is_directory(urlcopy + 1, 1, NULL)) {
+		if (is_directory(urlcopy + 1, /*followlinks:*/ 1)) {
 			/* may have subdir config */
 			parse_conf(urlcopy + 1, SUBDIR_PARSE);
 			ip_allowed = checkPermIP();
@@ -1964,7 +2089,7 @@ static void handle_incoming_and_exit(const len_and_sockaddr *fromAddr)
 	if (http_major_version >= '0') {
 		/* Request was with "... HTTP/nXXX", and n >= 0 */
 
-		/* Read until blank line for HTTP version specified, else parse immediate */
+		/* Read until blank line */
 		while (1) {
 			if (!get_line())
 				break; /* EOF or error or empty line */
@@ -1991,9 +2116,9 @@ static void handle_incoming_and_exit(const len_and_sockaddr *fromAddr)
 			if ((STRNCASECMP(iobuf, "Content-length:") == 0)) {
 				/* extra read only for POST */
 				if (prequest != request_GET
-#if ENABLE_FEATURE_HTTPD_CGI
+# if ENABLE_FEATURE_HTTPD_CGI
 				 && prequest != request_HEAD
-#endif
+# endif
 				) {
 					tptr = skip_whitespace(iobuf + sizeof("Content-length:") - 1);
 					if (!tptr[0])
@@ -2046,12 +2171,29 @@ static void handle_incoming_and_exit(const len_and_sockaddr *fromAddr)
 					s += sizeof("bytes=")-1;
 					range_start = BB_STRTOOFF(s, &s, 10);
 					if (s[0] != '-' || range_start < 0) {
-						range_start = 0;
+						range_start = -1;
 					} else if (s[1]) {
 						range_end = BB_STRTOOFF(s+1, NULL, 10);
 						if (errno || range_end < range_start)
-							range_start = 0;
+							range_start = -1;
 					}
+				}
+			}
+#endif
+#if ENABLE_FEATURE_HTTPD_GZIP
+			if (STRNCASECMP(iobuf, "Accept-Encoding:") == 0) {
+				/* Note: we do not support "gzip;q=0"
+				 * method of _disabling_ gzip
+				 * delivery. No one uses that, though */
+				const char *s = strstr(iobuf, "gzip");
+				if (s) {
+					// want more thorough checks?
+					//if (s[-1] == ' '
+					// || s[-1] == ','
+					// || s[-1] == ':'
+					//) {
+						content_gzip = 1;
+					//}
 				}
 			}
 #endif
@@ -2067,10 +2209,10 @@ static void handle_incoming_and_exit(const len_and_sockaddr *fromAddr)
 	}
 
 #if ENABLE_FEATURE_HTTPD_BASIC_AUTH
-	/* Case: no "Authorization:" was seen, but page does require passwd.
+	/* Case: no "Authorization:" was seen, but page might require passwd.
 	 * Check that with dummy user:pass */
 	if (authorized < 0)
-		authorized = check_user_passwd(urlcopy, ":");
+		authorized = check_user_passwd(urlcopy, (char *) "");
 	if (!authorized)
 		send_headers_and_exit(HTTP_UNAUTHORIZED);
 #endif
@@ -2116,12 +2258,20 @@ static void handle_incoming_and_exit(const len_and_sockaddr *fromAddr)
 			/* protect listing "cgi-bin/" */
 			send_headers_and_exit(HTTP_FORBIDDEN);
 		}
-		send_cgi_and_exit(urlcopy, prequest, length, cookie, content_type);
+		send_cgi_and_exit(urlcopy, urlcopy, prequest, length, cookie, content_type);
 	}
 #endif
 
-	if (urlp[-1] == '/')
+	if (urlp[-1] == '/') {
+		/* When index_page string is appended to <dir>/ URL, it overwrites
+		 * the query string. If we fall back to call /cgi-bin/index.cgi,
+		 * query string would be lost and not available to the CGI.
+		 * Work around it by making a deep copy.
+		 */
+		if (ENABLE_FEATURE_HTTPD_CGI)
+			g_query = xstrdup(g_query); /* ok for NULL too */
 		strcpy(urlp, index_page);
+	}
 	if (stat(tptr, &sb) == 0) {
 #if ENABLE_FEATURE_HTTPD_CONFIG_WITH_SCRIPT_INTERPR
 		char *suffix = strrchr(tptr, '.');
@@ -2129,7 +2279,7 @@ static void handle_incoming_and_exit(const len_and_sockaddr *fromAddr)
 			Htaccess *cur;
 			for (cur = script_i; cur; cur = cur->next) {
 				if (strcmp(cur->before_colon + 1, suffix) == 0) {
-					send_cgi_and_exit(urlcopy, prequest, length, cookie, content_type);
+					send_cgi_and_exit(urlcopy, urlcopy, prequest, length, cookie, content_type);
 				}
 			}
 		}
@@ -2142,9 +2292,8 @@ static void handle_incoming_and_exit(const len_and_sockaddr *fromAddr)
 		/* It's a dir URL and there is no index.html
 		 * Try cgi-bin/index.cgi */
 		if (access("/cgi-bin/index.cgi"+1, X_OK) == 0) {
-			urlp[0] = '\0';
-			g_query = urlcopy;
-			send_cgi_and_exit("/cgi-bin/index.cgi", prequest, length, cookie, content_type);
+			urlp[0] = '\0'; /* remove index_page */
+			send_cgi_and_exit("/cgi-bin/index.cgi", urlcopy, prequest, length, cookie, content_type);
 		}
 	}
 	/* else fall through to send_file, it errors out if open fails: */
@@ -2183,9 +2332,9 @@ static void mini_httpd(int server_socket)
 		/* Wait for connections... */
 		fromAddr.len = LSA_SIZEOF_SA;
 		n = accept(server_socket, &fromAddr.u.sa, &fromAddr.len);
-
 		if (n < 0)
 			continue;
+
 		/* set the KEEPALIVE option to cull dead connections */
 		setsockopt(n, SOL_SOCKET, SO_KEEPALIVE, &const_int_1, sizeof(const_int_1));
 
@@ -2226,9 +2375,9 @@ static void mini_httpd_nommu(int server_socket, int argc, char **argv)
 		/* Wait for connections... */
 		fromAddr.len = LSA_SIZEOF_SA;
 		n = accept(server_socket, &fromAddr.u.sa, &fromAddr.len);
-
 		if (n < 0)
 			continue;
+
 		/* set the KEEPALIVE option to cull dead connections */
 		setsockopt(n, SOL_SOCKET, SO_KEEPALIVE, &const_int_1, sizeof(const_int_1));
 
@@ -2243,6 +2392,7 @@ static void mini_httpd_nommu(int server_socket, int argc, char **argv)
 			/* Run a copy of ourself in inetd mode */
 			re_exec(argv_copy);
 		}
+		argv_copy[0][0] &= 0x7f;
 		/* parent, or vfork failed */
 		close(n);
 	} /* while (1) */
@@ -2336,7 +2486,7 @@ int httpd_main(int argc UNUSED_PARAM, char **argv)
 			, &verbose
 		);
 	if (opt & OPT_DECODE_URL) {
-		fputs(decodeString(url_for_decode, 1), stdout);
+		fputs(percent_decode_in_place(url_for_decode, /*strict:*/ 0), stdout);
 		return 0;
 	}
 #if ENABLE_FEATURE_HTTPD_ENCODE_URL_STR
@@ -2351,8 +2501,8 @@ int httpd_main(int argc UNUSED_PARAM, char **argv)
 		salt[0] = '$';
 		salt[1] = '1';
 		salt[2] = '$';
-		crypt_make_salt(salt + 3, 4, 0);
-		puts(pw_encrypt(pass, salt, 1));
+		crypt_make_salt(salt + 3, 4);
+		puts(pw_encrypt(pass, salt, /*cleanup:*/ 0));
 		return 0;
 	}
 #endif

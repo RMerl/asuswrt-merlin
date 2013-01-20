@@ -7,17 +7,24 @@
  *
  * Renamed to flash_eraseall.c
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define flash_eraseall_trivial_usage
+//usage:       "[-jq] MTD_DEVICE"
+//usage:#define flash_eraseall_full_usage "\n\n"
+//usage:       "Erase an MTD device\n"
+//usage:     "\n	-j	Format the device for jffs2"
+//usage:     "\n	-q	Don't display progress messages"
 
 #include "libbb.h"
 #include <mtd/mtd-user.h>
 #include <linux/jffs2.h>
 
-#define OPTION_J	(1 << 0)
-#define OPTION_Q	(1 << 1)
-#define IS_NAND		(1 << 2)
-#define BBTEST		(1 << 3)
+#define OPTION_J  (1 << 0)
+#define OPTION_Q  (1 << 1)
+#define IS_NAND   (1 << 2)
+#define BBTEST    (1 << 3)
 
 /* mtd/jffs2-user.h used to have this atrocity:
 extern int target_endian;
@@ -41,15 +48,6 @@ but mtd/jffs2-user.h is gone now (at least 2.6.31.6 does not have it anymore)
 #undef cpu_to_je32
 #define cpu_to_je16(v) ((jint16_t){(v)})
 #define cpu_to_je32(v) ((jint32_t){(v)})
-
-static uint32_t crc32(uint32_t val, const void *ss, int len,
-		uint32_t *crc32_table)
-{
-	const unsigned char *s = ss;
-	while (--len >= 0)
-		val = crc32_table[(val ^ *s++) & 0xff] ^ (val >> 8);
-	return val;
-}
 
 static void show_progress(mtd_info_t *meminfo, erase_info_t *erase)
 {
@@ -131,8 +129,9 @@ int flash_eraseall_main(int argc UNUSED_PARAM, char **argv)
 			cleanmarker.totlen = cpu_to_je32(8);
 		}
 
-		cleanmarker.hdr_crc = cpu_to_je32(crc32(0, &cleanmarker, sizeof(struct jffs2_unknown_node) - 4,
-					crc32_table));
+		cleanmarker.hdr_crc = cpu_to_je32(
+			crc32_block_endian0(0, &cleanmarker, sizeof(struct jffs2_unknown_node) - 4, crc32_table)
+		);
 	}
 
 	/* Don't want to destroy progress indicator by bb_error_msg's */

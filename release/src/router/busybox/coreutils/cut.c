@@ -6,8 +6,25 @@
  * Written by Mark Whitley <markw@codepoet.org>
  * debloated by Bernhard Reutner-Fischer
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define cut_trivial_usage
+//usage:       "[OPTIONS] [FILE]..."
+//usage:#define cut_full_usage "\n\n"
+//usage:       "Print selected fields from each input FILE to stdout\n"
+//usage:     "\n	-b LIST	Output only bytes from LIST"
+//usage:     "\n	-c LIST	Output only characters from LIST"
+//usage:     "\n	-d CHAR	Use CHAR instead of tab as the field delimiter"
+//usage:     "\n	-s	Output only the lines containing delimiter"
+//usage:     "\n	-f N	Print only these fields"
+//usage:     "\n	-n	Ignored"
+//usage:
+//usage:#define cut_example_usage
+//usage:       "$ echo \"Hello world\" | cut -f 1 -d ' '\n"
+//usage:       "Hello\n"
+//usage:       "$ echo \"Hello world\" | cut -f 2 -d ' '\n"
+//usage:       "world\n"
 
 #include "libbb.h"
 
@@ -37,7 +54,6 @@ static int cmpfunc(const void *a, const void *b)
 {
 	return (((struct cut_list *) a)->startpos -
 			((struct cut_list *) b)->startpos);
-
 }
 
 static void cut_file(FILE *file, char delim, const struct cut_list *cut_lists, unsigned nlists)
@@ -225,7 +241,7 @@ int cut_main(int argc UNUSED_PARAM, char **argv)
 			if (!ntok[0]) {
 				s = BOL;
 			} else {
-				s = xatoi_u(ntok);
+				s = xatoi_positive(ntok);
 				/* account for the fact that arrays are zero based, while
 				 * the user expects the first char on the line to be char #1 */
 				if (s != 0)
@@ -238,7 +254,7 @@ int cut_main(int argc UNUSED_PARAM, char **argv)
 			} else if (!ltok[0]) {
 				e = EOL;
 			} else {
-				e = xatoi_u(ltok);
+				e = xatoi_positive(ltok);
 				/* if the user specified and end position of 0,
 				 * that means "til the end of the line" */
 				if (e == 0)

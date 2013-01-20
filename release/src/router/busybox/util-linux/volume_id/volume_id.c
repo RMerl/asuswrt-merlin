@@ -88,11 +88,8 @@ static const probe_fptr raid2[] = {
 #endif
 };
 
-/* fill buffer with maximum */
-static const probe_fptr fs[] = {
-#if ENABLE_FEATURE_VOLUMEID_LINUXSWAP
-	volume_id_probe_linux_swap,
-#endif
+/* signature in the first block, only small buffer needed */
+static const probe_fptr fs1[] = {
 #if ENABLE_FEATURE_VOLUMEID_FAT
 	volume_id_probe_vfat,
 #endif
@@ -101,6 +98,13 @@ static const probe_fptr fs[] = {
 #endif
 #if ENABLE_FEATURE_VOLUMEID_XFS
 	volume_id_probe_xfs,
+#endif
+};
+
+/* fill buffer with maximum */
+static const probe_fptr fs2[] = {
+#if ENABLE_FEATURE_VOLUMEID_LINUXSWAP
+	volume_id_probe_linux_swap,
 #endif
 #if ENABLE_FEATURE_VOLUMEID_EXT
 	volume_id_probe_ext,
@@ -170,11 +174,19 @@ int FAST_FUNC volume_id_probe_all(struct volume_id *id, /*uint64_t off,*/ uint64
 			goto ret;
 	}
 
+	/* signature in the first block, only small buffer needed */
+	for (i = 0; i < ARRAY_SIZE(fs1); i++) {
+		if (fs1[i](id /*,off*/) == 0)
+			goto ret;
+		if (id->error)
+			goto ret;
+	}
+
 	/* fill buffer with maximum */
 	volume_id_get_buffer(id, 0, SB_BUFFER_SIZE);
 
-	for (i = 0; i < ARRAY_SIZE(fs); i++) {
-		if (fs[i](id /*,off*/) == 0)
+	for (i = 0; i < ARRAY_SIZE(fs2); i++) {
+		if (fs2[i](id /*,off*/) == 0)
 			goto ret;
 		if (id->error)
 			goto ret;
@@ -183,7 +195,6 @@ int FAST_FUNC volume_id_probe_all(struct volume_id *id, /*uint64_t off,*/ uint64
  ret:
 	volume_id_free_buffer(id);
 	return (- id->error); /* 0 or -1 */
-
 }
 
 /* open volume by device node */

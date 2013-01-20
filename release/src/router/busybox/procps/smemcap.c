@@ -8,7 +8,7 @@
  herein by reference.
 */
 
-//applet:IF_SMEMCAP(APPLET(smemcap, _BB_DIR_USR_BIN, _BB_SUID_DROP))
+//applet:IF_SMEMCAP(APPLET(smemcap, BB_DIR_USR_BIN, BB_SUID_DROP))
 
 //kbuild:lib-$(CONFIG_SMEMCAP) += smemcap.o
 
@@ -20,7 +20,7 @@
 //config:	  a memory usage statistic tool.
 
 #include "libbb.h"
-#include "unarchive.h"
+#include "bb_archive.h"
 
 struct fileblock {
 	struct fileblock *next;
@@ -41,7 +41,7 @@ static void writeheader(const char *path, struct stat *sb, int type)
 	sprintf(header.size, "%o", (unsigned)sb->st_size);
 	sprintf(header.mtime, "%llo", sb->st_mtime & 077777777777LL);
 	header.typeflag = type;
-	//strcpy(header.magic, "ustar  "); - do we want to be standard-compliant?
+	strcpy(header.magic, "ustar  "); /* like GNU tar */
 
 	/* Calculate and store the checksum (the sum of all of the bytes of
 	 * the header). The checksum field must be filled with blanks for the
@@ -124,6 +124,9 @@ int smemcap_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 			archivejoin(de->d_name, "stat");
 		}
 	}
+
+	if (ENABLE_FEATURE_CLEAN_UP)
+		closedir(d);
 
 	return EXIT_SUCCESS;
 }
