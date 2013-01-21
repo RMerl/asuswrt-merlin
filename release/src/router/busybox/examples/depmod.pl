@@ -119,8 +119,6 @@ foreach my $obj ( @liblist ){
     # turn the input file name into a target tag name
     my ($tgtname) = $obj =~ m-(/lib/modules/.*)$-;
     
-    $tgtname = "/opt" . $tgtname;
-
     warn "\nMODULE = $tgtname\n" if $verbose;
 
     # get a list of symbols
