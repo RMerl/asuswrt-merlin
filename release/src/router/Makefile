@@ -1787,7 +1787,7 @@ openvpn/.conf:
 	$(CONFIGURE) --prefix= \
 	--disable-debug --disable-plugins --enable-management --enable-small \
 	--disable-selinux --disable-socks --enable-password-save \
-	ac_cv_lib_resolv_gethostbyname=no \
+	ac_cv_lib_resolv_gethostbyname=no
 	touch openvpn/.conf
 
 openvpn-clean:
