@@ -38,6 +38,7 @@ Here is a list of features that Asuswrt-merlin brings over the original firmware
 System:
    - Based on the 3.0.0.4.266 source release from Asus
    - Various bugfixes (like the crash on VPN/NAT Loopback access of LAN devices)
+   - Some components were updated to their latest versions, for improved stability
    - Persistent JFFS partition
    - User scripts that run on specific events
    - Cron jobs
@@ -362,6 +363,7 @@ History
               will overwrite names with those entered on the DHCP static
               lease page.
    - CHANGED: Updated to OpenVPN 2.3.0 and lzo 2.06.
+   - CHANGED: Updated Busybox to 1.20.2 (with all oleg/wl500 patches re-applied)
    - FIXED: ebtables were still broken, fixed by a complete rebuild.
    - FIXED: Some OpenVPN fields rejected -1 as being valid.
    - FIXED: Hide 5G radio info from Sysinfo page if router is single band (RT-N16)
