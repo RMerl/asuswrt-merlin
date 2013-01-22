@@ -78,7 +78,6 @@ typedef struct _gpt_header {
 	__le32 num_partition_entries;
 	__le32 sizeof_partition_entry;
 	__le32 partition_entry_array_crc32;
-
 	/* The rest of the logical block is reserved by UEFI and must be zero.
 	 * EFI standard handles this by:
 	 *
