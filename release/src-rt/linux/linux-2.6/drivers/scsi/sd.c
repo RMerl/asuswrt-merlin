@@ -87,7 +87,8 @@ MODULE_ALIAS_SCSI_DEVICE(TYPE_DISK);
 MODULE_ALIAS_SCSI_DEVICE(TYPE_MOD);
 MODULE_ALIAS_SCSI_DEVICE(TYPE_RBC);
 
-static DEFINE_IDA(sd_index_ida);
+static DEFINE_IDR(sd_index_idr);
+static DEFINE_SPINLOCK(sd_index_lock);
 
 /* This semaphore is used to mediate the 0->1 reference get in the
  * face of object destruction (i.e. we can't allow a get on an
@@ -1617,19 +1618,17 @@ static int sd_probe(struct device *dev)
 	if (!gd)
 		goto out_free;
 
-	do {
-		if (!ida_pre_get(&sd_index_ida, GFP_KERNEL))
-			goto out_put;
-
-		error = ida_get_new(&sd_index_ida, &index);
-	} while (error == -EAGAIN);
-
-	if (error)
+	if (!idr_pre_get(&sd_index_idr, GFP_KERNEL))
 		goto out_put;
 
-	error = -EBUSY;
+	spin_lock(&sd_index_lock);
+	error = idr_get_new(&sd_index_idr, NULL, &index);
+	spin_unlock(&sd_index_lock);
+
 	if (index >= SD_MAX_DISKS)
-		goto out_free_index;
+		error = -EBUSY;
+	if (error)
+		goto out_put;
 
 	sdkp->device = sdp;
 	sdkp->driver = &sd_template;
@@ -1650,7 +1649,7 @@ static int sd_probe(struct device *dev)
 	strncpy(sdkp->cdev.class_id, sdp->sdev_gendev.bus_id, BUS_ID_SIZE);
 
 	if (class_device_add(&sdkp->cdev))
-		goto out_free_index;
+			goto out_put;
 
 	get_device(&sdp->sdev_gendev);
 
@@ -1699,8 +1698,6 @@ static int sd_probe(struct device *dev)
 
 	return 0;
 
- out_free_index:
-	ida_remove(&sd_index_ida, index);
  out_put:
 	put_disk(gd);
  out_free:
@@ -1749,8 +1746,10 @@ static void scsi_disk_release(struct class_device *cdev)
 {
 	struct scsi_disk *sdkp = to_scsi_disk(cdev);
 	struct gendisk *disk = sdkp->disk;
-	
-	ida_remove(&sd_index_ida, sdkp->index);
+
+	spin_lock(&sd_index_lock);
+	idr_remove(&sd_index_idr, sdkp->index);
+	spin_unlock(&sd_index_lock);
 
 	disk->private_data = NULL;
 	put_disk(disk);
