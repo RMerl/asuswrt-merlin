@@ -596,6 +596,9 @@ static void add_client_options(struct dhcp_packet *packet)
 	uint8_t c;
 	int i, end, len;
 
+	uint8_t optionsToRequest[sizeof(client_config.opt_mask)];
+	uint16_t currOption;
+
 	len = sizeof(struct ip_udp_dhcp_packet);
 	if (client_config.client_mtu == 0 ||
 	    client_config.client_mtu > len)
@@ -606,13 +609,18 @@ static void add_client_options(struct dhcp_packet *packet)
 	 * No bounds checking because it goes towards the head of the packet. */
 	end = udhcp_end_option(packet->options);
 	len = 0;
-	for (i = 0; (c = dhcp_optflags[i].code) != 0; i++) {
-		if ((   (dhcp_optflags[i].flags & OPTION_REQ)
-		     && !client_config.no_default_options
-		    )
-		 || (client_config.opt_mask[c >> 3] & (1 << (c & 7)))
-		) {
-			packet->options[end + OPT_DATA + len] = c;
+	memcpy(optionsToRequest, client_config.opt_mask, sizeof(optionsToRequest));
+	if(!client_config.no_default_options) {
+		for (i = 0; (c = dhcp_optflags[i].code) != 0; i++) {
+			if (dhcp_optflags[i].flags & OPTION_REQ) {
+				optionsToRequest[c >> 3] |= 1 << (c & 7);
+			}
+		}
+	}
+	for(currOption = 0; currOption < sizeof(optionsToRequest) * 8; currOption++) {
+		if(optionsToRequest[currOption >> 3] & 1 << (currOption & 7))
+		{
+			packet->options[end + OPT_DATA + len] = (uint8_t)currOption;
 			len++;
 		}
 	}
