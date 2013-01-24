@@ -363,10 +363,12 @@ History
               will overwrite names with those entered on the DHCP static
               lease page.
    - CHANGED: Updated to OpenVPN 2.3.0 and lzo 2.06.
-   - CHANGED: Updated Busybox to 1.20.2 (with all oleg/wl500 patches re-applied)
+   - CHANGED: Updated Busybox to 1.20.2 (with all oleg/wl500 patches re-applied).
+              Lots of fixes, including GPT support in fdisk.
    - FIXED: ebtables were still broken, fixed by a complete rebuild.
    - FIXED: Some OpenVPN fields rejected -1 as being valid.
    - FIXED: Hide 5G radio info from Sysinfo page if router is single band (RT-N16)
+   - FIXED: Master Browser/WINS would not work if there was no USB disk plugged.
 
 
 3.0.0.4.266.23b:
