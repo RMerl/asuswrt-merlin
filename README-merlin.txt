@@ -370,6 +370,8 @@ History
    - FIXED: Hide 5G radio info from Sysinfo page if router is single band (RT-N16)
    - FIXED: Master Browser/WINS would not work if there was no USB disk plugged.
    - FIXED: Samba would bind to the WAN interface while in router mode (Asus bug)
+   - FIXED: Backported various kernel fixes from Oleg/WL500G, Tomato and Kernel.org in
+            an attempt to fix large HDD support (STILL NEED TO BE TESTED)
 
 
 3.0.0.4.266.23b:
