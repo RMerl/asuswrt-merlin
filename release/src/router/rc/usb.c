@@ -2243,6 +2243,13 @@ void start_nas_services(int force)
 		// webdav still needed if no disk is mounted
 		start_webdav();
 #endif
+
+#ifdef RTCONFIG_SAMBASRV
+		if (nvram_get_int("smbd_master") || nvram_get_int("smbd_wins")) {
+			start_samba();
+		}
+#endif
+
 		return;
 	}
 
