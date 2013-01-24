@@ -1,8 +1,9 @@
 /************************************************************
  * EFI GUID Partition Table handling
- * Per Intel EFI Specification v1.02
- * http://developer.intel.com/technology/efi/efi.htm
- * efi.[ch] by Matt Domsch <Matt_Domsch@dell.com>
+ *
+ * http://www.uefi.org/specs/
+ * http://www.intel.com/technology/efi/
+ * * efi.[ch] by Matt Domsch <Matt_Domsch@dell.com>
  *   Copyright 2000,2001,2002,2004 Dell Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -92,6 +93,7 @@
  *
  ************************************************************/
 #include <linux/crc32.h>
+#include <asm/div64.h>
 #include "check.h"
 #include "efi.h"
 
@@ -148,7 +150,7 @@ last_lba(struct block_device *bdev)
 {
 	if (!bdev || !bdev->bd_inode)
 		return 0;
-	return (bdev->bd_inode->i_size >> 9) - 1ULL;
+	return div64_64(bdev->bd_inode->i_size, bdev_hardsect_size(bdev)) - 1ULL;
 }
 
 static inline int
@@ -195,6 +197,7 @@ static size_t
 read_lba(struct block_device *bdev, u64 lba, u8 * buffer, size_t count)
 {
 	size_t totalreadcount = 0;
+	sector_t n = lba * (bdev_hardsect_size(bdev) >> 9);
 
 	if (!bdev || !buffer || lba > last_lba(bdev))
                 return 0;
@@ -202,7 +205,7 @@ read_lba(struct block_device *bdev, u64 lba, u8 * buffer, size_t count)
 	while (count) {
 		int copied = 512;
 		Sector sect;
-		unsigned char *data = read_dev_sector(bdev, lba++, &sect);
+		unsigned char *data = read_dev_sector(bdev, n++, &sect);
 		if (!data)
 			break;
 		if (copied > count)
@@ -264,15 +267,16 @@ static gpt_header *
 alloc_read_gpt_header(struct block_device *bdev, u64 lba)
 {
 	gpt_header *gpt;
+	int ssz = bdev_hardsect_size(bdev);
+
 	if (!bdev)
 		return NULL;
 
-	gpt = kzalloc(sizeof (gpt_header), GFP_KERNEL);
+	gpt = kzalloc(ssz, GFP_KERNEL);
 	if (!gpt)
 		return NULL;
 
-	if (read_lba(bdev, lba, (u8 *) gpt,
-		     sizeof (gpt_header)) < sizeof (gpt_header)) {
+	if (read_lba(bdev, lba, (u8 *) gpt, ssz) < ssz) {
 		kfree(gpt);
                 gpt=NULL;
 		return NULL;
@@ -609,6 +613,7 @@ efi_partition(struct parsed_partitions *state, struct block_device *bdev)
 	gpt_header *gpt = NULL;
 	gpt_entry *ptes = NULL;
 	u32 i;
+	int n = (bdev_hardsect_size(bdev) >> 9);
 
 	if (!find_valid_gpt(bdev, &gpt, &ptes) || !gpt || !ptes) {
 		kfree(gpt);
@@ -619,13 +624,17 @@ efi_partition(struct parsed_partitions *state, struct block_device *bdev)
 	Dprintk("GUID Partition Table is valid!  Yea!\n");
 
 	for (i = 0; i < le32_to_cpu(gpt->num_partition_entries) && i < state->limit-1; i++) {
+		u64 start = le64_to_cpu(ptes[i].starting_lba);
+		u64 size = le64_to_cpu(ptes[i].ending_lba) -
+			le64_to_cpu(ptes[i].starting_lba) + 1ULL;
+
 		if (!is_pte_valid(&ptes[i], last_lba(bdev)))
 			continue;
 
-		put_partition(state, i+1, le64_to_cpu(ptes[i].starting_lba),
-				 (le64_to_cpu(ptes[i].ending_lba) -
-                                  le64_to_cpu(ptes[i].starting_lba) +
-				  1ULL));
+		put_partition(state, i+1, le64_to_cpu(ptes[i].starting_lba)*n,
+				(le64_to_cpu(ptes[i].ending_lba) -
+				le64_to_cpu(ptes[i].starting_lba) +
+				1ULL)*n);
 
 		/* If this is a RAID volume, tell md */
 		if (!efi_guidcmp(ptes[i].partition_type_guid,
