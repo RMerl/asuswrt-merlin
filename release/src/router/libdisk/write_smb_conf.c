@@ -199,7 +199,7 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "strict allocate = No\n");		// ASUS add
 //	fprintf(fp, "mangling method = hash2\n");	// ASUS add
 	fprintf(fp, "bind interfaces only = yes\n");	// ASUS add
-	fprintf(fp, "interfaces = lo br0 %s\n", (!nvram_match("sw_mode", "3") ? nvram_safe_get("wan0_ifname") : ""));
+	fprintf(fp, "interfaces = lo br0 %s\n", ( ( (!nvram_match("sw_mode", "3") && !nvram_match("sw_mode", "1")) || (!strcmp(nvram_safe_get("smbd_bind_wan"), "1")) ) ? nvram_safe_get("wan0_ifname") : "") );
 	//	fprintf(fp, "dns proxy = no\n");				// J--
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3,0,0)
 	fprintf(fp, "use sendfile = no\n");

@@ -369,6 +369,7 @@ History
    - FIXED: Some OpenVPN fields rejected -1 as being valid.
    - FIXED: Hide 5G radio info from Sysinfo page if router is single band (RT-N16)
    - FIXED: Master Browser/WINS would not work if there was no USB disk plugged.
+   - FIXED: Samba would bind to the WAN interface while in router mode (Asus bug)
 
 
 3.0.0.4.266.23b:

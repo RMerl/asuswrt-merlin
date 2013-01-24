@@ -963,6 +963,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "smbd_wgroup", "WORKGROUP"},
 	{ "smbd_wins", "0"},
 	{ "smbd_simpler_naming", "0"},
+	{ "smbd_bind_wan", "0"},
 
 	{ "log_ipaddr", ""},
 	{ "log_port", "514"},
