@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.266.24 (xx-xxx-2013)
-====================================================
+Asuswrt-Merlin - build 3.0.0.4.266.24 BETA (24-Jan-2013)
+========================================================
 
 About
 -----
@@ -352,7 +352,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.266.24:
+3.0.0.4.266.24 Beta:
    - NEW: Report CTF (HW Acceleration) state on Sysinfo page.
    - NEW: Display Ethernet port states on the Sysinfo page.
    - NEW: Replaced Busybox fsck/mkfs tools with those from e2fsprogs, should
