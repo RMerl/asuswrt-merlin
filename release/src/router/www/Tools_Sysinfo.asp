@@ -36,7 +36,7 @@ function initial(){
 	show_menu();
         if (!rc_support.search("5G")) $("wifi5_clients_tr").style.display = "none";
 	showbootTime();
-	setTimeout("update_temperatures();", 1000);
+	update_temperatures();
 	hwaccel_state();
 	populateCache();
 	setTimeout("get_ethernet_states();", 3000);
