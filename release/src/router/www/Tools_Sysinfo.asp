@@ -34,7 +34,7 @@ var $j = jQuery.noConflict();
 
 function initial(){
 	show_menu();
-	model_customize();
+        if (!rc_support.search("5G")) $("wifi5_clients_tr").style.display = "none";
 	showbootTime();
 	setTimeout("update_temperatures();", 1000);
 	hwaccel_state();
@@ -54,7 +54,7 @@ function update_temperatures(){
 			if (rc_support.search("5G")) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
 			}
-			E("temp_td").innerHTML = code;
+			$("temp_td").innerHTML = code;
 			setTimeout("update_temperatures();", 3000);
 		}
 	});
@@ -75,18 +75,6 @@ function get_ethernet_states(){
 	});
 }
 
-function model_customize(){
-
-	code = "<b>2.4 GHz:</b><span> <% sysinfo("temperature.2"); %></span>";
-
-	if (rc_support.search("5G")) {
-		code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span><% sysinfo("temperature.5"); %></span>";
-	} else {
-		E("wifi5_clients_tr").style.display = "none";
-	}
-
-	E("temp_td").innerHTML = code;
-}
 
 function hwaccel_state(){
 	if (hwacc == "1")
@@ -96,6 +84,7 @@ function hwaccel_state(){
 	else
 		$("hwaccel").innerHTML = "<span>N/A</span>";
 }
+
 
 function showbootTime(){
         Days = Math.floor(boottime / (60*60*24));        
@@ -111,12 +100,13 @@ function showbootTime(){
         setTimeout("showbootTime()", 1000);
 }
 
-function show_etherstate(etherstate){
+function show_etherstate(e){
 	var state, state2;
 	var hostname, devicename, overlib_str, port;
 	var tmpPort;
 	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th>Port</th><th>Link State</th><th>Last Device Seen</th></tr>';
-	var t = etherstate.split('>');
+
+	var t = e.split('>');
 
 	for (var i = 0; i < t.length; ++i) {
 		var line = t[i].split(/[\s]+/);
@@ -163,7 +153,7 @@ function show_etherstate(etherstate){
 		}
 	}
 	code += '</table>';
-	E("etherstate").innerHTML = code;
+	$("etherstate_td").innerHTML = code;
 }
 
 </script>
@@ -337,7 +327,7 @@ function show_etherstate(etherstate){
 
 					<tr>
 						<th>Ethernet Ports</th>
-						<td id="etherstate"><i><span>Querying switch...</span></i></td>
+						<td id="etherstate_td"><i><span>Querying switch...</span></i></td>
 					</tr>
 					
 					<tr>
