@@ -15,16 +15,32 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
+
+var $j = jQuery.noConflict();
 
 function initial() {
 	show_menu();
 	setTimeout('$("conn_frame").src = "conn_status.asp"',100);
 }
 
+function get_connections(){
+        $j.ajax({
+                url: '/conn_status.asp',
+                dataType: 'script',
+                error: function(xhr){
+                        get_connections();
+                },
+                success: function(){
+                        $("conn_frame").src = "/conn_status.asp";
+                }
+        });
+}
 
 </script>
 </head>
