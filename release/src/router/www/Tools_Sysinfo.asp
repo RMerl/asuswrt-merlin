@@ -36,10 +36,30 @@ function initial(){
 	show_menu();
 	model_customize();
 	showbootTime();
+	setTimeout("update_temperatures();", 1000);
 	hwaccel_state();
 	populateCache();
-	setTimeout("get_ethernet_states();",1000);
+	setTimeout("get_ethernet_states();", 3000);
 }
+
+function update_temperatures(){
+	$j.ajax({
+		url: '/ajax_coretmp.asp',
+		dataType: 'script',
+		error: function(xhr){
+			update_temperatures();
+		},
+		success: function(response){
+			code = "<b>2.4 GHz:</b><span> " + curr_coreTmp_2_raw + "</span>";
+			if (rc_support.search("5G")) {
+				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
+			}
+			E("temp_td").innerHTML = code;
+			setTimeout("update_temperatures();", 3000);
+		}
+	});
+}
+
 
 function get_ethernet_states(){
 	$j.ajax({
