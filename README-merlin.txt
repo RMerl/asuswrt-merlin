@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.266.24 BETA (24-Jan-2013)
-========================================================
+Asuswrt-Merlin - build 3.0.0.4.266.24 BETA 2 (xx-Jan-2013)
+==========================================================
 
 About
 -----
@@ -352,6 +352,16 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.266.24 Beta 2:
+   - CHANGED: Temperatures on Sysinfo page will now update every 3 seconds.
+   - CHANGED: Connections page now uses Ajax for slightly better rendering
+   - FIXED: 1-3 seconds delay loading the Sysinfo page due to Ethernet ports query.
+   - FIXED: Temperature on Performance Tuning page would fail to update if a radio
+            was disabled.
+   - FIXED: Ethernet port status would not display under IE.
+   - FIXED: Display of Connections under IE
+
+
 3.0.0.4.266.24 Beta:
    - NEW: Report CTF (HW Acceleration) state on Sysinfo page.
    - NEW: Display Ethernet port states on the Sysinfo page.
