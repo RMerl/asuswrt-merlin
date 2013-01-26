@@ -20,7 +20,9 @@
 <script language="JavaScript" type="text/javascript" src="/tmhist.js"></script>
 <script language="JavaScript" type="text/javascript" src="tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/nameresolv.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
+
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
@@ -28,7 +30,7 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 hwacc = "<% nvram_get("ctf_disable"); %>";
 arplist = [<% get_arp_table(); %>];
 
-etherstate = "<% sysinfo("ethernet"); %>";
+var $j = jQuery.noConflict();
 
 function initial(){
 	show_menu();
@@ -36,9 +38,22 @@ function initial(){
 	showbootTime();
 	hwaccel_state();
 	populateCache();
-	show_etherstate();
+	setTimeout("get_ethernet_states();",1000);
 }
 
+function get_ethernet_states(){
+	$j.ajax({
+		url: '/ajax_ethernet.asp',
+		dataType: 'script',
+		error: function(xhr){
+			get_ethernet_states();
+		},
+		success: function(){
+			show_etherstate(etherstate);
+			return 0;
+		}
+	});
+}
 
 function model_customize(){
 
@@ -76,7 +91,7 @@ function showbootTime(){
         setTimeout("showbootTime()", 1000);
 }
 
-function show_etherstate(){
+function show_etherstate(etherstate){
 	var state, state2;
 	var hostname, devicename, overlib_str, port;
 	var tmpPort;
@@ -302,7 +317,7 @@ function show_etherstate(){
 
 					<tr>
 						<th>Ethernet Ports</th>
-						<td id="etherstate"></td>
+						<td id="etherstate"><i><span>Querying switch...</span></i></td>
 					</tr>
 					
 					<tr>

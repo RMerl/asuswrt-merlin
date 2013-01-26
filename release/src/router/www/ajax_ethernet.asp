@@ -1,0 +1,2 @@
+etherstate = "<% sysinfo("ethernet"); %>";
+
