@@ -15,10 +15,34 @@
 /* 
  * The main single-value unaligned transfer routines.
  */
-#define get_unaligned(ptr) \
-	__get_unaligned((ptr), sizeof(*(ptr)))
-#define put_unaligned(x,ptr) \
-	__put_unaligned((__u64)(x), (ptr), sizeof(*(ptr)))
+#define get_unaligned(ptr) ((typeof(*(ptr)))({					\
+	__builtin_choose_expr(sizeof(*(ptr)) == 1, *(ptr),			\
+	__builtin_choose_expr(sizeof(*(ptr)) == 2, __get_unaligned_cpu16((ptr)),\
+	__builtin_choose_expr(sizeof(*(ptr)) == 4, __get_unaligned_cpu32((ptr)),\
+	__builtin_choose_expr(sizeof(*(ptr)) == 8, __get_unaligned_cpu64((ptr)),\
+	bad_unaligned_access_length()))));					\
+	}))
+
+#define put_unaligned(val, ptr)					\
+do {								\
+	void *__gu_p = (ptr);					\
+	switch (sizeof(*(ptr))) {				\
+	case 1:							\
+		*(__u8 *)__gu_p = (__u8)(val);			\
+	        break;						\
+	case 2:							\
+		__put_unaligned_cpu16((__u16)(val), __gu_p);	\
+		break;						\
+	case 4:							\
+		__put_unaligned_cpu32((__u32)(val), __gu_p);	\
+		break;						\
+	case 8:							\
+		__put_unaligned_cpu64((__u64)(val), __gu_p);	\
+		break;						\
+	default:						\
+	    	bad_unaligned_access_length();			\
+	};							\
+} while(0)
 
 /*
  * This function doesn't actually exist.  The idea is that when
@@ -28,27 +52,27 @@
  */
 extern void bad_unaligned_access_length(void) __attribute__((noreturn));
 
-struct __una_u64 { __u64 x __attribute__((packed)); };
-struct __una_u32 { __u32 x __attribute__((packed)); };
-struct __una_u16 { __u16 x __attribute__((packed)); };
+struct __una_u64 { __u64 x; } __attribute__((packed));
+struct __una_u32 { __u32 x; } __attribute__((packed));
+struct __una_u16 { __u16 x; } __attribute__((packed));
 
 /*
  * Elemental unaligned loads 
  */
 
-static inline __u64 __uldq(const __u64 *addr)
+static inline __u64 __get_unaligned_cpu64(const void *addr)
 {
 	const struct __una_u64 *ptr = (const struct __una_u64 *) addr;
 	return ptr->x;
 }
 
-static inline __u32 __uldl(const __u32 *addr)
+static inline __u32 __get_unaligned_cpu32(const void *addr)
 {
 	const struct __una_u32 *ptr = (const struct __una_u32 *) addr;
 	return ptr->x;
 }
 
-static inline __u16 __uldw(const __u16 *addr)
+static inline __u16 __get_unaligned_cpu16(const void *addr)
 {
 	const struct __una_u16 *ptr = (const struct __una_u16 *) addr;
 	return ptr->x;
@@ -58,65 +82,22 @@ static inline __u16 __uldw(const __u16 *addr)
  * Elemental unaligned stores 
  */
 
-static inline void __ustq(__u64 val, __u64 *addr)
+static inline void __put_unaligned_cpu64(__u64 val, void *addr)
 {
 	struct __una_u64 *ptr = (struct __una_u64 *) addr;
 	ptr->x = val;
 }
 
-static inline void __ustl(__u32 val, __u32 *addr)
+static inline void __put_unaligned_cpu32(__u32 val, void *addr)
 {
 	struct __una_u32 *ptr = (struct __una_u32 *) addr;
 	ptr->x = val;
 }
 
-static inline void __ustw(__u16 val, __u16 *addr)
+static inline void __put_unaligned_cpu16(__u16 val, void *addr)
 {
 	struct __una_u16 *ptr = (struct __una_u16 *) addr;
 	ptr->x = val;
 }
-
-#define __get_unaligned(ptr, size) ({		\
-	const void *__gu_p = ptr;		\
-	__u64 val;				\
-	switch (size) {				\
-	case 1:					\
-		val = *(const __u8 *)__gu_p;	\
-		break;				\
-	case 2:					\
-		val = __uldw(__gu_p);		\
-		break;				\
-	case 4:					\
-		val = __uldl(__gu_p);		\
-		break;				\
-	case 8:					\
-		val = __uldq(__gu_p);		\
-		break;				\
-	default:				\
-		bad_unaligned_access_length();	\
-	};					\
-	(__typeof__(*(ptr)))val;		\
-})
-
-#define __put_unaligned(val, ptr, size)		\
-do {						\
-	void *__gu_p = ptr;			\
-	switch (size) {				\
-	case 1:					\
-		*(__u8 *)__gu_p = val;		\
-	        break;				\
-	case 2:					\
-		__ustw(val, __gu_p);		\
-		break;				\
-	case 4:					\
-		__ustl(val, __gu_p);		\
-		break;				\
-	case 8:					\
-		__ustq(val, __gu_p);		\
-		break;				\
-	default:				\
-	    	bad_unaligned_access_length();	\
-	};					\
-} while(0)
 
 #endif /* _ASM_GENERIC_UNALIGNED_H */

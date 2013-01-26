@@ -662,15 +662,14 @@ __clear_user(void __user *addr, __kernel_size_t size)
 	return res;
 }
 
-#define clear_user(addr,n)						\
-({									\
-	void __user * __cl_addr = (addr);				\
-	unsigned long __cl_size = (n);					\
-	if (__cl_size && access_ok(VERIFY_WRITE,			\
-		((unsigned long)(__cl_addr)), __cl_size))		\
-		__cl_size = __clear_user(__cl_addr, __cl_size);		\
-	__cl_size;							\
-})
+static inline unsigned long
+clear_user(void __user *to, unsigned long n)
+{
+        if (!access_ok(VERIFY_WRITE, to, n))
+                return n;
+
+        return __clear_user(to, n);
+}
 
 /*
  * __strncpy_from_user: - Copy a NUL terminated string from userspace, with less checking.
