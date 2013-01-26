@@ -163,8 +163,8 @@ function gen_svg(){
 }
 
 function updateSVG(){
-	drawData(polyCoreTmp_2, top.coreTmp_2, 0, "#FF9000");
-	drawData(polyCoreTmp_5, top.coreTmp_5, 0, "#33CCFF");
+	if (top.curr_coreTmp_2>0) drawData(polyCoreTmp_2, top.coreTmp_2, 0, "#FF9000");
+	if (top.curr_coreTmp_5>0) drawData(polyCoreTmp_5, top.coreTmp_5, 0, "#33CCFF");
 	//drawData(polyRx, rxData, 0, "#33CCFF");
 	setTimeout('gen_svg();', 5000);
 }
