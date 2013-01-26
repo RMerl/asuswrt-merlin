@@ -23,9 +23,7 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 curr_coreTmp_2 = "<% sysinfo("temperature.2"); %>".replace("&deg;C", "");
-if (curr_coreTmp_2 == "diasbled") curr_coreTmp_2 = 0;      
 curr_coreTmp_5 = "<% sysinfo("temperature.5"); %>".replace("&deg;C", ""); 
-if (curr_coreTmp_5 == "disabled") curr_coreTmp_5 = 0;
 var coreTmp_2 = new Array();
 var coreTmp_5 = new Array();
 coreTmp_2 = [curr_coreTmp_2];
@@ -82,12 +80,12 @@ function update_coretmp(e){
 function updateNum(_coreTmp_2, _coreTmp_5){
 
 	if(document.form.fanctrl_fullspeed_temp_unit.value == 1){
-		$("coreTemp_2").innerHTML = Math.round(_coreTmp_2*9/5+32) + " °F";
-		$("coreTemp_5").innerHTML = Math.round(_coreTmp_5*9/5+32) + " °F";
+		$("coreTemp_2").innerHTML = (_coreTmp_2 == 0 ? "disabled" : Math.round(_coreTmp_2*9/5+32) + " °F");
+		$("coreTemp_5").innerHTML = (_coreTmp_5 == 0 ? "disabled" : Math.round(_coreTmp_5*9/5+32) + " °F");
 	}
 	else{
-		$("coreTemp_2").innerHTML = _coreTmp_2 + " °C";
-		$("coreTemp_5").innerHTML = _coreTmp_5 + " °C";
+		$("coreTemp_2").innerHTML = (_coreTmp_2 == 0 ? "disabled" : _coreTmp_2 + " °C");
+		$("coreTemp_5").innerHTML = (_coreTmp_5 == 0 ? "disabled" : _coreTmp_5 + " °C");
 	}
 }
 
@@ -257,6 +255,8 @@ function getCookie(c_name)
 											</tr>
 										</table>
 										<br>Legend: <span style="color: #FF9900;">2.4 GHz</span> - <span style="color: #33CCFF;">5 GHz</span>
+										<br>Current Temperatures:<span id="coreTemp_2" style="text-align:center; font-weight:bold;color:#FF9900"></span> - <span id="coreTemp_5" style="text-align:center; font-weight:bold;color:#33CCFF"></span>
+
 									</td>
 								</tr>
 								<tr>
@@ -296,9 +296,9 @@ function getCookie(c_name)
 											</tr>
 											
 										</table>
-										<div class="apply_gen">
+										<!-- div class="apply_gen">
 											<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
-										</div>
+										</div -->
 									</td>
 					  		</tr>
 							</tbody>
