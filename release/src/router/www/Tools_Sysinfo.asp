@@ -28,6 +28,7 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
 hwacc = "<% nvram_get("ctf_disable"); %>";
+hwacc_force = "<% nvram_get("ctf_disable_force"); %>";
 arplist = [<% get_arp_table(); %>];
 
 var $j = jQuery.noConflict();
@@ -77,12 +78,19 @@ function get_ethernet_states(){
 
 
 function hwaccel_state(){
-	if (hwacc == "1")
-		$("hwaccel").innerHTML = "<span>Disabled</span>";
-	else if (hwacc == "0")
-		$("hwaccel").innerHTML = "<span>Enabled</span>";
-	else
-		$("hwaccel").innerHTML = "<span>N/A</span>";
+	if (hwacc == "1") {
+		code = "<span>Disabled</span>";
+		if (hwacc_force == "1")
+			code += " <i>(by user)</i>";
+		else
+			code += " <i>(incompatible feature enabled)</i>";
+	} else if (hwacc == "0") {
+		code = "<span>Enabled</span>";
+	} else {
+		code = "<span>N/A</span>";
+	}
+
+	$("hwaccel").innerHTML = code;
 }
 
 
