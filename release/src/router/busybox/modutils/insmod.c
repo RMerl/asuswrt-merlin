@@ -37,6 +37,28 @@
 //usage:	)
 //usage:#endif
 
+static char *m_filename;
+
+static int FAST_FUNC check_module_name_match(const char *filename,
+		struct stat *statbuf UNUSED_PARAM,
+		void *userdata, int depth UNUSED_PARAM)
+{
+	char *fullname = (char *) userdata;
+	char *tmp;
+
+	if (fullname[0] == '\0')
+		return FALSE;
+
+	tmp = bb_get_last_path_component_nostrip(filename);
+	if (strcmp(tmp, fullname) == 0) {
+		/* Stop searching if we find a match */
+		m_filename = xstrdup(filename);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
 int insmod_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int insmod_main(int argc UNUSED_PARAM, char **argv)
 {

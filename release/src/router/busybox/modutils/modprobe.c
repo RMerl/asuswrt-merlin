@@ -422,7 +422,7 @@ static int do_modprobe(struct module_entry *m)
 		if (option_mask32 & OPT_REMOVE) {
 			/* modprobe -r */
 			if (m2->flags & MODULE_FLAG_LOADED) {
-				rc = bb_delete_module(m2->modname, O_EXCL);
+				rc = bb_delete_module(m2->modname, O_NONBLOCK | O_EXCL);
 				if (rc) {
 					if (first) {
 						bb_error_msg("can't unload module %s: %s",

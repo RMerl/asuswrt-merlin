@@ -159,7 +159,7 @@ sub maybe_unshift
 	my ($array, $ele) = @_;
 	# chop off the leading path /lib/modules/<kver>/ as modprobe
 	# will handle relative paths just fine
-	$ele =~ s:^/lib/modules/[^/]*/::;
+##!!	$ele =~ s:^/lib/modules/[^/]*/::;
 	foreach (@{$array}) {
 		if ($_ eq $ele) {
 			return;
@@ -205,11 +205,11 @@ foreach my $module ( keys %$mod ) {
     if($kseries eq '2.4') {
 	    print "$module:\t";
 	    my @sorted = sort bydep keys %{$mod->{$module}};
-	    print join(" \\\n\t",@sorted);
+	    print join(" ",@sorted);
 	    print "\n\n";
     } else {
 	    my $shortmod = $module;
-	    $shortmod =~ s:^/lib/modules/[^/]*/::;
+##!!	    $shortmod =~ s:^/lib/modules/[^/]*/::;
 	    print "$shortmod:";
 	    my @sorted = @{$mod2->{$module}};
 	    printf " " if @sorted;
