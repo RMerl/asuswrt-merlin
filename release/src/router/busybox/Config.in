@@ -793,7 +793,7 @@ source editors/Config.in
 source findutils/Config.in
 source init/Config.in
 source loginutils/Config.in
-source e2fsprogs/Config.in
+source e2fsprogs/old_e2fsprogs/Config.in
 source modutils/Config.in
 source util-linux/Config.in
 source miscutils/Config.in

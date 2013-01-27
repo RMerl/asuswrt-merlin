@@ -50,7 +50,7 @@
 #include "e2fsbb.h"
 #include "ext2fs/ext2_fs.h"
 #include "ext2fs/ext2fs.h"
-#include "e2fs_lib.h"
+#include "../e2fs_lib.h"
 #include "e2p/e2p.h"
 #include "ext2fs/kernel-jbd.h"
 #include "util.h"
