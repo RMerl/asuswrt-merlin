@@ -2564,12 +2564,12 @@ static int file_write(char *fn, char *first, char *last)
 	 * but instead ftruncate() it _after_ successful write.
 	 * Might reduce amount of data lost on power fail etc.
 	 */
-	fd = open(fn, (O_WRONLY | O_CREAT), 0666);
+	fd = open(fn, (O_WRONLY | O_CREAT | O_TRUNC), 0666);	// zzz
 	if (fd < 0)
 		return -1;
 	cnt = last - first + 1;
 	charcnt = full_write(fd, first, cnt);
-	ftruncate(fd, charcnt);
+/*	ftruncate(fd, charcnt);		 buggy for us	- zzz */
 	if (charcnt == cnt) {
 		// good write
 		//file_modified = FALSE;
@@ -3411,7 +3411,7 @@ static void do_cmd(int c)
 		buf[1] = '\0';
 		q = get_input_line(buf);	// get input line- use "status line"
 		if (q[0] && !q[1]) {
-			if (last_search_pattern[0])
+			if (last_search_pattern)
 				last_search_pattern[0] = c;
 			goto dc3; // if no pat re-use old pat
 		}

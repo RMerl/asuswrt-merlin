@@ -330,6 +330,7 @@ make_new_session(
 
 	/* Restore default signal handling ASAP */
 	bb_signals((1 << SIGCHLD) + (1 << SIGPIPE), SIG_DFL);
+	signal(SIGINT, SIG_DFL);
 
 	pid = getpid();
 

@@ -949,7 +949,7 @@ static void ife_print6(struct interface *ptr)
 			inet_pton(AF_INET6, addr6,
 					  (struct sockaddr *) &sap.sin6_addr);
 			sap.sin6_family = AF_INET6;
-			printf("          inet6 addr: %s/%d",
+			printf("           inet6 addr: %s/%d",
 				   INET6_sprint((struct sockaddr *) &sap, 1),
 				   plen);
 			printf(" Scope:");
@@ -1000,7 +1000,7 @@ static void ife_print(struct interface *ptr)
 	if (hw == NULL)
 		hw = get_hwntype(-1);
 
-	printf("%-9s Link encap:%s  ", ptr->name, hw->title);
+	printf("%-10s Link encap:%s  ", ptr->name, hw->title);
 	/* For some hardware types (eg Ash, ATM) we don't print the
 	   hardware address if it's null.  */
 	if (hw->print != NULL
@@ -1018,7 +1018,7 @@ static void ife_print(struct interface *ptr)
 	bb_putchar('\n');
 
 	if (ptr->has_ip) {
-		printf("          %s addr:%s ", ap->name,
+		printf("           %s addr:%s ", ap->name,
 			   ap->sprint(&ptr->addr, 1));
 		if (ptr->flags & IFF_POINTOPOINT) {
 			printf(" P-t-P:%s ", ap->sprint(&ptr->dstaddr, 1));
@@ -1031,7 +1031,7 @@ static void ife_print(struct interface *ptr)
 
 	ife_print6(ptr);
 
-	printf("          ");
+	printf("           ");
 	/* DONT FORGET TO ADD THE FLAGS IN ife_print_short, too */
 
 	if (ptr->flags == 0) {
@@ -1099,26 +1099,26 @@ static void ife_print(struct interface *ptr)
 		 *      not for the aliases, although strictly speaking they're shared
 		 *      by all addresses.
 		 */
-		printf("          ");
+		printf("           ");
 
 		printf("RX packets:%llu errors:%lu dropped:%lu overruns:%lu frame:%lu\n",
 			   ptr->stats.rx_packets, ptr->stats.rx_errors,
 			   ptr->stats.rx_dropped, ptr->stats.rx_fifo_errors,
 			   ptr->stats.rx_frame_errors);
 		if (can_compress)
-			printf("             compressed:%lu\n",
+			printf("              compressed:%lu\n",
 				   ptr->stats.rx_compressed);
-		printf("          ");
+		printf("           ");
 		printf("TX packets:%llu errors:%lu dropped:%lu overruns:%lu carrier:%lu\n",
 			   ptr->stats.tx_packets, ptr->stats.tx_errors,
 			   ptr->stats.tx_dropped, ptr->stats.tx_fifo_errors,
 			   ptr->stats.tx_carrier_errors);
-		printf("          collisions:%lu ", ptr->stats.collisions);
+		printf("           collisions:%lu ", ptr->stats.collisions);
 		if (can_compress)
 			printf("compressed:%lu ", ptr->stats.tx_compressed);
 		if (ptr->tx_queue_len != -1)
 			printf("txqueuelen:%d ", ptr->tx_queue_len);
-		printf("\n          R");
+		printf("\n           R");
 		print_bytes_scaled(ptr->stats.rx_bytes, "  T");
 		print_bytes_scaled(ptr->stats.tx_bytes, "\n");
 	}
@@ -1126,7 +1126,7 @@ static void ife_print(struct interface *ptr)
 	if (ptr->map.irq || ptr->map.mem_start
 	 || ptr->map.dma || ptr->map.base_addr
 	) {
-		printf("          ");
+		printf("           ");
 		if (ptr->map.irq)
 			printf("Interrupt:%d ", ptr->map.irq);
 		if (ptr->map.base_addr >= 0x100)	/* Only print devices using it for

@@ -170,6 +170,8 @@ int df_main(int argc UNUSED_PARAM, char **argv)
 
 		device = mount_entry->mnt_fsname;
 		mount_point = mount_entry->mnt_dir;
+		if (strcmp(mount_point, "proc") == 0 || strcmp(mount_point, "ramfs") == 0)
+			continue;
 
 		if (statfs(mount_point, &s) != 0) {
 			bb_simple_perror_msg(mount_point);
