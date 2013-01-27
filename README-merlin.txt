@@ -355,6 +355,8 @@ History
 3.0.0.4.266.24 Beta 2:
    - CHANGED: Temperatures on Sysinfo page will now update every 3 seconds.
    - CHANGED: Connections page now uses Ajax for slightly better rendering
+   - CHANGED: Sysinfo will report if CTF is disabled by user or due to incompatible
+              feature being enabled
    - FIXED: 1-3 seconds delay loading the Sysinfo page due to Ethernet ports query.
    - FIXED: Temperature on Performance Tuning page would fail to update if a radio
             was disabled.
