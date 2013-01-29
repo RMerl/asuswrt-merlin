@@ -2072,8 +2072,9 @@ int ntpd_main(int argc UNUSED_PARAM, char **argv)
 	 * fewer packets to it and more to other peers.
 	 * NB2: sync usually happens using INITIAL_SAMPLES packets,
 	 * since last reply does not come back instantaneously.
+	 * NB3: sync by single answer if exit after sync requested.
 	 */
-	cnt = G.peer_cnt * (INITIAL_SAMPLES + 1);
+	cnt = G.peer_cnt * ((option_mask32 & OPT_q) ? 1 : (INITIAL_SAMPLES + 1));
 
 	while (!bb_got_signal) {
 		llist_t *item;
