@@ -12806,6 +12806,10 @@ readcmd(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 		}
 	}
 
+	/* "read -s" needs to save/restore termios, can't allow ^C
+	 * to jump out of it.
+	 */
+	INT_OFF;
 	r = shell_builtin_read(setvar2,
 		argptr,
 		bltinlookup("IFS"), /* can be NULL */
@@ -12815,6 +12819,7 @@ readcmd(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 		opt_t,
 		opt_u
 	);
+	INT_ON;
 
 	if ((uintptr_t)r > 1)
 		ash_msg_and_raise_error(r);

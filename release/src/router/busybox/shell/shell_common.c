@@ -169,7 +169,7 @@ shell_builtin_read(void FAST_FUNC (*setvar)(const char *name, const char *val),
 		int timeout;
 
 		if ((bufpos & 0xff) == 0)
-			buffer = xrealloc(buffer, bufpos + 0x100);
+			buffer = xrealloc(buffer, bufpos + 0x101);
 
 		timeout = -1;
 		if (end_ms) {
