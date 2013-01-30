@@ -1,0 +1,22 @@
+# Makefile for busybox
+#
+# Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
+#
+# Licensed under GPLv2, see file LICENSE in this source tree.
+
+lib-y:=
+
+INSERT
+lib-$(CONFIG_FREE)	+= free.o
+lib-$(CONFIG_FUSER)	+= fuser.o
+lib-$(CONFIG_KILL)	+= kill.o
+lib-$(CONFIG_ASH)	+= kill.o  # used for built-in kill by ash
+lib-$(CONFIG_PGREP)	+= pgrep.o
+lib-$(CONFIG_PKILL)	+= pgrep.o
+lib-$(CONFIG_PIDOF)	+= pidof.o
+lib-$(CONFIG_PS)	+= ps.o
+lib-$(CONFIG_RENICE)	+= renice.o
+lib-$(CONFIG_BB_SYSCTL)	+= sysctl.o
+lib-$(CONFIG_TOP)	+= top.o
+lib-$(CONFIG_UPTIME)	+= uptime.o
+lib-$(CONFIG_WATCH)     += watch.o

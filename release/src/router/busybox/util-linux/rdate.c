@@ -5,15 +5,8 @@
  *
  * by Sterling Huxley <sterling@europa.com>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPL v2 or later, see file License for details.
 */
-
-//usage:#define rdate_trivial_usage
-//usage:       "[-sp] HOST"
-//usage:#define rdate_full_usage "\n\n"
-//usage:       "Get and possibly set the system date and time from a remote HOST\n"
-//usage:     "\n	-s	Set the system date and time (default)"
-//usage:     "\n	-p	Print the date and time"
 
 #include "libbb.h"
 

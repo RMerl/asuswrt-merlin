@@ -1,0 +1,21 @@
+# Makefile for busybox
+#
+# Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
+#
+# Licensed under GPLv2, see file LICENSE in this source tree.
+
+lib-y:=
+
+INSERT
+lib-$(CONFIG_ADDGROUP)	+= addgroup.o
+lib-$(CONFIG_ADDUSER)	+= adduser.o
+lib-$(CONFIG_CRYPTPW)	+= cryptpw.o
+lib-$(CONFIG_CHPASSWD)	+= chpasswd.o
+lib-$(CONFIG_GETTY)	+= getty.o
+lib-$(CONFIG_LOGIN)	+= login.o
+lib-$(CONFIG_PASSWD)	+= passwd.o
+lib-$(CONFIG_SU)	+= su.o
+lib-$(CONFIG_SULOGIN)	+= sulogin.o
+lib-$(CONFIG_VLOCK)	+= vlock.o
+lib-$(CONFIG_DELUSER)	+= deluser.o
+lib-$(CONFIG_DELGROUP)	+= deluser.o

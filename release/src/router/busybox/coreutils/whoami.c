@@ -4,15 +4,10 @@
  *
  * Copyright (C) 2000  Edward Betts <edward@debian.org>.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 
 /* BB_AUDIT SUSv3 N/A -- Matches GNU behavior. */
-
-//usage:#define whoami_trivial_usage
-//usage:       ""
-//usage:#define whoami_full_usage "\n\n"
-//usage:       "Print the user name associated with the current effective user id"
 
 #include "libbb.h"
 

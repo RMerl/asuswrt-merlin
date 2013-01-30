@@ -764,3 +764,4 @@ errcode_t ext2fs_check_directory(ext2_filsys fs, ext2_ino_t ino)
 		return EXT2_ET_NO_DIRECTORY;
 	return 0;
 }
+

@@ -1,0 +1,16 @@
+# Makefile for busybox
+#
+# Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
+#
+# Licensed under GPLv2, see file LICENSE in this source tree.
+
+lib-y:=
+
+INSERT
+lib-$(CONFIG_MODPROBE_SMALL)      += modprobe-small.o
+lib-$(CONFIG_DEPMOD)              += depmod.o modutils.o
+lib-$(CONFIG_INSMOD)              += insmod.o modutils.o
+lib-$(CONFIG_LSMOD)               += lsmod.o modutils.o
+lib-$(CONFIG_MODPROBE)            += modprobe.o modutils.o
+lib-$(CONFIG_RMMOD)               += rmmod.o modutils.o
+lib-$(CONFIG_FEATURE_2_4_MODULES) += modutils-24.o

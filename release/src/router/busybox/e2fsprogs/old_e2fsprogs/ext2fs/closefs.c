@@ -378,3 +378,4 @@ errcode_t ext2fs_close(ext2_filsys fs)
 	ext2fs_free(fs);
 	return 0;
 }
+

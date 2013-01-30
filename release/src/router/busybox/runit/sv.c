@@ -153,22 +153,6 @@ Exit Codes
 /* Busyboxed by Denys Vlasenko <vda.linux@googlemail.com> */
 /* TODO: depends on runit_lib.c - review and reduce/eliminate */
 
-//usage:#define sv_trivial_usage
-//usage:       "[-v] [-w SEC] CMD SERVICE_DIR..."
-//usage:#define sv_full_usage "\n\n"
-//usage:       "Control services monitored by runsv supervisor.\n"
-//usage:       "Commands (only first character is enough):\n"
-//usage:       "\n"
-//usage:       "status: query service status\n"
-//usage:       "up: if service isn't running, start it. If service stops, restart it\n"
-//usage:       "once: like 'up', but if service stops, don't restart it\n"
-//usage:       "down: send TERM and CONT signals. If ./run exits, start ./finish\n"
-//usage:       "	if it exists. After it stops, don't restart service\n"
-//usage:       "exit: send TERM and CONT signals to service and log service. If they exit,\n"
-//usage:       "	runsv exits too\n"
-//usage:       "pause, cont, hup, alarm, interrupt, quit, 1, 2, term, kill: send\n"
-//usage:       "STOP, CONT, HUP, ALRM, INT, QUIT, USR1, USR2, TERM, KILL signal to service"
-
 #include <sys/poll.h>
 #include <sys/file.h>
 #include "libbb.h"
@@ -190,9 +174,6 @@ struct globals {
 #define tnow         (G.tnow        )
 #define svstatus     (G.svstatus    )
 #define INIT_G() do { } while (0)
-
-
-#define str_equal(s,t) (!strcmp((s), (t)))
 
 
 static void fatal_cannot(const char *m1) NORETURN;
@@ -240,7 +221,7 @@ static int svstatus_get(void)
 {
 	int fd, r;
 
-	fd = open("supervise/ok", O_WRONLY|O_NDELAY);
+	fd = open_write("supervise/ok");
 	if (fd == -1) {
 		if (errno == ENODEV) {
 			*acts == 'x' ? ok("runsv not running")
@@ -251,7 +232,7 @@ static int svstatus_get(void)
 		return -1;
 	}
 	close(fd);
-	fd = open("supervise/status", O_RDONLY|O_NDELAY);
+	fd = open_read("supervise/status");
 	if (fd == -1) {
 		warn("can't open supervise/status");
 		return -1;
@@ -416,7 +397,7 @@ static int control(const char *a)
 	if (svstatus.want == *a)
 		return 0;
 */
-	fd = open("supervise/control", O_WRONLY|O_NDELAY);
+	fd = open_write("supervise/control");
 	if (fd == -1) {
 		if (errno != ENODEV)
 			warn("can't open supervise/control");
@@ -437,6 +418,7 @@ static int control(const char *a)
 int sv_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int sv_main(int argc UNUSED_PARAM, char **argv)
 {
+	unsigned opt;
 	char *x;
 	char *action;
 	const char *varservice = CONFIG_SV_DEFAULT_SERVICE_DIR;
@@ -457,14 +439,14 @@ int sv_main(int argc UNUSED_PARAM, char **argv)
 	if (x) waitsec = xatou(x);
 
 	opt_complementary = "w+:vv"; /* -w N, -v is a counter */
-	getopt32(argv, "w:v", &waitsec, &verbose);
+	opt = getopt32(argv, "w:v", &waitsec, &verbose);
 	argv += optind;
 	action = *argv++;
 	if (!action || !*argv) bb_show_usage();
 
 	tnow = time(NULL) + 0x400000000000000aULL;
 	tstart = tnow;
-	curdir = open(".", O_RDONLY|O_NDELAY);
+	curdir = open_read(".");
 	if (curdir == -1)
 		fatal_cannot("open current directory");
 

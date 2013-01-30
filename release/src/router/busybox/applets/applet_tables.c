@@ -5,21 +5,15 @@
  *
  * Copyright (C) 2007 Denys Vlasenko <vda.linux@googlemail.com>
  *
- * Licensed under GPLv2, see file LICENSE in this source tree.
+ * Licensed under GPLv2, see file License in this tarball for details.
  */
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <unistd.h>
-
-#undef ARRAY_SIZE
-#define ARRAY_SIZE(x) ((unsigned)(sizeof(x) / sizeof((x)[0])))
 
 #include "../include/autoconf.h"
-#include "../include/applet_metadata.h"
+#include "../include/busybox.h"
 
 struct bb_applet {
 	const char *name;
@@ -81,7 +75,7 @@ int main(int argc, char **argv)
 	printf("#define NUM_APPLETS %u\n", NUM_APPLETS);
 	if (NUM_APPLETS == 1) {
 		printf("#define SINGLE_APPLET_STR \"%s\"\n", applets[0].name);
-		printf("#define SINGLE_APPLET_MAIN %s_main\n", applets[0].main);
+		printf("#define SINGLE_APPLET_MAIN %s_main\n", applets[0].name);
 	}
 	printf("\n");
 

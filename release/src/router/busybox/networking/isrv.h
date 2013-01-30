@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2007 Denys Vlasenko
  *
- * Licensed under GPLv2, see file LICENSE in this source tree.
+ * Licensed under GPL version 2, see file LICENSE in this tarball for details.
  */
 
 PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN

@@ -4,26 +4,11 @@
  *
  * Copyright (C) 2003  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 
 /* BB_AUDIT SUSv3 compliant */
 /* http://www.opengroup.org/onlinepubs/007904975/utilities/rmdir.html */
-
-//usage:#define rmdir_trivial_usage
-//usage:       "[OPTIONS] DIRECTORY..."
-//usage:#define rmdir_full_usage "\n\n"
-//usage:       "Remove DIRECTORY if it is empty\n"
-//usage:	IF_FEATURE_RMDIR_LONG_OPTIONS(
-//usage:     "\n	-p|--parents	Include parents"
-//usage:     "\n	--ignore-fail-on-non-empty"
-//usage:	)
-//usage:	IF_NOT_FEATURE_RMDIR_LONG_OPTIONS(
-//usage:     "\n	-p	Include parents"
-//usage:	)
-//usage:
-//usage:#define rmdir_example_usage
-//usage:       "# rmdir /tmp/foo\n"
 
 #include "libbb.h"
 
@@ -65,7 +50,7 @@ int rmdir_main(int argc UNUSED_PARAM, char **argv)
 				if ((flags & IGNORE_NON_EMPTY) && errno == ENOTEMPTY)
 					break;
 #endif
-				bb_perror_msg("'%s'", path);  /* Match gnu rmdir msg. */
+				bb_perror_msg("'%s'", path);	/* Match gnu rmdir msg. */
 				status = EXIT_FAILURE;
 			} else if (flags & PARENTS) {
 				/* Note: path was not "" since rmdir succeeded. */

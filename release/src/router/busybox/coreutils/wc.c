@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2003  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 
 /* BB_AUDIT SUSv3 compliant. */
@@ -64,6 +64,7 @@
 //usage:
 //usage:#define wc_full_usage "\n\n"
 //usage:       "Count lines, words, and bytes for each FILE (or stdin)\n"
+//usage:     "\nOptions:"
 //usage:     "\n	-c	Count bytes"
 //usage:	IF_UNICODE_SUPPORT(
 //usage:     "\n	-m	Count characters"
@@ -80,11 +81,11 @@
  * column order in "wc -cmlwL" output:
  */
 enum {
-	WC_LINES    = 0, /* -l */
-	WC_WORDS    = 1, /* -w */
-	WC_UNICHARS = 2, /* -m */
-	WC_BYTES    = 3, /* -c */
-	WC_LENGTH   = 4, /* -L */
+	WC_LINES    = 0,
+	WC_WORDS    = 1,
+	WC_UNICHARS = 2,
+	WC_CHARS    = 3,
+	WC_LENGTH   = 4,
 	NUM_WCS     = 5,
 };
 
@@ -103,10 +104,10 @@ int wc_main(int argc UNUSED_PARAM, char **argv)
 
 	init_unicode();
 
-	print_type = getopt32(argv, "lwmcL");
+	print_type = getopt32(argv, "lwcmL");
 
 	if (print_type == 0) {
-		print_type = (1 << WC_LINES) | (1 << WC_WORDS) | (1 << WC_BYTES);
+		print_type = (1 << WC_LINES) | (1 << WC_WORDS) | (1 << WC_CHARS);
 	}
 
 	argv += optind;
@@ -152,11 +153,11 @@ int wc_main(int argc UNUSED_PARAM, char **argv)
 					bb_simple_perror_msg(arg);
 					status = EXIT_FAILURE;
 				}
-				goto DO_EOF;  /* Treat an EOF as '\r'. */
+				goto DO_EOF;		/* Treat an EOF as '\r'. */
 			}
 
 			/* Cater for -c and -m */
-			++counts[WC_BYTES];
+			++counts[WC_CHARS];
 			if (unicode_status != UNICODE_ON /* every byte is a new char */
 			 || (c & 0xc0) != 0x80 /* it isn't a 2nd+ byte of a Unicode char */
 			) {
@@ -178,7 +179,7 @@ int wc_main(int argc UNUSED_PARAM, char **argv)
 				 */
 				if (c == '\t') {
 					linepos = (linepos | 7) + 1;
-				} else {  /* '\n', '\r', '\f', or '\v' */
+				} else {			/* '\n', '\r', '\f', or '\v' */
  DO_EOF:
 					if (linepos > counts[WC_LENGTH]) {
 						counts[WC_LENGTH] = linepos;
@@ -229,7 +230,7 @@ int wc_main(int argc UNUSED_PARAM, char **argv)
 	 * effect of trashing the totals array after outputting it, but that's
 	 * irrelavent since we no longer need it. */
 	if (num_files > 1) {
-		num_files = 0;  /* Make sure we don't get here again. */
+		num_files = 0;				/* Make sure we don't get here again. */
 		arg = "total";
 		pcounts = totals;
 		--argv;

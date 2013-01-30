@@ -4,9 +4,10 @@
  *
  * Copyright (C) 2010 Denys Vlasenko
  *
- * Licensed under GPLv2, see file LICENSE in this source tree.
+ * Licensed under GPL version 2, see file LICENSE in this tarball for details.
  */
 #include "libbb.h"
+#include <utmp.h>
 
 static void touch(const char *filename)
 {

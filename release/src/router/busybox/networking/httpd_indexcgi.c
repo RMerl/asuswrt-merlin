@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2007 Denys Vlasenko <vda.linux@googlemail.com>
  *
- * Licensed under GPLv2, see file LICENSE in this source tree.
+ * Licensed under GPLv2, see file LICENSE in this tarball for details.
  */
 
 /*
@@ -221,25 +221,20 @@ int main(int argc, char *argv[])
 	unsigned long long size_total;
 	int odd;
 	DIR *dirp;
-	char *location;
+	char *QUERY_STRING;
 
-	location = getenv("REQUEST_URI");
-	if (!location)
-		return 1;
-
-	/* drop URL arguments if any */
-	strchrnul(location, '?')[0] = '\0';
-
-	if (location[0] != '/'
-	 || strstr(location, "//")
-	 || strstr(location, "/../")
-	 || strcmp(strrchr(location, '/'), "/..") == 0
+	QUERY_STRING = getenv("QUERY_STRING");
+	if (!QUERY_STRING
+	 || QUERY_STRING[0] != '/'
+	 || strstr(QUERY_STRING, "//")
+	 || strstr(QUERY_STRING, "/../")
+	 || strcmp(strrchr(QUERY_STRING, '/'), "/..") == 0
 	) {
 		return 1;
 	}
 
 	if (chdir("..")
-	 || (location[1] && chdir(location + 1))
+	 || (QUERY_STRING[1] && chdir(QUERY_STRING + 1))
 	) {
 		return 1;
 	}
@@ -276,14 +271,14 @@ int main(int argc, char *argv[])
 		"\r\n" /* Mandatory empty line after headers */
 		"<html><head><title>Index of ");
 	/* Guard against directories with &, > etc */
-	fmt_html(location);
+	fmt_html(QUERY_STRING);
 	fmt_str(
 		"</title>\n"
 		STYLE_STR
 		"</head>" "\n"
 		"<body>" "\n"
 		"<h1>Index of ");
-	fmt_html(location);
+	fmt_html(QUERY_STRING);
 	fmt_str(
 		"</h1>" "\n"
 		"<table>" "\n"

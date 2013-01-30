@@ -130,3 +130,4 @@ errcode_t ext2fs_write_dir_block(ext2_filsys fs, blk_t block,
 {
 	return ext2fs_write_dir_block2(fs, block, inbuf, 0);
 }
+

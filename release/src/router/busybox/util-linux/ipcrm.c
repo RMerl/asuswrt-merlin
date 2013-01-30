@@ -5,17 +5,8 @@
  * 01 Sept 2004 - Rodney Radford <rradford@mindspring.com>
  * Adapted for busybox from util-linux-2.12a.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
-
-//usage:#define ipcrm_trivial_usage
-//usage:       "[-MQS key] [-mqs id]"
-//usage:#define ipcrm_full_usage "\n\n"
-//usage:       "Upper-case options MQS remove an object by shmkey value.\n"
-//usage:       "Lower-case options remove an object by shmid value.\n"
-//usage:     "\n	-mM	Remove memory segment after last detach"
-//usage:     "\n	-qQ	Remove message queue"
-//usage:     "\n	-sS	Remove semaphore"
 
 #include "libbb.h"
 
@@ -49,21 +40,21 @@ typedef enum type_id {
 	MSG
 } type_id;
 
-static int remove_ids(type_id type, char **argv)
+static int remove_ids(type_id type, int argc, char **argv)
 {
 	unsigned long id;
+	int ret = 0;		/* silence gcc */
 	int nb_errors = 0;
 	union semun arg;
 
 	arg.val = 0;
 
-	while (argv[0]) {
+	while (argc) {
 		id = bb_strtoul(argv[0], NULL, 10);
 		if (errno || id > INT_MAX) {
 			bb_error_msg("invalid id: %s", argv[0]);
 			nb_errors++;
 		} else {
-			int ret = 0;
 			if (type == SEM)
 				ret = semctl(id, 0, IPC_RMID, arg);
 			else if (type == MSG)
@@ -76,6 +67,7 @@ static int remove_ids(type_id type, char **argv)
 				nb_errors++;
 			}
 		}
+		argc--;
 		argv++;
 	}
 
@@ -100,13 +92,14 @@ int ipcrm_main(int argc, char **argv)
 		type_id what = 0; /* silence gcc */
 		char w;
 
-		w = argv[1][0];
+		w=argv[1][0];
 		if ( ((w == 'm' && argv[1][1] == 's' && argv[1][2] == 'g')
 		       || (argv[1][0] == 's'
-		           && ((w = argv[1][1]) == 'h' || w == 'e')
+		           && ((w=argv[1][1]) == 'h' || w == 'e')
 		           && argv[1][2] == 'm')
 		     ) && argv[1][3] == '\0'
 		) {
+
 			if (argc < 3)
 				bb_show_usage();
 
@@ -117,7 +110,7 @@ int ipcrm_main(int argc, char **argv)
 			else if (w == 'e')
 				what = SEM;
 
-			if (remove_ids(what, &argv[2]))
+			if (remove_ids(what, argc-2, &argv[2]))
 				fflush_stdout_and_exit(EXIT_FAILURE);
 			printf("resource(s) deleted\n");
 			return 0;

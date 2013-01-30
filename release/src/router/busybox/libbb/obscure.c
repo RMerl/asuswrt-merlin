@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2006 Tito Ragusa <farmatito@tiscali.it>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 
 /*	A good password:
@@ -45,59 +45,53 @@ static int string_checker_helper(const char *p1, const char *p2) __attribute__ (
 
 static int string_checker_helper(const char *p1, const char *p2)
 {
-	/* as sub-string */
-	if (strcasestr(p2, p1) != NULL
-	/* invert in case haystack is shorter than needle */
-	 || strcasestr(p1, p2) != NULL
 	/* as-is or capitalized */
-	/* || strcasecmp(p1, p2) == 0 - 1st strcasestr should catch this too */
-	) {
+	if (strcasecmp(p1, p2) == 0
+	/* as sub-string */
+	|| strcasestr(p2, p1) != NULL
+	/* invert in case haystack is shorter than needle */
+	|| strcasestr(p1, p2) != NULL)
 		return 1;
-	}
 	return 0;
 }
 
 static int string_checker(const char *p1, const char *p2)
 {
-	int size, i;
+	int size;
 	/* check string */
 	int ret = string_checker_helper(p1, p2);
-	/* make our own copy */
+	/* Make our own copy */
 	char *p = xstrdup(p1);
-
 	/* reverse string */
-	i = size = strlen(p1);
-	while (--i >= 0) {
-		*p++ = p1[i];
-	}
-	p -= size; /* restore pointer */
+	size = strlen(p);
 
+	while (size--) {
+		*p = p1[size];
+		p++;
+	}
+	/* restore pointer */
+	p -= strlen(p1);
 	/* check reversed string */
 	ret |= string_checker_helper(p, p2);
-
 	/* clean up */
-	memset(p, 0, size);
+	memset(p, 0, strlen(p1));
 	free(p);
-
 	return ret;
 }
 
-#define CATEGORIES  4
-
-#define LOWERCASE   1
-#define UPPERCASE   2
-#define NUMBERS     4
-#define SPECIAL     8
-
-#define LAST_CAT    8
+#define LOWERCASE          1
+#define UPPERCASE          2
+#define NUMBERS            4
+#define SPECIAL            8
 
 static const char *obscure_msg(const char *old_p, const char *new_p, const struct passwd *pw)
 {
-	unsigned length;
-	unsigned size;
-	unsigned mixed;
-	unsigned c;
-	unsigned i;
+	int i;
+	int c;
+	int length;
+	int mixed = 0;
+	/* Add 2 for each type of characters to the minlen of password */
+	int size = CONFIG_PASSWORD_MINLEN + 8;
 	const char *p;
 	char *hostname;
 
@@ -109,12 +103,10 @@ static const char *obscure_msg(const char *old_p, const char *new_p, const struc
 	if (string_checker(new_p, pw->pw_name)) {
 		return "similar to username";
 	}
-#ifndef __BIONIC__
 	/* no gecos as-is, as sub-string, reversed, capitalized, doubled */
-	if (pw->pw_gecos[0] && string_checker(new_p, pw->pw_gecos)) {
+	if (*pw->pw_gecos && string_checker(new_p, pw->pw_gecos)) {
 		return "similar to gecos";
 	}
-#endif
 	/* hostname as-is, as sub-string, reversed, capitalized, doubled */
 	hostname = safe_gethostname();
 	i = string_checker(new_p, hostname);
@@ -123,7 +115,6 @@ static const char *obscure_msg(const char *old_p, const char *new_p, const struc
 		return "similar to hostname";
 
 	/* Should / Must contain a mix of: */
-	mixed = 0;
 	for (i = 0; i < length; i++) {
 		if (islower(new_p[i])) {        /* a-z */
 			mixed |= LOWERCASE;
@@ -134,7 +125,7 @@ static const char *obscure_msg(const char *old_p, const char *new_p, const struc
 		} else  {                       /* special characters */
 			mixed |= SPECIAL;
 		}
-		/* Count i'th char */
+		/* More than 50% similar characters ? */
 		c = 0;
 		p = new_p;
 		while (1) {
@@ -143,31 +134,26 @@ static const char *obscure_msg(const char *old_p, const char *new_p, const struc
 				break;
 			}
 			c++;
-			p++;
-			if (!*p) {
-				break;
+			if (!++p) {
+				break; /* move past the matched char if possible */
 			}
 		}
-		/* More than 50% similar characters ? */
-		if (c*2 >= length) {
+
+		if (c >= (length / 2)) {
 			return "too many similar characters";
 		}
 	}
-
-	size = CONFIG_PASSWORD_MINLEN + 2*CATEGORIES;
-	for (i = 1; i <= LAST_CAT; i <<= 1)
-		if (mixed & i)
-			size -= 2;
+	for (i=0; i<4; i++)
+		if (mixed & (1<<i)) size -= 2;
 	if (length < size)
 		return "too weak";
 
-	if (old_p && old_p[0]) {
+	if (old_p && old_p[0] != '\0') {
 		/* check vs. old password */
 		if (string_checker(new_p, old_p)) {
 			return "similar to old password";
 		}
 	}
-
 	return NULL;
 }
 

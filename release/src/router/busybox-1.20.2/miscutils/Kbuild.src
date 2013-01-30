@@ -1,0 +1,50 @@
+# Makefile for busybox
+#
+# Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
+#
+# Licensed under GPLv2, see file LICENSE in this source tree.
+
+lib-y:=
+
+INSERT
+lib-$(CONFIG_ADJTIMEX)    += adjtimex.o
+lib-$(CONFIG_BBCONFIG)    += bbconfig.o
+lib-$(CONFIG_BEEP)        += beep.o
+lib-$(CONFIG_CHAT)        += chat.o
+lib-$(CONFIG_CHRT)        += chrt.o
+lib-$(CONFIG_CROND)       += crond.o
+lib-$(CONFIG_CRONTAB)     += crontab.o
+lib-$(CONFIG_DC)          += dc.o
+lib-$(CONFIG_DEVFSD)      += devfsd.o
+lib-$(CONFIG_DEVMEM)      += devmem.o
+lib-$(CONFIG_EJECT)       += eject.o
+lib-$(CONFIG_FBSPLASH)    += fbsplash.o
+lib-$(CONFIG_FLASHCP)     += flashcp.o
+lib-$(CONFIG_FLASH_ERASEALL) += flash_eraseall.o
+lib-$(CONFIG_FLASH_LOCK)     += flash_lock_unlock.o
+lib-$(CONFIG_FLASH_UNLOCK)   += flash_lock_unlock.o
+lib-$(CONFIG_IONICE)      += ionice.o
+lib-$(CONFIG_HDPARM)      += hdparm.o
+lib-$(CONFIG_INOTIFYD)    += inotifyd.o
+lib-$(CONFIG_FEATURE_LAST_SMALL)+= last.o
+lib-$(CONFIG_FEATURE_LAST_FANCY)+= last_fancy.o
+lib-$(CONFIG_LESS)        += less.o
+lib-$(CONFIG_MAKEDEVS)    += makedevs.o
+lib-$(CONFIG_MAN)         += man.o
+lib-$(CONFIG_MICROCOM)    += microcom.o
+lib-$(CONFIG_MOUNTPOINT)  += mountpoint.o
+lib-$(CONFIG_MT)          += mt.o
+lib-$(CONFIG_RAIDAUTORUN) += raidautorun.o
+lib-$(CONFIG_READAHEAD)   += readahead.o
+lib-$(CONFIG_RFKILL)      += rfkill.o
+lib-$(CONFIG_RUNLEVEL)    += runlevel.o
+lib-$(CONFIG_RX)          += rx.o
+lib-$(CONFIG_SETSID)      += setsid.o
+lib-$(CONFIG_STRINGS)     += strings.o
+lib-$(CONFIG_TASKSET)     += taskset.o
+lib-$(CONFIG_TIME)        += time.o
+lib-$(CONFIG_TIMEOUT)     += timeout.o
+lib-$(CONFIG_TTYSIZE)     += ttysize.o
+lib-$(CONFIG_VOLNAME)     += volname.o
+lib-$(CONFIG_WALL)        += wall.o
+lib-$(CONFIG_WATCHDOG)    += watchdog.o

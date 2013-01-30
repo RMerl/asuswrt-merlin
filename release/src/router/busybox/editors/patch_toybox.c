@@ -1,4 +1,4 @@
-/* Adapted from toybox's patch. */
+/* Adapted from toybox's patch. Currently unused */
 
 /* vi: set sw=4 ts=4:
  *
@@ -23,7 +23,7 @@
  * -F fuzz (number, default 2)
  * [file] which file to patch
 
-USE_PATCH(NEWTOY(patch, USE_TOYBOX_DEBUG("x")"up#i:R", TOYFLAG_USR|TOYFLAG_BIN))
+USE_PATCH(NEWTOY(patch, "up#i:R", TOYFLAG_USR|TOYFLAG_BIN))
 
 config PATCH
 	bool "patch"
@@ -223,16 +223,15 @@ void delete_tempfile(int fdin, int fdout, char **tempname)
 
 
 struct globals {
-	char *infile;
-	long prefix;
-
-	struct double_list *current_hunk;
-	long oldline, oldlen, newline, newlen, linenum;
-	int context, state, filein, fileout, filepatch, hunknum;
+	struct double_list *plines;
+	long linenum;
+	int context;
+	int hunknum;
+	int filein;
+	int fileout;
+	int state;
 	char *tempname;
-
-	// was toys.foo:
-	int exitval;
+	smallint exitval;
 };
 #define TT (*ptr_to_globals)
 #define INIT_TT() do { \
@@ -241,14 +240,12 @@ struct globals {
 
 
 //bbox had: "p:i:RN"
-#define FLAG_STR "Rup:i:x"
+#define FLAG_STR "Rup:i:"
 /* FLAG_REVERSE must be == 1! Code uses this fact. */
 #define FLAG_REVERSE (1 << 0)
 #define FLAG_u       (1 << 1)
 #define FLAG_PATHLEN (1 << 2)
 #define FLAG_INPUT   (1 << 3)
-//non-standard:
-#define FLAG_DEBUG   (1 << 4)
 
 // Dispose of a line of input, either by writing it out or discarding it.
 
@@ -257,8 +254,6 @@ struct globals {
 // state = 3: write whole line to fileout
 // state > 3: write line+1 to fileout when *line != state
 
-#define PATCH_DEBUG (option_mask32 & FLAG_DEBUG)
-
 static void do_line(void *data)
 {
 	struct double_list *dlist = (struct double_list *)data;
@@ -266,8 +261,6 @@ static void do_line(void *data)
 	if (TT.state>1 && *dlist->data != TT.state)
 		fdprintf(TT.state == 2 ? 2 : TT.fileout,
 			"%s\n", dlist->data+(TT.state>3 ? 1 : 0));
-
-	if (PATCH_DEBUG) fdprintf(2, "DO %d: %s\n", TT.state, dlist->data);
 
 	free(dlist->data);
 	free(data);
@@ -281,118 +274,94 @@ static void finish_oldfile(void)
 
 static void fail_hunk(void)
 {
-	if (!TT.current_hunk) return;
-	TT.current_hunk->prev->next = 0;
+	if (!TT.plines) return;
+	TT.plines->prev->next = 0;
 
-	fdprintf(2, "Hunk %d FAILED %ld/%ld.\n", TT.hunknum, TT.oldline, TT.newline);
+	fdprintf(2, "Hunk %d FAILED.\n", TT.hunknum);
 	TT.exitval = 1;
 
 	// If we got to this point, we've seeked to the end.  Discard changes to
 	// this file and advance to next file.
 
 	TT.state = 2;
-	TOY_llist_free(TT.current_hunk, do_line);
-	TT.current_hunk = NULL;
+	TOY_llist_free(TT.plines, do_line);
+	TT.plines = NULL;
 	delete_tempfile(TT.filein, TT.fileout, &TT.tempname);
 	TT.state = 0;
 }
 
-// Given a hunk of a unified diff, make the appropriate change to the file.
-// This does not use the location information, but instead treats a hunk
-// as a sort of regex.  Copies data from input to output until it finds
-// the change to be made, then outputs the changed data and returns.
-// (Finding EOF first is an error.)  This is a single pass operation, so
-// multiple hunks must occur in order in the file.
-
-static int apply_one_hunk(void)
+static int apply_hunk(void)
 {
 	struct double_list *plist, *buf = NULL, *check;
-	int matcheof = 0, reverse = option_mask32 & FLAG_REVERSE, backwarn = 0;
+	int i = 0, backwards = 0, matcheof = 0,
+		reverse = option_mask32 & FLAG_REVERSE;
 
 	// Break doubly linked list so we can use singly linked traversal function.
-	TT.current_hunk->prev->next = NULL;
+	TT.plines->prev->next = NULL;
 
 	// Match EOF if there aren't as many ending context lines as beginning
-	for (plist = TT.current_hunk; plist; plist = plist->next) {
-		if (plist->data[0]==' ') matcheof++;
-		else matcheof = 0;
-		if (PATCH_DEBUG) fdprintf(2, "HUNK:%s\n", plist->data);
+	for (plist = TT.plines; plist; plist = plist->next) {
+		if (plist->data[0]==' ') i++;
+		else i = 0;
 	}
-	matcheof = matcheof < TT.context;
+	if (i < TT.context) matcheof++;
 
-	if (PATCH_DEBUG) fdprintf(2,"MATCHEOF=%c\n", matcheof ? 'Y' : 'N');
-
-	// Loop through input data searching for this hunk.  Match all context
-	// lines and all lines to be removed until we've found the end of a
-	// complete hunk.
-	plist = TT.current_hunk;
+	// Search for a place to apply this hunk.  Match all context lines and
+	// lines to be removed.
+	plist = TT.plines;
 	buf = NULL;
+	i = 0;
+
+	// Start of for loop
 	if (TT.context) for (;;) {
 		char *data = get_line(TT.filein);
 
 		TT.linenum++;
 
-		// Figure out which line of hunk to compare with next.  (Skip lines
-		// of the hunk we'd be adding.)
+		// Skip lines of the hunk we'd be adding.
 		while (plist && *plist->data == "+-"[reverse]) {
 			if (data && !strcmp(data, plist->data+1)) {
-				if (!backwarn) {
+				if (++backwards == TT.context)
 					fdprintf(2,"Possibly reversed hunk %d at %ld\n",
 						TT.hunknum, TT.linenum);
-					backwarn++;
-				}
-			}
+			} else backwards=0;
 			plist = plist->next;
 		}
 
 		// Is this EOF?
 		if (!data) {
-			if (PATCH_DEBUG) fdprintf(2, "INEOF\n");
-
 			// Does this hunk need to match EOF?
 			if (!plist && matcheof) break;
 
 			// File ended before we found a place for this hunk.
 			fail_hunk();
 			goto done;
-		} else if (PATCH_DEBUG) fdprintf(2, "IN: %s\n", data);
+		}
 		check = dlist_add(&buf, data);
 
-		// Compare this line with next expected line of hunk.
 		// todo: teach the strcmp() to ignore whitespace.
 
-		// A match can fail because the next line doesn't match, or because
-		// we hit the end of a hunk that needed EOF, and this isn't EOF.
-
-		// If match failed, flush first line of buffered data and
-		// recheck buffered data for a new match until we find one or run
-		// out of buffer.
-
 		for (;;) {
+			// If we hit the end of a hunk that needed EOF and this isn't EOF,
+			// or next line doesn't match, flush first line of buffered data and
+			// recheck match until we find a new match or run out of buffer.
+
 			if (!plist || strcmp(check->data, plist->data+1)) {
-				// Match failed.  Write out first line of buffered data and
-				// recheck remaining buffered data for a new match.
-
-				if (PATCH_DEBUG)
-					fdprintf(2, "NOT: %s\n", plist->data);
-
+				// First line isn't a match, write it out.
 				TT.state = 3;
 				check = TOY_llist_pop(&buf);
 				check->prev->next = buf;
 				buf->prev = check->prev;
 				do_line(check);
-				plist = TT.current_hunk;
+				plist = TT.plines;
 
-				// If we've reached the end of the buffer without confirming a
-				// match, read more lines.
+				// Out of buffered lines?
 				if (check==buf) {
 					buf = 0;
 					break;
 				}
 				check = buf;
 			} else {
-				if (PATCH_DEBUG)
-					fdprintf(2, "MAYBE: %s\n", plist->data);
 				// This line matches.  Advance plist, detect successful match.
 				plist = plist->next;
 				if (!plist && !matcheof) goto out;
@@ -402,10 +371,10 @@ static int apply_one_hunk(void)
 		}
 	}
 out:
-	// We have a match.  Emit changed data.
+	// Got it.  Emit changed data.
 	TT.state = "-+"[reverse];
-	TOY_llist_free(TT.current_hunk, do_line);
-	TT.current_hunk = NULL;
+	TOY_llist_free(TT.plines, do_line);
+	TT.plines = NULL;
 	TT.state = 1;
 done:
 	if (buf) {
@@ -415,9 +384,6 @@ done:
 
 	return TT.state;
 }
-
-// Read a patch file and find hunks, opening/creating/deleting files.
-// Call apply_one_hunk() on each hunk.
 
 // state 0: Not in a hunk, look for +++.
 // state 1: Found +++ file indicator, look for @@
@@ -431,20 +397,24 @@ int patch_main(int argc UNUSED_PARAM, char **argv)
 	int reverse, state = 0;
 	char *oldname = NULL, *newname = NULL;
 	char *opt_p, *opt_i;
+	int prefix;
+
+	long oldline = 0, oldlen = 0, newline = 0, newlen = 0;
 
 	INIT_TT();
 
 	opts = getopt32(argv, FLAG_STR, &opt_p, &opt_i);
 	reverse = opts & FLAG_REVERSE;
-	TT.prefix = (opts & FLAG_PATHLEN) ? xatoi(opt_p) : 0; // can be negative!
-	if (opts & FLAG_INPUT) TT.filepatch = xopen(opt_i, O_RDONLY);
+
+	if (opts & FLAG_INPUT) xmove_fd(xopen(opt_i, O_RDONLY), STDIN_FILENO);
+	prefix = (opts & FLAG_PATHLEN) ? xatoi(opt_p) : 0; // can be negative!
 	TT.filein = TT.fileout = -1;
 
 	// Loop through the lines in the patch
 	for(;;) {
 		char *patchline;
 
-		patchline = get_line(TT.filepatch);
+		patchline = get_line(STDIN_FILENO);
 		if (!patchline) break;
 
 		// Other versions of patch accept damaged patches,
@@ -457,18 +427,17 @@ int patch_main(int argc UNUSED_PARAM, char **argv)
 		// Are we assembling a hunk?
 		if (state >= 2) {
 			if (*patchline==' ' || *patchline=='+' || *patchline=='-') {
-				dlist_add(&TT.current_hunk, patchline);
+				dlist_add(&TT.plines, patchline);
 
-				if (*patchline != '+') TT.oldlen--;
-				if (*patchline != '-') TT.newlen--;
+				if (*patchline != '+') oldlen--;
+				if (*patchline != '-') newlen--;
 
 				// Context line?
 				if (*patchline==' ' && state==2) TT.context++;
 				else state=3;
 
 				// If we've consumed all expected hunk lines, apply the hunk.
-
-				if (!TT.oldlen && !TT.newlen) state = apply_one_hunk();
+				if (!oldlen && !newlen) state = apply_hunk();
 				continue;
 			}
 			fail_hunk();
@@ -478,11 +447,11 @@ int patch_main(int argc UNUSED_PARAM, char **argv)
 
 		// Open a new file?
 		if (!strncmp("--- ", patchline, 4) || !strncmp("+++ ", patchline, 4)) {
-			char *s, **name = reverse ? &newname : &oldname;
+			char *s, **name = &oldname;
 			int i;
 
 			if (*patchline == '+') {
-				name = reverse ? &oldname : &newname;
+				name = &newname;
 				state = 1;
 			}
 
@@ -493,7 +462,7 @@ int patch_main(int argc UNUSED_PARAM, char **argv)
 			for (s = patchline+4; *s && *s!='\t'; s++)
 				if (*s=='\\' && s[1]) s++;
 			i = atoi(s);
-			if (i>1900 && i<=1970)
+			if (i && i<=1970)
 				*name = xstrdup("/dev/null");
 			else {
 				*s = 0;
@@ -509,8 +478,8 @@ int patch_main(int argc UNUSED_PARAM, char **argv)
 		} else if (state == 1 && !strncmp("@@ -", patchline, 4)) {
 			int i;
 
-			i = sscanf(patchline+4, "%ld,%ld +%ld,%ld", &TT.oldline,
-						&TT.oldlen, &TT.newline, &TT.newlen);
+			i = sscanf(patchline+4, "%ld,%ld +%ld,%ld",
+					&oldline, &oldlen, &newline, &newlen);
 			if (i != 4)
 				bb_error_msg_and_die("corrupt hunk %d at %ld", TT.hunknum, TT.linenum);
 
@@ -522,22 +491,22 @@ int patch_main(int argc UNUSED_PARAM, char **argv)
 				int oldsum, newsum, del = 0;
 				char *s, *name;
 
-				oldsum = TT.oldline + TT.oldlen;
-				newsum = TT.newline + TT.newlen;
+				oldsum = oldline + oldlen;
+				newsum = newline + newlen;
 
 				name = reverse ? oldname : newname;
 
 				// We're deleting oldname if new file is /dev/null (before -p)
 				// or if new hunk is empty (zero context) after patching
-				if (!strcmp(name, "/dev/null") || !(reverse ? oldsum : newsum))
-				{
+				if (!strcmp(name, "/dev/null") || !(reverse ? oldsum : newsum)) {
 					name = reverse ? newname : oldname;
 					del++;
 				}
 
 				// handle -p path truncation.
 				for (i=0, s = name; *s;) {
-					if ((option_mask32 & FLAG_PATHLEN) && TT.prefix == i) break;
+					if ((option_mask32 & FLAG_PATHLEN) && prefix == i)
+						break;
 					if (*(s++)=='/') {
 						name = s;
 						i++;
@@ -549,7 +518,7 @@ int patch_main(int argc UNUSED_PARAM, char **argv)
 					xunlink(name);
 					state = 0;
 				// If we've got a file to open, do so.
-				} else if (!(option_mask32 & FLAG_PATHLEN) || i <= TT.prefix) {
+				} else if (!(option_mask32 & FLAG_PATHLEN) || i <= prefix) {
 					// If the old file was null, we're creating a new one.
 					if (!strcmp(oldname, "/dev/null") || !oldsum) {
 						printf("creating %s\n", name);
@@ -559,7 +528,7 @@ int patch_main(int argc UNUSED_PARAM, char **argv)
 							xmkpath(name, -1);
 							*s = '/';
 						}
-						TT.filein = xopen(name, O_CREAT|O_EXCL|O_RDWR);
+						TT.filein = xopen3(name, O_CREAT|O_EXCL|O_RDWR, 0666);
 					} else {
 						printf("patching file %s\n", name);
 						TT.filein = xopen(name, O_RDWR);
@@ -582,7 +551,6 @@ int patch_main(int argc UNUSED_PARAM, char **argv)
 	finish_oldfile();
 
 	if (ENABLE_FEATURE_CLEAN_UP) {
-		close(TT.filepatch);
 		free(oldname);
 		free(newname);
 	}

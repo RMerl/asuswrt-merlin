@@ -12,7 +12,7 @@
  *
  * Modified for uClibc by Erik Andersen <andersee@debian.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 
 #include "busybox.h" /* uses applet tables */
@@ -52,7 +52,6 @@ pid_t FAST_FUNC spawn(char **argv)
 	 * Interested party can wait on pid and learn exit code.
 	 * If 111 - then it (most probably) failed to exec */
 	if (failed) {
-		safe_waitpid(pid, NULL, 0); /* prevent zombie */
 		errno = failed;
 		return -1;
 	}
@@ -69,22 +68,17 @@ pid_t FAST_FUNC xspawn(char **argv)
 }
 
 #if ENABLE_FEATURE_PREFER_APPLETS
-struct nofork_save_area {
-	jmp_buf die_jmp;
-	const char *applet_name;
-	uint32_t option_mask32;
-	int die_sleep;
-	uint8_t xfunc_error_retval;
-};
-static void save_nofork_data(struct nofork_save_area *save)
+void FAST_FUNC save_nofork_data(struct nofork_save_area *save)
 {
 	memcpy(&save->die_jmp, &die_jmp, sizeof(die_jmp));
 	save->applet_name = applet_name;
 	save->xfunc_error_retval = xfunc_error_retval;
 	save->option_mask32 = option_mask32;
 	save->die_sleep = die_sleep;
+	save->saved = 1;
 }
-static void restore_nofork_data(struct nofork_save_area *save)
+
+void FAST_FUNC restore_nofork_data(struct nofork_save_area *save)
 {
 	memcpy(&die_jmp, &save->die_jmp, sizeof(die_jmp));
 	applet_name = save->applet_name;
@@ -93,16 +87,18 @@ static void restore_nofork_data(struct nofork_save_area *save)
 	die_sleep = save->die_sleep;
 }
 
-int FAST_FUNC run_nofork_applet(int applet_no, char **argv)
+int FAST_FUNC run_nofork_applet_prime(struct nofork_save_area *old, int applet_no, char **argv)
 {
 	int rc, argc;
-	struct nofork_save_area old;
-
-	save_nofork_data(&old);
 
 	applet_name = APPLET_NAME(applet_no);
 
 	xfunc_error_retval = EXIT_FAILURE;
+
+	/* Special flag for xfunc_die(). If xfunc will "die"
+	 * in NOFORK applet, xfunc_die() sees negative
+	 * die_sleep and longjmp here instead. */
+	die_sleep = -1;
 
 	/* In case getopt() or getopt32() was already called:
 	 * reset the libc getopt() function, which keeps internal state.
@@ -133,11 +129,6 @@ int FAST_FUNC run_nofork_applet(int applet_no, char **argv)
 	while (argv[argc])
 		argc++;
 
-	/* Special flag for xfunc_die(). If xfunc will "die"
-	 * in NOFORK applet, xfunc_die() sees negative
-	 * die_sleep and longjmp here instead. */
-	die_sleep = -1;
-
 	rc = setjmp(die_jmp);
 	if (!rc) {
 		/* Some callers (xargs)
@@ -146,6 +137,15 @@ int FAST_FUNC run_nofork_applet(int applet_no, char **argv)
 		memcpy(tmp_argv, argv, (argc+1) * sizeof(tmp_argv[0]));
 		/* Finally we can call NOFORK applet's main() */
 		rc = applet_main[applet_no](argc, tmp_argv);
+
+	/* The whole reason behind nofork_save_area is that <applet>_main
+	 * may exit non-locally! For example, in hush Ctrl-Z tries
+	 * (modulo bugs) to dynamically create a child (backgrounded task)
+	 * if it detects that Ctrl-Z was pressed when a NOFORK was running.
+	 * Testcase: interactive "rm -i".
+	 * Don't fool yourself into thinking "and <applet>_main() returns
+	 * quickly here" and removing "useless" nofork_save_area code. */
+
 	} else { /* xfunc died in NOFORK applet */
 		/* in case they meant to return 0... */
 		if (rc == -2222)
@@ -153,7 +153,7 @@ int FAST_FUNC run_nofork_applet(int applet_no, char **argv)
 	}
 
 	/* Restoring some globals */
-	restore_nofork_data(&old);
+	restore_nofork_data(old);
 
 	/* Other globals can be simply reset to defaults */
 #ifdef __GLIBC__
@@ -164,6 +164,15 @@ int FAST_FUNC run_nofork_applet(int applet_no, char **argv)
 
 	return rc & 0xff; /* don't confuse people with "exitcodes" >255 */
 }
+
+int FAST_FUNC run_nofork_applet(int applet_no, char **argv)
+{
+	struct nofork_save_area old;
+
+	/* Saving globals */
+	save_nofork_data(&old);
+	return run_nofork_applet_prime(&old, applet_no, argv);
+}
 #endif /* FEATURE_PREFER_APPLETS */
 
 int FAST_FUNC spawn_and_wait(char **argv)
@@ -173,17 +182,17 @@ int FAST_FUNC spawn_and_wait(char **argv)
 	int a = find_applet_by_name(argv[0]);
 
 	if (a >= 0 && (APPLET_IS_NOFORK(a)
-# if BB_MMU
+#if BB_MMU
 			|| APPLET_IS_NOEXEC(a) /* NOEXEC trick needs fork() */
-# endif
+#endif
 	)) {
-# if BB_MMU
+#if BB_MMU
 		if (APPLET_IS_NOFORK(a))
-# endif
+#endif
 		{
 			return run_nofork_applet(a, argv);
 		}
-# if BB_MMU
+#if BB_MMU
 		/* MMU only */
 		/* a->noexec is true */
 		rc = fork();
@@ -192,7 +201,7 @@ int FAST_FUNC spawn_and_wait(char **argv)
 		/* child */
 		xfunc_error_retval = EXIT_FAILURE;
 		run_applet_no_and_exit(a, argv);
-# endif
+#endif
 	}
 #endif /* FEATURE_PREFER_APPLETS */
 	rc = spawn(argv);
@@ -253,19 +262,11 @@ void FAST_FUNC bb_daemonize_or_rexec(int flags, char **argv)
 	if (!(flags & DAEMON_ONLY_SANITIZE)) {
 		if (fork_or_rexec(argv))
 			exit(EXIT_SUCCESS); /* parent */
-		/* if daemonizing, detach from stdio & ctty */
+		/* if daemonizing, make sure we detach from stdio & ctty */
 		setsid();
 		dup2(fd, 0);
 		dup2(fd, 1);
 		dup2(fd, 2);
-		if (flags & DAEMON_DOUBLE_FORK) {
-			/* On Linux, session leader can acquire ctty
-			 * unknowingly, by opening a tty.
-			 * Prevent this: stop being a session leader.
-			 */
-			if (fork_or_rexec(argv))
-				exit(EXIT_SUCCESS); /* parent */
-		}
 	}
 	while (fd > 2) {
 		close(fd--);

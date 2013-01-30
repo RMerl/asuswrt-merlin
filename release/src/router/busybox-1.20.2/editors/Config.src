@@ -1,0 +1,78 @@
+#
+# For a description of the syntax of this configuration file,
+# see scripts/kbuild/config-language.txt.
+#
+
+menu "Editors"
+
+INSERT
+
+config AWK
+	bool "awk"
+	default y
+	help
+	  Awk is used as a pattern scanning and processing language. This is
+	  the BusyBox implementation of that programming language.
+
+config FEATURE_AWK_LIBM
+	bool "Enable math functions (requires libm)"
+	default y
+	depends on AWK
+	help
+	  Enable math functions of the Awk programming language.
+	  NOTE: This will require libm to be present for linking.
+
+config CMP
+	bool "cmp"
+	default y
+	help
+	  cmp is used to compare two files and returns the result
+	  to standard output.
+
+config DIFF
+	bool "diff"
+	default y
+	help
+	  diff compares two files or directories and outputs the
+	  differences between them in a form that can be given to
+	  the patch command.
+
+config FEATURE_DIFF_LONG_OPTIONS
+	bool "Enable long options"
+	default y
+	depends on DIFF && LONG_OPTS
+	help
+	  Enable use of long options.
+
+config FEATURE_DIFF_DIR
+	bool "Enable directory support"
+	default y
+	depends on DIFF
+	help
+	  This option enables support for directory and subdirectory
+	  comparison.
+
+config ED
+	bool "ed"
+	default y
+	help
+	  The original 1970's Unix text editor, from the days of teletypes.
+	  Small, simple, evil. Part of SUSv3. If you're not already using
+	  this, you don't need it.
+
+config SED
+	bool "sed"
+	default y
+	help
+	  sed is used to perform text transformations on a file
+	  or input from a pipeline.
+
+config FEATURE_ALLOW_EXEC
+	bool "Allow vi and awk to execute shell commands"
+	default y
+	depends on VI || AWK
+	help
+	  Enables vi and awk features which allows user to execute
+	  shell commands (using system() C call).
+
+endmenu

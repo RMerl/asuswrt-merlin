@@ -1,0 +1,10 @@
+# UNFIXED BUG.
+# commented-out words contain ^C character.
+# It's a SPECIAL_VAR_SYMBOL, for now hush does not escape it.
+# When it is fixed, update this test.
+
+for a in 'a' 'b\c' 'b\\c' 'b"c' "b'c" 'b$c' 'b`true`c' ### 'b#c'
+do
+    echo $a
+done
+echo Zero:$?

@@ -71,8 +71,7 @@ int FAST_FUNC get_uidgid(struct bb_uidgid_t *u, const char *ug, int numeric_ok)
 			}
 		}
 		gr = getgrnam(group);
-		if (!gr)
-			return 0;
+		if (!gr) return 0;
 		u->gid = gr->gr_gid;
 	}
 	return 1;

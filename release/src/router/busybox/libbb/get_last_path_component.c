@@ -4,18 +4,10 @@
  *
  * Copyright (C) 2001  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
+
 #include "libbb.h"
-
-const char* FAST_FUNC bb_basename(const char *name)
-{
-	const char *cp = strrchr(name, '/');
-	if (cp)
-		return cp + 1;
-	return name;
-}
-
 /*
  * "/"        -> "/"
  * "abc"      -> "abc"

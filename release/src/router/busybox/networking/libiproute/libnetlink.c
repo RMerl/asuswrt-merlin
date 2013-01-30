@@ -1,11 +1,14 @@
 /* vi: set sw=4 ts=4: */
 /*
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
+ * libnetlink.c	RTnetlink service routines.
  *
- * Authors: Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
+ *		This program is free software; you can redistribute it and/or
+ *		modify it under the terms of the GNU General Public License
+ *		as published by the Free Software Foundation; either version
+ *		2 of the License, or (at your option) any later version.
+ *
+ * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
+ *
  */
 
 #include <sys/socket.h>
@@ -14,7 +17,12 @@
 #include "libbb.h"
 #include "libnetlink.h"
 
-void FAST_FUNC xrtnl_open(struct rtnl_handle *rth/*, unsigned subscriptions*/)
+void FAST_FUNC rtnl_close(struct rtnl_handle *rth)
+{
+	close(rth->fd);
+}
+
+int FAST_FUNC xrtnl_open(struct rtnl_handle *rth/*, unsigned subscriptions*/)
 {
 	socklen_t addr_len;
 
@@ -36,6 +44,7 @@ void FAST_FUNC xrtnl_open(struct rtnl_handle *rth/*, unsigned subscriptions*/)
 		bb_error_msg_and_die("wrong address family %d", rth->local.nl_family);
 */
 	rth->seq = time(NULL);
+	return 0;
 }
 
 int FAST_FUNC xrtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
@@ -44,6 +53,10 @@ int FAST_FUNC xrtnl_wilddump_request(struct rtnl_handle *rth, int family, int ty
 		struct nlmsghdr nlh;
 		struct rtgenmsg g;
 	} req;
+	struct sockaddr_nl nladdr;
+
+	memset(&nladdr, 0, sizeof(nladdr));
+	nladdr.nl_family = AF_NETLINK;
 
 	req.nlh.nlmsg_len = sizeof(req);
 	req.nlh.nlmsg_type = type;
@@ -52,10 +65,10 @@ int FAST_FUNC xrtnl_wilddump_request(struct rtnl_handle *rth, int family, int ty
 	req.nlh.nlmsg_seq = rth->dump = ++rth->seq;
 	req.g.rtgen_family = family;
 
-	return rtnl_send(rth, (void*)&req, sizeof(req));
+	return xsendto(rth->fd, (void*)&req, sizeof(req),
+				 (struct sockaddr*)&nladdr, sizeof(nladdr));
 }
 
-//TODO: pass rth->fd instead of full rth?
 int FAST_FUNC rtnl_send(struct rtnl_handle *rth, char *buf, int len)
 {
 	struct sockaddr_nl nladdr;
@@ -73,8 +86,8 @@ int FAST_FUNC rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, in
 	struct iovec iov[2] = { { &nlh, sizeof(nlh) }, { req, len } };
 	struct msghdr msg = {
 		(void*)&nladdr, sizeof(nladdr),
-		iov,  2,
-		NULL, 0,
+		iov,	2,
+		NULL,	0,
 		0
 	};
 
@@ -107,8 +120,8 @@ static int rtnl_dump_filter(struct rtnl_handle *rth,
 
 		struct msghdr msg = {
 			(void*)&nladdr, sizeof(nladdr),
-			&iov, 1,
-			NULL, 0,
+			&iov,	1,
+			NULL,	0,
 			0
 		};
 
@@ -213,8 +226,8 @@ int FAST_FUNC rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	char   *buf = xmalloc(8*1024); /* avoid big stack buffer */
 	struct msghdr msg = {
 		(void*)&nladdr, sizeof(nladdr),
-		&iov, 1,
-		NULL, 0,
+		&iov,	1,
+		NULL,	0,
 		0
 	};
 
@@ -326,10 +339,8 @@ int FAST_FUNC addattr32(struct nlmsghdr *n, int maxlen, int type, uint32_t data)
 {
 	int len = RTA_LENGTH(4);
 	struct rtattr *rta;
-
-	if ((int)(NLMSG_ALIGN(n->nlmsg_len) + len) > maxlen) {
+	if ((int)(NLMSG_ALIGN(n->nlmsg_len) + len) > maxlen)
 		return -1;
-	}
 	rta = (struct rtattr*)(((char*)n) + NLMSG_ALIGN(n->nlmsg_len));
 	rta->rta_type = type;
 	rta->rta_len = len;
@@ -343,9 +354,8 @@ int FAST_FUNC addattr_l(struct nlmsghdr *n, int maxlen, int type, void *data, in
 	int len = RTA_LENGTH(alen);
 	struct rtattr *rta;
 
-	if ((int)(NLMSG_ALIGN(n->nlmsg_len) + len) > maxlen) {
+	if ((int)(NLMSG_ALIGN(n->nlmsg_len) + len) > maxlen)
 		return -1;
-	}
 	rta = (struct rtattr*)(((char*)n) + NLMSG_ALIGN(n->nlmsg_len));
 	rta->rta_type = type;
 	rta->rta_len = len;
@@ -387,15 +397,16 @@ int FAST_FUNC rta_addattr_l(struct rtattr *rta, int maxlen, int type, void *data
 }
 
 
-void FAST_FUNC parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
+int FAST_FUNC parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
 {
 	while (RTA_OK(rta, len)) {
 		if (rta->rta_type <= max) {
 			tb[rta->rta_type] = rta;
 		}
-		rta = RTA_NEXT(rta, len);
+		rta = RTA_NEXT(rta,len);
 	}
 	if (len) {
 		bb_error_msg("deficit %d, rta_len=%d!", len, rta->rta_len);
 	}
+	return 0;
 }

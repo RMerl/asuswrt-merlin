@@ -13,7 +13,7 @@
  * files as well as stdin/stdout, and to generally behave itself wrt
  * command line handling.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 
 /* big objects in bss:
@@ -39,23 +39,8 @@ gzip: bogus: No such file or directory
 aa:      85.1% -- replaced with aa.gz
 */
 
-//usage:#define gzip_trivial_usage
-//usage:       "[-cfd] [FILE]..."
-//usage:#define gzip_full_usage "\n\n"
-//usage:       "Compress FILEs (or stdin)\n"
-//usage:     "\n	-d	Decompress"
-//usage:     "\n	-c	Write to stdout"
-//usage:     "\n	-f	Force"
-//usage:
-//usage:#define gzip_example_usage
-//usage:       "$ ls -la /tmp/busybox*\n"
-//usage:       "-rw-rw-r--    1 andersen andersen  1761280 Apr 14 17:47 /tmp/busybox.tar\n"
-//usage:       "$ gzip /tmp/busybox.tar\n"
-//usage:       "$ ls -la /tmp/busybox*\n"
-//usage:       "-rw-rw-r--    1 andersen andersen   554058 Apr 14 17:49 /tmp/busybox.tar.gz\n"
-
 #include "libbb.h"
-#include "bb_archive.h"
+#include "unarchive.h"
 
 
 /* ===========================================================================
@@ -81,17 +66,9 @@ aa:      85.1% -- replaced with aa.gz
 
 /* ===========================================================================
  */
-#if   CONFIG_GZIP_FAST == 0
-# define SMALL_MEM
-#elif CONFIG_GZIP_FAST == 1
-# define MEDIUM_MEM
-#elif CONFIG_GZIP_FAST == 2
-# define BIG_MEM
-#else
-# error "Invalid CONFIG_GZIP_FAST value"
-#endif
+#define SMALL_MEM
 
-#ifndef INBUFSIZ
+#ifndef	INBUFSIZ
 #  ifdef SMALL_MEM
 #    define INBUFSIZ  0x2000	/* input buffer size */
 #  else
@@ -99,7 +76,7 @@ aa:      85.1% -- replaced with aa.gz
 #  endif
 #endif
 
-#ifndef OUTBUFSIZ
+#ifndef	OUTBUFSIZ
 #  ifdef SMALL_MEM
 #    define OUTBUFSIZ   8192	/* output buffer size */
 #  else
@@ -363,7 +340,7 @@ struct globals {
 	ulg bits_sent;			/* bit length of the compressed data */
 #endif
 
-	/*uint32_t *crc_32_tab;*/
+	uint32_t *crc_32_tab;
 	uint32_t crc;	/* shift register contents */
 };
 
@@ -416,9 +393,15 @@ static void put_32bit(ulg n)
  * pointer, then initialize the crc shift register contents instead.
  * Return the current crc in either case.
  */
-static void updcrc(uch * s, unsigned n)
+static uint32_t updcrc(uch * s, unsigned n)
 {
-	G1.crc = crc32_block_endian0(G1.crc, s, n, global_crc32_table /*G1.crc_32_tab*/);
+	uint32_t c = G1.crc;
+	while (n) {
+		c = G1.crc_32_tab[(uch)(c ^ *s++)] ^ (c >> 8);
+		n--;
+	}
+	G1.crc = c;
+	return c;
 }
 
 
@@ -1681,7 +1664,7 @@ static ulg flush_block(char *buf, ulg stored_len, int eof)
 
 /* ===========================================================================
  * Update a hash value with the given input byte
- * IN  assertion: all calls to UPDATE_HASH are made with consecutive
+ * IN  assertion: all calls to to UPDATE_HASH are made with consecutive
  *    input characters, so that a running hash key can be computed from the
  *    previous key instead of complete recalculation each time.
  */
@@ -1712,7 +1695,7 @@ static ulg flush_block(char *buf, ulg stored_len, int eof)
 /* Insert string s in the dictionary and set match_head to the previous head
  * of the hash chain (the most recent string with same hash key). Return
  * the previous length of the hash chain.
- * IN  assertion: all calls to INSERT_STRING are made with consecutive
+ * IN  assertion: all calls to to INSERT_STRING are made with consecutive
  *    input characters and the first MIN_MATCH bytes of s are valid
  *    (except for the last MIN_MATCH-1 bytes of the input file). */
 #define INSERT_STRING(s, match_head) \
@@ -2015,7 +1998,7 @@ static void zip(ulg time_stamp)
 
 /* ======================================================================== */
 static
-IF_DESKTOP(long long) int FAST_FUNC pack_gzip(transformer_aux_data_t *aux UNUSED_PARAM)
+IF_DESKTOP(long long) int FAST_FUNC pack_gzip(unpack_info_t *info UNUSED_PARAM)
 {
 	struct stat s;
 
@@ -2121,8 +2104,8 @@ int gzip_main(int argc UNUSED_PARAM, char **argv)
 	ALLOC(uch, G1.window, 2L * WSIZE);
 	ALLOC(ush, G1.prev, 1L << BITS);
 
-	/* Initialize the CRC32 table */
-	global_crc32_table = crc32_filltable(NULL, 0);
+	/* Initialise the CRC32 table */
+	G1.crc_32_tab = crc32_filltable(NULL, 0);
 
 	return bbunpack(argv, pack_gzip, append_ext, "gz");
 }

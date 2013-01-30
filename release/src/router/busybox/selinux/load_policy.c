@@ -2,12 +2,8 @@
  * load_policy
  * Author: Yuichi Nakamura <ynakam@hitachisoft.jp>
  *
- * Licensed under GPLv2, see file LICENSE in this source tree.
+ * Licensed under GPLv2, see file LICENSE in this tarball for details.
  */
-
-//usage:#define load_policy_trivial_usage NOUSAGE_STR
-//usage:#define load_policy_full_usage ""
-
 #include "libbb.h"
 
 int load_policy_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;

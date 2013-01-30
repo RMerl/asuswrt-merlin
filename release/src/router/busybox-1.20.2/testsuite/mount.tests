@@ -1,0 +1,86 @@
+#!/bin/sh
+# Copyright 2007 by Denys Vlasenko <vda.linux@googlemail.com>
+# Licensed under GPLv2, see file LICENSE in this source tree.
+
+. ./testing.sh
+test -f "$bindir/.config" && . "$bindir/.config"
+
+test "`id -u`" = 0 || {
+	echo "SKIPPED: mount (must be root to test this)"
+	exit 0
+}
+
+if test x"$CONFIG_MKFS_MINIX" != x"y" \
+|| test x"$CONFIG_FEATURE_MINIX2" != x"y" \
+|| test x"$CONFIG_FEATURE_MOUNT_LOOP" != x"y" \
+|| test x"$CONFIG_FEATURE_MOUNT_FLAGS" != x"y" \
+|| test x"$CONFIG_FEATURE_DEVFS" = x"y" \
+; then
+	echo "SKIPPED: mount"
+	exit 0
+fi
+
+testdir="$PWD/mount.testdir"
+
+dd if=/dev/zero of=mount.image1m count=1 bs=1M 2>/dev/null || { echo "dd error"; exit 1; }
+mkfs.minix -v mount.image1m >/dev/null 2>&1 || { echo "mkfs.minix error"; exit 1; }
+modprobe minix 2>/dev/null
+mkdir "$testdir" 2>/dev/null
+umount -d "$testdir" 2>/dev/null
+
+# testing "test name" "command" "expected result" "file input" "stdin"
+#   file input will be file called "input"
+#   test can create a file "actual" instead of writing to stdout
+
+testing "mount -o remount,mand" \
+"mount -o loop mount.image1m $testdir "\
+"&& grep -Fc $testdir </proc/mounts "\
+"&& mount -o remount,mand $testdir "\
+"&& grep -F $testdir </proc/mounts | grep -c '[, ]mand[, ]'" \
+	"1\n""1\n" \
+	"" ""
+
+umount -d "$testdir"
+rmdir "$testdir"
+rm mount.image1m
+
+
+# Bug: mount.shared1 directory shows no files (has to show files a and b)
+optional FEATURE_LS_RECURSIVE FEATURE_LS_SORTFILES
+testing "mount bind+rshared" "\
+mkdir -p mount.dir mount.shared1 mount.shared2
+touch mount.dir/a mount.dir/b
+
+mount --bind         mount.shared1 mount.shared1 2>&1
+mount --make-rshared mount.shared1               2>&1
+mount --bind         mount.shared2 mount.shared2 2>&1
+mount --make-rshared mount.shared2               2>&1
+
+mount --bind mount.shared2 mount.shared1         2>&1
+mount --bind mount.dir     mount.shared2         2>&1
+
+ls -R mount.dir mount.shared1 mount.shared2      2>&1
+
+umount mount.dir mount.shared1 mount.shared2 2>/dev/null
+umount mount.dir mount.shared1 mount.shared2 2>/dev/null
+umount mount.dir mount.shared1 mount.shared2 2>/dev/null
+rm -f mount.dir/a mount.dir/b mount.dir/c
+rmdir mount.dir mount.shared1 mount.shared2
+" \
+"\
+mount.dir:
+a
+b
+
+mount.shared1:
+a
+b
+
+mount.shared2:
+a
+b
+" \
+	"" ""
+SKIP=
+
+exit $FAILCOUNT

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cd log/logdir || exit 1
+cat @* current | $PAGER

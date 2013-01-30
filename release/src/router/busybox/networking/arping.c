@@ -1,26 +1,12 @@
 /* vi: set sw=4 ts=4: */
 /*
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * arping.c - Ping hosts by ARP requests/replies
  *
- * Author: Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ *
+ * Author:	Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>
  * Busybox port: Nick Fedchik <nick@fedchik.org.ua>
  */
-
-//usage:#define arping_trivial_usage
-//usage:       "[-fqbDUA] [-c CNT] [-w TIMEOUT] [-I IFACE] [-s SRC_IP] DST_IP"
-//usage:#define arping_full_usage "\n\n"
-//usage:       "Send ARP requests/replies\n"
-//usage:     "\n	-f		Quit on first ARP reply"
-//usage:     "\n	-q		Quiet"
-//usage:     "\n	-b		Keep broadcasting, don't go unicast"
-//usage:     "\n	-D		Duplicated address detection mode"
-//usage:     "\n	-U		Unsolicited ARP mode, update your neighbors"
-//usage:     "\n	-A		ARP answer mode, update your neighbors"
-//usage:     "\n	-c N		Stop after sending N ARP requests"
-//usage:     "\n	-w TIMEOUT	Time to wait for ARP reply, seconds"
-//usage:     "\n	-I IFACE	Interface to use (default eth0)"
-//usage:     "\n	-s SRC_IP	Sender IP address"
-//usage:     "\n	DST_IP		Target IP address"
 
 #include <arpa/inet.h>
 #include <net/if.h>

@@ -2,14 +2,8 @@
 /*
  * Mini sulogin implementation for busybox
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
-
-//usage:#define sulogin_trivial_usage
-//usage:       "[-t N] [TTY]"
-//usage:#define sulogin_full_usage "\n\n"
-//usage:       "Single user login\n"
-//usage:     "\n	-t N	Timeout"
 
 #include "libbb.h"
 #include <syslog.h>
@@ -94,8 +88,8 @@ int sulogin_main(int argc UNUSED_PARAM, char **argv)
 		if (r == 0) {
 			break;
 		}
-		bb_do_delay(LOGIN_FAIL_DELAY);
-		bb_info_msg("Login incorrect");
+		bb_do_delay(FAIL_DELAY);
+		bb_error_msg("login incorrect");
 	}
 	memset(cp, 0, strlen(cp));
 //	signal(SIGALRM, SIG_DFL);

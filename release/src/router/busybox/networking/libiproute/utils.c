@@ -1,12 +1,14 @@
 /* vi: set sw=4 ts=4: */
 /*
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * utils.c
  *
- * Authors: Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ *
+ * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
  * Changes:
  *
- * Rani Assaf <rani@magic.metawire.com> 980929: resolve addresses
+ * Rani Assaf <rani@magic.metawire.com> 980929:	resolve addresses
  */
 
 #include "libbb.h"
@@ -62,7 +64,7 @@ int get_addr_1(inet_prefix *addr, char *name, int family)
 {
 	memset(addr, 0, sizeof(*addr));
 
-	if (strcmp(name, "default") == 0
+	if (strcmp(name, bb_str_default) == 0
 	 || strcmp(name, "all") == 0
 	 || strcmp(name, "any") == 0
 	) {
@@ -83,98 +85,73 @@ int get_addr_1(inet_prefix *addr, char *name, int family)
 		return 0;
 	}
 
+	addr->family = AF_INET;
 	if (family != AF_UNSPEC && family != AF_INET)
 		return -1;
-
-	/* Try to parse it as IPv4 */
-	addr->family = AF_INET;
-#if 0 /* Doesn't handle e.g. "10.10", for example, "ip r l root 10.10/16" */
 	if (inet_pton(AF_INET, name, addr->data) <= 0)
 		return -1;
-#else
-	{
-		unsigned i = 0;
-		unsigned n = 0;
-		const char *cp = name - 1;
-		while (*++cp) {
-			if ((unsigned char)(*cp - '0') <= 9) {
-				n = 10 * n + (unsigned char)(*cp - '0');
-				if (n >= 256)
-					return -1;
-				((uint8_t*)addr->data)[i] = n;
-				continue;
-			}
-			if (*cp == '.' && ++i <= 3) {
-				n = 0;
-				continue;
-			}
-			return -1;
-		}
-	}
-#endif
 	addr->bytelen = 4;
 	addr->bitlen = -1;
-
 	return 0;
 }
 
-static void get_prefix_1(inet_prefix *dst, char *arg, int family)
+static int get_prefix_1(inet_prefix *dst, char *arg, int family)
 {
+	int err;
+	unsigned plen;
 	char *slash;
 
 	memset(dst, 0, sizeof(*dst));
 
-	if (strcmp(arg, "default") == 0
+	if (strcmp(arg, bb_str_default) == 0
 	 || strcmp(arg, "all") == 0
 	 || strcmp(arg, "any") == 0
 	) {
 		dst->family = family;
 		/*dst->bytelen = 0; - done by memset */
 		/*dst->bitlen = 0;*/
-		return;
+		return 0;
 	}
 
 	slash = strchr(arg, '/');
 	if (slash)
 		*slash = '\0';
-
-	if (get_addr_1(dst, arg, family) == 0) {
+	err = get_addr_1(dst, arg, family);
+	if (err == 0) {
 		dst->bitlen = (dst->family == AF_INET6) ? 128 : 32;
 		if (slash) {
-			unsigned plen;
 			inet_prefix netmask_pfx;
 
 			netmask_pfx.family = AF_UNSPEC;
 			plen = bb_strtou(slash + 1, NULL, 0);
 			if ((errno || plen > dst->bitlen)
-			 && get_addr_1(&netmask_pfx, slash + 1, family) != 0
-			) {
-				goto bad;
-			}
-			if (netmask_pfx.family == AF_INET) {
+			 && (get_addr_1(&netmask_pfx, slash + 1, family)))
+				err = -1;
+			else if (netmask_pfx.family == AF_INET) {
 				/* fill in prefix length of dotted quad */
 				uint32_t mask = ntohl(netmask_pfx.data[0]);
 				uint32_t host = ~mask;
 
 				/* a valid netmask must be 2^n - 1 */
-				if (host & (host + 1))
-					goto bad;
-
-				for (plen = 0; mask; mask <<= 1)
-					++plen;
-				if (plen > dst->bitlen)
-					goto bad;
-				/* dst->flags |= PREFIXLEN_SPECIFIED; */
+				if (!(host & (host + 1))) {
+					for (plen = 0; mask; mask <<= 1)
+						++plen;
+					if (plen <= dst->bitlen) {
+						dst->bitlen = plen;
+						/* dst->flags |= PREFIXLEN_SPECIFIED; */
+					} else
+						err = -1;
+				} else
+					err = -1;
+			} else {
+				/* plain prefix */
+				dst->bitlen = plen;
 			}
-			dst->bitlen = plen;
 		}
 	}
-
 	if (slash)
 		*slash = '/';
-	return;
- bad:
-	bb_error_msg_and_die("an %s %s is expected rather than \"%s\"", "inet", "prefix", arg);
+	return err;
 }
 
 int get_addr(inet_prefix *dst, char *arg, int family)
@@ -188,12 +165,15 @@ int get_addr(inet_prefix *dst, char *arg, int family)
 	return 0;
 }
 
-void get_prefix(inet_prefix *dst, char *arg, int family)
+int get_prefix(inet_prefix *dst, char *arg, int family)
 {
 	if (family == AF_PACKET) {
 		bb_error_msg_and_die("\"%s\" may be inet %s, but it is not allowed in this context", arg, "prefix");
 	}
-	get_prefix_1(dst, arg, family);
+	if (get_prefix_1(dst, arg, family)) {
+		bb_error_msg_and_die("an %s %s is expected rather than \"%s\"", "inet", "prefix", arg);
+	}
+	return 0;
 }
 
 uint32_t get_addr32(char *name)
@@ -226,10 +206,10 @@ void duparg2(const char *key, const char *arg)
 	bb_error_msg_and_die("either \"%s\" is duplicate, or \"%s\" is garbage", key, arg);
 }
 
-int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits)
+int inet_addr_match(inet_prefix *a, inet_prefix *b, int bits)
 {
-	const uint32_t *a1 = a->data;
-	const uint32_t *a2 = b->data;
+	uint32_t *a1 = a->data;
+	uint32_t *a2 = b->data;
 	int words = bits >> 5;
 
 	bits &= 0x1f;

@@ -4,12 +4,8 @@
  * Based on libselinux 1.33.1
  * Port to BusyBox  Hiroshi Shinji <shiroshi@my.email.ne.jp>
  *
- * Licensed under GPLv2, see file LICENSE in this source tree.
+ * Licensed under GPLv2, see file LICENSE in this tarball for details.
  */
-
-//usage:#define setenforce_trivial_usage
-//usage:       "[Enforcing | Permissive | 1 | 0]"
-//usage:#define setenforce_full_usage ""
 
 #include "libbb.h"
 

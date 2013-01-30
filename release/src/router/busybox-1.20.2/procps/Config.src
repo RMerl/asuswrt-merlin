@@ -1,0 +1,212 @@
+#
+# For a description of the syntax of this configuration file,
+# see scripts/kbuild/config-language.txt.
+#
+
+menu "Process Utilities"
+
+INSERT
+
+config FREE
+	bool "free"
+	default y
+	select PLATFORM_LINUX #sysinfo()
+	help
+	  free displays the total amount of free and used physical and swap
+	  memory in the system, as well as the buffers used by the kernel.
+	  The shared memory column should be ignored; it is obsolete.
+
+config FUSER
+	bool "fuser"
+	default y
+	help
+	  fuser lists all PIDs (Process IDs) that currently have a given
+	  file open. fuser can also list all PIDs that have a given network
+	  (TCP or UDP) port open.
+
+config KILL
+	bool "kill"
+	default y
+	help
+	  The command kill sends the specified signal to the specified
+	  process or process group. If no signal is specified, the TERM
+	  signal is sent.
+
+config KILLALL
+	bool "killall"
+	default y
+	depends on KILL
+	help
+	  killall sends a signal to all processes running any of the
+	  specified commands. If no signal name is specified, SIGTERM is
+	  sent.
+
+config KILLALL5
+	bool "killall5"
+	default y
+	depends on KILL
+
+config PGREP
+	bool "pgrep"
+	default y
+	help
+	  Look for processes by name.
+
+config PIDOF
+	bool "pidof"
+	default y
+	help
+	  Pidof finds the process id's (pids) of the named programs. It prints
+	  those id's on the standard output.
+
+config FEATURE_PIDOF_SINGLE
+	bool "Enable argument for single shot (-s)"
+	default y
+	depends on PIDOF
+	help
+	  Support argument '-s' for returning only the first pid found.
+
+config FEATURE_PIDOF_OMIT
+	bool "Enable argument for omitting pids (-o)"
+	default y
+	depends on PIDOF
+	help
+	  Support argument '-o' for omitting the given pids in output.
+	  The special pid %PPID can be used to name the parent process
+	  of the pidof, in other words the calling shell or shell script.
+
+config PKILL
+	bool "pkill"
+	default y
+	help
+	  Send signals to processes by name.
+
+config PS
+	bool "ps"
+	default y
+	help
+	  ps gives a snapshot of the current processes.
+
+config FEATURE_PS_WIDE
+	bool "Enable wide output option (-w)"
+	default y
+	depends on PS && !DESKTOP
+	help
+	  Support argument 'w' for wide output.
+	  If given once, 132 chars are printed, and if given more
+	  than once, the length is unlimited.
+
+config FEATURE_PS_LONG
+	bool "Enable long output option (-l)"
+	default y
+	depends on PS && !DESKTOP
+	help
+	  Support argument 'l' for long output.
+	  Adds fields PPID, RSS, START, TIME & TTY
+
+config FEATURE_PS_TIME
+	bool "Enable time and elapsed time output"
+	default y
+	depends on PS && DESKTOP
+	select PLATFORM_LINUX
+	help
+	  Support -o time and -o etime output specifiers.
+
+config FEATURE_PS_ADDITIONAL_COLUMNS
+	bool "Enable additional ps columns"
+	default y
+	depends on PS && DESKTOP
+	help
+	  Support -o rgroup, -o ruser, -o nice output specifiers.
+
+config FEATURE_PS_UNUSUAL_SYSTEMS
+	bool "Support Linux prior to 2.4.0 and non-ELF systems"
+	default n
+	depends on FEATURE_PS_TIME
+	help
+	  Include support for measuring HZ on old kernels and non-ELF systems
+	  (if you are on Linux 2.4.0+ and use ELF, you don't need this)
+
+config RENICE
+	bool "renice"
+	default y
+	help
+	  Renice alters the scheduling priority of one or more running
+	  processes.
+
+config BB_SYSCTL
+	bool "sysctl"
+	default y
+	help
+	  Configure kernel parameters at runtime.
+
+config TOP
+	bool "top"
+	default y
+	help
+	  The top program provides a dynamic real-time view of a running
+	  system.
+
+config FEATURE_TOP_CPU_USAGE_PERCENTAGE
+	bool "Show CPU per-process usage percentage"
+	default y
+	depends on TOP
+	help
+	  Make top display CPU usage for each process.
+	  This adds about 2k.
+
+config FEATURE_TOP_CPU_GLOBAL_PERCENTS
+	bool "Show CPU global usage percentage"
+	default y
+	depends on FEATURE_TOP_CPU_USAGE_PERCENTAGE
+	help
+	  Makes top display "CPU: NN% usr NN% sys..." line.
+	  This adds about 0.5k.
+
+config FEATURE_TOP_SMP_CPU
+	bool "SMP CPU usage display ('c' key)"
+	default y
+	depends on FEATURE_TOP_CPU_GLOBAL_PERCENTS
+	help
+	  Allow 'c' key to switch between individual/cumulative CPU stats
+	  This adds about 0.5k.
+
+config FEATURE_TOP_DECIMALS
+	bool "Show 1/10th of a percent in CPU/mem statistics"
+	default y
+	depends on FEATURE_TOP_CPU_USAGE_PERCENTAGE
+	help
+	  Show 1/10th of a percent in CPU/mem statistics.
+	  This adds about 0.3k.
+
+config FEATURE_TOP_SMP_PROCESS
+	bool "Show CPU process runs on ('j' field)"
+	default y
+	depends on TOP
+	help
+	  Show CPU where process was last found running on.
+	  This is the 'j' field.
+
+config FEATURE_TOPMEM
+	bool "Topmem command ('s' key)"
+	default y
+	depends on TOP
+	help
+	  Enable 's' in top (gives lots of memory info).
+
+config FEATURE_SHOW_THREADS
+	bool "Support for showing threads in ps/pstree/top"
+	default y
+	depends on PS || TOP || PSTREE
+	help
+	  Enables the ps -T option, showing of threads in pstree,
+	  and 'h' command in top.
+
+config WATCH
+	bool "watch"
+	default y
+	help
+	  watch is used to execute a program periodically, showing
+	  output to the screen.
+
+endmenu

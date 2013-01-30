@@ -171,3 +171,4 @@ errcode_t ext2fs_get_free_blocks(ext2_filsys fs, blk_t start, blk_t finish,
 	} while (b != finish);
 	return EXT2_ET_BLOCK_ALLOC_FAIL;
 }
+

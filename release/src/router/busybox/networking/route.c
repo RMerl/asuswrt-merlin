@@ -10,7 +10,7 @@
  *              Fred N. van Kempen, <waltje@uwalt.nl.mugnet.org>
  *              (derived from FvK's 'route.c     1.70    01/04/94')
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  *
  *
  * displayroute() code added by Vladimir N. Oleynik <dzo@simtreas.ru>
@@ -24,14 +24,6 @@
  * Rewritten to fix several bugs, add additional error checking, and
  * remove ridiculous amounts of bloat.
  */
-
-//usage:#define route_trivial_usage
-//usage:       "[{add|del|delete}]"
-//usage:#define route_full_usage "\n\n"
-//usage:       "Edit kernel routing tables\n"
-//usage:     "\n	-n	Don't resolve names"
-//usage:     "\n	-e	Display other/more information"
-//usage:     "\n	-A inet" IF_FEATURE_IPV6("{6}") "	Select address family"
 
 #include <net/route.h>
 #include <net/if.h>
@@ -161,10 +153,7 @@ static int kw_lookup(const char *kwtbl, char ***pargs)
 
 static NOINLINE void INET_setroute(int action, char **args)
 {
-	/* char buffer instead of bona-fide struct avoids aliasing warning */
-	char rt_buf[sizeof(struct rtentry)];
-	struct rtentry *const rt = (void *)rt_buf;
-
+	struct rtentry rt;
 	const char *netmask = NULL;
 	int skfd, isnet, xflag;
 
@@ -177,7 +166,7 @@ static NOINLINE void INET_setroute(int action, char **args)
 	}
 
 	/* Clean out the RTREQ structure. */
-	memset(rt, 0, sizeof(*rt));
+	memset(&rt, 0, sizeof(rt));
 
 	{
 		const char *target = *args++;
@@ -189,17 +178,17 @@ static NOINLINE void INET_setroute(int action, char **args)
 			int prefix_len;
 
 			prefix_len = xatoul_range(prefix+1, 0, 32);
-			mask_in_addr(*rt) = htonl( ~(0xffffffffUL >> prefix_len));
+			mask_in_addr(rt) = htonl( ~(0xffffffffUL >> prefix_len));
 			*prefix = '\0';
 #if HAVE_NEW_ADDRT
-			rt->rt_genmask.sa_family = AF_INET;
+			rt.rt_genmask.sa_family = AF_INET;
 #endif
 		} else {
 			/* Default netmask. */
-			netmask = "default";
+			netmask = bb_str_default;
 		}
 		/* Prefer hostname lookup is -host flag (xflag==1) was given. */
-		isnet = INET_resolve(target, (struct sockaddr_in *) &rt->rt_dst,
+		isnet = INET_resolve(target, (struct sockaddr_in *) &rt.rt_dst,
 							 (xflag & HOST_FLAG));
 		if (isnet < 0) {
 			bb_error_msg_and_die("resolving %s", target);
@@ -215,20 +204,20 @@ static NOINLINE void INET_setroute(int action, char **args)
 	}
 
 	/* Fill in the other fields. */
-	rt->rt_flags = ((isnet) ? RTF_UP : (RTF_UP | RTF_HOST));
+	rt.rt_flags = ((isnet) ? RTF_UP : (RTF_UP | RTF_HOST));
 
 	while (*args) {
 		int k = kw_lookup(tbl_ipvx, &args);
 		const char *args_m1 = args[-1];
 
 		if (k & KW_IPVx_FLAG_ONLY) {
-			rt->rt_flags |= flags_ipvx[k & 3];
+			rt.rt_flags |= flags_ipvx[k & 3];
 			continue;
 		}
 
 #if HAVE_NEW_ADDRT
 		if (k == KW_IPVx_METRIC) {
-			rt->rt_metric = xatoul(args_m1) + 1;
+			rt.rt_metric = xatoul(args_m1) + 1;
 			continue;
 		}
 #endif
@@ -236,7 +225,7 @@ static NOINLINE void INET_setroute(int action, char **args)
 		if (k == KW_IPVx_NETMASK) {
 			struct sockaddr mask;
 
-			if (mask_in_addr(*rt)) {
+			if (mask_in_addr(rt)) {
 				bb_show_usage();
 			}
 
@@ -245,18 +234,18 @@ static NOINLINE void INET_setroute(int action, char **args)
 			if (isnet < 0) {
 				bb_error_msg_and_die("resolving %s", netmask);
 			}
-			rt->rt_genmask = full_mask(mask);
+			rt.rt_genmask = full_mask(mask);
 			continue;
 		}
 
 		if (k == KW_IPVx_GATEWAY) {
-			if (rt->rt_flags & RTF_GATEWAY) {
+			if (rt.rt_flags & RTF_GATEWAY) {
 				bb_show_usage();
 			}
 
 			isnet = INET_resolve(args_m1,
-						(struct sockaddr_in *) &rt->rt_gateway, 1);
-			rt->rt_flags |= RTF_GATEWAY;
+								 (struct sockaddr_in *) &rt.rt_gateway, 1);
+			rt.rt_flags |= RTF_GATEWAY;
 
 			if (isnet) {
 				if (isnet < 0) {
@@ -268,24 +257,24 @@ static NOINLINE void INET_setroute(int action, char **args)
 		}
 
 		if (k == KW_IPVx_MSS) {	/* Check valid MSS bounds. */
-			rt->rt_flags |= RTF_MSS;
-			rt->rt_mss = xatoul_range(args_m1, 64, 32768);
+			rt.rt_flags |= RTF_MSS;
+			rt.rt_mss = xatoul_range(args_m1, 64, 32768);
 			continue;
 		}
 
 		if (k == KW_IPVx_WINDOW) {	/* Check valid window bounds. */
-			rt->rt_flags |= RTF_WINDOW;
-			rt->rt_window = xatoul_range(args_m1, 128, INT_MAX);
+			rt.rt_flags |= RTF_WINDOW;
+			rt.rt_window = xatoul_range(args_m1, 128, INT_MAX);
 			continue;
 		}
 
 #ifdef RTF_IRTT
 		if (k == KW_IPVx_IRTT) {
-			rt->rt_flags |= RTF_IRTT;
-			rt->rt_irtt = xatoul(args_m1);
-			rt->rt_irtt *= (sysconf(_SC_CLK_TCK) / 100);	/* FIXME */
+			rt.rt_flags |= RTF_IRTT;
+			rt.rt_irtt = xatoul(args_m1);
+			rt.rt_irtt *= (sysconf(_SC_CLK_TCK) / 100);	/* FIXME */
 #if 0					/* FIXME: do we need to check anything of this? */
-			if (rt->rt_irtt < 1 || rt->rt_irtt > (120 * HZ)) {
+			if (rt.rt_irtt < 1 || rt.rt_irtt > (120 * HZ)) {
 				bb_error_msg_and_die("bad irtt");
 			}
 #endif
@@ -295,9 +284,9 @@ static NOINLINE void INET_setroute(int action, char **args)
 
 		/* Device is special in that it can be the last arg specified
 		 * and doesn't requre the dev/device keyword in that case. */
-		if (!rt->rt_dev && ((k == KW_IPVx_DEVICE) || (!k && !*++args))) {
+		if (!rt.rt_dev && ((k == KW_IPVx_DEVICE) || (!k && !*++args))) {
 			/* Don't use args_m1 here since args may have changed! */
-			rt->rt_dev = args[-1];
+			rt.rt_dev = args[-1];
 			continue;
 		}
 
@@ -306,41 +295,41 @@ static NOINLINE void INET_setroute(int action, char **args)
 	}
 
 #ifdef RTF_REJECT
-	if ((rt->rt_flags & RTF_REJECT) && !rt->rt_dev) {
-		rt->rt_dev = (char*)"lo";
+	if ((rt.rt_flags & RTF_REJECT) && !rt.rt_dev) {
+		rt.rt_dev = (char*)"lo";
 	}
 #endif
 
 	/* sanity checks.. */
-	if (mask_in_addr(*rt)) {
-		uint32_t mask = mask_in_addr(*rt);
+	if (mask_in_addr(rt)) {
+		uint32_t mask = mask_in_addr(rt);
 
 		mask = ~ntohl(mask);
-		if ((rt->rt_flags & RTF_HOST) && mask != 0xffffffff) {
+		if ((rt.rt_flags & RTF_HOST) && mask != 0xffffffff) {
 			bb_error_msg_and_die("netmask %.8x and host route conflict",
 								 (unsigned int) mask);
 		}
 		if (mask & (mask + 1)) {
 			bb_error_msg_and_die("bogus netmask %s", netmask);
 		}
-		mask = ((struct sockaddr_in *) &rt->rt_dst)->sin_addr.s_addr;
-		if (mask & ~(uint32_t)mask_in_addr(*rt)) {
+		mask = ((struct sockaddr_in *) &rt.rt_dst)->sin_addr.s_addr;
+		if (mask & ~(uint32_t)mask_in_addr(rt)) {
 			bb_error_msg_and_die("netmask and route address conflict");
 		}
 	}
 
 	/* Fill out netmask if still unset */
-	if ((action == RTACTION_ADD) && (rt->rt_flags & RTF_HOST)) {
-		mask_in_addr(*rt) = 0xffffffff;
+	if ((action == RTACTION_ADD) && (rt.rt_flags & RTF_HOST)) {
+		mask_in_addr(rt) = 0xffffffff;
 	}
 
 	/* Create a socket to the INET kernel. */
 	skfd = xsocket(AF_INET, SOCK_DGRAM, 0);
 
 	if (action == RTACTION_ADD)
-		xioctl(skfd, SIOCADDRT, rt);
+		xioctl(skfd, SIOCADDRT, &rt);
 	else
-		xioctl(skfd, SIOCDELRT, rt);
+		xioctl(skfd, SIOCDELRT, &rt);
 
 	if (ENABLE_FEATURE_CLEAN_UP) close(skfd);
 }
@@ -357,7 +346,7 @@ static NOINLINE void INET6_setroute(int action, char **args)
 		/* We know args isn't NULL from the check in route_main. */
 		const char *target = *args++;
 
-		if (strcmp(target, "default") == 0) {
+		if (strcmp(target, bb_str_default) == 0) {
 			prefix_len = 0;
 			memset(&sa6, 0, sizeof(sa6));
 		} else {
@@ -545,7 +534,6 @@ void FAST_FUNC bb_displayroutes(int noresolve, int netstatfmt)
 			printf("%-6d %-2d %7d %s\n", metric, ref, use, devname);
 		}
 	}
-	fclose(fp);
 }
 
 #if ENABLE_FEATURE_IPV6
@@ -613,7 +601,7 @@ static void INET6_displayroutes(void)
 		set_flags(flags, (iflags & IPV6_MASK));
 
 		r = 0;
-		while (1) {
+		do {
 			inet_pton(AF_INET6, addr6x + r,
 					  (struct sockaddr *) &snaddr6.sin6_addr);
 			snaddr6.sin6_family = AF_INET6;
@@ -632,9 +620,8 @@ static void INET6_displayroutes(void)
 				free(naddr6);
 				break;
 			}
-		}
+		} while (1);
 	}
-	fclose(fp);
 }
 
 #endif

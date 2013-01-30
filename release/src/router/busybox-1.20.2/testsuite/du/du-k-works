@@ -1,0 +1,6 @@
+mkdir du.testdir
+cd du.testdir
+dd if=/dev/zero of=file1 bs=1k count=64 2>/dev/null
+dd if=/dev/zero of=file2 bs=1k count=16 2>/dev/null
+test x"`busybox du -k .`" = x"80	." \
+  -o x"`busybox du -k .`" = x"88	."

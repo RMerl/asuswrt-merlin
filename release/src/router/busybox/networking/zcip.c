@@ -6,7 +6,7 @@
  * Copyright (C) 2003 by Arthur van Hoff (avh@strangeberry.com)
  * Copyright (C) 2004 by David Brownell
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
  */
 
 /*
@@ -23,25 +23,14 @@
 // - avoid silent script failures, especially under load...
 // - link status monitoring (restart on link-up; stop on link-down)
 
-//usage:#define zcip_trivial_usage
-//usage:       "[OPTIONS] IFACE SCRIPT"
-//usage:#define zcip_full_usage "\n\n"
-//usage:       "Manage a ZeroConf IPv4 link-local address\n"
-//usage:     "\n	-f		Run in foreground"
-//usage:     "\n	-q		Quit after obtaining address"
-//usage:     "\n	-r 169.254.x.x	Request this address first"
-//usage:     "\n	-v		Verbose"
-//usage:     "\n	-S		Log to syslog too"
-//usage:     "\n"
-//usage:     "\nWith no -q, runs continuously monitoring for ARP conflicts,"
-//usage:     "\nexits only on I/O errors (link down etc)"
-
-#include "libbb.h"
 #include <netinet/ether.h>
+#include <net/ethernet.h>
 #include <net/if.h>
 #include <net/if_arp.h>
+#include <linux/if_packet.h>
 #include <linux/sockios.h>
 
+#include "libbb.h"
 #include <syslog.h>
 
 /* We don't need more than 32 bits of the counter */
@@ -92,7 +81,6 @@ struct globals {
 #define G (*(struct globals*)&bb_common_bufsiz1)
 #define saddr    (G.saddr   )
 #define eth_addr (G.eth_addr)
-#define INIT_G() do { } while (0)
 
 
 /**
@@ -225,7 +213,6 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 #define verbose    (L.verbose   )
 
 	memset(&L, 0, sizeof(L));
-	INIT_G();
 
 #define FOREGROUND (opts & 1)
 #define QUIT       (opts & 2)

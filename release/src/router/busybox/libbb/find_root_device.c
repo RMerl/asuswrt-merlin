@@ -4,7 +4,7 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 
 #include "libbb.h"
@@ -29,15 +29,14 @@ static char *find_block_device_in_dir(struct arena *ap)
 	char *retpath = NULL;
 	int len, rem;
 
-	len = strlen(ap->devpath);
-	rem = DEVNAME_MAX-2 - len;
-	if (rem <= 0)
-		return NULL;
-
 	dir = opendir(ap->devpath);
 	if (!dir)
 		return NULL;
 
+	len = strlen(ap->devpath);
+	rem = DEVNAME_MAX-2 - len;
+	if (rem <= 0)
+		return NULL;
 	ap->devpath[len++] = '/';
 
 	while ((entry = readdir(dir)) != NULL) {

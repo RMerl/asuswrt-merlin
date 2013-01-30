@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2007 by Stephane Billiart <stephane.billiart@gmail.com>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 
 /* Override ENABLE_FEATURE_PIDFILE */

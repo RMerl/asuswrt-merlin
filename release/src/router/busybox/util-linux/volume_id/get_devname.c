@@ -5,7 +5,7 @@
  * Copyright (C) 2006 by Jason Schoon <floydpink@gmail.com>
  * Some portions cribbed from e2fsprogs, util-linux, dosfstools
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 #include <sys/mount.h> /* BLKGETSIZE64 */
 #if !defined(BLKGETSIZE64)
@@ -19,22 +19,14 @@ static struct uuidCache_s {
 	char *device;
 	char *label;
 	char *uc_uuid; /* prefix makes it easier to grep for */
-	IF_FEATURE_BLKID_TYPE(const char *type;)
 } *uuidCache;
-
-#if !ENABLE_FEATURE_BLKID_TYPE
-#define get_label_uuid(fd, label, uuid, type) \
-	get_label_uuid(fd, label, uuid)
-#define uuidcache_addentry(device, devno, label, uuid, type) \
-	uuidcache_addentry(device, devno, label, uuid)
-#endif
 
 /* Returns !0 on error.
  * Otherwise, returns malloc'ed strings for label and uuid
  * (and they can't be NULL, although they can be "").
  * NB: closes fd. */
 static int
-get_label_uuid(int fd, char **label, char **uuid, const char **type)
+get_label_uuid(int fd, char **label, char **uuid)
 {
 	int rv = 1;
 	uint64_t size;
@@ -52,12 +44,7 @@ get_label_uuid(int fd, char **label, char **uuid, const char **type)
 	if (vid->label[0] != '\0' || vid->uuid[0] != '\0') {
 		*label = xstrndup(vid->label, sizeof(vid->label));
 		*uuid  = xstrndup(vid->uuid, sizeof(vid->uuid));
-#if ENABLE_FEATURE_BLKID_TYPE
-		*type = vid->type;
-		dbg("found label '%s', uuid '%s', type '%s'", *label, *uuid, *type);
-#else
 		dbg("found label '%s', uuid '%s'", *label, *uuid);
-#endif
 		rv = 0;
 	}
  ret:
@@ -67,7 +54,7 @@ get_label_uuid(int fd, char **label, char **uuid, const char **type)
 
 /* NB: we take ownership of (malloc'ed) label and uuid */
 static void
-uuidcache_addentry(char *device, dev_t devno, char *label, char *uuid, const char *type)
+uuidcache_addentry(char *device, dev_t devno, char *label, char *uuid)
 {
 	struct uuidCache_s *last;
 
@@ -84,7 +71,6 @@ uuidcache_addentry(char *device, dev_t devno, char *label, char *uuid, const cha
 	last->device = device;
 	last->label = label;
 	last->uc_uuid = uuid;
-	IF_FEATURE_BLKID_TYPE(last->type = type;)
 }
 
 /* If get_label_uuid() on device_name returns success,
@@ -96,6 +82,10 @@ uuidcache_check_device(const char *device,
 		void *userData UNUSED_PARAM,
 		int depth UNUSED_PARAM)
 {
+	char *uuid = uuid; /* for compiler */
+	char *label = label;
+	int fd;
+
 	/* note: this check rejects links to devices, among other nodes */
 	if (!S_ISBLK(statbuf->st_mode))
 		return TRUE;
@@ -108,17 +98,23 @@ uuidcache_check_device(const char *device,
 	if (major(statbuf->st_rdev) == 2)
 		return TRUE;
 
-	add_to_uuid_cache(device, statbuf->st_rdev);
+	fd = open(device, O_RDONLY);
+	if (fd < 0)
+		return TRUE;
 
+	/* get_label_uuid() closes fd in all cases (success & failure) */
+	if (get_label_uuid(fd, &label, &uuid) == 0) {
+		/* uuidcache_addentry() takes ownership of all three params */
+		uuidcache_addentry(xstrdup(device), statbuf->st_rdev, label, uuid);
+	}
 	return TRUE;
 }
 
-static struct uuidCache_s*
-uuidcache_init(int scan_devices)
+static void
+uuidcache_init(void)
 {
-	dbg("DBG: uuidCache=%x, uuidCache");
 	if (uuidCache)
-		return uuidCache;
+		return;
 
 	/* We were scanning /proc/partitions
 	 * and /proc/sys/dev/cdrom/info here.
@@ -130,14 +126,12 @@ uuidcache_init(int scan_devices)
 	 * This is unacceptably complex. Let's just scan /dev.
 	 * (Maybe add scanning of /sys/block/XXX/dev for devices
 	 * somehow not having their /dev/XXX entries created?) */
-	if (scan_devices)
-		recursive_action("/dev", ACTION_RECURSE,
-			uuidcache_check_device, /* file_action */
-			NULL, /* dir_action */
-			NULL, /* userData */
-			0 /* depth */);
 
-	return uuidCache;
+	recursive_action("/dev", ACTION_RECURSE,
+		uuidcache_check_device, /* file_action */
+		NULL, /* dir_action */
+		NULL, /* userData */
+		0 /* depth */);
 }
 
 #define UUID   1
@@ -149,7 +143,9 @@ get_spec_by_x(int n, const char *t, dev_t *devnoPtr)
 {
 	struct uuidCache_s *uc;
 
-	uc = uuidcache_init(/*scan_devices:*/ 1);
+	uuidcache_init();
+	uc = uuidCache;
+
 	while (uc) {
 		switch (n) {
 		case UUID:
@@ -177,48 +173,22 @@ found:
 }
 
 /* Used by blkid */
-void display_uuid_cache(int scan_devices)
+void display_uuid_cache(void)
 {
-	struct uuidCache_s *uc;
+	struct uuidCache_s *u;
 
-	uc = uuidcache_init(scan_devices);
-	while (uc) {
-		printf("%s:", uc->device);
-		if (uc->label[0])
-			printf(" LABEL=\"%s\"", uc->label);
-		if (uc->uc_uuid[0])
-			printf(" UUID=\"%s\"", uc->uc_uuid);
-#if ENABLE_FEATURE_BLKID_TYPE
-	if (uc->type)
-		printf(" TYPE=\"%s\"", uc->type);
-#endif
+	uuidcache_init();
+	u = uuidCache;
+	while (u) {
+		printf("%s:", u->device);
+		if (u->label[0])
+			printf(" LABEL=\"%s\"", u->label);
+		if (u->uc_uuid[0])
+			printf(" UUID=\"%s\"", u->uc_uuid);
 		bb_putchar('\n');
-		uc = uc->next;
+		u = u->next;
 	}
 }
-
-int add_to_uuid_cache(const char *device, dev_t devno)
-{
-	char *uuid = uuid; /* for compiler */
-	char *label = label;
-#if ENABLE_FEATURE_BLKID_TYPE
-	const char *type = type;
-#endif
-	int fd;
-
-	fd = open(device, O_RDONLY);
-	if (fd < 0)
-		return 0;
-
-	/* get_label_uuid() closes fd in all cases (success & failure) */
-	if (get_label_uuid(fd, &label, &uuid, &type) == 0) {
-		/* uuidcache_addentry() takes ownership of all four params */
-		uuidcache_addentry(xstrdup(device), devno, label, uuid, type);
-		return 1;
-	}
-	return 0;
-}
-
 
 /* Used by mount and findfs & old_e2fsprogs */
 
@@ -239,16 +209,14 @@ char *get_devname_from_device(dev_t dev)
 
 int resolve_mount_spec(char **fsname)
 {
-	char *tmp = NULL;
+	char *tmp = *fsname;
 
 	if (strncmp(*fsname, "UUID=", 5) == 0)
 		tmp = get_devname_from_uuid(*fsname + 5);
 	else if (strncmp(*fsname, "LABEL=", 6) == 0)
 		tmp = get_devname_from_label(*fsname + 6);
-	else {
-		*fsname = xstrdup(*fsname);
+	else
 		return 0; /* no UUID= or LABEL= prefix found */
-	}
 
 	if (!tmp)
 		return -2; /* device defined by UUID= or LABEL= wasn't found */

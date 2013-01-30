@@ -4,15 +4,8 @@
  *
  * Copyright (C) 2008 by  <u173034@informatik.uni-oldenburg.de>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
-
-//usage:#define ionice_trivial_usage
-//usage:	"[-c 1-3] [-n 0-7] [-p PID] [PROG]"
-//usage:#define ionice_full_usage "\n\n"
-//usage:       "Change I/O priority and class\n"
-//usage:     "\n	-c	Class. 1:realtime 2:best-effort 3:idle"
-//usage:     "\n	-n	Priority"
 
 #include <sys/syscall.h>
 #include <asm/unistd.h>
@@ -80,7 +73,7 @@ int ionice_main(int argc UNUSED_PARAM, char **argv)
 
 	if (!(opt & (OPT_n|OPT_c))) {
 		if (!(opt & OPT_p) && *argv)
-			pid = xatoi_positive(*argv);
+			pid = xatoi_u(*argv);
 
 		pri = ioprio_get(IOPRIO_WHO_PROCESS, pid);
 		if (pri == -1)

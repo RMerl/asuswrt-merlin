@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2005 by Tito Ragusa <tito-wolit@tiscali.it>
  *
- * Licensed under GPLv2, see file LICENSE in this source tree.
+ * Licensed under the GPL v2, see the file LICENSE in this tarball.
  */
 
 #include "libbb.h"

@@ -7,7 +7,7 @@
  */
 
 /* Constants and structures */
-#include "bb_e2fs_defs.h"
+#include "e2fs_defs.h"
 
 PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
 

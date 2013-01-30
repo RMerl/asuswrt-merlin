@@ -1,0 +1,214 @@
+#!/bin/sh
+# Copyright 2009 by Denys Vlasenko
+# Licensed under GPLv2, see file LICENSE in this source tree.
+
+. ./testing.sh
+
+unset LANG
+unset LANGUAGE
+unset LC_COLLATE
+unset LC_ALL
+umask 022
+
+rm -rf tar.tempdir 2>/dev/null
+mkdir tar.tempdir && cd tar.tempdir || exit 1
+
+# testing "test name" "script" "expected result" "file input" "stdin"
+
+optional FEATURE_TAR_CREATE FEATURE_LS_SORTFILES
+testing "tar hardlinks and repeated files" '\
+rm -rf input_* test.tar 2>/dev/null
+>input_hard1
+ln input_hard1 input_hard2
+mkdir input_dir
+>input_dir/file
+chmod -R 644 *
+chmod    755 input_dir
+tar cf test.tar input input_dir/ input_hard1 input_hard2 input_hard1 input_dir/ input
+tar tvf test.tar | sed "s/.*[0-9] input/input/"
+tar xf test.tar 2>&1
+echo Ok: $?
+ls -l . input_dir/* | grep input_ | sed "s/\\(^[^ ]*\\) .* input/\\1 input/"
+' "\
+input
+input_dir/
+input_dir/file
+input_hard1
+input_hard2 -> input_hard1
+input_hard1 -> input_hard1
+input_dir/
+input_dir/file
+input
+Ok: 0
+-rw-r--r-- input_dir/file
+drwxr-xr-x input_dir
+-rw-r--r-- input_hard1
+-rw-r--r-- input_hard2
+" \
+"" ""
+SKIP=
+
+optional FEATURE_TAR_CREATE FEATURE_LS_SORTFILES
+testing "tar hardlinks mode" '\
+rm -rf input_* test.tar 2>/dev/null
+>input_hard1
+chmod 741 input_hard1
+ln input_hard1 input_hard2
+mkdir input_dir
+ln input_hard1 input_dir
+ln input_hard2 input_dir
+chmod 550 input_dir
+# On some filesystems, input_dir/input_hard2 is returned by readdir
+# BEFORE input_dir/input_hard1! Thats why we cant just "tar cf ... input_*":
+tar cf test.tar input_dir/input_hard* input_hard*
+tar tvf test.tar | sed "s/.*[0-9] input/input/"
+chmod 770 input_dir
+rm -rf input_*
+tar xf test.tar 2>&1
+echo Ok: $?
+ls -l . input_dir/* | grep "input.*hard" | sed "s/\\(^[^ ]*\\) .* input/\\1 input/"
+' "\
+input_dir/input_hard1
+input_dir/input_hard2 -> input_dir/input_hard1
+input_hard1 -> input_dir/input_hard1
+input_hard2 -> input_dir/input_hard1
+Ok: 0
+-rwxr----x input_dir/input_hard1
+-rwxr----x input_dir/input_hard2
+-rwxr----x input_hard1
+-rwxr----x input_hard2
+" \
+"" ""
+SKIP=
+
+optional FEATURE_TAR_CREATE FEATURE_LS_SORTFILES
+testing "tar symlinks mode" '\
+rm -rf input_* test.tar 2>/dev/null
+>input_file
+chmod 741 input_file
+ln -s input_file input_soft
+mkdir input_dir
+ln input_file input_dir
+ln input_soft input_dir
+chmod 550 input_dir
+tar cf test.tar input_dir/* input_[fs]*
+tar tvf test.tar | sed "s/.*[0-9] input/input/" | sort
+chmod 770 input_dir
+rm -rf input_*
+tar xf test.tar 2>&1
+echo Ok: $?
+ls -l . input_dir/* | grep "input_[fs]" | sed "s/\\(^[^ ]*\\) .* input/\\1 input/"
+' "\
+input_dir/input_file
+input_dir/input_soft -> input_file
+input_file -> input_dir/input_file
+input_soft -> input_dir/input_soft
+Ok: 0
+-rwxr----x input_dir/input_file
+lrwxrwxrwx input_file
+-rwxr----x input_file
+lrwxrwxrwx input_file
+" \
+"" ""
+SKIP=
+
+optional FEATURE_TAR_CREATE FEATURE_TAR_LONG_OPTIONS
+testing "tar --overwrite" "\
+rm -rf input_* test.tar 2>/dev/null
+ln input input_hard
+tar cf test.tar input_hard
+echo WRONG >input
+# --overwrite opens 'input_hard' without unlinking,
+# thus 'input_hard' still linked to 'input' and we write 'Ok' into it
+tar xf test.tar --overwrite 2>&1 && cat input
+" "\
+Ok
+" \
+"Ok\n" ""
+SKIP=
+
+test x"$SKIP_KNOWN_BUGS" = x"" && {
+# Needs to be run under non-root for meaningful test
+optional FEATURE_TAR_CREATE
+testing "tar writing into read-only dir" '\
+rm -rf input_* test.tar 2>/dev/null
+mkdir input_dir
+>input_dir/input_file
+chmod 550 input_dir
+tar cf test.tar input_dir
+tar tvf test.tar | sed "s/.*[0-9] input/input/"
+chmod 770 input_dir
+rm -rf input_*
+tar xf test.tar 2>&1
+echo Ok: $?
+ls -l input_dir/* . | grep input_ | sed "s/\\(^[^ ]*\\) .* input/\\1 input/"
+chmod 770 input_dir
+' "\
+input_dir/
+input_dir/input_file
+Ok: 0
+-rw-r--r-- input_dir/input_file
+dr-xr-x--- input_dir
+" \
+"" ""
+SKIP=
+}
+
+# Had a bug where on extract autodetect first "switched off" -z
+# and then failed to recognize .tgz extension
+optional FEATURE_TAR_CREATE FEATURE_SEAMLESS_GZ
+testing "tar extract tgz" "\
+dd count=1 bs=1M if=/dev/zero of=F0 2>/dev/null
+tar -czf F0.tgz F0
+rm F0
+tar -xzvf F0.tgz && echo Ok
+rm F0 || echo BAD
+" "\
+F0
+Ok
+" \
+"" ""
+SKIP=
+
+# Do we detect XZ-compressed data (even w/o .tar.xz or txz extension)?
+# (the uuencoded hello_world.txz contains one empty file named "hello_world")
+optional UUDECODE FEATURE_TAR_AUTODETECT FEATURE_SEAMLESS_XZ
+testing "tar extract txz" "\
+uudecode -o input && tar tf input && echo Ok
+" "\
+hello_world
+Ok
+" \
+"" "\
+begin-base64 644 hello_world.txz
+/Td6WFoAAATm1rRGAgAhARYAAAB0L+Wj4AX/AEldADQZSe6ODIZQ3rSQ8kAJ
+SnMPTX+XWGKW3Yu/Rwqg4Ik5wqgQKgVH97J8yA8IvZ4ahaCQogUNHRkXibr2
+Q615wcb2G7fJU49AhWAAAAAAUA8gu9DyXfAAAWWADAAAAB5FXGCxxGf7AgAA
+AAAEWVo=
+====
+"
+SKIP=
+
+# On extract, everything up to and including last ".." component is stripped
+optional FEATURE_TAR_CREATE
+testing "tar strips /../ on extract" "\
+rm -rf input_* test.tar 2>/dev/null
+mkdir input_dir
+echo Ok >input_dir/file
+tar cf test.tar ./../tar.tempdir/input_dir/../input_dir 2>&1
+rm -rf input_* 2>/dev/null
+tar -vxf test.tar 2>&1
+cat input_dir/file 2>&1
+" "\
+tar: removing leading './../tar.tempdir/input_dir/../' from member names
+input_dir/
+input_dir/file
+Ok
+" \
+"" ""
+SKIP=
+
+
+cd .. && rm -rf tar.tempdir || exit 1
+
+exit $FAILCOUNT

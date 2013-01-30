@@ -1,0 +1,85 @@
+# Makefile for busybox
+#
+# Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
+#
+# Licensed under GPLv2, see file LICENSE in this source tree.
+
+libs-y			+= libcoreutils/
+
+lib-y:=
+
+INSERT
+lib-$(CONFIG_CAL)       += cal.o
+lib-$(CONFIG_CATV)      += catv.o
+lib-$(CONFIG_CHGRP)     += chgrp.o chown.o
+lib-$(CONFIG_CHMOD)     += chmod.o
+lib-$(CONFIG_CHOWN)     += chown.o
+lib-$(CONFIG_ADDUSER)   += chown.o # used by adduser
+lib-$(CONFIG_ADDGROUP)  += chown.o # used by adduser
+lib-$(CONFIG_CHROOT)    += chroot.o
+lib-$(CONFIG_CKSUM)     += cksum.o
+lib-$(CONFIG_COMM)      += comm.o
+lib-$(CONFIG_CP)        += cp.o
+lib-$(CONFIG_CUT)       += cut.o
+lib-$(CONFIG_DD)        += dd.o
+lib-$(CONFIG_DF)        += df.o
+lib-$(CONFIG_DIRNAME)   += dirname.o
+lib-$(CONFIG_DOS2UNIX)  += dos2unix.o
+lib-$(CONFIG_DU)        += du.o
+lib-$(CONFIG_ECHO)      += echo.o
+lib-$(CONFIG_ASH)       += echo.o # used by ash
+lib-$(CONFIG_HUSH)      += echo.o # used by hush
+lib-$(CONFIG_ENV)       += env.o
+lib-$(CONFIG_EXPR)      += expr.o
+lib-$(CONFIG_EXPAND)    += expand.o
+lib-$(CONFIG_FALSE)     += false.o
+lib-$(CONFIG_FOLD)      += fold.o
+lib-$(CONFIG_FSYNC)     += fsync.o
+lib-$(CONFIG_HEAD)      += head.o
+lib-$(CONFIG_INSTALL)   += install.o
+#lib-$(CONFIG_LENGTH)    += length.o
+lib-$(CONFIG_LN)        += ln.o
+lib-$(CONFIG_LOGNAME)   += logname.o
+lib-$(CONFIG_LS)        += ls.o
+lib-$(CONFIG_FTPD)      += ls.o
+lib-$(CONFIG_MD5SUM)    += md5_sha1_sum.o
+lib-$(CONFIG_MKDIR)     += mkdir.o
+lib-$(CONFIG_MKFIFO)    += mkfifo.o
+lib-$(CONFIG_MKNOD)     += mknod.o
+lib-$(CONFIG_MV)        += mv.o
+lib-$(CONFIG_NICE)      += nice.o
+lib-$(CONFIG_NOHUP)     += nohup.o
+lib-$(CONFIG_OD)        += od.o
+lib-$(CONFIG_PRINTENV)  += printenv.o
+lib-$(CONFIG_PRINTF)    += printf.o
+lib-$(CONFIG_ASH_BUILTIN_PRINTF) += printf.o
+lib-$(CONFIG_PWD)       += pwd.o
+lib-$(CONFIG_READLINK)  += readlink.o
+lib-$(CONFIG_REALPATH)  += realpath.o
+lib-$(CONFIG_RM)        += rm.o
+lib-$(CONFIG_RMDIR)     += rmdir.o
+lib-$(CONFIG_SEQ)       += seq.o
+lib-$(CONFIG_SHA1SUM)   += md5_sha1_sum.o
+lib-$(CONFIG_SHA256SUM) += md5_sha1_sum.o
+lib-$(CONFIG_SHA512SUM) += md5_sha1_sum.o
+lib-$(CONFIG_SLEEP)     += sleep.o
+lib-$(CONFIG_SPLIT)     += split.o
+lib-$(CONFIG_SORT)      += sort.o
+lib-$(CONFIG_STAT)      += stat.o
+lib-$(CONFIG_STTY)      += stty.o
+lib-$(CONFIG_SUM)       += sum.o
+lib-$(CONFIG_SYNC)      += sync.o
+lib-$(CONFIG_TAC)       += tac.o
+lib-$(CONFIG_TAIL)      += tail.o
+lib-$(CONFIG_TEE)       += tee.o
+lib-$(CONFIG_TRUE)      += true.o
+lib-$(CONFIG_TTY)       += tty.o
+lib-$(CONFIG_UNAME)     += uname.o
+lib-$(CONFIG_UNEXPAND)  += expand.o
+lib-$(CONFIG_UNIQ)      += uniq.o
+lib-$(CONFIG_USLEEP)    += usleep.o
+lib-$(CONFIG_UUDECODE)  += uudecode.o
+lib-$(CONFIG_UUENCODE)  += uuencode.o
+lib-$(CONFIG_WC)        += wc.o
+lib-$(CONFIG_WHOAMI)    += whoami.o
+lib-$(CONFIG_YES)       += yes.o

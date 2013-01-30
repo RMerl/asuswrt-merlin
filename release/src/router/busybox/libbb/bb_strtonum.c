@@ -4,7 +4,7 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 
 #include "libbb.h"
@@ -36,14 +36,14 @@ static unsigned long long ret_ERANGE(void)
 	return ULLONG_MAX;
 }
 
-static unsigned long long handle_errors(unsigned long long v, char **endp)
+static unsigned long long handle_errors(unsigned long long v, char **endp, char *endptr)
 {
-	char next_ch = **endp;
+	if (endp) *endp = endptr;
 
 	/* errno is already set to ERANGE by strtoXXX if value overflowed */
-	if (next_ch) {
+	if (endptr[0]) {
 		/* "1234abcg" or out-of-range? */
-		if (isalnum(next_ch) || errno)
+		if (isalnum(endptr[0]) || errno)
 			return ret_ERANGE();
 		/* good number, just suspicious terminator */
 		errno = EINVAL;
@@ -56,41 +56,33 @@ unsigned long long FAST_FUNC bb_strtoull(const char *arg, char **endp, int base)
 {
 	unsigned long long v;
 	char *endptr;
-	char first;
-
-	if (!endp) endp = &endptr;
-	*endp = (char*) arg;
 
 	/* strtoul("  -4200000000") returns 94967296, errno 0 (!) */
 	/* I don't think that this is right. Preventing this... */
 	//if (!isalnum(arg[0])) return ret_ERANGE();
-	first = (arg[0] != '-' ? arg[0] : arg[1]);
+	char first = (arg[0] != '-' ? arg[0] : arg[1]);
 	if (!isalnum(first)) return ret_ERANGE();
 
 	/* not 100% correct for lib func, but convenient for the caller */
 	errno = 0;
-	v = strtoull(arg, endp, base);
-	return handle_errors(v, endp);
+	v = strtoull(arg, &endptr, base);
+	return handle_errors(v, endp, endptr);
 }
 
 long long FAST_FUNC bb_strtoll(const char *arg, char **endp, int base)
 {
 	unsigned long long v;
 	char *endptr;
-	char first;
-
-	if (!endp) endp = &endptr;
-	*endp = (char*) arg;
 
 	/* Check for the weird "feature":
 	 * a "-" string is apparently a valid "number" for strto[u]l[l]!
 	 * It returns zero and errno is 0! :( */
-	first = (arg[0] != '-' ? arg[0] : arg[1]);
+	char first = (arg[0] != '-' ? arg[0] : arg[1]);
 	if (!isalnum(first)) return ret_ERANGE();
 
 	errno = 0;
-	v = strtoll(arg, endp, base);
-	return handle_errors(v, endp);
+	v = strtoll(arg, &endptr, base);
+	return handle_errors(v, endp, endptr);
 }
 
 #if ULONG_MAX != ULLONG_MAX
@@ -98,34 +90,26 @@ unsigned long FAST_FUNC bb_strtoul(const char *arg, char **endp, int base)
 {
 	unsigned long v;
 	char *endptr;
-	char first;
 
-	if (!endp) endp = &endptr;
-	*endp = (char*) arg;
-
-	first = (arg[0] != '-' ? arg[0] : arg[1]);
+	char first = (arg[0] != '-' ? arg[0] : arg[1]);
 	if (!isalnum(first)) return ret_ERANGE();
 
 	errno = 0;
-	v = strtoul(arg, endp, base);
-	return handle_errors(v, endp);
+	v = strtoul(arg, &endptr, base);
+	return handle_errors(v, endp, endptr);
 }
 
 long FAST_FUNC bb_strtol(const char *arg, char **endp, int base)
 {
 	long v;
 	char *endptr;
-	char first;
 
-	if (!endp) endp = &endptr;
-	*endp = (char*) arg;
-
-	first = (arg[0] != '-' ? arg[0] : arg[1]);
+	char first = (arg[0] != '-' ? arg[0] : arg[1]);
 	if (!isalnum(first)) return ret_ERANGE();
 
 	errno = 0;
-	v = strtol(arg, endp, base);
-	return handle_errors(v, endp);
+	v = strtol(arg, &endptr, base);
+	return handle_errors(v, endp, endptr);
 }
 #endif
 
@@ -134,36 +118,28 @@ unsigned FAST_FUNC bb_strtou(const char *arg, char **endp, int base)
 {
 	unsigned long v;
 	char *endptr;
-	char first;
 
-	if (!endp) endp = &endptr;
-	*endp = (char*) arg;
-
-	first = (arg[0] != '-' ? arg[0] : arg[1]);
+	char first = (arg[0] != '-' ? arg[0] : arg[1]);
 	if (!isalnum(first)) return ret_ERANGE();
 
 	errno = 0;
-	v = strtoul(arg, endp, base);
+	v = strtoul(arg, &endptr, base);
 	if (v > UINT_MAX) return ret_ERANGE();
-	return handle_errors(v, endp);
+	return handle_errors(v, endp, endptr);
 }
 
 int FAST_FUNC bb_strtoi(const char *arg, char **endp, int base)
 {
 	long v;
 	char *endptr;
-	char first;
 
-	if (!endp) endp = &endptr;
-	*endp = (char*) arg;
-
-	first = (arg[0] != '-' ? arg[0] : arg[1]);
+	char first = (arg[0] != '-' ? arg[0] : arg[1]);
 	if (!isalnum(first)) return ret_ERANGE();
 
 	errno = 0;
-	v = strtol(arg, endp, base);
+	v = strtol(arg, &endptr, base);
 	if (v > INT_MAX) return ret_ERANGE();
 	if (v < INT_MIN) return ret_ERANGE();
-	return handle_errors(v, endp);
+	return handle_errors(v, endp, endptr);
 }
 #endif

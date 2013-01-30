@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# Tests for unzip.
+# Copyright 2006 Rob Landley <rob@landley.net>
+# Copyright 2006 Glenn McGrath
+# Licensed under GPLv2, see file LICENSE in this source tree.
+
+. ./testing.sh
+
+# testing "test name" "options" "expected result" "file input" "stdin"
+#   file input will be file called "input"
+#   test can create a file "actual" instead of writing to stdout
+
+# Create a scratch directory
+
+mkdir temp
+cd temp
+
+# Create test file to work with.
+
+mkdir foo
+touch foo/bar
+zip foo.zip foo foo/bar > /dev/null
+rm -f foo/bar
+rmdir foo
+
+# Test that unzipping just foo doesn't create bar.
+testing "unzip (subdir only)" "unzip -q foo.zip foo/ && test -d foo && test ! -f foo/bar && echo yes" "yes\n" "" ""
+
+rmdir foo
+rm foo.zip
+
+# Clean up scratch directory.
+
+cd ..
+rm -rf temp
+
+exit $FAILCOUNT

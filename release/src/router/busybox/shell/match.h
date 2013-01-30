@@ -7,26 +7,25 @@ PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
 
 //TODO! Why ash.c still uses internal version?!
 
-enum {
-	SCAN_MOVE_FROM_LEFT = (1 << 0),
-	SCAN_MOVE_FROM_RIGHT = (1 << 1),
-	SCAN_MATCH_LEFT_HALF = (1 << 2),
-	SCAN_MATCH_RIGHT_HALF = (1 << 3),
-};
+typedef char *(*scan_t)(char *string, char *match, bool match_at_left);
 
-char* FAST_FUNC scan_and_match(char *string, const char *pattern, unsigned flags);
+char *scanleft(char *string, char *match, bool match_at_left);
+char *scanright(char *string, char *match, bool match_at_left);
 
-static inline unsigned pick_scan(char op1, char op2)
+static inline scan_t pick_scan(char op1, char op2, bool *match_at_left)
 {
-	unsigned scan_flags;
+	/* #  - scanleft
+	 * ## - scanright
+	 * %  - scanright
+	 * %% - scanleft
+	 */
 	if (op1 == '#') {
-		scan_flags = SCAN_MATCH_LEFT_HALF +
-			(op1 == op2 ? SCAN_MOVE_FROM_RIGHT : SCAN_MOVE_FROM_LEFT);
-	} else { /* % */
-		scan_flags = SCAN_MATCH_RIGHT_HALF +
-			(op1 == op2 ? SCAN_MOVE_FROM_LEFT : SCAN_MOVE_FROM_RIGHT);
+		*match_at_left = true;
+		return op1 == op2 ? scanright : scanleft;
+	} else {
+		*match_at_left = false;
+		return op1 == op2 ? scanleft : scanright;
 	}
-	return scan_flags;
 }
 
 POP_SAVED_FUNCTION_VISIBILITY

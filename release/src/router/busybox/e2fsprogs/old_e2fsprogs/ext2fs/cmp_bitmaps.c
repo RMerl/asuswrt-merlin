@@ -70,3 +70,4 @@ errcode_t ext2fs_compare_inode_bitmap(ext2fs_inode_bitmap bm1,
 
 	return 0;
 }
+

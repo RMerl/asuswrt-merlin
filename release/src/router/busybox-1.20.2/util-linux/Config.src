@@ -1,0 +1,922 @@
+#
+# For a description of the syntax of this configuration file,
+# see scripts/kbuild/config-language.txt.
+#
+
+menu "Linux System Utilities"
+
+INSERT
+
+config ACPID
+	bool "acpid"
+	default y
+	select PLATFORM_LINUX
+	help
+	  acpid listens to ACPI events coming either in textual form from
+	  /proc/acpi/event (though it is marked deprecated it is still widely
+	  used and _is_ a standard) or in binary form from specified evdevs
+	  (just use /dev/input/event*).
+
+	  It parses the event to retrieve ACTION and a possible PARAMETER.
+	  It then spawns /etc/acpi/<ACTION>[/<PARAMETER>] either via run-parts
+	  (if the resulting path is a directory) or directly as an executable.
+
+	  N.B. acpid relies on run-parts so have the latter installed.
+
+config FEATURE_ACPID_COMPAT
+	bool "Accept and ignore redundant options"
+	default y
+	depends on ACPID
+	help
+	  Accept and ignore compatibility options -g -m -s -S -v.
+
+config BLKID
+	bool "blkid"
+	default y
+	select PLATFORM_LINUX
+	select VOLUMEID
+	help
+	  Lists labels and UUIDs of all filesystems.
+	  WARNING:
+	  With all submodules selected, it will add ~8k to busybox.
+
+config FEATURE_BLKID_TYPE
+	bool "Print filesystem type"
+	default n
+	depends on BLKID
+	help
+	  Show TYPE="filesystem type"
+
+config DMESG
+	bool "dmesg"
+	default y
+	select PLATFORM_LINUX
+	help
+	  dmesg is used to examine or control the kernel ring buffer. When the
+	  Linux kernel prints messages to the system log, they are stored in
+	  the kernel ring buffer. You can use dmesg to print the kernel's ring
+	  buffer, clear the kernel ring buffer, change the size of the kernel
+	  ring buffer, and change the priority level at which kernel messages
+	  are also logged to the system console. Enable this option if you
+	  wish to enable the 'dmesg' utility.
+
+config FEATURE_DMESG_PRETTY
+	bool "Pretty dmesg output"
+	default y
+	depends on DMESG
+	help
+	  If you wish to scrub the syslog level from the output, say 'Y' here.
+	  The syslog level is a string prefixed to every line with the form
+	  "<#>".
+
+	  With this option you will see:
+	    # dmesg
+	    Linux version 2.6.17.4 .....
+	    BIOS-provided physical RAM map:
+	     BIOS-e820: 0000000000000000 - 000000000009f000 (usable)
+
+	  Without this option you will see:
+	    # dmesg
+	    <5>Linux version 2.6.17.4 .....
+	    <6>BIOS-provided physical RAM map:
+	    <6> BIOS-e820: 0000000000000000 - 000000000009f000 (usable)
+
+config FBSET
+	bool "fbset"
+	default y
+	select PLATFORM_LINUX
+	help
+	  fbset is used to show or change the settings of a Linux frame buffer
+	  device. The frame buffer device provides a simple and unique
+	  interface to access a graphics display. Enable this option
+	  if you wish to enable the 'fbset' utility.
+
+config FEATURE_FBSET_FANCY
+	bool "Turn on extra fbset options"
+	default y
+	depends on FBSET
+	help
+	  This option enables extended fbset options, allowing one to set the
+	  framebuffer size, color depth, etc. interface to access a graphics
+	  display. Enable this option if you wish to enable extended fbset
+	  options.
+
+config FEATURE_FBSET_READMODE
+	bool "Turn on fbset readmode support"
+	default y
+	depends on FBSET
+	help
+	  This option allows fbset to read the video mode database stored by
+	  default as /etc/fb.modes, which can be used to set frame buffer
+	  device to pre-defined video modes.
+
+config FDFLUSH
+	bool "fdflush"
+	default y
+	select PLATFORM_LINUX
+	help
+	  fdflush is only needed when changing media on slightly-broken
+	  removable media drives. It is used to make Linux believe that a
+	  hardware disk-change switch has been actuated, which causes Linux to
+	  forget anything it has cached from the previous media. If you have
+	  such a slightly-broken drive, you will need to run fdflush every time
+	  you change a disk. Most people have working hardware and can safely
+	  leave this disabled.
+
+config FDFORMAT
+	bool "fdformat"
+	default y
+	select PLATFORM_LINUX
+	help
+	  fdformat is used to low-level format a floppy disk.
+
+config FDISK
+	bool "fdisk"
+	default y
+	select PLATFORM_LINUX
+	help
+	  The fdisk utility is used to divide hard disks into one or more
+	  logical disks, which are generally called partitions. This utility
+	  can be used to list and edit the set of partitions or BSD style
+	  'disk slices' that are defined on a hard drive.
+
+config FDISK_SUPPORT_LARGE_DISKS
+	bool "Support over 4GB disks"
+	default y
+	depends on FDISK
+	depends on !LFS   # with LFS no special code is needed
+	help
+	  Enable this option to support large disks > 4GB.
+
+config FEATURE_FDISK_WRITABLE
+	bool "Write support"
+	default y
+	depends on FDISK
+	help
+	  Enabling this option allows you to create or change a partition table
+	  and write those changes out to disk. If you leave this option
+	  disabled, you will only be able to view the partition table.
+
+config FEATURE_AIX_LABEL
+	bool "Support AIX disklabels"
+	default n
+	depends on FDISK && FEATURE_FDISK_WRITABLE
+	help
+	  Enabling this option allows you to create or change AIX disklabels.
+	  Most people can safely leave this option disabled.
+
+config FEATURE_SGI_LABEL
+	bool "Support SGI disklabels"
+	default n
+	depends on FDISK && FEATURE_FDISK_WRITABLE
+	help
+	  Enabling this option allows you to create or change SGI disklabels.
+	  Most people can safely leave this option disabled.
+
+config FEATURE_SUN_LABEL
+	bool "Support SUN disklabels"
+	default n
+	depends on FDISK && FEATURE_FDISK_WRITABLE
+	help
+	  Enabling this option allows you to create or change SUN disklabels.
+	  Most people can safely leave this option disabled.
+
+config FEATURE_OSF_LABEL
+	bool "Support BSD disklabels"
+	default n
+	depends on FDISK && FEATURE_FDISK_WRITABLE
+	help
+	  Enabling this option allows you to create or change BSD disklabels
+	  and define and edit BSD disk slices.
+
+config FEATURE_GPT_LABEL
+	bool "Support GPT disklabels"
+	default n
+	depends on FDISK && FEATURE_FDISK_WRITABLE
+	help
+	  Enabling this option allows you to view GUID Partition Table
+	  disklabels.
+
+config FEATURE_FDISK_ADVANCED
+	bool "Support expert mode"
+	default y
+	depends on FDISK && FEATURE_FDISK_WRITABLE
+	help
+	  Enabling this option allows you to do terribly unsafe things like
+	  define arbitrary drive geometry, move the beginning of data in a
+	  partition, and similarly evil things. Unless you have a very good
+	  reason you would be wise to leave this disabled.
+
+config FINDFS
+	bool "findfs"
+	default y
+	select PLATFORM_LINUX
+	select VOLUMEID
+	help
+	  Prints the name of a filesystem with given label or UUID.
+	  WARNING:
+	  With all submodules selected, it will add ~8k to busybox.
+
+config FLOCK
+	bool "flock"
+	default y
+	help
+	  Manage locks from shell scripts
+
+config FREERAMDISK
+	bool "freeramdisk"
+	default y
+	select PLATFORM_LINUX
+	help
+	  Linux allows you to create ramdisks. This utility allows you to
+	  delete them and completely free all memory that was used for the
+	  ramdisk. For example, if you boot Linux into a ramdisk and later
+	  pivot_root, you may want to free the memory that is allocated to the
+	  ramdisk. If you have no use for freeing memory from a ramdisk, leave
+	  this disabled.
+
+config FSCK_MINIX
+	bool "fsck_minix"
+	default y
+	help
+	  The minix filesystem is a nice, small, compact, read-write filesystem
+	  with little overhead. It is not a journaling filesystem however and
+	  can experience corruption if it is not properly unmounted or if the
+	  power goes off in the middle of a write. This utility allows you to
+	  check for and attempt to repair any corruption that occurs to a minix
+	  filesystem.
+
+config MKFS_EXT2
+	bool "mkfs_ext2"
+	default y
+	select PLATFORM_LINUX
+	help
+	  Utility to create EXT2 filesystems.
+
+config MKFS_MINIX
+	bool "mkfs_minix"
+	default y
+	select PLATFORM_LINUX
+	help
+	  The minix filesystem is a nice, small, compact, read-write filesystem
+	  with little overhead. If you wish to be able to create minix
+	  filesystems this utility will do the job for you.
+
+config FEATURE_MINIX2
+	bool "Support Minix fs v2 (fsck_minix/mkfs_minix)"
+	default y
+	depends on FSCK_MINIX || MKFS_MINIX
+	help
+	  If you wish to be able to create version 2 minix filesystems, enable
+	  this. If you enabled 'mkfs_minix' then you almost certainly want to
+	  be using the version 2 filesystem support.
+
+config MKFS_REISER
+	bool "mkfs_reiser"
+	default n
+	select PLATFORM_LINUX
+	help
+	  Utility to create ReiserFS filesystems.
+	  Note: this applet needs a lot of testing and polishing.
+
+config MKFS_VFAT
+	bool "mkfs_vfat"
+	default y
+	select PLATFORM_LINUX
+	help
+	  Utility to create FAT32 filesystems.
+
+config GETOPT
+	bool "getopt"
+	default y
+	help
+	  The getopt utility is used to break up (parse) options in command
+	  lines to make it easy to write complex shell scripts that also check
+	  for legal (and illegal) options. If you want to write horribly
+	  complex shell scripts, or use some horribly complex shell script
+	  written by others, this utility may be for you. Most people will
+	  wisely leave this disabled.
+
+config FEATURE_GETOPT_LONG
+	bool "Support option -l"
+	default y if LONG_OPTS
+	depends on GETOPT
+	help
+	  Enable support for long options (option -l).
+
+config HEXDUMP
+	bool "hexdump"
+	default y
+	help
+	  The hexdump utility is used to display binary data in a readable
+	  way that is comparable to the output from most hex editors.
+
+config FEATURE_HEXDUMP_REVERSE
+	bool "Support -R, reverse of 'hexdump -Cv'"
+	default y
+	depends on HEXDUMP
+	help
+	  The hexdump utility is used to display binary data in an ascii
+	  readable way. This option creates binary data from an ascii input.
+	  NB: this option is non-standard. It's unwise to use it in scripts
+	  aimed to be portable.
+
+config HD
+	bool "hd"
+	default y
+	depends on HEXDUMP
+	help
+	  hd is an alias to hexdump -C.
+
+config HWCLOCK
+	bool "hwclock"
+	default y
+	select PLATFORM_LINUX
+	help
+	  The hwclock utility is used to read and set the hardware clock
+	  on a system. This is primarily used to set the current time on
+	  shutdown in the hardware clock, so the hardware will keep the
+	  correct time when Linux is _not_ running.
+
+config FEATURE_HWCLOCK_LONG_OPTIONS
+	bool "Support long options (--hctosys,...)"
+	default y
+	depends on HWCLOCK && LONG_OPTS
+	help
+	  By default, the hwclock utility only uses short options. If you
+	  are overly fond of its long options, such as --hctosys, --utc, etc)
+	  then enable this option.
+
+config FEATURE_HWCLOCK_ADJTIME_FHS
+	bool "Use FHS /var/lib/hwclock/adjtime"
+	default n  # util-linux-ng in Fedora 13 still uses /etc/adjtime
+	depends on HWCLOCK
+	help
+	  Starting with FHS 2.3, the adjtime state file is supposed to exist
+	  at /var/lib/hwclock/adjtime instead of /etc/adjtime. If you wish
+	  to use the FHS behavior, answer Y here, otherwise answer N for the
+	  classic /etc/adjtime path.
+
+	  pathname.com/fhs/pub/fhs-2.3.html#VARLIBHWCLOCKSTATEDIRECTORYFORHWCLO
+
+config IPCRM
+	bool "ipcrm"
+	default y
+	help
+	  The ipcrm utility allows the removal of System V interprocess
+	  communication (IPC) objects and the associated data structures
+	  from the system.
+
+config IPCS
+	bool "ipcs"
+	default y
+	select PLATFORM_LINUX
+	help
+	  The ipcs utility is used to provide information on the currently
+	  allocated System V interprocess (IPC) objects in the system.
+
+config LOSETUP
+	bool "losetup"
+	default y
+	select PLATFORM_LINUX
+	help
+	  losetup is used to associate or detach a loop device with a regular
+	  file or block device, and to query the status of a loop device. This
+	  version does not currently support enabling data encryption.
+
+config LSPCI
+	bool "lspci"
+	default y
+	#select PLATFORM_LINUX
+	help
+	  lspci is a utility for displaying information about PCI buses in the
+	  system and devices connected to them.
+
+	  This version uses sysfs (/sys/bus/pci/devices) only.
+
+config LSUSB
+	bool "lsusb"
+	default y
+	#select PLATFORM_LINUX
+	help
+	  lsusb is a utility for displaying information about USB buses in the
+	  system and devices connected to them.
+
+	  This version uses sysfs (/sys/bus/usb/devices) only.
+
+config MKSWAP
+	bool "mkswap"
+	default y
+	help
+	  The mkswap utility is used to configure a file or disk partition as
+	  Linux swap space. This allows Linux to use the entire file or
+	  partition as if it were additional RAM, which can greatly increase
+	  the capability of low-memory machines. This additional memory is
+	  much slower than real RAM, but can be very helpful at preventing your
+	  applications being killed by the Linux out of memory (OOM) killer.
+	  Once you have created swap space using 'mkswap' you need to enable
+	  the swap space using the 'swapon' utility.
+
+config FEATURE_MKSWAP_UUID
+	bool "UUID support"
+	default y
+	depends on MKSWAP
+	help
+	  Generate swap spaces with universally unique identifiers.
+
+config MORE
+	bool "more"
+	default y
+	help
+	  more is a simple utility which allows you to read text one screen
+	  sized page at a time. If you want to read text that is larger than
+	  the screen, and you are using anything faster than a 300 baud modem,
+	  you will probably find this utility very helpful. If you don't have
+	  any need to reading text files, you can leave this disabled.
+
+config MOUNT
+	bool "mount"
+	default y
+	select PLATFORM_LINUX
+	help
+	  All files and filesystems in Unix are arranged into one big directory
+	  tree. The 'mount' utility is used to graft a filesystem onto a
+	  particular part of the tree. A filesystem can either live on a block
+	  device, or it can be accessible over the network, as is the case with
+	  NFS filesystems. Most people using BusyBox will also want to enable
+	  the 'mount' utility.
+
+config FEATURE_MOUNT_FAKE
+	bool "Support option -f"
+	default y
+	depends on MOUNT
+	help
+	  Enable support for faking a file system mount.
+
+config FEATURE_MOUNT_VERBOSE
+	bool "Support option -v"
+	default y
+	depends on MOUNT
+	help
+	  Enable multi-level -v[vv...] verbose messages. Useful if you
+	  debug mount problems and want to see what is exactly passed
+	  to the kernel.
+
+config FEATURE_MOUNT_HELPERS
+	bool "Support mount helpers"
+	default n
+	depends on MOUNT
+	help
+	  Enable mounting of virtual file systems via external helpers.
+	  E.g. "mount obexfs#-b00.11.22.33.44.55 /mnt" will in effect call
+	  "obexfs -b00.11.22.33.44.55 /mnt"
+	  Also "mount -t sometype [-o opts] fs /mnt" will try
+	  "sometype [-o opts] fs /mnt" if simple mount syscall fails.
+	  The idea is to use such virtual filesystems in /etc/fstab.
+
+config FEATURE_MOUNT_LABEL
+	bool "Support specifying devices by label or UUID"
+	default y
+	depends on MOUNT
+	select VOLUMEID
+	help
+	  This allows for specifying a device by label or uuid, rather than by
+	  name. This feature utilizes the same functionality as blkid/findfs.
+	  This also enables label or uuid support for swapon.
+
+config FEATURE_MOUNT_NFS
+	bool "Support mounting NFS file systems on Linux < 2.6.23"
+	default n
+	depends on MOUNT
+	select FEATURE_HAVE_RPC
+	select FEATURE_SYSLOG
+	help
+	  Enable mounting of NFS file systems on Linux kernels prior
+	  to version 2.6.23. Note that in this case mounting of NFS
+	  over IPv6 will not be possible.
+
+	  Note that this option links in RPC support from libc,
+	  which is rather large (~10 kbytes on uclibc).
+
+config FEATURE_MOUNT_CIFS
+	bool "Support mounting CIFS/SMB file systems"
+	default y
+	depends on MOUNT
+	help
+	  Enable support for samba mounts.
+
+config FEATURE_MOUNT_FLAGS
+	depends on MOUNT
+	bool "Support lots of -o flags in mount"
+	default y
+	help
+	  Without this, mount only supports ro/rw/remount. With this, it
+	  supports nosuid, suid, dev, nodev, exec, noexec, sync, async, atime,
+	  noatime, diratime, nodiratime, loud, bind, move, shared, slave,
+	  private, unbindable, rshared, rslave, rprivate, and runbindable.
+
+config FEATURE_MOUNT_FSTAB
+	depends on MOUNT
+	bool "Support /etc/fstab and -a"
+	default y
+	help
+	  Support mount all and looking for files in /etc/fstab.
+
+config PIVOT_ROOT
+	bool "pivot_root"
+	default y
+	select PLATFORM_LINUX
+	help
+	  The pivot_root utility swaps the mount points for the root filesystem
+	  with some other mounted filesystem. This allows you to do all sorts
+	  of wild and crazy things with your Linux system and is far more
+	  powerful than 'chroot'.
+
+	  Note: This is for initrd in linux 2.4. Under initramfs (introduced
+	  in linux 2.6) use switch_root instead.
+
+config RDATE
+	bool "rdate"
+	default y
+	help
+	  The rdate utility allows you to synchronize the date and time of your
+	  system clock with the date and time of a remote networked system using
+	  the RFC868 protocol, which is built into the inetd daemon on most
+	  systems.
+
+config RDEV
+	bool "rdev"
+	default y
+	help
+	  Print the device node associated with the filesystem mounted at '/'.
+
+config READPROFILE
+	bool "readprofile"
+	default y
+	#select PLATFORM_LINUX
+	help
+	  This allows you to parse /proc/profile for basic profiling.
+
+config RTCWAKE
+	bool "rtcwake"
+	default y
+	select PLATFORM_LINUX
+	help
+	  Enter a system sleep state until specified wakeup time.
+
+config SCRIPT
+	bool "script"
+	default y
+	help
+	  The script makes typescript of terminal session.
+
+config SCRIPTREPLAY
+	bool "scriptreplay"
+	default y
+	help
+	  This program replays a typescript, using timing information
+	  given by script -t.
+
+config SETARCH
+	bool "setarch"
+	default y
+	select PLATFORM_LINUX
+	help
+	  The linux32 utility is used to create a 32bit environment for the
+	  specified program (usually a shell). It only makes sense to have
+	  this util on a system that supports both 64bit and 32bit userland
+	  (like amd64/x86, ppc64/ppc, sparc64/sparc, etc...).
+
+config SWAPONOFF
+	bool "swaponoff"
+	default y
+	select PLATFORM_LINUX
+	help
+	  This option enables both the 'swapon' and the 'swapoff' utilities.
+	  Once you have created some swap space using 'mkswap', you also need
+	  to enable your swap space with the 'swapon' utility. The 'swapoff'
+	  utility is used, typically at system shutdown, to disable any swap
+	  space. If you are not using any swap space, you can leave this
+	  option disabled.
+
+config FEATURE_SWAPON_PRI
+	bool "Support priority option -p"
+	default y
+	depends on SWAPONOFF
+	help
+	  Enable support for setting swap device priority in swapon.
+
+config SWITCH_ROOT
+	bool "switch_root"
+	default y
+	select PLATFORM_LINUX
+	help
+	  The switch_root utility is used from initramfs to select a new
+	  root device. Under initramfs, you have to use this instead of
+	  pivot_root. (Stop reading here if you don't care why.)
+
+	  Booting with initramfs extracts a gzipped cpio archive into rootfs
+	  (which is a variant of ramfs/tmpfs). Because rootfs can't be moved
+	  or unmounted*, pivot_root will not work from initramfs. Instead,
+	  switch_root deletes everything out of rootfs (including itself),
+	  does a mount --move that overmounts rootfs with the new root, and
+	  then execs the specified init program.
+
+	  * Because the Linux kernel uses rootfs internally as the starting
+	  and ending point for searching through the kernel's doubly linked
+	  list of active mount points. That's why.
+
+config UMOUNT
+	bool "umount"
+	default y
+	select PLATFORM_LINUX
+	help
+	  When you want to remove a mounted filesystem from its current mount
+	  point, for example when you are shutting down the system, the
+	  'umount' utility is the tool to use. If you enabled the 'mount'
+	  utility, you almost certainly also want to enable 'umount'.
+
+config FEATURE_UMOUNT_ALL
+	bool "Support option -a"
+	default y
+	depends on UMOUNT
+	help
+	  Support -a option to unmount all currently mounted filesystems.
+
+comment "Common options for mount/umount"
+	depends on MOUNT || UMOUNT
+
+config FEATURE_MOUNT_LOOP
+	bool "Support loopback mounts"
+	default y
+	depends on MOUNT || UMOUNT
+	help
+	  Enabling this feature allows automatic mounting of files (containing
+	  filesystem images) via the linux kernel's loopback devices.
+	  The mount command will detect you are trying to mount a file instead
+	  of a block device, and transparently associate the file with a
+	  loopback device. The umount command will also free that loopback
+	  device.
+
+	  You can still use the 'losetup' utility (to manually associate files
+	  with loop devices) if you need to do something advanced, such as
+	  specify an offset or cryptographic options to the loopback device.
+	  (If you don't want umount to free the loop device, use "umount -D".)
+
+config FEATURE_MOUNT_LOOP_CREATE
+	bool "Create new loopback devices if needed"
+	default y
+	depends on FEATURE_MOUNT_LOOP
+	help
+	  Linux kernels >= 2.6.24 support unlimited loopback devices. They are
+	  allocated for use when trying to use a loop device. The loop device
+	  must however exist.
+
+	  This feature lets mount to try to create next /dev/loopN device
+	  if it does not find a free one.
+
+config FEATURE_MTAB_SUPPORT
+	bool "Support for the old /etc/mtab file"
+	default n
+	depends on MOUNT || UMOUNT
+	select FEATURE_MOUNT_FAKE
+	help
+	  Historically, Unix systems kept track of the currently mounted
+	  partitions in the file "/etc/mtab". These days, the kernel exports
+	  the list of currently mounted partitions in "/proc/mounts", rendering
+	  the old mtab file obsolete. (In modern systems, /etc/mtab should be
+	  a symlink to /proc/mounts.)
+
+	  The only reason to have mount maintain an /etc/mtab file itself is if
+	  your stripped-down embedded system does not have a /proc directory.
+	  If you must use this, keep in mind it's inherently brittle (for
+	  example a mount under chroot won't update it), can't handle modern
+	  features like separate per-process filesystem namespaces, requires
+	  that your /etc directory be writable, tends to get easily confused
+	  by --bind or --move mounts, won't update if you rename a directory
+	  that contains a mount point, and so on. (In brief: avoid.)
+
+	  About the only reason to use this is if you've removed /proc from
+	  your kernel.
+
+config VOLUMEID
+	bool #No description makes it a hidden option
+	default n
+
+menu "Filesystem/Volume identification"
+	depends on VOLUMEID
+
+config FEATURE_VOLUMEID_EXT
+	bool "Ext filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+config FEATURE_VOLUMEID_BTRFS
+	bool "btrfs filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+config FEATURE_VOLUMEID_REISERFS
+	bool "Reiser filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+config FEATURE_VOLUMEID_FAT
+	bool "fat filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+config FEATURE_VOLUMEID_HFS
+	bool "hfs filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+config FEATURE_VOLUMEID_JFS
+	bool "jfs filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+### config FEATURE_VOLUMEID_UFS
+###	bool "ufs filesystem"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+
+config FEATURE_VOLUMEID_XFS
+	bool "xfs filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+config FEATURE_VOLUMEID_NTFS
+	bool "ntfs filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+config FEATURE_VOLUMEID_ISO9660
+	bool "iso9660 filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+config FEATURE_VOLUMEID_UDF
+	bool "udf filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+config FEATURE_VOLUMEID_LUKS
+	bool "luks filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+config FEATURE_VOLUMEID_LINUXSWAP
+	bool "linux swap filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+### config FEATURE_VOLUMEID_LVM
+###	bool "lvm"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+
+config FEATURE_VOLUMEID_CRAMFS
+	bool "cramfs filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+### config FEATURE_VOLUMEID_HPFS
+###	bool "hpfs filesystem"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+
+config FEATURE_VOLUMEID_ROMFS
+	bool "romfs filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+config FEATURE_VOLUMEID_SYSV
+	bool "sysv filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+### config FEATURE_VOLUMEID_MINIX
+###	bool "minix filesystem"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+
+### These only detect partition tables - not used (yet?)
+### config FEATURE_VOLUMEID_MAC
+###	bool "mac filesystem"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+###
+### config FEATURE_VOLUMEID_MSDOS
+###	bool "msdos filesystem"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+
+config FEATURE_VOLUMEID_OCFS2
+	bool "ocfs2 filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+### config FEATURE_VOLUMEID_HIGHPOINTRAID
+###	bool "highpoint raid"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+
+### config FEATURE_VOLUMEID_ISWRAID
+###	bool "intel raid"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+
+### config FEATURE_VOLUMEID_LSIRAID
+###	bool "lsi raid"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+
+### config FEATURE_VOLUMEID_VIARAID
+###	bool "via raid"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+
+### config FEATURE_VOLUMEID_SILICONRAID
+###	bool "silicon raid"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+
+### config FEATURE_VOLUMEID_NVIDIARAID
+###	bool "nvidia raid"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+
+### config FEATURE_VOLUMEID_PROMISERAID
+###	bool "promise raid"
+###	default y
+###	depends on VOLUMEID
+###	help
+###	  TODO
+
+config FEATURE_VOLUMEID_LINUXRAID
+	bool "linuxraid"
+	default y
+	depends on VOLUMEID
+	help
+	  TODO
+
+endmenu
+
+endmenu

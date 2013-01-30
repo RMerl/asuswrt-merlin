@@ -125,3 +125,4 @@ void ext2fs_free_dblist(ext2_dblist dblist)
 	dblist->magic = 0;
 	ext2fs_free_mem(&dblist);
 }
+

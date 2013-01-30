@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2008 Bernhard Reutner-Fischer
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file License in this tarball for details.
  */
 
 #ifdef __DO_STRRSTR_TEST

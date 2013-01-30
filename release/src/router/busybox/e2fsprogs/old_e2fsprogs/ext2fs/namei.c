@@ -202,3 +202,4 @@ errcode_t ext2fs_follow_link(ext2_filsys fs, ext2_ino_t root, ext2_ino_t cwd,
 	ext2fs_free_mem(&buf);
 	return retval;
 }
+

@@ -97,8 +97,11 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 		fs->group_desc[group].bg_inode_table = new_blk;
 	}
 
+
 	return 0;
 }
+
+
 
 errcode_t ext2fs_allocate_tables(ext2_filsys fs)
 {
@@ -112,3 +115,4 @@ errcode_t ext2fs_allocate_tables(ext2_filsys fs)
 	}
 	return 0;
 }
+

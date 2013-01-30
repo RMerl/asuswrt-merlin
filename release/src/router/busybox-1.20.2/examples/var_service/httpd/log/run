@@ -1,0 +1,21 @@
+#!/bin/sh
+
+user=logger
+
+logdir="/var/log/service/`(cd ..;basename $PWD)`"
+mkdir -p "$logdir" 2>/dev/null
+chown -R "$user": "$logdir"
+chmod -R go-rwxst,u+rwX "$logdir"
+rm logdir
+ln -s "$logdir" logdir
+
+# make this dir accessible to logger
+chmod a+rX .
+
+exec >/dev/null
+exec 2>&1
+exec \
+env - PATH="$PATH" \
+softlimit \
+setuidgid "$user" \
+svlogd -tt "$logdir"

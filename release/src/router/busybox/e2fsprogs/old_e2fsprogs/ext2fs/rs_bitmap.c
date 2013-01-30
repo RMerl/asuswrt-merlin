@@ -104,3 +104,4 @@ errcode_t ext2fs_resize_block_bitmap(__u32 new_end, __u32 new_real_end,
 	bmap->magic = EXT2_ET_MAGIC_BLOCK_BITMAP;
 	return retval;
 }
+

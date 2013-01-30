@@ -61,7 +61,7 @@ check that the unevaluated part of the ternary operator does not do evaluation o
 20 20
 30 30
 check precedence of assignment vs. conditional operator
-hush: arithmetic syntax error
+hush: error in arithmetic
 check precedence of assignment vs. conditional operator
 associativity of assignment-operator operator
 6 6
@@ -70,22 +70,22 @@ octal, hex
 263 263
 255 255
 40 40
-hush: arithmetic syntax error
-hush: divide by zero
+hush: error in arithmetic
+hush: divide by 0
 hush: can't execute 'let': No such file or directory
-hush: arithmetic syntax error
+hush: error in arithmetic
 hush: can't execute 'let': No such file or directory
 abc
 def
 ghi
-hush: arithmetic syntax error
+hush: error in arithmetic
 16 16
-hush: arithmetic syntax error
-hush: malformed ?: operator
-hush: arithmetic syntax error
+hush: error in arithmetic
+hush: error in arithmetic
+hush: error in arithmetic
 9 9
-hush: arithmetic syntax error
-hush: arithmetic syntax error
+hush: error in arithmetic
+hush: error in arithmetic
 9 9
 9 9
 9 9
@@ -106,18 +106,18 @@ hush: arithmetic syntax error
 3 3
 4 4
 4 4
-hush: arithmetic syntax error
-hush: arithmetic syntax error
-hush: arithmetic syntax error
-hush: arithmetic syntax error
-hush: arithmetic syntax error
+hush: error in arithmetic
+hush: error in arithmetic
+hush: error in arithmetic
+hush: error in arithmetic
+hush: error in arithmetic
 4 4
 7 7
 -7 -7
-hush: arithmetic syntax error
-hush: arithmetic syntax error
-hush: arithmetic syntax error
-hush: arithmetic syntax error
+hush: error in arithmetic
+hush: error in arithmetic
+hush: error in arithmetic
+hush: error in arithmetic
 6 6
 3 3
 7 7
@@ -128,19 +128,19 @@ hush: arithmetic syntax error
 2 2
 -2 -2
 1 1
-hush: arithmetic syntax error
-hush: arithmetic syntax error
-hush: arithmetic syntax error
-hush: arithmetic syntax error
-hush: arithmetic syntax error
+hush: error in arithmetic
+hush: error in arithmetic
+hush: error in arithmetic
+hush: error in arithmetic
+hush: error in arithmetic
 5 5
 1 1
 4 4
 0 0
-hush: arithmetic syntax error
-hush: arithmetic syntax error
+hush: error in arithmetic
+hush: error in arithmetic
 8 12
-hush: arithmetic syntax error
+hush: error in arithmetic
 42
 42
 42

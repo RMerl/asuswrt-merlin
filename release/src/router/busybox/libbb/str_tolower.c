@@ -1,7 +1,7 @@
 /* vi set: sw=4 ts=4: */
 /* Convert string str to lowercase, return str.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 #include "libbb.h"
 

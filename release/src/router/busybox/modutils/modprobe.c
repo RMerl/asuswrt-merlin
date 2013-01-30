@@ -5,11 +5,13 @@
  * Copyright (c) 2008 Timo Teras <timo.teras@iki.fi>
  * Copyright (c) 2008 Vladimir Dronnikov
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 
-//applet:IF_MODPROBE(APPLET(modprobe, BB_DIR_SBIN, BB_SUID_DROP))
-
+/* Note that unlike older versions of modules.dep/depmod (busybox and m-i-t),
+ * we expect the full dependency list to be specified in modules.dep.
+ * Older versions would only export the direct dependency list.
+ */
 #include "libbb.h"
 #include "modutils.h"
 #include <sys/utsname.h>
@@ -17,12 +19,6 @@
 
 //#define DBG(fmt, ...) bb_error_msg("%s: " fmt, __func__, ## __VA_ARGS__)
 #define DBG(...) ((void)0)
-
-/* Note that unlike older versions of modules.dep/depmod (busybox and m-i-t),
- * we expect the full dependency list to be specified in modules.dep.
- * Older versions would only export the direct dependency list.
- */
-
 
 //usage:#if !ENABLE_MODPROBE_SMALL
 //usage:#define modprobe_notes_usage
@@ -86,60 +82,41 @@
 //usage:       "   from the command line\n"
 //usage:
 //usage:#define modprobe_trivial_usage
-//usage:	"[-alrqvsD" IF_FEATURE_MODPROBE_BLACKLIST("b") "]"
-//usage:	" MODULE [symbol=value]..."
+//usage:	"[-alrqvs"
+//usage:	IF_FEATURE_MODPROBE_BLACKLIST("b")
+//usage:	"] MODULE [symbol=value]..."
 //usage:#define modprobe_full_usage "\n\n"
-//usage:       "	-a	Load multiple MODULEs"
+//usage:       "Options:"
+//usage:     "\n	-a	Load multiple MODULEs"
 //usage:     "\n	-l	List (MODULE is a pattern)"
 //usage:     "\n	-r	Remove MODULE (stacks) or do autoclean"
 //usage:     "\n	-q	Quiet"
 //usage:     "\n	-v	Verbose"
 //usage:     "\n	-s	Log to syslog"
-//usage:     "\n	-D	Show dependencies"
 //usage:	IF_FEATURE_MODPROBE_BLACKLIST(
 //usage:     "\n	-b	Apply blacklist to module names too"
 //usage:	)
 //usage:#endif /* !ENABLE_MODPROBE_SMALL */
 
-/* Note: usage text doesn't document various 2.4 options
- * we pull in through INSMOD_OPTS define
- * Note2: -b is always accepted, but if !FEATURE_MODPROBE_BLACKLIST,
- * it is a no-op.
- */
-#define MODPROBE_OPTS  "alrDb"
-/* -a and -D _are_ in fact compatible */
-#define MODPROBE_COMPLEMENTARY ("q-v:v-q:l--arD:r--alD:a--lr:D--rl")
-//#define MODPROBE_OPTS  "acd:lnrt:C:b"
+/* Note that usage text doesn't document various 2.4 options
+ * we pull in through INSMOD_OPTS define */
+
+#define MODPROBE_COMPLEMENTARY "q-v:v-q:l--ar:a--lr:r--al"
+#define MODPROBE_OPTS  "alr" IF_FEATURE_MODPROBE_BLACKLIST("b")
 //#define MODPROBE_COMPLEMENTARY "q-v:v-q:l--acr:a--lr:r--al"
+//#define MODPROBE_OPTS  "acd:lnrt:C:" IF_FEATURE_MODPROBE_BLACKLIST("b")
 enum {
-	OPT_INSERT_ALL   = (INSMOD_OPT_UNUSED << 0), /* a */
-	//OPT_DUMP_ONLY  = (INSMOD_OPT_UNUSED << x), /* c */
-	//OPT_DIRNAME    = (INSMOD_OPT_UNUSED << x), /* d */
-	OPT_LIST_ONLY    = (INSMOD_OPT_UNUSED << 1), /* l */
-	//OPT_SHOW_ONLY  = (INSMOD_OPT_UNUSED << x), /* n */
-	OPT_REMOVE       = (INSMOD_OPT_UNUSED << 2), /* r */
-	//OPT_RESTRICT   = (INSMOD_OPT_UNUSED << x), /* t */
-	//OPT_VERONLY    = (INSMOD_OPT_UNUSED << x), /* V */
-	//OPT_CONFIGFILE = (INSMOD_OPT_UNUSED << x), /* C */
-	OPT_SHOW_DEPS    = (INSMOD_OPT_UNUSED << 3), /* D */
-	OPT_BLACKLIST    = (INSMOD_OPT_UNUSED << 4) * ENABLE_FEATURE_MODPROBE_BLACKLIST,
+	MODPROBE_OPT_INSERT_ALL = (INSMOD_OPT_UNUSED << 0), /* a */
+	//MODPROBE_OPT_DUMP_ONLY= (INSMOD_OPT_UNUSED << x), /* c */
+	//MODPROBE_OPT_DIRNAME  = (INSMOD_OPT_UNUSED << x), /* d */
+	MODPROBE_OPT_LIST_ONLY  = (INSMOD_OPT_UNUSED << 1), /* l */
+	//MODPROBE_OPT_SHOW_ONLY= (INSMOD_OPT_UNUSED << x), /* n */
+	MODPROBE_OPT_REMOVE     = (INSMOD_OPT_UNUSED << 2), /* r */
+	//MODPROBE_OPT_RESTRICT = (INSMOD_OPT_UNUSED << x), /* t */
+	//MODPROBE_OPT_VERONLY  = (INSMOD_OPT_UNUSED << x), /* V */
+	//MODPROBE_OPT_CONFIGFILE=(INSMOD_OPT_UNUSED << x), /* C */
+	MODPROBE_OPT_BLACKLIST  = (INSMOD_OPT_UNUSED << 3) * ENABLE_FEATURE_MODPROBE_BLACKLIST,
 };
-#if ENABLE_LONG_OPTS
-static const char modprobe_longopts[] ALIGN1 =
-	/* nobody asked for long opts (yet) */
-	// "all\0"          No_argument "a"
-	// "list\0"         No_argument "l"
-	// "remove\0"       No_argument "r"
-	// "quiet\0"        No_argument "q"
-	// "verbose\0"      No_argument "v"
-	// "syslog\0"       No_argument "s"
-	/* module-init-tools 3.11.1 has only long opt --show-depends
-	 * but no short -D, we provide long opt for scripts which
-	 * were written for 3.11.1: */
-	"show-depends\0"     No_argument "D"
-	// "use-blacklist\0" No_argument "b"
-	;
-#endif
 
 #define MODULE_FLAG_LOADED              0x0001
 #define MODULE_FLAG_NEED_DEPS           0x0002
@@ -158,21 +135,16 @@ struct module_entry { /* I'll call it ME. */
 	llist_t *deps; /* strings. modules we depend on */
 };
 
-#define DB_HASH_SIZE 256
-
 struct globals {
+	llist_t *db; /* MEs of all modules ever seen (caching for speed) */
 	llist_t *probes; /* MEs of module(s) requested on cmdline */
 	char *cmdline_mopts; /* module options from cmdline */
 	int num_unresolved_deps;
 	/* bool. "Did we have 'symbol:FOO' requested on cmdline?" */
 	smallint need_symbols;
-	struct utsname uts;
-	llist_t *db[DB_HASH_SIZE]; /* MEs of all modules ever seen (caching for speed) */
 } FIX_ALIASING;
-#define G (*ptr_to_globals)
-#define INIT_G() do { \
-        SET_PTR_TO_GLOBALS(xzalloc(sizeof(G))); \
-} while (0)
+#define G (*(struct globals*)&bb_common_bufsiz1)
+#define INIT_G() do { } while (0)
 
 
 static int read_config(const char *path);
@@ -192,26 +164,14 @@ static char *gather_options_str(char *opts, const char *append)
 	return opts;
 }
 
-/* These three functions called many times, optimizing for speed.
- * Users reported minute-long delays when they runn iptables repeatedly
- * (iptables use modprobe to install needed kernel modules).
- */
 static struct module_entry *helper_get_module(const char *module, int create)
 {
 	char modname[MODULE_NAME_LEN];
 	struct module_entry *e;
 	llist_t *l;
-	unsigned i;
-	unsigned hash;
 
 	filename2modname(module, modname);
-
-	hash = 0;
-	for (i = 0; modname[i]; i++)
-		hash = ((hash << 5) + hash) + modname[i];
-	hash %= DB_HASH_SIZE;
-
-	for (l = G.db[hash]; l; l = l->link) {
+	for (l = G.db; l != NULL; l = l->link) {
 		e = (struct module_entry *) l->data;
 		if (strcmp(e->modname, modname) == 0)
 			return e;
@@ -221,15 +181,15 @@ static struct module_entry *helper_get_module(const char *module, int create)
 
 	e = xzalloc(sizeof(*e));
 	e->modname = xstrdup(modname);
-	llist_add_to(&G.db[hash], e);
+	llist_add_to(&G.db, e);
 
 	return e;
 }
-static ALWAYS_INLINE struct module_entry *get_or_add_modentry(const char *module)
+static struct module_entry *get_or_add_modentry(const char *module)
 {
 	return helper_get_module(module, 1);
 }
-static ALWAYS_INLINE struct module_entry *get_modentry(const char *module)
+static struct module_entry *get_modentry(const char *module)
 {
 	return helper_get_module(module, 0);
 }
@@ -239,7 +199,7 @@ static void add_probe(const char *name)
 	struct module_entry *m;
 
 	m = get_or_add_modentry(name);
-	if (!(option_mask32 & (OPT_REMOVE | OPT_SHOW_DEPS))
+	if (!(option_mask32 & MODPROBE_OPT_REMOVE)
 	 && (m->flags & MODULE_FLAG_LOADED)
 	) {
 		DBG("skipping %s, it is already loaded", name);
@@ -289,7 +249,7 @@ static int FAST_FUNC config_file_action(const char *filename,
 				continue;
 			filename2modname(tokens[1], wildcard);
 
-			for (l = G.probes; l; l = l->link) {
+			for (l = G.probes; l != NULL; l = l->link) {
 				m = (struct module_entry *) l->data;
 				if (fnmatch(wildcard, m->modname, 0) != 0)
 					continue;
@@ -390,7 +350,10 @@ static char *parse_and_add_kcmdline_module_options(char *options, const char *mo
  */
 static int do_modprobe(struct module_entry *m)
 {
+	struct module_entry *m2 = m2; /* for compiler */
+	char *fn, *options;
 	int rc, first;
+	llist_t *l;
 
 	if (!(m->flags & MODULE_FLAG_FOUND_IN_MODDEP)) {
 		if (!(option_mask32 & INSMOD_OPT_SILENT))
@@ -400,26 +363,20 @@ static int do_modprobe(struct module_entry *m)
 	}
 	DBG("do_modprob'ing %s", m->modname);
 
-	if (!(option_mask32 & OPT_REMOVE))
+	if (!(option_mask32 & MODPROBE_OPT_REMOVE))
 		m->deps = llist_rev(m->deps);
 
-	if (0) {
-		llist_t *l;
-		for (l = m->deps; l; l = l->link)
-			DBG("dep: %s", l->data);
-	}
+	for (l = m->deps; l != NULL; l = l->link)
+		DBG("dep: %s", l->data);
 
 	first = 1;
 	rc = 0;
 	while (m->deps) {
-		struct module_entry *m2;
-		char *fn, *options;
-
 		rc = 0;
 		fn = llist_pop(&m->deps); /* we leak it */
 		m2 = get_or_add_modentry(fn);
 
-		if (option_mask32 & OPT_REMOVE) {
+		if (option_mask32 & MODPROBE_OPT_REMOVE) {
 			/* modprobe -r */
 			if (m2->flags & MODULE_FLAG_LOADED) {
 				rc = bb_delete_module(m2->modname, O_NONBLOCK | O_EXCL);
@@ -439,27 +396,16 @@ static int do_modprobe(struct module_entry *m)
 			continue;
 		}
 
+		if (m2->flags & MODULE_FLAG_LOADED) {
+			DBG("%s is already loaded, skipping", fn);
+			continue;
+		}
+
 		options = m2->options;
 		m2->options = NULL;
 		options = parse_and_add_kcmdline_module_options(options, m2->modname);
 		if (m == m2)
 			options = gather_options_str(options, G.cmdline_mopts);
-
-		if (option_mask32 & OPT_SHOW_DEPS) {
-			printf(options ? "insmod %s/%s/%s %s\n"
-					: "insmod %s/%s/%s\n",
-				CONFIG_DEFAULT_MODULES_DIR, G.uts.release, fn,
-				options);
-			free(options);
-			continue;
-		}
-
-		if (m2->flags & MODULE_FLAG_LOADED) {
-			DBG("%s is already loaded, skipping", fn);
-			free(options);
-			continue;
-		}
-
 		rc = bb_init_module(fn, options);
 		DBG("loaded %s '%s', rc:%d", fn, options, rc);
 		if (rc == EEXIST)
@@ -507,7 +453,7 @@ static void load_modules_dep(void)
 
 		/* Optimization... */
 		if ((m->flags & MODULE_FLAG_LOADED)
-		 && !(option_mask32 & (OPT_REMOVE | OPT_SHOW_DEPS))
+		 && !(option_mask32 & MODPROBE_OPT_REMOVE)
 		) {
 			DBG("skip deps of %s, it's already loaded", tokens[0]);
 			continue;
@@ -528,30 +474,24 @@ static void load_modules_dep(void)
 int modprobe_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int modprobe_main(int argc UNUSED_PARAM, char **argv)
 {
+	struct utsname uts;
 	int rc;
 	unsigned opt;
 	struct module_entry *me;
 
-	INIT_G();
-
-	IF_LONG_OPTS(applet_long_options = modprobe_longopts;)
 	opt_complementary = MODPROBE_COMPLEMENTARY;
 	opt = getopt32(argv, INSMOD_OPTS MODPROBE_OPTS INSMOD_ARGS);
 	argv += optind;
 
 	/* Goto modules location */
 	xchdir(CONFIG_DEFAULT_MODULES_DIR);
-	uname(&G.uts);
-	xchdir(G.uts.release);
+	uname(&uts);
+	xchdir(uts.release);
 
-	if (opt & OPT_LIST_ONLY) {
-		int i;
+	if (opt & MODPROBE_OPT_LIST_ONLY) {
 		char name[MODULE_NAME_LEN];
 		char *colon, *tokens[2];
 		parser_t *p = config_open2(CONFIG_DEFAULT_DEPMOD_FILE, xfopen_for_read);
-
-		for (i = 0; argv[i]; i++)
-			replace(argv[i], '-', '_');
 
 		while (config_read(p, tokens, 2, 1, "# \t", PARSE_NORMAL)) {
 			colon = last_char_is(tokens[0], ':');
@@ -562,6 +502,7 @@ int modprobe_main(int argc UNUSED_PARAM, char **argv)
 			if (!argv[0])
 				puts(tokens[0]);
 			else {
+				int i;
 				for (i = 0; argv[i]; i++) {
 					if (fnmatch(argv[i], name, 0) == 0) {
 						puts(tokens[0]);
@@ -577,7 +518,7 @@ int modprobe_main(int argc UNUSED_PARAM, char **argv)
 		logmode = LOGMODE_SYSLOG;
 
 	if (!argv[0]) {
-		if (opt & OPT_REMOVE) {
+		if (opt & MODPROBE_OPT_REMOVE) {
 			/* "modprobe -r" (w/o params).
 			 * "If name is NULL, all unused modules marked
 			 * autoclean will be removed".
@@ -597,7 +538,7 @@ int modprobe_main(int argc UNUSED_PARAM, char **argv)
 		config_close(parser);
 	}
 
-	if (opt & (OPT_INSERT_ALL | OPT_REMOVE)) {
+	if (opt & (MODPROBE_OPT_INSERT_ALL | MODPROBE_OPT_REMOVE)) {
 		/* Each argument is a module name */
 		do {
 			DBG("adding module %s", *argv);
@@ -607,7 +548,7 @@ int modprobe_main(int argc UNUSED_PARAM, char **argv)
 		/* First argument is module name, rest are parameters */
 		DBG("probing just module %s", *argv);
 		add_probe(argv[0]);
-		G.cmdline_mopts = parse_cmdline_module_options(argv, /*quote_spaces:*/ 1);
+		G.cmdline_mopts = parse_cmdline_module_options(argv);
 	}
 
 	/* Happens if all requested modules are already loaded */
@@ -631,7 +572,7 @@ int modprobe_main(int argc UNUSED_PARAM, char **argv)
 			/* This is not an alias. Literal names are blacklisted
 			 * only if '-b' is given.
 			 */
-			if (!(opt & OPT_BLACKLIST)
+			if (!(opt & MODPROBE_OPT_BLACKLIST)
 			 || !(me->flags & MODULE_FLAG_BLACKLISTED)
 			) {
 				rc |= do_modprobe(me);
@@ -648,7 +589,7 @@ int modprobe_main(int argc UNUSED_PARAM, char **argv)
 			m2 = get_or_add_modentry(realname);
 			if (!(m2->flags & MODULE_FLAG_BLACKLISTED)
 			 && (!(m2->flags & MODULE_FLAG_LOADED)
-			    || (opt & (OPT_REMOVE | OPT_SHOW_DEPS)))
+			    || (opt & MODPROBE_OPT_REMOVE))
 			) {
 //TODO: we can pass "me" as 2nd param to do_modprobe,
 //and make do_modprobe emit more meaningful error messages

@@ -188,6 +188,7 @@ static int mkjournal_proc(ext2_filsys	fs,
 		return (BLOCK_CHANGED | BLOCK_ABORT);
 	else
 		return BLOCK_CHANGED;
+
 }
 
 /*
@@ -422,5 +423,6 @@ main(int argc, char **argv)
 	}
 	ext2fs_close(fs);
 	exit(0);
+
 }
 #endif

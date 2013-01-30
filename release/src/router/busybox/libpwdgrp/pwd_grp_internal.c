@@ -1,20 +1,21 @@
 /* vi: set sw=4 ts=4: */
-/* Copyright (C) 2003     Manuel Novoa III
+/*  Copyright (C) 2003     Manuel Novoa III
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ *  Licensed under GPL v2, or later.  See file LICENSE in this tarball.
  */
 
-/* Nov 6, 2003  Initial version.
+/*  Nov 6, 2003  Initial version.
  *
- * NOTE: This implementation is quite strict about requiring all
+ *  NOTE: This implementation is quite strict about requiring all
  *    field seperators.  It also does not allow leading whitespace
  *    except when processing the numeric fields.  glibc is more
  *    lenient.  See the various glibc difference comments below.
  *
- * TODO:
+ *  TODO:
  *    Move to dynamic allocation of (currently statically allocated)
  *      buffers; especially for the group-related functions since
  *      large group member lists will cause error returns.
+ *
  */
 
 #ifndef GETXXKEY_R_FUNC
@@ -37,12 +38,12 @@ int GETXXKEY_R_FUNC(GETXXKEY_R_KEYTYPE key,
 	while (1) {
 		rv = bb__pgsreader(GETXXKEY_R_PARSER, resultbuf, buffer, buflen, stream);
 		if (!rv) {
-			if (GETXXKEY_R_TEST(resultbuf)) { /* found key? */
+			if (GETXXKEY_R_TEST(resultbuf)) { /* Found key? */
 				*result = resultbuf;
 				break;
 			}
 		} else {
-			if (rv == ENOENT) {  /* EOF encountered */
+			if (rv == ENOENT) {	/* end-of-file encountered. */
 				rv = 0;
 			}
 			break;

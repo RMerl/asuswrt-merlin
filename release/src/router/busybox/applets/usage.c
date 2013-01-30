@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2008 Denys Vlasenko.
  *
- * Licensed under GPLv2, see file LICENSE in this source tree.
+ * Licensed under GPLv2, see file LICENSE in this tarball for details.
  */
 #include <unistd.h>
 #include <stdlib.h>

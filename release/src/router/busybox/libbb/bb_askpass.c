@@ -5,7 +5,7 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
  */
 
 #include "libbb.h"
@@ -30,23 +30,14 @@ char* FAST_FUNC bb_ask(const int fd, int timeout, const char *prompt)
 	struct sigaction sa, oldsa;
 	struct termios tio, oldtio;
 
-	fputs(prompt, stdout);
-	fflush_all();
-	tcflush(fd, TCIFLUSH);
-
 	tcgetattr(fd, &oldtio);
+	tcflush(fd, TCIFLUSH);
 	tio = oldtio;
-#if 0
-	/* Switch off UPPERCASE->lowercase conversion (never used since 198x)
-	 * and XON/XOFF (why we want to mess with this??)
-	 */
-# ifndef IUCLC
-#  define IUCLC 0
-# endif
-	tio.c_iflag &= ~(IUCLC|IXON|IXOFF|IXANY);
+#ifndef IUCLC
+# define IUCLC 0
 #endif
-	/* Switch off echo */
-	tio.c_lflag &= ~(ECHO|ECHOE|ECHOK|ECHONL);
+	tio.c_iflag &= ~(IUCLC|IXON|IXOFF|IXANY);
+	tio.c_lflag &= ~(ECHO|ECHOE|ECHOK|ECHONL|TOSTOP);
 	tcsetattr(fd, TCSANOW, &tio);
 
 	memset(&sa, 0, sizeof(sa));
@@ -58,6 +49,9 @@ char* FAST_FUNC bb_ask(const int fd, int timeout, const char *prompt)
 		sigaction_set(SIGALRM, &sa);
 		alarm(timeout);
 	}
+
+	fputs(prompt, stdout);
+	fflush_all();
 
 	if (!passwd)
 		passwd = xmalloc(sizeof_passwd);

@@ -38,7 +38,10 @@ int dialog_textbox(const char *title, const char *file, int height, int width)
 {
 	int i, x, y, cur_x, cur_y, fpos, key = 0;
 	int passed_end;
+	char search_term[MAX_LEN + 1];
 	WINDOW *dialog, *text;
+
+	search_term[0] = '\0';	/* no search term entered yet */
 
 	/* Open input file for reading */
 	if ((fd = open(file, O_RDONLY)) == -1) {
@@ -434,6 +437,7 @@ static void print_page(WINDOW * win, int height, int width)
  */
 static void print_line(WINDOW * win, int row, int width)
 {
+	int y, x;
 	char *line;
 
 	line = get_line();
@@ -442,13 +446,11 @@ static void print_line(WINDOW * win, int row, int width)
 	waddch(win, ' ');
 	waddnstr(win, line, MIN(strlen(line), width - 2));
 
+	getyx(win, y, x);
 	/* Clear 'residue' of previous line */
 #if OLD_NCURSES
 	{
 		int i;
-		int y, x;
-
-		getyx(win, y, x);
 		for (i = 0; i < width - x; i++)
 			waddch(win, ' ');
 	}

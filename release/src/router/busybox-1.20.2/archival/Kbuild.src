@@ -1,0 +1,30 @@
+# Makefile for busybox
+#
+# Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
+#
+# Licensed under GPLv2, see file LICENSE in this source tree.
+
+libs-y				+= libarchive/
+
+lib-y:=
+
+INSERT
+
+lib-$(CONFIG_AR)		+= ar.o
+lib-$(CONFIG_CPIO)		+= cpio.o
+lib-$(CONFIG_DPKG)		+= dpkg.o
+lib-$(CONFIG_DPKG_DEB)		+= dpkg_deb.o
+lib-$(CONFIG_RPM2CPIO)		+= rpm2cpio.o
+lib-$(CONFIG_RPM)		+= rpm.o
+lib-$(CONFIG_TAR)		+= tar.o
+lib-$(CONFIG_UNZIP)		+= unzip.o
+
+lib-$(CONFIG_LZOP)		+= lzop.o bbunzip.o
+lib-$(CONFIG_GZIP)		+= gzip.o bbunzip.o
+lib-$(CONFIG_BZIP2)		+= bzip2.o bbunzip.o
+
+lib-$(CONFIG_UNXZ)		+= bbunzip.o
+lib-$(CONFIG_UNLZMA)		+= bbunzip.o
+lib-$(CONFIG_BUNZIP2)		+= bbunzip.o
+lib-$(CONFIG_GUNZIP)		+= bbunzip.o
+lib-$(CONFIG_UNCOMPRESS)	+= bbunzip.o

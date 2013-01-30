@@ -1,12 +1,10 @@
 #!/bin/sh
 
-run_testsuite=true
-
 test -d "$1" || { echo "'$1' is not a directory"; exit 1; }
 test -x "$1/scripts/randomtest" || { echo "No scripts/randomtest in '$1'"; exit 1; }
 
 export LIBC="uclibc"
-export CROSS_COMPILER_PREFIX="i686-"
+export CROSS_COMPILER_PREFIX="i486-linux-uclibc-"
 export MAKEOPTS="-j9"
 
 cnt=0
@@ -23,9 +21,7 @@ while sleep 1; do
 		echo "Failed build in: failed.$dir"
 		exit 1 # you may comment this out...
 		let fail++
-		continue
-	fi
-	if $run_testsuite; then
+	else
 		(
 			cd -- "$dir/testsuite" || exit 1
 			echo "Running testsuite in $dir..."
@@ -33,12 +29,10 @@ while sleep 1; do
 		)
 		if test $? != 0; then
 			echo "Failed runtest in $dir"
-			exit 1 # you may comment this out...
-			let fail++
-			continue
+			exit 1
 		fi
 		tail -n10 -- "$dir/testsuite/runtest.log"
+		rm -rf -- "$dir"
 	fi
-	rm -rf -- "$dir"
 	let cnt++
 done

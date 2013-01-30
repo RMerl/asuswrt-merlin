@@ -218,3 +218,4 @@ out_free:
 	ext2fs_free_mem((void *)&dindir_buf);
 	return retval;
 }
+

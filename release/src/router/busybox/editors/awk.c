@@ -4,15 +4,8 @@
  *
  * Copyright (C) 2002 by Dmitry Zakharov <dmit@crp.bank.gov.ua>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
  */
-
-//usage:#define awk_trivial_usage
-//usage:       "[OPTIONS] [AWK_PROGRAM] [FILE]..."
-//usage:#define awk_full_usage "\n\n"
-//usage:       "	-v VAR=VAL	Set variable"
-//usage:     "\n	-F SEP		Use SEP as field separator"
-//usage:     "\n	-f FILE		Read program from FILE"
 
 #include "libbb.h"
 #include "xregex.h"
@@ -25,16 +18,12 @@
  * to perform debug printfs to stderr: */
 #define debug_printf_walker(...)  do {} while (0)
 #define debug_printf_eval(...)  do {} while (0)
-#define debug_printf_parse(...)  do {} while (0)
 
 #ifndef debug_printf_walker
 # define debug_printf_walker(...) (fprintf(stderr, __VA_ARGS__))
 #endif
 #ifndef debug_printf_eval
 # define debug_printf_eval(...) (fprintf(stderr, __VA_ARGS__))
-#endif
-#ifndef debug_printf_parse
-# define debug_printf_parse(...) (fprintf(stderr, __VA_ARGS__))
 #endif
 
 
@@ -242,9 +231,6 @@ typedef struct tsplitter_s {
  * For builtins it has different meaning: n n s3 s2 s1 v3 v2 v1,
  * n - min. number of args, vN - resolve Nth arg to var, sN - resolve to string
  */
-#undef P
-#undef PRIMASK
-#undef PRIMASK2
 #define P(x)      (x << 24)
 #define PRIMASK   0x7F000000
 #define PRIMASK2  0x7E000000
@@ -291,86 +277,94 @@ enum {
 
 /* tokens and their corresponding info values */
 
-#define NTC     "\377"  /* switch to next token class (tc<<1) */
-#define NTCC    '\377'
+#define	NTC     "\377"  /* switch to next token class (tc<<1) */
+#define	NTCC    '\377'
 
-#define OC_B  OC_BUILTIN
+#define	OC_B	OC_BUILTIN
 
 static const char tokenlist[] ALIGN1 =
-	"\1("         NTC
-	"\1)"         NTC
-	"\1/"         NTC                                   /* REGEXP */
-	"\2>>"        "\1>"         "\1|"       NTC         /* OUTRDR */
-	"\2++"        "\2--"        NTC                     /* UOPPOST */
-	"\2++"        "\2--"        "\1$"       NTC         /* UOPPRE1 */
-	"\2=="        "\1="         "\2+="      "\2-="      /* BINOPX */
-	"\2*="        "\2/="        "\2%="      "\2^="
-	"\1+"         "\1-"         "\3**="     "\2**"
-	"\1/"         "\1%"         "\1^"       "\1*"
-	"\2!="        "\2>="        "\2<="      "\1>"
-	"\1<"         "\2!~"        "\1~"       "\2&&"
-	"\2||"        "\1?"         "\1:"       NTC
-	"\2in"        NTC
-	"\1,"         NTC
-	"\1|"         NTC
-	"\1+"         "\1-"         "\1!"       NTC         /* UOPPRE2 */
-	"\1]"         NTC
-	"\1{"         NTC
-	"\1}"         NTC
-	"\1;"         NTC
-	"\1\n"        NTC
-	"\2if"        "\2do"        "\3for"     "\5break"   /* STATX */
-	"\10continue" "\6delete"    "\5print"
-	"\6printf"    "\4next"      "\10nextfile"
-	"\6return"    "\4exit"      NTC
-	"\5while"     NTC
-	"\4else"      NTC
+	"\1("       NTC
+	"\1)"       NTC
+	"\1/"       NTC                                 /* REGEXP */
+	"\2>>"      "\1>"       "\1|"       NTC         /* OUTRDR */
+	"\2++"      "\2--"      NTC                     /* UOPPOST */
+	"\2++"      "\2--"      "\1$"       NTC         /* UOPPRE1 */
+	"\2=="      "\1="       "\2+="      "\2-="      /* BINOPX */
+	"\2*="      "\2/="      "\2%="      "\2^="
+	"\1+"       "\1-"       "\3**="     "\2**"
+	"\1/"       "\1%"       "\1^"       "\1*"
+	"\2!="      "\2>="      "\2<="      "\1>"
+	"\1<"       "\2!~"      "\1~"       "\2&&"
+	"\2||"      "\1?"       "\1:"       NTC
+	"\2in"      NTC
+	"\1,"       NTC
+	"\1|"       NTC
+	"\1+"       "\1-"       "\1!"       NTC         /* UOPPRE2 */
+	"\1]"       NTC
+	"\1{"       NTC
+	"\1}"       NTC
+	"\1;"       NTC
+	"\1\n"      NTC
+	"\2if"      "\2do"      "\3for"     "\5break"   /* STATX */
+	"\10continue"           "\6delete"  "\5print"
+	"\6printf"  "\4next"    "\10nextfile"
+	"\6return"  "\4exit"    NTC
+	"\5while"   NTC
+	"\4else"    NTC
 
-	"\3and"       "\5compl"     "\6lshift"  "\2or"
-	"\6rshift"    "\3xor"
-	"\5close"     "\6system"    "\6fflush"  "\5atan2"   /* BUILTIN */
-	"\3cos"       "\3exp"       "\3int"     "\3log"
-	"\4rand"      "\3sin"       "\4sqrt"    "\5srand"
-	"\6gensub"    "\4gsub"      "\5index"   "\6length"
-	"\5match"     "\5split"     "\7sprintf" "\3sub"
-	"\6substr"    "\7systime"   "\10strftime" "\6mktime"
-	"\7tolower"   "\7toupper"   NTC
-	"\7getline"   NTC
-	"\4func"      "\10function" NTC
-	"\5BEGIN"     NTC
-	"\3END"
-	/* compiler adds trailing "\0" */
+	"\3and"     "\5compl"   "\6lshift"  "\2or"
+	"\6rshift"  "\3xor"
+	"\5close"   "\6system"  "\6fflush"  "\5atan2"   /* BUILTIN */
+	"\3cos"     "\3exp"     "\3int"     "\3log"
+	"\4rand"    "\3sin"     "\4sqrt"    "\5srand"
+	"\6gensub"  "\4gsub"    "\5index"   "\6length"
+	"\5match"   "\5split"   "\7sprintf" "\3sub"
+	"\6substr"  "\7systime" "\10strftime" "\6mktime"
+	"\7tolower" "\7toupper" NTC
+	"\7getline" NTC
+	"\4func"    "\10function"   NTC
+	"\5BEGIN"   NTC
+	"\3END"     "\0"
 	;
 
 static const uint32_t tokeninfo[] = {
 	0,
 	0,
 	OC_REGEXP,
-	xS|'a',                  xS|'w',                  xS|'|',
-	OC_UNARY|xV|P(9)|'p',    OC_UNARY|xV|P(9)|'m',
-	OC_UNARY|xV|P(9)|'P',    OC_UNARY|xV|P(9)|'M',    OC_FIELD|xV|P(5),
-	OC_COMPARE|VV|P(39)|5,   OC_MOVE|VV|P(74),        OC_REPLACE|NV|P(74)|'+', OC_REPLACE|NV|P(74)|'-',
-	OC_REPLACE|NV|P(74)|'*', OC_REPLACE|NV|P(74)|'/', OC_REPLACE|NV|P(74)|'%', OC_REPLACE|NV|P(74)|'&',
-	OC_BINARY|NV|P(29)|'+',  OC_BINARY|NV|P(29)|'-',  OC_REPLACE|NV|P(74)|'&', OC_BINARY|NV|P(15)|'&',
-	OC_BINARY|NV|P(25)|'/',  OC_BINARY|NV|P(25)|'%',  OC_BINARY|NV|P(15)|'&',  OC_BINARY|NV|P(25)|'*',
-	OC_COMPARE|VV|P(39)|4,   OC_COMPARE|VV|P(39)|3,   OC_COMPARE|VV|P(39)|0,   OC_COMPARE|VV|P(39)|1,
-	OC_COMPARE|VV|P(39)|2,   OC_MATCH|Sx|P(45)|'!',   OC_MATCH|Sx|P(45)|'~',   OC_LAND|Vx|P(55),
-	OC_LOR|Vx|P(59),         OC_TERNARY|Vx|P(64)|'?', OC_COLON|xx|P(67)|':',
-	OC_IN|SV|P(49), /* in */
+	xS|'a',     xS|'w',     xS|'|',
+	OC_UNARY|xV|P(9)|'p',       OC_UNARY|xV|P(9)|'m',
+	OC_UNARY|xV|P(9)|'P',       OC_UNARY|xV|P(9)|'M',
+	    OC_FIELD|xV|P(5),
+	OC_COMPARE|VV|P(39)|5,      OC_MOVE|VV|P(74),
+	    OC_REPLACE|NV|P(74)|'+',    OC_REPLACE|NV|P(74)|'-',
+	OC_REPLACE|NV|P(74)|'*',    OC_REPLACE|NV|P(74)|'/',
+	    OC_REPLACE|NV|P(74)|'%',    OC_REPLACE|NV|P(74)|'&',
+	OC_BINARY|NV|P(29)|'+',     OC_BINARY|NV|P(29)|'-',
+	    OC_REPLACE|NV|P(74)|'&',    OC_BINARY|NV|P(15)|'&',
+	OC_BINARY|NV|P(25)|'/',     OC_BINARY|NV|P(25)|'%',
+	    OC_BINARY|NV|P(15)|'&',     OC_BINARY|NV|P(25)|'*',
+	OC_COMPARE|VV|P(39)|4,      OC_COMPARE|VV|P(39)|3,
+	    OC_COMPARE|VV|P(39)|0,      OC_COMPARE|VV|P(39)|1,
+	OC_COMPARE|VV|P(39)|2,      OC_MATCH|Sx|P(45)|'!',
+	    OC_MATCH|Sx|P(45)|'~',      OC_LAND|Vx|P(55),
+	OC_LOR|Vx|P(59),            OC_TERNARY|Vx|P(64)|'?',
+	    OC_COLON|xx|P(67)|':',
+	OC_IN|SV|P(49),
 	OC_COMMA|SS|P(80),
 	OC_PGETLINE|SV|P(37),
-	OC_UNARY|xV|P(19)|'+',   OC_UNARY|xV|P(19)|'-',   OC_UNARY|xV|P(19)|'!',
-	0, /* ] */
+	OC_UNARY|xV|P(19)|'+',      OC_UNARY|xV|P(19)|'-',
+	    OC_UNARY|xV|P(19)|'!',
 	0,
 	0,
 	0,
-	0, /* \n */
-	ST_IF,        ST_DO,        ST_FOR,      OC_BREAK,
-	OC_CONTINUE,  OC_DELETE|Vx, OC_PRINT,
-	OC_PRINTF,    OC_NEXT,      OC_NEXTFILE,
-	OC_RETURN|Vx, OC_EXIT|Nx,
+	0,
+	0,
+	ST_IF,          ST_DO,          ST_FOR,         OC_BREAK,
+	OC_CONTINUE,                    OC_DELETE|Vx,   OC_PRINT,
+	OC_PRINTF,      OC_NEXT,        OC_NEXTFILE,
+	OC_RETURN|Vx,   OC_EXIT|Nx,
 	ST_WHILE,
-	0, /* else */
+	0,
 
 	OC_B|B_an|P(0x83), OC_B|B_co|P(0x41), OC_B|B_ls|P(0x83), OC_B|B_or|P(0x83),
 	OC_B|B_rs|P(0x83), OC_B|B_xo|P(0x83),
@@ -382,9 +376,9 @@ static const uint32_t tokeninfo[] = {
 	OC_B|B_ss|P(0x8f), OC_FBLTIN|F_ti,    OC_B|B_ti|P(0x0b), OC_B|B_mt|P(0x0b),
 	OC_B|B_lo|P(0x49), OC_B|B_up|P(0x49),
 	OC_GETLINE|SV|P(0),
-	0,                 0,
+	0,	0,
 	0,
-	0 /* END */
+	0
 };
 
 /* internal variable names and their initial values       */
@@ -394,7 +388,7 @@ enum {
 	ORS,        RS,         RT,         FILENAME,
 	SUBSEP,     F0,         ARGIND,     ARGC,
 	ARGV,       ERRNO,      FNR,        NR,
-	NF,         IGNORECASE, ENVIRON,    NUM_INTERNAL_VARS
+	NF,         IGNORECASE,	ENVIRON,    NUM_INTERNAL_VARS
 };
 
 static const char vNames[] ALIGN1 =
@@ -439,13 +433,13 @@ struct globals {
 	smallint nextrec;
 	smallint nextfile;
 	smallint is_f0_split;
-	smallint t_rollback;
 };
 struct globals2 {
 	uint32_t t_info; /* often used */
 	uint32_t t_tclass;
 	char *t_string;
 	int t_lineno;
+	int t_rollback;
 
 	var *intvar[NUM_INTERNAL_VARS]; /* often used */
 
@@ -503,11 +497,11 @@ struct globals2 {
 #define nextrec      (G1.nextrec     )
 #define nextfile     (G1.nextfile    )
 #define is_f0_split  (G1.is_f0_split )
-#define t_rollback   (G1.t_rollback  )
 #define t_info       (G.t_info      )
 #define t_tclass     (G.t_tclass    )
 #define t_string     (G.t_string    )
 #define t_lineno     (G.t_lineno    )
+#define t_rollback   (G.t_rollback  )
 #define intvar       (G.intvar      )
 #define fsplitter    (G.fsplitter   )
 #define rsplitter    (G.rsplitter   )
@@ -538,7 +532,9 @@ static const char EMSG_TOO_FEW_ARGS[] ALIGN1 = "Too few arguments for builtin";
 static const char EMSG_NOT_ARRAY[] ALIGN1 = "Not an array";
 static const char EMSG_POSSIBLE_ERROR[] ALIGN1 = "Possible syntax error";
 static const char EMSG_UNDEF_FUNC[] ALIGN1 = "Call to undefined function";
+#if !ENABLE_FEATURE_AWK_LIBM
 static const char EMSG_NO_MATH[] ALIGN1 = "Math support is not compiled in";
+#endif
 
 static void zero_out_var(var *vp)
 {
@@ -696,11 +692,8 @@ static char nextchar(char **s)
 	pps = *s;
 	if (c == '\\')
 		c = bb_process_escape_sequence((const char**)s);
-	if (c == '\\' && *s == pps) { /* unrecognized \z? */
-		c = *(*s); /* yes, fetch z */
-		if (c)
-			(*s)++; /* advance unless z = NUL */
-	}
+	if (c == '\\' && *s == pps)
+		c = *(*s)++;
 	return c;
 }
 
@@ -712,7 +705,8 @@ static ALWAYS_INLINE int isalnum_(int c)
 static double my_strtod(char **pp)
 {
 	char *cp = *pp;
-	if (ENABLE_DESKTOP && cp[0] == '0') {
+#if ENABLE_DESKTOP
+	if (cp[0] == '0') {
 		/* Might be hex or octal integer: 0x123abc or 07777 */
 		char c = (cp[1] | 0x20);
 		if (c == 'x' || isdigit(cp[1])) {
@@ -729,6 +723,7 @@ static double my_strtod(char **pp)
 			 */
 		}
 	}
+#endif
 	return strtod(cp, pp);
 }
 
@@ -1015,23 +1010,20 @@ static uint32_t next_token(uint32_t expected)
 
 		if (*p == '\0') {
 			tc = TC_EOF;
-			debug_printf_parse("%s: token found: TC_EOF\n", __func__);
 
 		} else if (*p == '\"') {
 			/* it's a string */
 			t_string = s = ++p;
 			while (*p != '\"') {
-				char *pp;
+				char *pp = p;
 				if (*p == '\0' || *p == '\n')
 					syntax_error(EMSG_UNEXP_EOS);
-				pp = p;
 				*s++ = nextchar(&pp);
 				p = pp;
 			}
 			p++;
 			*s = '\0';
 			tc = TC_STRING;
-			debug_printf_parse("%s: token found:'%s' TC_STRING\n", __func__, t_string);
 
 		} else if ((expected & TC_REGEXP) && *p == '/') {
 			/* it's regexp */
@@ -1054,7 +1046,6 @@ static uint32_t next_token(uint32_t expected)
 			p++;
 			*s = '\0';
 			tc = TC_REGEXP;
-			debug_printf_parse("%s: token found:'%s' TC_REGEXP\n", __func__, t_string);
 
 		} else if (*p == '.' || isdigit(*p)) {
 			/* it's a number */
@@ -1064,7 +1055,6 @@ static uint32_t next_token(uint32_t expected)
 			if (*p == '.')
 				syntax_error(EMSG_UNEXP_TOKEN);
 			tc = TC_NUMBER;
-			debug_printf_parse("%s: token found:%f TC_NUMBER\n", __func__, t_double);
 
 		} else {
 			/* search for something known */
@@ -1087,7 +1077,6 @@ static uint32_t next_token(uint32_t expected)
 				) {
 					/* then this is what we are looking for */
 					t_info = *ti;
-					debug_printf_parse("%s: token found:'%.*s' t_info:%x\n", __func__, l, p, t_info);
 					p += l;
 					goto token_found;
 				}
@@ -1111,17 +1100,14 @@ static uint32_t next_token(uint32_t expected)
 				p = skip_spaces(p);
 			if (*p == '(') {
 				tc = TC_FUNCTION;
-				debug_printf_parse("%s: token found:'%s' TC_FUNCTION\n", __func__, t_string);
 			} else {
 				if (*p == '[') {
 					p++;
 					tc = TC_ARRAY;
-					debug_printf_parse("%s: token found:'%s' TC_ARRAY\n", __func__, t_string);
-				} else
-					debug_printf_parse("%s: token found:'%s' TC_VARIABLE\n", __func__, t_string);
+				}
 			}
+ token_found: ;
 		}
- token_found:
 		g_pos = p;
 
 		/* skipping newlines in some cases */
@@ -1193,8 +1179,6 @@ static node *parse_expr(uint32_t iexp)
 	uint32_t tc, xtc;
 	var *v;
 
-	debug_printf_parse("%s(%x)\n", __func__, iexp);
-
 	sn.info = PRIMASK;
 	sn.r.n = glptr = NULL;
 	xtc = TC_OPERAND | TC_UOPPRE | TC_REGEXP | iexp;
@@ -1203,14 +1187,12 @@ static node *parse_expr(uint32_t iexp)
 
 		if (glptr && (t_info == (OC_COMPARE | VV | P(39) | 2))) {
 			/* input redirection (<) attached to glptr node */
-			debug_printf_parse("%s: input redir\n", __func__);
 			cn = glptr->l.n = new_node(OC_CONCAT | SS | P(37));
 			cn->a.n = glptr;
 			xtc = TC_OPERAND | TC_UOPPRE;
 			glptr = NULL;
 
 		} else if (tc & (TC_BINOP | TC_UOPPOST)) {
-			debug_printf_parse("%s: TC_BINOP | TC_UOPPOST\n", __func__);
 			/* for binary and postfix-unary operators, jump back over
 			 * previous operators with higher priority */
 			vn = cn;
@@ -1240,7 +1222,6 @@ static node *parse_expr(uint32_t iexp)
 			vn->a.n = cn;
 
 		} else {
-			debug_printf_parse("%s: other\n", __func__);
 			/* for operands and prefix-unary operators, attach them
 			 * to last node */
 			vn = cn;
@@ -1248,14 +1229,12 @@ static node *parse_expr(uint32_t iexp)
 			cn->a.n = vn;
 			xtc = TC_OPERAND | TC_UOPPRE | TC_REGEXP;
 			if (tc & (TC_OPERAND | TC_REGEXP)) {
-				debug_printf_parse("%s: TC_OPERAND | TC_REGEXP\n", __func__);
 				xtc = TC_UOPPRE | TC_UOPPOST | TC_BINOP | TC_OPERAND | iexp;
 				/* one should be very careful with switch on tclass -
 				 * only simple tclasses should be used! */
 				switch (tc) {
 				case TC_VARIABLE:
 				case TC_ARRAY:
-					debug_printf_parse("%s: TC_VARIABLE | TC_ARRAY\n", __func__);
 					cn->info = OC_VAR;
 					v = hash_search(ahash, t_string);
 					if (v != NULL) {
@@ -1272,7 +1251,6 @@ static node *parse_expr(uint32_t iexp)
 
 				case TC_NUMBER:
 				case TC_STRING:
-					debug_printf_parse("%s: TC_NUMBER | TC_STRING\n", __func__);
 					cn->info = OC_VAR;
 					v = cn->l.v = xzalloc(sizeof(var));
 					if (tc & TC_NUMBER)
@@ -1282,41 +1260,32 @@ static node *parse_expr(uint32_t iexp)
 					break;
 
 				case TC_REGEXP:
-					debug_printf_parse("%s: TC_REGEXP\n", __func__);
 					mk_re_node(t_string, cn, xzalloc(sizeof(regex_t)*2));
 					break;
 
 				case TC_FUNCTION:
-					debug_printf_parse("%s: TC_FUNCTION\n", __func__);
 					cn->info = OC_FUNC;
 					cn->r.f = newfunc(t_string);
 					cn->l.n = condition();
 					break;
 
 				case TC_SEQSTART:
-					debug_printf_parse("%s: TC_SEQSTART\n", __func__);
 					cn = vn->r.n = parse_expr(TC_SEQTERM);
-					if (!cn)
-						syntax_error("Empty sequence");
 					cn->a.n = vn;
 					break;
 
 				case TC_GETLINE:
-					debug_printf_parse("%s: TC_GETLINE\n", __func__);
 					glptr = cn;
 					xtc = TC_OPERAND | TC_UOPPRE | TC_BINOP | iexp;
 					break;
 
 				case TC_BUILTIN:
-					debug_printf_parse("%s: TC_BUILTIN\n", __func__);
 					cn->l.n = condition();
 					break;
 				}
 			}
 		}
 	}
-
-	debug_printf_parse("%s() returns %p\n", __func__, sn.r.n);
 	return sn.r.n;
 }
 
@@ -1385,25 +1354,18 @@ static void chain_group(void)
 	} while (c & TC_NEWLINE);
 
 	if (c & TC_GRPSTART) {
-		debug_printf_parse("%s: TC_GRPSTART\n", __func__);
 		while (next_token(TC_GRPSEQ | TC_GRPTERM) != TC_GRPTERM) {
-			debug_printf_parse("%s: !TC_GRPTERM\n", __func__);
 			if (t_tclass & TC_NEWLINE)
 				continue;
 			rollback_token();
 			chain_group();
 		}
-		debug_printf_parse("%s: TC_GRPTERM\n", __func__);
 	} else if (c & (TC_OPSEQ | TC_OPTERM)) {
-		debug_printf_parse("%s: TC_OPSEQ | TC_OPTERM\n", __func__);
 		rollback_token();
 		chain_expr(OC_EXEC | Vx);
-	} else {
-		/* TC_STATEMNT */
-		debug_printf_parse("%s: TC_STATEMNT(?)\n", __func__);
+	} else {						/* TC_STATEMNT */
 		switch (t_info & OPCLSMASK) {
 		case ST_IF:
-			debug_printf_parse("%s: ST_IF\n", __func__);
 			n = chain_node(OC_BR | Vx);
 			n->l.n = condition();
 			chain_group();
@@ -1418,14 +1380,12 @@ static void chain_group(void)
 			break;
 
 		case ST_WHILE:
-			debug_printf_parse("%s: ST_WHILE\n", __func__);
 			n2 = condition();
 			n = chain_loop(NULL);
 			n->l.n = n2;
 			break;
 
 		case ST_DO:
-			debug_printf_parse("%s: ST_DO\n", __func__);
 			n2 = chain_node(OC_EXEC);
 			n = chain_loop(NULL);
 			n2->a.n = n->a.n;
@@ -1434,7 +1394,6 @@ static void chain_group(void)
 			break;
 
 		case ST_FOR:
-			debug_printf_parse("%s: ST_FOR\n", __func__);
 			next_token(TC_SEQSTART);
 			n2 = parse_expr(TC_SEMICOL | TC_SEQTERM);
 			if (t_tclass & TC_SEQTERM) {	/* for-in */
@@ -1460,7 +1419,6 @@ static void chain_group(void)
 
 		case OC_PRINT:
 		case OC_PRINTF:
-			debug_printf_parse("%s: OC_PRINT[F]\n", __func__);
 			n = chain_node(t_info);
 			n->l.n = parse_expr(TC_OPTERM | TC_OUTRDR | TC_GRPTERM);
 			if (t_tclass & TC_OUTRDR) {
@@ -1472,20 +1430,17 @@ static void chain_group(void)
 			break;
 
 		case OC_BREAK:
-			debug_printf_parse("%s: OC_BREAK\n", __func__);
 			n = chain_node(OC_EXEC);
 			n->a.n = break_ptr;
 			break;
 
 		case OC_CONTINUE:
-			debug_printf_parse("%s: OC_CONTINUE\n", __func__);
 			n = chain_node(OC_EXEC);
 			n->a.n = continue_ptr;
 			break;
 
 		/* delete, next, nextfile, return, exit */
 		default:
-			debug_printf_parse("%s: default\n", __func__);
 			chain_expr(t_info);
 		}
 	}
@@ -1503,24 +1458,19 @@ static void parse_program(char *p)
 	while ((tclass = next_token(TC_EOF | TC_OPSEQ | TC_GRPSTART |
 			TC_OPTERM | TC_BEGIN | TC_END | TC_FUNCDECL)) != TC_EOF) {
 
-		if (tclass & TC_OPTERM) {
-			debug_printf_parse("%s: TC_OPTERM\n", __func__);
+		if (tclass & TC_OPTERM)
 			continue;
-		}
 
 		seq = &mainseq;
 		if (tclass & TC_BEGIN) {
-			debug_printf_parse("%s: TC_BEGIN\n", __func__);
 			seq = &beginseq;
 			chain_group();
 
 		} else if (tclass & TC_END) {
-			debug_printf_parse("%s: TC_END\n", __func__);
 			seq = &endseq;
 			chain_group();
 
 		} else if (tclass & TC_FUNCDECL) {
-			debug_printf_parse("%s: TC_FUNCDECL\n", __func__);
 			next_token(TC_FUNCTION);
 			g_pos++;
 			f = newfunc(t_string);
@@ -1538,27 +1488,22 @@ static void parse_program(char *p)
 			clear_array(ahash);
 
 		} else if (tclass & TC_OPSEQ) {
-			debug_printf_parse("%s: TC_OPSEQ\n", __func__);
 			rollback_token();
 			cn = chain_node(OC_TEST);
 			cn->l.n = parse_expr(TC_OPTERM | TC_EOF | TC_GRPSTART);
 			if (t_tclass & TC_GRPSTART) {
-				debug_printf_parse("%s: TC_GRPSTART\n", __func__);
 				rollback_token();
 				chain_group();
 			} else {
-				debug_printf_parse("%s: !TC_GRPSTART\n", __func__);
 				chain_node(OC_PRINT);
 			}
 			cn->r.n = mainseq.last;
 
 		} else /* if (tclass & TC_GRPSTART) */ {
-			debug_printf_parse("%s: TC_GRPSTART(?)\n", __func__);
 			rollback_token();
 			chain_group();
 		}
 	}
-	debug_printf_parse("%s: TC_EOF\n", __func__);
 }
 
 
@@ -1799,18 +1744,6 @@ static void handle_special(var *v)
 		is_f0_split = FALSE;
 
 	} else if (v == intvar[FS]) {
-		/*
-		 * The POSIX-2008 standard says that changing FS should have no effect on the
-		 * current input line, but only on the next one. The language is:
-		 *
-		 * > Before the first reference to a field in the record is evaluated, the record
-		 * > shall be split into fields, according to the rules in Regular Expressions,
-		 * > using the value of FS that was current at the time the record was read.
-		 *
-		 * So, split up current line before assignment to FS:
-		 */
-		split_f0();
-
 		mk_splitter(getvar_s(v), &fsplitter);
 
 	} else if (v == intvar[RS]) {
@@ -1903,8 +1836,6 @@ static int awk_getline(rstream *rsm, var *v)
 	int fd, so, eo, r, rp;
 	char c, *m, *s;
 
-	debug_printf_eval("entered %s()\n", __func__);
-
 	/* we're using our own buffer since we need access to accumulating
 	 * characters
 	 */
@@ -1990,8 +1921,6 @@ static int awk_getline(rstream *rsm, var *v)
 	rsm->adv = a + eo;
 	rsm->pos = p - eo;
 	rsm->size = size;
-
-	debug_printf_eval("returning from %s(): %d\n", __func__, r);
 
 	return r;
 }
@@ -2239,10 +2168,11 @@ static NOINLINE var *exec_builtin(node *op, var *res)
 	switch (info) {
 
 	case B_a2:
-		if (ENABLE_FEATURE_AWK_LIBM)
-			setvar_i(res, atan2(getvar_i(av[0]), getvar_i(av[1])));
-		else
-			syntax_error(EMSG_NO_MATH);
+#if ENABLE_FEATURE_AWK_LIBM
+		setvar_i(res, atan2(getvar_i(av[0]), getvar_i(av[1])));
+#else
+		syntax_error(EMSG_NO_MATH);
+#endif
 		break;
 
 	case B_sp: {
@@ -2410,14 +2340,12 @@ static var *evaluate(node *op, var *res)
 #define fnargs (G.evaluate__fnargs)
 /* seed is initialized to 1 */
 #define seed   (G.evaluate__seed)
-#define sreg   (G.evaluate__sreg)
+#define	sreg   (G.evaluate__sreg)
 
 	var *v1;
 
 	if (!op)
 		return setvar_s(res, NULL);
-
-	debug_printf_eval("entered %s()\n", __func__);
 
 	v1 = nvalloc(2);
 
@@ -2439,7 +2367,7 @@ static var *evaluate(node *op, var *res)
 		opn = (opinfo & OPNMASK);
 		g_lineno = op->lineno;
 		op1 = op->l.n;
-		debug_printf_eval("opinfo:%08x opn:%08x\n", opinfo, opn);
+		debug_printf_eval("opinfo:%08x opn:%08x XC:%x\n", opinfo, opn, XC(opinfo & OPCLSMASK));
 
 		/* execute inevitable things */
 		if (opinfo & OF_RES1)
@@ -2459,7 +2387,6 @@ static var *evaluate(node *op, var *res)
 			debug_printf_eval("L_d:%f\n", L_d);
 		}
 
-		debug_printf_eval("switch(0x%x)\n", XC(opinfo & OPCLSMASK));
 		switch (XC(opinfo & OPCLSMASK)) {
 
 		/* -- iterative node type -- */
@@ -2686,7 +2613,7 @@ static var *evaluate(node *op, var *res)
 						rsm->F = popen(L.s, "r");
 						rsm->is_pipe = TRUE;
 					} else {
-						rsm->F = fopen_for_read(L.s);  /* not xfopen! */
+						rsm->F = fopen_for_read(L.s);		/* not xfopen! */
 					}
 				}
 			} else {
@@ -2695,7 +2622,7 @@ static var *evaluate(node *op, var *res)
 				rsm = iF;
 			}
 
-			if (!rsm || !rsm->F) {
+			if (!rsm->F) {
 				setvar_i(intvar[ERRNO], errno);
 				setvar_i(res, -1);
 				break;
@@ -2715,6 +2642,8 @@ static var *evaluate(node *op, var *res)
 
 		/* simple builtins */
 		case XC( OC_FBLTIN ): {
+			int i;
+			rstream *rsm;
 			double R_d = R_d; /* for compiler */
 
 			switch (opn) {
@@ -2725,40 +2654,35 @@ static var *evaluate(node *op, var *res)
 			case F_rn:
 				R_d = (double)rand() / (double)RAND_MAX;
 				break;
-
+#if ENABLE_FEATURE_AWK_LIBM
 			case F_co:
-				if (ENABLE_FEATURE_AWK_LIBM) {
-					R_d = cos(L_d);
-					break;
-				}
-
-			case F_ex:
-				if (ENABLE_FEATURE_AWK_LIBM) {
-					R_d = exp(L_d);
-					break;
-				}
-
-			case F_lg:
-				if (ENABLE_FEATURE_AWK_LIBM) {
-					R_d = log(L_d);
-					break;
-				}
-
-			case F_si:
-				if (ENABLE_FEATURE_AWK_LIBM) {
-					R_d = sin(L_d);
-					break;
-				}
-
-			case F_sq:
-				if (ENABLE_FEATURE_AWK_LIBM) {
-					R_d = sqrt(L_d);
-					break;
-				}
-
-				syntax_error(EMSG_NO_MATH);
+				R_d = cos(L_d);
 				break;
 
+			case F_ex:
+				R_d = exp(L_d);
+				break;
+
+			case F_lg:
+				R_d = log(L_d);
+				break;
+
+			case F_si:
+				R_d = sin(L_d);
+				break;
+
+			case F_sq:
+				R_d = sqrt(L_d);
+				break;
+#else
+			case F_co:
+			case F_ex:
+			case F_lg:
+			case F_si:
+			case F_sq:
+				syntax_error(EMSG_NO_MATH);
+				break;
+#endif
 			case F_sr:
 				R_d = (double)seed;
 				seed = op1 ? (unsigned)L_d : (unsigned)time(NULL);
@@ -2785,37 +2709,26 @@ static var *evaluate(node *op, var *res)
 				if (!op1) {
 					fflush(stdout);
 				} else if (L.s && *L.s) {
-					rstream *rsm = newfile(L.s);
+					rsm = newfile(L.s);
 					fflush(rsm->F);
 				} else {
 					fflush_all();
 				}
 				break;
 
-			case F_cl: {
-				rstream *rsm;
-				int err = 0;
+			case F_cl:
+				i = 0;
 				rsm = (rstream *)hash_search(fdhash, L.s);
-				debug_printf_eval("OC_FBLTIN F_cl rsm:%p\n", rsm);
 				if (rsm) {
-					debug_printf_eval("OC_FBLTIN F_cl "
-						"rsm->is_pipe:%d, ->F:%p\n",
-						rsm->is_pipe, rsm->F);
-					/* Can be NULL if open failed. Example:
-					 * getline line <"doesnt_exist";
-					 * close("doesnt_exist"); <--- here rsm->F is NULL
-					 */
-					if (rsm->F)
-						err = rsm->is_pipe ? pclose(rsm->F) : fclose(rsm->F);
+					i = rsm->is_pipe ? pclose(rsm->F) : fclose(rsm->F);
 					free(rsm->buffer);
 					hash_remove(fdhash, L.s);
 				}
-				if (err)
+				if (i != 0)
 					setvar_i(intvar[ERRNO], errno);
-				R_d = (double)err;
+				R_d = (double)i;
 				break;
 			}
-			} /* switch */
 			setvar_i(res, R_d);
 			break;
 		}
@@ -2909,10 +2822,11 @@ static var *evaluate(node *op, var *res)
 				L_d /= R_d;
 				break;
 			case '&':
-				if (ENABLE_FEATURE_AWK_LIBM)
-					L_d = pow(L_d, R_d);
-				else
-					syntax_error(EMSG_NO_MATH);
+#if ENABLE_FEATURE_AWK_LIBM
+				L_d = pow(L_d, R_d);
+#else
+				syntax_error(EMSG_NO_MATH);
+#endif
 				break;
 			case '%':
 				if (R_d == 0)
@@ -2963,7 +2877,6 @@ static var *evaluate(node *op, var *res)
 	} /* while (op) */
 
 	nvfree(v1);
-	debug_printf_eval("returning from %s(): %p\n", __func__, res);
 	return res;
 #undef fnargs
 #undef seed
@@ -3004,21 +2917,21 @@ static int awk_exit(int r)
  * otherwise return 0 */
 static int is_assignment(const char *expr)
 {
-	char *exprc, *val, *s, *s1;
+	char *exprc, *s, *s0, *s1;
 
-	if (!isalnum_(*expr) || (val = strchr(expr, '=')) == NULL) {
+	exprc = xstrdup(expr);
+	if (!isalnum_(*exprc) || (s = strchr(exprc, '=')) == NULL) {
+		free(exprc);
 		return FALSE;
 	}
 
-	exprc = xstrdup(expr);
-	val = exprc + (val - expr);
-	*val++ = '\0';
+	*s++ = '\0';
+	s0 = s1 = s;
+	while (*s)
+		*s1++ = nextchar(&s);
 
-	s = s1 = val;
-	while ((*s1 = nextchar(&s)) != '\0')
-		s1++;
-
-	setvar_u(newvar(exprc), val);
+	*s1 = '\0';
+	setvar_u(newvar(exprc), s0);
 	free(exprc);
 	return TRUE;
 }
@@ -3029,7 +2942,7 @@ static rstream *next_input_file(void)
 #define rsm          (G.next_input_file__rsm)
 #define files_happen (G.next_input_file__files_happen)
 
-	FILE *F;
+	FILE *F = NULL;
 	const char *fname, *ind;
 
 	if (rsm.F)
@@ -3037,21 +2950,19 @@ static rstream *next_input_file(void)
 	rsm.F = NULL;
 	rsm.pos = rsm.adv = 0;
 
-	for (;;) {
+	do {
 		if (getvar_i(intvar[ARGIND])+1 >= getvar_i(intvar[ARGC])) {
 			if (files_happen)
 				return NULL;
 			fname = "-";
 			F = stdin;
-			break;
+		} else {
+			ind = getvar_s(incvar(intvar[ARGIND]));
+			fname = getvar_s(findvar(iamarray(intvar[ARGV]), ind));
+			if (fname && *fname && !is_assignment(fname))
+				F = xfopen_stdin(fname);
 		}
-		ind = getvar_s(incvar(intvar[ARGIND]));
-		fname = getvar_s(findvar(iamarray(intvar[ARGV]), ind));
-		if (fname && *fname && !is_assignment(fname)) {
-			F = xfopen_stdin(fname);
-			break;
-		}
-	}
+	} while (!F);
 
 	files_happen = TRUE;
 	setvar_s(intvar[FILENAME], fname);
@@ -3065,7 +2976,7 @@ int awk_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int awk_main(int argc, char **argv)
 {
 	unsigned opt;
-	char *opt_F;
+	char *opt_F, *opt_W;
 	llist_t *list_v = NULL;
 	llist_t *list_f = NULL;
 	int i, j;
@@ -3127,7 +3038,7 @@ int awk_main(int argc, char **argv)
 		}
 	}
 	opt_complementary = "v::f::"; /* -v and -f can occur multiple times */
-	opt = getopt32(argv, "F:v:f:W:", &opt_F, &list_v, &list_f, NULL);
+	opt = getopt32(argv, "F:v:f:W:", &opt_F, &list_v, &list_f, &opt_W);
 	argv += optind;
 	argc -= optind;
 	if (opt & 0x1)
@@ -3161,7 +3072,7 @@ int awk_main(int argc, char **argv)
 		parse_program(*argv++);
 	}
 	if (opt & 0x8) // -W
-		bb_error_msg("warning: option -W is ignored");
+		bb_error_msg("warning: unrecognized option '-W %s' ignored", opt_W);
 
 	/* fill in ARGV array */
 	setvar_i(intvar[ARGC], argc);

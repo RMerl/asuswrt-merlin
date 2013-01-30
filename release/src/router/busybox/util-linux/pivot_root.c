@@ -6,15 +6,8 @@
  * pivot_root syscall stubbed by Erik Andersen, so it will compile
  *     regardless of the kernel being used.
  *
- * Licensed under GPLv2, see file LICENSE in this source tree.
+ * Licensed under GPL version 2, see file LICENSE in this tarball for details.
  */
-
-//usage:#define pivot_root_trivial_usage
-//usage:       "NEW_ROOT PUT_OLD"
-//usage:#define pivot_root_full_usage "\n\n"
-//usage:       "Move the current root file system to PUT_OLD and make NEW_ROOT\n"
-//usage:       "the new root file system"
-
 #include "libbb.h"
 
 extern int pivot_root(const char * new_root,const char * put_old);

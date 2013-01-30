@@ -37,3 +37,16 @@ struct ext2_image_hdr {
 	__u32	offset_blockmap; /* Byte offset of the inode bitmaps */
 	__u32	offset_reserved[8];
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
