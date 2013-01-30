@@ -1,7 +1,7 @@
-/* $Id: miniupnpdpath.h,v 1.8 2011/05/20 17:51:23 nanard Exp $ */
+/* $Id: miniupnpdpath.h,v 1.5 2008/02/21 12:54:18 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2011 Thomas Bernard
+ * (c) 2006-2008 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -30,19 +30,6 @@
 #define L3F_PATH			"/L3F.xml"
 #define L3F_CONTROLURL		"/ctl/L3F"
 #define L3F_EVENTURL		"/evt/L3F"
-#endif
-
-#ifdef ENABLE_6FC_SERVICE
-#define WANIP6FC_PATH		"/WANIP6FC.xml"
-#define WANIP6FC_CONTROLURL	"/ctl/IP6FCtl"
-#define WANIP6FC_EVENTURL	"/evt/IP6FCtl"
-#endif
-
-#ifdef ENABLE_DP_SERVICE
-/* For DeviceProtection introduced in IGD v2 */
-#define DP_PATH				"/DP.xml"
-#define DP_CONTROLURL		"/ctl/DP"
-#define DP_EVENTURL			"/evt/DP"
 #endif
 
 #endif

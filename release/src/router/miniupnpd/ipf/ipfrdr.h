@@ -1,7 +1,7 @@
-/* $Id: ipfrdr.h,v 1.5 2012/03/19 21:14:13 nanard Exp $ */
+/* $Id: ipfrdr.h,v 1.3 2007/11/02 22:54:01 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2007 Thomas Bernard
+ * (c) 2006-2007 Thomas Bernard 
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 #ifndef __IPFRDR_H__
@@ -10,15 +10,15 @@
 #include "../commonrdr.h"
 
 int
-add_redirect_rule2(const char * ifname, const char * rhost, unsigned short eport,
+add_redirect_rule2(const char * ifname, unsigned short eport,
                    const char * iaddr, unsigned short iport, int proto,
-				   const char * desc, unsigned int timestamp);
+				   const char * desc);
 
 int
-add_filter_rule2(const char * ifname, const char * rhost, const char * iaddr,
+add_filter_rule2(const char * ifname, const char * iaddr,
                  unsigned short eport, unsigned short iport,
 				 int proto, const char * desc);
-
+ 
 
 /* get_redirect_rule() gets internal IP and port from
  * interface, external port and protocl

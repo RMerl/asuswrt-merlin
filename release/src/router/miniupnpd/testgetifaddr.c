@@ -1,7 +1,7 @@
-/* $Id: testgetifaddr.c,v 1.4 2012/03/05 20:36:17 nanard Exp $ */
+/* $Id: testgetifaddr.c,v 1.2 2010/04/07 16:31:21 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2011 Thomas Bernard
+ * (c) 2006-2008 Thomas Bernard 
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 #include <stdio.h>
@@ -9,7 +9,7 @@
 #include "getifaddr.h"
 
 int main(int argc, char * * argv) {
-	char addr[64];
+	char addr[16];
 	if(argc < 2) {
 		fprintf(stderr, "Usage:\t%s interface_name\n", argv[0]);
 		return 1;

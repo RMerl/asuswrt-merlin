@@ -1,7 +1,7 @@
-/* $Id: upnpglobalvars.h,v 1.33 2012/04/26 14:01:16 nanard Exp $ */
+/* $Id: upnpglobalvars.h,v 1.22 2010/09/21 15:31:01 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2010 Thomas Bernard 
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -49,7 +49,7 @@ extern int runtime_flags;
 #endif
 
 #define SETFLAG(mask)	runtime_flags |= mask
-#define GETFLAG(mask)	(runtime_flags & mask)
+#define GETFLAG(mask)	runtime_flags & mask
 #define CLEARFLAG(mask)	runtime_flags &= ~mask
 
 extern const char * pidfilename;
@@ -68,27 +68,18 @@ extern char friendly_name[];
 #define PRESENTATIONURL_MAX_LEN (64)
 extern char presentationurl[];
 
-#define FRIENDLY_NAME_MAX_LEN (64)
-extern char friendly_name[];
-
 /* UPnP permission rules : */
 extern struct upnpperm * upnppermlist;
 extern unsigned int num_upnpperm;
 
 #ifdef ENABLE_NATPMP
 /* NAT-PMP */
-#if 0
 extern unsigned int nextnatpmptoclean_timestamp;
 extern unsigned short nextnatpmptoclean_eport;
 extern unsigned short nextnatpmptoclean_proto;
 #endif
-#endif
-
-/* For automatic removal of expired rules (with LeaseDuration) */
-extern unsigned int nextruletoclean_timestamp;
 
 #ifdef USE_PF
-extern const char * anchor_name;
 /* queue and tag for PF rules */
 extern const char * queue;
 extern const char * tag;
@@ -97,9 +88,6 @@ extern const char * tag;
 #ifdef USE_NETFILTER
 extern const char * miniupnpd_nat_chain;
 extern const char * miniupnpd_forward_chain;
-#ifdef ENABLE_6FC_SERVICE
-extern const char * miniupnpd_v6_filter_chain;
-#endif
 #endif
 
 #ifdef ENABLE_NFQUEUE
@@ -107,25 +95,14 @@ extern int nfqueue;
 extern int n_nfqix;
 extern unsigned nfqix[];
 #endif
-
-/* lan addresses to listen to SSDP traffic */
-extern struct lan_addr_list lan_addrs;
-
-#ifdef ENABLE_IPV6
-/* ipv6 address used for HTTP */
-extern char ipv6_addr_for_http_with_brackets[64];
-#endif
+/* lan addresses */
+/* MAX_LAN_ADDR : maximum number of interfaces
+ * to listen to SSDP traffic */
+#define MAX_LAN_ADDR (4)
+extern int n_lan_addr;
+extern struct lan_addr_s lan_addr[];
 
 extern const char * minissdpdsocketpath;
-
-/* BOOTID.UPNP.ORG and CONFIGID.UPNP.ORG */
-extern unsigned int upnp_bootid;
-extern unsigned int upnp_configid;
-
-#ifdef ENABLE_6FC_SERVICE
-extern int ipv6fc_firewall_enabled;
-extern int ipv6fc_inbound_pinhole_allowed;
-#endif
 
 #endif
 

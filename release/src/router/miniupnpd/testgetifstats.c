@@ -1,7 +1,7 @@
-/* $Id: testgetifstats.c,v 1.5 2012/03/05 20:36:17 nanard Exp $ */
+/* $Id: testgetifstats.c,v 1.4 2007/02/07 22:14:47 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006 Thomas Bernard
+ * (c) 2006 Thomas Bernard 
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 

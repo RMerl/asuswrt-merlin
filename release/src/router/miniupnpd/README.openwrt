@@ -1,0 +1,76 @@
+MiniUPnP Daemon
+(c) 2006 Thomas Bernard
+This software is subject to the conditions detailed in
+the LICENCE file provided within the distribution.
+
+How to build and run miniupnpd for your router running openwrt.
+These instructions apply to the OpenWRT WHITE RUSSIAN (RC6) version.
+My device is a Linksys WRT54G v1, used in pppoe mode.
+More information about OpenWRT on http://openwrt.org/
+
+First make sure that openwrt white russian RC6 is up and running on your
+router device.
+
+NOTES : Makefile.openwrt has been updated, following informations could
+        be inacurate.
+        The X-Wrt team made an ipk package out of miniupnpd,
+        check the webpage : http://www.x-wrt.org/
+
+* A. COMPILATION *
+
+To Build, use your PC. I have been using the SDK but you might need
+to compile the cross compiler yourself.
+
+1. Get the SDK from http://downloads.openwrt.org/whiterussian/rc6/
+   I used http://downloads.openwrt.org/whiterussian/rc6/OpenWrt-SDK-Linux-ppc-1.tar.bz2
+   unpack somewhere and add the bin directory to your PATH environement :
+   > tar xvjf OpenWrt-SDK-Linux-i686-1.tar.bz2
+   > PATH=`pwd`/OpenWrt-SDK-Linux-i686-1/staging_dir_mipsel/bin:$PATH
+   >  mipsel-linux-gcc --version
+mipsel-linux-gcc (GCC) 3.4.4 (OpenWrt-1.0)
+[...]
+
+2. Get iptables 1.3.3 sources from http://downloads.openwrt.org/sources/iptables-1.3.3.tar.bz2
+   unpack and compile libiptc.a
+   > tar xvjf iptables-1.3.3.tar.bz2
+   > cd iptables-1.3.3/libiptc/
+   > make CC=mipsel-linux-gcc
+
+3. Go to miniupnpd directory and edit the Makefile.openwrt to make
+   IPTABLESINC and LIBS variables point to the correct directory.
+   > make -f Makefile.openwrt
+   > mipsel-linux-strip miniupnpd
+
+That's it !
+
+
+* B. INSTALLATION - USAGE *
+
+1. copy miniupnpd and scripts to the device :
+   > scp miniupnpd root@192.168.1.1:.
+   > cd linux
+   > scp iptables_init.sh iptables_flush.sh root@192.168.1.1:.
+   > scp iptables_display.sh iptables_removall.sh root@192.168.1.1:.
+
+2. log onto your router and edit the scripts in order to adapt to your
+   configuration : EXTIF variable shoud be set to your external network
+   interface. In my case it is ppp0
+
+3. init tables :
+   > ./iptables_init.sh
+
+4. run the daemon :
+   ./miniupnpd -i ppp0 -a 192.168.1.1 -p 5000 -U -d
+   -d option is a debug option to prevent the program from going to
+   background. It is usefull to see the debug messages and check if everything
+   is ok.
+
+5. Once you checked that everything is ok,
+   you can set up a script in /etc/init.d etc...
+
+   If you can build an ipkg package for miniupnpd, I'll be glad !
+
+Thomas
+contact me by email : miniupnp@free.fr
+
+

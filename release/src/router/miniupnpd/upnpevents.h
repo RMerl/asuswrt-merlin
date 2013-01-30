@@ -1,28 +1,17 @@
-/* $Id: upnpevents.h,v 1.9 2011/05/18 22:21:19 nanard Exp $ */
+/* $Id: upnpevents.h,v 1.8 2008/04/26 22:37:30 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2008-2011 Thomas Bernard
+ * (c) 2008 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
 #ifndef __UPNPEVENTS_H__
 #define __UPNPEVENTS_H__
-
-#include "config.h"
-
 #ifdef ENABLE_EVENTS
 enum subscriber_service_enum {
  EWanCFG = 1,
  EWanIPC,
-#ifdef ENABLE_L3F_SERVICE
- EL3F,
-#endif
-#ifdef ENABLE_6FC_SERVICE
- E6FC,
-#endif
-#ifdef ENABLE_DP_SERVICE
- EDP,
-#endif
+ EL3F
 };
 
 void

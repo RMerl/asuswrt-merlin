@@ -1,7 +1,7 @@
-/* $Id: upnppermissions.c,v 1.17 2012/02/15 22:43:34 nanard Exp $ */
+/* $Id: upnppermissions.c,v 1.14 2009/12/22 17:21:43 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -10,24 +10,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <syslog.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include "config.h"
 #include "upnppermissions.h"
 
-/* read_permission_line()
- * parse the a permission line which format is :
- * (deny|allow) [0-9]+(-[0-9]+) ip/mask [0-9]+(-[0-9]+)
- * ip/mask is either 192.168.1.1/24 or 192.168.1.1/255.255.255.0
- */
 int
 read_permission_line(struct upnpperm * perm,
                      char * p)
 {
 	char * q;
 	int n_bits;
-	int i;
 
 	/* first token: (allow|deny) */
 	while(isspace(*p))
@@ -46,43 +39,28 @@ read_permission_line(struct upnpperm * perm,
 	{
 		return -1;
 	}
-	while(isspace(*p))
-		p++;
 
 	/* second token: eport or eport_min-eport_max */
+	while(isspace(*p))
+		p++;
 	if(!isdigit(*p))
 		return -1;
 	for(q = p; isdigit(*q); q++);
 	if(*q=='-')
 	{
 		*q = '\0';
-		i = atoi(p);
-		if(i > 65535)
-			return -1;
-		perm->eport_min = (u_short)i;
+		perm->eport_min = (u_short)atoi(p);
 		q++;
 		p = q;
 		while(isdigit(*q))
 			q++;
 		*q = '\0';
-		i = atoi(p);
-		if(i > 65535)
-			return -1;
-		perm->eport_max = (u_short)i;
-		if(perm->eport_min > perm->eport_max)
-			return -1;
-	}
-	else if(isspace(*q))
-	{
-		*q = '\0';
-		i = atoi(p);
-		if(i > 65535)
-			return -1;
-		perm->eport_min = perm->eport_max = (u_short)i;
+		perm->eport_max = (u_short)atoi(p);
 	}
 	else
 	{
-		return -1;
+		*q = '\0';
+		perm->eport_min = perm->eport_max = (u_short)atoi(p);
 	}
 	p = q + 1;
 	while(isspace(*p))
@@ -101,37 +79,27 @@ read_permission_line(struct upnpperm * perm,
 		p = q;
 		while(isdigit(*q) || (*q == '.'))
 			q++;
-		if(*q == '.')
+		*q = '\0';
+		
+		unsigned short i, mask[4];
+		unsigned char *am = (unsigned char *) &(perm->mask.s_addr);
+		if (sscanf(p, "%3hu.%3hu.%3hu.%3hu", &mask[0], &mask[1], &mask[2], &mask[3]) == 4)
 		{
-			while(*q == '.' || isdigit(*q))
-				q++;
-			if(!isspace(*q))
-				return -1;
-			*q = '\0';
-			if(!inet_aton(p, &perm->mask))
-				return -1;
+			for (i = 0; i < 4; i++)
+				am[i] = (unsigned char) mask[i];
 		}
-		else if(!isspace(*q))
-			return -1;
 		else
 		{
-			*q = '\0';
 			n_bits = atoi(p);
-			if(n_bits > 32)
-				return -1;
-			perm->mask.s_addr = htonl(n_bits ? (0xffffffffu << (32 - n_bits)) : 0);
+			perm->mask.s_addr = htonl(n_bits ? (0xffffffff << (32 - n_bits)) : 0);
 		}
 	}
-	else if(isspace(*q))
+	else
 	{
 		*q = '\0';
 		if(!inet_aton(p, &perm->address))
 			return -1;
-		perm->mask.s_addr = 0xffffffffu;
-	}
-	else
-	{
-		return -1;
+		perm->mask.s_addr = 0xffffffff;
 	}
 	p = q + 1;
 
@@ -144,33 +112,18 @@ read_permission_line(struct upnpperm * perm,
 	if(*q=='-')
 	{
 		*q = '\0';
-		i = atoi(p);
-		if(i > 65535)
-			return -1;
-		perm->iport_min = (u_short)i;
+		perm->iport_min = (u_short)atoi(p);
 		q++;
 		p = q;
 		while(isdigit(*q))
 			q++;
 		*q = '\0';
-		i = atoi(p);
-		if(i > 65535)
-			return -1;
-		perm->iport_max = (u_short)i;
-		if(perm->iport_min > perm->iport_max)
-			return -1;
-	}
-	else if(isspace(*q) || *q == '\0')
-	{
-		*q = '\0';
-		i = atoi(p);
-		if(i > 65535)
-			return -1;
-		perm->iport_min = perm->iport_max = (u_short)i;
+		perm->iport_max = (u_short)atoi(p);
 	}
 	else
 	{
-		return -1;
+		*q = '\0';
+		perm->iport_min = perm->iport_max = (u_short)atoi(p);
 	}
 #ifdef DEBUG
 	printf("perm rule added : %s %hu-%hu %08x/%08x %hu-%hu\n",
