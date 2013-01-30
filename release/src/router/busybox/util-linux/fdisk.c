@@ -4,7 +4,7 @@
  * Copyright (C) 1992  A. V. Le Blanc (LeBlanc@mcc.ac.uk)
  * Copyright (C) 2001,2002 Vladimir Oleynik <dzo@simtreas.ru> (initial bb port)
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #ifndef _LARGEFILE64_SOURCE
@@ -107,12 +107,30 @@ struct partition {
 	unsigned char size4[4];         /* nr of sectors in partition */
 } PACKED;
 
+/*
+ * per partition table entry data
+ *
+ * The four primary partitions have the same sectorbuffer (MBRbuffer)
+ * and have NULL ext_pointer.
+ * Each logical partition table entry has two pointers, one for the
+ * partition and one link to the next one.
+ */
+struct pte {
+	struct partition *part_table;   /* points into sectorbuffer */
+	struct partition *ext_pointer;  /* points into sectorbuffer */
+	sector_t offset_from_dev_start; /* disk sector number */
+	char *sectorbuffer;             /* disk sector contents */
+#if ENABLE_FEATURE_FDISK_WRITABLE
+	char changed;                   /* boolean */
+#endif
+};
+
 #define unable_to_open "can't open '%s'"
 #define unable_to_read "can't read from %s"
 #define unable_to_seek "can't seek on %s"
 
 enum label_type {
-	LABEL_DOS, LABEL_SUN, LABEL_SGI, LABEL_AIX, LABEL_OSF
+	LABEL_DOS, LABEL_SUN, LABEL_SGI, LABEL_AIX, LABEL_OSF, LABEL_GPT
 };
 
 #define LABEL_IS_DOS	(LABEL_DOS == current_label_type)
@@ -149,6 +167,14 @@ enum label_type {
 #define STATIC_OSF extern
 #endif
 
+#if ENABLE_FEATURE_GPT_LABEL
+#define LABEL_IS_GPT	(LABEL_GPT == current_label_type)
+#define STATIC_GPT static
+#else
+#define LABEL_IS_GPT	0
+#define STATIC_GPT extern
+#endif
+
 enum action { OPEN_MAIN, TRY_ONLY, CREATE_EMPTY_DOS, CREATE_EMPTY_SUN };
 
 static void update_units(void);
@@ -162,6 +188,7 @@ static sector_t read_int(sector_t low, sector_t dflt, sector_t high, sector_t ba
 #endif
 static const char *partition_type(unsigned char type);
 static void get_geometry(void);
+static void read_pte(struct pte *pe, sector_t offset);
 #if ENABLE_FEATURE_SUN_LABEL || ENABLE_FEATURE_FDISK_WRITABLE
 static int get_boot(enum action what);
 #else
@@ -173,24 +200,6 @@ static int get_boot(void);
 
 static sector_t get_start_sect(const struct partition *p);
 static sector_t get_nr_sects(const struct partition *p);
-
-/*
- * per partition table entry data
- *
- * The four primary partitions have the same sectorbuffer (MBRbuffer)
- * and have NULL ext_pointer.
- * Each logical partition table entry has two pointers, one for the
- * partition and one link to the next one.
- */
-struct pte {
-	struct partition *part_table;   /* points into sectorbuffer */
-	struct partition *ext_pointer;  /* points into sectorbuffer */
-	sector_t offset_from_dev_start; /* disk sector number */
-	char *sectorbuffer;             /* disk sector contents */
-#if ENABLE_FEATURE_FDISK_WRITABLE
-	char changed;                   /* boolean */
-#endif
-};
 
 /* DOS partition types */
 
@@ -394,7 +403,7 @@ static sector_t bb_BLKGETSIZE_sectors(int fd)
 
 	if (ioctl(fd, BLKGETSIZE64, &v64) == 0) {
 		/* Got bytes, convert to 512 byte sectors */
-		v64 >>= 9;
+                v64 /= sector_size;
 		if (v64 != (sector_t)v64) {
  ret_trunc:
 			/* Not only DOS, but all other partition tables
@@ -653,6 +662,9 @@ STATIC_OSF void bsd_select(void);
 STATIC_OSF void xbsd_print_disklabel(int);
 #include "fdisk_osf.c"
 
+STATIC_GPT void gpt_list_table(int xtra);
+#include "fdisk_gpt.c"
+
 #if ENABLE_FEATURE_SGI_LABEL || ENABLE_FEATURE_SUN_LABEL
 static uint16_t
 fdisk_swap16(uint16_t x)
@@ -831,6 +843,11 @@ menu(void)
 		puts("w\twrite table to disk and exit");
 	} else if (LABEL_IS_AIX) {
 		puts("o\tcreate a new empty DOS partition table");
+		puts("q\tquit without saving changes");
+		puts("s\tcreate a new empty Sun disklabel");  /* sun */
+	} else if (LABEL_IS_GPT) {
+		puts("o\tcreate a new empty DOS partition table");
+		puts("p\tprint the partition table");
 		puts("q\tquit without saving changes");
 		puts("s\tcreate a new empty Sun disklabel");  /* sun */
 	} else {
@@ -1308,7 +1325,18 @@ get_geometry(void)
 
 /*
  * Opens disk_device and optionally reads MBR.
- *    FIXME: document what each 'what' value will do!
+ *    If what == OPEN_MAIN:
+ *      Open device, read MBR.  Abort program on short read.  Create empty
+ *      disklabel if the on-disk structure is invalid (WRITABLE mode).
+ *    If what == TRY_ONLY:
+ *      Open device, read MBR.  Return an error if anything is out of place.
+ *      Do not create an empty disklabel.  This is used for the "list"
+ *      operations: "fdisk -l /dev/sda" and "fdisk -l" (all devices).
+ *    If what == CREATE_EMPTY_*:
+ *      This means that get_boot() was called recursively from create_*label().
+ *      Do not re-open the device; just set up the ptes array and print
+ *      geometry warnings.
+ *
  * Returns:
  *   -1: no 0xaa55 flag present (possibly entire disk BSD)
  *    0: found or created label
@@ -1390,6 +1418,10 @@ static int get_boot(void)
 	if (check_aix_label())
 		return 0;
 #endif
+#if ENABLE_FEATURE_GPT_LABEL
+	if (check_gpt_label())
+		return 0;
+#endif
 #if ENABLE_FEATURE_OSF_LABEL
 	if (check_osf_label()) {
 		possibly_osf_label = 1;
@@ -1409,7 +1441,7 @@ static int get_boot(void)
 	if (!valid_part_table_flag(MBRbuffer)) {
 		if (what == OPEN_MAIN) {
 			printf("Device contains neither a valid DOS "
-				  "partition table, nor Sun, SGI or OSF "
+				  "partition table, nor Sun, SGI, OSF or GPT "
 				  "disklabel\n");
 #ifdef __sparc__
 			IF_FEATURE_SUN_LABEL(create_sunlabel();)
@@ -1886,7 +1918,7 @@ check_consistency(const struct partition *p, int partition)
 static void
 list_disk_geometry(void)
 {
-	ullong bytes = ((ullong)total_number_of_sectors << 9);
+    ullong bytes = ((ullong)total_number_of_sectors * sector_size);
 	long megabytes = bytes / 1000000;
 
 	if (megabytes < 10000)
@@ -1899,7 +1931,7 @@ list_disk_geometry(void)
 		   g_heads, g_sectors, g_cylinders);
 	if (units_per_sector == 1)
 		printf(", total %"SECT_FMT"u sectors",
-			total_number_of_sectors / (sector_size/512));
+                       total_number_of_sectors);
 	printf("\nUnits = %s of %u * %u = %u bytes\n\n",
 		str_units(PLURAL),
 		units_per_sector, sector_size, units_per_sector * sector_size);
@@ -2043,7 +2075,6 @@ fix_partition_table_order(void)
 		fix_chain_of_logicals();
 
 	printf("Done.\n");
-
 }
 #endif
 
@@ -2057,8 +2088,12 @@ list_table(int xtra)
 		sun_list_table(xtra);
 		return;
 	}
-	if (LABEL_IS_SUN) {
+	if (LABEL_IS_SGI) {
 		sgi_list_table(xtra);
+		return;
+	}
+	if (LABEL_IS_GPT) {
+		gpt_list_table(xtra);
 		return;
 	}
 

@@ -1529,8 +1529,10 @@ void md5_begin(md5_ctx_t *ctx) FAST_FUNC;
 void md5_hash(const void *data, size_t length, md5_ctx_t *ctx) FAST_FUNC;
 void md5_end(void *resbuf, md5_ctx_t *ctx) FAST_FUNC;
 
-
+extern uint32_t *global_crc32_table;
 uint32_t *crc32_filltable(uint32_t *tbl256, int endian) FAST_FUNC;
+uint32_t crc32_block_endian1(uint32_t val, const void *buf, unsigned len, uint32_t *crc_table) FAST_FUNC;
+uint32_t crc32_block_endian0(uint32_t val, const void *buf, unsigned len, uint32_t *crc_table) FAST_FUNC;
 
 typedef struct masks_labels_t {
 	const char *labels;

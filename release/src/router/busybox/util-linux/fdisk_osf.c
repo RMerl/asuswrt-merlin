@@ -46,7 +46,8 @@
 #if defined(i386) || defined(__sparc__) || defined(__arm__) \
  || defined(__m68k__) || defined(__mips__) || defined(__s390__) \
  || defined(__s390__) || defined(__s390x__) \
- || defined(__sh__) || defined(__x86_64__) || defined(__avr32__)
+ || defined(__sh__) || defined(__x86_64__) || defined(__avr32__) \
+ || defined(__nds32__)
 # define BSD_LABELSECTOR   1
 # define BSD_LABELOFFSET   0
 #elif defined(__alpha__) || defined(__powerpc__) || defined(__ia64__) \
