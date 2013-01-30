@@ -1,7 +1,7 @@
-/* $Id: upnphttp.h,v 1.20 2009/09/04 16:35:13 nanard Exp $ */ 
+/* $Id: upnphttp.h,v 1.30 2012/04/25 22:26:05 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2009 Thomas Bernard 
+ * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -13,8 +13,16 @@
 
 #include "config.h"
 
+#if 0
+/* according to "UPnP Device Architecture 1.0" */
+#define UPNP_VERSION_STRING "UPnP/1.0"
+#else
+/* according to "UPnP Device Architecture 1.1" */
+#define UPNP_VERSION_STRING "UPnP/1.1"
+#endif
+
 /* server: HTTP header returned in all HTTP responses : */
-#define MINIUPNPD_SERVER_STRING	OS_VERSION " UPnP/1.0 MiniUPnPd/1.4"
+#define MINIUPNPD_SERVER_STRING	OS_VERSION " " UPNP_VERSION_STRING " MiniUPnPd/" MINIUPNPD_VERSION
 
 /*
  states :
@@ -23,6 +31,13 @@
   ...
   >= 100 - to be deleted
 */
+enum httpStates {
+	EWaitingForHttpRequest = 0,
+	EWaitingForHttpContent,
+	ESendingAndClosing,
+	EToDelete = 100
+};
+
 enum httpCommands {
 	EUnknown = 0,
 	EGet,
@@ -34,7 +49,11 @@ enum httpCommands {
 struct upnphttp {
 	int socket;
 	struct in_addr clientaddr;	/* client address */
-	int state;
+#ifdef ENABLE_IPV6
+	int ipv6;
+	struct in6_addr clientaddr_v6;
+#endif
+	enum httpStates state;
 	char HttpVer[16];
 	/* request */
 	char * req_buf;
@@ -42,28 +61,31 @@ struct upnphttp {
 	int req_contentlen;
 	int req_contentoff;     /* header length */
 	enum httpCommands req_command;
-	const char * req_soapAction;
+	int req_soapActionOff;
 	int req_soapActionLen;
 #ifdef ENABLE_EVENTS
-	const char * req_Callback;	/* For SUBSCRIBE */
+	int req_CallbackOff;	/* For SUBSCRIBE */
 	int req_CallbackLen;
 	int req_Timeout;
-	const char * req_SID;		/* For UNSUBSCRIBE */
+	int req_SIDOff;		/* For UNSUBSCRIBE */
 	int req_SIDLen;
+	const char * res_SID;
 #endif
-	int respflags;
+	int respflags;				/* see FLAG_* constants below */
 	/* response */
 	char * res_buf;
 	int res_buflen;
+	int res_sent;
 	int res_buf_alloclen;
-	/*int res_contentlen;*/
-	/*int res_contentoff;*/		/* header length */
 	LIST_ENTRY(upnphttp) entries;
 };
 
+/* Include the "Timeout:" header in response */
 #define FLAG_TIMEOUT	0x01
+/* Include the "SID:" header in response */
 #define FLAG_SID		0x02
 
+/* If set, the Content-Type is set to text/xml, otherwise it is text/xml */
 #define FLAG_HTML		0x80
 
 /* New_upnphttp() */
@@ -90,7 +112,7 @@ BuildHeader_upnphttp(struct upnphttp * h, int respcode,
                      const char * respmsg,
                      int bodylen);
 
-/* BuildResp_upnphttp() 
+/* BuildResp_upnphttp()
  * fill the res_buf buffer with the complete
  * HTTP 200 OK response from the body passed as argument */
 void
@@ -103,9 +125,9 @@ BuildResp2_upnphttp(struct upnphttp * h, int respcode,
                     const char * respmsg,
                     const char * body, int bodylen);
 
-/* SendResp_upnphttp() */
+/* SendRespAndClose_upnphttp() */
 void
-SendResp_upnphttp(struct upnphttp *);
+SendRespAndClose_upnphttp(struct upnphttp *);
 
 #endif
 

@@ -14,7 +14,7 @@
 
 #include "../getifstats.h"
 
-int 
+int
 getifstats(const char * ifname, struct ifdata * data)
 {
 	char buffer[64], *s;

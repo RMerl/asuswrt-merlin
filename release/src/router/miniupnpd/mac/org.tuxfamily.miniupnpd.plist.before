@@ -7,8 +7,8 @@
 	<string>org.tuxfamily.miniupnpd</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/usr/sbin/miniupnpd</string>
-		<string>-f /etc/miniupnpd/miniupnpd.conf</string>
+		<string>INSTALLPREFIX/sbin/miniupnpd</string>
+		<string>-f INSTALLPREFIX/etc/miniupnpd/miniupnpd.conf</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>

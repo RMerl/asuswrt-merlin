@@ -1,4 +1,276 @@
-$Id: Changelog.txt,v 1.198 2010/09/21 15:31:02 nanard Exp $
+$Id: Changelog.txt,v 1.286 2012/05/27 22:35:10 nanard Exp $
+
+VERSION 1.7 : released the 2012/05/28
+
+2012/05/28:
+  clean linux/ifacewatcher.c
+  set natpmp socket non blocking
+
+2012/05/24:
+  More solaris fixes
+
+2012/05/21:
+  Clean signal handling
+
+2012/05/08:
+  Clean expired IPv6 pinholes correctly. and also with linux/netfilter.
+
+2012/05/07:
+  Finalizing netfilter version of get_pinhole_info()
+
+2012/05/01:
+  Move IPv6FirewallControl related code from upnpredirect.c to upnppinhole.c
+  Add netfilter implementation for
+    delete_pinhole()/update_pinhole()/get_pinhole_info()
+
+2012/04/30:
+  Clean up settings of CFLAGS in Makefile's
+  Remove Warnings caused by signed/unsigned integer comparaisons
+  Also fix a couple of integer/pointer comparaisons.
+  Add UNUSED(arg) macro to remove unused argument warning.
+  Fix error handling in upnpevents.c (was causing segfault on Solaris !)
+
+2012/04/26:
+  Started to implement add_pinhole() for netfilter (linux)
+
+2012/04/25:
+  Fixed a bug in upnphttp that happened when POST is received in several
+  recv() calls and realloc() is called so the buffer used is moved.
+
+2012/04/23:
+  Implement CheckPinholeWorking GetPinholePackets. WANIPv6FirewallControl
+  UpdatePinhole still to be done. And also netfilter/ipf/ipfw versions
+
+2012/04/20:
+  Enough WANIPv6FirewallControl is implemented on pf so that AddPinhole() and
+    DeletePinhole() works !
+
+2012/04/19:
+  First working experiment of IPv6 "pinhole" with pf
+
+2012/04/15:
+  More C++ => ANSI C comments to compile with -ansi option
+  Add command line arguments to genconfig.sh config script.
+
+2012/04/12:
+  Set TTL on SSDP Notify sockets (IPv4). TTL is set to 2 (recommendation from
+    UPnP Device Architecture v1.1)
+
+2012/04/06:
+  Implementing IPv6 support :
+    Send SSDP NOTIFY ssdp:alive and ssdp:goodbye messages in IPv6.
+  Use UPnP/1.1 in SERVER: string as required in UPnP Device architecture 1.1.
+  Allow LAN interface to be given as interface names, instead of interface
+    IP addresses. It will allow IPv6 operations.
+  fix linux/getifstats.c when bitrate is unknown
+
+2012/03/31:
+  Only remove pidfile if one was written in the first place.
+
+2012/03/19:
+  Fix ipfilter support (thanks dhowland https://github.com/dhowland)
+
+2012/03/14:
+  Changes to miniupnpd.init.d.script by Shawn Landden
+
+2012/03/05:
+  fixed reload_from_lease_file().
+
+2012/02/15:
+  Change parselanaddr() function to allow 192.168.1.1/255.255.255.0 in
+    configuration file.
+  Change read_permission_line() to allow 192.168.1.1/255.255.255.0 in
+    permission line (in configuration file).
+
+2012/02/12:
+  More syntax checks in upnppermissions.c
+
+2012/02/11:
+  Fix ipfw/Mac OS X specific source files to compile ok with -ansi flag
+
+2012/02/09:
+  Make HTTP listen socket non blocking (so accept() can't block)
+  Make SSDP receive sockets non blocking
+  use sockaddr_to_string() in SendSSDPAnnonce2 to handle IPv6 addresses
+
+2012/02/06:
+  Make HTTP (SOAP) sockets non blocking.
+
+2012/02/05:
+  Compile ok with -ansi flag.
+  Save a few bytes in options.c using a string repository, instead of a fixed size
+    buffer for each option value.
+
+2012/02/04:
+  Added friendly_name= option to config file
+
+2012/02/03:
+  Anchor name (PF) is now configurable through the config file with anchor=
+  Added test of presence of /lib/libip4tc.so and /lib/libip6tc.so files in
+    Makefile.linux in order to add -lip4tc and -lip6tc to LIBS accordingly.
+
+2012/02/01:
+  always handle EAGAIN, EWOULDBLOCK and EINTR after recv()/recvfrom() calls
+
+2012/01/20:
+  Always #include <netinet/in.h> before #include <arpa/inet.h> (for OpenBSD)
+  .onrdomain field was added in pf with OpenBSD 5.0. Add PFRULE_HAS_ONRDOMAIN
+
+2012/01/02:
+  Fixing netfilter/iptables_*.sh scripts for new ifconfig output format.
+  getifaddr.c: added additional checks on structure returned by getifaddrs()
+  Fixing Mac OS X makefile for installation
+
+2011/11/18:
+  avoid infinite loop in SendResp_upnphttp() in case of error
+  Replaced SendResp_upnphttp() + CloseSocket_upnphttp() by
+    SendRespAndClose_upnphttp()
+  Tomato specifics in genconfig.sh
+
+2011/07/30:
+  netfilter : Added a tiny_nf_nat.h file to compile with iptables
+    installed headers.
+    include xtables.h instead of iptables.h
+
+VERSION 1.6 : released the 2011/07/25
+
+2011/07/25:
+  Update doc for version 1.6
+
+2011/07/15:
+  Fixing code with MULTIPLE_EXTERNAL_IP defined.
+
+2011/06/27:
+  IPv6 support for UPnP events.
+  Security checks in UPnP events.
+
+2011/06/22:
+  Remote host for GetListOfPortMappings
+  Remote host support for ipfw (tested on Mac OS X)
+
+2011/06/20:
+  support for iptables-1.4.11.1
+
+2011/06/18:
+  Remote host support for pf version
+
+2011/06/04:
+  Supporting RemoteHost (mandatory in IGD v2)
+
+2011/06/03:
+  Enabling events by default
+
+2011/06/01:
+  Fixing Timeout missing in SUBSCRIBE renewal responses
+  (thanks to Pranesh Kulkarni)
+  Added comments about changes between IGD v1 and IGD v2
+
+2011/05/28:
+  Description and leaseduration kept in ipfw version of the code.
+  Fixing ipfw code after testing under Mac OS X 10.6.7 (darwin 10.7.0)
+
+2011/05/27:
+  Finishing and testing LeaseDuration support under OpenBSD.
+  Changing NAT-PMP port mapping lifetime support to match
+  lease duration support.
+  NAT-PMP address change announce broadcasted to both port
+  5350 and 5351 to be compatible with client following the
+  version of NAT PMP specification from 2008 or earlier.
+  writepidfile() Overwrite file if already existing
+
+2011/05/26:
+  fix in linux/getifstats.c.
+  See http://miniupnp.tuxfamily.org/forum/viewtopic.php?p=2212
+  Implementation of LeaseDuration support.
+
+2011/05/23:
+  added get_wan_connection_status_str()
+
+2011/05/20:
+  adding ifacewatcher thanks to Alexey Osipov
+  GET /DP.xml is now available. The description has to be completed.
+
+2011/05/19:
+  Add getconnstatus.c/.h. Dont always have ConnectionStatus to "Connected"
+  Events for WANIPv6FirewallControll
+
+2011/05/16:
+  patches for gentoo linux.
+  generation of the DeviceProtection service description.
+
+2011/05/15:
+  Making the SSDP receiving socket work in IPv6 !
+
+2011/05/14:
+  Support for HTTP in both IPv6 and IPv4.
+  IPv6 for SSDP receiving socket.
+
+2011/05/13:
+  add new options in genconfig.sh (IGD_V2, ENABLE_DP_SERVICE)
+  add global vars ipv6fc_firewall_enabled and ipv6fc_inbound_pinhole_allowed
+  have MACROS for magical values in upnpdescgen.c, add eventing vars for WanIPv6FirewallControl.
+  applied 0001-Cosmetic-changes.patch(see http://miniupnp.tuxfamily.org/forum/viewtopic.php?t=764)
+  applied 0002-Remove-lan-addresses-limit-by-changing-storage-type-.patch
+  replaced some of the urn:schemas-upnp-org:device:* literal strings by macros.
+  adding some support for IP v6. #define ENABLE_IPV6
+  added -fno-strict-aliasing to compile options.
+
+2011/05/09:
+  updating upnp descriptions for IGDv2
+
+2011/05/07:
+  Adding WANIPv6FirewallContro to upnp description
+
+2011/04/30:
+  adding a UPNP_STRICT config macro. Use it now for checking RemoteHost.
+  ENABLE_6FC_SERVICE : add the implementations of WANIPv6FirewallControl actions
+
+2011/04/11:
+  preparing getifaddr() for IP v6
+  preparing SSDP stuff for IP v6. Trying to conform to UDA v1.1
+
+2011/03/09:
+  Some modifications thanks to Daniel Dickinson to improve OpenWRT
+  build.
+  Fixed some warnings.
+
+2011/03/03:
+  Added code to generate devices/services descriptions for IGD v2
+  (to be continued)
+
+2011/03/02:
+  improved netfilter/delete_redirect_and_filter_rules() in order
+  to remove the right filter rule, even if it has another index than
+  the nat rule.
+
+2011/03/01:
+  clean up an fixes to make netfilter/testiptcrdr compile
+
+2011/02/21:
+  Make "Makefile" work under Mac OS X with bsdmake.
+  added get_portmappings_in_range() in ipfwrdr.c
+
+2011/02/07:
+  added get_portmappings_in_range() / upnp_get_portmappings_in_range()
+
+2011/02/06:
+  Implementation of GetListOfPortMappings
+
+2011/01/27:
+  Reverting "fixes" done in linux/iptables code the 2010/09/27.
+  see http://miniupnp.tuxfamily.org/forum/viewtopic.php?t=741
+
+2011/01/04:
+  added MINIUPNPD_VERSION in config.h. Taken from VERSION file.
+
+VERSION 1.5 : released the 2011/01/01
+
+2011/01/01:
+  Started to implement some of the new methods from WANIPConnection v2
+
+2010/09/27:
+  Some fixes in the linux/iptables code when
+  miniupnpd_nat_chain <> miniupnpd_forward_chain
 
 2010/09/21:
   Patch to support nfqueue thanks to Colin McFarlane
@@ -88,7 +360,7 @@ VERSION 1.3 :
   work to support iptables-1.4.3 and up
 
 2009/04/10:
-  fix in upnpevents_removeSubscriber() 
+  fix in upnpevents_removeSubscriber()
 
 2009/02/14:
   added reload_from_lease_file()
@@ -100,7 +372,7 @@ VERSION 1.3 :
 
 2009/01/29:
   Some minor changes to Makefile
-  improving Makefile.linux in order to build with iptables not properly 
+  improving Makefile.linux in order to build with iptables not properly
   installed on the system.
 
 2009/01/23:
@@ -131,7 +403,7 @@ VERSION 1.2 :
 2008/10/01:
   Improvements in genconfig.sh for detecting ipf or pf (under FreeBSD)
   and improve debian/ubuntu stuff.
-  custom chain name patch from : 
+  custom chain name patch from :
     http://miniupnp.tuxfamily.org/forum/viewtopic.php?t=493
 
 2008/08/24:
@@ -179,7 +451,7 @@ VERSION 1.1 :
   fixed a small bug in the description
 
 2008/03/03:
-  Fixed miniupnpd.c for compiling without natpmp support 
+  Fixed miniupnpd.c for compiling without natpmp support
   fixed presentationURL not there with L3F
   fixing lease file creation/modification
 
@@ -447,7 +719,7 @@ VERSION 1.0 :
   minixml updated. should have no impact
   Added support for presentationURL with -w switch
   implemented getifstats() for linux. Added testgetifstats program
-  improved error handling in getifstats() BSD 
+  improved error handling in getifstats() BSD
 
 2006/11/26:
   no need to have miniupnpc sources to compile miniupnpd.
@@ -564,7 +836,7 @@ VERSION 1.0 :
   filtering SSDP requests and responding with same ST: field
 
 2006/07/25:
-  Added a dummy description for the WANDevice 
+  Added a dummy description for the WANDevice
 
 2006/07/20:
   Command line arguments processing

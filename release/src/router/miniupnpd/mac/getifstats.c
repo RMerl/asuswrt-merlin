@@ -1,7 +1,8 @@
+/* $Id: getifstats.c,v 1.7 2012/03/05 20:36:20 nanard Exp $ */
 /*
  * MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2009 Jarder Weyrich
+ * (c) 2009 Jardel Weyrich
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution
  */
@@ -25,9 +26,9 @@ int getifstats(const char * ifname, struct ifdata * data) {
 	int mib[] = { CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_IFLIST, if_nametoindex(ifname) };
 	const size_t mib_len = sizeof(mib) / sizeof(mib[0]);
 	size_t needed;
-	char *buf, *end;
+	char *buf, *end, *p;
 	struct if_msghdr *ifm;
-	struct if_data ifdata;	
+	struct if_data ifdata;
 #ifdef ENABLE_GETIFSTATS_CACHING
 	static time_t cache_timestamp = 0;
 	static struct ifdata cache_data;
@@ -35,7 +36,7 @@ int getifstats(const char * ifname, struct ifdata * data) {
 #endif
 
 	if (data == NULL || ifname == NULL || ifname[0] == '\0')
-		return -1; // error
+		return -1; /* error */
 
 	data->baudrate = 4200000;
 	data->opackets = 0;
@@ -61,14 +62,14 @@ int getifstats(const char * ifname, struct ifdata * data) {
 	}
 	buf = (char *) malloc(needed);
 	if (buf == NULL)
-		return -1; // error
+		return -1; /* error */
 	if (sysctl(mib, mib_len, buf, &needed, NULL, 0) == -1) {
 		syslog(LOG_ERR, "sysctl(): %m");
 		free(buf);
-		return -1; // error
+		return -1; /* error */
 	} else {
-		for (end = buf + needed; buf < end; buf += ifm->ifm_msglen) {
-			ifm = (struct if_msghdr *) buf;
+		for (end = buf + needed, p = buf; p < end; p += ifm->ifm_msglen) {
+			ifm = (struct if_msghdr *) p;
 			if (ifm->ifm_type == RTM_IFINFO && ifm->ifm_data.ifi_type == IFT_ETHER) {
 				ifdata = ifm->ifm_data;
 				data->opackets = ifdata.ifi_opackets;
@@ -83,11 +84,11 @@ int getifstats(const char * ifname, struct ifdata * data) {
 					memcpy(&cache_data, data, sizeof(struct ifdata));
 				}
 #endif
-				return 0; // found, ok
+				return 0; /* found, ok */
 			}
-		}		
+		}
 	}
 	free(buf);
-	return -1; // not found or error
+	return -1; /* not found or error */
 }
 

@@ -1,7 +1,7 @@
-/* $Id: miniupnpdctl.c,v 1.8 2010/02/15 10:19:46 nanard Exp $ */
+/* $Id: miniupnpdctl.c,v 1.10 2012/04/30 21:08:00 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006 Thomas Bernard
+ * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -13,6 +13,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <signal.h>
+
+#include "macros.h"
 
 #if 0
 static void sighandler(int sig)
@@ -30,8 +32,10 @@ main(int argc, char * * argv)
 	int l;
 	int s;
 	struct sockaddr_un addr;
+	UNUSED(argc);
+	UNUSED(argv);
 
-//	signal(SIGINT, sighandler);
+	/*signal(SIGINT, sighandler);*/
 	s = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(s<0)
 	{

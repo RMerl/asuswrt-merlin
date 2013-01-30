@@ -1,7 +1,7 @@
-/* $Id: getifstats.c,v 1.7 2010/02/15 10:11:34 nanard Exp $ */
+/* $Id: getifstats.c,v 1.11 2012/04/06 15:26:45 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006,2007 Thomas Bernard 
+ * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -11,8 +11,8 @@
 #include <string.h>
 #include <time.h>
 
-#include "../getifstats.h"
 #include "../config.h"
+#include "../getifstats.h"
 
 int
 getifstats(const char * ifname, struct ifdata * data)
@@ -22,6 +22,7 @@ getifstats(const char * ifname, struct ifdata * data)
 	char * p;
 	int i;
 	int r = -1;
+	char fname[64];
 #ifdef ENABLE_GETIFSTATS_CACHING
 	static time_t cache_timestamp = 0;
 	static struct ifdata cache_data;
@@ -29,7 +30,7 @@ getifstats(const char * ifname, struct ifdata * data)
 #endif
 	if(!data)
 		return -1;
-	data->baudrate = 4200000;
+	data->baudrate = 4200000;	/* that is the answer */
 	data->opackets = 0;
 	data->ipackets = 0;
 	data->obytes = 0;
@@ -42,6 +43,7 @@ getifstats(const char * ifname, struct ifdata * data)
 		syslog(LOG_ERR, "getifstats() : time() error : %m");
 	} else {
 		if(current_time < cache_timestamp + GETIFSTATS_CACHING_DURATION) {
+			/* return cached data */
 			memcpy(data, &cache_data, sizeof(struct ifdata));
 			return 0;
 		}
@@ -84,8 +86,22 @@ getifstats(const char * ifname, struct ifdata * data)
 		break;
 	}
 	fclose(f);
+	/* get interface speed */
+	snprintf(fname, sizeof(fname), "/sys/class/net/%s/speed", ifname);
+	f = fopen(fname, "r");
+	if(f) {
+		if(fgets(line, sizeof(line), f)) {
+			i = atoi(line);	/* 65535 means unknown */
+			if(i > 0 && i < 65535)
+				data->baudrate = 1000000*i;
+		}
+		fclose(f);
+	} else {
+		syslog(LOG_WARNING, "cannot read %s file : %m", fname);
+	}
 #ifdef ENABLE_GETIFSTATS_CACHING
 	if(r==0 && current_time!=((time_t)-1)) {
+		/* cache the new data */
 		cache_timestamp = current_time;
 		memcpy(&cache_data, data, sizeof(struct ifdata));
 	}

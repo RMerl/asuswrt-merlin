@@ -1,7 +1,7 @@
-/* $Id: daemonize.c,v 1.11 2008/01/29 13:04:45 nanard Exp $ */
+/* $Id: daemonize.c,v 1.13 2012/03/05 20:36:15 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006 Thomas Bernard 
+ * (c) 2006 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -31,7 +31,7 @@ daemonize(void)
 	case -1:
 		perror("fork()");
 		exit(1);
-	
+
 	/* child process */
 	case 0:
 		/* obtain a new process group */
@@ -42,14 +42,14 @@ daemonize(void)
 		}
 
 		/* close all descriptors */
-		for (i=getdtablesize();i>=0;--i) close(i);		
+		for (i=getdtablesize();i>=0;--i) close(i);
 
-		i = open("/dev/null",O_RDWR); /* open stdin */
+		i = open("/dev/null", O_RDWR); /* open stdin */
 		dup(i); /* stdout */
 		dup(i); /* stderr */
 
 		umask(027);
-		chdir("/"); /* chdir to /tmp ? */			
+		chdir("/"); /* chdir to /tmp ? */
 
 		return pid;
 
@@ -69,8 +69,8 @@ writepidfile(const char * fname, int pid)
 
 	if(!fname || (strlen(fname) == 0))
 		return -1;
-	
-	if( (pidfile = open(fname, O_WRONLY|O_CREAT|O_EXCL, 0666)) < 0)
+
+	if( (pidfile = open(fname, O_WRONLY|O_CREAT, 0644)) < 0)
 	{
 		syslog(LOG_ERR, "Unable to open pidfile for writing %s: %m", fname);
 		return -1;
@@ -79,7 +79,7 @@ writepidfile(const char * fname, int pid)
 	pidstringlen = snprintf(pidstring, sizeof(pidstring), "%d\n", pid);
 	if(pidstringlen <= 0)
 	{
-		syslog(LOG_ERR, 
+		syslog(LOG_ERR,
 			"Unable to write to pidfile %s: snprintf(): FAILED", fname);
 		close(pidfile);
 		return -1;
@@ -107,9 +107,9 @@ checkforrunning(const char * fname)
 
 	if( (pidfile = open(fname, O_RDONLY)) < 0)
 		return 0;
-	
+
 	memset(buffer, 0, 64);
-	
+
 	if(read(pidfile, buffer, 63))
 	{
 		if( (pid = atol(buffer)) > 0)
@@ -121,9 +121,9 @@ checkforrunning(const char * fname)
 			}
 		}
 	}
-	
+
 	close(pidfile);
-	
+
 	return 0;
 }
 

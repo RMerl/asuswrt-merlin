@@ -1,4 +1,4 @@
-/* $Id: upnppermissions.h,v 1.7 2007/02/28 18:13:18 nanard Exp $ */
+/* $Id: upnppermissions.h,v 1.8 2012/03/05 20:36:18 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006 Thomas Bernard
@@ -29,14 +29,14 @@ struct upnpperm {
  *          -1 error reading line
  *
  * line sample :
- *  allow 1024-65535 192.168.3.0/24 1024-65535 
+ *  allow 1024-65535 192.168.3.0/24 1024-65535
  *  allow 22 192.168.4.33/32 22
  *  deny 0-65535 0.0.0.0/0 0-65535 */
 int
 read_permission_line(struct upnpperm * perm,
                      char * p);
 
-/* check_upnp_rule_against_permissions() 
+/* check_upnp_rule_against_permissions()
  * returns: 0 if the upnp rule should be rejected,
  *          1 if it could be accepted */
 int
