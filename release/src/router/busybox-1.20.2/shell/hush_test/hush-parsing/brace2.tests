@@ -1,5 +1,0 @@
-v='{q,w}'
-# Should not brace-expand v value
-echo $v
-echo "$v"
-echo Done

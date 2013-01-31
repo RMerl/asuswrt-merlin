@@ -4,7 +4,7 @@
  *
  * See original copyright at the end of this file
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* BB_AUDIT SUSv3 compliant with -j and -y extensions (from util-linux). */
@@ -16,6 +16,14 @@
  *
  * Major size reduction... over 50% (>1.5k) on i386.
  */
+
+//usage:#define cal_trivial_usage
+//usage:       "[-jy] [[MONTH] YEAR]"
+//usage:#define cal_full_usage "\n\n"
+//usage:       "Display a calendar\n"
+//usage:     "\n	-j	Use julian dates"
+//usage:     "\n	-y	Display the entire year"
+
 #include "libbb.h"
 #include "unicode.h"
 

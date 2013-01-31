@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Copyright 2009 by Denys Vlasenko <vda.linux@googlemail.com>
-# Licensed under GPL v2, see file LICENSE for details.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 . ./testing.sh
 
@@ -15,19 +15,19 @@ testing "tr understands 0-9A-F" \
 	"tr -cd '[0-9A-F]'" \
 	"19AF" "" "19AFH\n"
 
-optional CONFIG_FEATURE_TR_CLASSES
+optional FEATURE_TR_CLASSES
 testing "tr understands [:xdigit:]" \
 	"tr -cd '[:xdigit:]'" \
 	"19AF" "" "19AFH\n"
 SKIP=
 
-optional CONFIG_FEATURE_TR_CLASSES
+optional FEATURE_TR_CLASSES
 testing "tr does not stop after [:digit:]" \
 	"tr '[:digit:]y-z' 111111111123" \
 	"111abcx23\n" "" "789abcxyz\n"
 SKIP=
 
-optional CONFIG_FEATURE_TR_CLASSES
+optional FEATURE_TR_CLASSES
 testing "tr has correct xdigit sequence" \
 	"tr '[:xdigit:]Gg' 1111111151242222333330xX" \
 	"#1111111151242222x333330X\n" "" \

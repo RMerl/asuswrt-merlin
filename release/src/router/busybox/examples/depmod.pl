@@ -118,7 +118,7 @@ warn "**** Finished locating modules\n" if $verbose;
 foreach my $obj ( @liblist ){
     # turn the input file name into a target tag name
     my ($tgtname) = $obj =~ m-(/lib/modules/.*)$-;
-
+    
     warn "\nMODULE = $tgtname\n" if $verbose;
 
     # get a list of symbols
@@ -173,6 +173,9 @@ sub add_mod_deps
 
 	$depth .= " ";
 	warn "${depth}loading deps of module: $this_module\n" if $verbose;
+	if (length($depth) > 50) {
+		die "too much recursion (circular dependencies in modules?)";
+	}
 
 	foreach my $md (keys %{$mod->{$this_module}}) {
 		add_mod_deps ($depth, $mod, $mod2, $module, $md);
@@ -196,7 +199,7 @@ if ($stdout == 0) {
     open(STDOUT, ">$basedir/modules.dep")
                              or die "cannot open $basedir/modules.dep: $!";
 }
-my $kseries = $basedir =~ m,/2\.6\.[^/]*, ? '2.6' : '2.4';
+my $kseries = $basedir =~ m,/2\.4\.[^/]*, ? '2.4' : 'others';
 
 foreach my $module ( keys %$mod ) {
     if($kseries eq '2.4') {

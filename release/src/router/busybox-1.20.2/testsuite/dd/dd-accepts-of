@@ -1,2 +1,0 @@
-echo I WANT | busybox dd of=foo 2>/dev/null
-echo I WANT | cmp foo -

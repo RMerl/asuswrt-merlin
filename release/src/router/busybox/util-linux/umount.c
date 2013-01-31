@@ -5,46 +5,35 @@
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  * Copyright (C) 2005 by Rob Landley <rob@landley.net>
  *
- * Licensed under GPL version 2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define umount_trivial_usage
+//usage:       "[OPTIONS] FILESYSTEM|DIRECTORY"
+//usage:#define umount_full_usage "\n\n"
+//usage:       "Unmount file systems\n"
+//usage:	IF_FEATURE_UMOUNT_ALL(
+//usage:     "\n	-a	Unmount all file systems" IF_FEATURE_MTAB_SUPPORT(" in /etc/mtab")
+//usage:	)
+//usage:	IF_FEATURE_MTAB_SUPPORT(
+//usage:     "\n	-n	Don't erase /etc/mtab entries"
+//usage:	)
+//usage:     "\n	-r	Try to remount devices as read-only if mount is busy"
+//usage:     "\n	-l	Lazy umount (detach filesystem)"
+//usage:     "\n	-f	Force umount (i.e., unreachable NFS server)"
+//usage:	IF_FEATURE_MOUNT_LOOP(
+//usage:     "\n	-D	Don't free loop device even if it has been used"
+//usage:	)
+//usage:
+//usage:#define umount_example_usage
+//usage:       "$ umount /dev/hdc1\n"
+
 #include <mntent.h>
 #include <sys/mount.h>
-/* Make sure we have all the new mount flags we actually try to use. */
-#ifndef MS_BIND
-# define MS_BIND        (1 << 12)
-#endif
-#ifndef MS_MOVE
-# define MS_MOVE        (1 << 13)
-#endif
-#ifndef MS_RECURSIVE
-# define MS_RECURSIVE   (1 << 14)
-#endif
-#ifndef MS_SILENT
-# define MS_SILENT      (1 << 15)
-#endif
-/* The shared subtree stuff, which went in around 2.6.15. */
-#ifndef MS_UNBINDABLE
-# define MS_UNBINDABLE  (1 << 17)
-#endif
-#ifndef MS_PRIVATE
-# define MS_PRIVATE     (1 << 18)
-#endif
-#ifndef MS_SLAVE
-# define MS_SLAVE       (1 << 19)
-#endif
-#ifndef MS_SHARED
-# define MS_SHARED      (1 << 20)
-#endif
-#ifndef MS_RELATIME
-# define MS_RELATIME    (1 << 21)
-#endif
 #include "libbb.h"
-#ifndef PATH_MAX
-# define PATH_MAX (4*1024)
-#endif
-
 
 #if defined(__dietlibc__)
+// TODO: This does not belong here.
 /* 16.12.2006, Sampo Kellomaki (sampo@iki.fi)
  * dietlibc-0.30 does not have implementation of getmntent_r() */
 static struct mntent *getmntent_r(FILE* stream, struct mntent* result,
@@ -55,25 +44,27 @@ static struct mntent *getmntent_r(FILE* stream, struct mntent* result,
 }
 #endif
 
-/* ignored: -v -d -t -i */
-#define OPTION_STRING           "fldnra" "vdt:i"
-#define OPT_FORCE               (1 << 0)
-#define OPT_LAZY                (1 << 1)
-#define OPT_FREELOOP            (1 << 2)
-#define OPT_NO_MTAB             (1 << 3)
-#define OPT_REMOUNT             (1 << 4)
-#define OPT_ALL                 (ENABLE_FEATURE_UMOUNT_ALL ? (1 << 5) : 0)
-
-// These constants from linux/fs.h must match OPT_FORCE and OPT_LAZY,
-// otherwise "doForce" trick below won't work!
-//#define MNT_FORCE  0x00000001 /* Attempt to forcibly umount */
-//#define MNT_DETACH 0x00000002 /* Just detach from the tree */
+/* Ignored: -v -t -i
+ * bbox always acts as if -d is present.
+ * -D can be used to suppress it (bbox extension).
+ * Rationale:
+ * (1) util-linux's umount does it if "loop=..." is seen in /etc/mtab:
+ * thus, on many systems, bare umount _does_ drop loop devices.
+ * (2) many users request this feature.
+ */
+#define OPTION_STRING           "fldDnra" "vt:i"
+#define OPT_FORCE               (1 << 0) // Same as MNT_FORCE
+#define OPT_LAZY                (1 << 1) // Same as MNT_DETACH
+//#define OPT_FREE_LOOP           (1 << 2) // -d is assumed always present
+#define OPT_DONT_FREE_LOOP      (1 << 3)
+#define OPT_NO_MTAB             (1 << 4)
+#define OPT_REMOUNT             (1 << 5)
+#define OPT_ALL                 (ENABLE_FEATURE_UMOUNT_ALL ? (1 << 6) : 0)
 
 int umount_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int umount_main(int argc UNUSED_PARAM, char **argv)
 {
 	int doForce;
-	char *const buf = xmalloc(PATH_MAX * 2 + 128); /* to save stack */
 	struct mntent me;
 	FILE *fp;
 	char *fstype = NULL;
@@ -88,6 +79,9 @@ int umount_main(int argc UNUSED_PARAM, char **argv)
 	opt = getopt32(argv, OPTION_STRING, &fstype);
 	//argc -= optind;
 	argv += optind;
+
+	// MNT_FORCE and MNT_DETACH (from linux/fs.h) must match
+	// OPT_FORCE and OPT_LAZY, otherwise this trick won't work:
 	doForce = MAX((opt & OPT_FORCE), (opt & OPT_LAZY));
 
 	/* Get a list of mount points from mtab.  We read them all in now mostly
@@ -104,7 +98,7 @@ int umount_main(int argc UNUSED_PARAM, char **argv)
 		if (opt & OPT_ALL)
 			bb_error_msg_and_die("can't open '%s'", bb_path_mtab_file);
 	} else {
-		while (getmntent_r(fp, &me, buf, PATH_MAX * 2 + 128)) {
+		while (getmntent_r(fp, &me, bb_common_bufsiz1, sizeof(bb_common_bufsiz1))) {
 			/* Match fstype if passed */
 			if (!match_fstype(&me, fstype))
 				continue;
@@ -179,7 +173,7 @@ int umount_main(int argc UNUSED_PARAM, char **argv)
 		} else {
 			// De-allocate the loop device.  This ioctl should be ignored on
 			// any non-loop block devices.
-			if (ENABLE_FEATURE_MOUNT_LOOP && (opt & OPT_FREELOOP) && m)
+			if (ENABLE_FEATURE_MOUNT_LOOP && !(opt & OPT_DONT_FREE_LOOP) && m)
 				del_loop(m->device);
 			if (ENABLE_FEATURE_MTAB_SUPPORT && !(opt & OPT_NO_MTAB) && m)
 				erase_mtab(m->dir);
@@ -206,7 +200,6 @@ int umount_main(int argc UNUSED_PARAM, char **argv)
 			free(mtl);
 			mtl = m;
 		}
-		free(buf);
 	}
 
 	return status;

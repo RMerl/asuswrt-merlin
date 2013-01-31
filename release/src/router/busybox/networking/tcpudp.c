@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2007 Denys Vlasenko.
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 /* Based on ipsvd-0.12.1. This tcpsvd accepts all options
@@ -29,10 +29,50 @@
  * - don't know how to retrieve ORIGDST for udp.
  */
 
+//usage:#define tcpsvd_trivial_usage
+//usage:       "[-hEv] [-c N] [-C N[:MSG]] [-b N] [-u USER] [-l NAME] IP PORT PROG"
+/* with not-implemented options: */
+/* //usage:    "[-hpEvv] [-c N] [-C N[:MSG]] [-b N] [-u USER] [-l NAME] [-i DIR|-x CDB] [-t SEC] IP PORT PROG" */
+//usage:#define tcpsvd_full_usage "\n\n"
+//usage:       "Create TCP socket, bind to IP:PORT and listen\n"
+//usage:       "for incoming connection. Run PROG for each connection.\n"
+//usage:     "\n	IP		IP to listen on, 0 = all"
+//usage:     "\n	PORT		Port to listen on"
+//usage:     "\n	PROG ARGS	Program to run"
+//usage:     "\n	-l NAME		Local hostname (else looks up local hostname in DNS)"
+//usage:     "\n	-u USER[:GRP]	Change to user/group after bind"
+//usage:     "\n	-c N		Handle up to N connections simultaneously"
+//usage:     "\n	-b N		Allow a backlog of approximately N TCP SYNs"
+//usage:     "\n	-C N[:MSG]	Allow only up to N connections from the same IP"
+//usage:     "\n			New connections from this IP address are closed"
+//usage:     "\n			immediately. MSG is written to the peer before close"
+//usage:     "\n	-h		Look up peer's hostname"
+//usage:     "\n	-E		Don't set up environment variables"
+//usage:     "\n	-v		Verbose"
+//usage:
+//usage:#define udpsvd_trivial_usage
+//usage:       "[-hEv] [-c N] [-u USER] [-l NAME] IP PORT PROG"
+//usage:#define udpsvd_full_usage "\n\n"
+//usage:       "Create UDP socket, bind to IP:PORT and wait\n"
+//usage:       "for incoming packets. Run PROG for each packet,\n"
+//usage:       "redirecting all further packets with same peer ip:port to it.\n"
+//usage:     "\n	IP		IP to listen on, 0 = all"
+//usage:     "\n	PORT		Port to listen on"
+//usage:     "\n	PROG ARGS	Program to run"
+//usage:     "\n	-l NAME		Local hostname (else looks up local hostname in DNS)"
+//usage:     "\n	-u USER[:GRP]	Change to user/group after bind"
+//usage:     "\n	-c N		Handle up to N connections simultaneously"
+//usage:     "\n	-h		Look up peer's hostname"
+//usage:     "\n	-E		Don't set up environment variables"
+//usage:     "\n	-v		Verbose"
+
 #include "libbb.h"
+
 /* Wants <limits.h> etc, thus included after libbb.h: */
+#ifdef __linux__
 #include <linux/types.h> /* for __be32 etc */
 #include <linux/netfilter_ipv4.h>
+#endif
 
 // TODO: move into this file:
 #include "tcpudp_perhost.h"
@@ -384,7 +424,7 @@ int tcpudpsvd_main(int argc UNUSED_PARAM, char **argv)
 		 * already bound in parent! This seems to work in Linux.
 		 * (otherwise we can move socket to fd #0 only if bind succeeds) */
 		close(0);
-		set_nport(localp, htons(local_port));
+		set_nport(&localp->u.sa, htons(local_port));
 		xmove_fd(xsocket(localp->u.sa.sa_family, SOCK_DGRAM, 0), 0);
 		setsockopt_reuseaddr(0); /* crucial */
 		xbind(0, &localp->u.sa, localp->len);
@@ -464,6 +504,7 @@ int tcpudpsvd_main(int argc UNUSED_PARAM, char **argv)
 			/* setup ucspi env */
 			const char *proto = tcp ? "TCP" : "UDP";
 
+#ifdef SO_ORIGINAL_DST
 			/* Extract "original" destination addr:port
 			 * from Linux firewall. Useful when you redirect
 			 * an outbond connection to local handler, and it needs
@@ -473,6 +514,7 @@ int tcpudpsvd_main(int argc UNUSED_PARAM, char **argv)
 				xsetenv_plain("TCPORIGDSTADDR", addr);
 				free(addr);
 			}
+#endif
 			xsetenv_plain("PROTO", proto);
 			xsetenv_proto(proto, "LOCALADDR", local_addr);
 			xsetenv_proto(proto, "REMOTEADDR", remote_addr);

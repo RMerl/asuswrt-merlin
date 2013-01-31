@@ -1,2 +1,0 @@
-{ trap "echo got TERM" TERM; sleep 3; }& sleep 1; kill $!; wait
-echo Done: $?

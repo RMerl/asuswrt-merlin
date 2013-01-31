@@ -1,5 +1,5 @@
 /*
- * arithmetic code ripped out of ash shell for code sharing
+ * Arithmetic code ripped out of ash shell for code sharing.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -23,46 +23,44 @@
  * rewrote arith (see notes to this), added locale support,
  * rewrote dynamic variables.
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 /* Copyright (c) 2001 Aaron Lehmann <aaronl@vitelus.com>
-
-   Permission is hereby granted, free of charge, to any person obtaining
-   a copy of this software and associated documentation files (the
-   "Software"), to deal in the Software without restriction, including
-   without limitation the rights to use, copy, modify, merge, publish,
-   distribute, sublicense, and/or sell copies of the Software, and to
-   permit persons to whom the Software is furnished to do so, subject to
-   the following conditions:
-
-   The above copyright notice and this permission notice shall be
-   included in all copies or substantial portions of the Software.
-
-   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 
 /* This is my infix parser/evaluator. It is optimized for size, intended
  * as a replacement for yacc-based parsers. However, it may well be faster
  * than a comparable parser written in yacc. The supported operators are
  * listed in #defines below. Parens, order of operations, and error handling
  * are supported. This code is thread safe. The exact expression format should
- * be that which POSIX specifies for shells. */
-
-/* The code uses a simple two-stack algorithm. See
+ * be that which POSIX specifies for shells.
+ *
+ * The code uses a simple two-stack algorithm. See
  * http://www.onthenet.com.au/~grahamis/int2008/week02/lect02.html
  * for a detailed explanation of the infix-to-postfix algorithm on which
  * this is based (this code differs in that it applies operators immediately
  * to the stack instead of adding them to a queue to end up with an
- * expression). */
-
-/* To use the routine, call it with an expression string and error return
- * pointer */
+ * expression).
+ */
 
 /*
  * Aug 24, 2001              Manuel Novoa III
@@ -104,28 +102,23 @@
  *  (C) 2003 Vladimir Oleynik <dzo@simtreas.ru>
  *
  * - allow access to variable,
- *   used recursive find value indirection (c=2*2; a="c"; $((a+=2)) produce 6)
- * - realize assign syntax (VAR=expr, +=, *= etc)
- * - realize exponentiation (** operator)
- * - realize comma separated - expr, expr
- * - realise ++expr --expr expr++ expr--
- * - realise expr ? expr : expr (but, second expr calculate always)
+ *   use recursive value indirection: c="2*2"; a="c"; echo $((a+=2)) produce 6
+ * - implement assign syntax (VAR=expr, +=, *= etc)
+ * - implement exponentiation (** operator)
+ * - implement comma separated - expr, expr
+ * - implement ++expr --expr expr++ expr--
+ * - implement expr ? expr : expr (but second expr is always calculated)
  * - allow hexadecimal and octal numbers
- * - was restored loses XOR operator
- * - remove one goto label, added three ;-)
- * - protect $((num num)) as true zero expr (Manuel`s error)
+ * - restore lost XOR operator
+ * - protect $((num num)) as true zero expr (Manuel's error)
  * - always use special isspace(), see comment from bash ;-)
  */
 #include "libbb.h"
 #include "math.h"
 
-#define a_e_h_t arith_eval_hooks_t
-#define lookupvar (math_hooks->lookupvar)
-#define setvar    (math_hooks->setvar   )
-#define endofname (math_hooks->endofname)
-
-#define arith_isspace(arithval) \
-	(arithval == ' ' || arithval == '\n' || arithval == '\t')
+#define lookupvar (math_state->lookupvar)
+#define setvar    (math_state->setvar   )
+//#define endofname (math_state->endofname)
 
 typedef unsigned char operator;
 
@@ -133,181 +126,199 @@ typedef unsigned char operator;
  * precedence, and 3 high bits are an ID unique across operators of that
  * precedence. The ID portion is so that multiple operators can have the
  * same precedence, ensuring that the leftmost one is evaluated first.
- * Consider * and /. */
+ * Consider * and /
+ */
+#define tok_decl(prec,id)       (((id)<<5) | (prec))
+#define PREC(op)                ((op) & 0x1F)
 
-#define tok_decl(prec,id) (((id)<<5)|(prec))
-#define PREC(op) ((op) & 0x1F)
+#define TOK_LPAREN              tok_decl(0,0)
 
-#define TOK_LPAREN tok_decl(0,0)
+#define TOK_COMMA               tok_decl(1,0)
 
-#define TOK_COMMA tok_decl(1,0)
+/* All assignments are right associative and have the same precedence,
+ * but there are 11 of them, which doesn't fit into 3 bits for unique id.
+ * Abusing another precedence level:
+ */
+#define TOK_ASSIGN              tok_decl(2,0)
+#define TOK_AND_ASSIGN          tok_decl(2,1)
+#define TOK_OR_ASSIGN           tok_decl(2,2)
+#define TOK_XOR_ASSIGN          tok_decl(2,3)
+#define TOK_PLUS_ASSIGN         tok_decl(2,4)
+#define TOK_MINUS_ASSIGN        tok_decl(2,5)
+#define TOK_LSHIFT_ASSIGN       tok_decl(2,6)
+#define TOK_RSHIFT_ASSIGN       tok_decl(2,7)
 
-#define TOK_ASSIGN tok_decl(2,0)
-#define TOK_AND_ASSIGN tok_decl(2,1)
-#define TOK_OR_ASSIGN tok_decl(2,2)
-#define TOK_XOR_ASSIGN tok_decl(2,3)
-#define TOK_PLUS_ASSIGN tok_decl(2,4)
-#define TOK_MINUS_ASSIGN tok_decl(2,5)
-#define TOK_LSHIFT_ASSIGN tok_decl(2,6)
-#define TOK_RSHIFT_ASSIGN tok_decl(2,7)
+#define TOK_MUL_ASSIGN          tok_decl(3,0)
+#define TOK_DIV_ASSIGN          tok_decl(3,1)
+#define TOK_REM_ASSIGN          tok_decl(3,2)
 
-#define TOK_MUL_ASSIGN tok_decl(3,0)
-#define TOK_DIV_ASSIGN tok_decl(3,1)
-#define TOK_REM_ASSIGN tok_decl(3,2)
+#define fix_assignment_prec(prec) do { if (prec == 3) prec = 2; } while (0)
 
-/* all assign is right associativity and precedence eq, but (7+3)<<5 > 256 */
-#define convert_prec_is_assing(prec) do { if (prec == 3) prec = 2; } while (0)
+/* Ternary conditional operator is right associative too */
+#define TOK_CONDITIONAL         tok_decl(4,0)
+#define TOK_CONDITIONAL_SEP     tok_decl(4,1)
 
-/* conditional is right associativity too */
-#define TOK_CONDITIONAL tok_decl(4,0)
-#define TOK_CONDITIONAL_SEP tok_decl(4,1)
+#define TOK_OR                  tok_decl(5,0)
 
-#define TOK_OR tok_decl(5,0)
+#define TOK_AND                 tok_decl(6,0)
 
-#define TOK_AND tok_decl(6,0)
+#define TOK_BOR                 tok_decl(7,0)
 
-#define TOK_BOR tok_decl(7,0)
+#define TOK_BXOR                tok_decl(8,0)
 
-#define TOK_BXOR tok_decl(8,0)
+#define TOK_BAND                tok_decl(9,0)
 
-#define TOK_BAND tok_decl(9,0)
+#define TOK_EQ                  tok_decl(10,0)
+#define TOK_NE                  tok_decl(10,1)
 
-#define TOK_EQ tok_decl(10,0)
-#define TOK_NE tok_decl(10,1)
+#define TOK_LT                  tok_decl(11,0)
+#define TOK_GT                  tok_decl(11,1)
+#define TOK_GE                  tok_decl(11,2)
+#define TOK_LE                  tok_decl(11,3)
 
-#define TOK_LT tok_decl(11,0)
-#define TOK_GT tok_decl(11,1)
-#define TOK_GE tok_decl(11,2)
-#define TOK_LE tok_decl(11,3)
+#define TOK_LSHIFT              tok_decl(12,0)
+#define TOK_RSHIFT              tok_decl(12,1)
 
-#define TOK_LSHIFT tok_decl(12,0)
-#define TOK_RSHIFT tok_decl(12,1)
+#define TOK_ADD                 tok_decl(13,0)
+#define TOK_SUB                 tok_decl(13,1)
 
-#define TOK_ADD tok_decl(13,0)
-#define TOK_SUB tok_decl(13,1)
+#define TOK_MUL                 tok_decl(14,0)
+#define TOK_DIV                 tok_decl(14,1)
+#define TOK_REM                 tok_decl(14,2)
 
-#define TOK_MUL tok_decl(14,0)
-#define TOK_DIV tok_decl(14,1)
-#define TOK_REM tok_decl(14,2)
+/* Exponent is right associative */
+#define TOK_EXPONENT            tok_decl(15,1)
 
-/* exponent is right associativity */
-#define TOK_EXPONENT tok_decl(15,1)
+/* Unary operators */
+#define UNARYPREC               16
+#define TOK_BNOT                tok_decl(UNARYPREC,0)
+#define TOK_NOT                 tok_decl(UNARYPREC,1)
 
-/* For now unary operators. */
-#define UNARYPREC 16
-#define TOK_BNOT tok_decl(UNARYPREC,0)
-#define TOK_NOT tok_decl(UNARYPREC,1)
+#define TOK_UMINUS              tok_decl(UNARYPREC+1,0)
+#define TOK_UPLUS               tok_decl(UNARYPREC+1,1)
 
-#define TOK_UMINUS tok_decl(UNARYPREC+1,0)
-#define TOK_UPLUS tok_decl(UNARYPREC+1,1)
+#define PREC_PRE                (UNARYPREC+2)
 
-#define PREC_PRE (UNARYPREC+2)
+#define TOK_PRE_INC             tok_decl(PREC_PRE, 0)
+#define TOK_PRE_DEC             tok_decl(PREC_PRE, 1)
 
-#define TOK_PRE_INC tok_decl(PREC_PRE, 0)
-#define TOK_PRE_DEC tok_decl(PREC_PRE, 1)
+#define PREC_POST               (UNARYPREC+3)
 
-#define PREC_POST (UNARYPREC+3)
+#define TOK_POST_INC            tok_decl(PREC_POST, 0)
+#define TOK_POST_DEC            tok_decl(PREC_POST, 1)
 
-#define TOK_POST_INC tok_decl(PREC_POST, 0)
-#define TOK_POST_DEC tok_decl(PREC_POST, 1)
+#define SPEC_PREC               (UNARYPREC+4)
 
-#define SPEC_PREC (UNARYPREC+4)
-
-#define TOK_NUM tok_decl(SPEC_PREC, 0)
-#define TOK_RPAREN tok_decl(SPEC_PREC, 1)
-
-#define NUMPTR (*numstackptr)
+#define TOK_NUM                 tok_decl(SPEC_PREC, 0)
+#define TOK_RPAREN              tok_decl(SPEC_PREC, 1)
 
 static int
-tok_have_assign(operator op)
+is_assign_op(operator op)
 {
 	operator prec = PREC(op);
-
-	convert_prec_is_assing(prec);
-	return (prec == PREC(TOK_ASSIGN) ||
-			prec == PREC_PRE || prec == PREC_POST);
+	fix_assignment_prec(prec);
+	return prec == PREC(TOK_ASSIGN)
+	|| prec == PREC_PRE
+	|| prec == PREC_POST;
 }
 
 static int
-is_right_associativity(operator prec)
+is_right_associative(operator prec)
 {
-	return (prec == PREC(TOK_ASSIGN) || prec == PREC(TOK_EXPONENT)
-	        || prec == PREC(TOK_CONDITIONAL));
+	return prec == PREC(TOK_ASSIGN)
+	|| prec == PREC(TOK_EXPONENT)
+	|| prec == PREC(TOK_CONDITIONAL);
 }
+
 
 typedef struct {
 	arith_t val;
-	arith_t contidional_second_val;
-	char contidional_second_val_initialized;
-	char *var;      /* if NULL then is regular number,
-			   else is variable name */
-} v_n_t;
+	/* We acquire second_val only when "expr1 : expr2" part
+	 * of ternary ?: op is evaluated.
+	 * We treat ?: as two binary ops: (expr ? (expr1 : expr2)).
+	 * ':' produces a new value which has two parts, val and second_val;
+	 * then '?' selects one of them based on its left side.
+	 */
+	arith_t second_val;
+	char second_val_present;
+	/* If NULL then it's just a number, else it's a named variable */
+	char *var;
+} var_or_num_t;
 
-typedef struct chk_var_recursive_looped_t {
+typedef struct remembered_name {
+	struct remembered_name *next;
 	const char *var;
-	struct chk_var_recursive_looped_t *next;
-} chk_var_recursive_looped_t;
+} remembered_name;
 
-static chk_var_recursive_looped_t *prev_chk_var_recursive;
 
-static int
-arith_lookup_val(v_n_t *t, a_e_h_t *math_hooks)
+static arith_t FAST_FUNC
+evaluate_string(arith_state_t *math_state, const char *expr);
+
+static const char*
+arith_lookup_val(arith_state_t *math_state, var_or_num_t *t)
 {
 	if (t->var) {
 		const char *p = lookupvar(t->var);
-
 		if (p) {
-			int errcode;
+			remembered_name *cur;
+			remembered_name cur_save;
 
-			/* recursive try as expression */
-			chk_var_recursive_looped_t *cur;
-			chk_var_recursive_looped_t cur_save;
-
-			for (cur = prev_chk_var_recursive; cur; cur = cur->next) {
+			/* did we already see this name?
+			 * testcase: a=b; b=a; echo $((a))
+			 */
+			for (cur = math_state->list_of_recursed_names; cur; cur = cur->next) {
 				if (strcmp(cur->var, t->var) == 0) {
-					/* expression recursion loop detected */
-					return -5;
+					/* Yes */
+					return "expression recursion loop detected";
 				}
 			}
-			/* save current lookuped var name */
-			cur = prev_chk_var_recursive;
+
+			/* push current var name */
+			cur = math_state->list_of_recursed_names;
 			cur_save.var = t->var;
 			cur_save.next = cur;
-			prev_chk_var_recursive = &cur_save;
+			math_state->list_of_recursed_names = &cur_save;
 
-			t->val = arith (p, &errcode, math_hooks);
-			/* restore previous ptr after recursiving */
-			prev_chk_var_recursive = cur;
-			return errcode;
+			/* recursively evaluate p as expression */
+			t->val = evaluate_string(math_state, p);
+
+			/* pop current var name */
+			math_state->list_of_recursed_names = cur;
+
+			return math_state->errmsg;
 		}
-		/* allow undefined var as 0 */
+		/* treat undefined var as 0 */
 		t->val = 0;
 	}
 	return 0;
 }
 
-/* "applying" a token means performing it on the top elements on the integer
- * stack. For a unary operator it will only change the top element, but a
- * binary operator will pop two arguments and push a result */
-static NOINLINE int
-arith_apply(operator op, v_n_t *numstack, v_n_t **numstackptr, a_e_h_t *math_hooks)
+/* "Applying" a token means performing it on the top elements on the integer
+ * stack. For an unary operator it will only change the top element, but a
+ * binary operator will pop two arguments and push the result */
+static NOINLINE const char*
+arith_apply(arith_state_t *math_state, operator op, var_or_num_t *numstack, var_or_num_t **numstackptr)
 {
-	v_n_t *numptr_m1;
-	arith_t numptr_val, rez;
-	int ret_arith_lookup_val;
+#define NUMPTR (*numstackptr)
+
+	var_or_num_t *top_of_stack;
+	arith_t rez;
+	const char *err;
 
 	/* There is no operator that can work without arguments */
-	if (NUMPTR == numstack) goto err;
-	numptr_m1 = NUMPTR - 1;
+	if (NUMPTR == numstack)
+		goto err;
 
-	/* check operand is var with noninteger value */
-	ret_arith_lookup_val = arith_lookup_val(numptr_m1, math_hooks);
-	if (ret_arith_lookup_val)
-		return ret_arith_lookup_val;
+	top_of_stack = NUMPTR - 1;
 
-	rez = numptr_m1->val;
+	/* Resolve name to value, if needed */
+	err = arith_lookup_val(math_state, top_of_stack);
+	if (err)
+		return err;
+
+	rez = top_of_stack->val;
 	if (op == TOK_UMINUS)
-		rez *= -1;
+		rez = -rez;
 	else if (op == TOK_NOT)
 		rez = !rez;
 	else if (op == TOK_BNOT)
@@ -318,118 +329,123 @@ arith_apply(operator op, v_n_t *numstack, v_n_t **numstackptr, a_e_h_t *math_hoo
 		rez--;
 	else if (op != TOK_UPLUS) {
 		/* Binary operators */
+		arith_t right_side_val;
+		char bad_second_val;
 
-		/* check and binary operators need two arguments */
-		if (numptr_m1 == numstack) goto err;
-
-		/* ... and they pop one */
-		--NUMPTR;
-		numptr_val = rez;
-		if (op == TOK_CONDITIONAL) {
-			if (!numptr_m1->contidional_second_val_initialized) {
-				/* protect $((expr1 ? expr2)) without ": expr" */
-				goto err;
-			}
-			rez = numptr_m1->contidional_second_val;
-		} else if (numptr_m1->contidional_second_val_initialized) {
-			/* protect $((expr1 : expr2)) without "expr ? " */
+		/* Binary operators need two arguments */
+		if (top_of_stack == numstack)
 			goto err;
-		}
-		numptr_m1 = NUMPTR - 1;
-		if (op != TOK_ASSIGN) {
-			/* check operand is var with noninteger value for not '=' */
-			ret_arith_lookup_val = arith_lookup_val(numptr_m1, math_hooks);
-			if (ret_arith_lookup_val)
-				return ret_arith_lookup_val;
-		}
-		if (op == TOK_CONDITIONAL) {
-			numptr_m1->contidional_second_val = rez;
-		}
-		rez = numptr_m1->val;
-		if (op == TOK_BOR || op == TOK_OR_ASSIGN)
-			rez |= numptr_val;
-		else if (op == TOK_OR)
-			rez = numptr_val || rez;
-		else if (op == TOK_BAND || op == TOK_AND_ASSIGN)
-			rez &= numptr_val;
-		else if (op == TOK_BXOR || op == TOK_XOR_ASSIGN)
-			rez ^= numptr_val;
-		else if (op == TOK_AND)
-			rez = rez && numptr_val;
-		else if (op == TOK_EQ)
-			rez = (rez == numptr_val);
-		else if (op == TOK_NE)
-			rez = (rez != numptr_val);
-		else if (op == TOK_GE)
-			rez = (rez >= numptr_val);
-		else if (op == TOK_RSHIFT || op == TOK_RSHIFT_ASSIGN)
-			rez >>= numptr_val;
-		else if (op == TOK_LSHIFT || op == TOK_LSHIFT_ASSIGN)
-			rez <<= numptr_val;
-		else if (op == TOK_GT)
-			rez = (rez > numptr_val);
-		else if (op == TOK_LT)
-			rez = (rez < numptr_val);
-		else if (op == TOK_LE)
-			rez = (rez <= numptr_val);
-		else if (op == TOK_MUL || op == TOK_MUL_ASSIGN)
-			rez *= numptr_val;
-		else if (op == TOK_ADD || op == TOK_PLUS_ASSIGN)
-			rez += numptr_val;
-		else if (op == TOK_SUB || op == TOK_MINUS_ASSIGN)
-			rez -= numptr_val;
-		else if (op == TOK_ASSIGN || op == TOK_COMMA)
-			rez = numptr_val;
-		else if (op == TOK_CONDITIONAL_SEP) {
-			if (numptr_m1 == numstack) {
-				/* protect $((expr : expr)) without "expr ? " */
-				goto err;
-			}
-			numptr_m1->contidional_second_val_initialized = op;
-			numptr_m1->contidional_second_val = numptr_val;
-		} else if (op == TOK_CONDITIONAL) {
-			rez = rez ?
-				numptr_val : numptr_m1->contidional_second_val;
-		} else if (op == TOK_EXPONENT) {
-			if (numptr_val < 0)
-				return -3;      /* exponent less than 0 */
-			else {
-				arith_t c = 1;
+		/* ...and they pop one */
+		NUMPTR = top_of_stack; /* this decrements NUMPTR */
 
-				if (numptr_val)
-					while (numptr_val--)
-						c *= rez;
-				rez = c;
+		bad_second_val = top_of_stack->second_val_present;
+		if (op == TOK_CONDITIONAL) { /* ? operation */
+			/* Make next if (...) protect against
+			 * $((expr1 ? expr2)) - that is, missing ": expr" */
+			bad_second_val = !bad_second_val;
+		}
+		if (bad_second_val) {
+			/* Protect against $((expr <not_?_op> expr1 : expr2)) */
+			return "malformed ?: operator";
+		}
+
+		top_of_stack--; /* now points to left side */
+
+		if (op != TOK_ASSIGN) {
+			/* Resolve left side value (unless the op is '=') */
+			err = arith_lookup_val(math_state, top_of_stack);
+			if (err)
+				return err;
+		}
+
+		right_side_val = rez;
+		rez = top_of_stack->val;
+		if (op == TOK_CONDITIONAL) /* ? operation */
+			rez = (rez ? right_side_val : top_of_stack[1].second_val);
+		else if (op == TOK_CONDITIONAL_SEP) { /* : operation */
+			if (top_of_stack == numstack) {
+				/* Protect against $((expr : expr)) */
+				return "malformed ?: operator";
 			}
-		} else if (numptr_val==0)          /* zero divisor check */
-			return -2;
+			top_of_stack->second_val_present = op;
+			top_of_stack->second_val = right_side_val;
+		}
+		else if (op == TOK_BOR || op == TOK_OR_ASSIGN)
+			rez |= right_side_val;
+		else if (op == TOK_OR)
+			rez = right_side_val || rez;
+		else if (op == TOK_BAND || op == TOK_AND_ASSIGN)
+			rez &= right_side_val;
+		else if (op == TOK_BXOR || op == TOK_XOR_ASSIGN)
+			rez ^= right_side_val;
+		else if (op == TOK_AND)
+			rez = rez && right_side_val;
+		else if (op == TOK_EQ)
+			rez = (rez == right_side_val);
+		else if (op == TOK_NE)
+			rez = (rez != right_side_val);
+		else if (op == TOK_GE)
+			rez = (rez >= right_side_val);
+		else if (op == TOK_RSHIFT || op == TOK_RSHIFT_ASSIGN)
+			rez >>= right_side_val;
+		else if (op == TOK_LSHIFT || op == TOK_LSHIFT_ASSIGN)
+			rez <<= right_side_val;
+		else if (op == TOK_GT)
+			rez = (rez > right_side_val);
+		else if (op == TOK_LT)
+			rez = (rez < right_side_val);
+		else if (op == TOK_LE)
+			rez = (rez <= right_side_val);
+		else if (op == TOK_MUL || op == TOK_MUL_ASSIGN)
+			rez *= right_side_val;
+		else if (op == TOK_ADD || op == TOK_PLUS_ASSIGN)
+			rez += right_side_val;
+		else if (op == TOK_SUB || op == TOK_MINUS_ASSIGN)
+			rez -= right_side_val;
+		else if (op == TOK_ASSIGN || op == TOK_COMMA)
+			rez = right_side_val;
+		else if (op == TOK_EXPONENT) {
+			arith_t c;
+			if (right_side_val < 0)
+				return "exponent less than 0";
+			c = 1;
+			while (--right_side_val >= 0)
+			    c *= rez;
+			rez = c;
+		}
+		else if (right_side_val == 0)
+			return "divide by zero";
 		else if (op == TOK_DIV || op == TOK_DIV_ASSIGN)
-			rez /= numptr_val;
+			rez /= right_side_val;
 		else if (op == TOK_REM || op == TOK_REM_ASSIGN)
-			rez %= numptr_val;
+			rez %= right_side_val;
 	}
-	if (tok_have_assign(op)) {
+
+	if (is_assign_op(op)) {
 		char buf[sizeof(arith_t)*3 + 2];
 
-		if (numptr_m1->var == NULL) {
+		if (top_of_stack->var == NULL) {
 			/* Hmm, 1=2 ? */
+//TODO: actually, bash allows ++7 but for some reason it evals to 7, not 8
 			goto err;
 		}
-		/* save to shell variable */
-		sprintf(buf, arith_t_fmt, rez);
-		setvar(numptr_m1->var, buf);
-		/* after saving, make previous value for v++ or v-- */
+		/* Save to shell variable */
+		sprintf(buf, ARITH_FMT, rez);
+		setvar(top_of_stack->var, buf);
+		/* After saving, make previous value for v++ or v-- */
 		if (op == TOK_POST_INC)
 			rez--;
 		else if (op == TOK_POST_DEC)
 			rez++;
 	}
-	numptr_m1->val = rez;
-	/* protect geting var value, is number now */
-	numptr_m1->var = NULL;
-	return 0;
+
+	top_of_stack->val = rez;
+	/* Erase var name, it is just a number now */
+	top_of_stack->var = NULL;
+	return NULL;
  err:
-	return -1;
+	return "arithmetic syntax error";
+#undef NUMPTR
 }
 
 /* longest must be first */
@@ -476,38 +492,54 @@ static const char op_tokens[] ALIGN1 = {
 	'(',        0, TOK_LPAREN,
 	0
 };
-/* ptr to ")" */
-#define endexpression (&op_tokens[sizeof(op_tokens)-7])
+#define ptr_to_rparen (&op_tokens[sizeof(op_tokens)-7])
 
-arith_t
-arith(const char *expr, int *perrcode, a_e_h_t *math_hooks)
+const char* FAST_FUNC
+endofname(const char *name)
 {
-	char arithval; /* Current character under analysis */
-	operator lasttok, op;
-	operator prec;
-	operator *stack, *stackptr;
-	const char *p = endexpression;
-	int errcode;
-	v_n_t *numstack, *numstackptr;
-	unsigned datasizes = strlen(expr) + 2;
+	if (!is_name(*name))
+		return name;
+	while (*++name) {
+		if (!is_in_name(*name))
+			break;
+	}
+	return name;
+}
 
+static arith_t FAST_FUNC
+evaluate_string(arith_state_t *math_state, const char *expr)
+{
+	operator lasttok;
+	const char *errmsg;
+	const char *start_expr = expr = skip_whitespace(expr);
+	unsigned expr_len = strlen(expr) + 2;
 	/* Stack of integers */
-	/* The proof that there can be no more than strlen(startbuf)/2+1 integers
-	 * in any given correct or incorrect expression is left as an exercise to
-	 * the reader. */
-	numstackptr = numstack = alloca((datasizes / 2) * sizeof(numstack[0]));
+	/* The proof that there can be no more than strlen(startbuf)/2+1
+	 * integers in any given correct or incorrect expression
+	 * is left as an exercise to the reader. */
+	var_or_num_t *const numstack = alloca((expr_len / 2) * sizeof(numstack[0]));
+	var_or_num_t *numstackptr = numstack;
 	/* Stack of operator tokens */
-	stackptr = stack = alloca(datasizes * sizeof(stack[0]));
+	operator *const stack = alloca(expr_len * sizeof(stack[0]));
+	operator *stackptr = stack;
 
-	*stackptr++ = lasttok = TOK_LPAREN;     /* start off with a left paren */
-	*perrcode = errcode = 0;
+	/* Start with a left paren */
+	*stackptr++ = lasttok = TOK_LPAREN;
+	errmsg = NULL;
 
 	while (1) {
+		const char *p;
+		operator op;
+		operator prec;
+		char arithval;
+
+		expr = skip_whitespace(expr);
 		arithval = *expr;
-		if (arithval == 0) {
-			if (p == endexpression) {
-				/* Null expression. */
-				return 0;
+		if (arithval == '\0') {
+			if (expr == start_expr) {
+				/* Null expression */
+				numstack->val = 0;
+				goto ret;
 			}
 
 			/* This is only reached after all tokens have been extracted from the
@@ -515,77 +547,80 @@ arith(const char *expr, int *perrcode, a_e_h_t *math_hooks)
 			 * are to be applied in order. At the end, there should be a final
 			 * result on the integer stack */
 
-			if (expr != endexpression + 1) {
-				/* If we haven't done so already, */
-				/* append a closing right paren */
-				expr = endexpression;
-				/* and let the loop process it. */
+			if (expr != ptr_to_rparen + 1) {
+				/* If we haven't done so already,
+				 * append a closing right paren
+				 * and let the loop process it */
+				expr = ptr_to_rparen;
 				continue;
 			}
-			/* At this point, we're done with the expression. */
-			if (numstackptr != numstack+1) {
-				/* ... but if there isn't, it's bad */
- err:
-				*perrcode = -1;
-				return *perrcode;
+			/* At this point, we're done with the expression */
+			if (numstackptr != numstack + 1) {
+				/* ...but if there isn't, it's bad */
+				goto err;
 			}
 			if (numstack->var) {
 				/* expression is $((var)) only, lookup now */
-				errcode = arith_lookup_val(numstack, math_hooks);
+				errmsg = arith_lookup_val(math_state, numstack);
 			}
- ret:
-			*perrcode = errcode;
-			return numstack->val;
+			goto ret;
 		}
 
-		/* Continue processing the expression. */
-		if (arith_isspace(arithval)) {
-			/* Skip whitespace */
-			goto prologue;
-		}
 		p = endofname(expr);
 		if (p != expr) {
-			size_t var_name_size = (p-expr) + 1;  /* trailing zero */
-
+			/* Name */
+			size_t var_name_size = (p-expr) + 1;  /* +1 for NUL */
 			numstackptr->var = alloca(var_name_size);
 			safe_strncpy(numstackptr->var, expr, var_name_size);
 			expr = p;
  num:
-			numstackptr->contidional_second_val_initialized = 0;
+			numstackptr->second_val_present = 0;
 			numstackptr++;
 			lasttok = TOK_NUM;
 			continue;
 		}
+
 		if (isdigit(arithval)) {
+			/* Number */
 			numstackptr->var = NULL;
 			errno = 0;
-			/* call strtoul[l]: */
-			numstackptr->val = strto_arith_t(expr, (char **) &expr, 0);
+			numstackptr->val = strto_arith_t(expr, (char**) &expr, 0);
 			if (errno)
 				numstackptr->val = 0; /* bash compat */
 			goto num;
 		}
-		for (p = op_tokens; ; p++) {
-			const char *o;
 
-			if (*p == 0) {
-				/* strange operator not found */
-				goto err;
+		/* Should be an operator */
+		p = op_tokens;
+		while (1) {
+// TODO: bash allows 7+++v, treats it as 7 + ++v
+// we treat it as 7++ + v and reject
+			/* Compare expr to current op_tokens[] element */
+			const char *e = expr;
+			while (1) {
+				if (*p == '\0') {
+					/* Match: operator is found */
+					expr = e;
+					goto tok_found;
+				}
+				if (*p != *e)
+					break;
+				p++;
+				e++;
 			}
-			for (o = expr; *p && *o == *p; p++)
-				o++;
-			if (!*p) {
-				/* found */
-				expr = o - 1;
-				break;
-			}
-			/* skip tail uncompared token */
+			/* No match, go to next element of op_tokens[] */
 			while (*p)
 				p++;
-			/* skip zero delim */
-			p++;
+			p += 2; /* skip NUL and TOK_foo bytes */
+			if (*p == '\0') {
+				/* No next element, operator not found */
+				//math_state->syntax_error_at = expr;
+				goto err;
+			}
 		}
-		op = p[1];
+ tok_found:
+		op = p[1]; /* fetch TOK_foo value */
+		/* NB: expr now points past the operator */
 
 		/* post grammar: a++ reduce to num */
 		if (lasttok == TOK_POST_INC || lasttok == TOK_POST_DEC)
@@ -614,13 +649,13 @@ arith(const char *expr, int *perrcode, a_e_h_t *math_hooks)
 		/* We don't want an unary operator to cause recursive descent on the
 		 * stack, because there can be many in a row and it could cause an
 		 * operator to be evaluated before its argument is pushed onto the
-		 * integer stack. */
-		/* But for binary operators, "apply" everything on the operator
+		 * integer stack.
+		 * But for binary operators, "apply" everything on the operator
 		 * stack until we find an operator with a lesser priority than the
-		 * one we have just extracted. */
-		/* Left paren is given the lowest priority so it will never be
+		 * one we have just extracted. If op is right-associative,
+		 * then stop "applying" on the equal priority too.
+		 * Left paren is given the lowest priority so it will never be
 		 * "applied" in this way.
-		 * if associativity is right and priority eq, applied also skip
 		 */
 		prec = PREC(op);
 		if ((prec > 0 && prec < UNARYPREC) || prec == SPEC_PREC) {
@@ -630,41 +665,56 @@ arith(const char *expr, int *perrcode, a_e_h_t *math_hooks)
 				goto err;
 			}
 			while (stackptr != stack) {
+				operator prev_op = *--stackptr;
 				if (op == TOK_RPAREN) {
 					/* The algorithm employed here is simple: while we don't
 					 * hit an open paren nor the bottom of the stack, pop
 					 * tokens and apply them */
-					if (stackptr[-1] == TOK_LPAREN) {
-						--stackptr;
-						/* Any operator directly after a */
+					if (prev_op == TOK_LPAREN) {
+						/* Any operator directly after a
+						 * close paren should consider itself binary */
 						lasttok = TOK_NUM;
-						/* close paren should consider itself binary */
-						goto prologue;
+						goto next;
 					}
 				} else {
-					operator prev_prec = PREC(stackptr[-1]);
-
-					convert_prec_is_assing(prec);
-					convert_prec_is_assing(prev_prec);
-					if (prev_prec < prec)
+					operator prev_prec = PREC(prev_op);
+					fix_assignment_prec(prec);
+					fix_assignment_prec(prev_prec);
+					if (prev_prec < prec
+					 || (prev_prec == prec && is_right_associative(prec))
+					) {
+						stackptr++;
 						break;
-					/* check right assoc */
-					if (prev_prec == prec && is_right_associativity(prec))
-						break;
+					}
 				}
-				errcode = arith_apply(*--stackptr, numstack, &numstackptr, math_hooks);
-				if (errcode) goto ret;
+				errmsg = arith_apply(math_state, prev_op, numstack, &numstackptr);
+				if (errmsg)
+					goto err_with_custom_msg;
 			}
-			if (op == TOK_RPAREN) {
+			if (op == TOK_RPAREN)
 				goto err;
-			}
 		}
 
-		/* Push this operator to the stack and remember it. */
+		/* Push this operator to the stack and remember it */
 		*stackptr++ = lasttok = op;
- prologue:
-		++expr;
-	} /* while */
+ next: ;
+	} /* while (1) */
+
+ err:
+	errmsg = "arithmetic syntax error";
+ err_with_custom_msg:
+	numstack->val = -1;
+ ret:
+	math_state->errmsg = errmsg;
+	return numstack->val;
+}
+
+arith_t FAST_FUNC
+arith(arith_state_t *math_state, const char *expr)
+{
+	math_state->errmsg = NULL;
+	math_state->list_of_recursed_names = NULL;
+	return evaluate_string(math_state, expr);
 }
 
 /*

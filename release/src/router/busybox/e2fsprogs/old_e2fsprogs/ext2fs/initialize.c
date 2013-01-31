@@ -284,7 +284,7 @@ retry:
 	/*
 	 * check the number of reserved group descriptor table blocks
 	 */
-	if (super->s_feature_compat & EXT2_FEATURE_COMPAT_RESIZE_INODE)
+	if (super->s_feature_compat & EXT2_FEATURE_COMPAT_RESIZE_INO)
 		rsv_gdt = calc_reserved_gdt_blocks(fs);
 	else
 		rsv_gdt = 0;

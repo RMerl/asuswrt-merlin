@@ -31,6 +31,9 @@ all:
 
 Makefile:;
 
-\$(filter-out all Makefile,\$(MAKECMDGOALS)) %/:
+\$(filter-out all Makefile,\$(MAKECMDGOALS)):
+	\$(MAKE) -C \$(KERNELSRC) O=\$(KERNELOUTPUT) \$@
+
+%/:
 	\$(MAKE) -C \$(KERNELSRC) O=\$(KERNELOUTPUT) \$@
 EOF

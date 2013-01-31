@@ -1,2 +1,0 @@
-echo I WANT | busybox dd of=foo >/dev/null 2>bar
-grep -q records bar

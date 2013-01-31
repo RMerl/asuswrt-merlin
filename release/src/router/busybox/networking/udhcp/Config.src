@@ -8,6 +8,7 @@ INSERT
 config UDHCPD
 	bool "udhcp server (udhcpd)"
 	default y
+	select PLATFORM_LINUX
 	help
 	  udhcpd is a DHCP server geared primarily toward embedded systems,
 	  while striving to be fully functional and RFC compliant.
@@ -65,6 +66,7 @@ config DHCPD_LEASES_FILE
 config UDHCPC
 	bool "udhcp client (udhcpc)"
 	default y
+	select PLATFORM_LINUX
 	help
 	  udhcpc is a DHCP client geared primarily toward embedded systems,
 	  while striving to be fully functional and RFC compliant.
@@ -94,7 +96,7 @@ config UDHCP_DEBUG
 	int "Maximum verbosity level for udhcp applets (0..9)"
 	default 9
 	range 0 9
-	depends on UDHCPD || UDHCPC || DHCPRELAY
+	depends on UDHCPD || UDHCPC || DHCPRELAY || DHCP6C || DHCP6RELAY
 	help
 	  Verbosity can be increased with multiple -v options.
 	  This option controls how high it can be cranked up.
@@ -105,7 +107,7 @@ config UDHCP_DEBUG
 config FEATURE_UDHCP_RFC3397
 	bool "Support for RFC3397 domain search (experimental)"
 	default y
-	depends on UDHCPD || UDHCPC
+	depends on UDHCPD || UDHCPC || DHCP6C
 	help
 	  If selected, both client and server will support passing of domain
 	  search lists via option 119, specified in RFC 3397,
@@ -157,3 +159,27 @@ config UDHCPC_SLACK_FOR_BUGGY_SERVERS
 	    maximum size of entire IP packet, and sends packets which are
 	    28 bytes too large.
 	  Seednet (ISP) VDSL: sends packets 2 bytes too large.
+
+config DHCP6C
+	bool "DHCPv6 client daemon (dhcp6c)"
+	default n
+	depends on PLATFORM_LINUX && FEATURE_IPV6
+	help
+	  dhcp6c is a DHCPv6 client geared primarily toward embedded systems,
+	  while striving to be fully functional and RFC compliant.
+
+config FEATURE_DHCP6_AUTH
+	bool "Support DHCPv6 messages authentication"
+	default n
+	depends on DHCP6C
+	help
+	  If selected, client will support DHCPv6 messages authentication,
+	  currently HMAC-MD5 only.
+
+config DHCP6RELAY
+	bool "dhcp6relay"
+	default n
+	depends on FEATURE_IPV6 && DHCP6C
+	help
+	  dhcp6relay listens for DHCPv6 requests on one or more interfaces
+	  and forwards these requests to a different interface.

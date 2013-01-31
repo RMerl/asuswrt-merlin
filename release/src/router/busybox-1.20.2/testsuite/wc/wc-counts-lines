@@ -1,1 +1,0 @@
-test `echo i\'m a little teapot | busybox wc -l` -eq 1

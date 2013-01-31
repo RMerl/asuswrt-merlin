@@ -51,18 +51,21 @@ config VERBOSE_RESOLUTION_ERRORS
 config ARP
 	bool "arp"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Manipulate the system ARP cache.
 
 config ARPING
 	bool "arping"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Ping hosts by ARP packets.
 
 config BRCTL
 	bool "brctl"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Manage ethernet bridges.
 	  Supports addbr/delbr and addif/delif.
@@ -95,6 +98,7 @@ config DNSD
 config ETHER_WAKE
 	bool "ether-wake"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Send a magic packet to wake up sleeping machines.
 
@@ -195,14 +199,22 @@ config FEATURE_HTTPD_BASIC_AUTH
 	help
 	  Utilizes password settings from /etc/httpd.conf for basic
 	  authentication on a per url basis.
+	  Example for httpd.conf file:
+	  /adm:toor:PaSsWd
 
 config FEATURE_HTTPD_AUTH_MD5
 	bool "Support MD5 crypted passwords for http Authentication"
 	default y
 	depends on FEATURE_HTTPD_BASIC_AUTH
 	help
-	  Enables basic per URL authentication from /etc/httpd.conf
-	  using md5 passwords.
+	  Enables encrypted passwords, and wildcard user/passwords
+	  in httpd.conf file.
+	  User '*' means 'any system user name is ok',
+	  password of '*' means 'use system password for this user'
+	  Examples:
+	  /adm:toor:$1$P/eKnWXS$aI1aPGxT.dJD5SzqAKWrF0
+	  /adm:root:*
+	  /wiki:*:*
 
 config FEATURE_HTTPD_CGI
 	bool "Support Common Gateway Interface (CGI)"
@@ -219,8 +231,8 @@ config FEATURE_HTTPD_CONFIG_WITH_SCRIPT_INTERPR
 	help
 	  This option enables support for running scripts through an
 	  interpreter. Turn this on if you want PHP scripts to work
-	  properly. You need to supply an additional line in your httpd
-	  config file:
+	  properly. You need to supply an additional line in your
+	  httpd.conf file:
 	  *.php:/path/to/your/php
 
 config FEATURE_HTTPD_SET_REMOTE_PORT_TO_ENV
@@ -266,9 +278,18 @@ config FEATURE_HTTPD_PROXY
 	  Then a request to /url/myfile will be forwarded to
 	  http://hostname[:port]/new/path/myfile.
 
+config FEATURE_HTTPD_GZIP
+	bool "Support for GZIP content encoding"
+	default y
+	depends on HTTPD
+	help
+	  Makes httpd send files using GZIP content encoding if the
+	  client supports it and a pre-compressed <file>.gz exists.
+
 config IFCONFIG
 	bool "ifconfig"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Ifconfig is used to configure the kernel-resident network interfaces.
 
@@ -316,6 +337,7 @@ config FEATURE_IFCONFIG_BROADCAST_PLUS
 config IFENSLAVE
 	bool "ifenslave"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Userspace application to bind several interfaces
 	  to a logical interface (use with kernel bonding driver).
@@ -323,6 +345,7 @@ config IFENSLAVE
 config IFPLUGD
 	bool "ifplugd"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Network interface plug detection daemon.
 
@@ -365,6 +388,7 @@ config FEATURE_IFUPDOWN_IP_BUILTIN
 	bool "Use busybox ip applet"
 	default y
 	depends on FEATURE_IFUPDOWN_IP
+	select PLATFORM_LINUX
 	select IP
 	select FEATURE_IP_ADDRESS
 	select FEATURE_IP_LINK
@@ -483,6 +507,7 @@ config FEATURE_INETD_RPC
 config IP
 	bool "ip"
 	default y
+	select PLATFORM_LINUX
 	help
 	  The "ip" applet is a TCP/IP interface configuration and routing
 	  utility. You generally don't need "ip" to use busybox with
@@ -595,37 +620,10 @@ config FEATURE_IPCALC_LONG_OPTIONS
 	help
 	  Support long options for the ipcalc applet.
 
-config NAMEIF
-	bool "nameif"
-	default y
-	select FEATURE_SYSLOG
-	help
-	  nameif is used to rename network interface by its MAC address.
-	  Renamed interfaces MUST be in the down state.
-	  It is possible to use a file (default: /etc/mactab)
-	  with list of new interface names and MACs.
-	  Maximum interface name length: IFNAMSIZ = 16
-	  File fields are separated by space or tab.
-	  File format:
-	  # Comment
-	  new_interface_name    XX:XX:XX:XX:XX:XX
-
-config FEATURE_NAMEIF_EXTENDED
-	bool "Extended nameif"
-	default y
-	depends on NAMEIF
-	help
-	  This extends the nameif syntax to support the bus_info and driver
-	  checks. The syntax is compatible to the normal nameif.
-	  File format:
-	    new_interface_name  driver=asix bus=usb-0000:00:08.2-3
-	    new_interface_name  bus=usb-0000:00:08.2-3 00:80:C8:38:91:B5
-	    new_interface_name  mac=00:80:C8:38:91:B5
-	    new_interface_name  00:80:C8:38:91:B5
-
 config NETSTAT
 	bool "netstat"
 	default y
+	select PLATFORM_LINUX
 	help
 	  netstat prints information about the Linux networking subsystem.
 
@@ -654,6 +652,7 @@ config NSLOOKUP
 config NTPD
 	bool "ntpd"
 	default y
+	select PLATFORM_LINUX
 	help
 	  The NTP client/server daemon.
 
@@ -665,28 +664,6 @@ config FEATURE_NTPD_SERVER
 	  Make ntpd usable as a NTP server. If you disable this option
 	  ntpd will be usable only as a NTP client.
 
-config PING
-	bool "ping"
-	default y
-	help
-	  ping uses the ICMP protocol's mandatory ECHO_REQUEST datagram to
-	  elicit an ICMP ECHO_RESPONSE from a host or gateway.
-
-config PING6
-	bool "ping6"
-	default y
-	depends on FEATURE_IPV6 && PING
-	help
-	  This will give you a ping that can talk IPv6.
-
-config FEATURE_FANCY_PING
-	bool "Enable fancy ping output"
-	default y
-	depends on PING
-	help
-	  Make the output from the ping applet include statistics, and at the
-	  same time provide full support for ICMP packets.
-
 config PSCAN
 	bool "pscan"
 	default y
@@ -696,12 +673,14 @@ config PSCAN
 config ROUTE
 	bool "route"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Route displays or manipulates the kernel's IP routing tables.
 
 config SLATTACH
 	bool "slattach"
 	default y
+	select PLATFORM_LINUX
 	help
 	  slattach is a small utility to attach network interfaces to serial
 	  lines.
@@ -782,7 +761,7 @@ config TELNETD
 
 		  mount -t devpts devpts /dev/pts
 
-	  You need to be sure that Busybox has LOGIN and
+	  You need to be sure that busybox has LOGIN and
 	  FEATURE_SUID enabled. And finally, you should make
 	  certain that Busybox has been installed setuid root:
 
@@ -888,6 +867,7 @@ config TFTP_DEBUG
 config TRACEROUTE
 	bool "traceroute"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Utility to trace the route of IP packets.
 
@@ -924,6 +904,7 @@ config FEATURE_TRACEROUTE_USE_ICMP
 config TUNCTL
 	bool "tunctl"
 	default y
+	select PLATFORM_LINUX
 	help
 	  tunctl creates or deletes tun devices.
 
@@ -956,6 +937,7 @@ config UDPSVD
 config VCONFIG
 	bool "vconfig"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Creates, removes, and configures VLAN interfaces
 
@@ -1002,6 +984,7 @@ config FEATURE_WGET_TIMEOUT
 config ZCIP
 	bool "zcip"
 	default y
+	select PLATFORM_LINUX
 	select FEATURE_SYSLOG
 	help
 	  ZCIP provides ZeroConf IPv4 address selection, according to RFC 3927.

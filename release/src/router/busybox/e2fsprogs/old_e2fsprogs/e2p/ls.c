@@ -21,7 +21,7 @@
 #include <time.h>
 
 #include "e2p.h"
-#include "../../e2fs_lib.h"
+#include "../e2fs_lib.h"
 
 static void print_user(unsigned short uid, FILE *f)
 {

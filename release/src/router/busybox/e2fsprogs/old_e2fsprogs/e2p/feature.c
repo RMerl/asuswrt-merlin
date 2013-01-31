@@ -34,7 +34,7 @@ static const struct feature feature_list[] = {
 			"ext_attr" },
 	{	E2P_FEATURE_COMPAT, EXT2_FEATURE_COMPAT_DIR_INDEX,
 			"dir_index" },
-	{	E2P_FEATURE_COMPAT, EXT2_FEATURE_COMPAT_RESIZE_INODE,
+	{	E2P_FEATURE_COMPAT, EXT2_FEATURE_COMPAT_RESIZE_INO,
 			"resize_inode" },
 	{	E2P_FEATURE_RO_INCOMPAT, EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER,
 			"sparse_super" },

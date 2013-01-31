@@ -10,8 +10,43 @@
  *
  * Maintainer: Gennady Feldman <gfeldman@gena01.com> as of Mar 12, 2001
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define syslogd_trivial_usage
+//usage:       "[OPTIONS]"
+//usage:#define syslogd_full_usage "\n\n"
+//usage:       "System logging utility\n"
+//usage:	IF_NOT_FEATURE_SYSLOGD_CFG(
+//usage:       "(this version of syslogd ignores /etc/syslog.conf)\n"
+//usage:	)
+//usage:     "\n	-n		Run in foreground"
+//usage:     "\n	-O FILE		Log to FILE (default:/var/log/messages)"
+//usage:     "\n	-l N		Log only messages more urgent than prio N (1-8)"
+//usage:     "\n	-S		Smaller output"
+//usage:	IF_FEATURE_ROTATE_LOGFILE(
+//usage:     "\n	-s SIZE		Max size (KB) before rotation (default:200KB, 0=off)"
+//usage:     "\n	-b N		N rotated logs to keep (default:1, max=99, 0=purge)"
+//usage:	)
+//usage:	IF_FEATURE_REMOTE_LOG(
+//usage:     "\n	-R HOST[:PORT]	Log to IP or hostname on PORT (default PORT=514/UDP)"
+//usage:     "\n	-L		Log locally and via network (default is network only if -R)"
+//usage:	)
+//usage:	IF_FEATURE_SYSLOGD_DUP(
+//usage:     "\n	-D		Drop duplicates"
+//usage:	)
+//usage:	IF_FEATURE_IPC_SYSLOG(
+/* NB: -Csize shouldn't have space (because size is optional) */
+//usage:     "\n	-C[size_kb]	Log to shared mem buffer (use logread to read it)"
+//usage:	)
+//usage:	IF_FEATURE_SYSLOGD_CFG(
+//usage:     "\n	-f FILE		Use FILE as config (default:/etc/syslog.conf)"
+//usage:	)
+/* //usage:  "\n	-m MIN		Minutes between MARK lines (default:20, 0=off)" */
+//usage:
+//usage:#define syslogd_example_usage
+//usage:       "$ syslogd -R masterlog:514\n"
+//usage:       "$ syslogd -R 192.168.1.1:601\n"
 
 /*
  * Done in syslogd_and_logger.c:
@@ -66,10 +101,26 @@ typedef struct {
 } remoteHost_t;
 #endif
 
+typedef struct logFile_t {
+	const char *path;
+	int fd;
+#if ENABLE_FEATURE_ROTATE_LOGFILE
+	unsigned size;
+	uint8_t isRegular;
+#endif
+} logFile_t;
+
+#if ENABLE_FEATURE_SYSLOGD_CFG
+typedef struct logRule_t {
+	uint8_t enabled_facility_priomap[LOG_NFACILITIES];
+	struct logFile_t *file;
+	struct logRule_t *next;
+} logRule_t;
+#endif
+
 /* Allows us to have smaller initializer. Ugly. */
 #define GLOBALS \
-	const char *logFilePath;                \
-	int logFD;                              \
+	logFile_t logFile;                      \
 	/* interval between marks in seconds */ \
 	/*int markInterval;*/                   \
 	/* level of messages to be logged */    \
@@ -79,8 +130,6 @@ IF_FEATURE_ROTATE_LOGFILE( \
 	unsigned logFileSize;                   \
 	/* number of rotated message files */   \
 	unsigned logFileRotate;                 \
-	unsigned curFileSize;                   \
-	smallint isRegular;                     \
 ) \
 IF_FEATURE_IPC_SYSLOG( \
 	int shmid; /* ipc shared memory id */   \
@@ -88,6 +137,9 @@ IF_FEATURE_IPC_SYSLOG( \
 	int shm_size;                           \
 	struct sembuf SMwup[1];                 \
 	struct sembuf SMwdn[3];                 \
+) \
+IF_FEATURE_SYSLOGD_CFG( \
+	logRule_t *log_rules; \
 )
 
 struct init_globals {
@@ -119,8 +171,10 @@ struct globals {
 };
 
 static const struct init_globals init_data = {
-	.logFilePath = "/var/log/messages",
-	.logFD = -1,
+	.logFile = {
+		.path = "/var/log/messages",
+		.fd = -1,
+	},
 #ifdef SYSLOGD_MARK
 	.markInterval = 20 * 60,
 #endif
@@ -132,7 +186,7 @@ static const struct init_globals init_data = {
 #if ENABLE_FEATURE_IPC_SYSLOG
 	.shmid = -1,
 	.s_semid = -1,
-	.shm_size = ((CONFIG_FEATURE_IPC_SYSLOG_BUFFER_SIZE)*1024), // default shm size
+	.shm_size = ((CONFIG_FEATURE_IPC_SYSLOG_BUFFER_SIZE)*1024), /* default shm size */
 	.SMwup = { {1, -1, IPC_NOWAIT} },
 	.SMwdn = { {0, 0}, {1, 0}, {1, +1} },
 #endif
@@ -157,6 +211,7 @@ enum {
 	IF_FEATURE_REMOTE_LOG(    OPTBIT_locallog   ,)	// -L
 	IF_FEATURE_IPC_SYSLOG(    OPTBIT_circularlog,)	// -C
 	IF_FEATURE_SYSLOGD_DUP(   OPTBIT_dup        ,)	// -D
+	IF_FEATURE_SYSLOGD_CFG(   OPTBIT_cfg        ,)	// -f
 
 	OPT_mark        = 1 << OPTBIT_mark    ,
 	OPT_nofork      = 1 << OPTBIT_nofork  ,
@@ -169,6 +224,7 @@ enum {
 	OPT_locallog    = IF_FEATURE_REMOTE_LOG(    (1 << OPTBIT_locallog   )) + 0,
 	OPT_circularlog = IF_FEATURE_IPC_SYSLOG(    (1 << OPTBIT_circularlog)) + 0,
 	OPT_dup         = IF_FEATURE_SYSLOGD_DUP(   (1 << OPTBIT_dup        )) + 0,
+	OPT_cfg         = IF_FEATURE_SYSLOGD_CFG(   (1 << OPTBIT_cfg        )) + 0,
 };
 #define OPTION_STR "m:nO:l:S" \
 	IF_FEATURE_ROTATE_LOGFILE("s:" ) \
@@ -176,17 +232,195 @@ enum {
 	IF_FEATURE_REMOTE_LOG(    "R:" ) \
 	IF_FEATURE_REMOTE_LOG(    "L"  ) \
 	IF_FEATURE_IPC_SYSLOG(    "C::") \
-	IF_FEATURE_SYSLOGD_DUP(   "D"  )
+	IF_FEATURE_SYSLOGD_DUP(   "D"  ) \
+	IF_FEATURE_SYSLOGD_CFG(   "f:"  )
 #define OPTION_DECL *opt_m, *opt_l \
 	IF_FEATURE_ROTATE_LOGFILE(,*opt_s) \
 	IF_FEATURE_ROTATE_LOGFILE(,*opt_b) \
-	IF_FEATURE_IPC_SYSLOG(    ,*opt_C = NULL)
-#define OPTION_PARAM &opt_m, &G.logFilePath, &opt_l \
+	IF_FEATURE_IPC_SYSLOG(    ,*opt_C = NULL) \
+	IF_FEATURE_SYSLOGD_CFG(   ,*opt_f = NULL)
+#define OPTION_PARAM &opt_m, &(G.logFile.path), &opt_l \
 	IF_FEATURE_ROTATE_LOGFILE(,&opt_s) \
 	IF_FEATURE_ROTATE_LOGFILE(,&opt_b) \
 	IF_FEATURE_REMOTE_LOG(	  ,&remoteAddrList) \
-	IF_FEATURE_IPC_SYSLOG(    ,&opt_C)
+	IF_FEATURE_IPC_SYSLOG(    ,&opt_C) \
+	IF_FEATURE_SYSLOGD_CFG(   ,&opt_f)
 
+
+#if ENABLE_FEATURE_SYSLOGD_CFG
+static const CODE* find_by_name(char *name, const CODE* c_set)
+{
+	for (; c_set->c_name; c_set++) {
+		if (strcmp(name, c_set->c_name) == 0)
+			return c_set;
+	}
+	return NULL;
+}
+#endif
+static const CODE* find_by_val(int val, const CODE* c_set)
+{
+	for (; c_set->c_name; c_set++) {
+		if (c_set->c_val == val)
+			return c_set;
+	}
+	return NULL;
+}
+
+#if ENABLE_FEATURE_SYSLOGD_CFG
+static void parse_syslogdcfg(const char *file)
+{
+	char *t;
+	logRule_t **pp_rule;
+	/* tok[0] set of selectors */
+	/* tok[1] file name */
+	/* tok[2] has to be NULL */
+	char *tok[3];
+	parser_t *parser;
+
+	parser = config_open2(file ? file : "/etc/syslog.conf",
+				file ? xfopen_for_read : fopen_for_read);
+	if (!parser)
+		/* didn't find default /etc/syslog.conf */
+		/* proceed as if we built busybox without config support */
+		return;
+
+	/* use ptr to ptr to avoid checking whether head was initialized */
+	pp_rule = &G.log_rules;
+	/* iterate through lines of config, skipping comments */
+	while (config_read(parser, tok, 3, 2, "# \t", PARSE_NORMAL | PARSE_MIN_DIE)) {
+		char *cur_selector;
+		logRule_t *cur_rule;
+
+		/* unexpected trailing token? */
+		if (tok[2])
+			goto cfgerr;
+
+		cur_rule = *pp_rule = xzalloc(sizeof(*cur_rule));
+
+		cur_selector = tok[0];
+		/* iterate through selectors: "kern.info;kern.!err;..." */
+		do {
+			const CODE *code;
+			char *next_selector;
+			uint8_t negated_prio; /* "kern.!err" */
+			uint8_t single_prio;  /* "kern.=err" */
+			uint32_t facmap; /* bitmap of enabled facilities */
+			uint8_t primap;  /* bitmap of enabled priorities */
+			unsigned i;
+
+			next_selector = strchr(cur_selector, ';');
+			if (next_selector)
+				*next_selector++ = '\0';
+
+			t = strchr(cur_selector, '.');
+			if (!t)
+				goto cfgerr;
+			*t++ = '\0'; /* separate facility from priority */
+
+			negated_prio = 0;
+			single_prio = 0;
+			if (*t == '!') {
+				negated_prio = 1;
+				++t;
+			}
+			if (*t == '=') {
+				single_prio = 1;
+				++t;
+			}
+
+			/* parse priority */
+			if (*t == '*')
+				primap = 0xff; /* all 8 log levels enabled */
+			else {
+				uint8_t priority;
+				code = find_by_name(t, prioritynames);
+				if (!code)
+					goto cfgerr;
+				primap = 0;
+				priority = code->c_val;
+				if (priority == INTERNAL_NOPRI) {
+					/* ensure we take "enabled_facility_priomap[fac] &= 0" branch below */
+					negated_prio = 1;
+				} else {
+					priority = 1 << priority;
+					do {
+						primap |= priority;
+						if (single_prio)
+							break;
+						priority >>= 1;
+					} while (priority);
+					if (negated_prio)
+						primap = ~primap;
+				}
+			}
+
+			/* parse facility */
+			if (*cur_selector == '*')
+				facmap = (1<<LOG_NFACILITIES) - 1;
+			else {
+				char *next_facility;
+				facmap = 0;
+				t = cur_selector;
+				/* iterate through facilities: "kern,daemon.<priospec>" */
+				do {
+					next_facility = strchr(t, ',');
+					if (next_facility)
+						*next_facility++ = '\0';
+					code = find_by_name(t, facilitynames);
+					if (!code)
+						goto cfgerr;
+					/* "mark" is not a real facility, skip it */
+					if (code->c_val != INTERNAL_MARK)
+						facmap |= 1<<(LOG_FAC(code->c_val));
+					t = next_facility;
+				} while (t);
+			}
+
+			/* merge result with previous selectors */
+			for (i = 0; i < LOG_NFACILITIES; ++i) {
+				if (!(facmap & (1<<i)))
+					continue;
+				if (negated_prio)
+					cur_rule->enabled_facility_priomap[i] &= primap;
+				else
+					cur_rule->enabled_facility_priomap[i] |= primap;
+			}
+
+			cur_selector = next_selector;
+		} while (cur_selector);
+
+		/* check whether current file name was mentioned in previous rules or
+		 * as global logfile (G.logFile).
+		 */
+		if (strcmp(G.logFile.path, tok[1]) == 0) {
+			cur_rule->file = &G.logFile;
+			goto found;
+		}
+		/* temporarily use cur_rule as iterator, but *pp_rule still points
+		 * to currently processing rule entry.
+		 * NOTE: *pp_rule points to the current (and last in the list) rule.
+		 */
+		for (cur_rule = G.log_rules; cur_rule != *pp_rule; cur_rule = cur_rule->next) {
+			if (strcmp(cur_rule->file->path, tok[1]) == 0) {
+				/* found - reuse the same file structure */
+				(*pp_rule)->file = cur_rule->file;
+				cur_rule = *pp_rule;
+				goto found;
+			}
+		}
+		cur_rule->file = xzalloc(sizeof(*cur_rule->file));
+		cur_rule->file->fd = -1;
+		cur_rule->file->path = xstrdup(tok[1]);
+ found:
+		pp_rule = &cur_rule->next;
+	}
+	config_close(parser);
+	return;
+
+ cfgerr:
+	bb_error_msg_and_die("error in '%s' at line %d", file, parser->lineno);
+}
+#endif
 
 /* circular buffer variables/structures */
 #if ENABLE_FEATURE_IPC_SYSLOG
@@ -231,7 +465,7 @@ static void ipcsyslog_init(void)
 	G.shbuf->size = G.shm_size - offsetof(struct shbuf_ds, data) - 1;
 	/*G.shbuf->tail = 0;*/
 
-	// we'll trust the OS to set initial semval to 0 (let's hope)
+	/* we'll trust the OS to set initial semval to 0 (let's hope) */
 	G.s_semid = semget(KEY_ID, 2, IPC_CREAT | IPC_EXCL | 1023);
 	if (G.s_semid == -1) {
 		if (errno == EEXIST) {
@@ -244,9 +478,10 @@ static void ipcsyslog_init(void)
 }
 
 /* Write message to shared mem buffer */
-static void log_to_shmem(const char *msg, int len)
+static void log_to_shmem(const char *msg)
 {
 	int old_tail, new_tail;
+	int len;
 
 	if (semop(G.s_semid, G.SMwdn, 3) == -1) {
 		bb_perror_msg_and_die("SMwdn");
@@ -258,7 +493,7 @@ static void log_to_shmem(const char *msg, int len)
 	 * tail's max value is (shbuf->size - 1)
 	 * Last byte of buffer is never used and remains NUL.
 	 */
-	len++; /* length with NUL included */
+	len = strlen(msg) + 1; /* length with NUL included */
  again:
 	old_tail = G.shbuf->tail;
 	new_tail = old_tail + len;
@@ -288,23 +523,15 @@ void ipcsyslog_init(void);
 void log_to_shmem(const char *msg);
 #endif /* FEATURE_IPC_SYSLOG */
 
-
 /* Print a message to the log file. */
-static void log_locally(time_t now, char *msg)
+static void log_locally(time_t now, char *msg, logFile_t *log_file)
 {
 #ifdef SYSLOGD_WRLOCK
 	struct flock fl;
 #endif
 	int len = strlen(msg);
-	const char *sav_logFilePath = G.logFilePath;
 
-#if ENABLE_FEATURE_IPC_SYSLOG
-	if ((option_mask32 & OPT_circularlog) && G.shbuf) {
-		log_to_shmem(msg, len);
-		return;
-	}
-#endif
-	if (G.logFD >= 0) {
+	if (log_file->fd >= 0) {
 		/* Reopen log file every second. This allows admin
 		 * to delete the file and not worry about restarting us.
 		 * This costs almost nothing since it happens
@@ -314,24 +541,17 @@ static void log_locally(time_t now, char *msg)
 			now = time(NULL);
 		if (G.last_log_time != now) {
 			G.last_log_time = now;
-			close(G.logFD);
+			close(log_file->fd);
 			goto reopen;
 		}
 	} else {
  reopen:
-		G.logFD = open(G.logFilePath, O_WRONLY | O_CREAT
+		log_file->fd = open(log_file->path, O_WRONLY | O_CREAT
 					| O_NOCTTY | O_APPEND | O_NONBLOCK,
 					0666);
-		if (G.logFD < 0) {	/* fallback is to initial default. */
-			G.logFilePath = init_data.logFilePath;
-			G.logFD = open(G.logFilePath, O_WRONLY | O_CREAT
-					| O_NOCTTY | O_APPEND | O_NONBLOCK,
-					0666);
-		}
-		if (G.logFD < 0) {
+		if (log_file->fd < 0) {
 			/* cannot open logfile? - print to /dev/console then */
 			int fd = device_open(DEV_CONSOLE, O_WRONLY | O_NOCTTY | O_NONBLOCK);
-			G.logFilePath = sav_logFilePath;
 			if (fd < 0)
 				fd = 2; /* then stderr, dammit */
 			full_write(fd, msg, len);
@@ -342,9 +562,9 @@ static void log_locally(time_t now, char *msg)
 #if ENABLE_FEATURE_ROTATE_LOGFILE
 		{
 			struct stat statf;
-			G.isRegular = (fstat(G.logFD, &statf) == 0 && S_ISREG(statf.st_mode));
+			log_file->isRegular = (fstat(log_file->fd, &statf) == 0 && S_ISREG(statf.st_mode));
 			/* bug (mostly harmless): can wrap around if file > 4gb */
-			G.curFileSize = statf.st_size;
+			log_file->size = statf.st_size;
 		}
 #endif
 	}
@@ -354,72 +574,65 @@ static void log_locally(time_t now, char *msg)
 	fl.l_start = 0;
 	fl.l_len = 1;
 	fl.l_type = F_WRLCK;
-	fcntl(G.logFD, F_SETLKW, &fl);
+	fcntl(log_file->fd, F_SETLKW, &fl);
 #endif
 
 #if ENABLE_FEATURE_ROTATE_LOGFILE
-	if (G.logFileSize && G.isRegular && G.curFileSize > G.logFileSize) {
+	if (G.logFileSize && log_file->isRegular && log_file->size > G.logFileSize) {
 		if (G.logFileRotate) { /* always 0..99 */
-			int i = strlen(G.logFilePath) + 3 + 1;
+			int i = strlen(log_file->path) + 3 + 1;
 			char oldFile[i];
 			char newFile[i];
 			i = G.logFileRotate - 1;
 			/* rename: f.8 -> f.9; f.7 -> f.8; ... */
 			while (1) {
-				sprintf(newFile, "%s.%d", G.logFilePath, i);
+				sprintf(newFile, "%s.%d", log_file->path, i);
 				if (i == 0) break;
-				sprintf(oldFile, "%s.%d", G.logFilePath, --i);
+				sprintf(oldFile, "%s.%d", log_file->path, --i);
 				/* ignore errors - file might be missing */
 				rename(oldFile, newFile);
 			}
 			/* newFile == "f.0" now */
-			rename(G.logFilePath, newFile);
+			rename(log_file->path, newFile);
+			/* Incredibly, if F and F.0 are hardlinks, POSIX
+			 * _demands_ that rename returns 0 but does not
+			 * remove F!!!
+			 * (hardlinked F/F.0 pair was observed after
+			 * power failure during rename()).
+			 * Ensure old file is gone:
+			 */
+			unlink(log_file->path);
 #ifdef SYSLOGD_WRLOCK
 			fl.l_type = F_UNLCK;
-			fcntl(G.logFD, F_SETLKW, &fl);
+			fcntl(log_file->fd, F_SETLKW, &fl);
 #endif
-			close(G.logFD);
+			close(log_file->fd);
 			goto reopen;
 		}
-		ftruncate(G.logFD, 0);
+		ftruncate(log_file->fd, 0);
 	}
-	G.curFileSize +=
+	log_file->size +=
 #endif
-			full_write(G.logFD, msg, len);
+			full_write(log_file->fd, msg, len);
 #ifdef SYSLOGD_WRLOCK
 	fl.l_type = F_UNLCK;
-	fcntl(G.logFD, F_SETLKW, &fl);
+	fcntl(log_file->fd, F_SETLKW, &fl);
 #endif
-	G.logFilePath = sav_logFilePath;
 }
 
 static void parse_fac_prio_20(int pri, char *res20)
 {
 	const CODE *c_pri, *c_fac;
 
-	if (pri != 0) {
-		c_fac = facilitynames;
-		while (c_fac->c_name) {
-			if (c_fac->c_val != (LOG_FAC(pri) << 3)) {
-				c_fac++;
-				continue;
-			}
-			/* facility is found, look for prio */
-			c_pri = prioritynames;
-			while (c_pri->c_name) {
-				if (c_pri->c_val != LOG_PRI(pri)) {
-					c_pri++;
-					continue;
-				}
-				snprintf(res20, 20, "%s.%s",
-						c_fac->c_name, c_pri->c_name);
-				return;
-			}
-			/* prio not found, bail out */
-			break;
+	c_fac = find_by_val(LOG_FAC(pri) << 3, facilitynames);
+	if (c_fac) {
+		c_pri = find_by_val(LOG_PRI(pri), prioritynames);
+		if (c_pri) {
+			snprintf(res20, 20, "%s.%s", c_fac->c_name, c_pri->c_name);
+			return;
 		}
-		snprintf(res20, 20, "<%d>", pri);
 	}
+	snprintf(res20, 20, "<%d>", pri);
 }
 
 /* len parameter is used only for "is there a timestamp?" check.
@@ -453,7 +666,32 @@ static void timestamp_and_log(int pri, char *msg, int len)
 	}
 
 	/* Log message locally (to file or shared mem) */
-	log_locally(now, G.printbuf);
+#if ENABLE_FEATURE_SYSLOGD_CFG
+	{
+		bool match = 0;
+		logRule_t *rule;
+		uint8_t facility = LOG_FAC(pri);
+		uint8_t prio_bit = 1 << LOG_PRI(pri);
+
+		for (rule = G.log_rules; rule; rule = rule->next) {
+			if (rule->enabled_facility_priomap[facility] & prio_bit) {
+				log_locally(now, G.printbuf, rule->file);
+				match = 1;
+			}
+		}
+		if (match)
+			return;
+	}
+#endif
+	if (LOG_PRI(pri) < G.logLevel) {
+#if ENABLE_FEATURE_IPC_SYSLOG
+		if ((option_mask32 & OPT_circularlog) && G.shbuf) {
+			log_to_shmem(G.printbuf);
+			return;
+		}
+#endif
+		log_locally(now, G.printbuf, &G.logFile);
+	}
 }
 
 static void timestamp_and_log_internal(const char *msg)
@@ -498,8 +736,7 @@ static void split_escape_and_log(char *tmpbuf, int len)
 		*q = '\0';
 
 		/* Now log it */
-		if (LOG_PRI(pri) < G.logLevel)
-			timestamp_and_log(pri, G.parsebuf, q - G.parsebuf);
+		timestamp_and_log(pri, G.parsebuf, q - G.parsebuf);
 	}
 }
 
@@ -520,6 +757,11 @@ static NOINLINE int create_socket(void)
 	struct sockaddr_un sunx;
 	int sock_fd;
 	char *dev_log_name;
+
+#if ENABLE_FEATURE_SYSTEMD
+	if (sd_listen_fds() == 1)
+		return SD_LISTEN_FDS_START;
+#endif
 
 	memset(&sunx, 0, sizeof(sunx));
 	sunx.sun_family = AF_UNIX;
@@ -723,10 +965,12 @@ int syslogd_main(int argc UNUSED_PARAM, char **argv)
 	if (opt_C) // -Cn
 		G.shm_size = xatoul_range(opt_C, 4, INT_MAX/1024) * 1024;
 #endif
-
 	/* If they have not specified remote logging, then log locally */
 	if (ENABLE_FEATURE_REMOTE_LOG && !(opts & OPT_remotelog)) // -R
 		option_mask32 |= OPT_locallog;
+#if ENABLE_FEATURE_SYSLOGD_CFG
+	parse_syslogdcfg(opt_f);
+#endif
 
 	/* Store away localhost's name before the fork */
 	G.hostname = safe_gethostname();

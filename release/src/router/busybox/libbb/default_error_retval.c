@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2003  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* Seems silly to copyright a global variable.  ;-)  Oh well.
@@ -15,4 +15,4 @@
 
 #include "libbb.h"
 
-int xfunc_error_retval = EXIT_FAILURE;
+uint8_t xfunc_error_retval = EXIT_FAILURE;

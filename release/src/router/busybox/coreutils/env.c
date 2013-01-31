@@ -3,9 +3,9 @@
  * env implementation for busybox
  *
  * Copyright (c) 1988, 1993, 1994
- *	The Regents of the University of California.  All rights reserved.
+ * The Regents of the University of California.  All rights reserved.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Original copyright notice is retained at the end of this file.
  *
@@ -30,6 +30,14 @@
  */
 
 /* This is a NOEXEC applet. Be very careful! */
+
+//usage:#define env_trivial_usage
+//usage:       "[-iu] [-] [name=value]... [PROG ARGS]"
+//usage:#define env_full_usage "\n\n"
+//usage:       "Print the current environment or run PROG after setting up\n"
+//usage:       "the specified environment\n"
+//usage:     "\n	-, -i	Start with an empty environment"
+//usage:     "\n	-u	Remove variable from the environment"
 
 #include "libbb.h"
 
@@ -103,8 +111,8 @@ int env_main(int argc UNUSED_PARAM, char **argv)
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. <BSD Advertising Clause omitted per the July 22, 1999 licensing change
- *		ftp://ftp.cs.berkeley.edu/pub/4bsd/README.Impt.License.Change>
+ * 3. BSD Advertising Clause omitted per the July 22, 1999 licensing change
+ *    ftp://ftp.cs.berkeley.edu/pub/4bsd/README.Impt.License.Change
  *
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software

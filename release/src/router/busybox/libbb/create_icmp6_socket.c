@@ -5,7 +5,7 @@
  * create raw socket for icmp (IPv6 version) protocol
  * and drop root privileges if running setuid
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"

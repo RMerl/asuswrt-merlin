@@ -28,6 +28,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Busyboxed by Denys Vlasenko <vda.linux@googlemail.com> */
 /* TODO: depends on runit_lib.c - review and reduce/eliminate */
 
+//usage:#define runsvdir_trivial_usage
+//usage:       "[-P] [-s SCRIPT] DIR"
+//usage:#define runsvdir_full_usage "\n\n"
+//usage:       "Start a runsv process for each subdirectory. If it exits, restart it.\n"
+//usage:     "\n	-P		Put each runsv in a new session"
+//usage:     "\n	-s SCRIPT	Run SCRIPT <signo> after signal is processed"
+
 #include <sys/poll.h>
 #include <sys/file.h>
 #include "libbb.h"
@@ -68,8 +75,7 @@ struct globals {
 #define logpipe     (G.logpipe     )
 #define pfd         (G.pfd         )
 #define stamplog    (G.stamplog    )
-#define INIT_G() do { \
-} while (0)
+#define INIT_G() do { } while (0)
 
 static void fatal2_cannot(const char *m1, const char *m2)
 {
@@ -276,7 +282,7 @@ int runsvdir_main(int argc UNUSED_PARAM, char **argv)
 	}
  run:
 #endif
-	curdir = open_read(".");
+	curdir = open(".", O_RDONLY|O_NDELAY);
 	if (curdir == -1)
 		fatal2_cannot("open current directory", "");
 	close_on_exec_on(curdir);
@@ -312,8 +318,11 @@ int runsvdir_main(int argc UNUSED_PARAM, char **argv)
 						last_mtime = s.st_mtime;
 						last_dev = s.st_dev;
 						last_ino = s.st_ino;
-						//if (now <= mtime)
-						//	sleep(1);
+						/* if the svdir changed this very second, wait until the
+						 * next second, because we won't be able to detect more
+						 * changes within this second */
+						while (time(NULL) == last_mtime)
+							usleep(100000);
 						need_rescan = do_rescan();
 						while (fchdir(curdir) == -1) {
 							warn2_cannot("change directory, pausing", "");

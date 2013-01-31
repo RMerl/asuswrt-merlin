@@ -60,6 +60,4 @@ typedef struct journal_superblock_s
 	/* Dynamic information describing the current state of the log */
 	__u32		s_sequence;	/* first commit ID expected in log */
 	__u32		s_start;	/* blocknr of start of log */
-
 } journal_superblock_t;
-

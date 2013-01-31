@@ -1,1 +1,0 @@
-test "`busybox msh -c 'FOO_BAR=foo; echo $FOO_BAR'`" = foo

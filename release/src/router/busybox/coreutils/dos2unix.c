@@ -9,10 +9,28 @@
  *
  * dos2unix filters reading input from stdin and writing output to stdout.
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
 */
 
+//usage:#define dos2unix_trivial_usage
+//usage:       "[-ud] [FILE]"
+//usage:#define dos2unix_full_usage "\n\n"
+//usage:       "Convert FILE in-place from DOS to Unix format.\n"
+//usage:       "When no file is given, use stdin/stdout.\n"
+//usage:     "\n	-u	dos2unix"
+//usage:     "\n	-d	unix2dos"
+//usage:
+//usage:#define unix2dos_trivial_usage
+//usage:       "[-ud] [FILE]"
+//usage:#define unix2dos_full_usage "\n\n"
+//usage:       "Convert FILE in-place from Unix to DOS format.\n"
+//usage:       "When no file is given, use stdin/stdout.\n"
+//usage:     "\n	-u	dos2unix"
+//usage:     "\n	-d	unix2dos"
+
 #include "libbb.h"
+
+/* This is a NOEXEC applet. Be very careful! */
 
 enum {
 	CT_UNIX2DOS = 1,
@@ -39,12 +57,10 @@ static void convert(char *fn, int conv_type)
 		fstat(fileno(in), &st);
 
 		temp_fn = xasprintf("%sXXXXXX", resolved_fn);
-		i = mkstemp(temp_fn);
-		if (i == -1
-		 || fchmod(i, st.st_mode) == -1
-		) {
+		i = xmkstemp(temp_fn);
+		if (fchmod(i, st.st_mode) == -1)
 			bb_simple_perror_msg_and_die(temp_fn);
-		}
+
 		out = xfdopen_for_write(i);
 	}
 

@@ -7,8 +7,16 @@
  * Copyright 2006 Rob Landley <rob@landley.net>
  * Copyright 2006 Bernhard Reutner-Fischer
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define nohup_trivial_usage
+//usage:       "PROG ARGS"
+//usage:#define nohup_full_usage "\n\n"
+//usage:       "Run PROG immune to hangups, with output to a non-tty"
+//usage:
+//usage:#define nohup_example_usage
+//usage:       "$ nohup make &"
 
 #include "libbb.h"
 

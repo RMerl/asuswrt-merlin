@@ -1,3 +1,0 @@
-mkdir -p foo/bar
-busybox rmdir -p foo/bar
-test ! -d foo

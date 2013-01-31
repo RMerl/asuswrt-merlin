@@ -1,2 +1,0 @@
-while true; do echo A; break; echo B; done
-echo OK:$?

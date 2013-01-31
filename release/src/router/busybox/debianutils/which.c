@@ -5,10 +5,19 @@
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  * Copyright (C) 2006 Gabriel Somlo <somlo at cmu.edu>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Based on which from debianutils
  */
+
+//usage:#define which_trivial_usage
+//usage:       "[COMMAND]..."
+//usage:#define which_full_usage "\n\n"
+//usage:       "Locate a COMMAND"
+//usage:
+//usage:#define which_example_usage
+//usage:       "$ which login\n"
+//usage:       "/bin/login\n"
 
 #include "libbb.h"
 

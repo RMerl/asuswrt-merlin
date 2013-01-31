@@ -1,4 +1,0 @@
-exec <read.tests
-read
-cat
-echo "REPLY=$REPLY"

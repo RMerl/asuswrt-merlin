@@ -4,8 +4,21 @@
  *
  * Copyright 2002 Andi Kleen, SuSE Labs.
  *
- * Licensed under GPL v2 or later, see file License for details.
-*/
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
+ */
+
+//usage:#define setarch_trivial_usage
+//usage:       "personality PROG ARGS"
+//usage:#define setarch_full_usage "\n\n"
+//usage:       "Personality may be:\n"
+//usage:       "	linux32		Set 32bit uname emulation\n"
+//usage:       "	linux64		Set 64bit uname emulation"
+//usage:
+//usage:#define linux32_trivial_usage NOUSAGE_STR
+//usage:#define linux32_full_usage ""
+//usage:
+//usage:#define linux64_trivial_usage NOUSAGE_STR
+//usage:#define linux64_full_usage ""
 
 #include <sys/personality.h>
 

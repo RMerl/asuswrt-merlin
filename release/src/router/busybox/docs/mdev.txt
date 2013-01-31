@@ -51,19 +51,25 @@ device nodes if your system needs something more than the default root/root
 660 permissions.
 
 The file has the format:
-    <device regex>       <uid>:<gid> <permissions>
- or @<maj[,min1[-min2]]> <uid>:<gid> <permissions>
+	[-]<device regex>	<uid>:<gid> <permissions>
+or
+	@<maj[,min1[-min2]]>	<uid>:<gid> <permissions>
+or
+	$envvar=<regex>		<uid>:<gid> <permissions>
 
 For example:
-    hd[a-z][0-9]* 0:3 660
+	hd[a-z][0-9]* 0:3 660
 
 The config file parsing stops at the first matching line.  If no line is
 matched, then the default of 0:0 660 is used.  To set your own default, simply
 create your own total match like so:
+
 	.* 1:1 777
 
 You can rename/move device nodes by using the next optional field.
+
 	<device regex> <uid>:<gid> <permissions> [=path]
+
 So if you want to place the device node into a subdirectory, make sure the path
 has a trailing /.  If you want to rename the device node, just place the name.
 	hda 0:3 660 =drives/

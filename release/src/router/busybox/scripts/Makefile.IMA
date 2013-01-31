@@ -9,7 +9,10 @@ objtree		:= $(CURDIR)
 src		:= $(srctree)
 obj		:= $(objtree)
 
-# Look for make include files relative to root of kernel src
+# Make generated files
+DUMMY := $(shell $(Q)$(srctree)/scripts/gen_build_files.sh $(srctree) $(objtree) >&2)
+
+# Look for make include files relative to root of src
 MAKEFLAGS += --include-dir=$(srctree)
 
 default: busybox
@@ -85,8 +88,8 @@ lib-y:=
 include archival/Kbuild
 lib-all-y += $(patsubst %,archival/%,$(sort $(lib-y)))
 lib-y:=
-include archival/libunarchive/Kbuild
-lib-all-y += $(patsubst %,archival/libunarchive/%,$(sort $(lib-y)))
+include archival/libarchive/Kbuild
+lib-all-y += $(patsubst %,archival/libarchive/%,$(sort $(lib-y)))
 lib-y:=
 include applets/Kbuild
 lib-all-y += $(patsubst %,applets/%,$(sort $(lib-y)))
@@ -120,6 +123,9 @@ lib-all-y += $(patsubst %,modutils/%,$(sort $(lib-y)))
 lib-y:=
 include miscutils/Kbuild
 lib-all-y += $(patsubst %,miscutils/%,$(sort $(lib-y)))
+lib-y:=
+include mailutils/Kbuild
+lib-all-y += $(patsubst %,mailutils/%,$(sort $(lib-y)))
 lib-y:=
 include coreutils/libcoreutils/Kbuild
 lib-all-y += $(patsubst %,coreutils/libcoreutils/%,$(sort $(lib-y)))
@@ -168,7 +174,7 @@ lib-all-y += $(patsubst %,libbb/%,$(sort $(lib-y)))
 lib-y:=
 
 comma:=,
-busybox_unstripped.o: $(usage_stuff) include/applet_tables.h include/autoconf.h
+busybox_unstripped.o: $(usage_stuff) include/applet_tables.h include/NUM_APPLETS.h include/autoconf.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(EXTRA_CFLAGS) \
 		$(patsubst %,-Wl$(comma)%,$(LDFLAGS) $(EXTRA_LDFLAGS)) \
 		-DGCC_COMBINE=1 \
@@ -194,14 +200,9 @@ busybox: busybox_unstripped.o
 include/autoconf.h: .config
 	$(MAKE) -f $(srctree)/Makefile silentoldconfig
 
+# Override rules for host compile
 applets/usage: include/autoconf.h
-	$(HOSTCC) -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer -I$(srctree)/include -o applets/usage applets/usage.c
+	$(HOSTCC) -Wall -O2 -I$(srctree)/include -o applets/usage applets/usage.c
 
 applets/applet_tables: include/autoconf.h
-	$(HOSTCC) -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer -I$(srctree)/include -o applets/applet_tables applets/applet_tables.c
-
-include/usage_compressed.h: include/usage.h applets/usage
-	$(srctree)/applets/usage_compressed include/usage_compressed.h applets
-
-include/applet_tables.h: include/applets.h
-	applets/applet_tables include/applet_tables.h
+	$(HOSTCC) -Wall -O2 -I$(srctree)/include -o applets/applet_tables applets/applet_tables.c

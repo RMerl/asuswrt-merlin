@@ -1,5 +1,0 @@
-false
-:
-echo $?
-(while :; do exit; done)
-echo OK: $?

@@ -7,16 +7,52 @@
  *
  * Copyright (C) 2008 by Vladimir Dronnikov <dronnikov@gmail.com>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//kbuild:lib-$(CONFIG_POPMAILDIR) += popmaildir.o mail.o
+
+//usage:#define popmaildir_trivial_usage
+//usage:       "[OPTIONS] MAILDIR [CONN_HELPER ARGS]"
+//usage:#define popmaildir_full_usage "\n\n"
+//usage:       "Fetch content of remote mailbox to local maildir\n"
+/* //usage:  "\n	-b		Binary mode. Ignored" */
+/* //usage:  "\n	-d		Debug. Ignored" */
+/* //usage:  "\n	-m		Show used memory. Ignored" */
+/* //usage:  "\n	-V		Show version. Ignored" */
+/* //usage:  "\n	-c		Use tcpclient. Ignored" */
+/* //usage:  "\n	-a		Use APOP protocol. Implied. If server supports APOP -> use it" */
+//usage:     "\n	-s		Skip authorization"
+//usage:     "\n	-T		Get messages with TOP instead of RETR"
+//usage:     "\n	-k		Keep retrieved messages on the server"
+//usage:     "\n	-t SEC		Network timeout"
+//usage:	IF_FEATURE_POPMAILDIR_DELIVERY(
+//usage:     "\n	-F \"PROG ARGS\"	Filter program (may be repeated)"
+//usage:     "\n	-M \"PROG ARGS\"	Delivery program"
+//usage:	)
+//usage:     "\n"
+//usage:     "\nFetch from plain POP3 server:"
+//usage:     "\npopmaildir -k DIR nc pop3.server.com 110 <user_and_pass.txt"
+//usage:     "\nFetch from SSLed POP3 server and delete fetched emails:"
+//usage:     "\npopmaildir DIR -- openssl s_client -quiet -connect pop3.server.com:995 <user_and_pass.txt"
+/* //usage:  "\n	-R BYTES	Remove old messages on the server >= BYTES. Ignored" */
+/* //usage:  "\n	-Z N1-N2	Remove messages from N1 to N2 (dangerous). Ignored" */
+/* //usage:  "\n	-L BYTES	Don't retrieve new messages >= BYTES. Ignored" */
+/* //usage:  "\n	-H LINES	Type first LINES of a message. Ignored" */
+//usage:
+//usage:#define popmaildir_example_usage
+//usage:       "$ popmaildir -k ~/Maildir -- nc pop.drvv.ru 110 [<password_file]\n"
+//usage:       "$ popmaildir ~/Maildir -- openssl s_client -quiet -connect pop.gmail.com:995 [<password_file]\n"
+
 #include "libbb.h"
 #include "mail.h"
 
 static void pop3_checkr(const char *fmt, const char *param, char **ret)
 {
-	const char *msg = command(fmt, param);
+	char *msg = send_mail_command(fmt, param);
 	char *answer = xmalloc_fgetline(stdin);
 	if (answer && '+' == answer[0]) {
+		free(msg);
 		if (timeout)
 			alarm(0);
 		if (ret) {
@@ -27,7 +63,7 @@ static void pop3_checkr(const char *fmt, const char *param, char **ret)
 			free(answer);
 		return;
 	}
-	bb_error_msg_and_die("%s failed: %s", msg, answer);
+	bb_error_msg_and_die("%s failed, reply was: %s", msg, answer);
 }
 
 static void pop3_check(const char *fmt, const char *param)
@@ -109,9 +145,9 @@ int popmaildir_main(int argc UNUSED_PARAM, char **argv)
 				s[1] = '\0';
 			// get md5 sum of "<stamp>password" string
 			md5_begin(&md5.ctx);
-			md5_hash(buf, strlen(buf), &md5.ctx);
-			md5_hash(G.pass, strlen(G.pass), &md5.ctx);
-			md5_end(res, &md5.ctx);
+			md5_hash(&md5.ctx, buf, strlen(buf));
+			md5_hash(&md5.ctx, G.pass, strlen(G.pass));
+			md5_end(&md5.ctx, res);
 			*bin2hex(md5.hex, (char*)res, 16) = '\0';
 			// APOP
 			s = xasprintf("%s %s", G.user, md5.hex);

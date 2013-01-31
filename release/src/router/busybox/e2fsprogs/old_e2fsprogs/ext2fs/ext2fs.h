@@ -46,7 +46,6 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../e2fsbb.h"
 #include "ext2_types.h"
 #include "ext2_fs.h"
 
@@ -388,7 +387,7 @@ typedef struct ext2_icount *ext2_icount_t;
 #define EXT2_LIB_FEATURE_COMPAT_SUPP	(EXT2_FEATURE_COMPAT_DIR_PREALLOC|\
 					 EXT2_FEATURE_COMPAT_IMAGIC_INODES|\
 					 EXT3_FEATURE_COMPAT_HAS_JOURNAL|\
-					 EXT2_FEATURE_COMPAT_RESIZE_INODE|\
+					 EXT2_FEATURE_COMPAT_RESIZE_INO|\
 					 EXT2_FEATURE_COMPAT_DIR_INDEX|\
 					 EXT2_FEATURE_COMPAT_EXT_ATTR)
 

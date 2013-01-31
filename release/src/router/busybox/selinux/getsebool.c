@@ -4,8 +4,13 @@
  * Based on libselinux 1.33.1
  * Port to BusyBox  Hiroshi Shinji <shiroshi@my.email.ne.jp>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define getsebool_trivial_usage
+//usage:       "-a or getsebool boolean..."
+//usage:#define getsebool_full_usage "\n\n"
+//usage:       "	-a	Show all selinux booleans"
 
 #include "libbb.h"
 

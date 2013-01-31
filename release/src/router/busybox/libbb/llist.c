@@ -7,7 +7,7 @@
  * Copyright (C) 2005 Bernhard Reutner-Fischer
  * Copyright (C) 2006 Rob Landley <rob@landley.net>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
@@ -62,7 +62,7 @@ void FAST_FUNC llist_unlink(llist_t **head, llist_t *elm)
 
 /* Recursively free all elements in the linked list.  If freeit != NULL
  * call it on each datum in the list */
-void FAST_FUNC llist_free(llist_t *elm, void (*freeit) (void *data))
+void FAST_FUNC llist_free(llist_t *elm, void (*freeit)(void *data))
 {
 	while (elm) {
 		void *data = llist_pop(&elm);

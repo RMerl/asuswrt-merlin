@@ -4,8 +4,14 @@
  *
  * Copyright (C) 2005  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define nice_trivial_usage
+//usage:       "[-n ADJUST] [PROG ARGS]"
+//usage:#define nice_full_usage "\n\n"
+//usage:       "Change scheduling priority, run PROG\n"
+//usage:     "\n	-n ADJUST	Adjust priority by ADJUST"
 
 #include <sys/resource.h>
 #include "libbb.h"
@@ -17,12 +23,12 @@ int nice_main(int argc, char **argv)
 
 	old_priority = getpriority(PRIO_PROCESS, 0);
 
-	if (!*++argv) {	/* No args, so (GNU) output current nice value. */
+	if (!*++argv) { /* No args, so (GNU) output current nice value. */
 		printf("%d\n", old_priority);
 		fflush_stdout_and_exit(EXIT_SUCCESS);
 	}
 
-	adjustment = 10;			/* Set default adjustment. */
+	adjustment = 10;  /* Set default adjustment. */
 
 	if (argv[0][0] == '-') {
 		if (argv[0][1] == 'n') { /* -n */
@@ -32,7 +38,7 @@ int nice_main(int argc, char **argv)
 		} else { /* -NNN (NNN may be negative) == -n NNN */
 			argv[0] += 1; argv--; argc++;
 		}
-		if (argc < 4) {			/* Missing priority and/or utility! */
+		if (argc < 4) {  /* Missing priority and/or utility! */
 			bb_show_usage();
 		}
 		adjustment = xatoi_range(argv[1], INT_MIN/2, INT_MAX/2);

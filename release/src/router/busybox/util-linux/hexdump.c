@@ -4,10 +4,33 @@
  * Based on code from util-linux v 2.11l
  *
  * Copyright (c) 1989
- *	The Regents of the University of California.  All rights reserved.
+ * The Regents of the University of California.  All rights reserved.
  *
- * Licensed under GPLv2 or later, see file License in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define hexdump_trivial_usage
+//usage:       "[-bcCdefnosvx" IF_FEATURE_HEXDUMP_REVERSE("R") "] [FILE]..."
+//usage:#define hexdump_full_usage "\n\n"
+//usage:       "Display FILEs (or stdin) in a user specified format\n"
+//usage:     "\n	-b		One-byte octal display"
+//usage:     "\n	-c		One-byte character display"
+//usage:     "\n	-C		Canonical hex+ASCII, 16 bytes per line"
+//usage:     "\n	-d		Two-byte decimal display"
+//usage:     "\n	-e FORMAT_STRING"
+//usage:     "\n	-f FORMAT_FILE"
+//usage:     "\n	-n LENGTH	Interpret only LENGTH bytes of input"
+//usage:     "\n	-o		Two-byte octal display"
+//usage:     "\n	-s OFFSET	Skip OFFSET bytes"
+//usage:     "\n	-v		Display all input data"
+//usage:     "\n	-x		Two-byte hexadecimal display"
+//usage:	IF_FEATURE_HEXDUMP_REVERSE(
+//usage:     "\n	-R		Reverse of 'hexdump -Cv'")
+//usage:
+//usage:#define hd_trivial_usage
+//usage:       "FILE..."
+//usage:#define hd_full_usage "\n\n"
+//usage:       "hd is an alias for hexdump -C"
 
 #include "libbb.h"
 #include "dump.h"
@@ -32,11 +55,11 @@ static void bb_dump_addfile(dumper_t *dumper, char *name)
 }
 
 static const char *const add_strings[] = {
-	"\"%07.7_ax \" 16/1 \"%03o \" \"\\n\"",		/* b */
-	"\"%07.7_ax \" 16/1 \"%3_c \" \"\\n\"",		/* c */
-	"\"%07.7_ax \" 8/2 \"  %05u \" \"\\n\"",	/* d */
-	"\"%07.7_ax \" 8/2 \" %06o \" \"\\n\"",		/* o */
-	"\"%07.7_ax \" 8/2 \"   %04x \" \"\\n\"",	/* x */
+	"\"%07.7_ax \" 16/1 \"%03o \" \"\\n\"",   /* b */
+	"\"%07.7_ax \" 16/1 \"%3_c \" \"\\n\"",   /* c */
+	"\"%07.7_ax \" 8/2 \"  %05u \" \"\\n\"",  /* d */
+	"\"%07.7_ax \" 8/2 \" %06o \" \"\\n\"",   /* o */
+	"\"%07.7_ax \" 8/2 \"   %04x \" \"\\n\"", /* x */
 };
 
 static const char add_first[] ALIGN1 = "\"%07.7_Ax\n\"";
@@ -90,7 +113,7 @@ int hexdump_main(int argc, char **argv)
 			bb_dump_addfile(dumper, optarg);
 		} /* else */
 		if (ch == 'n') {
-			dumper->dump_length = xatoi_u(optarg);
+			dumper->dump_length = xatoi_positive(optarg);
 		} /* else */
 		if (ch == 's') { /* compat: -s accepts hex numbers too */
 			dumper->dump_skip = xstrtoul_range_sfx(optarg, /*base:*/ 0, /*lo:*/ 0, /*hi:*/ LONG_MAX, suffixes);

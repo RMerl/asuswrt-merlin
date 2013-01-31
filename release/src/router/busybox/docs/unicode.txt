@@ -29,7 +29,7 @@ But we also need to handle the following problematic moments:
 	Editors (vi, ed)
 
 This case is a bit similar to "shell input", but unlike shell,
-editors may encounder many more unexpected unicode sequences
+editors may encounter many more unexpected unicode sequences
 (try to load a random binary file...), and they need to preserve
 them, unlike shell which can afford to drop bogus input.
 

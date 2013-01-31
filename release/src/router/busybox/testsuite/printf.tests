@@ -1,6 +1,6 @@
 #!/bin/sh
 # Copyright 2008 by Denys Vlasenko
-# Licensed under GPL v2, see file LICENSE for details.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 . ./testing.sh
 
@@ -89,9 +89,9 @@ testing "printf understands %Ld" \
 
 testing "printf handles %d bad_input" \
 	"${bb}printf '%d\n' 1 - 2 bad 3 123bad 4 2>&1; echo \$?" \
-"1\n""printf: -: invalid number\n""0\n"\
-"2\n""printf: bad: invalid number\n""0\n"\
-"3\n""printf: 123bad: invalid number\n""0\n"\
+"1\n""printf: invalid number '-'\n""0\n"\
+"2\n""printf: invalid number 'bad'\n""0\n"\
+"3\n""printf: invalid number '123bad'\n""0\n"\
 "4\n""1\n" \
 	"" ""
 

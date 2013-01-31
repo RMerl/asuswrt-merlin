@@ -4,13 +4,29 @@
  *
  * Author: Adam Tkac <vonsch@gmail.com>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  *
  * Only subset of FTP protocol is implemented but vast majority of clients
  * should not have any problem.
  *
  * You have to run this daemon via inetd.
  */
+
+//usage:#define ftpd_trivial_usage
+//usage:       "[-wvS] [-t N] [-T N] [DIR]"
+//usage:#define ftpd_full_usage "\n\n"
+//usage:       "Anonymous FTP server\n"
+//usage:       "\n"
+//usage:       "ftpd should be used as an inetd service.\n"
+//usage:       "ftpd's line for inetd.conf:\n"
+//usage:       "	21 stream tcp nowait root ftpd ftpd /files/to/serve\n"
+//usage:       "It also can be ran from tcpsvd:\n"
+//usage:       "	tcpsvd -vE 0.0.0.0 21 ftpd /files/to/serve\n"
+//usage:     "\n	-w	Allow upload"
+//usage:     "\n	-v	Log errors to stderr. -vv: verbose log"
+//usage:     "\n	-S	Log errors to syslog. -SS: verbose log"
+//usage:     "\n	-t,-T	Idle and absolute timeouts"
+//usage:     "\n	DIR	Change root to this directory"
 
 #include "libbb.h"
 #include <syslog.h>
@@ -206,7 +222,7 @@ cmdio_write_error(unsigned status)
 {
 	*(uint32_t *) G.msg_err = status;
 	xwrite(STDOUT_FILENO, G.msg_err, sizeof("NNN " MSG_ERR) - 1);
-	if (G.verbose > 1)
+	if (G.verbose > 0)
 		verbose_log(G.msg_err);
 }
 #define WRITE_ERR(a) cmdio_write_error(STRNUM32sp(a))
@@ -416,7 +432,7 @@ bind_for_passive_mode(void)
 	G.pasv_listen_fd = fd = xsocket(G.local_addr->u.sa.sa_family, SOCK_STREAM, 0);
 	setsockopt_reuseaddr(fd);
 
-	set_nport(G.local_addr, 0);
+	set_nport(&G.local_addr->u.sa, 0);
 	xbind(fd, &G.local_addr->u.sa, G.local_addr->len);
 	xlisten(fd, 1);
 	getsockname(fd, &G.local_addr->u.sa, &G.local_addr->len);
@@ -525,7 +541,7 @@ handle_port(void)
 	G.port_addr = xdotted2sockaddr(raw, port);
 #else
 	G.port_addr = get_peer_lsa(STDIN_FILENO);
-	set_nport(G.port_addr, htons(port));
+	set_nport(&G.port_addr->u.sa, htons(port));
 #endif
 	WRITE_OK(FTP_PORTOK);
 }
@@ -534,7 +550,7 @@ static void
 handle_rest(void)
 {
 	/* When ftp_arg == NULL simply restart from beginning */
-	G.restart_pos = G.ftp_arg ? xatoi_u(G.ftp_arg) : 0;
+	G.restart_pos = G.ftp_arg ? xatoi_positive(G.ftp_arg) : 0;
 	WRITE_OK(FTP_RESTOK);
 }
 
@@ -1163,8 +1179,7 @@ int ftpd_main(int argc UNUSED_PARAM, char **argv)
 #endif
 
 	if (argv[optind]) {
-		xchdir(argv[optind]);
-		chroot(".");
+		xchroot(argv[optind]);
 	}
 
 	//umask(077); - admin can set umask before starting us

@@ -95,7 +95,8 @@ gpt_list_table(int xtra UNUSED_PARAM)
 
 	numstr6[5] = '\0';
 
-        smart_ulltoa5((unsigned long long)total_number_of_sectors * sector_size, numstr6, " KMGTPEZY");
+	smart_ulltoa5((unsigned long long)total_number_of_sectors * sector_size,
+		numstr6, " KMGTPEZY");
 	printf("Disk %s: %llu sectors, %s\n", disk_device,
 		(unsigned long long)total_number_of_sectors,
 		numstr6);
@@ -112,8 +113,8 @@ gpt_list_table(int xtra UNUSED_PARAM)
 	for (i = 0; i < n_parts; i++) {
 		gpt_partition *p = gpt_part(i);
 		if (p->lba_start) {
-                        smart_ulltoa5((1 + SWAP_LE64(p->lba_end)
-                                - SWAP_LE64(p->lba_start)) * sector_size,
+			smart_ulltoa5((1 + SWAP_LE64(p->lba_end)
+				- SWAP_LE64(p->lba_start)) * sector_size,
 				numstr6, " KMGTPEZY");
 			printf("%4u %15llu %15llu %11s   %04x  ",
 				i + 1,

@@ -4,7 +4,7 @@
 
 BB_VER = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 export BB_VER
-SKIP_STRIP = n
+SKIP_STRIP ?= n
 
 # -std=gnu99 needed for [U]LLONG_MAX on some systems
 CPPFLAGS += $(call cc-option,-std=gnu99,)
@@ -58,14 +58,14 @@ CFLAGS += $(call cc-option,-falign-functions=1 -falign-jumps=1 -falign-labels=1 
 #CFLAGS += $(call cc-option,-Wconversion,)
 
 ifneq ($(CONFIG_DEBUG),y)
-CFLAGS += $(call cc-option,-Os,)
+CFLAGS += $(call cc-option,-Os,$(call cc-option,-O2,))
 else
 CFLAGS += $(call cc-option,-g,)
 #CFLAGS += "-D_FORTIFY_SOURCE=2"
 ifeq ($(CONFIG_DEBUG_PESSIMIZE),y)
 CFLAGS += $(call cc-option,-O0,)
 else
-CFLAGS += $(call cc-option,-Os,)
+CFLAGS += $(call cc-option,-Os,$(call cc-option,-O2,))
 endif
 endif
 
@@ -97,10 +97,33 @@ CFLAGS += $(strip $(subst ",,$(CONFIG_EXTRA_CFLAGS)))
 #"))
 endif
 
+# Note: both "" (string consisting of two quote chars) and empty string
+# are possible, and should be skipped below.
+ifneq ($(subst "",,$(CONFIG_SYSROOT)),)
+CFLAGS += --sysroot=$(CONFIG_SYSROOT)
+export SYSROOT=$(CONFIG_SYSROOT)
+endif
+
+# Android has no separate crypt library
+# gcc-4.2.1 fails if we try to feed C source on stdin:
+#  echo 'int main(void){return 0;}' | $(CC) $(CFLAGS) -lcrypt -o /dev/null -xc -
+# fall back to using a temp file:
+CRYPT_AVAILABLE := $(shell echo 'int main(void){return 0;}' >crypttest.c; $(CC) $(CFLAGS) -lcrypt -o /dev/null crypttest.c >/dev/null 2>&1 && echo "y"; rm crypttest.c)
+ifeq ($(CRYPT_AVAILABLE),y)
 LDLIBS += m crypt
+else
+LDLIBS += m
+endif
 
 ifeq ($(CONFIG_PAM),y)
-LDLIBS += pam pam_misc
+# libpam uses libpthread, so for static builds busybox must be linked to
+# libpthread. On some platforms that requires an explicit -lpthread, so
+# it should be in LDLIBS. For non-static builds, scripts/trylink will
+# take care of removing -lpthread if possible. (Not bothering to check
+# CONFIG_STATIC because even in a non-static build it could be that the
+# only libpam available is libpam.a, so -lpthread could still be
+# needed.)
+LDLIBS += pam pam_misc pthread
 endif
 
 ifeq ($(CONFIG_SELINUX),y)
@@ -123,6 +146,16 @@ endif
 W_ELF2FLT = -elf2flt
 ifneq (,$(findstring $(W_ELF2FLT),$(LDFLAGS) $(CFLAGS_busybox)))
 SKIP_STRIP = y
+endif
+
+ifneq ($(CONFIG_EXTRA_LDFLAGS),)
+EXTRA_LDFLAGS += $(strip $(subst ",,$(CONFIG_EXTRA_LDFLAGS)))
+#"))
+endif
+
+ifneq ($(CONFIG_EXTRA_LDLIBS),)
+LDLIBS += $(strip $(subst ",,$(CONFIG_EXTRA_LDLIBS)))
+#"))
 endif
 
 # Busybox is a stack-fatty so make sure we increase default size

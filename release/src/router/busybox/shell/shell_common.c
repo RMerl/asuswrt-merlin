@@ -14,7 +14,7 @@
  * Copyright (c) 2010 Denys Vlasenko
  * Split from ash.c
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 #include "libbb.h"
 #include "shell_common.h"
@@ -36,6 +36,10 @@ int FAST_FUNC is_well_formed_var_name(const char *s, char terminator)
 
 /* read builtin */
 
+/* Needs to be interruptible: shell mush handle traps and shell-special signals
+ * while inside read. To implement this, be sure to not loop on EINTR
+ * and return errno == EINTR reliably.
+ */
 //TODO: use more efficient setvar() which takes a pointer to malloced "VAR=VAL"
 //string. hush naturally has it, and ash has setvareq().
 //Here we can simply store "VAR=" at buffer start and store read data directly
@@ -51,6 +55,7 @@ shell_builtin_read(void FAST_FUNC (*setvar)(const char *name, const char *val),
 	const char *opt_u
 )
 {
+	unsigned err;
 	unsigned end_ms; /* -t TIMEOUT */
 	int fd; /* -u FD */
 	int nchars; /* -n NUM */
@@ -61,6 +66,8 @@ shell_builtin_read(void FAST_FUNC (*setvar)(const char *name, const char *val),
 	int bufpos; /* need to be able to hold -1 */
 	int startword;
 	smallint backslash;
+
+	errno = err = 0;
 
 	pp = argv;
 	while (*pp) {
@@ -131,7 +138,13 @@ shell_builtin_read(void FAST_FUNC (*setvar)(const char *name, const char *val),
 		old_tty = tty;
 		if (nchars) {
 			tty.c_lflag &= ~ICANON;
-			tty.c_cc[VMIN] = nchars < 256 ? nchars : 255;
+			// Setting it to more than 1 breaks poll():
+			// it blocks even if there's data. !??
+			//tty.c_cc[VMIN] = nchars < 256 ? nchars : 255;
+			/* reads would block only if < 1 char is available */
+			tty.c_cc[VMIN] = 1;
+			/* no timeout (reads block forever) */
+			tty.c_cc[VTIME] = 0;
 		}
 		if (read_flags & BUILTIN_READ_SILENT) {
 			tty.c_lflag &= ~(ECHO | ECHOK | ECHONL);
@@ -152,28 +165,40 @@ shell_builtin_read(void FAST_FUNC (*setvar)(const char *name, const char *val),
 	bufpos = 0;
 	do {
 		char c;
+		struct pollfd pfd[1];
+		int timeout;
 
+		if ((bufpos & 0xff) == 0)
+			buffer = xrealloc(buffer, bufpos + 0x101);
+
+		timeout = -1;
 		if (end_ms) {
-			int timeout;
-			struct pollfd pfd[1];
-
-			pfd[0].fd = fd;
-			pfd[0].events = POLLIN;
 			timeout = end_ms - (unsigned)monotonic_ms();
-			if (timeout <= 0 /* already late? */
-			 || safe_poll(pfd, 1, timeout) != 1 /* no? wait... */
-			) { /* timed out! */
+			if (timeout <= 0) { /* already late? */
 				retval = (const char *)(uintptr_t)1;
 				goto ret;
 			}
 		}
 
-		if ((bufpos & 0xff) == 0)
-			buffer = xrealloc(buffer, bufpos + 0x100);
-		if (nonblock_safe_read(fd, &buffer[bufpos], 1) != 1) {
+		/* We must poll even if timeout is -1:
+		 * we want to be interrupted if signal arrives,
+		 * regardless of SA_RESTART-ness of that signal!
+		 */
+		errno = 0;
+		pfd[0].fd = fd;
+		pfd[0].events = POLLIN;
+		if (poll(pfd, 1, timeout) != 1) {
+			/* timed out, or EINTR */
+			err = errno;
+			retval = (const char *)(uintptr_t)1;
+			goto ret;
+		}
+		if (read(fd, &buffer[bufpos], 1) != 1) {
+			err = errno;
 			retval = (const char *)(uintptr_t)1;
 			break;
 		}
+
 		c = buffer[bufpos];
 		if (c == '\0')
 			continue;
@@ -240,6 +265,8 @@ shell_builtin_read(void FAST_FUNC (*setvar)(const char *name, const char *val),
 	free(buffer);
 	if (read_flags & BUILTIN_READ_SILENT)
 		tcsetattr(fd, TCSANOW, &old_tty);
+
+	errno = err;
 	return retval;
 }
 
@@ -286,6 +313,12 @@ static const struct limits limits_tbl[] = {
 #ifdef RLIMIT_LOCKS
 	{ RLIMIT_LOCKS,		0,	'w',	"locks" },
 #endif
+#ifdef RLIMIT_NICE
+	{ RLIMIT_NICE,		0,	'e',	"scheduling priority" },
+#endif
+#ifdef RLIMIT_RTPRIO
+	{ RLIMIT_RTPRIO,	0,	'r',	"real-time priority" },
+#endif
 };
 
 enum {
@@ -328,6 +361,12 @@ static const char ulimit_opt_string[] = "-HSa"
 #ifdef RLIMIT_LOCKS
 			"w::"
 #endif
+#ifdef RLIMIT_NICE
+			"e::"
+#endif
+#ifdef RLIMIT_RTPRIO
+			"r::"
+#endif
 			;
 
 static void printlim(unsigned opts, const struct rlimit *limit,
@@ -368,9 +407,9 @@ shell_builtin_ulimit(char **argv)
 #endif
 	/* optarg = NULL; opterr = 0; optopt = 0; - do we need this?? */
 
-        argc = 1;
-        while (argv[argc])
-                argc++;
+	argc = 1;
+	while (argv[argc])
+		argc++;
 
 	opts = 0;
 	while (1) {
@@ -422,7 +461,7 @@ shell_builtin_ulimit(char **argv)
 						else
 							val = bb_strtoull(val_str, NULL, 10);
 						if (errno) {
-							bb_error_msg("bad number");
+							bb_error_msg("invalid number '%s'", val_str);
 							return EXIT_FAILURE;
 						}
 						val <<= l->factor_shift;

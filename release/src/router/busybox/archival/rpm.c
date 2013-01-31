@@ -4,11 +4,23 @@
  *
  * Copyright (C) 2001,2002 by Laurence Anderson
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
+//usage:#define rpm_trivial_usage
+//usage:       "-i PACKAGE.rpm; rpm -qp[ildc] PACKAGE.rpm"
+//usage:#define rpm_full_usage "\n\n"
+//usage:       "Manipulate RPM packages\n"
+//usage:     "\nCommands:"
+//usage:     "\n	-i	Install package"
+//usage:     "\n	-qp	Query package"
+//usage:     "\n	-i	Show information"
+//usage:     "\n	-l	List contents"
+//usage:     "\n	-d	List documents"
+//usage:     "\n	-c	List config files"
+
 #include "libbb.h"
-#include "unarchive.h"
+#include "bb_archive.h"
 #include "rpm.h"
 
 #define RPM_CHAR_TYPE           1
@@ -224,7 +236,7 @@ static void extract_cpio(int fd, const char *source_rpm)
 	archive_handle->src_fd = fd;
 	/*archive_handle->offset = 0; - init_handle() did it */
 
-	setup_unzip_on_fd(archive_handle->src_fd /*, fail_if_not_detected: 1*/);
+	setup_unzip_on_fd(archive_handle->src_fd, /*fail_if_not_detected:*/ 1);
 	while (get_header_cpio(archive_handle) == EXIT_SUCCESS)
 		continue;
 }

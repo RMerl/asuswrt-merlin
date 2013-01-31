@@ -25,6 +25,10 @@ help:
 	@echo '  			  You can use these commands if the commands on the host'
 	@echo '  			  is unusable. Afterwards use it like:'
 	@echo '  			  make SED="$(objtree)/sed"'
+	@$(if $(boards), \
+		$(foreach b, $(boards), \
+		printf "  %-21s - Build for %s\\n" $(b) $(subst _defconfig,,$(b));) \
+		echo '')
 	@echo
 	@echo 'Installation:'
 	@echo '  install		- install busybox into CONFIG_PREFIX'

@@ -4,15 +4,73 @@
  *
  * Copyright 2006 by Rob Landley <rob@landley.net>
  *
- * Licensed under GPL version 2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
+//applet:IF_HALT(APPLET(halt, BB_DIR_SBIN, BB_SUID_DROP))
+//applet:IF_HALT(APPLET_ODDNAME(poweroff, halt, BB_DIR_SBIN, BB_SUID_DROP, poweroff))
+//applet:IF_HALT(APPLET_ODDNAME(reboot, halt, BB_DIR_SBIN, BB_SUID_DROP, reboot))
+
+//kbuild:lib-$(CONFIG_HALT) += halt.o
+
+//config:config HALT
+//config:	bool "poweroff, halt, and reboot"
+//config:	default y
+//config:	help
+//config:	  Stop all processes and either halt, reboot, or power off the system.
+//config:
+//config:config FEATURE_CALL_TELINIT
+//config:	bool "Call telinit on shutdown and reboot"
+//config:	default y
+//config:	depends on HALT && !INIT
+//config:	help
+//config:	  Call an external program (normally telinit) to facilitate
+//config:	  a switch to a proper runlevel.
+//config:
+//config:	  This option is only available if you selected halt and friends,
+//config:	  but did not select init.
+//config:
+//config:config TELINIT_PATH
+//config:	string "Path to telinit executable"
+//config:	default "/sbin/telinit"
+//config:	depends on FEATURE_CALL_TELINIT
+//config:	help
+//config:	  When busybox halt and friends have to call external telinit
+//config:	  to facilitate proper shutdown, this path is to be used when
+//config:	  locating telinit executable.
+
+//usage:#define halt_trivial_usage
+//usage:       "[-d DELAY] [-n] [-f]" IF_FEATURE_WTMP(" [-w]")
+//usage:#define halt_full_usage "\n\n"
+//usage:       "Halt the system\n"
+//usage:     "\n	-d SEC	Delay interval"
+//usage:     "\n	-n	Do not sync"
+//usage:     "\n	-f	Force (don't go through init)"
+//usage:	IF_FEATURE_WTMP(
+//usage:     "\n	-w	Only write a wtmp record"
+//usage:	)
+//usage:
+//usage:#define poweroff_trivial_usage
+//usage:       "[-d DELAY] [-n] [-f]"
+//usage:#define poweroff_full_usage "\n\n"
+//usage:       "Halt and shut off power\n"
+//usage:     "\n	-d SEC	Delay interval"
+//usage:     "\n	-n	Do not sync"
+//usage:     "\n	-f	Force (don't go through init)"
+//usage:
+//usage:#define reboot_trivial_usage
+//usage:       "[-d DELAY] [-n] [-f]"
+//usage:#define reboot_full_usage "\n\n"
+//usage:       "Reboot the system\n"
+//usage:     "\n	-d SEC	Delay interval"
+//usage:     "\n	-n	Do not sync"
+//usage:     "\n	-f	Force (don't go through init)"
+
 #include "libbb.h"
-#include <sys/reboot.h>
+#include "reboot.h"
 
 #if ENABLE_FEATURE_WTMP
 #include <sys/utsname.h>
-#include <utmp.h>
 
 static void write_wtmp(void)
 {
@@ -34,18 +92,6 @@ static void write_wtmp(void)
 }
 #else
 #define write_wtmp() ((void)0)
-#endif
-
-#ifndef RB_HALT_SYSTEM
-#define RB_HALT_SYSTEM RB_HALT
-#endif
-
-#ifndef RB_POWERDOWN
-/* Stop system and switch power off if possible.  */
-# define RB_POWERDOWN   0x4321fedc
-#endif
-#ifndef RB_POWER_OFF
-# define RB_POWER_OFF RB_POWERDOWN
 #endif
 
 
@@ -108,11 +154,13 @@ int halt_main(int argc UNUSED_PARAM, char **argv)
 				/* runlevels:
 				 * 0 == shutdown
 				 * 6 == reboot */
-				rc = execlp(CONFIG_TELINIT_PATH,
+				execlp(CONFIG_TELINIT_PATH,
 						CONFIG_TELINIT_PATH,
 						which == 2 ? "6" : "0",
 						(char *)NULL
 				);
+				bb_perror_msg_and_die("can't execute '%s'",
+						CONFIG_TELINIT_PATH);
 			}
 		}
 	} else {

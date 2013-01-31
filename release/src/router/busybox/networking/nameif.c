@@ -7,8 +7,67 @@
  *			Glenn McGrath
  * Extended matching support 2008 by Nico Erfurth <masta@perlgolf.de>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//config:config NAMEIF
+//config:	bool "nameif"
+//config:	default y
+//config:	select PLATFORM_LINUX
+//config:	select FEATURE_SYSLOG
+//config:	help
+//config:	  nameif is used to rename network interface by its MAC address.
+//config:	  Renamed interfaces MUST be in the down state.
+//config:	  It is possible to use a file (default: /etc/mactab)
+//config:	  with list of new interface names and MACs.
+//config:	  Maximum interface name length: IFNAMSIZ = 16
+//config:	  File fields are separated by space or tab.
+//config:	  File format:
+//config:	  # Comment
+//config:	  new_interface_name    XX:XX:XX:XX:XX:XX
+//config:
+//config:config FEATURE_NAMEIF_EXTENDED
+//config:	bool "Extended nameif"
+//config:	default y
+//config:	depends on NAMEIF
+//config:	help
+//config:	  This extends the nameif syntax to support the bus_info, driver,
+//config:	  phyaddr selectors. The syntax is compatible to the normal nameif.
+//config:	  File format:
+//config:	    new_interface_name  driver=asix bus=usb-0000:00:08.2-3
+//config:	    new_interface_name  bus=usb-0000:00:08.2-3 00:80:C8:38:91:B5
+//config:	    new_interface_name  phy_address=2 00:80:C8:38:91:B5
+//config:	    new_interface_name  mac=00:80:C8:38:91:B5
+//config:	    new_interface_name  00:80:C8:38:91:B5
+
+//usage:#define nameif_trivial_usage
+//usage:	IF_NOT_FEATURE_NAMEIF_EXTENDED(
+//usage:		"[-s] [-c FILE] [IFNAME HWADDR]..."
+//usage:	)
+//usage:	IF_FEATURE_NAMEIF_EXTENDED(
+//usage:		"[-s] [-c FILE] [IFNAME SELECTOR]..."
+//usage:	)
+//usage:#define nameif_full_usage "\n\n"
+//usage:	"Rename network interface while it in the down state."
+//usage:	IF_NOT_FEATURE_NAMEIF_EXTENDED(
+//usage:     "\nThe device with address HWADDR is renamed to IFACE."
+//usage:	)
+//usage:	IF_FEATURE_NAMEIF_EXTENDED(
+//usage:     "\nThe device matched by SELECTOR is renamed to IFACE."
+//usage:     "\nSELECTOR can be a combination of:"
+//usage:     "\n	driver=STRING"
+//usage:     "\n	bus=STRING"
+//usage:     "\n	phy_address=NUM"
+//usage:     "\n	[mac=]XX:XX:XX:XX:XX:XX"
+//usage:	)
+//usage:     "\n"
+//usage:     "\n	-c FILE	Configuration file (default: /etc/mactab)"
+//usage:     "\n	-s	Log to syslog"
+//usage:
+//usage:#define nameif_example_usage
+//usage:       "$ nameif -s dmz0 00:A0:C9:8C:F6:3F\n"
+//usage:       " or\n"
+//usage:       "$ nameif -c /etc/my_mactab_file\n"
 
 #include "libbb.h"
 #include <syslog.h>
@@ -21,10 +80,10 @@
 #endif
 
 /* Taken from linux/sockios.h */
-#define SIOCSIFNAME	0x8923	/* set interface name */
+#define SIOCSIFNAME  0x8923  /* set interface name */
 
 /* Octets in one Ethernet addr, from <linux/if_ether.h> */
-#define ETH_ALEN	6
+#define ETH_ALEN     6
 
 #ifndef ifr_newname
 #define ifr_newname ifr_ifru.ifru_slave
@@ -38,6 +97,7 @@ typedef struct ethtable_s {
 #if ENABLE_FEATURE_NAMEIF_EXTENDED
 	char *bus_info;
 	char *driver;
+	int32_t phy_address;
 #endif
 } ethtable_t;
 
@@ -59,6 +119,25 @@ struct ethtool_drvinfo {
 	uint32_t eedump_len; /* Size of data from ETHTOOL_GEEPROM (bytes) */
 	uint32_t regdump_len;  /* Size of data from ETHTOOL_GREGS (bytes) */
 };
+
+struct ethtool_cmd {
+	uint32_t   cmd;
+	uint32_t   supported;      /* Features this interface supports */
+	uint32_t   advertising;    /* Features this interface advertises */
+	uint16_t   speed;          /* The forced speed, 10Mb, 100Mb, gigabit */
+	uint8_t    duplex;         /* Duplex, half or full */
+	uint8_t    port;           /* Which connector port */
+	uint8_t    phy_address;
+	uint8_t    transceiver;    /* Which transceiver to use */
+	uint8_t    autoneg;        /* Enable or disable autonegotiation */
+	uint32_t   maxtxpkt;       /* Tx pkts before generating tx int */
+	uint32_t   maxrxpkt;       /* Rx pkts before generating rx int */
+	uint16_t   speed_hi;
+	uint16_t   reserved2;
+	uint32_t   reserved[3];
+};
+
+#define ETHTOOL_GSET      0x00000001 /* Get settings. */
 #define ETHTOOL_GDRVINFO  0x00000003 /* Get driver info. */
 #endif
 
@@ -74,6 +153,7 @@ static void nameif_parse_selector(ethtable_t *ch, char *selector)
 #endif
 		selector = skip_whitespace(selector);
 #if ENABLE_FEATURE_NAMEIF_EXTENDED
+		ch->phy_address = -1;
 		if (*selector == '\0')
 			break;
 		/* Search for the end .... */
@@ -86,6 +166,9 @@ static void nameif_parse_selector(ethtable_t *ch, char *selector)
 			found_selector++;
 		} else if (strncmp(selector, "driver=", 7) == 0) {
 			ch->driver = xstrdup(selector + 7);
+			found_selector++;
+		} else if (strncmp(selector, "phyaddr=", 8) == 0) {
+			ch->phy_address = xatoi_positive(selector + 8);
 			found_selector++;
 		} else {
 #endif
@@ -133,7 +216,7 @@ void delete_eth_table(ethtable_t *ch);
 #endif
 
 int nameif_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
-int nameif_main(int argc, char **argv)
+int nameif_main(int argc UNUSED_PARAM, char **argv)
 {
 	ethtable_t *clist = NULL;
 	const char *fname = "/etc/mactab";
@@ -148,17 +231,15 @@ int nameif_main(int argc, char **argv)
 		 * can't hurt. 2>/dev/null if you don't like it: */
 		logmode |= LOGMODE_SYSLOG;
 	}
-	argc -= optind;
 	argv += optind;
 
-	if (argc & 1)
-		bb_show_usage();
-
-	if (argc) {
-		while (*argv) {
-			char *ifname = xstrdup(*argv++);
-			prepend_new_eth_table(&clist, ifname, *argv++);
-		}
+	if (argv[0]) {
+		do {
+			if (!argv[1])
+				bb_show_usage();
+			prepend_new_eth_table(&clist, argv[0], argv[1]);
+			argv += 2;
+		} while (*argv);
 	} else {
 		parser = config_open(fname);
 		while (config_read(parser, token, 2, 2, "# \t", PARSE_NORMAL))
@@ -173,8 +254,9 @@ int nameif_main(int argc, char **argv)
 		struct ifreq ifr;
 #if  ENABLE_FEATURE_NAMEIF_EXTENDED
 		struct ethtool_drvinfo drvinfo;
+		struct ethtool_cmd eth_settings;
 #endif
-		if (parser->lineno < 2)
+		if (parser->lineno <= 2)
 			continue; /* Skip the first two lines */
 
 		/* Find the current interface name and copy it to ifr.ifr_name */
@@ -182,8 +264,14 @@ int nameif_main(int argc, char **argv)
 		strncpy_IFNAMSIZ(ifr.ifr_name, token[0]);
 
 #if ENABLE_FEATURE_NAMEIF_EXTENDED
+		/* Check for phy address */
+		memset(&eth_settings, 0, sizeof(eth_settings));
+		eth_settings.cmd = ETHTOOL_GSET;
+		ifr.ifr_data = (caddr_t) &eth_settings;
+		ioctl(ctl_sk, SIOCETHTOOL, &ifr);
+
 		/* Check for driver etc. */
-		memset(&drvinfo, 0, sizeof(struct ethtool_drvinfo));
+		memset(&drvinfo, 0, sizeof(drvinfo));
 		drvinfo.cmd = ETHTOOL_GDRVINFO;
 		ifr.ifr_data = (caddr_t) &drvinfo;
 		/* Get driver and businfo first, so we have it in drvinfo */
@@ -197,6 +285,8 @@ int nameif_main(int argc, char **argv)
 			if (ch->bus_info && strcmp(ch->bus_info, drvinfo.bus_info) != 0)
 				continue;
 			if (ch->driver && strcmp(ch->driver, drvinfo.driver) != 0)
+				continue;
+			if (ch->phy_address != -1 && ch->phy_address != eth_settings.phy_address)
 				continue;
 #endif
 			if (ch->mac && memcmp(ch->mac, ifr.ifr_hwaddr.sa_data, ETH_ALEN) != 0)

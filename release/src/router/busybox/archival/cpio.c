@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2001 by Glenn McGrath
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Limitations:
  * Doesn't check CRC's
@@ -12,7 +12,36 @@
  *
  */
 #include "libbb.h"
-#include "unarchive.h"
+#include "bb_archive.h"
+
+//usage:#define cpio_trivial_usage
+//usage:       "[-dmvu] [-F FILE]" IF_FEATURE_CPIO_O(" [-H newc]")
+//usage:       " [-ti"IF_FEATURE_CPIO_O("o")"]" IF_FEATURE_CPIO_P(" [-p DIR]")
+//usage:       " [EXTR_FILE]..."
+//usage:#define cpio_full_usage "\n\n"
+//usage:       "Extract or list files from a cpio archive"
+//usage:	IF_FEATURE_CPIO_O(", or"
+//usage:     "\ncreate an archive" IF_FEATURE_CPIO_P(" (-o) or copy files (-p)")
+//usage:		" using file list on stdin"
+//usage:	)
+//usage:     "\n"
+//usage:     "\nMain operation mode:"
+//usage:     "\n	-t	List"
+//usage:     "\n	-i	Extract EXTR_FILEs (or all)"
+//usage:	IF_FEATURE_CPIO_O(
+//usage:     "\n	-o	Create (requires -H newc)"
+//usage:	)
+//usage:	IF_FEATURE_CPIO_P(
+//usage:     "\n	-p DIR	Copy files to DIR"
+//usage:	)
+//usage:     "\n	-d	Make leading directories"
+//usage:     "\n	-m	Preserve mtime"
+//usage:     "\n	-v	Verbose"
+//usage:     "\n	-u	Overwrite"
+//usage:     "\n	-F FILE	Input (-t,-i,-p) or output (-o) file"
+//usage:	IF_FEATURE_CPIO_O(
+//usage:     "\n	-H newc	Archive format"
+//usage:	)
 
 /* GNU cpio 2.9 --help (abridged):
 
@@ -20,7 +49,7 @@
   -t, --list                 List the archive
   -i, --extract              Extract files from an archive
   -o, --create               Create the archive
-  -p, --pass-through         Copy-pass mode [was ist das?!]
+  -p, --pass-through         Copy-pass mode
 
  Options valid in any mode:
       --block-size=SIZE      I/O block size = SIZE * 512 bytes
@@ -78,27 +107,28 @@
       --sparse               Write files with blocks of zeros as sparse files
   -u, --unconditional        Replace all files unconditionally
  */
+
 enum {
-	CPIO_OPT_EXTRACT            = (1 << 0),
-	CPIO_OPT_TEST               = (1 << 1),
-	CPIO_OPT_NUL_TERMINATED     = (1 << 2),
-	CPIO_OPT_UNCONDITIONAL      = (1 << 3),
-	CPIO_OPT_VERBOSE            = (1 << 4),
-	CPIO_OPT_CREATE_LEADING_DIR = (1 << 5),
-	CPIO_OPT_PRESERVE_MTIME     = (1 << 6),
-	CPIO_OPT_DEREF              = (1 << 7),
-	CPIO_OPT_FILE               = (1 << 8),
+	OPT_EXTRACT            = (1 << 0),
+	OPT_TEST               = (1 << 1),
+	OPT_NUL_TERMINATED     = (1 << 2),
+	OPT_UNCONDITIONAL      = (1 << 3),
+	OPT_VERBOSE            = (1 << 4),
+	OPT_CREATE_LEADING_DIR = (1 << 5),
+	OPT_PRESERVE_MTIME     = (1 << 6),
+	OPT_DEREF              = (1 << 7),
+	OPT_FILE               = (1 << 8),
 	OPTBIT_FILE = 8,
 	IF_FEATURE_CPIO_O(OPTBIT_CREATE     ,)
 	IF_FEATURE_CPIO_O(OPTBIT_FORMAT     ,)
 	IF_FEATURE_CPIO_P(OPTBIT_PASSTHROUGH,)
 	IF_LONG_OPTS(     OPTBIT_QUIET      ,)
 	IF_LONG_OPTS(     OPTBIT_2STDOUT    ,)
-	CPIO_OPT_CREATE             = IF_FEATURE_CPIO_O((1 << OPTBIT_CREATE     )) + 0,
-	CPIO_OPT_FORMAT             = IF_FEATURE_CPIO_O((1 << OPTBIT_FORMAT     )) + 0,
-	CPIO_OPT_PASSTHROUGH        = IF_FEATURE_CPIO_P((1 << OPTBIT_PASSTHROUGH)) + 0,
-	CPIO_OPT_QUIET              = IF_LONG_OPTS(     (1 << OPTBIT_QUIET      )) + 0,
-	CPIO_OPT_2STDOUT            = IF_LONG_OPTS(     (1 << OPTBIT_2STDOUT    )) + 0,
+	OPT_CREATE             = IF_FEATURE_CPIO_O((1 << OPTBIT_CREATE     )) + 0,
+	OPT_FORMAT             = IF_FEATURE_CPIO_O((1 << OPTBIT_FORMAT     )) + 0,
+	OPT_PASSTHROUGH        = IF_FEATURE_CPIO_P((1 << OPTBIT_PASSTHROUGH)) + 0,
+	OPT_QUIET              = IF_LONG_OPTS(     (1 << OPTBIT_QUIET      )) + 0,
+	OPT_2STDOUT            = IF_LONG_OPTS(     (1 << OPTBIT_2STDOUT    )) + 0,
 };
 
 #define OPTION_STR "it0uvdmLF:"
@@ -138,7 +168,7 @@ static NOINLINE int cpio_o(void)
 		char *line;
 		struct stat st;
 
-		line = (option_mask32 & CPIO_OPT_NUL_TERMINATED)
+		line = (option_mask32 & OPT_NUL_TERMINATED)
 				? bb_get_chunk_from_file(stdin, NULL)
 				: xmalloc_fgetline(stdin);
 
@@ -153,7 +183,7 @@ static NOINLINE int cpio_o(void)
 				free(line);
 				continue;
 			}
-			if ((option_mask32 & CPIO_OPT_DEREF)
+			if ((option_mask32 & OPT_DEREF)
 					? stat(name, &st)
 					: lstat(name, &st)
 			) {
@@ -308,28 +338,24 @@ int cpio_main(int argc UNUSED_PARAM, char **argv)
 	/* -L makes sense only with -o or -p */
 
 #if !ENABLE_FEATURE_CPIO_O
-	/* no parameters */
-	opt_complementary = "=0";
 	opt = getopt32(argv, OPTION_STR, &cpio_filename);
 	argv += optind;
-	if (opt & CPIO_OPT_FILE) { /* -F */
+	if (opt & OPT_FILE) { /* -F */
 		xmove_fd(xopen(cpio_filename, O_RDONLY), STDIN_FILENO);
 	}
 #else
-	/* _exactly_ one parameter for -p, thus <= 1 param if -p is allowed */
-	opt_complementary = ENABLE_FEATURE_CPIO_P ? "?1" : "=0";
 	opt = getopt32(argv, OPTION_STR "oH:" IF_FEATURE_CPIO_P("p"), &cpio_filename, &cpio_fmt);
 	argv += optind;
-	if ((opt & (CPIO_OPT_FILE|CPIO_OPT_CREATE)) == CPIO_OPT_FILE) { /* -F without -o */
+	if ((opt & (OPT_FILE|OPT_CREATE)) == OPT_FILE) { /* -F without -o */
 		xmove_fd(xopen(cpio_filename, O_RDONLY), STDIN_FILENO);
 	}
-	if (opt & CPIO_OPT_PASSTHROUGH) {
+	if (opt & OPT_PASSTHROUGH) {
 		pid_t pid;
 		struct fd_pair pp;
 
 		if (argv[0] == NULL)
 			bb_show_usage();
-		if (opt & CPIO_OPT_CREATE_LEADING_DIR)
+		if (opt & OPT_CREATE_LEADING_DIR)
 			mkdir(argv[0], 0777);
 		/* Crude existence check:
 		 * close(xopen(argv[0], O_RDONLY | O_DIRECTORY));
@@ -358,19 +384,20 @@ int cpio_main(int argc UNUSED_PARAM, char **argv)
 			goto dump;
 		}
 		/* parent */
+		USE_FOR_NOMMU(argv[-optind][0] &= 0x7f); /* undo fork_or_rexec() damage */
 		xchdir(*argv++);
 		close(pp.wr);
 		xmove_fd(pp.rd, STDIN_FILENO);
-		//opt &= ~CPIO_OPT_PASSTHROUGH;
-		opt |= CPIO_OPT_EXTRACT;
+		//opt &= ~OPT_PASSTHROUGH;
+		opt |= OPT_EXTRACT;
 		goto skip;
 	}
 	/* -o */
-	if (opt & CPIO_OPT_CREATE) {
+	if (opt & OPT_CREATE) {
 		if (cpio_fmt[0] != 'n') /* we _require_ "-H newc" */
 			bb_show_usage();
-		if (opt & CPIO_OPT_FILE) {
-			xmove_fd(xopen3(cpio_filename, O_WRONLY | O_CREAT | O_TRUNC, 0666), STDOUT_FILENO);
+		if (opt & OPT_FILE) {
+			xmove_fd(xopen(cpio_filename, O_WRONLY | O_CREAT | O_TRUNC), STDOUT_FILENO);
 		}
  dump:
 		return cpio_o();
@@ -379,35 +406,35 @@ int cpio_main(int argc UNUSED_PARAM, char **argv)
 #endif
 
 	/* One of either extract or test options must be given */
-	if ((opt & (CPIO_OPT_TEST | CPIO_OPT_EXTRACT)) == 0) {
+	if ((opt & (OPT_TEST | OPT_EXTRACT)) == 0) {
 		bb_show_usage();
 	}
 
-	if (opt & CPIO_OPT_TEST) {
+	if (opt & OPT_TEST) {
 		/* if both extract and test options are given, ignore extract option */
-		opt &= ~CPIO_OPT_EXTRACT;
+		opt &= ~OPT_EXTRACT;
 		archive_handle->action_header = header_list;
 	}
-	if (opt & CPIO_OPT_EXTRACT) {
+	if (opt & OPT_EXTRACT) {
 		archive_handle->action_data = data_extract_all;
-		if (opt & CPIO_OPT_2STDOUT)
+		if (opt & OPT_2STDOUT)
 			archive_handle->action_data = data_extract_to_stdout;
 	}
-	if (opt & CPIO_OPT_UNCONDITIONAL) {
+	if (opt & OPT_UNCONDITIONAL) {
 		archive_handle->ah_flags |= ARCHIVE_UNLINK_OLD;
 		archive_handle->ah_flags &= ~ARCHIVE_EXTRACT_NEWER;
 	}
-	if (opt & CPIO_OPT_VERBOSE) {
+	if (opt & OPT_VERBOSE) {
 		if (archive_handle->action_header == header_list) {
 			archive_handle->action_header = header_verbose_list;
 		} else {
 			archive_handle->action_header = header_list;
 		}
 	}
-	if (opt & CPIO_OPT_CREATE_LEADING_DIR) {
+	if (opt & OPT_CREATE_LEADING_DIR) {
 		archive_handle->ah_flags |= ARCHIVE_CREATE_LEADING_DIRS;
 	}
-	if (opt & CPIO_OPT_PRESERVE_MTIME) {
+	if (opt & OPT_PRESERVE_MTIME) {
 		archive_handle->ah_flags |= ARCHIVE_RESTORE_DATE;
 	}
 
@@ -423,7 +450,7 @@ int cpio_main(int argc UNUSED_PARAM, char **argv)
 		continue;
 
 	if (archive_handle->cpio__blocks != (off_t)-1
-	 && !(opt & CPIO_OPT_QUIET)
+	 && !(opt & OPT_QUIET)
 	) {
 		fprintf(stderr, "%"OFF_FMT"u blocks\n", archive_handle->cpio__blocks);
 	}

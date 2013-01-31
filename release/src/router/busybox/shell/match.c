@@ -4,7 +4,7 @@
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Copyright (c) 1989, 1991, 1993, 1994
  *      The Regents of the University of California.  All rights reserved.
@@ -18,65 +18,78 @@
 # include <stdlib.h>
 # include <string.h>
 # include <unistd.h>
+# define FAST_FUNC /* nothing */
+# define PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN /* nothing */
+# define POP_SAVED_FUNCTION_VISIBILITY /* nothing */
 #else
 # include "libbb.h"
 #endif
 #include <fnmatch.h>
 #include "match.h"
 
-#define pmatch(a, b) !fnmatch((a), (b), 0)
-
-char *scanleft(char *string, char *pattern, bool match_at_left)
+char* FAST_FUNC scan_and_match(char *string, const char *pattern, unsigned flags)
 {
-	char c;
-	char *loc = string;
+	char *loc;
+	char *end;
+	unsigned len = strlen(string);
+	int early_exit;
 
-	do {
-		int match;
-		const char *s;
+	/* We can stop the scan early only if the string part
+	 * we are matching against is shrinking, and the pattern has
+	 * an unquoted "star" at the corresponding end. There are two cases.
+	 * Case 1:
+	 * "qwerty" does not match against pattern "*zy",
+	 * no point in trying to match "werty", "erty" etc:
+	 */
+	early_exit = (flags == (SCAN_MOVE_FROM_LEFT + SCAN_MATCH_RIGHT_HALF) && pattern[0] == '*');
 
-		c = *loc;
-		if (match_at_left) {
-			*loc = '\0';
-			s = string;
-		} else
-			s = loc;
-		match = pmatch(pattern, s);
-		*loc = c;
-
-		if (match)
-			return loc;
-
-		loc++;
-	} while (c);
-
-	return NULL;
-}
-
-char *scanright(char *string, char *pattern, bool match_at_left)
-{
-	char c;
-	char *loc = string + strlen(string);
-
-	while (loc >= string) {
-		int match;
-		const char *s;
-
-		c = *loc;
-		if (match_at_left) {
-			*loc = '\0';
-			s = string;
-		} else
-			s = loc;
-		match = pmatch(pattern, s);
-		*loc = c;
-
-		if (match)
-			return loc;
-
-		loc--;
+	if (flags & SCAN_MOVE_FROM_LEFT) {
+		loc = string;
+		end = string + len + 1;
+	} else {
+		loc = string + len;
+		end = string - 1;
+		if (flags == (SCAN_MOVE_FROM_RIGHT + SCAN_MATCH_LEFT_HALF)) {
+			/* Case 2:
+			 * "qwerty" does not match against pattern "qz*",
+			 * no point in trying to match "qwert", "qwer" etc:
+			 */
+			const char *p = pattern + strlen(pattern);
+			if (--p >= pattern && *p == '*') {
+				early_exit = 1;
+				while (--p >= pattern && *p == '\\')
+					early_exit ^= 1;
+			}
+		}
 	}
 
+	while (loc != end) {
+		char c;
+		int r;
+
+		c = *loc;
+		if (flags & SCAN_MATCH_LEFT_HALF) {
+			*loc = '\0';
+			r = fnmatch(pattern, string, 0);
+			*loc = c;
+		} else {
+			r = fnmatch(pattern, loc, 0);
+		}
+		if (r == 0) /* match found */
+			return loc;
+		if (early_exit) {
+#ifdef STANDALONE
+			printf("(early exit) ");
+#endif
+			break;
+		}
+
+		if (flags & SCAN_MOVE_FROM_LEFT) {
+			loc++;
+		} else {
+			loc--;
+		}
+	}
 	return NULL;
 }
 
@@ -86,12 +99,11 @@ int main(int argc, char *argv[])
 	char *string;
 	char *op;
 	char *pattern;
-	bool match_at_left;
 	char *loc;
 
-	int i;
+	setvbuf(stdout, NULL, _IONBF, 0);
 
-	if (argc == 1) {
+	if (!argv[1]) {
 		puts(
 			"Usage: match <test> [test...]\n\n"
 			"Where a <test> is the form: <string><op><match>\n"
@@ -101,36 +113,34 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	for (i = 1; i < argc; ++i) {
+	while (*++argv) {
 		size_t off;
-		scan_t scan;
+		unsigned scan_flags;
 
-		printf("'%s': ", argv[i]);
-
-		string = strdup(argv[i]);
+		string = *argv;
 		off = strcspn(string, "#%");
 		if (!off) {
 			printf("invalid format\n");
-			free(string);
 			continue;
 		}
 		op = string + off;
-		scan = pick_scan(op[0], op[1], &match_at_left);
+		scan_flags = pick_scan(op[0], op[1]);
+
+		printf("'%s': flags:%x, ", string, scan_flags);
 		pattern = op + 1;
 		if (op[0] == op[1])
-			op[1] = '\0', ++pattern;
+			pattern++;
 		op[0] = '\0';
 
-		loc = scan(string, pattern, match_at_left);
+		loc = scan_and_match(string, pattern, scan_flags);
 
-		if (match_at_left) {
+		if (scan_flags & SCAN_MATCH_LEFT_HALF) {
 			printf("'%s'\n", loc);
 		} else {
-			*loc = '\0';
+			if (loc)
+				*loc = '\0';
 			printf("'%s'\n", string);
 		}
-
-		free(string);
 	}
 
 	return 0;

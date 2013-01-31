@@ -1,2 +1,0 @@
-while echo Hello; false; do echo NOT SHOWN; done
-echo OK:$?

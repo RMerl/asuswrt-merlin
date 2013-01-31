@@ -6,7 +6,7 @@
  *
  * Based in part on BusyBox tar, Debian dpkg-deb and GNU ar.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Archive creation support:
  * Copyright (C) 2010 Nokia Corporation. All rights reserved.
@@ -17,8 +17,18 @@
  * http://www.unix-systems.org/single_unix_specification_v2/xcu/ar.html
  */
 
+//usage:#define ar_trivial_usage
+//usage:       "[-o] [-v] [-p] [-t] [-x] ARCHIVE FILES"
+//usage:#define ar_full_usage "\n\n"
+//usage:       "Extract or list FILES from an ar archive\n"
+//usage:     "\n	-o	Preserve original dates"
+//usage:     "\n	-p	Extract to stdout"
+//usage:     "\n	-t	List"
+//usage:     "\n	-x	Extract"
+//usage:     "\n	-v	Verbose"
+
 #include "libbb.h"
-#include "unarchive.h"
+#include "bb_archive.h"
 #include "ar.h"
 
 #if ENABLE_FEATURE_AR_CREATE
@@ -71,7 +81,7 @@ static void output_ar_header(archive_handle_t *handle)
 }
 
 /*
- * when replacing files in an existing archive, copy from the the
+ * when replacing files in an existing archive, copy from the
  * original archive those files that are to be left intact
  */
 static void FAST_FUNC copy_data(archive_handle_t *handle)
@@ -123,8 +133,7 @@ static int write_ar_archive(archive_handle_t *handle)
 	struct stat st;
 	archive_handle_t *out_handle;
 
-	if (fstat(handle->src_fd, &st) == -1)
-		bb_simple_perror_msg_and_die(handle->ar__name);
+	xfstat(handle->src_fd, &st, handle->ar__name);
 
 	/* if archive exists, create a new handle for output.
 	 * we create it in place of the old one.
@@ -180,17 +189,17 @@ static void FAST_FUNC header_verbose_list_ar(const file_header_t *file_header)
 	);
 }
 
-#define AR_OPT_VERBOSE		(1 << 0)
-#define AR_OPT_PRESERVE_DATE	(1 << 1)
+#define AR_OPT_VERBOSE          (1 << 0)
+#define AR_OPT_PRESERVE_DATE    (1 << 1)
 /* "ar r" implies create, but warns about it. c suppresses warning.
  * bbox accepts but ignores it: */
-#define AR_OPT_CREATE		(1 << 2)
+#define AR_OPT_CREATE           (1 << 2)
 
-#define AR_CMD_PRINT		(1 << 3)
-#define FIRST_CMD AR_CMD_PRINT
-#define AR_CMD_LIST		(1 << 4)
-#define AR_CMD_EXTRACT		(1 << 5)
-#define AR_CMD_INSERT		(1 << 6)
+#define AR_CMD_PRINT            (1 << 3)
+#define FIRST_CMD               AR_CMD_PRINT
+#define AR_CMD_LIST             (1 << 4)
+#define AR_CMD_EXTRACT          (1 << 5)
+#define AR_CMD_INSERT           (1 << 6)
 
 int ar_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int ar_main(int argc UNUSED_PARAM, char **argv)

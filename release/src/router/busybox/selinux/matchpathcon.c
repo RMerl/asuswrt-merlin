@@ -3,8 +3,18 @@
  *                  based on libselinux-1.32
  * Port to busybox: KaiGai Kohei <kaigai@kaigai.gr.jp>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define matchpathcon_trivial_usage
+//usage:       "[-n] [-N] [-f file_contexts_file] [-p prefix] [-V]"
+//usage:#define matchpathcon_full_usage "\n\n"
+//usage:       "	-n	Don't display path"
+//usage:     "\n	-N	Don't use translations"
+//usage:     "\n	-f	Use alternate file_context file"
+//usage:     "\n	-p	Use prefix to speed translations"
+//usage:     "\n	-V	Verify file context on disk matches defaults"
+
 #include "libbb.h"
 
 static int print_matchpathcon(char *path, int noprint)

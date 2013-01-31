@@ -4,19 +4,9 @@
  *
  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 #include "libbb.h"
-
-#define ZIPPED (ENABLE_FEATURE_SEAMLESS_LZMA \
-	|| ENABLE_FEATURE_SEAMLESS_BZ2 \
-	|| ENABLE_FEATURE_SEAMLESS_GZ \
-	/* || ENABLE_FEATURE_SEAMLESS_Z */ \
-)
-
-#if ZIPPED
-# include "unarchive.h"
-#endif
 
 
 /* Suppose that you are a shell. You start child processes.
@@ -55,32 +45,35 @@
  * which detects EAGAIN and uses poll() to wait on the fd.
  * Thankfully, poll() doesn't care about O_NONBLOCK flag.
  */
-ssize_t FAST_FUNC nonblock_safe_read(int fd, void *buf, size_t count)
+ssize_t FAST_FUNC nonblock_immune_read(int fd, void *buf, size_t count, int loop_on_EINTR)
 {
 	struct pollfd pfd[1];
 	ssize_t n;
 
 	while (1) {
-		n = safe_read(fd, buf, count);
+		n = loop_on_EINTR ? safe_read(fd, buf, count) : read(fd, buf, count);
 		if (n >= 0 || errno != EAGAIN)
 			return n;
 		/* fd is in O_NONBLOCK mode. Wait using poll and repeat */
 		pfd[0].fd = fd;
 		pfd[0].events = POLLIN;
-		safe_poll(pfd, 1, -1); /* note: this pulls in printf */
+		/* note: safe_poll pulls in printf */
+		loop_on_EINTR ? safe_poll(pfd, 1, -1) : poll(pfd, 1, -1);
 	}
 }
 
 // Reads one line a-la fgets (but doesn't save terminating '\n').
 // Reads byte-by-byte. Useful when it is important to not read ahead.
 // Bytes are appended to pfx (which must be malloced, or NULL).
-char* FAST_FUNC xmalloc_reads(int fd, char *buf, size_t *maxsz_p)
+char* FAST_FUNC xmalloc_reads(int fd, size_t *maxsz_p)
 {
 	char *p;
-	size_t sz = buf ? strlen(buf) : 0;
+	char *buf = NULL;
+	size_t sz = 0;
 	size_t maxsz = maxsz_p ? *maxsz_p : (INT_MAX - 4095);
 
 	goto jump_in;
+
 	while (sz < maxsz) {
 		if ((size_t)(p - buf) == sz) {
  jump_in:
@@ -88,8 +81,8 @@ char* FAST_FUNC xmalloc_reads(int fd, char *buf, size_t *maxsz_p)
 			p = buf + sz;
 			sz += 128;
 		}
-		/* nonblock_safe_read() because we are used by e.g. shells */
-		if (nonblock_safe_read(fd, p, 1) != 1) { /* EOF/error */
+		if (nonblock_immune_read(fd, p, 1, /*loop_on_EINTR:*/ 1) != 1) {
+			/* EOF/error */
 			if (p == buf) { /* we read nothing */
 				free(buf);
 				return NULL;
@@ -240,133 +233,4 @@ void* FAST_FUNC xmalloc_xopen_read_close(const char *filename, size_t *maxsz_p)
 	if (!buf)
 		bb_perror_msg_and_die("can't read '%s'", filename);
 	return buf;
-}
-
-/* Used by e.g. rpm which gives us a fd without filename,
- * thus we can't guess the format from filename's extension.
- */
-#if ZIPPED
-void FAST_FUNC setup_unzip_on_fd(int fd /*, int fail_if_not_detected*/)
-{
-	const int fail_if_not_detected = 1;
-	union {
-		uint8_t b[4];
-		uint16_t b16[2];
-		uint32_t b32[1];
-	} magic;
-	int offset = -2;
-# if BB_MMU
-	IF_DESKTOP(long long) int FAST_FUNC (*xformer)(int src_fd, int dst_fd);
-	enum { xformer_prog = 0 };
-# else
-	enum { xformer = 0 };
-	const char *xformer_prog;
-# endif
-
-	/* .gz and .bz2 both have 2-byte signature, and their
-	 * unpack_XXX_stream wants this header skipped. */
-	xread(fd, magic.b16, sizeof(magic.b16[0]));
-	if (ENABLE_FEATURE_SEAMLESS_GZ
-	 && magic.b16[0] == GZIP_MAGIC
-	) {
-# if BB_MMU
-		xformer = unpack_gz_stream;
-# else
-		xformer_prog = "gunzip";
-# endif
-		goto found_magic;
-	}
-	if (ENABLE_FEATURE_SEAMLESS_BZ2
-	 && magic.b16[0] == BZIP2_MAGIC
-	) {
-# if BB_MMU
-		xformer = unpack_bz2_stream;
-# else
-		xformer_prog = "bunzip2";
-# endif
-		goto found_magic;
-	}
-	if (ENABLE_FEATURE_SEAMLESS_XZ
-	 && magic.b16[0] == XZ_MAGIC1
-	) {
-		offset = -6;
-		xread(fd, magic.b32, sizeof(magic.b32[0]));
-		if (magic.b32[0] == XZ_MAGIC2) {
-# if BB_MMU
-			xformer = unpack_xz_stream;
-			/* unpack_xz_stream wants fd at position 6, no need to seek */
-			//xlseek(fd, offset, SEEK_CUR);
-# else
-			xformer_prog = "unxz";
-# endif
-			goto found_magic;
-		}
-	}
-
-	/* No known magic seen */
-	if (fail_if_not_detected)
-		bb_error_msg_and_die("no gzip"
-			IF_FEATURE_SEAMLESS_BZ2("/bzip2")
-			IF_FEATURE_SEAMLESS_XZ("/xz")
-			" magic");
-	xlseek(fd, offset, SEEK_CUR);
-	return;
-
- found_magic:
-# if !BB_MMU
-	/* NOMMU version of open_transformer execs
-	 * an external unzipper that wants
-	 * file position at the start of the file */
-	xlseek(fd, offset, SEEK_CUR);
-# endif
-	open_transformer(fd, xformer, xformer_prog);
-}
-#endif /* ZIPPED */
-
-int FAST_FUNC open_zipped(const char *fname)
-{
-#if !ZIPPED
-	return open(fname, O_RDONLY);
-#else
-	char *sfx;
-	int fd;
-
-	fd = open(fname, O_RDONLY);
-	if (fd < 0)
-		return fd;
-
-	sfx = strrchr(fname, '.');
-	if (sfx) {
-		sfx++;
-		if (ENABLE_FEATURE_SEAMLESS_LZMA && strcmp(sfx, "lzma") == 0)
-			/* .lzma has no header/signature, just trust it */
-			open_transformer(fd, unpack_lzma_stream, "unlzma");
-		else
-		if ((ENABLE_FEATURE_SEAMLESS_GZ && strcmp(sfx, "gz") == 0)
-		 || (ENABLE_FEATURE_SEAMLESS_BZ2 && strcmp(sfx, "bz2") == 0)
-		 || (ENABLE_FEATURE_SEAMLESS_XZ && strcmp(sfx, "xz") == 0)
-		) {
-			setup_unzip_on_fd(fd /*, fail_if_not_detected: 1*/);
-		}
-	}
-
-	return fd;
-#endif
-}
-
-void* FAST_FUNC xmalloc_open_zipped_read_close(const char *fname, size_t *maxsz_p)
-{
-	int fd;
-	char *image;
-
-	fd = open_zipped(fname);
-	if (fd < 0)
-		return NULL;
-
-	image = xmalloc_read(fd, maxsz_p);
-	if (!image)
-		bb_perror_msg("read error from '%s'", fname);
-	close(fd);
-
-	return image;
 }

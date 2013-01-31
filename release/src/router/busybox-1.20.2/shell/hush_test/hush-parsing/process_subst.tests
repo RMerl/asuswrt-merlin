@@ -1,3 +1,0 @@
-echo "TEST`echo zz;echo;echo`BEST"
-echo "TEST`echo '$(echo zz)'`BEST"
-echo "TEST`echo "'"`BEST"

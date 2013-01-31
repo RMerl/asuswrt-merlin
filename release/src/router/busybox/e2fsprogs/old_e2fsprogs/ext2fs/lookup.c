@@ -66,5 +66,3 @@ errcode_t ext2fs_lookup(ext2_filsys fs, ext2_ino_t dir, const char *name,
 
 	return (ls.found) ? 0 : EXT2_ET_FILE_NOT_FOUND;
 }
-
-

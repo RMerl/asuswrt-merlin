@@ -1,8 +1,0 @@
-trap -- 'echo Exiting' EXIT
-trap -- 'echo WINCH!' WINCH
-trap -- 'echo Exiting' EXIT
-trap -- 'echo WINCH!' WINCH
-trap -- 'echo Exiting' EXIT
-trap -- 'echo WINCH!' WINCH
-Done
-Exiting

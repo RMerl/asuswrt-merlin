@@ -7,10 +7,19 @@
  * about bzip2 library code.
  */
 
-#include "libbb.h"
-#include "unarchive.h"
+//usage:#define bzip2_trivial_usage
+//usage:       "[OPTIONS] [FILE]..."
+//usage:#define bzip2_full_usage "\n\n"
+//usage:       "Compress FILEs (or stdin) with bzip2 algorithm\n"
+//usage:     "\n	-1..9	Compression level"
+//usage:     "\n	-d	Decompress"
+//usage:     "\n	-c	Write to stdout"
+//usage:     "\n	-f	Force"
 
-#define CONFIG_BZIP2_FEATURE_SPEED 1
+#include "libbb.h"
+#include "bb_archive.h"
+
+#define CONFIG_BZIP2_FAST 1
 
 /* Speed test:
  * Compiled with gcc 4.2.1, run on Athlon 64 1800 MHz (512K L2 cache).
@@ -18,7 +27,7 @@
  * (time to compress gcc-4.2.1.tar is 126.4% compared to bbox).
  * At SPEED 5 difference is 32.7%.
  *
- * Test run of all CONFIG_BZIP2_FEATURE_SPEED values on a 11Mb text file:
+ * Test run of all CONFIG_BZIP2_FAST values on a 11Mb text file:
  *     Size   Time (3 runs)
  * 0:  10828  4.145 4.146 4.148
  * 1:  11097  3.845 3.860 3.861
@@ -33,14 +42,14 @@
 /* Takes ~300 bytes, detects corruption caused by bad RAM etc */
 #define BZ_LIGHT_DEBUG 0
 
-#include "bz/bzlib.h"
+#include "libarchive/bz/bzlib.h"
 
-#include "bz/bzlib_private.h"
+#include "libarchive/bz/bzlib_private.h"
 
-#include "bz/blocksort.c"
-#include "bz/bzlib.c"
-#include "bz/compress.c"
-#include "bz/huffman.c"
+#include "libarchive/bz/blocksort.c"
+#include "libarchive/bz/bzlib.c"
+#include "libarchive/bz/compress.c"
+#include "libarchive/bz/huffman.c"
 
 /* No point in being shy and having very small buffer here.
  * bzip2 internal buffers are much bigger anyway, hundreds of kbytes.
@@ -102,7 +111,7 @@ IF_DESKTOP(long long) int bz_write(bz_stream *strm, void* rbuf, ssize_t rlen, vo
 }
 
 static
-IF_DESKTOP(long long) int FAST_FUNC compressStream(unpack_info_t *info UNUSED_PARAM)
+IF_DESKTOP(long long) int FAST_FUNC compressStream(transformer_aux_data_t *aux UNUSED_PARAM)
 {
 	IF_DESKTOP(long long) int total;
 	ssize_t count;
@@ -128,10 +137,12 @@ IF_DESKTOP(long long) int FAST_FUNC compressStream(unpack_info_t *info UNUSED_PA
 			break;
 	}
 
-#if ENABLE_FEATURE_CLEAN_UP
+	/* Can't be conditional on ENABLE_FEATURE_CLEAN_UP -
+	 * we are called repeatedly
+	 */
 	BZ2_bzCompressEnd(strm);
 	free(iobuf);
-#endif
+
 	return total;
 }
 

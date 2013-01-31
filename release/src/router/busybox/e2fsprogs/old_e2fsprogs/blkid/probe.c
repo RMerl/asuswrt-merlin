@@ -575,8 +575,12 @@ blkid_dev blkid_verify(blkid_cache cache, blkid_dev dev)
 	    printf("need to revalidate %s (time since last check %lu)\n",
 		   dev->bid_name, diff));
 
-	if (((fd = open(dev->bid_name, O_RDONLY)) < 0) ||
-	    (fstat(fd, &st) < 0)) {
+	fd = open(dev->bid_name, O_RDONLY);
+	if (fd < 0
+	 || fstat(fd, &st) < 0
+	) {
+		if (fd >= 0)
+			close(fd);
 		if (errno == ENXIO || errno == ENODEV || errno == ENOENT) {
 			blkid_free_dev(dev);
 			return NULL;
@@ -653,6 +657,7 @@ try_again:
 
 	if (!dev->bid_type) {
 		blkid_free_dev(dev);
+		close(fd);
 		return NULL;
 	}
 

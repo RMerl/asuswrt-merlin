@@ -2,7 +2,7 @@
 #
 # Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
 #
-# Licensed under the GPL v2, see the file LICENSE in this tarball.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 libs-y			+= libcoreutils/
 
@@ -36,10 +36,8 @@ lib-$(CONFIG_FALSE)     += false.o
 lib-$(CONFIG_FOLD)      += fold.o
 lib-$(CONFIG_FSYNC)     += fsync.o
 lib-$(CONFIG_HEAD)      += head.o
-lib-$(CONFIG_HOSTID)    += hostid.o
-lib-$(CONFIG_ID)        += id.o
 lib-$(CONFIG_INSTALL)   += install.o
-lib-$(CONFIG_LENGTH)    += length.o
+#lib-$(CONFIG_LENGTH)    += length.o
 lib-$(CONFIG_LN)        += ln.o
 lib-$(CONFIG_LOGNAME)   += logname.o
 lib-$(CONFIG_LS)        += ls.o
@@ -74,7 +72,6 @@ lib-$(CONFIG_SYNC)      += sync.o
 lib-$(CONFIG_TAC)       += tac.o
 lib-$(CONFIG_TAIL)      += tail.o
 lib-$(CONFIG_TEE)       += tee.o
-lib-$(CONFIG_TOUCH)     += touch.o
 lib-$(CONFIG_TRUE)      += true.o
 lib-$(CONFIG_TTY)       += tty.o
 lib-$(CONFIG_UNAME)     += uname.o
@@ -84,6 +81,5 @@ lib-$(CONFIG_USLEEP)    += usleep.o
 lib-$(CONFIG_UUDECODE)  += uudecode.o
 lib-$(CONFIG_UUENCODE)  += uuencode.o
 lib-$(CONFIG_WC)        += wc.o
-lib-$(CONFIG_WHO)       += who.o
 lib-$(CONFIG_WHOAMI)    += whoami.o
 lib-$(CONFIG_YES)       += yes.o

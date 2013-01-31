@@ -2,7 +2,7 @@
 
 # Tests for the sourcecode base itself.
 # Copyright 2006 by Mike Frysinger <vapier@gentoo.org>
-# Licensed under GPL v2, see file LICENSE for details.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 [ -n "$srcdir" ] || srcdir=$(pwd)
 . ./testing.sh

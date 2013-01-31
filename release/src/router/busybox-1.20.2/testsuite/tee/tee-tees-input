@@ -1,3 +1,0 @@
-echo i\'m a little teapot >foo
-echo i\'m a little teapot | busybox tee bar >baz
-cmp foo bar && cmp foo baz

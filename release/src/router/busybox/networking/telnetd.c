@@ -3,7 +3,7 @@
  * Simple telnet server
  * Bjorn Wesen, Axis Communications AB (bjornw@axis.com)
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * ---------------------------------------------------------------------------
  * (C) Copyright 2000, Axis Communications AB, LUND, SWEDEN
@@ -20,6 +20,27 @@
  * Vladimir Oleynik <dzo@simtreas.ru> 2001
  * Set process group corrections, initial busybox port
  */
+
+//usage:#define telnetd_trivial_usage
+//usage:       "[OPTIONS]"
+//usage:#define telnetd_full_usage "\n\n"
+//usage:       "Handle incoming telnet connections"
+//usage:	IF_NOT_FEATURE_TELNETD_STANDALONE(" via inetd") "\n"
+//usage:     "\n	-l LOGIN	Exec LOGIN on connect"
+//usage:     "\n	-f ISSUE_FILE	Display ISSUE_FILE instead of /etc/issue"
+//usage:     "\n	-K		Close connection as soon as login exits"
+//usage:     "\n			(normally wait until all programs close slave pty)"
+//usage:	IF_FEATURE_TELNETD_STANDALONE(
+//usage:     "\n	-p PORT		Port to listen on"
+//usage:     "\n	-b ADDR[:PORT]	Address to bind to"
+//usage:     "\n	-F		Run in foreground"
+//usage:     "\n	-i		Inetd mode"
+//usage:	IF_FEATURE_TELNETD_INETD_WAIT(
+//usage:     "\n	-w SEC		Inetd 'wait' mode, linger time SEC"
+//usage:     "\n	-S		Log to syslog (implied by -i or without -F and -w)"
+//usage:	)
+//usage:	)
+
 #define DEBUG 0
 
 #include "libbb.h"
@@ -30,10 +51,6 @@
 # define TELOPTS
 #endif
 #include <arpa/telnet.h>
-
-#if ENABLE_FEATURE_UTMP
-# include <utmp.h> /* LOGIN_PROCESS */
-#endif
 
 
 struct tsession {
@@ -141,7 +158,7 @@ remove_iacs(struct tsession *ts, int *pnum_totty)
 		if (ptr[1] == SB && ptr[2] == TELOPT_NAWS) {
 			struct winsize ws;
 			if ((ptr+8) >= end)
-				break;	/* incomplete, can't process */
+				break;  /* incomplete, can't process */
 			ws.ws_col = (ptr[3] << 8) | ptr[4];
 			ws.ws_row = (ptr[5] << 8) | ptr[6];
 			ioctl(ts->ptyfd, TIOCSWINSZ, (char *)&ws);
@@ -273,8 +290,8 @@ make_new_session(
 		static const char iacs_to_send[] ALIGN1 = {
 			IAC, DO, TELOPT_ECHO,
 			IAC, DO, TELOPT_NAWS,
-		/* This requires telnetd.ctrlSQ.patch (incomplete) */
-		/*	IAC, DO, TELOPT_LFLOW, */
+			/* This requires telnetd.ctrlSQ.patch (incomplete) */
+			/*IAC, DO, TELOPT_LFLOW,*/
 			IAC, WILL, TELOPT_ECHO,
 			IAC, WILL, TELOPT_SGA
 		};
@@ -315,6 +332,8 @@ make_new_session(
 	bb_signals((1 << SIGCHLD) + (1 << SIGPIPE), SIG_DFL);
 	signal(SIGINT, SIG_DFL);
 
+	pid = getpid();
+
 	if (ENABLE_FEATURE_UTMP) {
 		len_and_sockaddr *lsa = get_peer_lsa(sock);
 		char *hostname = NULL;
@@ -336,7 +355,6 @@ make_new_session(
 	xopen(tty_name, O_RDWR); /* becomes our ctty */
 	xdup2(0, 1);
 	xdup2(0, 2);
-	pid = getpid();
 	tcsetpgrp(0, pid); /* switch this tty's process group to us */
 
 	/* The pseudo-terminal allocated to the client is configured to operate

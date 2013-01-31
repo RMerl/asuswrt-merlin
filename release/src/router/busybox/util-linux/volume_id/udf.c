@@ -167,7 +167,6 @@ anchor:
 
  found:
 //	volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
-//	id->type = "udf";
-
+	IF_FEATURE_BLKID_TYPE(id->type = "udf";)
 	return 0;
 }

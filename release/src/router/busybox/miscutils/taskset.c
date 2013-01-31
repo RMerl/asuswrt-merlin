@@ -3,8 +3,25 @@
  * taskset - retrieve or set a processes' CPU affinity
  * Copyright (c) 2006 Bernhard Reutner-Fischer
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define taskset_trivial_usage
+//usage:       "[-p] [MASK] [PID | PROG ARGS]"
+//usage:#define taskset_full_usage "\n\n"
+//usage:       "Set or get CPU affinity\n"
+//usage:     "\n	-p	Operate on an existing PID"
+//usage:
+//usage:#define taskset_example_usage
+//usage:       "$ taskset 0x7 ./dgemm_test&\n"
+//usage:       "$ taskset -p 0x1 $!\n"
+//usage:       "pid 4790's current affinity mask: 7\n"
+//usage:       "pid 4790's new affinity mask: 1\n"
+//usage:       "$ taskset 0x7 /bin/sh -c './taskset -p 0x1 $$'\n"
+//usage:       "pid 6671's current affinity mask: 1\n"
+//usage:       "pid 6671's new affinity mask: 1\n"
+//usage:       "$ taskset -p 1\n"
+//usage:       "pid 1's current affinity mask: 3\n"
 
 #include <sched.h>
 #include "libbb.h"

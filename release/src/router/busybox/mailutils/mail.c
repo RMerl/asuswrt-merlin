@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2008 by Vladimir Dronnikov <dronnikov@gmail.com>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #include "libbb.h"
 #include "mail.h"
@@ -57,10 +57,13 @@ void FAST_FUNC launch_helper(const char **argv)
 	G.helper_pid = xvfork();
 
 	i = (!G.helper_pid) * 2; // for parent:0, for child:2
-	close(pipes[i + 1]); // 1 or 3 - closing one write end
-	close(pipes[2 - i]); // 2 or 0 - closing one read end
-	xmove_fd(pipes[i], STDIN_FILENO); // 0 or 2 - using other read end
-	xmove_fd(pipes[3 - i], STDOUT_FILENO); // 3 or 1 - other write end
+	close(pipes[i + 1]);     // 1 or 3 - closing one write end
+	close(pipes[2 - i]);     // 2 or 0 - closing one read end
+	xmove_fd(pipes[i], STDIN_FILENO);      // 0 or 2 - using other read end
+	xmove_fd(pipes[3 - i], STDOUT_FILENO); // 3 or 1 - using other write end
+	// End result:
+	// parent stdout [3] -> child stdin [2]
+	// child stdout [1] -> parent stdin [0]
 
 	if (!G.helper_pid) {
 		// child: try to execute connection helper
@@ -75,13 +78,16 @@ void FAST_FUNC launch_helper(const char **argv)
 	atexit(kill_helper);
 }
 
-const FAST_FUNC char *command(const char *fmt, const char *param)
+char* FAST_FUNC send_mail_command(const char *fmt, const char *param)
 {
-	const char *msg = fmt;
+	char *msg;
 	if (timeout)
 		alarm(timeout);
-	if (msg) {
+	msg = (char*)fmt;
+	if (fmt) {
 		msg = xasprintf(fmt, param);
+		if (verbose)
+			bb_error_msg("send:'%s'", msg);
 		printf("%s\r\n", msg);
 	}
 	fflush_all();
@@ -90,7 +96,7 @@ const FAST_FUNC char *command(const char *fmt, const char *param)
 
 // NB: parse_url can modify url[] (despite const), but only if '@' is there
 /*
-static char FAST_FUNC *parse_url(char *url, char **user, char **pass)
+static char* FAST_FUNC parse_url(char *url, char **user, char **pass)
 {
 	// parse [user[:pass]@]host
 	// return host
@@ -113,19 +119,18 @@ static char FAST_FUNC *parse_url(char *url, char **user, char **pass)
 void FAST_FUNC encode_base64(char *fname, const char *text, const char *eol)
 {
 	enum {
-		SRC_BUF_SIZE = 45,  /* This *MUST* be a multiple of 3 */
+		SRC_BUF_SIZE = 57,  /* This *MUST* be a multiple of 3 */
 		DST_BUF_SIZE = 4 * ((SRC_BUF_SIZE + 2) / 3),
 	};
-
 #define src_buf text
+	char src[SRC_BUF_SIZE];
 	FILE *fp = fp;
 	ssize_t len = len;
 	char dst_buf[DST_BUF_SIZE + 1];
 
 	if (fname) {
 		fp = (NOT_LONE_DASH(fname)) ? xfopen_for_read(fname) : (FILE *)text;
-		src_buf = bb_common_bufsiz1;
-	// N.B. strlen(NULL) segfaults!
+		src_buf = src;
 	} else if (text) {
 		// though we do not call uuencode(NULL, NULL) explicitly
 		// still we do not want to break things suddenly
@@ -161,73 +166,6 @@ void FAST_FUNC encode_base64(char *fname, const char *text, const char *eol)
 #undef src_buf
 }
 
-void FAST_FUNC decode_base64(FILE *src_stream, FILE *dst_stream)
-{
-	int term_count = 1;
-
-	while (1) {
-		char translated[4];
-		int count = 0;
-
-		while (count < 4) {
-			char *table_ptr;
-			int ch;
-
-			/* Get next _valid_ character.
-			 * global vector bb_uuenc_tbl_base64[] contains this string:
-			 * "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=\n"
-			 */
-			do {
-				ch = fgetc(src_stream);
-				if (ch == EOF) {
-					bb_error_msg_and_die(bb_msg_read_error);
-				}
-				// - means end of MIME section
-				if ('-' == ch) {
-					// push it back
-					ungetc(ch, src_stream);
-					return;
-				}
-				table_ptr = strchr(bb_uuenc_tbl_base64, ch);
-			} while (table_ptr == NULL);
-
-			/* Convert encoded character to decimal */
-			ch = table_ptr - bb_uuenc_tbl_base64;
-
-			if (*table_ptr == '=') {
-				if (term_count == 0) {
-					translated[count] = '\0';
-					break;
-				}
-				term_count++;
-			} else if (*table_ptr == '\n') {
-				/* Check for terminating line */
-				if (term_count == 5) {
-					return;
-				}
-				term_count = 1;
-				continue;
-			} else {
-				translated[count] = ch;
-				count++;
-				term_count = 0;
-			}
-		}
-
-		/* Merge 6 bit chars to 8 bit */
-		if (count > 1) {
-			fputc(translated[0] << 2 | translated[1] >> 4, dst_stream);
-		}
-		if (count > 2) {
-			fputc(translated[1] << 4 | translated[2] >> 2, dst_stream);
-		}
-		if (count > 3) {
-			fputc(translated[2] << 6 | translated[3], dst_stream);
-		}
-	}
-}
-
-
 /*
  * get username and password from a file descriptor
  */
@@ -237,8 +175,8 @@ void FAST_FUNC get_cred_or_die(int fd)
 		G.user = xstrdup(bb_ask(fd, /* timeout: */ 0, "User: "));
 		G.pass = xstrdup(bb_ask(fd, /* timeout: */ 0, "Password: "));
 	} else {
-		G.user = xmalloc_reads(fd, /* pfx: */ NULL, /* maxsize: */ NULL);
-		G.pass = xmalloc_reads(fd, /* pfx: */ NULL, /* maxsize: */ NULL);
+		G.user = xmalloc_reads(fd, /* maxsize: */ NULL);
+		G.pass = xmalloc_reads(fd, /* maxsize: */ NULL);
 	}
 	if (!G.user || !*G.user || !G.pass)
 		bb_error_msg_and_die("no username or password");

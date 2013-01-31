@@ -3,16 +3,17 @@
  * modinfo - retrieve module info
  * Copyright (c) 2008 Pascal Bellard
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
-//applet:IF_MODINFO(APPLET(modinfo, _BB_DIR_SBIN, _BB_SUID_DROP))
+//applet:IF_MODINFO(APPLET(modinfo, BB_DIR_SBIN, BB_SUID_DROP))
 
 //kbuild:lib-$(CONFIG_MODINFO) += modinfo.o modutils.o
 
 //config:config MODINFO
 //config:	bool "modinfo"
 //config:	default y
+//config:	select PLATFORM_LINUX
 //config:	help
 //config:	  Show information about a Linux Kernel module
 
@@ -23,9 +24,9 @@
 
 
 enum {
-	OPT_TAGS = (1 << 6) - 1,
-	OPT_F = (1 << 6), /* field name */
-	OPT_0 = (1 << 7),  /* \0 as separator */
+	OPT_TAGS = (1 << 8) - 1,
+	OPT_F = (1 << 8), /* field name */
+	OPT_0 = (1 << 9),  /* \0 as separator */
 };
 
 struct modinfo_env {
@@ -44,7 +45,7 @@ static int display(const char *data, const char *pattern, int flag)
 }
 
 static void modinfo(const char *path, const char *version,
-			struct modinfo_env *env)
+			const struct modinfo_env *env)
 {
 	static const char *const shortcuts[] = {
 		"filename",
@@ -53,6 +54,8 @@ static void modinfo(const char *path, const char *version,
 		"license",
 		"vermagic",
 		"parm",
+		"firmware",
+		"depends",
 	};
 	size_t len;
 	int j, length;
@@ -80,11 +83,13 @@ static void modinfo(const char *path, const char *version,
 	if (field)
 		tags |= OPT_F;
 	for (j = 1; (1<<j) & (OPT_TAGS + OPT_F); j++) {
-		const char *pattern = field;
-		if ((1<<j) & OPT_TAGS)
-			pattern = shortcuts[j];
+		const char *pattern;
+
 		if (!((1<<j) & tags))
 			continue;
+		pattern = field;
+		if ((1<<j) & OPT_TAGS)
+			pattern = shortcuts[j];
 		length = strlen(pattern);
 		ptr = the_module;
 		while (1) {
@@ -104,8 +109,7 @@ static void modinfo(const char *path, const char *version,
 //usage:#define modinfo_trivial_usage
 //usage:       "[-adlp0] [-F keyword] MODULE"
 //usage:#define modinfo_full_usage "\n\n"
-//usage:       "Options:"
-//usage:     "\n	-a		Shortcut for '-F author'"
+//usage:       "	-a		Shortcut for '-F author'"
 //usage:     "\n	-d		Shortcut for '-F description'"
 //usage:     "\n	-l		Shortcut for '-F license'"
 //usage:     "\n	-p		Shortcut for '-F parm'"

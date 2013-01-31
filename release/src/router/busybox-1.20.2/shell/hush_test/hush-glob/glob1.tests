@@ -1,2 +1,0 @@
-echo *glob1?t[e]sts*
-echo "glob1"?'t'[e]s*

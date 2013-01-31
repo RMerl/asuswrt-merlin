@@ -435,4 +435,3 @@ errcode_t ext2fs_block_iterate(ext2_filsys fs,
 	return ext2fs_block_iterate2(fs, ino, BLOCK_FLAG_NO_LARGE | flags,
 				     block_buf, xlate_func, &xl);
 }
-

@@ -1,13 +1,11 @@
 /* vi: set sw=4 ts=4: */
 /*
- * ipaddress.c		"ip address".
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
- *
- * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
+ * Authors: Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
  * Changes:
- *	Laszlo Valko <valko@linux.karinthy.hu> 990223: address label must be zero terminated
+ * Laszlo Valko <valko@linux.karinthy.hu> 990223: address label must be zero terminated
  */
 
 #include <fnmatch.h>
@@ -20,7 +18,7 @@
 
 #ifndef IFF_LOWER_UP
 /* from linux/if.h */
-#define IFF_LOWER_UP	0x10000		/* driver signals L1 up*/
+#define IFF_LOWER_UP  0x10000  /* driver signals L1 up */
 #endif
 
 struct filter_t {
@@ -164,6 +162,8 @@ static NOINLINE int print_linkinfo(const struct nlmsghdr *n)
 		printf("master %s ", ll_idx_n2a(*(int*)RTA_DATA(tb[IFLA_MASTER]), b1));
 	}
 #endif
+/* IFLA_OPERSTATE was added to kernel with the same commit as IFF_DORMANT */
+#ifdef IFF_DORMANT
 	if (tb[IFLA_OPERSTATE]) {
 		static const char operstate_labels[] ALIGN1 =
 			"UNKNOWN\0""NOTPRESENT\0""DOWN\0""LOWERLAYERDOWN\0"
@@ -171,6 +171,7 @@ static NOINLINE int print_linkinfo(const struct nlmsghdr *n)
 		printf("state %s ", nth_string(operstate_labels,
 					*(uint8_t *)RTA_DATA(tb[IFLA_OPERSTATE])));
 	}
+#endif
 	if (G_filter.showqueue)
 		print_queuelen((char*)RTA_DATA(tb[IFLA_IFNAME]));
 
@@ -365,7 +366,7 @@ static int FAST_FUNC print_addrinfo(const struct sockaddr_nl *who UNUSED_PARAM,
 
 struct nlmsg_list {
 	struct nlmsg_list *next;
-	struct nlmsghdr	  h;
+	struct nlmsghdr   h;
 };
 
 static int print_selected_addrinfo(int ifindex, struct nlmsg_list *ainfo)
@@ -415,7 +416,7 @@ static void ipaddr_reset_filter(int _oneline)
 }
 
 /* Return value becomes exitcode. It's okay to not return at all */
-int ipaddr_list_or_flush(char **argv, int flush)
+int FAST_FUNC ipaddr_list_or_flush(char **argv, int flush)
 {
 	static const char option[] ALIGN1 = "to\0""scope\0""up\0""label\0""dev\0";
 
@@ -747,7 +748,7 @@ static int ipaddr_modify(int cmd, char **argv)
 }
 
 /* Return value becomes exitcode. It's okay to not return at all */
-int do_ipaddr(char **argv)
+int FAST_FUNC do_ipaddr(char **argv)
 {
 	static const char commands[] ALIGN1 =
 		"add\0""delete\0""list\0""show\0""lst\0""flush\0";

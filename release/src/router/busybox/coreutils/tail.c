@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2001 by Matt Kraai <kraai@alumni.carnegiemellon.edu>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* BB_AUDIT SUSv3 compliant (need fancy for -c) */
@@ -24,6 +24,30 @@
  * 7) lseek attempted when count==0 even if arg was +0 (from top)
  */
 
+//usage:#define tail_trivial_usage
+//usage:       "[OPTIONS] [FILE]..."
+//usage:#define tail_full_usage "\n\n"
+//usage:       "Print last 10 lines of each FILE (or stdin) to stdout.\n"
+//usage:       "With more than one FILE, precede each with a filename header.\n"
+//usage:     "\n	-f		Print data as file grows"
+//usage:	IF_FEATURE_FANCY_TAIL(
+//usage:     "\n	-s SECONDS	Wait SECONDS between reads with -f"
+//usage:	)
+//usage:     "\n	-n N[kbm]	Print last N lines"
+//usage:	IF_FEATURE_FANCY_TAIL(
+//usage:     "\n	-c N[kbm]	Print last N bytes"
+//usage:     "\n	-q		Never print headers"
+//usage:     "\n	-v		Always print headers"
+//usage:     "\n"
+//usage:     "\nN may be suffixed by k (x1024), b (x512), or m (x1024^2)."
+//usage:     "\nIf N starts with a '+', output begins with the Nth item from the start"
+//usage:     "\nof each file, not from the end."
+//usage:	)
+//usage:
+//usage:#define tail_example_usage
+//usage:       "$ tail -n 1 /etc/resolv.conf\n"
+//usage:       "nameserver 10.0.0.1\n"
+
 #include "libbb.h"
 
 static const struct suffix_mult tail_suffixes[] = {
@@ -34,9 +58,11 @@ static const struct suffix_mult tail_suffixes[] = {
 };
 
 struct globals {
-	bool status;
+	bool from_top;
+	bool exitcode;
 } FIX_ALIASING;
 #define G (*(struct globals*)&bb_common_bufsiz1)
+#define INIT_G() do { } while (0)
 
 static void tail_xprint_header(const char *fmt, const char *filename)
 {
@@ -60,7 +86,7 @@ static ssize_t tail_read(int fd, char *buf, size_t count)
 	r = full_read(fd, buf, count);
 	if (r < 0) {
 		bb_perror_msg(bb_msg_read_error);
-		G.status = EXIT_FAILURE;
+		G.exitcode = EXIT_FAILURE;
 	}
 
 	return r;
@@ -74,7 +100,7 @@ static unsigned eat_num(const char *p)
 		p++;
 	else if (*p == '+') {
 		p++;
-		G.status = 1; /* mark that we saw "+" */
+		G.from_top = 1;
 	}
 	return xatou_sfx(p, tail_suffixes);
 }
@@ -84,7 +110,6 @@ int tail_main(int argc, char **argv)
 {
 	unsigned count = 10;
 	unsigned sleep_period = 1;
-	bool from_top;
 	const char *str_c, *str_n;
 
 	char *tailbuf;
@@ -95,6 +120,8 @@ int tail_main(int argc, char **argv)
 
 	int *fds;
 	const char *fmt;
+
+	INIT_G();
 
 #if ENABLE_INCLUDE_SUSv2 || ENABLE_FEATURE_FANCY_TAIL
 	/* Allow legacy syntax of an initial numeric option without -n. */
@@ -127,8 +154,6 @@ int tail_main(int argc, char **argv)
 #endif
 	argc -= optind;
 	argv += optind;
-	from_top = G.status; /* 1 if there was "-c +N" or "-n +N" */
-	G.status = EXIT_SUCCESS;
 
 	/* open all the files */
 	fds = xmalloc(sizeof(fds[0]) * (argc + 1));
@@ -146,7 +171,7 @@ int tail_main(int argc, char **argv)
 	do {
 		int fd = open_or_warn_stdin(argv[i]);
 		if (fd < 0 && !FOLLOW_RETRY) {
-			G.status = EXIT_FAILURE;
+			G.exitcode = EXIT_FAILURE;
 			continue;
 		}
 		fds[nfiles] = fd;
@@ -158,15 +183,19 @@ int tail_main(int argc, char **argv)
 
 	/* prepare the buffer */
 	tailbufsize = BUFSIZ;
-	if (!from_top && COUNT_BYTES) {
+	if (!G.from_top && COUNT_BYTES) {
 		if (tailbufsize < count + BUFSIZ) {
 			tailbufsize = count + BUFSIZ;
 		}
 	}
-	tailbuf = xmalloc(tailbufsize);
+	/* tail -c1024m REGULAR_FILE doesn't really need 1G mem block.
+	 * (In fact, it doesn't need ANY memory). So delay allocation.
+	 */
+	tailbuf = NULL;
 
 	/* tail the files */
-	fmt = header_fmt_str + 1; /* skip header leading newline on first output */
+
+	fmt = header_fmt_str + 1; /* skip leading newline in the header on the first output */
 	i = 0;
 	do {
 		char *buf;
@@ -177,14 +206,14 @@ int tail_main(int argc, char **argv)
 		int fd = fds[i];
 
 		if (ENABLE_FEATURE_FANCY_TAIL && fd < 0)
-			continue; /* may happen with -E */
+			continue; /* may happen with -F */
 
 		if (nfiles > header_threshhold) {
 			tail_xprint_header(fmt, argv[i]);
 			fmt = header_fmt_str;
 		}
 
-		if (!from_top) {
+		if (!G.from_top) {
 			off_t current = lseek(fd, 0, SEEK_END);
 			if (current > 0) {
 				unsigned off;
@@ -217,20 +246,23 @@ int tail_main(int argc, char **argv)
 			}
 		}
 
+		if (!tailbuf)
+			tailbuf = xmalloc(tailbufsize);
+
 		buf = tailbuf;
 		taillen = 0;
 		/* "We saw 1st line/byte".
 		 * Used only by +N code ("start from Nth", 1-based): */
 		seen = 1;
 		newlines_seen = 0;
-		while ((nread = tail_read(fd, buf, tailbufsize-taillen)) > 0) {
-			if (from_top) {
+		while ((nread = tail_read(fd, buf, tailbufsize - taillen)) > 0) {
+			if (G.from_top) {
 				int nwrite = nread;
 				if (seen < count) {
 					/* We need to skip a few more bytes/lines */
 					if (COUNT_BYTES) {
 						nwrite -= (count - seen);
-						seen = count;
+						seen += nread;
 					} else {
 						char *s = buf;
 						do {
@@ -288,7 +320,7 @@ int tail_main(int argc, char **argv)
 				buf = tailbuf + taillen;
 			}
 		} /* while (tail_read() > 0) */
-		if (!from_top) {
+		if (!G.from_top) {
 			xwrite(STDOUT_FILENO, tailbuf, taillen);
 		}
 	} while (++i < nfiles);
@@ -343,9 +375,11 @@ int tail_main(int argc, char **argv)
 				xwrite(STDOUT_FILENO, tailbuf, nread);
 			}
 		} while (++i < nfiles);
-	}
+	} /* while (1) */
+
 	if (ENABLE_FEATURE_CLEAN_UP) {
 		free(fds);
+		free(tailbuf);
 	}
-	return G.status;
+	return G.exitcode;
 }

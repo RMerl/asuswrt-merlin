@@ -4,14 +4,35 @@
  *
  * Copyright (C) 2003  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* BB_AUDIT SUSv3 compliant */
 /* BB_AUDIT GNU compatible -c, -q, and -v options in 'fancy' configuration. */
 /* http://www.opengroup.org/onlinepubs/007904975/utilities/head.html */
 
+//usage:#define head_trivial_usage
+//usage:       "[OPTIONS] [FILE]..."
+//usage:#define head_full_usage "\n\n"
+//usage:       "Print first 10 lines of each FILE (or stdin) to stdout.\n"
+//usage:       "With more than one FILE, precede each with a filename header.\n"
+//usage:     "\n	-n N[kbm]	Print first N lines"
+//usage:	IF_FEATURE_FANCY_HEAD(
+//usage:     "\n	-c N[kbm]	Print first N bytes"
+//usage:     "\n	-q		Never print headers"
+//usage:     "\n	-v		Always print headers"
+//usage:	)
+//usage:     "\n"
+//usage:     "\nN may be suffixed by k (x1024), b (x512), or m (x1024^2)."
+//usage:
+//usage:#define head_example_usage
+//usage:       "$ head -n 2 /etc/passwd\n"
+//usage:       "root:x:0:0:root:/root:/bin/bash\n"
+//usage:       "daemon:x:1:1:daemon:/usr/sbin:/bin/sh\n"
+
 #include "libbb.h"
+
+/* This is a NOEXEC applet. Be very careful! */
 
 static const char head_opts[] ALIGN1 =
 	"n:"

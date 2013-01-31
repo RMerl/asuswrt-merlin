@@ -59,7 +59,7 @@ static errcode_t check_mntent_file(const char *mtab_file, const char *file,
 		if (S_ISBLK(st_buf.st_mode)) {
 #ifndef __GNU__ /* The GNU hurd is broken with respect to stat devices */
 			file_rdev = st_buf.st_rdev;
-#endif	/* __GNU__ */
+#endif  /* __GNU__ */
 		} else {
 			file_dev = st_buf.st_dev;
 			file_ino = st_buf.st_ino;
@@ -73,7 +73,7 @@ static errcode_t check_mntent_file(const char *mtab_file, const char *file,
 #ifndef __GNU__
 				if (file_rdev && (file_rdev == st_buf.st_rdev))
 					break;
-#endif	/* __GNU__ */
+#endif  /* __GNU__ */
 			} else {
 				if (file_dev && ((file_dev == st_buf.st_dev) &&
 						 (file_ino == st_buf.st_ino)))
@@ -99,7 +99,7 @@ static errcode_t check_mntent_file(const char *mtab_file, const char *file,
 				goto is_root;
 			}
 		}
-#endif	/* __GNU__ */
+#endif  /* __GNU__ */
 		goto errout;
 	}
 #ifndef __GNU__ /* The GNU hurd is deficient; what else is new? */
@@ -148,7 +148,7 @@ static errcode_t check_mntent_file(const char *mtab_file, const char *file,
 is_root:
 #define TEST_FILE "/.ismount-test-file"
 		*mount_flags |= EXT2_MF_ISROOT;
-		fd = open(TEST_FILE, O_RDWR|O_CREAT, 0777);
+		fd = open(TEST_FILE, O_RDWR|O_CREAT);
 		if (fd < 0) {
 			if (errno == EROFS)
 				*mount_flags |= EXT2_MF_READONLY;
@@ -246,7 +246,7 @@ static int is_swap_device(const char *file)
 	if ((stat(file, &st_buf) == 0) &&
 	    S_ISBLK(st_buf.st_mode))
 		file_dev = st_buf.st_rdev;
-#endif	/* __GNU__ */
+#endif  /* __GNU__ */
 
 	if (!(f = fopen_for_read("/proc/swaps")))
 		return 0;
@@ -270,7 +270,7 @@ static int is_swap_device(const char *file)
 			ret++;
 			break;
 		}
-#endif	/* __GNU__ */
+#endif  /* __GNU__ */
 	}
 	fclose(f);
 	return ret;

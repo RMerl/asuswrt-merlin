@@ -266,7 +266,6 @@ errcode_t ext2fs_read_block_bitmap(ext2_filsys fs)
 
 errcode_t ext2fs_read_bitmaps(ext2_filsys fs)
 {
-
 	EXT2_CHECK_MAGIC(fs, EXT2_ET_MAGIC_EXT2FS_FILSYS);
 
 	if (fs->inode_map && fs->block_map)
@@ -293,4 +292,3 @@ errcode_t ext2fs_write_bitmaps(ext2_filsys fs)
 	}
 	return 0;
 }
-

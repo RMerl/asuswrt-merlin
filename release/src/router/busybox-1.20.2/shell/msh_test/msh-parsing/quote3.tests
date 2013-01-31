@@ -1,8 +1,0 @@
-if test $# = 0; then
-    exec "$THIS_SH" quote3.tests abc "d e"
-fi
-
-echo 'Testing: in $empty""'
-empty=''
-for a in $empty""; do echo ".$a."; done
-echo Finished

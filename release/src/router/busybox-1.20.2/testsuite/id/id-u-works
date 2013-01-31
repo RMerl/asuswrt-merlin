@@ -1,1 +1,0 @@
-test x$(id -u) = x$(busybox id -u)

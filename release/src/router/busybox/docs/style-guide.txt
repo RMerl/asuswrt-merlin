@@ -679,11 +679,10 @@ line in the midst of your #includes, if you need to parse long options:
 
 Then have long options defined:
 
-	static const struct option <applet>_long_options[] = {
-		{ "list",    0, NULL, 't' },
-		{ "extract", 0, NULL, 'x' },
-		{ NULL, 0, NULL, 0 }
-	};
+	static const char <applet>_longopts[] ALIGN1 =
+		"list\0"    No_argument "t"
+		"extract\0" No_argument "x"
+	;
 
 And a code block similar to the following near the top of your applet_main()
 routine:
@@ -691,7 +690,7 @@ routine:
 	char *str_b;
 
 	opt_complementary = "cryptic_string";
-	applet_long_options = <applet>_long_options; /* if you have them */
+	applet_long_options = <applet>_longopts; /* if you have them */
 	opt = getopt32(argc, argv, "ab:c", &str_b);
 	if (opt & 1) {
 		handle_option_a();

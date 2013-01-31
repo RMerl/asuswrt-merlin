@@ -1,3 +1,0 @@
-touch -t 198001010000 bar
-busybox touch -c foo bar
-test x"`find bar -mtime -1`" = xbar

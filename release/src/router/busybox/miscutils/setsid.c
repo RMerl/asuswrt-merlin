@@ -14,6 +14,13 @@
  * - busyboxed
  */
 
+//usage:#define setsid_trivial_usage
+//usage:       "PROG ARGS"
+//usage:#define setsid_full_usage "\n\n"
+//usage:       "Run PROG in a new session. PROG will have no controlling terminal\n"
+//usage:       "and will not be affected by keyboard signals (Ctrl-C etc).\n"
+//usage:       "See setsid(2) for details."
+
 #include "libbb.h"
 
 int setsid_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;

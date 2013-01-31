@@ -7,215 +7,6 @@ menu "Shells"
 
 INSERT
 
-config ASH
-	bool "ash"
-	default y
-	depends on !NOMMU
-	help
-	  Tha 'ash' shell adds about 60k in the default configuration and is
-	  the most complete and most pedantically correct shell included with
-	  busybox. This shell is actually a derivative of the Debian 'dash'
-	  shell (by Herbert Xu), which was created by porting the 'ash' shell
-	  (written by Kenneth Almquist) from NetBSD.
-
-config ASH_BASH_COMPAT
-	bool "bash-compatible extensions"
-	default y
-	depends on ASH
-	help
-	  Enable bash-compatible extensions.
-
-config ASH_JOB_CONTROL
-	bool "Job control"
-	default y
-	depends on ASH
-	help
-	  Enable job control in the ash shell.
-
-config ASH_ALIAS
-	bool "alias support"
-	default y
-	depends on ASH
-	help
-	  Enable alias support in the ash shell.
-
-config ASH_GETOPTS
-	bool "Builtin getopt to parse positional parameters"
-	default y
-	depends on ASH
-	help
-	  Enable getopts builtin in the ash shell.
-
-config ASH_BUILTIN_ECHO
-	bool "Builtin version of 'echo'"
-	default y
-	depends on ASH
-	help
-	  Enable support for echo, builtin to ash.
-
-config ASH_BUILTIN_PRINTF
-	bool "Builtin version of 'printf'"
-	default y
-	depends on ASH
-	help
-	  Enable support for printf, builtin to ash.
-
-config ASH_BUILTIN_TEST
-	bool "Builtin version of 'test'"
-	default y
-	depends on ASH
-	help
-	  Enable support for test, builtin to ash.
-
-config ASH_CMDCMD
-	bool "'command' command to override shell builtins"
-	default y
-	depends on ASH
-	help
-	  Enable support for the ash 'command' builtin, which allows
-	  you to run the specified command with the specified arguments,
-	  even when there is an ash builtin command with the same name.
-
-config ASH_MAIL
-	bool "Check for new mail on interactive shells"
-	default n
-	depends on ASH
-	help
-	  Enable "check for new mail" in the ash shell.
-
-config ASH_OPTIMIZE_FOR_SIZE
-	bool "Optimize for size instead of speed"
-	default y
-	depends on ASH
-	help
-	  Compile ash for reduced size at the price of speed.
-
-config ASH_RANDOM_SUPPORT
-	bool "Pseudorandom generator and $RANDOM variable"
-	default y
-	depends on ASH
-	help
-	  Enable pseudorandom generator and dynamic variable "$RANDOM".
-	  Each read of "$RANDOM" will generate a new pseudorandom value.
-	  You can reset the generator by using a specified start value.
-	  After "unset RANDOM" the generator will switch off and this
-	  variable will no longer have special treatment.
-
-config ASH_EXPAND_PRMT
-	bool "Expand prompt string"
-	default y
-	depends on ASH
-	help
-	  "PS#" may contain volatile content, such as backquote commands.
-	  This option recreates the prompt string from the environment
-	  variable each time it is displayed.
-
-config HUSH
-	bool "hush"
-	default y
-	help
-	  hush is a small shell (22k). It handles the normal flow control
-	  constructs such as if/then/elif/else/fi, for/in/do/done, while loops,
-	  case/esac. Redirections, here documents, $((arithmetic))
-	  and functions are supported.
-
-	  It will compile and work on no-mmu systems.
-
-	  It does not handle select, aliases, brace expansion,
-	  tilde expansion, &>file and >&file redirection of stdout+stderr.
-
-config HUSH_BASH_COMPAT
-	bool "bash-compatible extensions"
-	default y
-	depends on HUSH
-	help
-	  Enable bash-compatible extensions.
-
-config HUSH_HELP
-	bool "help builtin"
-	default y
-	depends on HUSH
-	help
-	  Enable help builtin in hush. Code size + ~1 kbyte.
-
-config HUSH_INTERACTIVE
-	bool "Interactive mode"
-	default y
-	depends on HUSH
-	help
-	  Enable interactive mode (prompt and command editing).
-	  Without this, hush simply reads and executes commands
-	  from stdin just like a shell script from a file.
-	  No prompt, no PS1/PS2 magic shell variables.
-
-config HUSH_JOB
-	bool "Job control"
-	default y
-	depends on HUSH_INTERACTIVE
-	help
-	  Enable job control: Ctrl-Z backgrounds, Ctrl-C interrupts current
-	  command (not entire shell), fg/bg builtins work. Without this option,
-	  "cmd &" still works by simply spawning a process and immediately
-	  prompting for next command (or executing next command in a script),
-	  but no separate process group is formed.
-
-config HUSH_TICK
-	bool "Process substitution"
-	default y
-	depends on HUSH
-	help
-	  Enable process substitution `command` and $(command) in hush.
-
-config HUSH_IF
-	bool "Support if/then/elif/else/fi"
-	default y
-	depends on HUSH
-	help
-	  Enable if/then/elif/else/fi in hush.
-
-config HUSH_LOOPS
-	bool "Support for, while and until loops"
-	default y
-	depends on HUSH
-	help
-	  Enable for, while and until loops in hush.
-
-config HUSH_CASE
-	bool "Support case ... esac statement"
-	default y
-	depends on HUSH
-	help
-	  Enable case ... esac statement in hush. +400 bytes.
-
-config HUSH_FUNCTIONS
-	bool "Support funcname() { commands; } syntax"
-	default y
-	depends on HUSH
-	help
-	  Enable support for shell functions in hush. +800 bytes.
-
-config HUSH_LOCAL
-	bool "Support local builtin"
-	default y
-	depends on HUSH_FUNCTIONS
-	help
-	  Enable support for local variables in functions.
-
-config HUSH_EXPORT_N
-	bool "Support export '-n' option"
-	default y
-	depends on HUSH
-	help
-	  Enable support for export '-n' option in hush. It is a bash extension.
-
-config HUSH_RANDOM_SUPPORT
-	bool "Pseudorandom generator and $RANDOM variable"
-	default y
-	depends on HUSH
-	help
-	  Enable pseudorandom generator and dynamic variable "$RANDOM".
-	  Each read of "$RANDOM" will generate a new pseudorandom value.
-
 
 choice
 	prompt "Choose which shell is aliased to 'sh' name"
@@ -269,29 +60,6 @@ config FEATURE_BASH_IS_NONE
 	bool "none"
 
 endchoice
-
-
-config LASH
-	bool "lash (deprecated: aliased to hush)"
-	default n
-	select HUSH
-	help
-	  lash is deprecated and will be removed, please migrate to hush.
-
-config MSH
-	bool "msh (deprecated: please use hush)"
-	default n
-	select HUSH
-	help
-	  msh is deprecated and will be removed, please migrate to hush.
-	  If there is a feature msh has but hush does not, please let us know.
-
-#	  The minix shell (adds just 30k) is quite complete and handles things
-#	  like for/do/done, case/esac and all the things you expect a Bourne
-#	  shell to do. It is not always pedantically correct about Bourne
-#	  shell grammar (try running the shell testscript "tests/sh.testcases"
-#	  on it and compare vs bash) but for most things it works quite well.
-#	  It uses only vfork, so it can be used on uClinux systems.
 
 
 config SH_MATH_SUPPORT
@@ -355,9 +123,9 @@ config FEATURE_SH_NOFORK
 	default n
 	depends on (HUSH || ASH) && FEATURE_PREFER_APPLETS
 	help
-	  This option causes busybox shells [currently only ash]
-	  to not execute typical fork/exec/wait sequence, but call <applet>_main
-	  directly, if possible. (Sometimes it is not possible: for example,
+	  This option causes busybox shells to not execute typical
+	  fork/exec/wait sequence, but call <applet>_main directly,
+	  if possible. (Sometimes it is not possible: for example,
 	  this is not possible in pipes).
 
 	  This will be done only for some applets (those which are marked
@@ -365,37 +133,17 @@ config FEATURE_SH_NOFORK
 
 	  This may significantly speed up some shell scripts.
 
-	  This feature is relatively new. Use with care.
+	  This feature is relatively new. Use with care. Report bugs
+	  to project mailing list.
 
-config CTTYHACK
-	bool "cttyhack"
+config FEATURE_SH_HISTFILESIZE
+	bool "Use $HISTFILESIZE"
 	default y
+	depends on HUSH || ASH
 	help
-	  One common problem reported on the mailing list is "can't access tty;
-	  job control turned off" error message which typically appears when
-	  one tries to use shell with stdin/stdout opened to /dev/console.
-	  This device is special - it cannot be a controlling tty.
+	  This option makes busybox shells to use $HISTFILESIZE variable
+	  to set shell history size. Note that its max value is capped
+	  by "History size" setting in library tuning section.
 
-	  Proper solution is to use correct device instead of /dev/console.
-
-	  cttyhack provides "quick and dirty" solution to this problem.
-	  It analyzes stdin with various ioctls, trying to determine whether
-	  it is a /dev/ttyN or /dev/ttySN (virtual terminal or serial line).
-	  If it detects one, it closes stdin/out/err and reopens that device.
-	  Then it executes given program. Opening the device will make
-	  that device a controlling tty. This may require cttyhack
-	  to be a session leader.
-
-	  Example for /etc/inittab (for busybox init):
-
-	  ::respawn:/bin/cttyhack /bin/sh
-
-	  Giving controlling tty to shell running with PID 1:
-
-	  $ exec cttyhack sh
-
-	  Starting an interactive shell from boot shell script:
-
-	  setsid cttyhack sh
 
 endmenu

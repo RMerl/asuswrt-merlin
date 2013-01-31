@@ -84,4 +84,3 @@ errcode_t ext2fs_brel_memarray_create(char *name, blk_t max_block,
 #define ext2fs_brel_move(brel, old, new) ((brel)->move((brel), old, new))
 #define ext2fs_brel_delete(brel, old) ((brel)->delete((brel), old))
 #define ext2fs_brel_free(brel) ((brel)->free((brel)))
-

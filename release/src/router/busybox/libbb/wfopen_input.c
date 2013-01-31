@@ -31,7 +31,7 @@ FILE* FAST_FUNC xfopen_stdin(const char *filename)
 	FILE *fp = fopen_or_warn_stdin(filename);
 	if (fp)
 		return fp;
-	xfunc_die();	/* We already output an error message. */
+	xfunc_die();  /* We already output an error message. */
 }
 
 int FAST_FUNC open_or_warn_stdin(const char *filename)
@@ -52,5 +52,5 @@ int FAST_FUNC xopen_stdin(const char *filename)
 	int fd = open_or_warn_stdin(filename);
 	if (fd >= 0)
 		return fd;
-	xfunc_die();	/* We already output an error message. */
+	xfunc_die();  /* We already output an error message. */
 }

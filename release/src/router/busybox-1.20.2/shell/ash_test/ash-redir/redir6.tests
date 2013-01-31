@@ -1,3 +1,0 @@
-# we had a bug where this would hang
-(head -n 1 <redir6.right)
-echo OK

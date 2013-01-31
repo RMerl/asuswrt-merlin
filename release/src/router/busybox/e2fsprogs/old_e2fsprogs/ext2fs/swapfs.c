@@ -66,7 +66,6 @@ void ext2fs_swap_super(struct ext2_super_block * sb)
 		sb->s_hash_seed[i] = ext2fs_swab32(sb->s_hash_seed[i]);
 	for (i=0; i < 17; i++)
 		sb->s_jnl_blocks[i] = ext2fs_swab32(sb->s_jnl_blocks[i]);
-
 }
 
 void ext2fs_swap_group_desc(struct ext2_group_desc *gdp)
@@ -222,7 +221,6 @@ void ext2fs_swap_inode_full(ext2_filsys fs, struct ext2_inode_large *t,
 	ext2fs_swap_ext_attr((char *) (eat + 1), (char *) (eaf + 1),
 			     bufsize - sizeof(struct ext2_inode) -
 			     t->i_extra_isize - sizeof(__u32), 0);
-
 }
 
 void ext2fs_swap_inode(ext2_filsys fs, struct ext2_inode *t,

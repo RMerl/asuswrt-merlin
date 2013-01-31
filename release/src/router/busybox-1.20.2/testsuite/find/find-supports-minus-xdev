@@ -1,3 +1,0 @@
-# FEATURE: CONFIG_FEATURE_FIND_XDEV
-
-busybox find . -xdev >/dev/null 2>&1

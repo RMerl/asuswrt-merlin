@@ -5,7 +5,7 @@
  *
  * Heavily modified by Manuel Novoa III       Mar 12, 2001
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
@@ -23,7 +23,7 @@ int FAST_FUNC INET_resolve(const char *name, struct sockaddr_in *s_in, int hostf
 	s_in->sin_port = 0;
 
 	/* Default is special, meaning 0.0.0.0. */
-	if (!strcmp(name, bb_str_default)) {
+	if (strcmp(name, "default") == 0) {
 		s_in->sin_addr.s_addr = INADDR_ANY;
 		return 1;
 	}
@@ -109,7 +109,7 @@ char* FAST_FUNC INET_rresolve(struct sockaddr_in *s_in, int numeric, uint32_t ne
 	if (ad == INADDR_ANY) {
 		if ((numeric & 0x0FFF) == 0) {
 			if (numeric & 0x8000)
-				return xstrdup(bb_str_default);
+				return xstrdup("default");
 			return xstrdup("*");
 		}
 	}
@@ -164,18 +164,19 @@ char* FAST_FUNC INET_rresolve(struct sockaddr_in *s_in, int numeric, uint32_t ne
 
 int FAST_FUNC INET6_resolve(const char *name, struct sockaddr_in6 *sin6)
 {
-	struct addrinfo req, *ai;
+	struct addrinfo req, *ai = NULL;
 	int s;
 
-	memset(&req, '\0', sizeof req);
+	memset(&req, 0, sizeof(req));
 	req.ai_family = AF_INET6;
 	s = getaddrinfo(name, NULL, &req, &ai);
-	if (s) {
+	if (s != 0) {
 		bb_error_msg("getaddrinfo: %s: %d", name, s);
 		return -1;
 	}
-	memcpy(sin6, ai->ai_addr, sizeof(struct sockaddr_in6));
-	freeaddrinfo(ai);
+	memcpy(sin6, ai->ai_addr, sizeof(*sin6));
+	if (ai)
+		freeaddrinfo(ai);
 	return 0;
 }
 
@@ -205,17 +206,19 @@ char* FAST_FUNC INET6_rresolve(struct sockaddr_in6 *sin6, int numeric)
 	}
 	if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 		if (numeric & 0x8000)
-			return xstrdup(bb_str_default);
+			return xstrdup("default");
 		return xstrdup("*");
 	}
 
-	s = getnameinfo((struct sockaddr *) sin6, sizeof(struct sockaddr_in6),
-				name, sizeof(name), NULL, 0, 0);
-	if (s) {
+	s = getnameinfo((struct sockaddr *) sin6, sizeof(*sin6),
+				name, sizeof(name),
+				/*serv,servlen:*/ NULL, 0,
+				0);
+	if (s != 0) {
 		bb_error_msg("getnameinfo failed");
 		return NULL;
 	}
 	return xstrdup(name);
 }
 
-#endif		/* CONFIG_FEATURE_IPV6 */
+#endif  /* CONFIG_FEATURE_IPV6 */

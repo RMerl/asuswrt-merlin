@@ -59,7 +59,7 @@ uint32_t FAST_FUNC crc32_block_endian0(uint32_t val, const void *buf, unsigned l
 	const void *end = (uint8_t*)buf + len;
 
 	while (buf != end) {
-                val = crc_table[(uint8_t)val ^ *(uint8_t*)buf] ^ (val >> 8);
+		val = crc_table[(uint8_t)val ^ *(uint8_t*)buf] ^ (val >> 8);
 		buf = (uint8_t*)buf + 1;
 	}
 	return val;

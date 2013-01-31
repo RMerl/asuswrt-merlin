@@ -1,3 +1,0 @@
-echo shown
-echo test `echo 'aa`
-echo not shown

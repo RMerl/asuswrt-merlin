@@ -13,7 +13,7 @@
  * This version of tr is adapted from Minix tr and was modified
  * by Erik Andersen <andersen@codepoet.org> to be used in busybox.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 /* http://www.opengroup.org/onlinepubs/009695399/utilities/tr.html
  * TODO: graph, print
@@ -46,6 +46,18 @@
 //config:	  replace all instances of 'a' with 'xyz'. This option is mainly
 //config:	  useful for cases when no other way of expressing a character
 //config:	  is possible.
+
+//usage:#define tr_trivial_usage
+//usage:       "[-cds] STRING1 [STRING2]"
+//usage:#define tr_full_usage "\n\n"
+//usage:       "Translate, squeeze, or delete characters from stdin, writing to stdout\n"
+//usage:     "\n	-c	Take complement of STRING1"
+//usage:     "\n	-d	Delete input characters coded STRING1"
+//usage:     "\n	-s	Squeeze multiple output characters of STRING2 into one character"
+//usage:
+//usage:#define tr_example_usage
+//usage:       "$ echo \"gdkkn vnqkc\" | tr [a-y] [b-z]\n"
+//usage:       "hello world\n"
 
 #include "libbb.h"
 
@@ -203,7 +215,7 @@ static unsigned expand(const char *arg, char **buffer_p)
 				buffer[pos++] = *arg; /* copy CHAR */
 				if (!arg[0] || arg[1] != '=' || arg[2] != ']')
 					bb_show_usage();
-				arg += 3;	/* skip CHAR=] */
+				arg += 3;  /* skip CHAR=] */
 				continue;
 			}
 			/* The rest of "[xyz..." cases is treated as normal
@@ -258,9 +270,9 @@ int tr_main(int argc UNUSED_PARAM, char **argv)
 	char *invec  = vector + ASCII;
 	char *outvec = vector + ASCII * 2;
 
-#define TR_OPT_complement	(3 << 0)
-#define TR_OPT_delete		(1 << 2)
-#define TR_OPT_squeeze_reps	(1 << 3)
+#define TR_OPT_complement   (3 << 0)
+#define TR_OPT_delete       (1 << 2)
+#define TR_OPT_squeeze_reps (1 << 3)
 
 	for (i = 0; i < ASCII; i++) {
 		vector[i] = i;
@@ -322,6 +334,12 @@ int tr_main(int argc UNUSED_PARAM, char **argv)
 			continue;
 		}
 		str2[out_index++] = last = coded;
+	}
+
+	if (ENABLE_FEATURE_CLEAN_UP) {
+		free(vector);
+		free(str2);
+		free(str1);
 	}
 
 	return EXIT_SUCCESS;

@@ -96,9 +96,9 @@ blkid_loff_t blkid_get_dev_size(int fd)
 
 #ifdef BLKGETSIZE64
 #ifdef __linux__
-	if ((uname(&ut) == 0) &&
-	    ((ut.release[0] == '2') && (ut.release[1] == '.') &&
-	     (ut.release[2] < '6') && (ut.release[3] == '.')))
+	uname(&ut);
+	if ((ut.release[0] == '2') && (ut.release[1] == '.') &&
+	     (ut.release[2] < '6') && (ut.release[3] == '.'))
 		valid_blkgetsize64 = 0;
 #endif
 	if (valid_blkgetsize64 &&

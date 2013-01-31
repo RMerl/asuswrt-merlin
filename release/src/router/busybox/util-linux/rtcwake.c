@@ -3,7 +3,7 @@
  *
  * This version was taken from util-linux and scrubbed down for busybox.
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  *
  * This uses cross-platform Linux interfaces to enter a system sleep state,
  * and leave it no later than a specified time.  It uses any RTC framework
@@ -22,6 +22,29 @@
  * RTC uses a local timezone instead (maybe you dual-boot MS-Windows).
  * That flag should not be needed on systems with adjtime support.
  */
+
+//usage:#define rtcwake_trivial_usage
+//usage:       "[-a | -l | -u] [-d DEV] [-m MODE] [-s SEC | -t TIME]"
+//usage:#define rtcwake_full_usage "\n\n"
+//usage:       "Enter a system sleep state until specified wakeup time\n"
+//usage:	IF_LONG_OPTS(
+//usage:     "\n	-a,--auto	Read clock mode from adjtime"
+//usage:     "\n	-l,--local	Clock is set to local time"
+//usage:     "\n	-u,--utc	Clock is set to UTC time"
+//usage:     "\n	-d,--device=DEV	Specify the RTC device"
+//usage:     "\n	-m,--mode=MODE	Set the sleep state (default: standby)"
+//usage:     "\n	-s,--seconds=SEC Set the timeout in SEC seconds from now"
+//usage:     "\n	-t,--time=TIME	Set the timeout to TIME seconds from epoch"
+//usage:	)
+//usage:	IF_NOT_LONG_OPTS(
+//usage:     "\n	-a	Read clock mode from adjtime"
+//usage:     "\n	-l	Clock is set to local time"
+//usage:     "\n	-u	Clock is set to UTC time"
+//usage:     "\n	-d DEV	Specify the RTC device"
+//usage:     "\n	-m MODE	Set the sleep state (default: standby)"
+//usage:     "\n	-s SEC	Set the timeout in SEC seconds from now"
+//usage:     "\n	-t TIME	Set the timeout to TIME seconds from epoch"
+//usage:	)
 
 #include "libbb.h"
 #include "rtc_.h"
@@ -50,7 +73,7 @@ static NOINLINE bool may_wakeup(const char *rtcname)
 static NOINLINE void setup_alarm(int fd, time_t *wakeup, time_t rtc_time)
 {
 	struct tm *ptm;
-	struct linux_rtc_wkalrm	wake;
+	struct linux_rtc_wkalrm wake;
 
 	/* The wakeup time is in POSIX time (more or less UTC).
 	 * Ideally RTCs use that same time; but PCs can't do that

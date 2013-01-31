@@ -5,9 +5,41 @@
  *
  * Copyright (C) 2006 - 2007 KaiGai Kohei <kaigai@kaigai.gr.jp>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
-#include <getopt.h>
+
+//usage:#define chcon_trivial_usage
+//usage:       "[OPTIONS] CONTEXT FILE..."
+//usage:       "\n	chcon [OPTIONS] [-u USER] [-r ROLE] [-l RANGE] [-t TYPE] FILE..."
+//usage:	IF_FEATURE_CHCON_LONG_OPTIONS(
+//usage:       "\n	chcon [OPTIONS] --reference=RFILE FILE..."
+//usage:	)
+//usage:#define chcon_full_usage "\n\n"
+//usage:       "Change the security context of each FILE to CONTEXT\n"
+//usage:	IF_FEATURE_CHCON_LONG_OPTIONS(
+//usage:     "\n	-v,--verbose		Verbose"
+//usage:     "\n	-c,--changes		Report changes made"
+//usage:     "\n	-h,--no-dereference	Affect symlinks instead of their targets"
+//usage:     "\n	-f,--silent,--quiet	Suppress most error messages"
+//usage:     "\n	--reference=RFILE	Use RFILE's group instead of using a CONTEXT value"
+//usage:     "\n	-u,--user=USER		Set user/role/type/range in the target"
+//usage:     "\n	-r,--role=ROLE		security context"
+//usage:     "\n	-t,--type=TYPE"
+//usage:     "\n	-l,--range=RANGE"
+//usage:     "\n	-R,--recursive		Recurse"
+//usage:	)
+//usage:	IF_NOT_FEATURE_CHCON_LONG_OPTIONS(
+//usage:     "\n	-v	Verbose"
+//usage:     "\n	-c	Report changes made"
+//usage:     "\n	-h	Affect symlinks instead of their targets"
+//usage:     "\n	-f	Suppress most error messages"
+//usage:     "\n	-u USER	Set user/role/type/range in the target security context"
+//usage:     "\n	-r ROLE"
+//usage:     "\n	-t TYPE"
+//usage:     "\n	-l RNG"
+//usage:     "\n	-R	Recurse"
+//usage:	)
+
 #include <selinux/context.h>
 
 #include "libbb.h"

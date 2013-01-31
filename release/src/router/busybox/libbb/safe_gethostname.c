@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2008 Tito Ragusa <farmatito@tiscali.it>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /*
@@ -49,26 +49,4 @@ char* FAST_FUNC safe_gethostname(void)
 	/* Uname can fail only if you pass a bad pointer to it. */
 	uname(&uts);
 	return xstrndup(!uts.nodename[0] ? "?" : uts.nodename, sizeof(uts.nodename));
-}
-
-/*
- * On success return the current malloced and NUL terminated domainname.
- * On error return malloced and NUL terminated string "?".
- * This is an illegal first character for a domainname.
- * The returned malloced string must be freed by the caller.
- */
-char* FAST_FUNC safe_getdomainname(void)
-{
-#if defined(__linux__)
-/* The field domainname of struct utsname is Linux specific. */
-	struct utsname uts;
-	uname(&uts);
-	return xstrndup(!uts.domainname[0] ? "?" : uts.domainname, sizeof(uts.domainname));
-#else
-	/* We really don't care about people with domain names wider than most screens */
-	char buf[256];
-	int r = getdomainname(buf, sizeof(buf));
-	buf[sizeof(buf)-1] = '\0';
-	return xstrdup(r < 0 ? "?" : buf);
-#endif
 }

@@ -3,7 +3,7 @@
  * This header makes it easier to include kernel headers
  * which use u32 and such.
  *
- * Licensed under the GPL version 2, see the file LICENSE in this tarball.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #ifndef FIX_U32_H
 #define FIX_U32_H 1

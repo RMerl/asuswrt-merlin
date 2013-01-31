@@ -1,1 +1,0 @@
-test x$(dirname $(pwd)) = x$(busybox dirname $(pwd))

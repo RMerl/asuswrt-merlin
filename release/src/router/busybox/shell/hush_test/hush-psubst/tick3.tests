@@ -7,6 +7,8 @@ echo `echo '\'TEST\`echo ZZ\`BEST`
 echo `echo \\$TEST`
 echo `echo \$TEST`
 echo a`echo \\\\b`c
-# \" etc are NOT special (passed verbatim WITH \)!
-echo a`echo \"`c
+
+# \" is not special if in unquoted `cmd` (passed verbatim WITH \),
+# but is special in quoted one
+echo `echo 11'-$a-\t-\\-\"-\`-\--\z-\*-\?-'22` "`echo 33'-$a-\t-\\-\"-\`-\--\z-\*-\?-'44`"
 echo done:$?

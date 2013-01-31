@@ -332,7 +332,7 @@ int FAST_FUNC volume_id_probe_vfat(struct volume_id *id /*,uint64_t fat_partitio
 
  ret:
 //	volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
-//	id->type = "vfat";
+	IF_FEATURE_BLKID_TYPE(id->type = "vfat";)
 
 	return 0;
 }

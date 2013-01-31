@@ -2,7 +2,7 @@
 #
 # Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
 #
-# Licensed under the GPL v2, see the file LICENSE in this tarball.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 libbb/appletlib.o: include/usage_compressed.h
 
@@ -13,7 +13,7 @@ INSERT
 lib-y += appletlib.o
 lib-y += ask_confirmation.o
 lib-y += bb_askpass.o
-lib-y += bb_basename.o
+lib-y += bb_bswap_64.o
 lib-y += bb_do_delay.o
 lib-y += bb_pwd.o
 lib-y += bb_qsort.o
@@ -58,16 +58,12 @@ lib-y += llist.o
 lib-y += login.o
 lib-y += make_directory.o
 lib-y += makedev.o
-lib-y += match_fstype.o
-lib-y += md5.o
-# Alternative (disabled) implementation
-#lib-y += md5prime.o
+lib-y += hash_md5_sha.o
+# Alternative (disabled) MD5 implementation
+#lib-y += hash_md5prime.o
 lib-y += messages.o
 lib-y += mode_string.o
-lib-y += mtab_file.o
-lib-y += obscure.o
 lib-y += parse_mode.o
-lib-y += parse_config.o
 lib-y += perror_msg.o
 lib-y += perror_nomsg.o
 lib-y += perror_nomsg_and_die.o
@@ -91,7 +87,6 @@ lib-y += safe_poll.o
 lib-y += safe_strncpy.o
 lib-y += safe_write.o
 lib-y += setup_environment.o
-lib-y += sha1.o
 lib-y += signals.o
 lib-y += simplify_path.o
 lib-y += single_argv.o
@@ -102,7 +97,6 @@ lib-y += strrstr.o
 lib-y += time.o
 lib-y += trim.o
 lib-y += u_signal_names.o
-lib-y += udp_io.o
 lib-y += uuencode.o
 lib-y += vdprintf.o
 lib-y += verror_msg.o
@@ -121,6 +115,8 @@ lib-y += xgethostbyname.o
 lib-y += xreadlink.o
 lib-y += xrealloc_vector.o
 
+lib-$(CONFIG_PLATFORM_LINUX) += match_fstype.o
+
 lib-$(CONFIG_FEATURE_UTMP) += utmp.o
 
 # A mix of optimizations (why build stuff we know won't be used)
@@ -130,6 +126,16 @@ lib-$(CONFIG_FEATURE_MTAB_SUPPORT) += mtab.o
 lib-$(CONFIG_UNICODE_SUPPORT) += unicode.o
 lib-$(CONFIG_FEATURE_CHECK_NAMES) += die_if_bad_username.o
 
+lib-$(CONFIG_NC) += udp_io.o
+lib-$(CONFIG_DNSD) += udp_io.o
+lib-$(CONFIG_NTPD) += udp_io.o
+lib-$(CONFIG_TFTP) += udp_io.o
+lib-$(CONFIG_TFTPD) += udp_io.o
+lib-$(CONFIG_TCPSVD) += udp_io.o
+lib-$(CONFIG_UDPSVD) += udp_io.o
+lib-$(CONFIG_TRACEROUTE) += udp_io.o
+lib-$(CONFIG_DHCP6C) += udp_io.o
+
 lib-$(CONFIG_LOSETUP) += loop.o
 lib-$(CONFIG_FEATURE_MOUNT_LOOP) += loop.o
 
@@ -138,7 +144,7 @@ lib-$(CONFIG_ADDUSER) += update_passwd.o
 lib-$(CONFIG_DELGROUP) += update_passwd.o
 lib-$(CONFIG_DELUSER) += update_passwd.o
 
-lib-$(CONFIG_PASSWD) += pw_encrypt.o update_passwd.o
+lib-$(CONFIG_PASSWD) += pw_encrypt.o update_passwd.o obscure.o
 lib-$(CONFIG_CHPASSWD) += pw_encrypt.o update_passwd.o
 lib-$(CONFIG_CRYPTPW) += pw_encrypt.o
 lib-$(CONFIG_SULOGIN) += pw_encrypt.o
@@ -157,10 +163,15 @@ lib-$(CONFIG_MOUNT) += find_mount_point.o
 lib-$(CONFIG_HWCLOCK) += rtc.o
 lib-$(CONFIG_RTCWAKE) += rtc.o
 
+lib-$(CONFIG_IOSTAT) += get_cpu_count.o
+lib-$(CONFIG_MPSTAT) += get_cpu_count.o
+lib-$(CONFIG_POWERTOP) += get_cpu_count.o
+
 lib-$(CONFIG_PING) += inet_cksum.o
 lib-$(CONFIG_TRACEROUTE) += inet_cksum.o
 lib-$(CONFIG_TRACEROUTE6) += inet_cksum.o
 lib-$(CONFIG_UDHCPC) += inet_cksum.o
+lib-$(CONFIG_UDHCPC6) += inet_cksum.o
 lib-$(CONFIG_UDHCPD) += inet_cksum.o
 
 # We shouldn't build xregcomp.c if we don't need it - this ensures we don't

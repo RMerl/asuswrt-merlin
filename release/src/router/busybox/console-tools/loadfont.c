@@ -7,8 +7,28 @@
  * Loads the console font, and possibly the corresponding screen map(s).
  * (Adapted for busybox by Matej Vela.)
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define loadfont_trivial_usage
+//usage:       "< font"
+//usage:#define loadfont_full_usage "\n\n"
+//usage:       "Load a console font from stdin"
+/* //usage:     "\n	-C TTY	Affect TTY instead of /dev/tty" */
+//usage:
+//usage:#define loadfont_example_usage
+//usage:       "$ loadfont < /etc/i18n/fontname\n"
+//usage:
+//usage:#define setfont_trivial_usage
+//usage:       "FONT [-m MAPFILE] [-C TTY]"
+//usage:#define setfont_full_usage "\n\n"
+//usage:       "Load a console font\n"
+//usage:     "\n	-m MAPFILE	Load console screen map"
+//usage:     "\n	-C TTY		Affect TTY instead of /dev/tty"
+//usage:
+//usage:#define setfont_example_usage
+//usage:       "$ setfont -m koi8-r /etc/i18n/fontname\n"
+
 #include "libbb.h"
 #include <sys/kd.h>
 
@@ -136,7 +156,7 @@ static void do_loadfont(int fd, unsigned char *inbuf, int height, int width, int
  * Example:
  * At the font position for a capital A-ring glyph, we
  * may have:
- *	00C5,212B,FFFE,0041,030A,FFFF
+ *   00C5,212B,FFFE,0041,030A,FFFF
  * Some font positions may be described by sequences only,
  * namely when there is no precomposed Unicode value for the glyph.
  */
@@ -159,7 +179,7 @@ static void do_loadtable(int fd, unsigned char *inbuf, int tailsz, int fontsize,
 	int glyph;
 	uint16_t unicode;
 
-	maxct = tailsz;	/* more than enough */
+	maxct = tailsz; /* more than enough */
 	up = xmalloc(maxct * sizeof(*up));
 
 	for (glyph = 0; glyph < fontsize; glyph++) {
@@ -255,10 +275,10 @@ static void do_load(int fd, unsigned char *buffer, size_t len)
 	} else
 #endif
 #if ENABLE_FEATURE_LOADFONT_RAW
-	if (len == 9780) {	/* file with three code pages? */
+	if (len == 9780) {  /* file with three code pages? */
 		charsize = height = 16;
 		font += 40;
-	} else if ((len & 0377) == 0) {		/* bare font */
+	} else if ((len & 0377) == 0) {  /* bare font */
 		charsize = height = len / 256;
 	} else
 #endif

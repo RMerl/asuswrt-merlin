@@ -260,9 +260,3 @@ static int set_bad_block_proc(ext2_filsys fs, blk_t *block_nr,
 	*block_nr = blk;
 	return BLOCK_CHANGED;
 }
-
-
-
-
-
-

@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2009 Denys Vlasenko.
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #include <unistd.h>
 #include <stdint.h>
@@ -31,8 +31,8 @@
 #include "usage.h"
 #define MAKE_USAGE(aname, usage) { aname, usage },
 static struct usage_data {
-        const char *aname;
-        const char *usage;
+	const char *aname;
+	const char *usage;
 } usage_array[] = {
 #include "applets.h"
 };

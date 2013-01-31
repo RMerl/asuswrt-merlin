@@ -1,7 +1,0 @@
-# ==========================================================================
-# Build system
-# ==========================================================================
-
-# -mpreferred-stack-boundary=2 is essential in preventing gcc 4.2.x
-# from aligning stack to 16 bytes. (Which is gcc's way of supporting SSE).
-CFLAGS += $(call cc-option,-march=i386 -mpreferred-stack-boundary=2,)

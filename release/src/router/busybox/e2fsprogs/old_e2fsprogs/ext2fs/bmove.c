@@ -153,4 +153,3 @@ errcode_t ext2fs_move_blocks(ext2_filsys fs,
 	}
 	return 0;
 }
-

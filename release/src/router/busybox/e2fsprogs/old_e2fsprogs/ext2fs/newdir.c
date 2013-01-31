@@ -66,7 +66,6 @@ errcode_t ext2fs_new_dir_block(ext2_filsys fs, ext2_ino_t dir_ino,
 		dir->name_len = 2 | filetype;
 		dir->name[0] = '.';
 		dir->name[1] = '.';
-
 	}
 	*block = buf;
 	return 0;

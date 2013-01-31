@@ -1,4 +1,0 @@
-_1=http://busybox.net
-
-echo $_1
-echo ${_1}_abc

@@ -5,12 +5,63 @@
  * Copyright (C) [2003] by [Matteo Croce] <3297627799@wind.it>
  * Hacked by Tito <farmatito@tiscali.it> for size optimization.
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * This program is based on the source code of hdparm: see below...
  * hdparm.c - Command line interface to get/set hard disk parameters
  *          - by Mark Lord (C) 1994-2002 -- freely distributable
  */
+
+//usage:#define hdparm_trivial_usage
+//usage:       "[OPTIONS] [DEVICE]"
+//usage:#define hdparm_full_usage "\n\n"
+//usage:       "	-a	Get/set fs readahead"
+//usage:     "\n	-A	Set drive read-lookahead flag (0/1)"
+//usage:     "\n	-b	Get/set bus state (0 == off, 1 == on, 2 == tristate)"
+//usage:     "\n	-B	Set Advanced Power Management setting (1-255)"
+//usage:     "\n	-c	Get/set IDE 32-bit IO setting"
+//usage:     "\n	-C	Check IDE power mode status"
+//usage:	IF_FEATURE_HDPARM_HDIO_GETSET_DMA(
+//usage:     "\n	-d	Get/set using_dma flag")
+//usage:     "\n	-D	Enable/disable drive defect-mgmt"
+//usage:     "\n	-f	Flush buffer cache for device on exit"
+//usage:     "\n	-g	Display drive geometry"
+//usage:     "\n	-h	Display terse usage information"
+//usage:	IF_FEATURE_HDPARM_GET_IDENTITY(
+//usage:     "\n	-i	Display drive identification")
+//usage:	IF_FEATURE_HDPARM_GET_IDENTITY(
+//usage:     "\n	-I	Detailed/current information directly from drive")
+//usage:     "\n	-k	Get/set keep_settings_over_reset flag (0/1)"
+//usage:     "\n	-K	Set drive keep_features_over_reset flag (0/1)"
+//usage:     "\n	-L	Set drive doorlock (0/1) (removable harddisks only)"
+//usage:     "\n	-m	Get/set multiple sector count"
+//usage:     "\n	-n	Get/set ignore-write-errors flag (0/1)"
+//usage:     "\n	-p	Set PIO mode on IDE interface chipset (0,1,2,3,4,...)"
+//usage:     "\n	-P	Set drive prefetch count"
+/* //usage:  "\n	-q	Change next setting quietly" - not supported ib bbox */
+//usage:     "\n	-Q	Get/set DMA tagged-queuing depth (if supported)"
+//usage:     "\n	-r	Get/set readonly flag (DANGEROUS to set)"
+//usage:	IF_FEATURE_HDPARM_HDIO_SCAN_HWIF(
+//usage:     "\n	-R	Register an IDE interface (DANGEROUS)")
+//usage:     "\n	-S	Set standby (spindown) timeout"
+//usage:     "\n	-t	Perform device read timings"
+//usage:     "\n	-T	Perform cache read timings"
+//usage:     "\n	-u	Get/set unmaskirq flag (0/1)"
+//usage:	IF_FEATURE_HDPARM_HDIO_UNREGISTER_HWIF(
+//usage:     "\n	-U	Unregister an IDE interface (DANGEROUS)")
+//usage:     "\n	-v	Defaults; same as -mcudkrag for IDE drives"
+//usage:     "\n	-V	Display program version and exit immediately"
+//usage:	IF_FEATURE_HDPARM_HDIO_DRIVE_RESET(
+//usage:     "\n	-w	Perform device reset (DANGEROUS)")
+//usage:     "\n	-W	Set drive write-caching flag (0/1) (DANGEROUS)"
+//usage:	IF_FEATURE_HDPARM_HDIO_TRISTATE_HWIF(
+//usage:     "\n	-x	Tristate device for hotswap (0/1) (DANGEROUS)")
+//usage:     "\n	-X	Set IDE xfer mode (DANGEROUS)"
+//usage:     "\n	-y	Put IDE drive in standby mode"
+//usage:     "\n	-Y	Put IDE drive to sleep"
+//usage:     "\n	-Z	Disable Seagate auto-powersaving mode"
+//usage:     "\n	-z	Reread partition table"
+
 #include "libbb.h"
 /* must be _after_ libbb.h: */
 #include <linux/hdreg.h>
@@ -382,6 +433,7 @@ struct BUG_G_too_big {
 #define hwif_data          (G.hwif_data              )
 #define hwif_ctrl          (G.hwif_ctrl              )
 #define hwif_irq           (G.hwif_irq               )
+#define INIT_G() do { } while (0)
 
 
 /* Busybox messages and functions */
@@ -730,8 +782,8 @@ static void identify(uint16_t *val)
 		if (val[MINOR] && (val[MINOR] <= MINOR_MAX)) {
 			if (like_std < 3) like_std = 3;
 			std = actual_ver[val[MINOR]];
-			if (std) printf("\n\tUsed: %s ", nth_string(minor_str, val[MINOR]));
-
+			if (std)
+				printf("\n\tUsed: %s ", nth_string(minor_str, val[MINOR]));
 		}
 		/* looks like when they up-issue the std, they obsolete one;
 		 * thus, only the newest 4 issues need be supported. (That's
@@ -1745,7 +1797,7 @@ static void process_dev(char *devname)
 		if (-1 == read(fd, buf, sizeof(buf)))
 			bb_perror_msg("read of 512 bytes failed");
 	}
-#endif	/* HDIO_DRIVE_CMD */
+#endif  /* HDIO_DRIVE_CMD */
 	if (getset_mult || get_identity) {
 		multcount = -1;
 		if (ioctl(fd, HDIO_GET_MULTCOUNT, &multcount)) {
@@ -2008,6 +2060,8 @@ int hdparm_main(int argc, char **argv)
 	int c;
 	int flagcount = 0;
 
+	INIT_G();
+
 	while ((c = getopt(argc, argv, hdparm_options)) >= 0) {
 		flagcount++;
 		IF_FEATURE_HDPARM_GET_IDENTITY(get_IDentity |= (c == 'I'));
@@ -2055,8 +2109,8 @@ int hdparm_main(int argc, char **argv)
 #if ENABLE_FEATURE_HDPARM_HDIO_SCAN_HWIF
 		if (c == 'R') {
 			scan_hwif = parse_opts_0_INTMAX(&hwif_data);
-			hwif_ctrl = xatoi_u((argv[optind]) ? argv[optind] : "");
-			hwif_irq  = xatoi_u((argv[optind+1]) ? argv[optind+1] : "");
+			hwif_ctrl = xatoi_positive((argv[optind]) ? argv[optind] : "");
+			hwif_irq  = xatoi_positive((argv[optind+1]) ? argv[optind+1] : "");
 			/* Move past the 2 additional arguments */
 			argv += 2;
 			argc -= 2;

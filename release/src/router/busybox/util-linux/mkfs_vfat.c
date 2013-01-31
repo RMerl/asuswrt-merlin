@@ -5,8 +5,24 @@
  *
  * Busybox'ed (2009) by Vladimir Dronnikov <dronnikov@gmail.com>
  *
- * Licensed under GPLv2, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2, see file LICENSE in this source tree.
  */
+
+//usage:#define mkfs_vfat_trivial_usage
+//usage:       "[-v] [-n LABEL] BLOCKDEV [KBYTES]"
+/* Accepted but ignored:
+       "[-c] [-C] [-I] [-l bad-block-file] [-b backup-boot-sector] "
+       "[-m boot-msg-file] [-i volume-id] "
+       "[-s sectors-per-cluster] [-S logical-sector-size] [-f number-of-FATs] "
+       "[-h hidden-sectors] [-F fat-size] [-r root-dir-entries] [-R reserved-sectors] "
+*/
+//usage:#define mkfs_vfat_full_usage "\n\n"
+//usage:       "Make a FAT32 filesystem\n"
+/* //usage:  "\n	-c	Check device for bad blocks" */
+//usage:     "\n	-v	Verbose"
+/* //usage:  "\n	-I	Allow to use entire disk device (e.g. /dev/hda)" */
+//usage:     "\n	-n LBL	Volume label"
+
 #include "libbb.h"
 
 #include <linux/hdreg.h> /* HDIO_GETGEO */
@@ -28,7 +44,7 @@
 
 #define ATTR_VOLUME     8
 
-#define	NUM_FATS        2
+#define NUM_FATS        2
 
 /* FAT32 filesystem looks like this:
  * sector -nn...-1: "hidden" sectors, all sectors before this partition
@@ -245,8 +261,7 @@ int mkfs_vfat_main(int argc UNUSED_PARAM, char **argv)
 	volume_id = time(NULL);
 
 	dev = xopen(device_name, O_RDWR);
-	if (fstat(dev, &st) < 0)
-		bb_simple_perror_msg_and_die(device_name);
+	xfstat(dev, &st, device_name);
 
 	//
 	// Get image size and sector size

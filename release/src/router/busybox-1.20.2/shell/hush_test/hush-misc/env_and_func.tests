@@ -1,4 +1,0 @@
-var=old
-f() { echo "var=$var"; }
-var=val f
-echo "var=$var"

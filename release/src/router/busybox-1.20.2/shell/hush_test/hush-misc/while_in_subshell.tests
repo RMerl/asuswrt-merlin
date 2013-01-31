@@ -1,2 +1,0 @@
-(while true; do exit; done)
-echo OK: $?

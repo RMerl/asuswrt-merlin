@@ -75,7 +75,7 @@ int FAST_FUNC volume_id_probe_linux_raid(struct volume_id *id /*,uint64_t off*/,
 
 	dbg("found raid signature");
 //	volume_id_set_usage(id, VOLUME_ID_RAID);
-//	id->type = "linux_raid_member";
+	IF_FEATURE_BLKID_TYPE(id->type = "linux_raid_member";)
 
 	return 0;
 }

@@ -3,7 +3,7 @@
 # These are not ash tests, we use ash as a way to test lineedit!
 #
 # Copyright 2010 by Denys Vlasenko
-# Licensed under GPL v2, see file LICENSE for details.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 . ./testing.sh
 test -f "$bindir/.config" && . "$bindir/.config"

@@ -1,9 +1,0 @@
-f() { echo $1; }
-f 1
-
-# hush fails on this syntax, but i've never seen anyone use it ...
-#f() ( echo $1; )
-f 2
-
-#f() ( echo $1 )
-f 3

@@ -5,7 +5,7 @@
  * Copyright (C) 1999,2000,2001 by Lineo, inc. and Mark Whitley
  * Copyright (C) 1999,2000,2001 by Mark Whitley <markw@codepoet.org>
  *
- * Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 /* BB_AUDIT SUSv3 defects - unsupported option -x "match whole line only". */
 /* BB_AUDIT GNU defects - always acts as -a.  */
@@ -18,9 +18,9 @@
  * (C) 2006 Jac Goudsmit added -o option
  */
 
-//applet:IF_GREP(APPLET(grep, _BB_DIR_BIN, _BB_SUID_DROP))
-//applet:IF_FEATURE_GREP_EGREP_ALIAS(APPLET_ODDNAME(egrep, grep, _BB_DIR_BIN, _BB_SUID_DROP, egrep))
-//applet:IF_FEATURE_GREP_FGREP_ALIAS(APPLET_ODDNAME(fgrep, grep, _BB_DIR_BIN, _BB_SUID_DROP, fgrep))
+//applet:IF_GREP(APPLET(grep, BB_DIR_BIN, BB_SUID_DROP))
+//applet:IF_FEATURE_GREP_EGREP_ALIAS(APPLET_ODDNAME(egrep, grep, BB_DIR_BIN, BB_SUID_DROP, egrep))
+//applet:IF_FEATURE_GREP_FGREP_ALIAS(APPLET_ODDNAME(fgrep, grep, BB_DIR_BIN, BB_SUID_DROP, fgrep))
 
 //kbuild:lib-$(CONFIG_GREP) += grep.o
 
@@ -72,7 +72,6 @@
 //usage:       "PATTERN/-e PATTERN.../-f FILE [FILE]..."
 //usage:#define grep_full_usage "\n\n"
 //usage:       "Search for PATTERN in FILEs (or stdin)\n"
-//usage:     "\nOptions:"
 //usage:     "\n	-H	Add 'filename:' prefix"
 //usage:     "\n	-h	Do not add 'filename:' prefix"
 //usage:     "\n	-n	Add 'line_no:' prefix"
@@ -86,6 +85,7 @@
 //usage:     "\n	-r	Recurse"
 //usage:     "\n	-i	Ignore case"
 //usage:     "\n	-w	Match whole words only"
+//usage:     "\n	-x	Match whole lines only"
 //usage:     "\n	-F	PATTERN is a literal (not regexp)"
 //usage:	IF_FEATURE_GREP_EGREP_ALIAS(
 //usage:     "\n	-E	PATTERN is an extended regexp"
@@ -114,7 +114,7 @@
 //usage:#define fgrep_full_usage ""
 
 #define OPTSTR_GREP \
-	"lnqvscFiHhe:f:Lorm:w" \
+	"lnqvscFiHhe:f:Lorm:wx" \
 	IF_FEATURE_GREP_CONTEXT("A:B:C:") \
 	IF_FEATURE_GREP_EGREP_ALIAS("E") \
 	IF_EXTRA_COMPAT("z") \
@@ -139,6 +139,7 @@ enum {
 	OPTBIT_r, /* recurse dirs */
 	OPTBIT_m, /* -m MAX_MATCHES */
 	OPTBIT_w, /* -w whole word match */
+	OPTBIT_x, /* -x whole line match */
 	IF_FEATURE_GREP_CONTEXT(    OPTBIT_A ,) /* -A NUM: after-match context */
 	IF_FEATURE_GREP_CONTEXT(    OPTBIT_B ,) /* -B NUM: before-match context */
 	IF_FEATURE_GREP_CONTEXT(    OPTBIT_C ,) /* -C NUM: -A and -B combined */
@@ -161,6 +162,7 @@ enum {
 	OPT_r = 1 << OPTBIT_r,
 	OPT_m = 1 << OPTBIT_m,
 	OPT_w = 1 << OPTBIT_w,
+	OPT_x = 1 << OPTBIT_x,
 	OPT_A = IF_FEATURE_GREP_CONTEXT(    (1 << OPTBIT_A)) + 0,
 	OPT_B = IF_FEATURE_GREP_CONTEXT(    (1 << OPTBIT_B)) + 0,
 	OPT_C = IF_FEATURE_GREP_CONTEXT(    (1 << OPTBIT_C)) + 0,
@@ -371,9 +373,12 @@ static int grep_file(FILE *file)
 							&gl->matched_range) >= 0
 #endif
 				) {
-					if (!(option_mask32 & OPT_w))
+					if (option_mask32 & OPT_x) {
+						found = (gl->matched_range.rm_so == 0
+						         && line[gl->matched_range.rm_eo] == '\0');
+					} else if (!(option_mask32 & OPT_w)) {
 						found = 1;
-					else {
+					} else {
 						char c = ' ';
 						if (gl->matched_range.rm_so)
 							c = line[gl->matched_range.rm_so - 1];
@@ -563,20 +568,20 @@ static char *add_grep_list_data(char *pattern)
 
 static void load_regexes_from_file(llist_t *fopt)
 {
-	char *line;
-	FILE *f;
-
 	while (fopt) {
+		char *line;
+		FILE *fp;
 		llist_t *cur = fopt;
 		char *ffile = cur->data;
 
 		fopt = cur->link;
 		free(cur);
-		f = xfopen_stdin(ffile);
-		while ((line = xmalloc_fgetline(f)) != NULL) {
+		fp = xfopen_stdin(ffile);
+		while ((line = xmalloc_fgetline(fp)) != NULL) {
 			llist_add_to(&pattern_head,
 				new_grep_list_data(line, ALLOCATED));
 		}
+		fclose_if_not_stdin(fp);
 	}
 }
 
@@ -660,15 +665,19 @@ int grep_main(int argc UNUSED_PARAM, char **argv)
 #endif
 	invert_search = ((option_mask32 & OPT_v) != 0); /* 0 | 1 */
 
-	if (pattern_head != NULL) {
-		/* convert char **argv to grep_list_data_t */
+	{	/* convert char **argv to grep_list_data_t */
 		llist_t *cur;
-
 		for (cur = pattern_head; cur; cur = cur->link)
 			cur->data = new_grep_list_data(cur->data, 0);
 	}
-	if (option_mask32 & OPT_f)
+	if (option_mask32 & OPT_f) {
 		load_regexes_from_file(fopt);
+		if (!pattern_head) { /* -f EMPTY_FILE? */
+			/* GNU grep treats it as "nothing matches" */
+			llist_add_to(&pattern_head, new_grep_list_data((char*) "", 0));
+			invert_search ^= 1;
+		}
+	}
 
 	if (ENABLE_FEATURE_GREP_FGREP_ALIAS && applet_name[0] == 'f')
 		option_mask32 |= OPT_F;

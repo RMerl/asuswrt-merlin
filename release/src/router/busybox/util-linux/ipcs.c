@@ -5,8 +5,24 @@
  * 01 Sept 2004 - Rodney Radford <rradford@mindspring.com>
  * Adapted for busybox from util-linux-2.12a.
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define ipcs_trivial_usage
+//usage:       "[[-smq] -i shmid] | [[-asmq] [-tcplu]]"
+//usage:#define ipcs_full_usage "\n\n"
+//usage:       "	-i	Show specific resource"
+//usage:     "\nResource specification:"
+//usage:     "\n	-m	Shared memory segments"
+//usage:     "\n	-q	Message queues"
+//usage:     "\n	-s	Semaphore arrays"
+//usage:     "\n	-a	All (default)"
+//usage:     "\nOutput format:"
+//usage:     "\n	-t	Time"
+//usage:     "\n	-c	Creator"
+//usage:     "\n	-p	Pid"
+//usage:     "\n	-l	Limits"
+//usage:     "\n	-u	Summary"
 
 /* X/OPEN tells us to use <sys/{types,ipc,sem}.h> for semctl() */
 /* X/OPEN tells us to use <sys/{types,ipc,msg}.h> for msgctl() */
@@ -39,11 +55,11 @@
 #define SHM_INFO        14
 struct shm_info {
 	int used_ids;
-	ulong shm_tot;		/* total allocated shm */
-	ulong shm_rss;		/* total resident shm */
-	ulong shm_swp;		/* total swapped shm */
-	ulong swap_attempts;
-	ulong swap_successes;
+	unsigned long shm_tot;		/* total allocated shm */
+	unsigned long shm_rss;		/* total resident shm */
+	unsigned long shm_swp;		/* total swapped shm */
+	unsigned long swap_attempts;
+	unsigned long swap_successes;
 };
 #endif
 
@@ -251,7 +267,7 @@ static NOINLINE void do_sem(void)
 	struct passwd *pw;
 	union semun arg;
 
-	arg.array = (ushort *) (void *) &seminfo;
+	arg.array = (unsigned short *) (void *) &seminfo;
 	maxid = semctl(0, 0, SEM_INFO, arg);
 	if (maxid < 0) {
 		printf("kernel not configured for %s\n", "semaphores");
@@ -261,7 +277,7 @@ static NOINLINE void do_sem(void)
 	switch (format) {
 	case LIMITS:
 		printf("------ Semaphore %s --------\n", "Limits");
-		arg.array = (ushort *) (void *) &seminfo;	/* damn union */
+		arg.array = (unsigned short *) (void *) &seminfo;	/* damn union */
 		if ((semctl(0, 0, IPC_INFO, arg)) < 0)
 			return;
 		printf("max number of arrays = %d\n"

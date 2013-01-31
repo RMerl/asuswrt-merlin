@@ -55,12 +55,11 @@
  *   Restructured (and partly rewritten) by:
  *   Björn Ekwall <bj0rn@blox.se> February 1999
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 #include "libbb.h"
 #include "modutils.h"
-#include <libgen.h>
 #include <sys/utsname.h>
 
 #if ENABLE_FEATURE_INSMOD_LOADINKMEM
@@ -88,6 +87,27 @@
 #define USE_GOT_ENTRIES
 #define GOT_ENTRY_SIZE 8
 #define USE_SINGLE
+#endif
+
+/* NDS32 support */
+#if defined(__nds32__) || defined(__NDS32__)
+#define CONFIG_USE_GOT_ENTRIES
+#define CONFIG_GOT_ENTRY_SIZE 4
+#define CONFIG_USE_SINGLE
+
+#if defined(__NDS32_EB__)
+#define MATCH_MACHINE(x) (x == EM_NDS32)
+#define SHT_RELM    SHT_RELA
+#define Elf32_RelM  Elf32_Rela
+#define ELFCLASSM   ELFCLASS32
+#endif
+
+#if defined(__NDS32_EL__)
+#define MATCH_MACHINE(x) (x == EM_NDS32)
+#define SHT_RELM    SHT_RELA
+#define Elf32_RelM  Elf32_Rela
+#define ELFCLASSM   ELFCLASS32
+#endif
 #endif
 
 /* blackfin */
@@ -773,7 +793,7 @@ static enum obj_reloc
 arch_apply_relocation(struct obj_file *f,
 		struct obj_section *targsec,
 		/*struct obj_section *symsec,*/
-		struct obj_symbol *sym,
+		struct obj_symbol *sym PLTGOT_UNUSED_PARAM,
 		ElfW(RelM) *rel, ElfW(Addr) v)
 {
 #if defined(__arm__) || defined(__i386__) || defined(__mc68000__) \
@@ -1742,7 +1762,7 @@ static struct obj_section *arch_xsect_init(struct obj_file *f, const char *name,
 
 #endif
 
-static void arch_create_got(struct obj_file *f)
+static void arch_create_got(struct obj_file *f PLTGOT_UNUSED_PARAM)
 {
 #if defined(USE_GOT_ENTRIES) || defined(USE_PLT_ENTRIES)
 	struct arch_file *ifile = (struct arch_file *) f;
@@ -2423,14 +2443,12 @@ new_process_module_arguments(struct obj_file *f, const char *options)
 			bb_error_msg_and_die("symbol for parameter %s not found", param);
 
 		/* Number of parameters */
+		min = max = 1;
 		if (isdigit(*pinfo)) {
-			min = strtoul(pinfo, &pinfo, 10);
+			min = max = strtoul(pinfo, &pinfo, 10);
 			if (*pinfo == '-')
 				max = strtoul(pinfo + 1, &pinfo, 10);
-			else
-				max = min;
-		} else
-			min = max = 1;
+		}
 
 		contents = f->sections[sym->secidx]->contents;
 		loc = contents + sym->value;
@@ -2452,7 +2470,8 @@ new_process_module_arguments(struct obj_file *f, const char *options)
 		/* Parse parameter values */
 		n = 0;
 		p = val;
-		while (*p != 0) {
+		while (*p) {
+			char sv_ch;
 			char *endp;
 
 			if (++n > max)
@@ -2461,21 +2480,25 @@ new_process_module_arguments(struct obj_file *f, const char *options)
 			switch (*pinfo) {
 			case 's':
 				len = strcspn(p, ",");
-				p[len] = 0;
+				sv_ch = p[len];
+				p[len] = '\0';
 				obj_string_patch(f, sym->secidx,
 						 loc - contents, p);
 				loc += tgt_sizeof_char_p;
 				p += len;
+				*p = sv_ch;
 				break;
 			case 'c':
 				len = strcspn(p, ",");
-				p[len] = 0;
+				sv_ch = p[len];
+				p[len] = '\0';
 				if (len >= charssize)
 					bb_error_msg_and_die("string too long for %s (max %ld)", param,
 							     charssize - 1);
 				strcpy((char *) loc, p);
 				loc += charssize;
 				p += len;
+				*p = sv_ch;
 				break;
 			case 'b':
 				*loc++ = strtoul(p, &endp, 0);
@@ -3540,7 +3563,7 @@ static void check_tainted_module(struct obj_file *f, const char *m_name)
 		else if (errno == EACCES)
 			kernel_has_tainted = 1;
 		else {
-			perror(TAINT_FILENAME);
+			bb_simple_perror_msg(TAINT_FILENAME);
 			kernel_has_tainted = 0;
 		}
 	}

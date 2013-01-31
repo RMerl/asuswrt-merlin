@@ -1,4 +1,0 @@
-# make sure we do not corrupt $? across traps
-trap "echo YEAH; false" USR1
-kill -USR1 $$
-echo $?

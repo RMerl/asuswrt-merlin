@@ -7,8 +7,13 @@
  *
  * Copyright (C) 2006  Michael Opdenacker <michael@free-electrons.com>
  *
- * Licensed under GPLv2 or later, see file License in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define readahead_trivial_usage
+//usage:       "[FILE]..."
+//usage:#define readahead_full_usage "\n\n"
+//usage:       "Preload FILEs to RAM"
 
 #include "libbb.h"
 

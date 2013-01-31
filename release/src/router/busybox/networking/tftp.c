@@ -16,9 +16,42 @@
  *
  * tftpd added by Denys Vlasenko & Vladimir Dronnikov
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define tftp_trivial_usage
+//usage:       "[OPTIONS] HOST [PORT]"
+//usage:#define tftp_full_usage "\n\n"
+//usage:       "Transfer a file from/to tftp server\n"
+//usage:     "\n	-l FILE	Local FILE"
+//usage:     "\n	-r FILE	Remote FILE"
+//usage:	IF_FEATURE_TFTP_GET(
+//usage:     "\n	-g	Get file"
+//usage:	)
+//usage:	IF_FEATURE_TFTP_PUT(
+//usage:     "\n	-p	Put file"
+//usage:	)
+//usage:	IF_FEATURE_TFTP_BLOCKSIZE(
+//usage:     "\n	-b SIZE	Transfer blocks of SIZE octets"
+//usage:	)
+//usage:
+//usage:#define tftpd_trivial_usage
+//usage:       "[-cr] [-u USER] [DIR]"
+//usage:#define tftpd_full_usage "\n\n"
+//usage:       "Transfer a file on tftp client's request\n"
+//usage:       "\n"
+//usage:       "tftpd should be used as an inetd service.\n"
+//usage:       "tftpd's line for inetd.conf:\n"
+//usage:       "	69 dgram udp nowait root tftpd tftpd -l /files/to/serve\n"
+//usage:       "It also can be ran from udpsvd:\n"
+//usage:       "	udpsvd -vE 0.0.0.0 69 tftpd /files/to/serve\n"
+//usage:     "\n	-r	Prohibit upload"
+//usage:     "\n	-c	Allow file creation via upload"
+//usage:     "\n	-u	Access files as USER"
+//usage:     "\n	-l	Log to syslog (inetd mode requires this)"
+
 #include "libbb.h"
+#include <syslog.h>
 
 #if ENABLE_FEATURE_TFTP_GET || ENABLE_FEATURE_TFTP_PUT
 
@@ -59,6 +92,7 @@ enum {
 	TFTPD_OPT_r = (1 << 8) * ENABLE_TFTPD,
 	TFTPD_OPT_c = (1 << 9) * ENABLE_TFTPD,
 	TFTPD_OPT_u = (1 << 10) * ENABLE_TFTPD,
+	TFTPD_OPT_l = (1 << 11) * ENABLE_TFTPD,
 };
 
 #if ENABLE_FEATURE_TFTP_GET && !ENABLE_FEATURE_TFTP_PUT
@@ -105,39 +139,22 @@ struct BUG_G_too_big {
 #define error_pkt_str    (error_pkt + 4)
 
 #if ENABLE_FEATURE_TFTP_PROGRESS_BAR
-/* SIGALRM logic nicked from the wget applet */
-static void progress_meter(int flag)
+static void tftp_progress_update(void)
 {
-	/* We can be called from signal handler */
-	int save_errno = errno;
-
-	if (flag == -1) { /* first call to progress_meter */
-		bb_progress_init(&G.pmt);
-	}
-
-	bb_progress_update(&G.pmt, G.file, 0, G.pos, G.size);
-
-	if (flag == 0) {
-		/* last call to progress_meter */
-		alarm(0);
-		bb_putchar_stderr('\n');
-	} else {
-		if (flag == -1) { /* first call to progress_meter */
-			signal_SA_RESTART_empty_mask(SIGALRM, progress_meter);
-		}
-		alarm(1);
-	}
-
-	errno = save_errno;
+	bb_progress_update(&G.pmt, 0, G.pos, G.size);
 }
 static void tftp_progress_init(void)
 {
-	progress_meter(-1);
+	bb_progress_init(&G.pmt, G.file);
+	tftp_progress_update();
 }
 static void tftp_progress_done(void)
 {
-	if (G.pmt.inited)
-		progress_meter(0);
+	if (is_bb_progress_inited(&G.pmt)) {
+		tftp_progress_update();
+		bb_putchar_stderr('\n');
+		bb_progress_free(&G.pmt);
+	}
 }
 #else
 # define tftp_progress_init() ((void)0)
@@ -439,6 +456,7 @@ static int tftp_protocol(
 				finished = 1;
 			}
 			cp += len;
+			IF_FEATURE_TFTP_PROGRESS_BAR(G.pos += len;)
 		}
  send_pkt:
 		/* Send packet */
@@ -447,7 +465,7 @@ static int tftp_protocol(
 		/* NB: send_len value is preserved in code below
 		 * for potential resend */
 
-		retries = TFTP_NUM_RETRIES;	/* re-initialize */
+		retries = TFTP_NUM_RETRIES;  /* re-initialize */
 		waittime_ms = TFTP_TIMEOUT_MS;
 
  send_again:
@@ -460,9 +478,8 @@ static int tftp_protocol(
 		xsendto(socket_fd, xbuf, send_len, &peer_lsa->u.sa, peer_lsa->len);
 
 #if ENABLE_FEATURE_TFTP_PROGRESS_BAR
-		if (ENABLE_TFTP && remote_file) { /* tftp */
-			G.pos = (block_nr - 1) * (uoff_t)blksize;
-		}
+		if (is_bb_progress_inited(&G.pmt))
+			tftp_progress_update();
 #endif
 		/* Was it final ACK? then exit */
 		if (finished && (opcode == TFTP_ACK))
@@ -479,6 +496,7 @@ static int tftp_protocol(
 		case 0:
 			retries--;
 			if (retries == 0) {
+				tftp_progress_done();
 				bb_error_msg("timeout");
 				goto ret; /* no err packet sent */
 			}
@@ -603,6 +621,7 @@ static int tftp_protocol(
 				if (sz != blksize) {
 					finished = 1;
 				}
+				IF_FEATURE_TFTP_PROGRESS_BAR(G.pos += sz;)
 				continue; /* send ACK */
 			}
 /* Disabled to cope with servers with Sorcerer's Apprentice Syndrome */
@@ -764,10 +783,15 @@ int tftpd_main(int argc UNUSED_PARAM, char **argv)
 	peer_lsa->len = our_lsa->len;
 
 	/* Shifting to not collide with TFTP_OPTs */
-	opt = option_mask32 = TFTPD_OPT | (getopt32(argv, "rcu:", &user_opt) << 8);
+	opt = option_mask32 = TFTPD_OPT | (getopt32(argv, "rcu:l", &user_opt) << 8);
 	argv += optind;
-	if (argv[0])
-		xchdir(argv[0]);
+	if (opt & TFTPD_OPT_l) {
+		openlog(applet_name, LOG_PID, LOG_DAEMON);
+		logmode = LOGMODE_SYSLOG;
+	}
+	if (argv[0]) {
+		xchroot(argv[0]);
+	}
 
 	result = recv_from_to(STDIN_FILENO, block_buf, sizeof(block_buf),
 			0 /* flags */,
@@ -790,7 +814,8 @@ int tftpd_main(int argc UNUSED_PARAM, char **argv)
 		goto err;
 	}
 	mode = local_file + strlen(local_file) + 1;
-	if (mode >= block_buf + result || strcmp(mode, "octet") != 0) {
+	/* RFC 1350 says mode string is case independent */
+	if (mode >= block_buf + result || strcasecmp(mode, "octet") != 0) {
 		goto err;
 	}
 # if ENABLE_FEATURE_TFTP_BLOCKSIZE

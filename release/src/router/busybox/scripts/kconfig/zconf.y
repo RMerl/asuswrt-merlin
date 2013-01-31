@@ -473,7 +473,7 @@ void conf_parse(const char *name)
 	menu_finalize(&rootmenu);
 	for_all_symbols(i, sym) {
 		sym_check_deps(sym);
-        }
+	}
 
 	sym_change_count = 1;
 }

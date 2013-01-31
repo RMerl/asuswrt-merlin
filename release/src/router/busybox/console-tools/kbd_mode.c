@@ -6,8 +6,19 @@
  *   written using Andries Brouwer <aeb@cwi.nl>'s kbd_mode from
  *   console-utils v0.2.3, licensed under GNU GPLv2
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define kbd_mode_trivial_usage
+//usage:       "[-a|k|s|u] [-C TTY]"
+//usage:#define kbd_mode_full_usage "\n\n"
+//usage:       "Report or set the keyboard mode\n"
+//usage:     "\n	-a	Default (ASCII)"
+//usage:     "\n	-k	Medium-raw (keyboard)"
+//usage:     "\n	-s	Raw (scancode)"
+//usage:     "\n	-u	Unicode (utf-8)"
+//usage:     "\n	-C TTY	Affect TTY instead of /dev/tty"
+
 #include "libbb.h"
 #include <linux/kd.h>
 
@@ -16,9 +27,9 @@ int kbd_mode_main(int argc UNUSED_PARAM, char **argv)
 {
 	enum {
 		SCANCODE  = (1 << 0),
-		ASCII	  = (1 << 1),
+		ASCII     = (1 << 1),
 		MEDIUMRAW = (1 << 2),
-		UNICODE	  = (1 << 3),
+		UNICODE   = (1 << 3),
 	};
 	int fd;
 	unsigned opt;

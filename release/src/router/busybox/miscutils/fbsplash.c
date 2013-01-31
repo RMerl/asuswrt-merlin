@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2008 Michele Sanges <michele.sanges@gmail.com>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Usage:
  * - use kernel option 'vga=xxx' or otherwise enable framebuffer device.
@@ -21,15 +21,23 @@
  *   "exit" (or just close fifo) - well you guessed it.
  */
 
+//usage:#define fbsplash_trivial_usage
+//usage:       "-s IMGFILE [-c] [-d DEV] [-i INIFILE] [-f CMD]"
+//usage:#define fbsplash_full_usage "\n\n"
+//usage:       "	-s	Image"
+//usage:     "\n	-c	Hide cursor"
+//usage:     "\n	-d	Framebuffer device (default /dev/fb0)"
+//usage:     "\n	-i	Config file (var=value):"
+//usage:     "\n			BAR_LEFT,BAR_TOP,BAR_WIDTH,BAR_HEIGHT"
+//usage:     "\n			BAR_R,BAR_G,BAR_B"
+//usage:     "\n	-f	Control pipe (else exit after drawing image)"
+//usage:     "\n			commands: 'NN' (% for progress bar) or 'exit'"
+
 #include "libbb.h"
 #include <linux/fb.h>
 
 /* If you want logging messages on /tmp/fbsplash.log... */
 #define DEBUG 0
-
-#define BYTES_PER_PIXEL 2
-
-typedef unsigned short DATA;
 
 struct globals {
 #if DEBUG
@@ -41,6 +49,7 @@ struct globals {
 	const char *image_filename;
 	struct fb_var_screeninfo scr_var;
 	struct fb_fix_screeninfo scr_fix;
+	unsigned bytes_per_pixel;
 };
 #define G (*ptr_to_globals)
 #define INIT_G() do { \
@@ -65,9 +74,46 @@ struct globals {
 #define DEBUG_MESSAGE(...) ((void)0)
 #endif
 
+/**
+ * Configure palette for RGB:332
+ */
+static void fb_setpal(int fd)
+{
+	struct fb_cmap cmap;
+	/* fb colors are 16 bit */
+	unsigned short red[256], green[256], blue[256];
+	unsigned i;
+
+	/* RGB:332 */
+	for (i = 0; i < 256; i++) {
+		/* Color is encoded in pixel value as rrrgggbb.
+		 * 3-bit color is mapped to 16-bit one as:
+		 * 000 -> 00000000 00000000
+		 * 001 -> 00100100 10010010
+		 * ...
+		 * 011 -> 01101101 10110110
+		 * 100 -> 10010010 01001001
+		 * ...
+		 * 111 -> 11111111 11111111
+		 */
+		red[i]   = (( i >> 5       ) * 0x9249) >> 2; // rrr * 00 10010010 01001001 >> 2
+		green[i] = (((i >> 2) & 0x7) * 0x9249) >> 2; // ggg * 00 10010010 01001001 >> 2
+		/* 2-bit color is easier: */
+		blue[i]  =  ( i       & 0x3) * 0x5555; // bb * 01010101 01010101
+	}
+
+	cmap.start = 0;
+	cmap.len   = 256;
+	cmap.red   = red;
+	cmap.green = green;
+	cmap.blue  = blue;
+	cmap.transp = 0;
+
+	xioctl(fd, FBIOPUTCMAP, &cmap);
+}
 
 /**
- *	Open and initialize the framebuffer device
+ * Open and initialize the framebuffer device
  * \param *strfb_device pointer to framebuffer device
  */
 static void fb_open(const char *strfb_device)
@@ -78,59 +124,120 @@ static void fb_open(const char *strfb_device)
 	xioctl(fbfd, FBIOGET_VSCREENINFO, &G.scr_var);
 	xioctl(fbfd, FBIOGET_FSCREENINFO, &G.scr_fix);
 
-	if (G.scr_var.bits_per_pixel != 16)
-		bb_error_msg_and_die("only 16 bpp is supported");
+	switch (G.scr_var.bits_per_pixel) {
+	case 8:
+		fb_setpal(fbfd);
+		break;
+
+	case 16:
+	case 24:
+	case 32:
+		break;
+
+	default:
+		bb_error_msg_and_die("unsupported %u bpp", (int)G.scr_var.bits_per_pixel);
+		break;
+	}
+
+	G.bytes_per_pixel = (G.scr_var.bits_per_pixel + 7) >> 3;
 
 	// map the device in memory
 	G.addr = mmap(NULL,
-			G.scr_var.xres * G.scr_var.yres
-			* BYTES_PER_PIXEL /*(G.scr_var.bits_per_pixel / 8)*/,
+		        G.scr_var.yres * G.scr_fix.line_length,
 			PROT_WRITE, MAP_SHARED, fbfd, 0);
 	if (G.addr == MAP_FAILED)
 		bb_perror_msg_and_die("mmap");
+
+	// point to the start of the visible screen
+	G.addr += G.scr_var.yoffset * G.scr_fix.line_length + G.scr_var.xoffset * G.bytes_per_pixel;
 	close(fbfd);
 }
 
 
 /**
- *	Draw hollow rectangle on framebuffer
+ * Return pixel value of the passed RGB color
+ */
+static unsigned fb_pixel_value(unsigned r, unsigned g, unsigned b)
+{
+	if (G.bytes_per_pixel == 1) {
+		r = r        & 0xe0; // 3-bit red
+		g = (g >> 3) & 0x1c; // 3-bit green
+		b =  b >> 6;         // 2-bit blue
+		return r + g + b;
+	}
+	if (G.bytes_per_pixel == 2) {
+		r = (r & 0xf8) << 8; // 5-bit red
+		g = (g & 0xfc) << 3; // 6-bit green
+		b =  b >> 3;         // 5-bit blue
+		return r + g + b;
+	}
+	// RGB 888
+	return b + (g << 8) + (r << 16);
+}
+
+/**
+ * Draw pixel on framebuffer
+ */
+static void fb_write_pixel(unsigned char *addr, unsigned pixel)
+{
+	switch (G.bytes_per_pixel) {
+	case 1:
+		*addr = pixel;
+		break;
+	case 2:
+		*(uint16_t *)addr = pixel;
+		break;
+	case 4:
+		*(uint32_t *)addr = pixel;
+		break;
+	default: // 24 bits per pixel
+		addr[0] = pixel;
+		addr[1] = pixel >> 8;
+		addr[2] = pixel >> 16;
+	}
+}
+
+
+/**
+ * Draw hollow rectangle on framebuffer
  */
 static void fb_drawrectangle(void)
 {
 	int cnt;
-	DATA thispix;
-	DATA *ptr1, *ptr2;
+	unsigned thispix;
+	unsigned char *ptr1, *ptr2;
 	unsigned char nred = G.nbar_colr/2;
 	unsigned char ngreen =  G.nbar_colg/2;
 	unsigned char nblue = G.nbar_colb/2;
 
-	nred   >>= 3;  // 5-bit red
-	ngreen >>= 2;  // 6-bit green
-	nblue  >>= 3;  // 5-bit blue
-	thispix = nblue + (ngreen << 5) + (nred << (5+6));
+	thispix = fb_pixel_value(nred, ngreen, nblue);
 
 	// horizontal lines
-	ptr1 = (DATA*)(G.addr + (G.nbar_posy * G.scr_var.xres + G.nbar_posx) * BYTES_PER_PIXEL);
-	ptr2 = (DATA*)(G.addr + ((G.nbar_posy + G.nbar_height - 1) * G.scr_var.xres + G.nbar_posx) * BYTES_PER_PIXEL);
+	ptr1 = G.addr + G.nbar_posy * G.scr_fix.line_length + G.nbar_posx * G.bytes_per_pixel;
+	ptr2 = G.addr + (G.nbar_posy + G.nbar_height - 1) * G.scr_fix.line_length + G.nbar_posx * G.bytes_per_pixel;
 	cnt = G.nbar_width - 1;
 	do {
-		*ptr1++ = thispix;
-		*ptr2++ = thispix;
+		fb_write_pixel(ptr1, thispix);
+		fb_write_pixel(ptr2, thispix);
+		ptr1 += G.bytes_per_pixel;
+		ptr2 += G.bytes_per_pixel;
 	} while (--cnt >= 0);
 
 	// vertical lines
-	ptr1 = (DATA*)(G.addr + (G.nbar_posy * G.scr_var.xres + G.nbar_posx) * BYTES_PER_PIXEL);
-	ptr2 = (DATA*)(G.addr + (G.nbar_posy * G.scr_var.xres + G.nbar_posx + G.nbar_width - 1) * BYTES_PER_PIXEL);
+	ptr1 = G.addr + G.nbar_posy * G.scr_fix.line_length + G.nbar_posx * G.bytes_per_pixel;
+	ptr2 = G.addr + G.nbar_posy * G.scr_fix.line_length + (G.nbar_posx + G.nbar_width - 1) * G.bytes_per_pixel;
 	cnt = G.nbar_height - 1;
 	do {
-		*ptr1 = thispix; ptr1 += G.scr_var.xres;
-		*ptr2 = thispix; ptr2 += G.scr_var.xres;
+		fb_write_pixel(ptr1, thispix);
+		fb_write_pixel(ptr2, thispix);
+		ptr1 += G.scr_fix.line_length;
+		ptr2 += G.scr_fix.line_length;
 	} while (--cnt >= 0);
 }
 
 
 /**
- *	Draw filled rectangle on framebuffer
+ * Draw filled rectangle on framebuffer
  * \param nx1pos,ny1pos upper left position
  * \param nx2pos,ny2pos down right position
  * \param nred,ngreen,nblue rgb color
@@ -139,21 +246,19 @@ static void fb_drawfullrectangle(int nx1pos, int ny1pos, int nx2pos, int ny2pos,
 	unsigned char nred, unsigned char ngreen, unsigned char nblue)
 {
 	int cnt1, cnt2, nypos;
-	DATA thispix;
-	DATA *ptr;
+	unsigned thispix;
+	unsigned char *ptr;
 
-	nred   >>= 3;  // 5-bit red
-	ngreen >>= 2;  // 6-bit green
-	nblue  >>= 3;  // 5-bit blue
-	thispix = nblue + (ngreen << 5) + (nred << (5+6));
+	thispix = fb_pixel_value(nred, ngreen, nblue);
 
 	cnt1 = ny2pos - ny1pos;
 	nypos = ny1pos;
 	do {
-		ptr = (DATA*)(G.addr + (nypos * G.scr_var.xres + nx1pos) * BYTES_PER_PIXEL);
+		ptr = G.addr + nypos * G.scr_fix.line_length + nx1pos * G.bytes_per_pixel;
 		cnt2 = nx2pos - nx1pos;
 		do {
-			*ptr++ = thispix;
+			fb_write_pixel(ptr, thispix);
+			ptr += G.bytes_per_pixel;
 		} while (--cnt2 >= 0);
 
 		nypos++;
@@ -162,19 +267,20 @@ static void fb_drawfullrectangle(int nx1pos, int ny1pos, int nx2pos, int ny2pos,
 
 
 /**
- *	Draw a progress bar on framebuffer
+ * Draw a progress bar on framebuffer
  * \param percent percentage of loading
  */
 static void fb_drawprogressbar(unsigned percent)
 {
-	int i, left_x, top_y, width, height;
+	int left_x, top_y, pos_x;
+	unsigned width, height;
 
 	// outer box
 	left_x = G.nbar_posx;
 	top_y = G.nbar_posy;
 	width = G.nbar_width - 1;
 	height = G.nbar_height - 1;
-	if ((height | width) < 0)
+	if ((int)(height | width) < 0)
 		return;
 	// NB: "width" of 1 actually makes rect with width of 2!
 	fb_drawrectangle();
@@ -184,35 +290,42 @@ static void fb_drawprogressbar(unsigned percent)
 	top_y++;
 	width -= 2;
 	height -= 2;
-	if ((height | width) < 0)
+	if ((int)(height | width) < 0)
 		return;
-	fb_drawfullrectangle(
-			left_x,	top_y,
-					left_x + width, top_y + height,
-			G.nbar_colr, G.nbar_colg, G.nbar_colb);
 
+	pos_x = left_x;
 	if (percent > 0) {
+		int y;
+		unsigned i;
+
 		// actual progress bar
-		width = width * percent / 100;
+		pos_x += (unsigned)(width * percent) / 100;
+
+		y = top_y;
 		i = height;
 		if (height == 0)
 			height++; // divide by 0 is bad
 		while (i >= 0) {
 			// draw one-line thick "rectangle"
 			// top line will have gray lvl 200, bottom one 100
-			unsigned gray_level = 100 + i*100/height;
+			unsigned gray_level = 100 + i*100 / height;
 			fb_drawfullrectangle(
-					left_x, top_y, left_x + width, top_y,
+					left_x, y, pos_x, y,
 					gray_level, gray_level, gray_level);
-			top_y++;
+			y++;
 			i--;
 		}
 	}
+
+	fb_drawfullrectangle(
+			pos_x, top_y,
+			left_x + width, top_y + height,
+			G.nbar_colr, G.nbar_colg, G.nbar_colb);
 }
 
 
 /**
- *	Draw image from PPM file
+ * Draw image from PPM file
  */
 static void fb_drawimage(void)
 {
@@ -273,18 +386,16 @@ static void fb_drawimage(void)
 		height = G.scr_var.yres;
 	for (j = 0; j < height; j++) {
 		unsigned char *pixel;
-		DATA *src;
+		unsigned char *src;
 
 		if (fread(pixline, 1, line_size, theme_file) != line_size)
 			bb_error_msg_and_die("bad PPM file '%s'", G.image_filename);
 		pixel = pixline;
-		src = (DATA *)(G.addr + j * G.scr_fix.line_length);
+		src = G.addr + j * G.scr_fix.line_length;
 		for (i = 0; i < width; i++) {
-			unsigned thispix;
-			thispix = (((unsigned)pixel[0] << 8) & 0xf800)
-				| (((unsigned)pixel[1] << 3) & 0x07e0)
-				| (((unsigned)pixel[2] >> 3));
-			*src++ = thispix;
+			unsigned thispix = fb_pixel_value(pixel[0], pixel[1], pixel[2]);
+			fb_write_pixel(src, thispix);
+			src += G.bytes_per_pixel;
 			pixel += 3;
 		}
 	}
@@ -294,7 +405,7 @@ static void fb_drawimage(void)
 
 
 /**
- *	Parse configuration file
+ * Parse configuration file
  * \param *cfg_filename name of the configuration file
  */
 static void init(const char *cfg_filename)
@@ -311,7 +422,7 @@ static void init(const char *cfg_filename)
 	parser_t *parser = config_open2(cfg_filename, xfopen_stdin);
 	while (config_read(parser, token, 2, 2, "#=",
 				(PARSE_NORMAL | PARSE_MIN_DIE) & ~(PARSE_TRIM | PARSE_COLLAPSE))) {
-		unsigned val = xatoi_u(token[1]);
+		unsigned val = xatoi_positive(token[1]);
 		int i = index_in_strings(param_names, token[0]);
 		if (i < 0)
 			bb_error_msg_and_die("syntax error: %s", token[0]);

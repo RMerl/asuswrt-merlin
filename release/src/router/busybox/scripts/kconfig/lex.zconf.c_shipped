@@ -2235,13 +2235,14 @@ static void zconf_endhelp(void)
  */
 FILE *zconf_fopen(const char *name)
 {
-	char *env, fullname[PATH_MAX+1];
+	char *env;
 	FILE *f;
 
 	f = fopen(name, "r");
 	if (!f && name[0] != '/') {
 		env = getenv(SRCTREE);
 		if (env) {
+			char *fullname = alloca(strlen(env) + strlen(name) + 2);
 			sprintf(fullname, "%s/%s", env, name);
 			f = fopen(fullname, "r");
 		}
@@ -2322,4 +2323,3 @@ char *zconf_curname(void)
 {
 	return current_pos.file ? current_pos.file->name : "<none>";
 }
-

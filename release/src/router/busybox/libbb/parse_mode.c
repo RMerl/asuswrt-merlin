@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2003  Manuel Novoa III  <mjn3@codepoet.org>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* http://www.opengroup.org/onlinepubs/007904975/utilities/chmod.html */
@@ -57,8 +57,8 @@ int FAST_FUNC bb_parse_mode(const char *s, mode_t *current_mode)
 	/* Note: we allow empty clauses, and hence empty modes.
 	 * We treat an empty mode as no change to perms. */
 
-	while (*s) {	/* Process clauses. */
-		if (*s == ',') {	/* We allow empty clauses. */
+	while (*s) {  /* Process clauses. */
+		if (*s == ',') {  /* We allow empty clauses. */
 			++s;
 			continue;
 		}
@@ -77,7 +77,7 @@ int FAST_FUNC bb_parse_mode(const char *s, mode_t *current_mode)
 			}
 		} while (*++p);
 
-		do {	/* Process action list. */
+		do {    /* Process action list. */
 			if ((*s != '+') && (*s != '-')) {
 				if (*s != '=') {
 					return 0;
@@ -93,7 +93,7 @@ int FAST_FUNC bb_parse_mode(const char *s, mode_t *current_mode)
 			op = *s++;
 
 			/* Check for permcopy. */
-			p = who_chars + 1;	/* Skip 'a' entry. */
+			p = who_chars + 1;  /* Skip 'a' entry. */
 			do {
 				if (*p == *s) {
 					int i = 0;
@@ -128,7 +128,7 @@ int FAST_FUNC bb_parse_mode(const char *s, mode_t *current_mode)
 				}
 			} while (*++p);
  GOT_ACTION:
-			if (permlist) {	/* The permlist was nonempty. */
+			if (permlist) { /* The permlist was nonempty. */
 				mode_t tmp = wholist;
 				if (!wholist) {
 					mode_t u_mask = umask(0);

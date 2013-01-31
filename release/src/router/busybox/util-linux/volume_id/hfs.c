@@ -195,7 +195,7 @@ int FAST_FUNC volume_id_probe_hfs_hfsplus(struct volume_id *id /*,uint64_t off*/
 
 	volume_id_set_uuid(id, hfs->finder_info.id, UUID_HFS);
 //	volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
-//	id->type = "hfs";
+	IF_FEATURE_BLKID_TYPE(id->type = "hfs";)
 
 	return 0;
 

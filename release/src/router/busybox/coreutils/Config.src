@@ -269,19 +269,6 @@ config FEATURE_FANCY_HEAD
 	help
 	  This enables the head options (-c, -q, and -v).
 
-config HOSTID
-	bool "hostid"
-	default y
-	help
-	  hostid prints the numeric identifier (in hexadecimal) for
-	  the current host.
-
-config ID
-	bool "id"
-	default y
-	help
-	  id displays the current user and group ID names.
-
 config INSTALL
 	bool "install"
 	default y
@@ -295,11 +282,11 @@ config FEATURE_INSTALL_LONG_OPTIONS
 	help
 	  Support long options for the install applet.
 
-config LENGTH
-	bool "length"
-	default y
-	help
-	  length is used to print out the length of a specified string.
+####config LENGTH
+####	bool "length"
+####	default y
+####	help
+####	  length is used to print out the length of a specified string.
 
 config LN
 	bool "ln"
@@ -591,6 +578,7 @@ config FEATURE_SPLIT_FANCY
 config STAT
 	bool "stat"
 	default y
+	select PLATFORM_LINUX # statfs()
 	help
 	  display file or filesystem status.
 
@@ -659,13 +647,6 @@ config FEATURE_TEE_USE_BLOCK_IO
 	depends on TEE
 	help
 	  Enable this option for a faster tee, at expense of size.
-
-config TOUCH
-	bool "touch"
-	default y
-	help
-	  touch is used to create or change the access and/or
-	  modification timestamp of specified files.
 
 config TRUE
 	bool "true"
@@ -736,13 +717,6 @@ config FEATURE_WC_LARGE
 	depends on WC
 	help
 	  Use "unsigned long long" in wc for counter variables.
-
-config WHO
-	bool "who"
-	default y
-	depends on FEATURE_UTMP
-	help
-	  who is used to show who is logged on.
 
 config WHOAMI
 	bool "whoami"

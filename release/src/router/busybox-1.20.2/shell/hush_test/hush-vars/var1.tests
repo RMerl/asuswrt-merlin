@@ -1,9 +1,0 @@
-URL=http://busybox.net
-
-echo $URL
-echo ${URL}_abc
-
-true
-false; echo $? ${?}
-true
-{ false; echo $? ${?}; }

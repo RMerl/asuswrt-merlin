@@ -4,10 +4,16 @@
  *
  * Copyright (C) 2001 by Laurence Anderson
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//usage:#define rpm2cpio_trivial_usage
+//usage:       "package.rpm"
+//usage:#define rpm2cpio_full_usage "\n\n"
+//usage:       "Output a cpio archive of the rpm file"
+
 #include "libbb.h"
-#include "unarchive.h"
+#include "bb_archive.h"
 #include "rpm.h"
 
 enum { rpm_fd = STDIN_FILENO };
@@ -60,54 +66,22 @@ int rpm2cpio_main(int argc UNUSED_PARAM, char **argv)
 	/* Skip the main header */
 	skip_header();
 
-#if 0
+	//if (SEAMLESS_COMPRESSION)
+	//	/* We need to know whether child (gzip/bzip/etc) exits abnormally */
+	//	signal(SIGCHLD, check_errors_in_children);
+
 	/* This works, but doesn't report uncompress errors (they happen in child) */
-	setup_unzip_on_fd(rpm_fd /*fail_if_not_detected: 1*/);
+	setup_unzip_on_fd(rpm_fd, /*fail_if_not_detected:*/ 1);
 	if (bb_copyfd_eof(rpm_fd, STDOUT_FILENO) < 0)
 		bb_error_msg_and_die("error unpacking");
-#else
-	/* BLOAT */
-	{
-		union {
-			uint8_t b[4];
-			uint16_t b16[2];
-			uint32_t b32[1];
-		} magic;
-		IF_DESKTOP(long long) int FAST_FUNC (*unpack)(int src_fd, int dst_fd);
-
-		xread(rpm_fd, magic.b16, sizeof(magic.b16[0]));
-		if (magic.b16[0] == GZIP_MAGIC) {
-			unpack = unpack_gz_stream;
-		} else
-		if (ENABLE_FEATURE_SEAMLESS_BZ2
-		 && magic.b16[0] == BZIP2_MAGIC
-		) {
-			unpack = unpack_bz2_stream;
-		} else
-		if (ENABLE_FEATURE_SEAMLESS_XZ
-		 && magic.b16[0] == XZ_MAGIC1
-		) {
-			xread(rpm_fd, magic.b32, sizeof(magic.b32[0]));
-			if (magic.b32[0] != XZ_MAGIC2)
-				goto no_magic;
-			/* unpack_xz_stream wants fd at position 6, no need to seek */
-			//xlseek(rpm_fd, -6, SEEK_CUR);
-			unpack = unpack_xz_stream;
-		} else {
- no_magic:
-			bb_error_msg_and_die("no gzip"
-					IF_FEATURE_SEAMLESS_BZ2("/bzip2")
-					IF_FEATURE_SEAMLESS_XZ("/xz")
-					" magic");
-		}
-		if (unpack(rpm_fd, STDOUT_FILENO) < 0)
-			bb_error_msg_and_die("error unpacking");
-	}
-#endif
 
 	if (ENABLE_FEATURE_CLEAN_UP) {
 		close(rpm_fd);
 	}
 
-	return 0;
+	if (SEAMLESS_COMPRESSION) {
+		check_errors_in_children(0);
+		return bb_got_signal;
+	}
+	return EXIT_SUCCESS;
 }

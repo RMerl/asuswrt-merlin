@@ -99,7 +99,7 @@ int FAST_FUNC volume_id_probe_sysv(struct volume_id *id /*,uint64_t off*/)
 		if (vs->s_magic == cpu_to_le32(SYSV_MAGIC) || vs->s_magic == cpu_to_be32(SYSV_MAGIC)) {
 //			volume_id_set_label_raw(id, vs->s_fname, 6);
 			volume_id_set_label_string(id, vs->s_fname, 6);
-//			id->type = "sysv";
+			IF_FEATURE_BLKID_TYPE(id->type = "sysv");
 			goto found;
 		}
 	}
@@ -112,7 +112,7 @@ int FAST_FUNC volume_id_probe_sysv(struct volume_id *id /*,uint64_t off*/)
 		if (xs->s_magic == cpu_to_le32(XENIX_MAGIC) || xs->s_magic == cpu_to_be32(XENIX_MAGIC)) {
 //			volume_id_set_label_raw(id, xs->s_fname, 6);
 			volume_id_set_label_string(id, xs->s_fname, 6);
-//			id->type = "xenix";
+			IF_FEATURE_BLKID_TYPE(id->type = "xenix";)
 			goto found;
 		}
 	}

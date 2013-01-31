@@ -1,4 +1,0 @@
-# This must not be interpreted as an assignment
-a''=b true
-echo $?
-# (buglet: $? should be 127. it is currently 1)

@@ -4,12 +4,30 @@
  *
  * Copyright 1999 George Staikos
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Changelog:
  * v1.01   - added -p <preload> to preload values from a file
  * v1.01.1 - busybox applet aware by <solar@gentoo.org>
  */
+
+//usage:#define sysctl_trivial_usage
+//usage:       "[OPTIONS] [VALUE]..."
+//usage:#define sysctl_full_usage "\n\n"
+//usage:       "Configure kernel parameters at runtime\n"
+//usage:     "\n	-n	Don't print key names"
+//usage:     "\n	-e	Don't warn about unknown keys"
+//usage:     "\n	-w	Change sysctl setting"
+//usage:     "\n	-p FILE	Load sysctl settings from FILE (default /etc/sysctl.conf)"
+//usage:     "\n	-a	Display all values"
+//usage:     "\n	-A	Display all values in table form"
+//usage:
+//usage:#define sysctl_example_usage
+//usage:       "sysctl [-n] [-e] variable...\n"
+//usage:       "sysctl [-n] [-e] -w variable=value...\n"
+//usage:       "sysctl [-n] [-e] -a\n"
+//usage:       "sysctl [-n] [-e] -p file	(default /etc/sysctl.conf)\n"
+//usage:       "sysctl [-n] [-e] -A\n"
 
 #include "libbb.h"
 
@@ -91,7 +109,7 @@ static int sysctl_act_on_setting(char *setting)
 			retval = EXIT_FAILURE;
 			goto end;
 		}
-		value = cptr + 1;	/* point to the value in name=value */
+		value = cptr + 1;  /* point to the value in name=value */
 		if (setting == cptr || !*value) {
 			bb_error_msg("error: malformed setting '%s'", outname);
 			retval = EXIT_FAILURE;
@@ -206,7 +224,7 @@ static int sysctl_handle_preload_file(const char *filename)
 	parser = config_open(filename);
 	/* Must do it _after_ config_open(): */
 	xchdir("/proc/sys");
-	/* xchroot(".") - if you are paranoid */
+	/* xchroot("/proc/sys") - if you are paranoid */
 
 //TODO: ';' is comment char too
 //TODO: comment may be only at line start. "var=1 #abc" - "1 #abc" is the value
@@ -242,7 +260,7 @@ int sysctl_main(int argc UNUSED_PARAM, char **argv)
 		return sysctl_handle_preload_file(*argv ? *argv : "/etc/sysctl.conf");
 	}
 	xchdir("/proc/sys");
-	/* xchroot(".") - if you are paranoid */
+	/* xchroot("/proc/sys") - if you are paranoid */
 	if (opt & (FLAG_TABLE_FORMAT | FLAG_SHOW_ALL)) {
 		return sysctl_act_recursive(".");
 	}

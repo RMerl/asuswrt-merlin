@@ -1,6 +1,6 @@
 #!/bin/sh
 # Copyright 2010 by Denys Vlasenko
-# Licensed under GPL v2, see file LICENSE for details.
+# Licensed under GPLv2, see file LICENSE in this source tree.
 
 . ./testing.sh
 test -f "$bindir/.config" && . "$bindir/.config"
@@ -250,6 +250,17 @@ test x"$CONFIG_UNICODE_SUPPORT" = x"y" \
 0109_5.3.1__U+FFFE_=_ef_bf_be_=_"?"_______________________________________|
 0110_5.3.2__U+FFFF_=_ef_bf_bf_=_"?"_______________________________________|
 ' "" ""
+
+rm -rf ls.testdir 2>/dev/null
+mkdir ls.testdir || exit 1
+
+# testing "test name" "command" "expected result" "file input" "stdin"
+
+test x"$CONFIG_FEATURE_LS_SORTFILES" = x"y" \
+&& testing "ls symlink_to_dir" \
+"touch ls.testdir/A ls.testdir/B; ln -s ls.testdir ls.link; ls ls.link; ls -1 ls.link/; ls -1 ls.link; rm -f ls.link" \
+"A\nB\nA\nB\nA\nB\n" \
+"" ""
 
 # Clean up
 rm -rf ls.testdir 2>/dev/null

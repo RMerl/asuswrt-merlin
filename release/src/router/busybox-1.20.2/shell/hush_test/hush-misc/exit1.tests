@@ -1,4 +1,0 @@
-trap "echo Not shown" EXIT
-(exit)  # must be silent
-trap "echo Once; exit" EXIT
-{ exit; }

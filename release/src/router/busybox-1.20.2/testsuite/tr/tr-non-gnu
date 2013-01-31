@@ -1,1 +1,0 @@
-echo fdhrnzvfu bffvsentr | busybox tr '[a-z]' '[n-z][a-m]'

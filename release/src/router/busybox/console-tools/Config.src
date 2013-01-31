@@ -10,6 +10,7 @@ INSERT
 config CHVT
 	bool "chvt"
 	default y
+	select PLATFORM_LINUX
 	help
 	  This program is used to change to another terminal.
 	  Example: chvt 4 (change to terminal /dev/tty4)
@@ -17,6 +18,7 @@ config CHVT
 config FGCONSOLE
 	bool "fgconsole"
 	default y
+	select PLATFORM_LINUX
 	help
 	  This program prints active (foreground) console number.
 
@@ -29,12 +31,14 @@ config CLEAR
 config DEALLOCVT
 	bool "deallocvt"
 	default y
+	select PLATFORM_LINUX
 	help
 	  This program deallocates unused virtual consoles.
 
 config DUMPKMAP
 	bool "dumpkmap"
 	default y
+	select PLATFORM_LINUX
 	help
 	  This program dumps the kernel's keyboard translation table to
 	  stdout, in binary format. You can then use loadkmap to load it.
@@ -42,18 +46,21 @@ config DUMPKMAP
 config KBD_MODE
 	bool "kbd_mode"
 	default y
+	select PLATFORM_LINUX
 	help
 	  This program reports and sets keyboard mode.
 
 config LOADFONT
 	bool "loadfont"
 	default y
+	select PLATFORM_LINUX
 	help
 	  This program loads a console font from standard input.
 
 config LOADKMAP
 	bool "loadkmap"
 	default y
+	select PLATFORM_LINUX
 	help
 	  This program loads a keyboard translation table from
 	  standard input.
@@ -61,6 +68,7 @@ config LOADKMAP
 config OPENVT
 	bool "openvt"
 	default y
+	select PLATFORM_LINUX
 	help
 	  This program is used to start a command on an unused
 	  virtual terminal.
@@ -92,6 +100,7 @@ config FEATURE_RESIZE_PRINT
 config SETCONSOLE
 	bool "setconsole"
 	default y
+	select PLATFORM_LINUX
 	help
 	  This program redirects the system console to another device,
 	  like the current tty while logged in via telnet.
@@ -106,6 +115,7 @@ config FEATURE_SETCONSOLE_LONG_OPTIONS
 config SETFONT
 	bool "setfont"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Allows to load console screen map. Useful for i18n.
 
@@ -127,6 +137,7 @@ config DEFAULT_SETFONT_DIR
 config SETKEYCODES
 	bool "setkeycodes"
 	default y
+	select PLATFORM_LINUX
 	help
 	  This program loads entries into the kernel's scancode-to-keycode
 	  map, allowing unusual keyboards to generate usable keycodes.
@@ -134,12 +145,14 @@ config SETKEYCODES
 config SETLOGCONS
 	bool "setlogcons"
 	default y
+	select PLATFORM_LINUX
 	help
 	  This program redirects the output console of kernel messages.
 
 config SHOWKEY
 	bool "showkey"
 	default y
+	select PLATFORM_LINUX
 	help
 	  Shows keys pressed.
 

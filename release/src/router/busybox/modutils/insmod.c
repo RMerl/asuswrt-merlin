@@ -4,24 +4,27 @@
  *
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+
+//applet:IF_INSMOD(APPLET(insmod, BB_DIR_SBIN, BB_SUID_DROP))
 
 #include "libbb.h"
 #include "modutils.h"
+#include <sys/utsname.h>
 #include <fnmatch.h>
 
 /* 2.6 style insmod has no options and required filename
  * (not module name - .ko can't be omitted) */
 
+//usage:#if !ENABLE_MODPROBE_SMALL
 //usage:#define insmod_trivial_usage
 //usage:	IF_FEATURE_2_4_MODULES("[OPTIONS] MODULE ")
 //usage:	IF_NOT_FEATURE_2_4_MODULES("FILE ")
-//usage:	"[symbol=value]..."
+//usage:	"[SYMBOL=VALUE]..."
 //usage:#define insmod_full_usage "\n\n"
 //usage:       "Load the specified kernel modules into the kernel"
 //usage:	IF_FEATURE_2_4_MODULES( "\n"
-//usage:     "\nOptions:"
 //usage:     "\n	-f	Force module to load into the wrong kernel version"
 //usage:     "\n	-k	Make module autoclean-able"
 //usage:     "\n	-v	Verbose"
@@ -32,6 +35,7 @@
 //usage:	)
 //usage:     "\n	-x	Don't export externs"
 //usage:	)
+//usage:#endif
 
 static char *m_filename;
 
@@ -53,6 +57,7 @@ static int FAST_FUNC check_module_name_match(const char *filename,
 	}
 	return TRUE;
 }
+
 
 int insmod_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int insmod_main(int argc UNUSED_PARAM, char **argv)
@@ -115,10 +120,10 @@ int insmod_main(int argc UNUSED_PARAM, char **argv)
 	if (fp != NULL)
 		fclose(fp);
 
-	rc = bb_init_module(filename, parse_cmdline_module_options(argv));
+	rc = bb_init_module(filename, parse_cmdline_module_options(argv, /*quote_spaces:*/ 0));
 	if (rc)
 		bb_error_msg("can't insert '%s': %s", filename, moderror(rc));
-	
+
 	free(m_filename);
 	return rc;
 }

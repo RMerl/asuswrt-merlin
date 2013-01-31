@@ -1,2 +1,0 @@
-if false; then echo Bad; fi
-echo Ok:$?

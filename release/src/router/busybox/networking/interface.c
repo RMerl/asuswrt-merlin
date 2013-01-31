@@ -19,7 +19,7 @@
  * Author:      Fred N. van Kempen, <waltje@uwalt.nl.mugnet.org>
  *              and others.  Copyright 1993 MicroWalt Corporation
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  *
  * Patched to support 'add' and 'del' keywords for INET(4) addresses
  * by Mrs. Brisby <mrs.brisby@nimh.org>
@@ -30,15 +30,14 @@
  *	    20001008 - Bernd Eckenfels, Patch from RH for setting mtu
  *			(default AF was wrong)
  */
-#include <net/if.h>
-#include <net/if_arp.h>
-#if (defined(__GLIBC__) && __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1) || defined(_NEWLIB_VERSION)
-# include <net/ethernet.h>
-#else
-# include <linux/if_ether.h>
-#endif
+
 #include "libbb.h"
 #include "inet_common.h"
+#include <net/if.h>
+#include <net/if_arp.h>
+#ifdef HAVE_NET_ETHERNET_H
+# include <net/ethernet.h>
+#endif
 
 #if ENABLE_FEATURE_HWIB
 /* #include <linux/if_infiniband.h> */
@@ -927,7 +926,6 @@ static void print_bytes_scaled(unsigned long long ull, const char *end)
 
 static void ife_print6(struct interface *ptr)
 {
-
 	FILE *f;
 	char addr6[40], devname[20];
 	struct sockaddr_in6 sap;

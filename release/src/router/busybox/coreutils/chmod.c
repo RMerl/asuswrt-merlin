@@ -7,12 +7,34 @@
  * Reworked by (C) 2002 Vladimir Oleynik <dzo@simtreas.ru>
  *  to correctly parse '-rwxgoa'
  *
- * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
 /* BB_AUDIT SUSv3 compliant */
 /* BB_AUDIT GNU defects - unsupported long options. */
 /* http://www.opengroup.org/onlinepubs/007904975/utilities/chmod.html */
+
+//usage:#define chmod_trivial_usage
+//usage:       "[-R"IF_DESKTOP("cvf")"] MODE[,MODE]... FILE..."
+//usage:#define chmod_full_usage "\n\n"
+//usage:       "Each MODE is one or more of the letters ugoa, one of the\n"
+//usage:       "symbols +-= and one or more of the letters rwxst\n"
+//usage:     "\n	-R	Recurse"
+//usage:	IF_DESKTOP(
+//usage:     "\n	-c	List changed files"
+//usage:     "\n	-v	List all files"
+//usage:     "\n	-f	Hide errors"
+//usage:	)
+//usage:
+//usage:#define chmod_example_usage
+//usage:       "$ ls -l /tmp/foo\n"
+//usage:       "-rw-rw-r--    1 root     root            0 Apr 12 18:25 /tmp/foo\n"
+//usage:       "$ chmod u+x /tmp/foo\n"
+//usage:       "$ ls -l /tmp/foo\n"
+//usage:       "-rwxrw-r--    1 root     root            0 Apr 12 18:25 /tmp/foo*\n"
+//usage:       "$ chmod 444 /tmp/foo\n"
+//usage:       "$ ls -l /tmp/foo\n"
+//usage:       "-r--r--r--    1 root     root            0 Apr 12 18:25 /tmp/foo\n"
 
 #include "libbb.h"
 

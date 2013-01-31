@@ -1,3 +1,0 @@
-false
-. /dev/null
-echo Done: $?

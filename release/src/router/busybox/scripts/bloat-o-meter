@@ -1,8 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # Copyright 2004 Matt Mackall <mpm@selenic.com>
 #
-# inspired by perl Bloat-O-Meter (c) 1997 by Andi Kleen
+# Inspired by perl Bloat-O-Meter (c) 1997 by Andi Kleen
 #
 # This software may be used and distributed according to the terms
 # of the GNU General Public License, incorporated herein by reference.
@@ -39,31 +39,22 @@ if f1 is None or f2 is None:
 sym_args = " ".join(sys.argv[3 + flag_timing + dashes:])
 def getsizes(file):
     sym, alias, lut = {}, {}, {}
-    #dynsym_filter = re.compile("^\d+:\s+[\dA-Fa-f]+\s+\d+\s+\w+\s+\w+\s+\w+\s+\w+\s+\w+$")
     for l in os.popen("readelf -W -s %s %s" % (sym_args, file)).readlines():
-        if True:
-            l = l.strip()
-            if not (len(l) and l[0].isdigit() and len(l.split()) == 8):
-                continue
-            num, value, size, typ, bind, vis, ndx, name = l.split()
-            if ndx == "UND": continue # skip undefined
-            if typ in ["SECTION", "FILES"]: continue # skip sections and files
-        #else:
-        #    l = l.strip()
-        #    match = dynsym_filter.match(l)
-        #    if not match: continue
-        #    x, value, size, typ, bind, x, ndx, name = l.split()
-        #    if ndx == "UND": continue # skip undefined
-        #    if typ in ["SECTION", "FILES"]: continue # skip sections and files
+        l = l.strip()
+        if not (len(l) and l[0].isdigit() and len(l.split()) == 8):
+            continue
+        num, value, size, typ, bind, vis, ndx, name = l.split()
+        if ndx == "UND": continue # skip undefined
+        if typ in ["SECTION", "FILES"]: continue # skip sections and files
         if "." in name: name = "static." + name.split(".")[0]
         value = int(value, 16)
-        size = int(size)
+        size = int(size, 16) if size.startswith('0x') else int(size)
         if vis != "DEFAULT" and bind != "GLOBAL": # see if it is an alias
             alias[(value, size)] = {"name" : name}
         else:
             sym[name] = {"addr" : value, "size":  size}
             lut[(value, size)] = 0
-    for addr, sz in alias.iterkeys():
+    for addr, sz in iter(alias.keys()):
         # If the non-GLOBAL sym has an implementation elsewhere then
         # it's an alias, disregard it.
         if not (addr, sz) in lut:
@@ -92,7 +83,7 @@ if flag_timing:
 grow, shrink, add, remove, up, down = 0, 0, 0, 0, 0, 0
 delta, common = [], {}
 
-for name in old.iterkeys():
+for name in iter(old.keys()):
     if name in new:
         common[name] = 1
 
