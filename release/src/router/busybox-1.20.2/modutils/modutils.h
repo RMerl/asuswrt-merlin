@@ -68,6 +68,11 @@ const char *moderror(int err) FAST_FUNC;
 
 #if ENABLE_FEATURE_2_4_MODULES
 int FAST_FUNC bb_init_module_24(const char *module, const char *options);
+# if defined(USE_GOT_ENTRIES) || defined(USE_PLT_ENTRIES)
+# define PLTGOT_UNUSED_PARAM
+# else
+# define PLTGOT_UNUSED_PARAM	UNUSED_PARAM
+# endif
 #endif
 
 POP_SAVED_FUNCTION_VISIBILITY
