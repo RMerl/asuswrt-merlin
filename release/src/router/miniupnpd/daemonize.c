@@ -1,4 +1,4 @@
-/* $Id: daemonize.c,v 1.11 2008/01/29 13:04:45 nanard Exp $ */
+/* $Id: daemonize.c,v 1.12 2011/05/27 09:35:02 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006 Thomas Bernard 
@@ -44,7 +44,7 @@ daemonize(void)
 		/* close all descriptors */
 		for (i=getdtablesize();i>=0;--i) close(i);		
 
-		i = open("/dev/null",O_RDWR); /* open stdin */
+		i = open("/dev/null", O_RDWR); /* open stdin */
 		dup(i); /* stdout */
 		dup(i); /* stderr */
 
@@ -70,7 +70,7 @@ writepidfile(const char * fname, int pid)
 	if(!fname || (strlen(fname) == 0))
 		return -1;
 	
-	if( (pidfile = open(fname, O_WRONLY|O_CREAT|O_EXCL, 0666)) < 0)
+	if( (pidfile = open(fname, O_WRONLY|O_CREAT, 0644)) < 0)
 	{
 		syslog(LOG_ERR, "Unable to open pidfile for writing %s: %m", fname);
 		return -1;

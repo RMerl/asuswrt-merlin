@@ -1,7 +1,7 @@
-/* $Id: testiptcrdr.c,v 1.14 2007/06/11 13:25:25 nanard Exp $ */
+/* $Id: testiptcrdr.c,v 1.16 2011/03/02 16:04:23 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006 Thomas Bernard 
+ * (c) 2006-2011 Thomas Bernard 
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -12,6 +12,10 @@
 
 #include "iptcrdr.h"
 
+#ifndef PRIu64
+#define PRIu64 "llu"
+#endif
+
 int
 main(int argc, char ** argv)
 {
@@ -21,7 +25,7 @@ main(int argc, char ** argv)
 	
 	if(argc<4)
 		return -1;
-	openlog("testuptcrdr", LOG_PERROR|LOG_CONS, LOG_LOCAL0);
+	openlog("testiptcrdr", LOG_PERROR|LOG_CONS, LOG_LOCAL0);
 	eport = (unsigned short)atoi(argv[1]);
 	iaddr = argv[2];
 	iport = (unsigned short)atoi(argv[3]);
@@ -42,12 +46,12 @@ main(int argc, char ** argv)
                                       &p2, &proto2, desc, sizeof(desc),
 									  &packets, &bytes) < 0)
 		{
-			printf("redirected port %hu to %s:%hu proto %d   packets=%llu bytes=%llu\n",
-			       p1, addr, p2, proto2, packets, bytes);
+			printf("rule not found\n");
 		}
 		else
 		{
-			printf("rule not found\n");
+			printf("redirected port %hu to %s:%hu proto %d   packets=%" PRIu64 " bytes=%" PRIu64 "\n",
+			       p1, addr, p2, proto2, packets, bytes);
 		}
 	}
 	printf("trying to list nat rules :\n");

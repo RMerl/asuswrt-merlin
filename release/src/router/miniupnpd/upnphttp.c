@@ -1,8 +1,8 @@
-/* $Id: upnphttp.c,v 1.57 2009/02/12 23:38:40 nanard Exp $ */
+/* $Id: upnphttp.c,v 1.61 2011/06/27 11:05:59 nanard Exp $ */
 /* Project :  miniupnp
  * Website :  http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * Author :   Thomas Bernard
- * Copyright (c) 2005-2008 Thomas Bernard
+ * Copyright (c) 2005-2011 Thomas Bernard
  * This software is subject to the conditions detailed in the
  * LICENCE file included in this distribution.
  * */
@@ -14,6 +14,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>	//!!TB
 #include <sys/param.h>
+#include <arpa/inet.h>
 #include <syslog.h>
 #include <ctype.h>
 #include "config.h"
@@ -304,6 +305,70 @@ ProcessHTTPPOST_upnphttp(struct upnphttp * h)
 }
 
 #ifdef ENABLE_EVENTS
+/**
+ * returns 0 if the callback header value is not valid
+ * 1 if it is valid.
+ */
+static int
+checkCallbackURL(struct upnphttp * h)
+{
+	char addrstr[48];
+	int ipv6;
+	const char * p;
+	int i;
+
+	if(!h->req_Callback || h->req_CallbackLen < 8)
+		return 0;
+	if(memcmp(h->req_Callback, "http://", 7) != 0)
+		return 0;
+	ipv6 = 0;
+	i = 0;
+	p = h->req_Callback + 7;
+	if(*p == '[') {
+		p++;
+		ipv6 = 1;
+		while(*p != ']' && i < (sizeof(addrstr)-1)
+		      && p < (h->req_Callback + h->req_CallbackLen))
+			addrstr[i++] = *(p++);
+	} else {
+		while(*p != '/' && *p != ':' && i < (sizeof(addrstr)-1)
+		      && p < (h->req_Callback + h->req_CallbackLen))
+			addrstr[i++] = *(p++);
+	}
+	addrstr[i] = '\0';
+	if(ipv6) {
+		struct in6_addr addr;
+		if(inet_pton(AF_INET6, addrstr, &addr) <= 0)
+			return 0;
+#ifdef ENABLE_IPV6
+		if(!h->ipv6
+		  || (0!=memcmp(&addr, &(h->clientaddr_v6), sizeof(struct in6_addr))))
+			return 0;
+#else
+		return 0;
+#endif
+	} else {
+		struct in_addr addr;
+		if(inet_pton(AF_INET, addrstr, &addr) <= 0)
+			return 0;
+#ifdef ENABLE_IPV6
+		if(h->ipv6) {
+			if(!IN6_IS_ADDR_V4MAPPED(&(h->clientaddr_v6)))
+				return 0;
+			if(0!=memcmp(&addr, ((const char *)&(h->clientaddr_v6) + 12), 4))
+				return 0;
+		} else {
+			if(0!=memcmp(&addr, &(h->clientaddr), sizeof(struct in_addr)))
+				return 0;
+		}
+#else
+		if(0!=memcmp(&addr, &(h->clientaddr), sizeof(struct in_addr)))
+			return 0;
+#endif
+	}
+	return 1;
+}
+
 static void
 ProcessHTTPSubscribe_upnphttp(struct upnphttp * h, const char * path)
 {
@@ -324,17 +389,25 @@ ProcessHTTPSubscribe_upnphttp(struct upnphttp * h, const char * path)
 	 * - respond HTTP/x.x 200 OK 
 	 * - Send the initial event message */
 /* Server:, SID:; Timeout: Second-(xx|infinite) */
+	/* Check that the callback URL is on the same IP as
+	 * the request, and not on the internet, nor on ourself (DOS attack ?) */
 		if(h->req_Callback) {
-			sid = upnpevents_addSubscriber(path, h->req_Callback,
-			                               h->req_CallbackLen, h->req_Timeout);
-			h->respflags = FLAG_TIMEOUT;
-			if(sid) {
-				syslog(LOG_DEBUG, "generated sid=%s", sid);
-				h->respflags |= FLAG_SID;
-				h->req_SID = sid;
-				h->req_SIDLen = strlen(sid);
+			if(checkCallbackURL(h)) {
+				sid = upnpevents_addSubscriber(path, h->req_Callback,
+				                               h->req_CallbackLen, h->req_Timeout);
+				h->respflags = FLAG_TIMEOUT;
+				if(sid) {
+					syslog(LOG_DEBUG, "generated sid=%s", sid);
+					h->respflags |= FLAG_SID;
+					h->req_SID = sid;
+					h->req_SIDLen = strlen(sid);
+				}
+				BuildResp_upnphttp(h, 0, 0);
+			} else {
+				syslog(LOG_WARNING, "Invalid Callback in SUBSCRIBE %.*s",
+	       		       h->req_CallbackLen, h->req_Callback);
+				BuildResp2_upnphttp(h, 412, "Precondition Failed", 0, 0);
 			}
-			BuildResp_upnphttp(h, 0, 0);
 		} else {
 			/* subscription renew */
 			/* Invalid SID
@@ -344,6 +417,7 @@ with HTTP error 412 Precondition Failed. */
 			if(renewSubscription(h->req_SID, h->req_SIDLen, h->req_Timeout) < 0) {
 				BuildResp2_upnphttp(h, 412, "Precondition Failed", 0, 0);
 			} else {
+				h->respflags = FLAG_TIMEOUT;
 				BuildResp_upnphttp(h, 0, 0);
 			}
 		}
@@ -428,6 +502,18 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
 		else if(strcasecmp(L3F_PATH, HttpUrl) == 0)
 		{
 			sendXMLdesc(h, genL3F);
+		}
+#endif
+#ifdef ENABLE_6FC_SERVICE
+		else if(strcasecmp(WANIP6FC_PATH, HttpUrl) == 0)
+		{
+			sendXMLdesc(h, gen6FC);
+		}
+#endif
+#ifdef ENABLE_DP_SERVICE
+		else if(strcasecmp(DP_PATH, HttpUrl) == 0)
+		{
+			sendXMLdesc(h, genDP);
 		}
 #endif
 		else
@@ -538,7 +624,6 @@ static const char httpresphead[] =
 	"Content-Type: %s\r\n"
 	"Connection: close\r\n"
 	"Content-Length: %d\r\n"
-	/*"Server: miniupnpd/1.0 UPnP/1.0\r\n"*/
 	"Server: " MINIUPNPD_SERVER_STRING "\r\n"
 	;	/*"\r\n";*/
 /*
@@ -563,6 +648,11 @@ BuildHeader_upnphttp(struct upnphttp * h, int respcode,
 	{
 		templen = sizeof(httpresphead) + 128 + bodylen;
 		h->res_buf = (char *)malloc(templen);
+		if(!h->res_buf)
+		{
+			syslog(LOG_ERR, "malloc error in BuildHeader_upnphttp()");
+			return;
+		}
 		h->res_buf_alloclen = templen;
 	}
 	h->res_buflen = snprintf(h->res_buf, h->res_buf_alloclen,
@@ -596,8 +686,17 @@ BuildHeader_upnphttp(struct upnphttp * h, int respcode,
 	h->res_buf[h->res_buflen++] = '\n';
 	if(h->res_buf_alloclen < (h->res_buflen + bodylen))
 	{
-		h->res_buf = (char *)realloc(h->res_buf, (h->res_buflen + bodylen));
-		h->res_buf_alloclen = h->res_buflen + bodylen;
+		char * tmp;
+		tmp = (char *)realloc(h->res_buf, (h->res_buflen + bodylen));
+		if(tmp)
+		{
+			h->res_buf = tmp;
+			h->res_buf_alloclen = h->res_buflen + bodylen;
+		}
+		else
+		{
+			syslog(LOG_ERR, "realloc error in BuildHeader_upnphttp()");
+		}
 	}
 }
 
@@ -623,17 +722,29 @@ BuildResp_upnphttp(struct upnphttp * h,
 void
 SendResp_upnphttp(struct upnphttp * h)
 {
-	int n;
-	n = send(h->socket, h->res_buf, h->res_buflen, 0);
-	if(n<0)
+	char * p;
+	ssize_t n;
+	size_t len;
+	p = h->res_buf;
+	len = h->res_buflen;
+	while (len > 0)
 	{
-		syslog(LOG_ERR, "send(res_buf): %m");
-	}
-	else if(n < h->res_buflen)
-	{
-		/* TODO : handle correctly this case */
-		syslog(LOG_ERR, "send(res_buf): %d bytes sent (out of %d)",
-						n, h->res_buflen);
+		n = send(h->socket, p, len, 0);
+		if(n<0)
+		{
+			syslog(LOG_ERR, "send(res_buf): %m");
+		}
+		else if(n == 0)
+		{
+			syslog(LOG_ERR, "send(res_buf): %zd bytes sent (out of %zu)",
+							n, len);
+			break;
+		}
+		else
+		{
+			p += n;
+			len -= n;
+		}
 	}
 }
 

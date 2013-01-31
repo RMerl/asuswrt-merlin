@@ -1,7 +1,7 @@
-/* $Id: upnpevents.c,v 1.13 2009/12/22 17:20:10 nanard Exp $ */
+/* $Id: upnpevents.c,v 1.17 2011/06/27 11:24:00 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2008-2009 Thomas Bernard
+ * (c) 2008-2011 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -37,7 +37,6 @@ struct subscriber {
 	struct upnp_event_notify * notify;
 	time_t timeout;
 	uint32_t seq;
-	/*enum { EWanCFG = 1, EWanIPC, EL3F } service;*/
 	enum subscriber_service_enum service;
 	char uuid[42];
 	char callback[];
@@ -58,7 +57,12 @@ struct upnp_event_notify {
 	int tosend;
     int sent;
 	const char * path;
+#ifdef ENABLE_IPV6
+	int ipv6;
+	char addrstr[48];
+#else
 	char addrstr[16];
+#endif
 	char portstr[8];
 };
 
@@ -80,6 +84,8 @@ newSubscriber(const char * eventurl, const char * callback, int callbacklen)
 	if(!eventurl || !callback || !callbacklen)
 		return NULL;
 	tmp = calloc(1, sizeof(struct subscriber)+callbacklen+1);
+	if(!tmp)
+		return NULL;
 	if(strcmp(eventurl, WANCFG_EVENTURL)==0)
 		tmp->service = EWanCFG;
 	else if(strcmp(eventurl, WANIPC_EVENTURL)==0)
@@ -103,7 +109,9 @@ newSubscriber(const char * eventurl, const char * callback, int callbacklen)
 }
 
 /* creates a new subscriber and adds it to the subscriber list
- * also initiate 1st notify */
+ * also initiate 1st notify
+ * TODO : add a check on the number of subscriber in order to
+ * prevent memory overflow... */
 const char *
 upnpevents_addSubscriber(const char * eventurl,
                          const char * callback, int callbacklen,
@@ -184,7 +192,12 @@ upnp_event_create_notify(struct subscriber * sub)
 	}
 	obj->sub = sub;
 	obj->state = ECreated;
+#ifdef ENABLE_IPV6
+	obj->s = socket((obj->sub->callback[7] == '[') ? PF_INET6 : PF_INET,
+	                SOCK_STREAM, 0);
+#else
 	obj->s = socket(PF_INET, SOCK_STREAM, 0);
+#endif
 	if(obj->s<0) {
 		syslog(LOG_ERR, "%s: socket(): %m", "upnp_event_create_notify");
 		goto error;
@@ -215,7 +228,11 @@ upnp_event_notify_connect(struct upnp_event_notify * obj)
 	int i;
 	const char * p;
 	unsigned short port;
+#ifdef ENABLE_IPV6
+	struct sockaddr_storage addr;
+#else
 	struct sockaddr_in addr;
+#endif
 	if(!obj)
 		return;
 	memset(&addr, 0, sizeof(addr));
@@ -226,8 +243,21 @@ upnp_event_notify_connect(struct upnp_event_notify * obj)
 	}
 	p = obj->sub->callback;
 	p += 7;	/* http:// */
-	while(*p != '/' && *p != ':')
-		obj->addrstr[i++] = *(p++);
+#ifdef ENABLE_IPV6
+	if(*p == '[') {	/* ip v6 */
+		p++;
+		obj->ipv6 = 1;
+		while(*p != ']' && i < (sizeof(obj->addrstr)-1))
+			obj->addrstr[i++] = *(p++);
+		if(*p == ']')
+			p++;
+	} else {
+#endif
+		while(*p != '/' && *p != ':' && i < (sizeof(obj->addrstr)-1))
+			obj->addrstr[i++] = *(p++);
+#ifdef ENABLE_IPV6
+	}
+#endif
 	obj->addrstr[i] = '\0';
 	if(*p == ':') {
 		obj->portstr[0] = *p;
@@ -244,9 +274,23 @@ upnp_event_notify_connect(struct upnp_event_notify * obj)
 		obj->portstr[0] = '\0';
 	}
 	obj->path = p;
+#ifdef ENABLE_IPV6
+	if(obj->ipv6) {
+		struct sockaddr_in6 * sa = (struct sockaddr_in6 *)&addr;
+		sa->sin6_family = AF_INET6;
+		inet_pton(AF_INET6, obj->addrstr, &(sa->sin6_addr));
+		sa->sin6_port = htons(port);
+	} else {
+		struct sockaddr_in * sa = (struct sockaddr_in *)&addr;
+		sa->sin_family = AF_INET;
+		inet_pton(AF_INET, obj->addrstr, &(sa->sin_addr));
+		sa->sin_port = htons(port);
+	}
+#else
 	addr.sin_family = AF_INET;
 	inet_aton(obj->addrstr, &addr.sin_addr);
 	addr.sin_port = htons(port);
+#endif
 	syslog(LOG_DEBUG, "%s: '%s' %hu '%s'", "upnp_event_notify_connect",
 	       obj->addrstr, port, obj->path);
 	obj->state = EConnecting;
@@ -289,6 +333,16 @@ static void upnp_event_prepare(struct upnp_event_notify * obj)
 #ifdef ENABLE_L3F_SERVICE
 	case EL3F:
 		xml = getVarsL3F(&l);
+		break;
+#endif
+#ifdef ENABLE_6FC_SERVICE
+	case E6FC:
+		xml = getVars6FC(&l);
+		break;
+#endif
+#ifdef ENABLE_DP_SERVICE
+	case EDP:
+		xml = getVarsDP(&l);
 		break;
 #endif
 	default:
@@ -394,6 +448,8 @@ void upnpevents_selectfds(fd_set *readset, fd_set *writeset, int * max_fd)
 				if(obj->s > *max_fd)
 					*max_fd = obj->s;
 				break;
+			default:
+				;
 			}
 		}
 	}
@@ -464,7 +520,7 @@ void write_events_details(int s) {
 	write(s, "Subscribers :\n", 14);
 	for(sub = subscriberlist.lh_first; sub != NULL; sub = sub->entries.le_next) {
 		n = snprintf(buff, sizeof(buff), " %p timeout=%d seq=%u service=%d\n",
-		             sub, sub->timeout, sub->seq, sub->service);
+		             sub, (int)sub->timeout, sub->seq, sub->service);
 		write(s, buff, n);
 		n = snprintf(buff, sizeof(buff), "   notify=%p %s\n",
 		             sub->notify, sub->uuid);

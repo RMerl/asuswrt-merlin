@@ -1,4 +1,144 @@
-$Id: Changelog.txt,v 1.198 2010/09/21 15:31:02 nanard Exp $
+$Id: Changelog.txt,v 1.239 2011/07/25 16:06:11 nanard Exp $
+
+VERSION 1.6 : released the 2011/07/25
+
+2011/07/25:
+  Update doc for version 1.6
+
+2011/07/15:
+  Fixing code with MULTIPLE_EXTERNAL_IP defined.
+
+2011/06/27:
+  IPv6 support for UPnP events.
+  Security checks in UPnP events.
+
+2011/06/22:
+  Remote host for GetListOfPortMappings
+  Remote host support for ipfw (tested on Mac OS X)
+
+2011/06/20:
+  support for iptables-1.4.11.1
+
+2011/06/18:
+  Remote host support for pf version
+
+2011/06/04:
+  Supporting RemoteHost (mandatory in IGD v2)
+
+2011/06/03:
+  Enabling events by default
+
+2011/06/01:
+  Fixing Timeout missing in SUBSCRIBE renewal responses
+  (thanks to Pranesh Kulkarni)
+  Added comments about changes between IGD v1 and IGD v2
+
+2011/05/28:
+  Description and leaseduration kept in ipfw version of the code.
+  Fixing ipfw code after testing under Mac OS X 10.6.7 (darwin 10.7.0)
+
+2011/05/27:
+  Finishing and testing LeaseDuration support under OpenBSD.
+  Changing NAT-PMP port mapping lifetime support to match
+  lease duration support.
+  NAT-PMP address change announce broadcasted to both port
+  5350 and 5351 to be compatible with client following the
+  version of NAT PMP specification from 2008 or earlier.
+  writepidfile() Overwrite file if already existing
+
+2011/05/26:
+  fix in linux/getifstats.c.
+  See http://miniupnp.tuxfamily.org/forum/viewtopic.php?p=2212
+  Implementation of LeaseDuration support.
+
+2011/05/23:
+  added get_wan_connection_status_str()
+
+2011/05/20:
+  adding ifacewatcher thanks to Alexey Osipov
+  GET /DP.xml is now available. The description has to be completed.
+
+2011/05/19:
+  Add getconnstatus.c/.h. Dont always have ConnectionStatus to "Connected"
+  Events for WANIPv6FirewallControll
+
+2011/05/16:
+  patches for gentoo linux.
+  generation of the DeviceProtection service description.
+
+2011/05/15:
+  Making the SSDP receiving socket work in IPv6 !
+
+2011/05/14:
+  Support for HTTP in both IPv6 and IPv4.
+  IPv6 for SSDP receiving socket.
+
+2011/05/13:
+  add new options in genconfig.sh (IGD_V2, ENABLE_DP_SERVICE)
+  add global vars ipv6fc_firewall_enabled and ipv6fc_inbound_pinhole_allowed
+  have MACROS for magical values in upnpdescgen.c, add eventing vars for WanIPv6FirewallControl.
+  applied 0001-Cosmetic-changes.patch(see http://miniupnp.tuxfamily.org/forum/viewtopic.php?t=764)
+  applied 0002-Remove-lan-addresses-limit-by-changing-storage-type-.patch
+  replaced some of the urn:schemas-upnp-org:device:* literal strings by macros.
+  adding some support for IP v6. #define ENABLE_IPV6
+  added -fno-strict-aliasing to compile options.
+
+2011/05/09:
+  updating upnp descriptions for IGDv2
+
+2011/05/07:
+  Adding WANIPv6FirewallContro to upnp description
+
+2011/04/30:
+  adding a UPNP_STRICT config macro. Use it now for checking RemoteHost.
+  ENABLE_6FC_SERVICE : add the implementations of WANIPv6FirewallControl actions
+
+2011/04/11:
+  preparing getifaddr() for IP v6
+  preparing SSDP stuff for IP v6. Trying to conform to UDA v1.1
+
+2011/03/09:
+  Some modifications thanks to Daniel Dickinson to improve OpenWRT
+  build.
+  Fixed some warnings.
+
+2011/03/03:
+  Added code to generate devices/services descriptions for IGD v2
+  (to be continued)
+
+2011/03/02:
+  improved netfilter/delete_redirect_and_filter_rules() in order
+  to remove the right filter rule, even if it has another index than
+  the nat rule.
+
+2011/03/01:
+  clean up an fixes to make netfilter/testiptcrdr compile
+
+2011/02/21:
+  Make "Makefile" work under Mac OS X with bsdmake.
+  added get_portmappings_in_range() in ipfwrdr.c
+
+2011/02/07:
+  added get_portmappings_in_range() / upnp_get_portmappings_in_range()
+
+2011/02/06:
+  Implementation of GetListOfPortMappings
+
+2011/01/27:
+  Reverting "fixes" done in linux/iptables code the 2010/09/27.
+  see http://miniupnp.tuxfamily.org/forum/viewtopic.php?t=741
+
+2011/01/04:
+  added MINIUPNPD_VERSION in config.h. Taken from VERSION file.
+
+VERSION 1.5 : released the 2011/01/01
+
+2011/01/01:
+  Started to implement some of the new methods from WANIPConnection v2
+
+2010/09/27:
+  Some fixes in the linux/iptables code when
+  miniupnpd_nat_chain <> miniupnpd_forward_chain
 
 2010/09/21:
   Patch to support nfqueue thanks to Colin McFarlane

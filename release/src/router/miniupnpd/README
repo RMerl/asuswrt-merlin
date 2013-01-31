@@ -1,5 +1,5 @@
 MiniUPnP project
-(c) 2006-2008 Thomas Bernard
+(c) 2006-2011 Thomas Bernard
 webpage: http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
 contact: miniupnp@free.fr
 
@@ -12,6 +12,9 @@ The miniUPnP daemon is an UPnP IGD (internet gateway device)
 which provide NAT traversal services to any UPnP enabled client on
 the network.
 See http://www.upnp.org/ for more details on UPnP.
+During the year 2011, support for IGD v2 has been added.
+This support is experimental, and should be enabled only
+for testing and development.
 
 Later, support for the NAT Port Mapping Protocol (NAT-PMP) was
 added. See information about NAT-PMP here :

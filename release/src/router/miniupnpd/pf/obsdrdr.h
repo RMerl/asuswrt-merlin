@@ -1,4 +1,4 @@
-/* $Id: obsdrdr.h,v 1.17 2007/11/02 22:54:02 nanard Exp $ */
+/* $Id: obsdrdr.h,v 1.19 2011/06/04 15:47:18 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006 Thomas Bernard 
@@ -14,17 +14,19 @@
  * proto can take the values IPPROTO_UDP or IPPROTO_TCP
  */
 int
-add_redirect_rule2(const char * ifname, unsigned short eport,
+add_redirect_rule2(const char * ifname,
+                   const char * rhost, unsigned short eport,
                    const char * iaddr, unsigned short iport, int proto,
-				   const char * desc);
+                   const char * desc, unsigned int timestamp);
 
 /* add_filter_rule2() uses DIOCCHANGERULE ioctl
  * proto can take the values IPPROTO_UDP or IPPROTO_TCP
  */
 int
-add_filter_rule2(const char * ifname, const char * iaddr,
+add_filter_rule2(const char * ifname,
+                 const char * rhost, const char * iaddr,
                  unsigned short eport, unsigned short iport,
-				 int proto, const char * desc);
+                 int proto, const char * desc);
  
 
 /* get_redirect_rule() gets internal IP and port from

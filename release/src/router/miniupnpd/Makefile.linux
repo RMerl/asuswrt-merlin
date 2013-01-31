@@ -1,5 +1,6 @@
-# $Id: Makefile.linux,v 1.52 2010/08/07 21:04:48 nanard Exp $
+# $Id: Makefile.linux,v 1.59 2011/07/25 16:04:54 nanard Exp $
 # MiniUPnP project
+# (c) 2006-2011 Thomas Bernard
 # http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
 # Author : Thomas Bernard
 # for use with GNU Make
@@ -17,11 +18,13 @@
 # $ IPTABLESPATH=/path/to/iptables-1.4.1 make -f Makefile.linux
 #
 #CFLAGS = -Wall -O -D_GNU_SOURCE -g -DDEBUG
-CFLAGS = -Wall -Os -D_GNU_SOURCE
-CC = gcc
+CFLAGS ?= -Wall -Os -D_GNU_SOURCE -fno-strict-aliasing -Wstrict-prototypes 
+CC ?= gcc
 RM = rm -f
 INSTALL = install
-STRIP = strip
+STRIP ?= strip
+CP = cp
+
 
 INSTALLPREFIX ?= $(PREFIX)/usr
 SBININSTALLDIR = $(INSTALLPREFIX)/sbin
@@ -31,23 +34,29 @@ BASEOBJS = miniupnpd.o upnphttp.o upnpdescgen.o upnpsoap.o \
            upnpreplyparse.o minixml.o \
 		   upnpredirect.o getifaddr.o daemonize.o upnpglobalvars.o \
            options.o upnppermissions.o minissdp.o natpmp.o \
-           upnpevents.o
+           upnpevents.o upnputils.o getconnstatus.o
 
-LNXOBJS = linux/getifstats.o
+LNXOBJS = linux/getifstats.o linux/ifacewatcher.o
 NETFILTEROBJS = netfilter/iptcrdr.o
 
 ALLOBJS = $(BASEOBJS) $(LNXOBJS) $(NETFILTEROBJS)
 
-LIBS = -liptc
+ifeq "$(wildcard /etc/gentoo-release )" ""
+LIBS ?= -liptc
+else
 # the following is better, at least on gentoo with iptables 1.4.6
 # see http://miniupnp.tuxfamily.org/forum/viewtopic.php?p=1618
-#LIBS = -lip4tc
+# and http://miniupnp.tuxfamily.org/forum/viewtopic.php?p=2183
+LIBS ?= -lip4tc
+CFLAGS := -I/usr/src/linux/include -DIPTABLES_143 $(CFLAGS)
+endif
 
-ARCH := $(shell uname -m | grep -q "x86_64" && echo 64)
+ARCH ?= $(shell uname -m | grep -q "x86_64" && echo 64)
 ifdef IPTABLESPATH
 CFLAGS := $(CFLAGS) -I$(IPTABLESPATH)/include/
 LDFLAGS := $(LDFLAFGS) -L$(IPTABLESPATH)/libiptc/
 # get iptables version and set IPTABLES_143 macro if needed
+ifeq ($(TARGET_OPENWRT),)
 IPTABLESVERSION := $(shell grep "\#define VERSION" $(IPTABLESPATH)/config.h | tr -d \" |cut -d" " -f3 )
 IPTABLESVERSION1 := $(shell echo $(IPTABLESVERSION) | cut -d. -f1 )
 IPTABLESVERSION2 := $(shell echo $(IPTABLESVERSION) | cut -d. -f2 )
@@ -57,8 +66,8 @@ TEST := $(shell [ \( \( $(IPTABLESVERSION1) -ge 1 \) -a \( $(IPTABLESVERSION2) -
 ifeq ($(TEST), 1)
 CFLAGS := $(CFLAGS) -DIPTABLES_143
 # the following sucks, but works
-#LIBS = $(IPTABLESPATH)/libiptc/.libs/libip4tc.o
-LIBS = $(IPTABLESPATH)/libiptc/.libs/libiptc.a
+LIBS = $(IPTABLESPATH)/libiptc/.libs/libip4tc.o
+#LIBS = $(IPTABLESPATH)/libiptc/.libs/libiptc.a
 else
 LIBS = $(IPTABLESPATH)/libiptc/libiptc.a
 endif
@@ -73,6 +82,7 @@ ifeq ($(TEST_LIB), 1)
 LIBS = -liptc /usr/lib$(ARCH)/libiptc.a
 endif
 endif 
+endif
 endif
 
 TESTUPNPDESCGENOBJS = testupnpdescgen.o upnpdescgen.o
@@ -105,7 +115,11 @@ install:	miniupnpd genuuid
 # genuuid is using the uuidgen CLI tool which is part of libuuid
 # from the e2fsprogs
 genuuid:
-	sed -i -e "s/^uuid=[-0-9a-f]*/uuid=`(genuuid||uuidgen) 2>/dev/null`/" miniupnpd.conf
+ifeq ($(TARGET_OPENWRT),)
+	sed -i -e "s/^uuid=[-0-9a-f]*/uuid=`(genuuid||uuidgen||uuid) 2>/dev/null`/" miniupnpd.conf
+else
+	sed -i -e "s/^uuid=[-0-9a-f]*/uuid=`($(STAGING_DIR_HOST)/bin/genuuid||$(STAGING_DIR_HOST)/bin/uuidgen||$(STAGING_DIR_HOST)/bin/uuid) 2>/dev/null`/" miniupnpd.conf
+endif
 
 miniupnpd:	$(BASEOBJS) $(LNXOBJS) $(NETFILTEROBJS) $(LIBS)
 
@@ -132,19 +146,20 @@ depend:	config.h
 miniupnpd.o: config.h upnpglobalvars.h upnppermissions.h miniupnpdtypes.h
 miniupnpd.o: upnphttp.h upnpdescgen.h miniupnpdpath.h getifaddr.h upnpsoap.h
 miniupnpd.o: options.h minissdp.h upnpredirect.h daemonize.h upnpevents.h
-miniupnpd.o: natpmp.h commonrdr.h
+miniupnpd.o: natpmp.h commonrdr.h upnputils.h ifacewatcher.h
 upnphttp.o: config.h upnphttp.h upnpdescgen.h miniupnpdpath.h upnpsoap.h
 upnphttp.o: upnpevents.h
-upnpdescgen.o: config.h upnpdescgen.h miniupnpdpath.h upnpglobalvars.h
-upnpdescgen.o: upnppermissions.h miniupnpdtypes.h upnpdescstrings.h
+upnpdescgen.o: config.h getifaddr.h upnpredirect.h upnpdescgen.h
+upnpdescgen.o: miniupnpdpath.h upnpglobalvars.h upnppermissions.h
+upnpdescgen.o: miniupnpdtypes.h upnpdescstrings.h upnpurns.h getconnstatus.h
 upnpsoap.o: config.h upnpglobalvars.h upnppermissions.h miniupnpdtypes.h
 upnpsoap.o: upnphttp.h upnpsoap.h upnpreplyparse.h upnpredirect.h getifaddr.h
-upnpsoap.o: getifstats.h
+upnpsoap.o: getifstats.h getconnstatus.h upnpurns.h
 upnpreplyparse.o: upnpreplyparse.h minixml.h
 minixml.o: minixml.h
 upnpredirect.o: config.h upnpredirect.h upnpglobalvars.h upnppermissions.h
 upnpredirect.o: miniupnpdtypes.h upnpevents.h netfilter/iptcrdr.h commonrdr.h
-getifaddr.o: getifaddr.h
+getifaddr.o: config.h getifaddr.h
 daemonize.o: daemonize.h config.h
 upnpglobalvars.o: config.h upnpglobalvars.h upnppermissions.h
 upnpglobalvars.o: miniupnpdtypes.h
@@ -153,15 +168,21 @@ options.o: miniupnpdtypes.h
 upnppermissions.o: config.h upnppermissions.h
 minissdp.o: config.h upnpdescstrings.h miniupnpdpath.h upnphttp.h
 minissdp.o: upnpglobalvars.h upnppermissions.h miniupnpdtypes.h minissdp.h
-minissdp.o: codelength.h
+minissdp.o: upnputils.h codelength.h
 natpmp.o: config.h natpmp.h upnpglobalvars.h upnppermissions.h
 natpmp.o: miniupnpdtypes.h getifaddr.h upnpredirect.h commonrdr.h
 upnpevents.o: config.h upnpevents.h miniupnpdpath.h upnpglobalvars.h
 upnpevents.o: upnppermissions.h miniupnpdtypes.h upnpdescgen.h
-linux/getifstats.o: getifstats.h config.h
+upnputils.o: config.h upnputils.h
+getconnstatus.o: getconnstatus.h getifaddr.h
+linux/getifstats.o: config.h getifstats.h
+linux/ifacewatcher.o: config.h ifacewatcher.h config.h minissdp.h
+linux/ifacewatcher.o: miniupnpdtypes.h getifaddr.h upnpglobalvars.h
+linux/ifacewatcher.o: upnppermissions.h natpmp.h
 netfilter/iptcrdr.o: netfilter/iptcrdr.h commonrdr.h config.h
 netfilter/iptcrdr.o: upnpglobalvars.h upnppermissions.h miniupnpdtypes.h
 testupnpdescgen.o: config.h upnpdescgen.h
-upnpdescgen.o: config.h upnpdescgen.h miniupnpdpath.h upnpglobalvars.h
-upnpdescgen.o: upnppermissions.h miniupnpdtypes.h upnpdescstrings.h
+upnpdescgen.o: config.h getifaddr.h upnpredirect.h upnpdescgen.h
+upnpdescgen.o: miniupnpdpath.h upnpglobalvars.h upnppermissions.h
+upnpdescgen.o: miniupnpdtypes.h upnpdescstrings.h upnpurns.h getconnstatus.h
 testgetifstats.o: getifstats.h

@@ -1,4 +1,4 @@
-/* $Id: upnpglobalvars.c,v 1.19 2010/09/21 15:31:01 nanard Exp $ */
+/* $Id: upnpglobalvars.c,v 1.25 2011/05/27 21:36:22 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2010 Thomas Bernard 
@@ -32,18 +32,6 @@ unsigned long upstream_bitrate = 0;
 /* startup time */
 time_t startup_time = 0;
 
-#if 0
-/* use system uptime */
-int sysuptime = 0;
-
-/* log packets flag */
-int logpackets = 0;
-
-#ifdef ENABLE_NATPMP
-int enablenatpmp = 0;
-#endif
-#endif
-
 int runtime_flags = 0;
 
 const char * pidfilename = "/var/run/miniupnpd.pid";
@@ -64,10 +52,15 @@ unsigned int num_upnpperm = 0;
 
 #ifdef ENABLE_NATPMP
 /* NAT-PMP */
+#if 0
 unsigned int nextnatpmptoclean_timestamp = 0;
 unsigned short nextnatpmptoclean_eport = 0;
 unsigned short nextnatpmptoclean_proto = 0;
 #endif
+#endif
+
+/* For automatic removal of expired rules (with LeaseDuration) */
+unsigned int nextruletoclean_timestamp = 0;
 
 #ifdef USE_PF
 const char * queue = 0;
@@ -85,9 +78,22 @@ int nfqueue = -1;
 int n_nfqix = 0;
 unsigned nfqix[MAX_LAN_ADDR];
 #endif
-int n_lan_addr = 0;
-struct lan_addr_s lan_addr[MAX_LAN_ADDR];
+struct lan_addr_list lan_addrs;
+
+#ifdef ENABLE_IPV6
+/* ipv6 address used for HTTP */
+char ipv6_addr_for_http_with_brackets[64];
+#endif
 
 /* Path of the Unix socket used to communicate with MiniSSDPd */
 const char * minissdpdsocketpath = "/var/run/minissdpd.sock";
+
+/* BOOTID.UPNP.ORG and CONFIGID.UPNP.ORG */
+unsigned int upnp_bootid = 1;
+unsigned int upnp_configid = 1337;
+
+#ifdef ENABLE_6FC_SERVICE
+int ipv6fc_firewall_enabled = 1;
+int ipv6fc_inbound_pinhole_allowed = 1;
+#endif
 

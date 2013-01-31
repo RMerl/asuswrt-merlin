@@ -1,4 +1,4 @@
-/* $Id: obsdrdr.c,v 1.59 2010/05/11 16:19:26 nanard Exp $ */
+/* $Id: obsdrdr.c,v 1.67 2011/06/22 21:20:27 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2010 Thomas Bernard 
@@ -58,6 +58,48 @@
 #include "../config.h"
 #include "obsdrdr.h"
 #include "../upnpglobalvars.h"
+
+/* list too keep timestamps for port mappings having a lease duration */
+struct timestamp_entry {
+	struct timestamp_entry * next;
+	unsigned int timestamp;
+	unsigned short eport;
+	short protocol;
+};
+
+static struct timestamp_entry * timestamp_list = NULL;
+
+static unsigned int
+get_timestamp(unsigned short eport, int proto)
+{
+	struct timestamp_entry * e;
+	e = timestamp_list;
+	while(e) {
+		if(e->eport == eport && e->protocol == (short)proto)
+			return e->timestamp;
+		e = e->next;
+	}
+	return 0;
+}
+
+static void
+remove_timestamp_entry(unsigned short eport, int proto)
+{
+	struct timestamp_entry * e;
+	struct timestamp_entry * * p;
+	p = &timestamp_list;
+	e = *p;
+	while(e) {
+		if(e->eport == eport && e->protocol == (short)proto) {
+			/* remove the entry */
+			*p = e->next;
+			free(e);
+			return;
+		}
+		p = &(e->next);
+		e = *p;
+	}
+}
 
 /* anchor name */
 static const char anchor_name[] = "miniupnpd";
@@ -138,9 +180,10 @@ error:
 /* add_redirect_rule2() :
  * create a rdr rule */
 int
-add_redirect_rule2(const char * ifname, unsigned short eport,
+add_redirect_rule2(const char * ifname,
+                   const char * rhost, unsigned short eport,
                    const char * iaddr, unsigned short iport, int proto,
-				   const char * desc)
+                   const char * desc, unsigned int timestamp)
 {
 	int r;
 	struct pfioc_rule pcr;
@@ -210,6 +253,11 @@ add_redirect_rule2(const char * ifname, unsigned short eport,
 		if(tag)
 			strlcpy(pcr.rule.tagname, tag, PF_TAG_NAME_SIZE);
 		strlcpy(pcr.rule.label, desc, PF_RULE_LABEL_SIZE);
+		if(rhost && rhost[0] != '\0' && rhost[0] != '*')
+		{
+			inet_pton(AF_INET, rhost, &pcr.rule.src.addr.v.a.addr.v4.s_addr);
+			pcr.rule.src.addr.v.a.mask.v4.s_addr = htonl(INADDR_NONE);
+		}
 #ifndef PF_NEWSTYLE
 		pcr.rule.rpool.proxy_port[0] = iport;
 		pcr.rule.rpool.proxy_port[1] = iport;
@@ -255,12 +303,26 @@ add_redirect_rule2(const char * ifname, unsigned short eport,
 		free(a);
 #endif
 	}
+	if(r == 0 && timestamp > 0)
+	{
+		struct timestamp_entry * tmp;
+		tmp = malloc(sizeof(struct timestamp_entry));
+		if(tmp)
+		{
+			tmp->next = timestamp_list;
+			tmp->timestamp = timestamp;
+			tmp->eport = eport;
+			tmp->protocol = (short)proto;
+			timestamp_list = tmp;
+		}
+	}
 	return r;
 }
 
 /* thanks to Seth Mos for this function */
 int
-add_filter_rule2(const char * ifname, const char * iaddr,
+add_filter_rule2(const char * ifname,
+                 const char * rhost, const char * iaddr,
                  unsigned short eport, unsigned short iport,
 				 int proto, const char * desc)
 {
@@ -323,6 +385,11 @@ add_filter_rule2(const char * ifname, const char * iaddr,
 		if(tag)
 			strlcpy(pcr.rule.tagname, tag, PF_TAG_NAME_SIZE);
 
+		if(rhost && rhost[0] != '\0' && rhost[0] != '*')
+		{
+			inet_pton(AF_INET, rhost, &pcr.rule.src.addr.v.a.addr.v4.s_addr);
+			pcr.rule.src.addr.v.a.mask.v4.s_addr = htonl(INADDR_NONE);
+		}
 #ifndef PF_NEWSTYLE
 		pcr.rule.rpool.proxy_port[0] = eport;
 		a = calloc(1, sizeof(struct pf_pooladdr));
@@ -381,6 +448,8 @@ int
 get_redirect_rule(const char * ifname, unsigned short eport, int proto,
                   char * iaddr, int iaddrlen, unsigned short * iport,
                   char * desc, int desclen,
+                  char * rhost, int rhostlen,
+                  unsigned int * timestamp,
                   u_int64_t * packets, u_int64_t * bytes)
 {
 	int i, n;
@@ -461,6 +530,20 @@ get_redirect_rule(const char * ifname, unsigned short eport, int proto,
 			inet_ntop(AF_INET, &pr.rule.rdr.addr.v.a.addr.v4.s_addr,
 			          iaddr, iaddrlen);
 #endif
+			if(rhost && rhostlen > 0)
+			{
+				if (pr.rule.src.addr.v.a.addr.v4.s_addr == 0)
+				{
+					rhost[0] = '\0'; /* empty string */
+				}
+				else
+				{
+					inet_ntop(AF_INET, &pr.rule.src.addr.v.a.addr.v4.s_addr,
+					          rhost, rhostlen);
+				}
+			}
+			if(timestamp)
+				*timestamp = get_timestamp(eport, proto);
 			return 0;
 		}
 	}
@@ -513,6 +596,7 @@ delete_redirect_rule(const char * ifname, unsigned short eport, int proto)
 				syslog(LOG_ERR, "ioctl(dev, DIOCCHANGERULE, ...) PF_CHANGE_REMOVE: %m");
 				goto error;
 			}
+			remove_timestamp_entry(eport, proto);
 			return 0;
 		}
 	}
@@ -578,6 +662,8 @@ get_redirect_rule_by_index(int index,
                            char * ifname, unsigned short * eport,
                            char * iaddr, int iaddrlen, unsigned short * iport,
                            int * proto, char * desc, int desclen,
+                           char * rhost, int rhostlen,
+                           unsigned int * timestamp,
                            u_int64_t * packets, u_int64_t * bytes)
 {
 	int n;
@@ -660,9 +746,91 @@ get_redirect_rule_by_index(int index,
 	inet_ntop(AF_INET, &pr.rule.rdr.addr.v.a.addr.v4.s_addr,
 	          iaddr, iaddrlen);
 #endif
+	if(rhost && rhostlen > 0)
+	{
+		if (pr.rule.src.addr.v.a.addr.v4.s_addr == 0)
+		{
+			rhost[0] = '\0'; /* empty string */
+		}
+		else
+		{
+			inet_ntop(AF_INET, &pr.rule.src.addr.v.a.addr.v4.s_addr,
+			          rhost, rhostlen);
+		}
+	}
+	if(timestamp)
+		*timestamp = get_timestamp(*eport, *proto);
 	return 0;
 error:
 	return -1;
+}
+
+/* return an (malloc'ed) array of "external" port for which there is
+ * a port mapping. number is the size of the array */
+unsigned short *
+get_portmappings_in_range(unsigned short startport, unsigned short endport,
+                          int proto, unsigned int * number)
+{
+	unsigned short * array;
+	unsigned int capacity;
+	int i, n;
+	unsigned short eport;
+	struct pfioc_rule pr;
+
+	*number = 0;
+	if(dev<0) {
+		syslog(LOG_ERR, "pf device is not open");
+		return NULL;
+	}
+	capacity = 128;
+	array = calloc(capacity, sizeof(unsigned short));
+	if(!array)
+	{
+		syslog(LOG_ERR, "get_portmappings_in_range() : calloc error");
+		return NULL;
+	}
+	memset(&pr, 0, sizeof(pr));
+	strlcpy(pr.anchor, anchor_name, MAXPATHLEN);
+#ifndef PF_NEWSTYLE
+	pr.rule.action = PF_RDR;
+#endif
+	if(ioctl(dev, DIOCGETRULES, &pr) < 0)
+	{
+		syslog(LOG_ERR, "ioctl(dev, DIOCGETRULES, ...): %m");
+		free(array);
+		return NULL;
+	}
+	n = pr.nr;
+	for(i=0; i<n; i++)
+	{
+		pr.nr = i;
+		if(ioctl(dev, DIOCGETRULE, &pr) < 0)
+		{
+			syslog(LOG_ERR, "ioctl(dev, DIOCGETRULE): %m");
+			continue;
+		}
+		eport = ntohs(pr.rule.dst.port[0]);
+		if( (eport == ntohs(pr.rule.dst.port[1]))
+		  && (pr.rule.proto == proto)
+		  && (startport <= eport) && (eport <= endport) )
+		{
+			if(*number >= capacity)
+			{
+				/* need to increase the capacity of the array */
+				capacity += 128;
+				array = realloc(array, sizeof(unsigned short)*capacity);
+				if(!array)
+				{
+					syslog(LOG_ERR, "get_portmappings_in_range() : realloc(%lu) error", sizeof(unsigned short)*capacity);
+					*number = 0;
+					return NULL;
+				}
+			}
+			array[*number] = eport;
+			(*number)++;
+		}
+	}
+	return array;
 }
 
 /* this function is only for testing */
@@ -695,8 +863,9 @@ list_rules(void)
 		pr.nr = i;
 		if(ioctl(dev, DIOCGETRULE, &pr) < 0)
 			perror("DIOCGETRULE");
-		printf(" %s %d:%d -> %d:%d  proto %d keep_state=%d action=%d\n",
+		printf(" %s %s %d:%d -> %d:%d  proto %d keep_state=%d action=%d\n",
 			pr.rule.ifname,
+			inet_ntop(AF_INET, &pr.rule.src.addr.v.a.addr.v4.s_addr, buf, 32);
 			(int)ntohs(pr.rule.dst.port[0]),
 			(int)ntohs(pr.rule.dst.port[1]),
 #ifndef PF_NEWSTYLE

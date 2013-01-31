@@ -1,4 +1,4 @@
-/* $Id: miniupnpdtypes.h,v 1.2 2008/01/27 22:24:39 nanard Exp $ */
+/* $Id: miniupnpdtypes.h,v 1.3 2011/05/13 13:56:18 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2007 Thomas Bernard
@@ -9,8 +9,9 @@
 
 #include "config.h"
 #include <netinet/in.h>
+#include <sys/queue.h>
 
-/* structure for storing lan addresses
+/* structure and list for storing lan addresses
  * with ascii representation and mask */
 struct lan_addr_s {
 	char str[16];	/* example: 192.168.0.1 */
@@ -19,6 +20,8 @@ struct lan_addr_s {
 	char ext_ip_str[16];
 	struct in_addr ext_ip_addr;
 #endif
+	LIST_ENTRY(lan_addr_s) list;
 };
+LIST_HEAD(lan_addr_list, lan_addr_s);
 
 #endif

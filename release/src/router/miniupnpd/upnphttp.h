@@ -1,7 +1,7 @@
-/* $Id: upnphttp.h,v 1.20 2009/09/04 16:35:13 nanard Exp $ */ 
+/* $Id: upnphttp.h,v 1.24 2011/06/27 11:06:00 nanard Exp $ */ 
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2009 Thomas Bernard 
+ * (c) 2006-2011 Thomas Bernard 
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -14,7 +14,7 @@
 #include "config.h"
 
 /* server: HTTP header returned in all HTTP responses : */
-#define MINIUPNPD_SERVER_STRING	OS_VERSION " UPnP/1.0 MiniUPnPd/1.4"
+#define MINIUPNPD_SERVER_STRING	OS_VERSION " UPnP/1.0 MiniUPnPd/" MINIUPNPD_VERSION
 
 /*
  states :
@@ -34,6 +34,10 @@ enum httpCommands {
 struct upnphttp {
 	int socket;
 	struct in_addr clientaddr;	/* client address */
+#ifdef ENABLE_IPV6
+	int ipv6;
+	struct in6_addr clientaddr_v6;
+#endif
 	int state;
 	char HttpVer[16];
 	/* request */
@@ -51,7 +55,7 @@ struct upnphttp {
 	const char * req_SID;		/* For UNSUBSCRIBE */
 	int req_SIDLen;
 #endif
-	int respflags;
+	int respflags;				/* see FLAG_* constants below */
 	/* response */
 	char * res_buf;
 	int res_buflen;
@@ -61,9 +65,12 @@ struct upnphttp {
 	LIST_ENTRY(upnphttp) entries;
 };
 
+/* Include the "Timeout:" header in response */
 #define FLAG_TIMEOUT	0x01
+/* Include the "SID:" header in response */
 #define FLAG_SID		0x02
 
+/* If set, the Content-Type is set to text/xml, otherwise it is text/xml */
 #define FLAG_HTML		0x80
 
 /* New_upnphttp() */

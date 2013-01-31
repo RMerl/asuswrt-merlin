@@ -1,7 +1,7 @@
-/* $Id: miniupnpd.c,v 1.125 2010/09/21 15:31:01 nanard Exp $ */
+/* $Id: miniupnpd.c,v 1.138 2011/05/27 21:58:12 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2010 Thomas Bernard
+ * (c) 2006-2011 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -63,6 +63,10 @@
 #include "natpmp.h"
 #endif
 #include "commonrdr.h"
+#include "upnputils.h"
+#ifdef USE_IFACEWATCHER
+#include "ifacewatcher.h"
+#endif
 
 #ifndef DEFAULT_CONFIG
 #define DEFAULT_CONFIG "/etc/miniupnpd.conf"
@@ -81,21 +85,14 @@ static struct nfq_handle *nfqHandle;
 static struct sockaddr_in ssdp;
 
 /* prototypes */
-void ProcessSSDPData(int s, char *bufr, struct sockaddr_in sendername, int n, unsigned short port);
 static int nfqueue_cb( struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa, void *data) ;
 int identify_ip_protocol (char *payload);
 int get_udp_dst_port (char *payload);
 #endif
 
-
-static int sudp = -1;
-
-/* MAX_LAN_ADDR : maximum number of interfaces
- * to listen to SSDP traffic */
-/*#define MAX_LAN_ADDR (4)*/
-
+/* variables used by signals */
 static volatile int quitting = 0;
-static volatile int should_send_public_address_change_notif = 0;
+volatile int should_send_public_address_change_notif = 0;
 
 
 #if 1
@@ -110,9 +107,12 @@ static void tomato_save(const char *fname)
 {
 	unsigned short eport;
 	unsigned short iport;
+	unsigned int leaseduration;
+	unsigned int timestamp;
 	char proto[4];
 	char iaddr[32];
 	char desc[64];
+	char rhost[32];
 	int n;
 	FILE *f;
 	int t;
@@ -122,8 +122,9 @@ static void tomato_save(const char *fname)
 	if ((t = mkstemp(tmp)) != -1) {
 		if ((f = fdopen(t, "w")) != NULL) {
 			n = 0;
-			while (upnp_get_redirection_infos_by_index(n, &eport, proto, &iport, iaddr, sizeof(iaddr), desc, sizeof(desc)) == 0) {
-				fprintf(f, "%s %u %s %u [%s]\n", proto, eport, iaddr, iport, desc);
+			while (upnp_get_redirection_infos_by_index(n, &eport, proto, &iport, iaddr, sizeof(iaddr), desc, sizeof(desc), rhost, sizeof(rhost), &leaseduration) == 0) {
+				timestamp = (leaseduration > 0) ? time(NULL) + leaseduration : 0;
+				fprintf(f, "%s %u %s %u [%s] %u\n", proto, eport, iaddr, iport, desc, timestamp);
 				++n;
 			}
 			fclose(f);
@@ -142,24 +143,40 @@ static void tomato_load(void)
 	char s[256];
 	unsigned short eport;
 	unsigned short iport;
+	unsigned int leaseduration;
+	unsigned int timestamp;
+	time_t current_time;
 	char proto[4];
 	char iaddr[32];
+	char *rhost;
 	char *a, *b;
 
 	if ((f = fopen("/etc/upnp/data", "r")) != NULL) {
+		current_time = time(NULL);
 		s[sizeof(s) - 1] = 0;
 		while (fgets(s, sizeof(s) - 1, f)) {
-			if (sscanf(s, "%3s %hu %31s %hu ", proto, &eport, iaddr, &iport) == 4) {
+			if (sscanf(s, "%3s %hu %31s %hu [%*s] %u", proto, &eport, iaddr, &iport, &timestamp) >= 4) {
 				if (((a = strchr(s, '[')) != NULL) && ((b = strrchr(a, ']')) != NULL)) {
+					if (timestamp > 0) {
+						if (timestamp > current_time)
+							leaseduration = current_time - timestamp;
+						else
+							continue;
+					} else {
+						leaseduration = 0;      /* default value */
+					}
 					*b = 0;
-					upnp_redirect(eport, iaddr, iport, proto, a + 1);
+					rhost = NULL;
+					upnp_redirect(rhost, eport, iaddr, iport, proto, a + 1, leaseduration);
 				}
 			}
 		}
 		fclose(f);
 	}
 #ifdef ENABLE_NATPMP
+#if 0
 	ScanNATPMPforExpiration();
+#endif
 #endif
 	unlink("/etc/upnp/load");
 }
@@ -170,9 +187,11 @@ static void tomato_delete(void)
 	char s[128];
 	unsigned short eport;
 	unsigned short iport;
+	unsigned int leaseduration;
 	char proto[4];
 	char iaddr[32];
 	char desc[64];
+	char rhost[32];
 	int n;
 
 	if ((f = fopen("/etc/upnp/delete", "r")) != NULL) {
@@ -182,7 +201,7 @@ static void tomato_delete(void)
 				if (proto[0] == '*') {
 					n = upnp_get_portmapping_number_of_entries();
 					while (--n >= 0) {
-						if (upnp_get_redirection_infos_by_index(n, &eport, proto, &iport, iaddr, sizeof(iaddr), desc, sizeof(desc)) == 0) {
+						if (upnp_get_redirection_infos_by_index(n, &eport, proto, &iport, iaddr, sizeof(iaddr), desc, sizeof(desc), rhost, sizeof(rhost), &leaseduration) == 0) {
 							upnp_delete_redirection(eport, proto);
 						}
 					}
@@ -230,9 +249,20 @@ OpenAndConfHTTPSocket(unsigned short port)
 {
 	int s;
 	int i = 1;
+#ifdef ENABLE_IPV6
+	struct sockaddr_in6 listenname;
+#else
 	struct sockaddr_in listenname;
+#endif
+	socklen_t listenname_len;
 
-	if( (s = socket(PF_INET, SOCK_STREAM, 0)) < 0)
+	if( (s = socket(
+#ifdef ENABLE_IPV6
+	                PF_INET6,
+#else
+	                PF_INET,
+#endif
+	                SOCK_STREAM, 0)) < 0)
 	{
 		syslog(LOG_ERR, "socket(http): %m");
 		return -1;
@@ -242,20 +272,36 @@ OpenAndConfHTTPSocket(unsigned short port)
 	{
 		syslog(LOG_WARNING, "setsockopt(http, SO_REUSEADDR): %m");
 	}
+#if 0
+	/* enable this to force IPV6 only for IPV6 socket.
+	 * see http://www.ietf.org/rfc/rfc3493.txt section 5.3 */
+	if(setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &i, sizeof(i)) < 0)
+	{
+		syslog(LOG_WARNING, "setsockopt(http, IPV6_V6ONLY): %m");
+	}
+#endif
 
-	memset(&listenname, 0, sizeof(struct sockaddr_in));
+#ifdef ENABLE_IPV6
+	memset(&listenname, 0, sizeof(struct sockaddr_in6));
+	listenname.sin6_family = AF_INET6;
+	listenname.sin6_port = htons(port);
+	listenname.sin6_addr = in6addr_any;
+	listenname_len =  sizeof(struct sockaddr_in6);
+#else
 	listenname.sin_family = AF_INET;
 	listenname.sin_port = htons(port);
 	listenname.sin_addr.s_addr = htonl(INADDR_ANY);
+	listenname_len =  sizeof(struct sockaddr_in);
+#endif
 
-	if(bind(s, (struct sockaddr *)&listenname, sizeof(struct sockaddr_in)) < 0)
+	if(bind(s, (struct sockaddr *)&listenname, listenname_len) < 0)
 	{
 		syslog(LOG_ERR, "bind(http): %m");
 		close(s);
 		return -1;
 	}
 
-	if(listen(s, 6) < 0)
+	if(listen(s, 5) < 0)
 	{
 		syslog(LOG_ERR, "listen(http): %m");
 		close(s);
@@ -381,7 +427,8 @@ static int nfqueue_cb(
 					sendername.sin_addr.s_addr = iph->ip_src.s_addr;
 
 					/* printf("pkt found %s\n",dd);*/
-					ProcessSSDPData (sudp, dd, sendername, size - x, (unsigned short) 5555);
+					ProcessSSDPData (sudp, dd, size - x,
+					                 &sendername, (unsigned short) 5555);
 				}
 			}
 		}
@@ -598,8 +645,6 @@ set_startup_time(int sysuptime)
 struct runtime_vars {
 	/* LAN IP addresses for SSDP traffic and HTTP */
 	/* moved to global vars */
-	/*int n_lan_addr;*/
-	/*struct lan_addr_s lan_addr[MAX_LAN_ADDR];*/
 	int port;	/* HTTP Port */
 	int notify_interval;	/* seconds between SSDP announces */
 	/* unused rules cleaning related variables : */
@@ -698,6 +743,8 @@ init(int argc, char * * argv, struct runtime_vars * v)
 	/*const char * logfilename = 0;*/
 	const char * presurl = 0;
 	const char * optionsfile = DEFAULT_CONFIG;
+	struct lan_addr_s * lan_addr;
+	struct lan_addr_s * lan_addr2;
 
 	/* only print usage if -h is used */
 	for(i=1; i<argc; i++)
@@ -719,7 +766,7 @@ init(int argc, char * * argv, struct runtime_vars * v)
 	/* set initial values */
 	SETFLAG(ENABLEUPNPMASK);
 
-	/*v->n_lan_addr = 0;*/
+	LIST_INIT(&lan_addrs);
 	v->port = -1;
 	v->notify_interval = 30;	/* seconds between SSDP announces */
 	v->clean_ruleset_threshold = 20;
@@ -746,18 +793,19 @@ init(int argc, char * * argv, struct runtime_vars * v)
 				use_ext_ip_addr = ary_options[i].value;
 				break;
 			case UPNPLISTENING_IP:
-				if(n_lan_addr < MAX_LAN_ADDR)/* if(v->n_lan_addr < MAX_LAN_ADDR)*/
+				lan_addr = (struct lan_addr_s *) malloc(sizeof(struct lan_addr_s));
+				if (lan_addr == NULL)
 				{
-					/*if(parselanaddr(&v->lan_addr[v->n_lan_addr],*/
-					if(parselanaddr(&lan_addr[n_lan_addr],
-					             ary_options[i].value) == 0)
-						n_lan_addr++; /*v->n_lan_addr++; */
+					fprintf(stderr, "malloc(sizeof(struct lan_addr_s)): %m");
+					break;
 				}
-				else
+				if(parselanaddr(lan_addr, ary_options[i].value) != 0)
 				{
-					fprintf(stderr, "Too many listening ips (max: %d), ignoring %s\n",
-			    		    MAX_LAN_ADDR, ary_options[i].value);
+					fprintf(stderr, "can't parse \"%s\" as valid lan address\n", ary_options[i].value);
+					free(lan_addr);
+					break;
 				}
+				LIST_INSERT_HEAD(&lan_addrs, lan_addr, list);
 				break;
 			case UPNPPORT:
 				v->port = atoi(ary_options[i].value);
@@ -995,28 +1043,27 @@ init(int argc, char * * argv, struct runtime_vars * v)
 		case 'a':
 			if(i+1 < argc)
 			{
-				int address_already_there = 0;
-				int j;
 				i++;
-				for(j=0; j<n_lan_addr; j++)
+				lan_addr = (struct lan_addr_s *) malloc(sizeof(struct lan_addr_s));
+				if (lan_addr == NULL)
 				{
-					struct lan_addr_s tmpaddr;
-					parselanaddr(&tmpaddr, argv[i]);
-					if(0 == strcmp(lan_addr[j].str, tmpaddr.str))
-						address_already_there = 1;
-				}
-				if(address_already_there)
+					fprintf(stderr, "malloc(sizeof(struct lan_addr_s)): %m");
 					break;
-				if(n_lan_addr < MAX_LAN_ADDR)
-				{
-					if(parselanaddr(&lan_addr[n_lan_addr], argv[i]) == 0)
-						n_lan_addr++;
 				}
-				else
+				if(parselanaddr(lan_addr, argv[i]) != 0)
 				{
-					fprintf(stderr, "Too many listening ips (max: %d), ignoring %s\n",
-				    	    MAX_LAN_ADDR, argv[i]);
+					fprintf(stderr, "can't parse \"%s\" as valid lan address\n", argv[i]);
+					free(lan_addr);
+					break;
 				}
+				/* check if we already have this address */
+				for(lan_addr2 = lan_addrs.lh_first; lan_addr2 != NULL; lan_addr2 = lan_addr2->list.le_next)
+				{
+					if (0 == strncmp(lan_addr2->str, lan_addr->str, 15))
+						break;
+				}
+				if (lan_addr2 == NULL)
+					LIST_INSERT_HEAD(&lan_addrs, lan_addr, list);
 			}
 			else
 				fprintf(stderr, "Option -%c takes one argument.\n", argv[i][1]);
@@ -1028,7 +1075,7 @@ init(int argc, char * * argv, struct runtime_vars * v)
 			fprintf(stderr, "Unknown option: %s\n", argv[i]);
 		}
 	}
-	if(!ext_if_name || (n_lan_addr==0))
+	if(!ext_if_name || !lan_addrs.lh_first)
 	{
 		/* bad configuration */
 		goto print_usage;
@@ -1081,8 +1128,8 @@ init(int argc, char * * argv, struct runtime_vars * v)
 	else
 	{
 		snprintf(presentationurl, PRESENTATIONURL_MAX_LEN,
-		         "http://%s/", lan_addr[0].str);
-		         /*"http://%s:%d/", lan_addr[0].str, 80);*/
+		         "http://%s/", lan_addrs.lh_first->str);
+		         /*"http://%s:%d/", lan_addrs.lh_first->str, 80);*/
 	}
 
 	/* set signal handler */
@@ -1181,14 +1228,23 @@ int
 main(int argc, char * * argv)
 {
 	int i;
-	int shttpl = -1;
+	int shttpl = -1;	/* socket for HTTP */
+	int sudp = -1;		/* IP v4 socket for receiving SSDP */
+#ifdef ENABLE_IPV6
+	int sudpv6 = -1;	/* IP v6 socket for receiving SSDP */
+#endif
 #ifdef ENABLE_NATPMP
-	int snatpmp[MAX_LAN_ADDR];
+	int * snatpmp;
+#endif
 #ifdef ENABLE_NFQUEUE
 	int nfqh = -1;
 #endif
+#ifdef USE_IFACEWATCHER
+	int sifacewatcher = -1;
 #endif
-	int snotify[MAX_LAN_ADDR];
+
+	int * snotify;
+	int addr_count;
 	LIST_HEAD(httplisthead, upnphttp) upnphttphead;
 	struct upnphttp * e = 0;
 	struct upnphttp * next;
@@ -1208,16 +1264,22 @@ main(int argc, char * * argv)
 	/* variables used for the unused-rule cleanup process */
 	struct rule_state * rule_list = 0;
 	struct timeval checktime = {0, 0};
+	struct lan_addr_s * lan_addr;
 	syslog(LOG_INFO, "SNet version started");
 
-
-	memset(snotify, 0, sizeof(snotify));
-#ifdef ENABLE_NATPMP
-	for(i = 0; i < MAX_LAN_ADDR; i++)
-		snatpmp[i] = -1;
-#endif
 	if(init(argc, argv, &v) != 0)
 		return 1;
+	/* count lan addrs */
+	addr_count = 0;
+	for(lan_addr = lan_addrs.lh_first; lan_addr != NULL; lan_addr = lan_addr->list.le_next)
+		addr_count++;
+	snotify = (int*) malloc(addr_count * sizeof(int));
+	memset(snotify, 0, sizeof(snotify));
+#ifdef ENABLE_NATPMP
+	snatpmp = (int*) malloc(addr_count * sizeof(int));
+	for(i = 0; i < addr_count; i++)
+		snatpmp[i] = -1;
+#endif
 
 	LIST_INIT(&upnphttphead);
 #ifdef USE_MINIUPNPDCTL
@@ -1253,17 +1315,33 @@ main(int argc, char * * argv)
 			v.port = ntohs(sockinfo.sin_port);
 		}
 		syslog(LOG_NOTICE, "HTTP listening on port %d", v.port);
+#ifdef ENABLE_IPV6
+		if(find_ipv6_addr(NULL, ipv6_addr_for_http_with_brackets, sizeof(ipv6_addr_for_http_with_brackets)) > 0) {
+			syslog(LOG_NOTICE, "HTTP IPv6 address given to control points : %s",
+			       ipv6_addr_for_http_with_brackets);
+		} else {
+			memcpy(ipv6_addr_for_http_with_brackets, "[::1]", 6);
+			syslog(LOG_WARNING, "no HTTP IPv6 address");
+		}
+#endif
 
 		/* open socket for SSDP connections */
-		sudp = OpenAndConfSSDPReceiveSocket(n_lan_addr, lan_addr);
+		sudp = OpenAndConfSSDPReceiveSocket(0);
 		if(sudp < 0)
 		{
 			syslog(LOG_INFO, "Failed to open socket for receiving SSDP. Trying to use MiniSSDPd");
-			if(SubmitServicesToMiniSSDPD(lan_addr[0].str, v.port) < 0) {
+			if(SubmitServicesToMiniSSDPD(lan_addrs.lh_first->str, v.port) < 0) {
 				syslog(LOG_ERR, "Failed to connect to MiniSSDPd. EXITING");
 				return 1;
 			}
 		}
+#ifdef ENABLE_IPV6
+		sudpv6 = OpenAndConfSSDPReceiveSocket(1);
+		if(sudpv6 < 0)
+		{
+			syslog(LOG_INFO, "Failed to open socket for receiving SSDP (IP v6).");
+		}
+#endif
 
 		/* open socket for sending notifications */
 		if(OpenAndConfSSDPNotifySockets(snotify) < 0)
@@ -1272,6 +1350,18 @@ main(int argc, char * * argv)
 		                "messages. EXITING");
 			return 1;
 		}
+
+#ifdef USE_IFACEWATCHER
+		/* open socket for kernel notifications about new network interfaces */
+		if (sudp >= 0)
+		{
+			sifacewatcher = OpenAndConfInterfaceWatchSocket();
+			if (sifacewatcher < 0)
+			{
+				syslog(LOG_ERR, "Failed to open socket for receiving network interface notifications");
+			}
+		}
+#endif
 	}
 
 #ifdef ENABLE_NATPMP
@@ -1285,7 +1375,9 @@ main(int argc, char * * argv)
 			syslog(LOG_NOTICE, "Listening for NAT-PMP traffic on port %u",
 			       NATPMP_PORT);
 		}
+#if 0
 		ScanNATPMPforExpiration();
+#endif
 	}
 #endif
 
@@ -1316,6 +1408,22 @@ main(int argc, char * * argv)
 		{
 			set_startup_time(GETFLAG(SYSUPTIMEMASK));
 		} 
+		/* send public address change notifications if needed */
+		if(should_send_public_address_change_notif)
+		{
+			syslog(LOG_DEBUG, "should send external iface address change notification(s)");
+#ifdef ENABLE_NATPMP
+			if(GETFLAG(ENABLENATPMPMASK))
+				SendNATPMPPublicAddressChangeNotification(snatpmp, addr_count);
+#endif
+#ifdef ENABLE_EVENTS
+			if(GETFLAG(ENABLEUPNPMASK))
+			{
+				upnp_event_var_change_notify(EWanIPC);
+			}
+#endif
+			should_send_public_address_change_notif = 0;
+		}
 		/* Check if we need to send SSDP NOTIFY messages and do it if
 		 * needed */
 		if(gettimeofday(&timeofday, 0) < 0)
@@ -1368,9 +1476,27 @@ main(int argc, char * * argv)
 			}
 			memcpy(&checktime, &timeofday, sizeof(struct timeval));
 		}
+		/* Remove expired port mappings, based on UPnP IGD LeaseDuration
+		 * or NAT-PMP lifetime) */
+		if(nextruletoclean_timestamp
+		  && (timeofday.tv_sec >= nextruletoclean_timestamp))
+		{
+			syslog(LOG_DEBUG, "cleaning expired Port Mappings");
+			get_upnp_rules_state_list(0);
+		}
+		if(nextruletoclean_timestamp
+		  && timeout.tv_sec >= (nextruletoclean_timestamp - timeofday.tv_sec))
+		{
+			timeout.tv_sec = nextruletoclean_timestamp - timeofday.tv_sec;
+			timeout.tv_usec = 0;
+			syslog(LOG_DEBUG, "setting timeout to %u sec",
+			       (unsigned)timeout.tv_sec);
+		}
 #ifdef ENABLE_NATPMP
+#if 0
 		/* Remove expired NAT-PMP mappings */
-		while( nextnatpmptoclean_timestamp && (timeofday.tv_sec >= nextnatpmptoclean_timestamp + startup_time))
+		while(nextnatpmptoclean_timestamp
+		     && (timeofday.tv_sec >= nextnatpmptoclean_timestamp + startup_time))
 		{
 			/*syslog(LOG_DEBUG, "cleaning expired NAT-PMP mappings");*/
 			if(CleanExpiredNATPMP() < 0) {
@@ -1378,20 +1504,15 @@ main(int argc, char * * argv)
 				break;
 			}
 		}
-		if(nextnatpmptoclean_timestamp && timeout.tv_sec >= (nextnatpmptoclean_timestamp + startup_time - timeofday.tv_sec))
+		if(nextnatpmptoclean_timestamp
+		  && timeout.tv_sec >= (nextnatpmptoclean_timestamp + startup_time - timeofday.tv_sec))
 		{
-			/*syslog(LOG_DEBUG, "setting timeout to %d sec", nextnatpmptoclean_timestamp + startup_time - timeofday.tv_sec);*/
-#ifdef ENABLE_NFQUEUE
-		if (nfqh >= 0) 
-		{
-			FD_SET(nfqh, &readset);
-			max_fd = MAX( max_fd, nfqh);
-		}
-#endif
-
+			/*syslog(LOG_DEBUG, "setting timeout to %d sec",
+			       nextnatpmptoclean_timestamp + startup_time - timeofday.tv_sec);*/
 			timeout.tv_sec = nextnatpmptoclean_timestamp + startup_time - timeofday.tv_sec;
 			timeout.tv_usec = 0;
 		}
+#endif
 #endif
 
 		/* select open sockets (SSDP, HTTP listen, and all HTTP soap sockets) */
@@ -1401,13 +1522,34 @@ main(int argc, char * * argv)
 		{
 			FD_SET(sudp, &readset);
 			max_fd = MAX( max_fd, sudp);
+#ifdef USE_IFACEWATCHER
+			if (sifacewatcher >= 0)
+			{
+				FD_SET(sifacewatcher, &readset);
+				max_fd = MAX(max_fd, sifacewatcher);
+			}
+#endif
 		}
-		
 		if (shttpl >= 0) 
 		{
 			FD_SET(shttpl, &readset);
 			max_fd = MAX( max_fd, shttpl);
 		}
+#ifdef ENABLE_IPV6
+		if (sudpv6 >= 0)
+		{
+			FD_SET(sudpv6, &readset);
+			max_fd = MAX( max_fd, sudpv6);
+		}
+#endif
+
+#ifdef ENABLE_NFQUEUE
+		if (nfqh >= 0) 
+		{
+			FD_SET(nfqh, &readset);
+			max_fd = MAX( max_fd, nfqh);
+		}
+#endif
 
 		i = 0;	/* active HTTP connections count */
 		for(e = upnphttphead.lh_first; e != NULL; e = e->entries.le_next)
@@ -1427,7 +1569,7 @@ main(int argc, char * * argv)
 		}
 #endif
 #ifdef ENABLE_NATPMP
-		for(i=0; i<n_lan_addr; i++) {
+		for(i=0; i<addr_count; i++) {
 			if(snatpmp[i] >= 0) {
 				FD_SET(snatpmp[i], &readset);
 				max_fd = MAX( max_fd, snatpmp[i]);
@@ -1529,7 +1671,7 @@ main(int argc, char * * argv)
 #endif
 #ifdef ENABLE_NATPMP
 		/* process NAT-PMP packets */
-		for(i=0; i<n_lan_addr; i++)
+		for(i=0; i<addr_count; i++)
 		{
 			if((snatpmp[i] >= 0) && FD_ISSET(snatpmp[i], &readset))
 			{
@@ -1543,6 +1685,19 @@ main(int argc, char * * argv)
 			/*syslog(LOG_INFO, "Received UDP Packet");*/
 			ProcessSSDPRequest(sudp, (unsigned short)v.port);
 		}
+#ifdef ENABLE_IPV6
+		if(sudpv6 >= 0 && FD_ISSET(sudpv6, &readset))
+		{
+			syslog(LOG_INFO, "Received UDP Packet (IPv6)");
+			ProcessSSDPRequest(sudpv6, (unsigned short)v.port);
+		}
+#endif
+#ifdef USE_IFACEWATCHER
+		/* process kernel notifications */
+		if (sifacewatcher >= 0 && FD_ISSET(sifacewatcher, &readset))
+			ProcessInterfaceWatchNotify(sifacewatcher);
+#endif
+
 		/* process active HTTP connections */
 		/* LIST_FOREACH macro is not available under linux */
 		for(e = upnphttphead.lh_first; e != NULL; e = e->entries.le_next)
@@ -1558,8 +1713,13 @@ main(int argc, char * * argv)
 		{
 			int shttp;
 			socklen_t clientnamelen;
+#ifdef ENABLE_IPV6
+			struct sockaddr_storage clientname;
+			clientnamelen = sizeof(struct sockaddr_storage);
+#else
 			struct sockaddr_in clientname;
 			clientnamelen = sizeof(struct sockaddr_in);
+#endif
 			shttp = accept(shttpl, (struct sockaddr *)&clientname, &clientnamelen);
 			if(shttp<0)
 			{
@@ -1568,26 +1728,43 @@ main(int argc, char * * argv)
 			else
 			{
 				struct upnphttp * tmp = 0;
-				syslog(LOG_INFO, "HTTP connection from %s:%d",
-					inet_ntoa(clientname.sin_addr),
-					ntohs(clientname.sin_port) );
+				char addr_str[64];
+
+				sockaddr_to_string((struct sockaddr *)&clientname, addr_str, sizeof(addr_str));
+				syslog(LOG_INFO, "HTTP connection from %s", addr_str);
 				/*if (fcntl(shttp, F_SETFL, O_NONBLOCK) < 0) {
 					syslog(LOG_ERR, "fcntl F_SETFL, O_NONBLOCK");
 				}*/
-#ifdef ENABLE_NFQUEUE
-		/* process NFQ packets */
-		if(nfqh >= 0 && FD_ISSET(nfqh, &readset))
-		{
-			/* syslog(LOG_INFO, "Received NFQUEUE Packet");*/
-			ProcessNFQUEUE(nfqh);
-		}
-#endif
 				/* Create a new upnphttp object and add it to
 				 * the active upnphttp object list */
 				tmp = New_upnphttp(shttp);
 				if(tmp)
 				{
+#ifdef ENABLE_IPV6
+					if(clientname.ss_family == AF_INET)
+					{
+						tmp->clientaddr = ((struct sockaddr_in *)&clientname)->sin_addr;
+					}
+					else if(clientname.ss_family == AF_INET6)
+					{
+						struct sockaddr_in6 * addr = (struct sockaddr_in6 *)&clientname;
+						if(IN6_IS_ADDR_V4MAPPED(&addr->sin6_addr))
+						{
+							memcpy(&tmp->clientaddr,
+							       &addr->sin6_addr.s6_addr[12],
+							       4);
+						}
+						else
+						{
+							tmp->ipv6 = 1;
+							memcpy(&tmp->clientaddr_v6,
+							       &addr->sin6_addr,
+							       sizeof(struct in6_addr));
+						}
+					}
+#else
 					tmp->clientaddr = clientname.sin_addr;
+#endif
 					LIST_INSERT_HEAD(&upnphttphead, tmp, entries);
 				}
 				else
@@ -1597,6 +1774,14 @@ main(int argc, char * * argv)
 				}
 			}
 		}
+#ifdef ENABLE_NFQUEUE
+		/* process NFQ packets */
+		if(nfqh >= 0 && FD_ISSET(nfqh, &readset))
+		{
+			/* syslog(LOG_INFO, "Received NFQUEUE Packet");*/
+			ProcessNFQUEUE(nfqh);
+		}
+#endif
 		/* delete finished HTTP connections */
 		for(e = upnphttphead.lh_first; e != NULL; )
 		{
@@ -1609,21 +1794,6 @@ main(int argc, char * * argv)
 			e = next;
 		}
 
-		/* send public address change notifications */
-		if(should_send_public_address_change_notif)
-		{
-#ifdef ENABLE_NATPMP
-			if(GETFLAG(ENABLENATPMPMASK))
-				SendNATPMPPublicAddressChangeNotification(snatpmp/*snotify*/, n_lan_addr);
-#endif
-#ifdef ENABLE_EVENTS
-			if(GETFLAG(ENABLEUPNPMASK))
-			{
-				upnp_event_var_change_notify(EWanIPC);
-			}
-#endif
-			should_send_public_address_change_notif = 0;
-		}
 	}	/* end of main loop */
 
 shutdown:
@@ -1639,8 +1809,15 @@ shutdown:
 
 	if (sudp >= 0) close(sudp);
 	if (shttpl >= 0) close(shttpl);
+#ifdef ENABLE_IPV6
+	if (sudpv6 >= 0) close(sudpv6);
+	//if (shttplv6 >= 0) close(shttplv6);
+#endif
+#ifdef USE_IFACEWATCHER
+	if(sifacewatcher >= 0) close(sifacewatcher);
+#endif
 #ifdef ENABLE_NATPMP
-	for(i=0; i<n_lan_addr; i++) {
+	for(i=0; i<addr_count; i++) {
 		if(snatpmp[i]>=0)
 		{
 			close(snatpmp[i]);
@@ -1663,11 +1840,11 @@ shutdown:
 	/*if(SendSSDPGoodbye(snotify, v.n_lan_addr) < 0)*/
 	if (GETFLAG(ENABLEUPNPMASK))
 	{
-		if(SendSSDPGoodbye(snotify, n_lan_addr) < 0)
+		if(SendSSDPGoodbye(snotify, addr_count) < 0)
 		{
 			syslog(LOG_ERR, "Failed to broadcast good-bye notifications");
 		}
-		for(i=0; i<n_lan_addr; i++)/* for(i=0; i<v.n_lan_addr; i++)*/
+		for(i=0; i<addr_count; i++)
 			close(snotify[i]);
 	}
 
@@ -1676,6 +1853,18 @@ shutdown:
 		syslog(LOG_ERR, "Failed to remove pidfile %s: %m", pidfilename);
 	}
 
+	/* delete lists */
+	while(lan_addrs.lh_first != NULL)
+	{
+		lan_addr = lan_addrs.lh_first;
+		LIST_REMOVE(lan_addrs.lh_first, list);
+		free(lan_addr);
+	}
+
+#ifdef ENABLE_NATPMP
+	free(snatpmp);
+#endif
+	free(snotify);
 	closelog();	
 	freeoptions();
 	

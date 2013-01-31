@@ -1,6 +1,6 @@
 #! /bin/sh
-# $Id: iptables_display.sh,v 1.3 2006/11/23 12:32:56 nanard Exp $
-IPTABLES=iptables
+# $Id: iptables_display.sh,v 1.4 2011/05/16 12:11:37 nanard Exp $
+IPTABLES=/sbin/iptables
 
 #display all chains relative to miniupnpd
 $IPTABLES -v -n -t nat -L PREROUTING

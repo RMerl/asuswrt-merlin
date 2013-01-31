@@ -22,11 +22,11 @@ ETCINSTALLDIR = $(PREFIX)/etc/miniupnpd
 
 BASEOBJS = miniupnpd.o upnphttp.o upnpdescgen.o upnpsoap.o \
            upnpreplyparse.o minixml.o \
-		   upnpredirect.o getifaddr.o daemonize.o upnpglobalvars.o \
+           upnpredirect.o getifaddr.o daemonize.o upnpglobalvars.o \
            options.o upnppermissions.o minissdp.o natpmp.o \
-           upnpevents.o
+           upnpevents.o upnputils.o getconnstatus.o
 
-LNXOBJS = linux/getifstats.o
+LNXOBJS = linux/getifstats.o linux/ifacewatcher.o
 NETFILTEROBJS = netfilter/iptcrdr.o
 
 ALLOBJS = $(BASEOBJS) $(LNXOBJS) $(NETFILTEROBJS)
@@ -75,14 +75,14 @@ testupnpdescgen:	$(TESTUPNPDESCGENOBJS)
 
 testgetifstats:	testgetifstats.o linux/getifstats.o
 
-testupnppermissions:	testupnppermissions.o upnppermissions.o
+testupnppermissions:    testupnppermissions.o upnppermissions.o
 
-testgetifaddr:	testgetifaddr.o getifaddr.o
+testgetifaddr:  testgetifaddr.o getifaddr.o
 
-miniupnpdctl:	miniupnpdctl.o
+miniupnpdctl:   miniupnpdctl.o
 
-#	config.h:	genconfig.sh
-#		./genconfig.sh
+config.h:	genconfig.sh
+	./genconfig.sh
 
 depend:	config.h
 	makedepend -f$(MAKEFILE_LIST) -Y \
@@ -94,19 +94,20 @@ depend:	config.h
 miniupnpd.o: config.h upnpglobalvars.h upnppermissions.h miniupnpdtypes.h
 miniupnpd.o: upnphttp.h upnpdescgen.h miniupnpdpath.h getifaddr.h upnpsoap.h
 miniupnpd.o: options.h minissdp.h upnpredirect.h daemonize.h upnpevents.h
-miniupnpd.o: natpmp.h commonrdr.h
+miniupnpd.o: natpmp.h commonrdr.h upnputils.h ifacewatcher.h
 upnphttp.o: config.h upnphttp.h upnpdescgen.h miniupnpdpath.h upnpsoap.h
 upnphttp.o: upnpevents.h
-upnpdescgen.o: config.h upnpdescgen.h miniupnpdpath.h upnpglobalvars.h
-upnpdescgen.o: upnppermissions.h miniupnpdtypes.h upnpdescstrings.h
+upnpdescgen.o: config.h getifaddr.h upnpredirect.h upnpdescgen.h
+upnpdescgen.o: miniupnpdpath.h upnpglobalvars.h upnppermissions.h
+upnpdescgen.o: miniupnpdtypes.h upnpdescstrings.h upnpurns.h getconnstatus.h
 upnpsoap.o: config.h upnpglobalvars.h upnppermissions.h miniupnpdtypes.h
 upnpsoap.o: upnphttp.h upnpsoap.h upnpreplyparse.h upnpredirect.h getifaddr.h
-upnpsoap.o: getifstats.h
+upnpsoap.o: getifstats.h getconnstatus.h upnpurns.h
 upnpreplyparse.o: upnpreplyparse.h minixml.h
 minixml.o: minixml.h
 upnpredirect.o: config.h upnpredirect.h upnpglobalvars.h upnppermissions.h
 upnpredirect.o: miniupnpdtypes.h upnpevents.h netfilter/iptcrdr.h commonrdr.h
-getifaddr.o: getifaddr.h
+getifaddr.o: config.h getifaddr.h
 daemonize.o: daemonize.h config.h
 upnpglobalvars.o: config.h upnpglobalvars.h upnppermissions.h
 upnpglobalvars.o: miniupnpdtypes.h
@@ -115,15 +116,22 @@ options.o: miniupnpdtypes.h
 upnppermissions.o: config.h upnppermissions.h
 minissdp.o: config.h upnpdescstrings.h miniupnpdpath.h upnphttp.h
 minissdp.o: upnpglobalvars.h upnppermissions.h miniupnpdtypes.h minissdp.h
-minissdp.o: codelength.h
+minissdp.o: upnputils.h codelength.h
 natpmp.o: config.h natpmp.h upnpglobalvars.h upnppermissions.h
 natpmp.o: miniupnpdtypes.h getifaddr.h upnpredirect.h commonrdr.h
 upnpevents.o: config.h upnpevents.h miniupnpdpath.h upnpglobalvars.h
 upnpevents.o: upnppermissions.h miniupnpdtypes.h upnpdescgen.h
-linux/getifstats.o: getifstats.h config.h
+upnputils.o: config.h upnputils.h
+getconnstatus.o: getconnstatus.h getifaddr.h
+linux/getifstats.o: config.h getifstats.h
+linux/ifacewatcher.o: config.h ifacewatcher.h config.h minissdp.h
+linux/ifacewatcher.o: miniupnpdtypes.h getifaddr.h upnpglobalvars.h
+linux/ifacewatcher.o: upnppermissions.h natpmp.h
 netfilter/iptcrdr.o: netfilter/iptcrdr.h commonrdr.h config.h
 netfilter/iptcrdr.o: upnpglobalvars.h upnppermissions.h miniupnpdtypes.h
 testupnpdescgen.o: config.h upnpdescgen.h
-upnpdescgen.o: config.h version.h upnpdescgen.h miniupnpdpath.h upnpglobalvars.h
-upnpdescgen.o: upnppermissions.h miniupnpdtypes.h upnpdescstrings.h
+upnpdescgen.o: config.h getifaddr.h upnpredirect.h upnpdescgen.h
+upnpdescgen.o: miniupnpdpath.h upnpglobalvars.h upnppermissions.h
+upnpdescgen.o: miniupnpdtypes.h upnpdescstrings.h upnpurns.h getconnstatus.h
 testgetifstats.o: getifstats.h
+
