@@ -357,14 +357,25 @@ History
    - CHANGED: Connections page now uses Ajax for slightly better rendering
    - CHANGED: Sysinfo will report if CTF is disabled by user or due to incompatible
               feature being enabled
+   - CHANGED: Applied a few additional kernel patches that might help with 3 TB support.
+              Full support for HDDs > 2 TB cannot be achieved, as some USB enclosures
+              don't play nice even with a full up-to-date Linux system.
+   - CHANGED: Updated miniupnpd to version 1.6.  NOTE: previous versions were NOT
+              affected by the recent UPNP exploit disclosure.  This is just as
+              an added security precaution.
    - FIXED: 1-3 seconds delay loading the Sysinfo page due to Ethernet ports query.
+            (regression from beta 1)
    - FIXED: Temperature on Performance Tuning page would fail to update if a radio
             was disabled.
    - FIXED: Ethernet port status would not display under IE.
    - FIXED: Display of Connections under IE
+   - FIXED: modprobe could get stuck during boot (regression fron Beta 1)
+   - FIXED: Some USB modems failed to load their drivers - insmod would no
+            longer recursively load drivers.  Reverted to 1.17.4's recursive
+            search, as the firmware calls insmod without giving a full path.
+            (regression from Beta 1)
 
-
-3.0.0.4.266.24 Beta:
+3.0.0.4.266.24 Beta 1:
    - NEW: Report CTF (HW Acceleration) state on Sysinfo page.
    - NEW: Display Ethernet port states on the Sysinfo page.
    - NEW: Replaced Busybox fsck/mkfs tools with those from e2fsprogs, should
