@@ -908,6 +908,7 @@ http://www.upnp.org/schemas/gw/WANIPConnection-v2.xsd">
 	{
 		ClearNameValueList(&data);
 		SoapError(h, 501, "ActionFailed");
+		free(body);
 		return;
 	}
 	bodylen = snprintf(body, bodyalloc, resp_start,
@@ -923,15 +924,19 @@ http://www.upnp.org/schemas/gw/WANIPConnection-v2.xsd">
 		/* have a margin of 1024 bytes to store the new entry */
 		if(bodylen + 1024 > bodyalloc)
 		{
+			char *new_body;
+
 			bodyalloc += 4096;
-			body = realloc(body, bodyalloc);
-			if(!body)
+			new_body = realloc(body, bodyalloc);
+			if(!new_body)
 			{
 				ClearNameValueList(&data);
 				SoapError(h, 501, "ActionFailed");
 				free(port_list);
+				free(body);
 				return;
 			}
+			body = new_body;
 		}
 		rhost[0] = '\0';
 		r = upnp_get_redirection_infos(port_list[i], protocol, &iport,
