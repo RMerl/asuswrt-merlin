@@ -24,7 +24,7 @@ vpath %.c $(SRCBASE)/shared/
 
 ifeq ($(wildcard $(SRCBASE)/router/acsd/*.c),)
 all:
-	-cp -f prebuild/acsd acsd
+	-cp -f prebuilt/acsd acsd
 else
 all: acsd #acs_cli
 endif
