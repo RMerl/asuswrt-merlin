@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.266.24 BETA 2 (xx-Jan-2013)
-==========================================================
+Asuswrt-Merlin - build 3.0.0.4.266.24 BETA 2 (1-Feb-2013)
+=========================================================
 
 About
 -----
@@ -353,7 +353,7 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.266.24 Beta 2:
-   - CHANGED: Temperatures on Sysinfo page will now update every 3 seconds.
+   - CHANGED: Temperatures on Sysinfo page will now auto-update every 3 seconds.
    - CHANGED: Connections page now uses Ajax for slightly better rendering
    - CHANGED: Sysinfo will report if CTF is disabled by user or due to incompatible
               feature being enabled
