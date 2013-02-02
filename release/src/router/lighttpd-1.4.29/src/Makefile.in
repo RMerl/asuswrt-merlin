@@ -162,13 +162,6 @@ mod_accesslog_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(AM_CFLAGS) $(CFLAGS) $(mod_accesslog_la_LDFLAGS) $(LDFLAGS) \
 	-o $@
-mod_aidisk_access_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_mod_aidisk_access_la_OBJECTS = mod_aidisk_access.lo
-mod_aidisk_access_la_OBJECTS = $(am_mod_aidisk_access_la_OBJECTS)
-mod_aidisk_access_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(AM_CFLAGS) $(CFLAGS) $(mod_aidisk_access_la_LDFLAGS) \
-	$(LDFLAGS) -o $@
 mod_alias_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_mod_alias_la_OBJECTS = mod_alias.lo
 mod_alias_la_OBJECTS = $(am_mod_alias_la_OBJECTS)
@@ -331,13 +324,6 @@ mod_setenv_la_OBJECTS = $(am_mod_setenv_la_OBJECTS)
 mod_setenv_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(mod_setenv_la_LDFLAGS) $(LDFLAGS) -o $@
-mod_sharelink_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_mod_sharelink_la_OBJECTS = mod_sharelink.lo
-mod_sharelink_la_OBJECTS = $(am_mod_sharelink_la_OBJECTS)
-mod_sharelink_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(AM_CFLAGS) $(CFLAGS) $(mod_sharelink_la_LDFLAGS) $(LDFLAGS) \
-	-o $@
 mod_simple_vhost_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_mod_simple_vhost_la_OBJECTS = mod_simple_vhost.lo
 mod_simple_vhost_la_OBJECTS = $(am_mod_simple_vhost_la_OBJECTS)
@@ -345,14 +331,6 @@ mod_simple_vhost_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(AM_CFLAGS) $(CFLAGS) $(mod_simple_vhost_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-mod_smbdav_la_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
-am_mod_smbdav_la_OBJECTS = mod_smbdav_la-mod_smbdav.lo
-mod_smbdav_la_OBJECTS = $(am_mod_smbdav_la_OBJECTS)
-mod_smbdav_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(mod_smbdav_la_CFLAGS) \
-	$(CFLAGS) $(mod_smbdav_la_LDFLAGS) $(LDFLAGS) -o $@
 mod_ssi_la_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
 am_mod_ssi_la_OBJECTS = mod_ssi_exprparser.lo mod_ssi_expr.lo \
 	mod_ssi.lo
@@ -504,7 +482,27 @@ AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(liblightcomp_la_SOURCES) $(mod_access_la_SOURCES) \
-	$(mod_accesslog_la_SOURCES) $(mod_aidisk_access_la_SOURCES) \
+	$(mod_accesslog_la_SOURCES) $(mod_alias_la_SOURCES) \
+	$(mod_auth_la_SOURCES) $(mod_cgi_la_SOURCES) \
+	$(mod_cml_la_SOURCES) $(mod_compress_la_SOURCES) \
+	$(mod_create_captcha_image_la_SOURCES) \
+	$(mod_dirlisting_la_SOURCES) $(mod_evasive_la_SOURCES) \
+	$(mod_evhost_la_SOURCES) $(mod_expire_la_SOURCES) \
+	$(mod_extforward_la_SOURCES) $(mod_fastcgi_la_SOURCES) \
+	$(mod_flv_streaming_la_SOURCES) $(mod_indexfile_la_SOURCES) \
+	$(mod_magnet_la_SOURCES) $(mod_mysql_vhost_la_SOURCES) \
+	$(mod_proxy_la_SOURCES) $(mod_redirect_la_SOURCES) \
+	$(mod_rewrite_la_SOURCES) $(mod_rrdtool_la_SOURCES) \
+	$(mod_scgi_la_SOURCES) $(mod_secdownload_la_SOURCES) \
+	$(mod_setenv_la_SOURCES) $(mod_simple_vhost_la_SOURCES) \
+	$(mod_ssi_la_SOURCES) $(mod_staticfile_la_SOURCES) \
+	$(mod_status_la_SOURCES) $(mod_trigger_b4_dl_la_SOURCES) \
+	$(mod_userdir_la_SOURCES) $(mod_usertrack_la_SOURCES) \
+	$(mod_webdav_la_SOURCES) $(lemon_SOURCES) $(lighttpd_SOURCES) \
+	$(lighttpd_angel_SOURCES) $(lighttpd_arpping_SOURCES) \
+	$(lighttpd_monitor_SOURCES) $(proc_open_SOURCES)
+DIST_SOURCES = $(am__liblightcomp_la_SOURCES_DIST) \
+	$(mod_access_la_SOURCES) $(mod_accesslog_la_SOURCES) \
 	$(mod_alias_la_SOURCES) $(mod_auth_la_SOURCES) \
 	$(mod_cgi_la_SOURCES) $(mod_cml_la_SOURCES) \
 	$(mod_compress_la_SOURCES) \
@@ -517,30 +515,7 @@ SOURCES = $(liblightcomp_la_SOURCES) $(mod_access_la_SOURCES) \
 	$(mod_proxy_la_SOURCES) $(mod_redirect_la_SOURCES) \
 	$(mod_rewrite_la_SOURCES) $(mod_rrdtool_la_SOURCES) \
 	$(mod_scgi_la_SOURCES) $(mod_secdownload_la_SOURCES) \
-	$(mod_setenv_la_SOURCES) $(mod_sharelink_la_SOURCES) \
-	$(mod_simple_vhost_la_SOURCES) $(mod_smbdav_la_SOURCES) \
-	$(mod_ssi_la_SOURCES) $(mod_staticfile_la_SOURCES) \
-	$(mod_status_la_SOURCES) $(mod_trigger_b4_dl_la_SOURCES) \
-	$(mod_userdir_la_SOURCES) $(mod_usertrack_la_SOURCES) \
-	$(mod_webdav_la_SOURCES) $(lemon_SOURCES) $(lighttpd_SOURCES) \
-	$(lighttpd_angel_SOURCES) $(lighttpd_arpping_SOURCES) \
-	$(lighttpd_monitor_SOURCES) $(proc_open_SOURCES)
-DIST_SOURCES = $(am__liblightcomp_la_SOURCES_DIST) \
-	$(mod_access_la_SOURCES) $(mod_accesslog_la_SOURCES) \
-	$(mod_aidisk_access_la_SOURCES) $(mod_alias_la_SOURCES) \
-	$(mod_auth_la_SOURCES) $(mod_cgi_la_SOURCES) \
-	$(mod_cml_la_SOURCES) $(mod_compress_la_SOURCES) \
-	$(mod_create_captcha_image_la_SOURCES) \
-	$(mod_dirlisting_la_SOURCES) $(mod_evasive_la_SOURCES) \
-	$(mod_evhost_la_SOURCES) $(mod_expire_la_SOURCES) \
-	$(mod_extforward_la_SOURCES) $(mod_fastcgi_la_SOURCES) \
-	$(mod_flv_streaming_la_SOURCES) $(mod_indexfile_la_SOURCES) \
-	$(mod_magnet_la_SOURCES) $(mod_mysql_vhost_la_SOURCES) \
-	$(mod_proxy_la_SOURCES) $(mod_redirect_la_SOURCES) \
-	$(mod_rewrite_la_SOURCES) $(mod_rrdtool_la_SOURCES) \
-	$(mod_scgi_la_SOURCES) $(mod_secdownload_la_SOURCES) \
-	$(mod_setenv_la_SOURCES) $(mod_sharelink_la_SOURCES) \
-	$(mod_simple_vhost_la_SOURCES) $(mod_smbdav_la_SOURCES) \
+	$(mod_setenv_la_SOURCES) $(mod_simple_vhost_la_SOURCES) \
 	$(mod_ssi_la_SOURCES) $(mod_staticfile_la_SOURCES) \
 	$(mod_status_la_SOURCES) $(mod_trigger_b4_dl_la_SOURCES) \
 	$(mod_userdir_la_SOURCES) $(mod_usertrack_la_SOURCES) \
@@ -710,9 +685,8 @@ lemon_SOURCES = lemon.c
 lighttpd_angel_SOURCES = lighttpd-angel.c
 lighttpd_monitor_SOURCES = log.c buffer.c lighttpd-monitor.c nvram_control.c
 lighttpd_arpping_SOURCES = log.c buffer.c arpping_thread.c nvram_control.c
-#lighttpd_arpping_CFLAGS = $(AM_CFLAGS) $(LIBSMBCLIENT_CFLAGS)
 lighttpd_arpping_LDFLAGS = -lsmbclient
-BUILT_SOURCES = parsers versionstamp
+BUILT_SOURCES = parsers versionstamp 
 MAINTAINERCLEANFILES = configparser.c configparser.h mod_ssi_exprparser.c mod_ssi_exprparser.h
 CLEANFILES = versionstamp.h versionstamp.h.tmp
 common_src = buffer.c log.c \
@@ -744,16 +718,15 @@ src = server.c response.c connections.c network.c configfile.c \
 #mod_httptls_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
 #mod_httptls_la_LIBADD = $(common_libadd)
 lib_LTLIBRARIES = $(am__append_1) mod_flv_streaming.la mod_evasive.la \
-	mod_webdav.la mod_smbdav.la mod_magnet.la mod_cml.la \
-	mod_trigger_b4_dl.la mod_mysql_vhost.la mod_cgi.la mod_scgi.la \
-	mod_staticfile.la mod_dirlisting.la mod_indexfile.la \
-	mod_setenv.la mod_alias.la mod_userdir.la mod_rrdtool.la \
-	mod_usertrack.la mod_proxy.la mod_ssi.la mod_secdownload.la \
-	mod_expire.la mod_evhost.la mod_simple_vhost.la mod_fastcgi.la \
-	mod_extforward.la mod_access.la mod_compress.la mod_auth.la \
-	mod_rewrite.la mod_redirect.la mod_status.la mod_accesslog.la \
-	mod_aidisk_access.la mod_create_captcha_image.la \
-	mod_sharelink.la
+	mod_webdav.la mod_magnet.la mod_cml.la mod_trigger_b4_dl.la \
+	mod_mysql_vhost.la mod_cgi.la mod_scgi.la mod_staticfile.la \
+	mod_dirlisting.la mod_indexfile.la mod_setenv.la mod_alias.la \
+	mod_userdir.la mod_rrdtool.la mod_usertrack.la mod_proxy.la \
+	mod_ssi.la mod_secdownload.la mod_expire.la mod_evhost.la \
+	mod_simple_vhost.la mod_fastcgi.la mod_extforward.la \
+	mod_access.la mod_compress.la mod_auth.la mod_rewrite.la \
+	mod_redirect.la mod_status.la mod_accesslog.la \
+	mod_create_captcha_image.la
 @NO_RDYNAMIC_TRUE@liblightcomp_la_SOURCES = $(common_src)
 @NO_RDYNAMIC_TRUE@liblightcomp_la_CFLAGS = $(AM_CFLAGS) $(LIBEV_CFLAGS)
 @NO_RDYNAMIC_TRUE@liblightcomp_la_LDFLAGS = -avoid-version -no-undefined
@@ -770,10 +743,6 @@ mod_webdav_la_SOURCES = mod_webdav.c
 mod_webdav_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) 
 mod_webdav_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
 mod_webdav_la_LIBADD = $(common_libadd) $(XML_LIBS) $(SQLITE_LIBS) $(UUID_LIBS)
-mod_smbdav_la_SOURCES = mod_smbdav.c
-mod_smbdav_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS)
-mod_smbdav_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
-mod_smbdav_la_LIBADD = $(common_libadd) $(XML_LIBS) $(SQLITE_LIBS) $(UUID_LIBS)
 mod_magnet_la_SOURCES = mod_magnet.c mod_magnet_cache.c
 mod_magnet_la_CFLAGS = $(AM_CFLAGS) $(LUA_CFLAGS)
 mod_magnet_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
@@ -864,15 +833,9 @@ mod_status_la_LIBADD = $(common_libadd)
 mod_accesslog_la_SOURCES = mod_accesslog.c
 mod_accesslog_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
 mod_accesslog_la_LIBADD = $(common_libadd)
-mod_aidisk_access_la_SOURCES = mod_aidisk_access.c
-mod_aidisk_access_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
-mod_aidisk_access_la_LIBADD = $(common_libadd)
 mod_create_captcha_image_la_SOURCES = mod_create_captcha_image.c
 mod_create_captcha_image_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
 mod_create_captcha_image_la_LIBADD = $(common_libadd)
-mod_sharelink_la_SOURCES = mod_sharelink.c
-mod_sharelink_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
-mod_sharelink_la_LIBADD = $(common_libadd)
 hdr = server.h buffer.h network.h log.h keyvalue.h \
       response.h request.h fastcgi.h chunk.h \
       settings.h http_chunk.h http_auth_digest.h \
@@ -981,8 +944,6 @@ mod_access.la: $(mod_access_la_OBJECTS) $(mod_access_la_DEPENDENCIES) $(EXTRA_mo
 	$(AM_V_CCLD)$(mod_access_la_LINK) -rpath $(libdir) $(mod_access_la_OBJECTS) $(mod_access_la_LIBADD) $(LIBS)
 mod_accesslog.la: $(mod_accesslog_la_OBJECTS) $(mod_accesslog_la_DEPENDENCIES) $(EXTRA_mod_accesslog_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(mod_accesslog_la_LINK) -rpath $(libdir) $(mod_accesslog_la_OBJECTS) $(mod_accesslog_la_LIBADD) $(LIBS)
-mod_aidisk_access.la: $(mod_aidisk_access_la_OBJECTS) $(mod_aidisk_access_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(mod_aidisk_access_la_LINK) -rpath $(libdir) $(mod_aidisk_access_la_OBJECTS) $(mod_aidisk_access_la_LIBADD) $(LIBS)
 mod_alias.la: $(mod_alias_la_OBJECTS) $(mod_alias_la_DEPENDENCIES) $(EXTRA_mod_alias_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(mod_alias_la_LINK) -rpath $(libdir) $(mod_alias_la_OBJECTS) $(mod_alias_la_LIBADD) $(LIBS)
 mod_auth.la: $(mod_auth_la_OBJECTS) $(mod_auth_la_DEPENDENCIES) $(EXTRA_mod_auth_la_DEPENDENCIES) 
@@ -1029,12 +990,8 @@ mod_secdownload.la: $(mod_secdownload_la_OBJECTS) $(mod_secdownload_la_DEPENDENC
 	$(AM_V_CCLD)$(mod_secdownload_la_LINK) -rpath $(libdir) $(mod_secdownload_la_OBJECTS) $(mod_secdownload_la_LIBADD) $(LIBS)
 mod_setenv.la: $(mod_setenv_la_OBJECTS) $(mod_setenv_la_DEPENDENCIES) $(EXTRA_mod_setenv_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(mod_setenv_la_LINK) -rpath $(libdir) $(mod_setenv_la_OBJECTS) $(mod_setenv_la_LIBADD) $(LIBS)
-mod_sharelink.la: $(mod_sharelink_la_OBJECTS) $(mod_sharelink_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(mod_sharelink_la_LINK) -rpath $(libdir) $(mod_sharelink_la_OBJECTS) $(mod_sharelink_la_LIBADD) $(LIBS)
 mod_simple_vhost.la: $(mod_simple_vhost_la_OBJECTS) $(mod_simple_vhost_la_DEPENDENCIES) $(EXTRA_mod_simple_vhost_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(mod_simple_vhost_la_LINK) -rpath $(libdir) $(mod_simple_vhost_la_OBJECTS) $(mod_simple_vhost_la_LIBADD) $(LIBS)
-mod_smbdav.la: $(mod_smbdav_la_OBJECTS) $(mod_smbdav_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(mod_smbdav_la_LINK) -rpath $(libdir) $(mod_smbdav_la_OBJECTS) $(mod_smbdav_la_LIBADD) $(LIBS)
 mod_ssi.la: $(mod_ssi_la_OBJECTS) $(mod_ssi_la_DEPENDENCIES) $(EXTRA_mod_ssi_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(mod_ssi_la_LINK) -rpath $(libdir) $(mod_ssi_la_OBJECTS) $(mod_ssi_la_LIBADD) $(LIBS)
 mod_staticfile.la: $(mod_staticfile_la_OBJECTS) $(mod_staticfile_la_DEPENDENCIES) $(EXTRA_mod_staticfile_la_DEPENDENCIES) 
@@ -1212,7 +1169,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_access.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_accesslog.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_aidisk_access.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_alias.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_auth.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_cgi.Plo@am__quote@
@@ -1239,10 +1195,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_scgi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_secure_download.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_setenv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_sharelink.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_simple_vhost.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_smbdav_basic.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_smbdav_la-mod_smbdav.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_smbdav_ntlm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_ssi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_ssi_expr.Plo@am__quote@
@@ -1651,14 +1605,6 @@ mod_mysql_vhost_la-mod_mysql_vhost.lo: mod_mysql_vhost.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mod_mysql_vhost.c' object='mod_mysql_vhost_la-mod_mysql_vhost.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mod_mysql_vhost_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mod_mysql_vhost_la-mod_mysql_vhost.lo `test -f 'mod_mysql_vhost.c' || echo '$(srcdir)/'`mod_mysql_vhost.c
-
-mod_smbdav_la-mod_smbdav.lo: mod_smbdav.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mod_smbdav_la_CFLAGS) $(CFLAGS) -MT mod_smbdav_la-mod_smbdav.lo -MD -MP -MF $(DEPDIR)/mod_smbdav_la-mod_smbdav.Tpo -c -o mod_smbdav_la-mod_smbdav.lo `test -f 'mod_smbdav.c' || echo '$(srcdir)/'`mod_smbdav.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/mod_smbdav_la-mod_smbdav.Tpo $(DEPDIR)/mod_smbdav_la-mod_smbdav.Plo
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mod_smbdav.c' object='mod_smbdav_la-mod_smbdav.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mod_smbdav_la_CFLAGS) $(CFLAGS) -c -o mod_smbdav_la-mod_smbdav.lo `test -f 'mod_smbdav.c' || echo '$(srcdir)/'`mod_smbdav.c
 
 mod_webdav_la-mod_webdav.lo: mod_webdav.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mod_webdav_la_CFLAGS) $(CFLAGS) -MT mod_webdav_la-mod_webdav.lo -MD -MP -MF $(DEPDIR)/mod_webdav_la-mod_webdav.Tpo -c -o mod_webdav_la-mod_webdav.lo `test -f 'mod_webdav.c' || echo '$(srcdir)/'`mod_webdav.c
