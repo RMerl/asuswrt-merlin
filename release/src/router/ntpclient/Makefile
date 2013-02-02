@@ -8,7 +8,7 @@
 
 CFLAGS += -Wall -O
 
-CFLAGS += -DASUS -DASUS_NVRAM
+CFLAGS += -DASUS
 CFLAGS += -I$(TOP)/shared -I$(SRCBASE)/include
 LDFLAGS = -L$(TOP)/shared -lshared -L$(TOP)/nvram -lnvram
 INSTALL = install

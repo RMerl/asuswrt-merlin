@@ -5286,10 +5286,12 @@ function SaveTmpData(_data){
 	var d = _date.getDate() - _date.getDay(); // the date of this sunday
 	var calEnd;
 	var calStart;
+	var elapsed_seconds = (((_date.getHours()*60) + _date.getMinutes())*60 + _date.getSeconds() )*1000; // calculate 
+	//calStart = _date.getTime() - _date.getDay()*86400000 - _date.getTime()%86400000 + _date.getTimezoneOffset()*60000;
+	//calEnd = _date.getTime() + (7-_date.getDay())*86400000 - _date.getTime()%86400000 + _date.getTimezoneOffset()*60000;
+	calStart = _date.getTime() - _date.getDay()*86400000 - elapsed_seconds ;
+	calEnd = _date.getTime() + (7-_date.getDay())*86400000 - elapsed_seconds ;
 
-	calStart = _date.getTime() - _date.getDay()*86400000 - _date.getTime()%86400000 + _date.getTimezoneOffset()*60000;
-	calEnd = _date.getTime() + (7-_date.getDay())*86400000 - _date.getTime()%86400000 + _date.getTimezoneOffset()*60000;
-	
 	var MULTIFILTER_MACFILTER_DAYTIME_row_title = "";
 	var MULTIFILTER_MACFILTER_DAYTIME_row_time = "";
 	MULTIFILTER_MACFILTER_DAYTIME_row[_client] = "";
@@ -5302,17 +5304,17 @@ function SaveTmpData(_data){
 			continue;
 		else{
 			if(i != 0)
-				MULTIFILTER_MACFILTER_DAYTIME_row_title += "<"		
+				MULTIFILTER_MACFILTER_DAYTIME_row_title += "<"	
+				
 			MULTIFILTER_MACFILTER_DAYTIME_row_title += _data[i].event.title;
 			MULTIFILTER_MACFILTER_DAYTIME_row_title += "<"
-
-			if(_data[i].event.start.getTime() < calStart){
+			if(_data[i].event.start.getTime() < calStart){				
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += "0";
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.end.getDay();
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += "00";
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += convHour(_data[i].event.end.getHours());			
 			}
-			else if(_data[i].event.end.getTime() >= calEnd){			
+			else if(_data[i].event.end.getTime() >= calEnd){		
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.start.getDay();
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += "6";
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += convHour(_data[i].event.start.getHours());			
@@ -5320,9 +5322,11 @@ function SaveTmpData(_data){
 			}
 			else{
 				MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.start.getDay();
-
-				if(convHour(_data[i].event.end.getHours()) == "00"){					
-					MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.end.getDay()-1;
+				if(convHour(_data[i].event.end.getHours()) == "00"){
+					if(_data[i].event.end.getDay() != 0)
+						MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.end.getDay()-1;
+					else
+						MULTIFILTER_MACFILTER_DAYTIME_row_time += 6;
 				}	
 				else
 					MULTIFILTER_MACFILTER_DAYTIME_row_time += _data[i].event.end.getDay();

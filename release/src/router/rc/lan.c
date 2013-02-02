@@ -933,7 +933,10 @@ void start_lan(void)
 
 		eval("brctl", "addbr", lan_ifname);
 		eval("brctl", "setfd", lan_ifname, "0");
-		eval("brctl", "stp", lan_ifname, nvram_safe_get("lan_stp"));
+		if (is_routing_enabled())
+			eval("brctl", "stp", lan_ifname, nvram_safe_get("lan_stp"));
+		else
+			eval("brctl", "stp", lan_ifname, "0");
 #ifdef RTCONFIG_IPV6
 		if ((get_ipv6_service() != IPV6_DISABLED) &&
 			(!((nvram_get_int("ipv6_accept_ra") & 2) != 0 && !nvram_get_int("ipv6_radvd"))))

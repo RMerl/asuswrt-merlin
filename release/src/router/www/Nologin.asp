@@ -6,37 +6,38 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<link href="other.css"  rel="stylesheet" type="text/css">
 <style type="text/css">
-body {
-	background-image: url(images/bg.gif);
-	margin:50px auto;
+.Desc{
+  text-shadow: 0px 1px 0px white;
+  font-weight: bolder;
+  font-size: 22px;
+	font-family:Segoe UI, Arial, sans-serif;
+  color: #000;				
+	line-height: 40px;
+	text-align: left;
 }
 </style>
 
 <script language="javascript">
 <% login_state_hook(); %>
+var dhcpLeaseInfo = <% IP_dhcpLeaseInfo(); %>;
 
 function initial(){
-	document.getElementById("logined_ip_str").innerHTML = login_ip_str();
+	var thehostName = "";
+	for(var i=0; i<dhcpLeaseInfo.length; i++){
+		if(dhcpLeaseInfo[i][0] == login_ip_str())
+			thehostName = " (" + dhcpLeaseInfo[i][1] + ")";
+	}
+
+	document.getElementById("logined_ip_str").innerHTML = login_ip_str() + thehostName;
 }
 </script>
 </head>
 
-<body onload="initial()">
-<form name="formname" method="POST">
-<table width="500" border="0" align="center" cellpadding="10" cellspacing="0" class="erTable">
-  <tr>
-    <th align="left" valign="top" background="images/er_bg.gif">
-		<div class="drword_Nologin">
-	  	  	<p><#login_hint1#> <span id="logined_ip_str"></span></p>
-	  	  	<p><#login_hint2#></p>
-		</div>
-		<!--div class="drImg"><img src="images/alertImg.png"></div-->		
-		<div style="height:70px; "></div>
-	  	</th>
-  </tr>
-</table>
-</form>
+<body onload="initial()" style="text-align:center;background: #DDD">
+	<div style="margin-top:100px;width:50%;margin-left:25%">
+		<div class="Desc"><#login_hint1#> <span id="logined_ip_str"></span></div>
+		<div class="Desc"><#login_hint2#></div>
+	</div>
 </body>
 </html>

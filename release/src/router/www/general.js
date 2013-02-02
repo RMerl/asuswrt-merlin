@@ -1212,10 +1212,10 @@ function change_common(o, s, v){
 			document.form.wl_gmode_protection.value = "off";
 	}
 	else if(s=="WLANConfig11b" && v == "wl_nmode_x"){
-		if(o.value=='0' || o.value=='3')
-			inputCtrl(document.form.wl_gmode_check, 0);
-		else
+		if(o.value=='0' || o.value=='2')
 			inputCtrl(document.form.wl_gmode_check, 1);
+		else
+			inputCtrl(document.form.wl_gmode_check, 0);
 		
 		if(o.value == "2")
 			inputCtrl(document.form.wl_bw, 0);

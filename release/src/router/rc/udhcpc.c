@@ -214,9 +214,11 @@ bound(void)
 
 	wan_up(wan_ifname);
 
-	logmessage("dhcp client", "bound %s via %s",
+	logmessage("dhcp client", "bound %s via %s during %d seconds.",
 		nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)),
-		nvram_safe_get(strcat_r(prefix, "gateway", tmp)));
+		nvram_safe_get(strcat_r(prefix, "gateway", tmp)),
+		nvram_get_int(strcat_r(prefix, "lease", tmp))
+		);
 
 	_dprintf("udhcpc:: %s done\n", __FUNCTION__);
 	return 0;

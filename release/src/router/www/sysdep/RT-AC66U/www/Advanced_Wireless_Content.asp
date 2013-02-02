@@ -181,6 +181,9 @@ function applyRule(){
 		
 		if(auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius")
 			document.form.next_page.value = "/Advanced_WSecurity_Content.asp";
+
+		if(document.form.wl_nmode_x.value == "1" && "<% nvram_get("wl_unit"); %>" == "0")
+			document.form.wl_gmode_protection.value = "off";
 			
 		/*  Viz 2012.08.15 seems ineeded
 		inputCtrl(document.form.wl_crypto, 1);

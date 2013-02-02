@@ -106,15 +106,27 @@ function showdisklink(){
 			$("ddnslink2").style.display = "";
 			$("desc_2").style.display = "";			
 			$("ddnslink2_LAN").style.display = "";
-			$("selected_account_link").href = 'ftp://'+accounts[0]+':'+accounts[0]+'@<% nvram_get("ddns_hostname_x"); %>';
+			$("selected_account_link").href = 'ftp://'+accounts[0]+'@<% nvram_get("ddns_hostname_x"); %>';
 			showtext($("selected_account_str"), 'ftp://<% nvram_get("ddns_hostname_x"); %>');
-			$("selected_account_link_LAN").href = 'ftp://'+accounts[0]+':'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
+			$("selected_account_link_LAN").href = 'ftp://'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
 			showtext($("selected_account_str_LAN"), 'ftp://<% nvram_get("lan_ipaddr"); %>');
 		}
 		
-		if('<% nvram_get("enable_samba"); %>' == '1' && navigator.appName.indexOf("Microsoft") >= 0){
+		if('<% nvram_get("enable_samba"); %>' == '1'
+				&& navigator.appName.indexOf("Microsoft") >= 0
+				&& (( navigator.userAgent.indexOf("MSIE 7.0") >= 0 && navigator.userAgent.indexOf("Trident") < 0 )
+							|| ( navigator.userAgent.indexOf("MSIE 7.0") >= 0 && navigator.userAgent.indexOf("Trident/4.0") >= 0 )
+							|| ( navigator.userAgent.indexOf("MSIE 8.0") >= 0 && navigator.userAgent.indexOf("Trident/4.0") >= 0 ))
+				&& FTP_mode == 1			
+		){
+			// IE 7, IE 8
 			$("desc_3").style.display = "";
 			$("ddnslink3_LAN").style.display = "";
+		}else if('<% nvram_get("enable_samba"); %>' == '1'
+				&& navigator.appName.indexOf("Microsoft") >= 0){
+			// IE else
+			$("desc_3").style.display = "";
+			$("ddnslink_non_LAN").style.display = "";	
 		}	
 	}
 	else{
@@ -123,12 +135,24 @@ function showdisklink(){
 		if(FTP_mode == 1){
 				$("ftp_account_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 		}else{
-				$("ftp_account_link").href = 'ftp://'+accounts[0]+':'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
+				$("ftp_account_link").href = 'ftp://'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
 				$("ftp_account_link").innerHTML = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 		}		
-		if('<% nvram_get("enable_samba"); %>' == '1' && navigator.appName.indexOf("Microsoft") >= 0){
+						
+		if('<% nvram_get("enable_samba"); %>' == '1'
+				&& navigator.appName.indexOf("Microsoft") >= 0
+				&& (( navigator.userAgent.indexOf("MSIE 7.0") >= 0 && navigator.userAgent.indexOf("Trident") < 0 )
+							|| ( navigator.userAgent.indexOf("MSIE 7.0") >= 0 && navigator.userAgent.indexOf("Trident/4.0") >= 0 )
+							|| ( navigator.userAgent.indexOf("MSIE 8.0") >= 0 && navigator.userAgent.indexOf("Trident/4.0") >= 0 ))
+		){
+			// IE 7, IE 8
 			$("desc_3").style.display = "";
 			$("ddnslink3_LAN").style.display = "";
+		}else if('<% nvram_get("enable_samba"); %>' == '1'
+				&& navigator.appName.indexOf("Microsoft") >= 0){
+			// IE else
+			$("desc_3").style.display = "";
+			$("ddnslink_non_LAN").style.display = "";		
 		}	
 	
 		if(FTP_status != 1){
@@ -281,8 +305,11 @@ function DMhint(){
 	  </span>
 	</li>
 	<li id="desc_3" style="display:none;">
-		<span id="ddnslink3_LAN" style="display:none;"><#menu5_4_1#><span id="clouddiskstr"> / Cloud Disk</span>:<br>
-			<a target="_blank" href="\\<% nvram_get("lan_ipaddr"); %>" style="text-decoration: underline; font-family:Lucida Console;">\\<% nvram_get("lan_ipaddr"); %></a>
+		<span id="ddnslink3_LAN" style="display:none;"><#menu5_4_1#><span id="clouddiskstr"> / Cloud Disk :</span><br>
+			<a target="_blank" href="\\<% nvram_get("lan_ipaddr"); %>" style="text-decoration:underline; font-family:Lucida Console;">\\<% nvram_get("lan_ipaddr"); %></a>
+		</span>
+		<span id="ddnslink_non_LAN" style="display:none;"><#menu5_4_1#><span id="clouddiskstr"> / Cloud Disk :</span><br>
+			<span style="text-decoration:underline;font-family:Lucida Console;">file://<% nvram_get("lan_ipaddr"); %></span>
 		</span>		
 	</li>
 </ul>

@@ -194,6 +194,11 @@ function selectAll(obj, tab){
 				tag_name[i].checked = obj.checked;
 		}
 	}
+
+	if(obj.checked)
+		MULTIFILTER_ENABLE = MULTIFILTER_ENABLE.replace(/0/g, "1");
+	else	
+		MULTIFILTER_ENABLE = MULTIFILTER_ENABLE.replace(/1/g, "0");
 }
 
 function genEnableArray_main(j, obj){

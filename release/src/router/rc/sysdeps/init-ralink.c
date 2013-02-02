@@ -132,6 +132,18 @@ void init_switch_ralink()
 	config_switch();
 #endif
 
+#ifdef RTCONFIG_SHP
+	if(nvram_get_int("qos_enable") || nvram_get_int("macfilter_enable_x") || nvram_get_int("lfp_disable_force")) {
+		nvram_set("lfp_disable", "1");
+	}
+	else {
+		nvram_set("lfp_disable", "0");
+	}
+
+	if(nvram_get_int("lfp_disable")==0) {
+		restart_lfp();
+	}
+#endif
 //	reinit_hwnat();
 }
 

@@ -2651,11 +2651,61 @@ ej_lan_leases(int eid, webs_t wp, int argc, char_t **argv)
 
 	return ret;
 }
+
+int
+ej_IP_dhcpLeaseInfo(int eid, webs_t wp, int argc, char_t **argv)
+{
+        FILE *fp;
+        struct in_addr addr4;
+        struct in6_addr addr6;
+        char line[256];
+        char *hwaddr, *ipaddr, *name, *next;
+        unsigned int expires;
+        int ret = 0;
+
+        if (!nvram_get_int("dhcp_enable_x") || !nvram_match("sw_mode", "1"))
+                return ret;
+
+        /* Read leases file */
+        if (!(fp = fopen("/var/lib/misc/dnsmasq.leases", "r")))
+                return ret;
+
+	ret += websWrite(wp, "[");
+        while ((next = fgets(line, sizeof(line), fp)) != NULL) {
+                /* line should start from numeric value */
+                if (sscanf(next, "%u ", &expires) != 1)
+                        continue;
+
+                strsep(&next, " ");
+                hwaddr = strsep(&next, " ") ? : "";
+                ipaddr = strsep(&next, " ") ? : "";
+                name = strsep(&next, " ") ? : "";
+
+                if (inet_pton(AF_INET6, ipaddr, &addr6) != 0) {
+                        /* skip ipv6 leases, thay have no hwaddr, but client id */
+                        // hwaddr = next ? : "";
+                        continue;
+                } else if (inet_pton(AF_INET, ipaddr, &addr4) == 0)
+                        continue;
+
+                ret += websWrite(wp,"['%s', '%s'],", ipaddr, name);
+        }
+	ret += websWrite(wp, "['', '']];");
+        fclose(fp);
+
+        return ret;
+}
 #else
 int
 ej_dhcpLeaseInfo(int eid, webs_t wp, int argc, char_t **argv)
 {
 	return "";
+}
+
+int
+ej_IP_dhcpLeaseInfo(int eid, webs_t wp, int argc, char_t **argv)
+{
+        return "[['', '']]";
 }
 
 /* Dump leases in <tr><td>hostname</td><td>MAC</td><td>IP</td><td>expires</td></tr> format */
@@ -4964,6 +5014,7 @@ struct except_mime_handler except_mime_handlers[] = {
 	{ "QIS_*", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},	
 	{ "qis/*", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},	
 	{ "*.css", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
+	{ "ajax.js", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "state.js", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "detect.js", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "popup.js", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
@@ -7595,6 +7646,7 @@ struct ej_handler ej_handlers[] = {
 	{ "load_script", ej_load},
 	{ "select_list", ej_select_list},
 	{ "dhcpLeaseInfo", ej_dhcpLeaseInfo},
+	{ "IP_dhcpLeaseInfo", ej_IP_dhcpLeaseInfo},
 //tomato qosvvvvvvvvvvv 2010.08 Viz
 	{ "qrate", ej_qos_packet},
 	{ "ctdump", ej_ctdump},

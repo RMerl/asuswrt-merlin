@@ -550,6 +550,7 @@ void timecheck(void)
 	}
 
 	// radio on/off
+	if (nvram_match("svc_ready", "1"))
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 

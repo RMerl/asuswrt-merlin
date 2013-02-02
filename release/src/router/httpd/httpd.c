@@ -841,7 +841,14 @@ handle_request(void)
 						return;
 					}
 				}
-				if(!fromapp) http_login(login_ip_tmp, url);
+				if(!fromapp) {
+					if (	!strstr(url, "QIS_") 
+							&& !strstr(url, ".js")
+							&& !strstr(url, ".css") 
+							&& !strstr(url, ".gif") 
+							&& !strstr(url, ".png"))
+						http_login(login_ip_tmp, url);
+					}
 			}
 			
 			if (strcasecmp(method, "post") == 0 && !handler->input) {

@@ -691,7 +691,7 @@ void start_radvd(void)
 	FILE *f;
 	char *prefix, *ip, *mtu;
 	int do_dns, do_6to4, do_6rd;
-	char *argv[] = { "radvd", NULL, NULL, NULL };
+	char *argv[] = { "radvd", NULL, NULL, NULL, NULL, NULL, NULL };
 	int pid, argc, service, cnt;
 	char *p = NULL;
 
@@ -796,7 +796,7 @@ void start_radvd(void)
 			else
 				p = ipv6_dns_str;
 
-			cnt = write_ipv6_dns_servers(f, (cnt) ? " RDNSS " : "", (p && *p) ? p : ip, " ", 1);
+			cnt = write_ipv6_dns_servers(f, " RDNSS ", (char*) ((p && *p) ? p : ip), " ", 1);
 			if (cnt) fprintf(f, "{};\n");
 		}
 
@@ -2338,8 +2338,6 @@ stop_ntpc(void)
 		return;
 	}
 
-	if (pids("ntp"))
-		killall_tk("ntp");
 	if (pids("ntpclient"))
 		killall_tk("ntpclient");
 }
@@ -2357,7 +2355,8 @@ void refresh_ntpc(void)
 		stop_ntpc();
 		start_ntpc();
 	}
-	else killall("ntp", SIGTSTP);
+	else
+		kill_pidfile_s("/var/run/ntp.pid", SIGALRM);
 }
 
 int start_lltd(void)
@@ -2891,6 +2890,7 @@ again:
 	}
 	else if(strcmp(script, "mfgmode") == 0) {
 		//stop_infosvr(); //ATE need ifosvr
+		killall_tk("ntp");
 		stop_ntpc();
 		stop_wps();
 #ifdef RTCONFIG_BCMWL6

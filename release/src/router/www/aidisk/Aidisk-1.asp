@@ -78,7 +78,7 @@ function show_share_link(){
 			$("desc_2").style.display = ""; 
 			$("ddnslink2_LAN").style.display = ""; 			
 			showtext($("ddnslink2_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink2_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
-			$("ddnslink2_LAN_link").href = 'ftp://'+accounts[0]+':'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
+			$("ddnslink2_LAN_link").href = 'ftp://'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
 			$("ddnslink2_LAN_link").innerHTML = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 		}
 	}
@@ -95,7 +95,7 @@ function show_share_link(){
 					$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 			}else{
 					showtext($("ddnslink1_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink1_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
-					$("ddnslink1_LAN_link").href = 'ftp://'+accounts[0]+':'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
+					$("ddnslink1_LAN_link").href = 'ftp://'+accounts[0]+'@<% nvram_get("lan_ipaddr"); %>';
 					$("ddnslink1_LAN_link").innerHTML = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 			}		
 		}else if(ddns_hostname.length <= 0){
