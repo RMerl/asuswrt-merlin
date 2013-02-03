@@ -59,10 +59,12 @@ function parsedhcpLease(xmldoc)
 	var dhcpleaseXML = xmldoc.getElementsByTagName("dhcplease");
 	leasehostname = dhcpleaseXML[0].getElementsByTagName("hostname");
 	leasemac = dhcpleaseXML[0].getElementsByTagName("mac");
+	populateCache();
 }
 
 var retHostName = function(_mac){
 	if(parent.sw_mode != 1) return false;
+	if(leasemac == "") return "";
 
 	for(var idx=0; idx<leasemac.length; idx++){
 		if(!(leasehostname[idx].childNodes[0].nodeValue.split("value=")[1]) || !(leasemac[idx].childNodes[0].nodeValue.split("value=")[1]))
@@ -121,6 +123,7 @@ function populateCache() {
 	}
 
 	hostnamecache[fixIP(ntoa(aton(lan_ipaddr) & aton(lan_netmask)))] = 'LAN';
+	return 0;
 }
 
 // Botho 06/04/2006 : Function to resolve OUI names

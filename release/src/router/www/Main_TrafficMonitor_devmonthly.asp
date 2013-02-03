@@ -316,8 +316,9 @@ function init() {
 	initDate('ymd');
 	monthly_history.sort(cmpDualFields);
 	init_filter_dates(2);
-	populateCache();
 	redraw();
+// Refresh with resolved names
+	setTimeout("redraw();",1000);
 }
 
 

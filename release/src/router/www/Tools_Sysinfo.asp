@@ -39,8 +39,7 @@ function initial(){
 	showbootTime();
 	update_temperatures();
 	hwaccel_state();
-	populateCache();
-	setTimeout("get_ethernet_states();", 3000);
+	setTimeout("get_ethernet_states();",100);
 }
 
 function update_temperatures(){

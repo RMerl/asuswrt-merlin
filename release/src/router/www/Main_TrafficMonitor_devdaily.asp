@@ -327,8 +327,10 @@ function init() {
 	initDate('ymd');
 	daily_history.sort(cmpDualFields);
 	init_filter_dates(dateselect);
-	populateCache();
 	redraw();
+// Refresh with resolved names
+	setTimeout("redraw();",1000);
+
 }
 
 

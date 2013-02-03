@@ -460,7 +460,6 @@ function init() {
 
 	update_visibility();
 
-	populateCache();
 	ref.start();
 }
 
