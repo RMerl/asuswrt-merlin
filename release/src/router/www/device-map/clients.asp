@@ -79,8 +79,6 @@ var macfilter_enable =  '<% nvram_get("macfilter_enable_x"); %>';
 
 function update_clients(e) {
 
-  populateCache();
-
   $j.ajax({
     url: '/update_clients.asp',
     dataType: 'script', 
