@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.266.24 BETA 2 (1-Feb-2013)
+Asuswrt-Merlin - build 3.0.0.4.270.24 BETA 3 (4-Feb-2013)
 =========================================================
 
 About
@@ -36,7 +36,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on the 3.0.0.4.266 source release from Asus
+   - Based on the 3.0.0.4.270 source release from Asus
    - Various bugfixes (like the crash on VPN/NAT Loopback access of LAN devices)
    - Some components were updated to their latest versions, for improved stability
    - Persistent JFFS partition
@@ -352,6 +352,17 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+
+3.0.0.4.270.24 Beta 3:
+   - NEW: Rebased on 3.0.0.4.270.  Notable changes:
+      o New driver builds (these are NOT the new major versions that
+        Asus are currently developping)
+      o NTP-related changes
+   - FIXED: Removed logged warning from miniupnpd (regression from Beta 2)
+   - FIXED: Various timing issues causing some TrafficMonitoring and the Sysinfo
+            pages to often fail loading under IE.
+
+
 3.0.0.4.266.24 Beta 2:
    - CHANGED: Temperatures on Sysinfo page will now auto-update every 3 seconds.
    - CHANGED: Connections page now uses Ajax for slightly better rendering
