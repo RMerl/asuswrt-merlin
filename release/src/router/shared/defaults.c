@@ -965,6 +965,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "smbd_simpler_naming", "0"},
 	{ "smbd_bind_wan", "0"},
 
+	{ "nfsd_enable", "0"},
+	{ "nfsd_exportlist", ""},
+
 	{ "log_ipaddr", ""},
 	{ "log_port", "514"},
 	{ "log_size", "256"},

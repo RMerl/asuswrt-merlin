@@ -2783,6 +2783,10 @@ int start_nfsd(void)
 {
 	struct stat	st_buf;
 	FILE 		*fp;
+        char *nv, *nvp, *b;
+	char *dir, *access, *options;
+
+//	if (nvram_match("nfsd_enable", "0")) return 0;
 
 	/* create directories/files */
 	mkdir("/var/lib", 0755);
@@ -2794,28 +2798,36 @@ int start_nfsd(void)
 	close(creat("/var/lib/nfs/etab", 0644));
 	close(creat("/var/lib/nfs/xtab", 0644));
 	close(creat("/var/lib/nfs/rmtab", 0644));
-	
+
 	/* create /etc/exports, if it does not exists yet */
-	if (stat("/etc/exports", &st_buf) != 0) 
+	if (stat("/etc/exports", &st_buf) != 0)
 	{
-		int i, count;
-		char tmp[sizeof("usb_nfslist_xXXXXX")];
-		
 		if ((fp = fopen("/etc/exports", "w")) == NULL) {
 			perror("/etc/exports");
 			return 1;
 		}
-		
+
 		fprintf(fp, "# automagically generated\n");
 
-		for (i = 0, count = nvram_get_int("usb_nfsnum_x"); i < count; i++) 
+       	        nv = nvp = strdup(nvram_safe_get("nfsd_exportlist"));
+               	if (nv) {
+                       	while ((b = strsep(&nvp, "<")) != NULL) {
+       	                        if ((vstrsep(b, ">", &dir, &access, &options) != 3))
+               	                        continue;
+				fprintf(fp, "%s %s (%s)\n", dir, access, options);
+			}
+			free(nv);
+		}
+/*
+		for (i = 0, count = nvram_get_int("usb_nfsnum_x"); i < count; i++)
 		{
 			sprintf(tmp, "usb_nfslist_x%d", i);
 			if (nvram_safe_get(tmp)[0] == '/')
 				fprintf(fp, "%s\n", nvram_safe_get(tmp));
-			else	fprintf(fp, "/tmp/harddisk/%s\n", nvram_safe_get(tmp));
+			else	fprintf(fp, "/tmp/mnt/%s\n", nvram_safe_get(tmp));
 		}
-		fappend(fp,"/usr/local/etc/exports");
+*/
+		append_custom_config("exports", fp);
 		fclose(fp);
 	}
 
@@ -2826,7 +2838,7 @@ int start_nfsd(void)
 	sleep(1);
 	eval("/usr/sbin/exportfs", "-a");
 
-	return 0;	
+	return 0;
 }
 
 int restart_nfsd(void)
@@ -2834,7 +2846,7 @@ int restart_nfsd(void)
 	eval("/usr/sbin/exportfs", "-au");
 	eval("/usr/sbin/exportfs", "-a");
 
-	return 0;	
+	return 0;
 }
 
 int stop_nfsd(void)
