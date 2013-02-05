@@ -1,0 +1,70 @@
+.\"@(#)umount.nfs.8"
+.TH UMOUNT.NFS 8 "6 Jun 2006"
+.SH NAME
+umount.nfs, umount.nfs4 \- unmount a Network File System
+.SH SYNOPSIS
+.BI "umount.nfs" " dir" " [\-fvnrlh ]"
+.SH DESCRIPTION
+.BR umount.nfs
+and
+.BR umount.nfs4
+are a part of 
+.BR nfs (5)
+utilities package, which provides NFS client functionality.
+
+.BR umount.nfs4 
+and
+.BR umount.nfs
+are meant to be used by the
+.BR umount (8)
+command for unmounting NFS shares. This subcommand, however, can also be used as a standalone command with limited functionality.
+
+.I dir 
+is the directory on which the file system is mounted.
+
+.SH OPTIONS
+.TP
+.BI "\-f"
+Force unmount the file system in case of unreachable NFS system.
+.TP
+.BI "\-v"
+Be verbose.
+.TP
+.BI "\-n"
+Do not update 
+.I /etc/mtab. 
+By default, an entry is created in 
+.I /etc/mtab 
+for every mounted file system. Use this option to skip deleting an entry.
+.TP
+.BI "\-r"
+In case unmounting fails, try to mount read-only.
+.TP
+.BI "\-l"
+Lazy unmount. Detach the file system from the file system hierarchy now, and cleanup all references to the file system as soon as it is not busy anymore.
+.TP
+.BI "\-h"
+Print help message.
+
+.SH NOTE
+For further information please refer 
+.BR nfs (5)
+and
+.BR umount (8)
+manual pages.
+
+.SH FILES
+.TP 18n
+.I /etc/fstab
+file system table
+.TP
+.I /etc/mtab
+table of mounted file systems
+
+.PD
+.SH "SEE ALSO"
+.BR nfs (5),
+.BR umount (8),
+
+.SH "AUTHOR"
+Amit Gud <agud@redhat.com>

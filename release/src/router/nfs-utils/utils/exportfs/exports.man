@@ -1,0 +1,505 @@
+.TH EXPORTS 5 "4 March 2005" "Linux" "Linux File Formats Manual"
+.SH NAME
+exports \- NFS file systems being exported (for Kernel based NFS)
+.SH SYNOPSIS
+.B /etc/exports
+.SH DESCRIPTION
+The file
+.I /etc/exports
+serves as the access control list for file systems which may be
+exported to NFS clients.  It is used by
+.IR exportfs (8)
+to give information to
+.IR mountd (8)
+and to the kernel based NFS file server daemon
+.IR nfsd (8).
+.PP
+The file format is similar to the SunOS
+.I exports
+file. Each line contains an export point and a whitespace-separated list
+of clients allowed to mount the file system at that point. Each listed
+client may be immediately followed by a parenthesized, comma-separated
+list of export options for that client. No whitespace is permitted
+between a client and its option list.
+.PP
+Also, each line may have one or more specifications for default options
+after the path name, in the form of a dash ("\-") followed by an option
+list. The option list is used for all subsequent exports on that line
+only.
+.PP
+Blank lines are ignored.  A pound sign ("#") introduces a comment to the
+end of the line. Entries may be continued across newlines using a
+backslash. If an export name contains spaces it should be quoted using
+double quotes. You can also specify spaces or other unusual character in
+the export name using a backslash followed by the character code as three
+octal digits.
+.PP
+To apply changes to this file, run exportfs \-ra or restart the NFS server.
+.PP
+.SS Machine Name Formats
+NFS clients may be specified in a number of ways:
+.IP "single host
+This is the most common format. You may specify a host either by an
+abbreviated name recognized be the resolver, the fully qualified domain
+name, or an IP address.
+.IP "netgroups
+NIS netgroups may be given as
+.IR @group .
+Only the host part of each
+netgroup members is consider in checking for membership.  Empty host
+parts or those containing a single dash (\-) are ignored.
+.IP "wildcards
+Machine names may contain the wildcard characters \fI*\fR and \fI?\fR.
+This can be used to make the \fIexports\fR file more compact; for instance,
+\fI*.cs.foo.edu\fR matches all hosts in the domain
+\fIcs.foo.edu\fR.  As these characters also match the dots in a domain
+name, the given pattern will also match all hosts within any subdomain
+of \fIcs.foo.edu\fR.
+.IP "IP networks
+You can also export directories to all hosts on an IP (sub-) network
+simultaneously. This is done by specifying an IP address and netmask pair
+as
+.IR address/netmask
+where the netmask can be specified in dotted-decimal format, or as a
+contiguous mask length (for example, either `/255.255.252.0' or `/22' appended
+to the network base address result in identical subnetworks with 10 bits of
+host). Wildcard characters generally do not work on IP addresses, though they
+may work by accident when reverse DNS lookups fail.
+'''.TP
+'''.B =public
+'''This is a special ``hostname'' that identifies the given directory name
+'''as the public root directory (see the section on WebNFS in
+'''.BR nfsd (8)
+'''for a discussion of WebNFS and the public root handle). When using this
+'''convention,
+'''.B =public
+'''must be the only entry on this line, and must have no export options
+'''associated with it. Note that this does
+'''.I not
+'''actually export the named directory; you still have to set the exports
+'''options in a separate entry.
+'''.PP
+'''The public root path can also be specified by invoking
+'''.I nfsd
+'''with the
+'''.B \-\-public\-root
+'''option. Multiple specifications of a public root will be ignored.
+.PP
+.SS RPCSEC_GSS security
+You may use the special strings "gss/krb5", "gss/krb5i", or "gss/krb5p"
+to restrict access to clients using rpcsec_gss security.  However, this
+syntax is deprecated; on linux kernels since 2.6.23, you should instead
+use the "sec=" export option:
+.TP
+.IR sec=
+The sec= option, followed by a colon-delimited list of security flavors,
+restricts the export to clients using those flavors.  Available security
+flavors include sys (the default--no cryptographic security), krb5
+(authentication only), krb5i (integrity protection), and krb5p (privacy
+protection).  For the purposes of security flavor negotiation, order
+counts: preferred flavors should be listed first.  The order of the sec=
+option with respect to the other options does not matter, unless you
+want some options to be enforced differently depending on flavor.
+In that case you may include multiple sec= options, and following options
+will be enforced only for access using flavors listed in the immediately
+preceding sec= option.  The only options that are permitted to vary in
+this way are ro, rw, no_root_squash, root_squash, and all_squash.
+.PP
+.SS General Options
+.IR exportfs
+understands the following export options:
+.TP
+.IR secure "\*d
+This option requires that requests originate on an Internet port less
+than IPPORT_RESERVED (1024). This option is on by default. To turn it
+off, specify
+.IR insecure .
+.TP
+.IR rw
+Allow both read and write requests on this NFS volume. The
+default is to disallow any request which changes the filesystem.
+This can also be made explicit by using
+the
+.IR ro " option.
+.TP
+.IR async
+This option allows the NFS server to violate the NFS protocol and
+reply to requests before any changes made by that request have been
+committed to stable storage (e.g. disc drive).
+
+Using this option usually improves performance, but at the cost that
+an unclean server restart (i.e. a crash) can cause data to be lost or
+corrupted.
+
+.TP
+.IR sync
+Reply to requests only after the changes have been committed to stable
+storage (see
+.IR async
+above).
+
+In releases of nfs-utils up to and including 1.0.0, this option was the
+default.  In all releases after 1.0.0,
+.I sync
+is the default, and
+.I async
+must be explicitly requested if needed.
+To help make system administrators aware of this change, 'exportfs'
+will issue a warning if neither
+.I sync
+nor
+.I async
+is specified.
+.TP
+.IR no_wdelay
+This option has no effect if
+.I async
+is also set.  The NFS server will normally delay committing a write request
+to disc slightly if it suspects that another related write request may be in
+progress or may arrive soon.  This allows multiple write requests to
+be committed to disc with the one operation which can improve
+performance.  If an NFS server received mainly small unrelated
+requests, this behaviour could actually reduce performance, so
+.IR no_wdelay
+is available to turn it off.
+The default can be explicitly requested with the
+.IR wdelay " option.
+.TP
+.IR nohide
+This option is based on the option of the same name provided in IRIX
+NFS.  Normally, if a server exports two filesystems one of which is
+mounted on the other, then the client will have to mount both
+filesystems explicitly to get access to them.  If it just mounts the
+parent, it will see an empty directory at the place where the other
+filesystem is mounted.  That filesystem is "hidden".
+
+Setting the
+.I nohide
+option on a filesystem causes it not to be hidden, and an
+appropriately authorised client will be able to move from the parent to
+that filesystem without noticing the change.
+
+However, some NFS clients do not cope well with this situation as, for
+instance, it is then possible for two files in the one apparent
+filesystem to have the same inode number.
+
+The
+.I nohide
+option is currently only effective on
+.I "single host
+exports.  It does not work reliably with netgroup, subnet, or wildcard
+exports. 
+
+This option can be very useful in some situations, but it should be
+used with due care, and only after confirming that the client system
+copes with the situation effectively.
+
+The option can be explicitly disabled with
+.IR hide .
+.TP
+.IR crossmnt
+This option is similar to
+.I nohide
+but it makes it possible for clients to move from the filesystem marked
+with crossmnt to exported filesystems mounted on it.  Thus when a child
+filesystem "B" is mounted on a parent "A", setting crossmnt on "A" has
+the same effect as setting "nohide" on B.
+.TP
+.IR no_subtree_check
+This option disables subtree checking, which has mild security
+implications, but can improve reliability in some circumstances.
+
+If a subdirectory of a filesystem is exported, but the whole
+filesystem isn't then whenever a NFS request arrives, the server must
+check not only that the accessed file is in the appropriate filesystem
+(which is easy) but also that it is in the exported tree (which is
+harder). This check is called the
+.IR subtree_check .
+
+In order to perform this check, the server must include some
+information about the location of the file in the "filehandle" that is
+given to the client.  This can cause problems with accessing files that
+are renamed while a client has them open (though in many simple cases
+it will still work).
+
+subtree checking is also used to make sure that files inside
+directories to which only root has access can only be accessed if the
+filesystem is exported with
+.I no_root_squash
+(see below), even if the file itself allows more general access.
+
+As a general guide, a home directory filesystem, which is normally
+exported at the root and may see lots of file renames, should be
+exported with subtree checking disabled.  A filesystem which is mostly
+readonly, and at least doesn't see many file renames (e.g. /usr or
+/var) and for which subdirectories may be exported, should probably be
+exported with subtree checks enabled.
+
+The default of having subtree checks enabled, can be explicitly
+requested with
+.IR subtree_check .
+
+From release 1.1.0 of nfs-utils onwards, the default will be
+.I no_subtree_check
+as subtree_checking tends to cause more problems than it is worth.
+If you genuinely require subtree checking, you should explicitly put
+that option in the
+.B exports
+file.  If you put neither option,
+.I exportfs
+will warn you that the change is pending.
+
+.TP
+.IR insecure_locks
+.TP
+.IR no_auth_nlm
+This option (the two names are synonymous) tells the NFS server not to require authentication of
+locking requests (i.e. requests which use the NLM protocol).  Normally
+the NFS server will require a lock request to hold a credential for a
+user who has read access to the file.  With this flag no access checks
+will be performed.
+
+Early NFS client implementations did not send credentials with lock
+requests, and many current NFS clients still exist which are based on
+the old implementations.  Use this flag if you find that you can only
+lock files which are world readable.
+
+The default behaviour of requiring authentication for NLM requests can
+be explicitly requested with either of the synonymous
+.IR auth_nlm ,
+or
+.IR secure_locks .
+.TP
+.IR no_acl
+On some specially patched kernels, and when exporting filesystems that
+support ACLs, this option tells nfsd not to reveal ACLs to clients, so
+they will see only a subset of actual permissions on the given file
+system.  This option is safe for filesystems used by NFSv2 clients and
+old NFSv3 clients that perform access decisions locally.  Current
+NFSv3 clients use the ACCESS RPC to perform all access decisions on
+the server.  Note that the
+.I no_acl
+option only has effect on kernels specially patched to support it, and
+when exporting filesystems with ACL support.  The default is to export
+with ACL support (i.e. by default,
+.I no_acl
+is off).
+
+'''.TP
+'''.I noaccess
+'''This makes everything below the directory inaccessible for the named
+'''client.  This is useful when you want to export a directory hierarchy to
+'''a client, but exclude certain subdirectories. The client's view of a
+'''directory flagged with noaccess is very limited; it is allowed to read
+'''its attributes, and lookup `.' and `..'. These are also the only entries
+'''returned by a readdir.
+'''.TP
+'''.IR link_relative
+'''Convert absolute symbolic links (where the link contents start with a
+'''slash) into relative links by prepending the necessary number of ../'s
+'''to get from the directory containing the link to the root on the
+'''server.  This has subtle, perhaps questionable, semantics when the file
+'''hierarchy is not mounted at its root.
+'''.TP
+'''.IR link_absolute
+'''Leave all symbolic link as they are. This is the default operation.
+
+.TP
+.IR mountpoint= path
+.TP
+.I mp
+This option makes it possible to only export a directory if it has
+successfully been mounted.
+If no path is given (e.g.
+.IR mountpoint " or " mp )
+then the export point must also be a mount point.  If it isn't then
+the export point is not exported.  This allows you to be sure that the
+directory underneath a mountpoint will never be exported by accident
+if, for example, the filesystem failed to mount due to a disc error.
+
+If a path is given (e.g.
+.IR mountpoint= "/path or " mp= /path)
+then the nominated path must be a mountpoint for the exportpoint to be
+exported.
+
+.TP
+.IR fsid= num|root|uuid
+NFS needs to be able to identify each filesystem that it exports.
+Normally it will use a UUID for the filesystem (if the filesystem has
+such a thing) or the device number of the device holding the
+filesystem (if the filesystem is stored on the device).
+
+As not all filesystems are stored on devices, and not all filesystems
+have UUIDs, it is sometimes necessary to explicitly tell NFS how to
+identify a filesystem.  This is done with the
+.I fsid=
+option.
+
+For NFSv4, there is a distinguished filesystem which is the root of
+all exported filesystem.  This is specified with
+.I fsid=root
+or
+.I fsid=0
+both of which mean exactly the same thing.
+
+Other filesystems can be identified with a small integer, or a UUID
+which should contain 32 hex digits and arbitrary punctuation.
+
+Linux kernels version 2.6.20 and earlier do not understand the UUID
+setting so a small integer must be used if an fsid option needs to be
+set for such kernels.  Setting both a small number and a UUID is
+supported so the same configuration can be made to work on old and new
+kernels alike.
+
+.TP
+.IR refer= path@host[+host][:path@host[+host]]
+A client referencing the export point will be directed to choose from
+the given list an alternative location for the filesystem.
+(Note that the server must have a mountpoint here, though a different
+filesystem is not required; so, for example,
+.IR "mount --bind" " /path /path"
+is sufficient.)
+.TP
+.IR replicas= path@host[+host][:path@host[+host]]
+If the client asks for alternative locations for the export point, it
+will be given this list of alternatives. (Note that actual replication
+of the filesystem must be handled elsewhere.)
+
+.TP
+.IR refer= path@host[+host][:path@host[+host]]
+A client referencing the export point will be directed to choose from
+the given list an alternative location for the filesystem.
+(Note that the server must have a mountpoint here, though a different
+filesystem is not required; so, for example,
+.IR "mount --bind" " /path /path"
+is sufficient.)
+.TP
+.IR replicas= path@host[+host][:path@host[+host]]
+If the client asks for alternative locations for the export point, it
+will be given this list of alternatives. (Note that actual replication
+of the filesystem must be handled elsewhere.)
+
+.SS User ID Mapping
+.PP
+.I nfsd
+bases its access control to files on the server machine on the uid and
+gid provided in each NFS RPC request. The normal behavior a user would
+expect is that she can access her files on the server just as she would
+on a normal file system. This requires that the same uids and gids are
+used on the client and the server machine. This is not always true, nor
+is it always desirable.
+.PP
+Very often, it is not desirable that the root user on a client machine
+is also treated as root when accessing files on the NFS server. To this
+end, uid 0 is normally mapped to a different id: the so-called
+anonymous or
+.I nobody
+uid. This mode of operation (called `root squashing') is the default,
+and can be turned off with
+.IR no_root_squash .
+.PP
+By default,
+'''.I nfsd
+'''tries to obtain the anonymous uid and gid by looking up user
+'''.I nobody
+'''in the password file at startup time. If it isn't found, a uid and gid
+.I exportfs
+chooses a uid and gid
+of 65534 for squashed access. These values can also be overridden by
+the
+.IR anonuid " and " anongid
+options.
+'''.PP
+'''In addition to this, 
+'''.I nfsd
+'''lets you specify arbitrary uids and gids that should be mapped to user
+'''nobody as well.
+Finally, you can map all user requests to the
+anonymous uid by specifying the
+.IR all_squash " option.
+.PP
+Here's the complete list of mapping options:
+.TP
+.IR root_squash
+Map requests from uid/gid 0 to the anonymous uid/gid. Note that this does
+not apply to any other uids or gids that might be equally sensitive, such as
+user
+.IR bin 
+or group
+.IR staff .
+.TP
+.IR no_root_squash
+Turn off root squashing. This option is mainly useful for diskless clients.
+.TP
+.IR all_squash
+Map all uids and gids to the anonymous user. Useful for NFS-exported
+public FTP directories, news spool directories, etc. The opposite option
+is 
+.IR no_all_squash ,
+which is the default setting.
+.TP
+.IR anonuid " and " anongid
+These options explicitly set the uid and gid of the anonymous account.
+This option is primarily useful for PC/NFS clients, where you might want
+all requests appear to be from one user. As an example, consider the
+export entry for
+.B /home/joe
+in the example section below, which maps all requests to uid 150 (which
+is supposedly that of user joe).
+.IP
+.SH EXAMPLE
+.PP
+.nf
+.ta +3i
+# sample /etc/exports file
+/               master(rw) trusty(rw,no_root_squash)
+/projects       proj*.local.domain(rw)
+/usr            *.local.domain(ro) @trusted(rw)
+/home/joe       pc001(rw,all_squash,anonuid=150,anongid=100)
+/pub            *(ro,insecure,all_squash)
+/srv/www        \-sync,rw server @trusted @external(ro)
+'''/pub/private    (noaccess)
+.fi
+.PP
+The first line exports the entire filesystem to machines master and trusty.
+In addition to write access, all uid squashing is turned off for host
+trusty. The second and third entry show examples for wildcard hostnames
+and netgroups (this is the entry `@trusted'). The fourth line shows the
+entry for the PC/NFS client discussed above. Line 5 exports the
+public FTP directory to every host in the world, executing all requests
+under the nobody account. The
+.I insecure 
+option in this entry also allows clients with NFS implementations that
+don't use a reserved port for NFS.
+The sixth line exports a directory read-write to the machine 'server'
+as well as the `@trusted' netgroup, and read-only to netgroup `@external',
+all three mounts with the `sync' option enabled.
+''' The last line denies all NFS clients
+'''access to the private directory.
+'''.SH CAVEATS
+'''Unlike other NFS server implementations, this
+'''.I nfsd
+'''allows you to export both a directory and a subdirectory thereof to
+'''the same host, for instance 
+'''.IR /usr " and " /usr/X11R6 .
+'''In this case, the mount options of the most specific entry apply. For
+'''instance, when a user on the client host accesses a file in 
+'''.IR /usr/X11R6 ,
+'''the mount options given in the 
+'''.I /usr/X11R6 
+'''entry apply. This is also true when the latter is a wildcard or netgroup
+'''entry.
+.SH FILES
+/etc/exports
+.SH SEE ALSO
+.BR exportfs (8),
+.BR netgroup (5),
+.BR mountd (8),
+.BR nfsd (8),
+.BR showmount (8).
+'''.SH DIAGNOSTICS
+'''An error parsing the file is reported using syslogd(8) as level NOTICE from
+'''a DAEMON whenever nfsd(8) or mountd(8) is started up.  Any unknown
+'''host is reported at that time, but often not all hosts are not yet known
+'''to named(8) at boot time, thus as hosts are found they are reported
+'''with the same syslogd(8) parameters.

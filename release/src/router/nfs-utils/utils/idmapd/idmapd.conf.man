@@ -1,0 +1,74 @@
+.\"	$OpenBSD: mdoc.template,v 1.6 2001/02/03 08:22:44 niklas Exp $
+.\"
+.\" The following requests are required for all man pages.
+.Dd July 16, 2003
+.Dt idmapd.conf 5
+.Os
+.Sh NAME
+.Nm idmapd.conf
+.Nd configuration file for idmapd, the NFSv4 ID <-> Name Mapper
+.Sh SYNOPSIS
+Configuration file for idmapd, the NFSv4 ID <-> Name Mapper
+.Sh DESCRIPTION
+The
+.Nm
+configuration file has two sections, initiated by the strings
+[General] and [Mapping].  Each section may contain lines of the form
+.Dl ""
+.Dl variable = value
+.Dl ""
+The variables allowed in the General section are
+.Va Verbosity,
+.Va Pipefs-Directory,
+and
+.Va Domain,
+whose values have the same effect as the arguments to the
+.Fl v,
+.Fl p,
+and
+.Fl d
+commandline options, respectively.  The variables allowed in the
+Mapping section are
+.Va Nobody-User
+and
+.Va Nobody-Group,
+which have the same effect as the
+.Fl U
+and
+.Fl G
+commandline options.
+'
+.Sh EXAMPLES
+'
+An example
+.Pa /etc/idmapd.conf
+file:
+'
+.Bd -literal
+[General]
+
+Verbosity = 0
+Pipefs-Directory = /var/lib/nfs/rpc_pipefs
+Domain = localdomain
+
+[Mapping]
+
+Nobody-User = nobody
+Nobody-Group = nobody
+.Ed
+'
+.Sh SEE ALSO
+.Xr idmapd 8
+.\".Sh SEE ALSO
+.\".Xr nylon.conf 4
+.\" .Sh COMPATIBILITY
+.\".Sh STANDARDS
+.\".Sh ACKNOWLEDGEMENTS
+.Sh AUTHORS
+The idmapd software has been developed by Marius Aamodt Eriksen
+.Aq marius@citi.umich.edu .
+.\" .Sh HISTORY
+.\".Sh BUGS
+.\"Please report any bugs to Marius Aamodt Eriksen
+.\".Aq marius@monkey.org .
+.\" .Sh CAVEATS

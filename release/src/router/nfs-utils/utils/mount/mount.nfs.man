@@ -1,0 +1,86 @@
+.\"@(#)mount.nfs.8"
+.TH MOUNT.NFS 8 "5 Jun 2006"
+.SH NAME
+mount.nfs, mount.nfs4 \- mount a Network File System
+.SH SYNOPSIS
+.BI "mount.nfs" " remotetarget dir" " [\-rvVwfnsh ] [\-o " options "]
+.SH DESCRIPTION
+.BR mount.nfs
+is a part of 
+.BR nfs (5)
+utilities package, which provides NFS client functionality.
+
+.BR mount.nfs 
+is meant to be used by the
+.BR mount (8)
+command for mounting NFS shares. This subcommand, however, can also be used as a standalone command with limited functionality.
+
+.BR mount.nfs4 
+is used for mounting NFSv4 file system, while 
+.BR mount.nfs 
+is used to mount NFS file systems versions 3 or 2.
+.I remotetarget 
+is a server share usually in the form of 
+.BR servername:/path/to/share.
+.I dir 
+is the directory on which the file system is to be mounted.
+
+.SH OPTIONS
+.TP
+.BI "\-r"
+Mount file system readonly.
+.TP
+.BI "\-v"
+Be verbose.
+.TP
+.BI "\-V"
+Print version.
+.TP
+.BI "\-w"
+Mount file system read-write.
+.TP
+.BI "\-f"
+Fake mount. Don't actually call the mount system call.
+.TP
+.BI "\-n"
+Do not update 
+.I /etc/mtab. 
+By default, an entry is created in 
+.I /etc/mtab 
+for every mounted file system. Use this option to skip making an entry.
+.TP
+.BI "\-s"
+Tolerate sloppy mount options rather than fail.
+.TP
+.BI "\-h"
+Print help message.
+.TP
+.BI "nfsoptions"
+Refer to 
+.BR nfs (5)
+or
+.BR mount (8) 
+manual pages.
+
+.SH NOTE
+For further information please refer 
+.BR nfs (5)
+and
+.BR mount (8)
+manual pages.
+
+.SH FILES
+.TP 18n
+.I /etc/fstab
+file system table
+.TP
+.I /etc/mtab
+table of mounted file systems
+
+.PD
+.SH "SEE ALSO"
+.BR nfs (5),
+.BR mount (8),
+
+.SH "AUTHOR"
+Amit Gud <agud@redhat.com>

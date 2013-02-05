@@ -1,0 +1,42 @@
+@(#) BLURB 1.5 96/07/06 23:09:45
+
+This is the fifth replacement portmapper release.
+
+There is an increasing interest in access control for the NIS, mount
+and other RPC-based services that are normally registered with the
+portmap process. Possible attacks on RPC daemons involve:
+
+    - theft of NIS (YP) password files
+
+    - ypset to force hosts to bind to a rogue NIS (YP) server
+
+    - theft of NFS file handles
+
+My contribution is a replacement portmap program, derived from source
+code in the RPCSRC 4.0 and the TIRPC source distributions.  Access
+control (optional) is in the style of my tcp wrapper (log_tcp) package.
+
+Supported platforms: this program is known to work with all SunOS 4.x
+releases. With some Makefile editing it should also work on Ultrix 4.x,
+HP-UX 9.x, AIX 3.x and AIX 4.x, and Digital UNIX (OSF/1).
+
+Solaris 2.x and other System V.4 UNIXes should use use my rpcbind
+replacement (ftp.win.tue.nl:/pub/security/rpcbind_*.tar.Z).
+
+This portmap version attempts to close all portmap security problems
+that are known to me.  The README file gives a complete list of
+security features.
+
+Without the availability of portmap source, possible alternatives are
+1) packet filtering with a smart router (which we do anyway); 2)
+linking the portmap executable against the securelib shared library.
+Linking RPC daemons against the securelib library is a good idea,
+anyway.
+
+The source is available for anonymous FTP from ftp.win.tue.nl directory
+/pub/security/portmap_*.tar.gz.
+
+	Wietse Venema (wietse@wzv.win.tue.nl)
+	Mathematics and Computing Science
+	Eindhoven University of Technology
+	The Netherlands

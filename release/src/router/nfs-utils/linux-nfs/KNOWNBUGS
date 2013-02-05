@@ -1,0 +1,37 @@
+
+nfsd:
+
+ *	We currently keep the inode in the exports struct. This is
+	a bad idea with directories that are intended to be used as
+	a mount point. Must store the file name instead and do a
+	lookup when getfh is called. Yuck!
+
+	Even yuckier: what do we do about exports matching when we
+	can't keep the inode number?
+
+ *	stating a file on remote cdrom returns st_blocks == 0 for some
+	apps.
+
+ *	Should allow multiple exports per dev if one of the directories
+	isn't a subdir of the other.
+
+nfsclnt:
+
+ *	On some occasions, an EAGAIN reported by the transport layer
+	will be propagated to the VFS.
+ *	Some operations do not seem to release the inode properly, so
+	unmounting the device fails.
+
+lockd:
+
+ *	Handle portmap registration in a separate thread. portmap may
+	not be running when we try to mount the first NFS volume (esp.
+	when mounting /usr).
+
+ *	Does not inform rpc.statd when hosts no longer require
+	monitoring; hosts are incorrectly monitored until next system
+	reboot.
+
+exportfs/mountd:
+
+ *	Export handling is reported to do odd things at times.

@@ -1,0 +1,319 @@
+This is the Linux kernel NFS daemon 1.4.7. It is based on linux-nfs
+0.4.22. It is tested on Linux/alpha and Linux/x86 running glibc 2.1.1.
+
+WARNING: The NFS servers in Linux 2.2 to 2.2.11 are not compatible with
+other NFS client implemenations. If you plan to use Linux 2.2.x as an
+NFS server for non-Linux NFS clients, you should apply the patches
+enlosed here.
+
+linux-2.2.7-sunrpc.patch, nfsd-2.2.7-2.lockd.patch, nfsd-2.2.7-3.patch
+and nfsd-2.2.7-nfsfh.patch are required for Linux 2.2.7 to 2.2.11.
+For other kernel versions, they have to be applied by hand if they are
+still needed.
+
+For Linux 2.2.7 to 2.2.10, nfsd-2.2.7-1.lock.patch is also required.
+
+I made my knfsd package available only because I use it and noone else
+seems to maintain it. But I don't have much time to really work on it.
+I will only fix bugs in the NFS utilities and serious kernel NFS bugs
+which I can duplcate easily. If you have any kernel NFS server problem,
+please report it to the Linux kernel mailing list. If it can be
+reproduced with Linux NFS server and client in less than 5 minutes, you
+can also send me a copy in addition to sending it to the Linux kernel
+mailing list. I may take a look when I have time. However I will collect
+kernel NFS related patches. Contributions are more than welcome.
+
+The NFS lock only works with lockd. Please make sure the portmapper,
+portmap, is started before mounting NFS.
+
+Changes from knfsd 1.4.6:
+
+1. Fix a typo in knfslock.init.
+2. A new kernel patch, nfsd-2.2.7-1.lock.patch, to fix some NFS lock
+   bugs.
+
+Changes from knfsd 1.4.5:
+
+1. Rename /var/lib/nfs/xtab.export to /var/lib/nfs/etab.
+
+Changes from knfsd 1.4.4:
+
+1. Try to fix mountd performance problem by introducing
+   /var/lib/nfs/xtab.export. That is
+   
+  a. "exportfs" reads from /var/lib/nfs/xtab and writes to
+     /var/lib/nfs/xtab.export.
+  b. "mountd" reads from /var/lib/nfs/xtab.export and writes to
+     /var/lib/nfs/xtab.
+
+  The idea is "mountd" doesn't have to read /var/lib/nfs/xtab, which
+  is very expensive.
+
+Changes from knfsd 1.4.3:
+
+1. nfsd-2.2.7-nfsfh.patch, a new kernel patch for filehandle.
+2. nfsd-2.2.7-2.lockd.patch, a new patch for lockd.
+3. Misc bug fixes.
+
+Changes from knfsd 1.4.2:
+
+1. A mountd patch so that the syslog reports unknown requests, and also
+   reports *what* is being (un)mounted, from Piete Brooks
+   <Piete.Brooks@cl.cam.ac.uk>.
+2. Fix knfsd.init for restart.
+3. Add knfslock.init.
+4. knfsd-compat.spec is removed.
+5. nfsd-2.2.7-lockd.patch, a patch to start lockd independent of
+   nfs and nfsd.
+
+Changes from knfsd 1.4.1:
+
+1. Resolve symlink for umount from Piete.Brooks@cl.cam.ac.uk (Piete
+   Brooks)
+2. Fix knfsd.init for statd.
+
+Changes from knfsd 1.4:
+
+1. nfsd-2.2.7-3.patch. This is the only patch you need for Linux 2.2.7
+   to 2.2.10.
+2. Remove
+	nfsd-2.2.5-1.patch
+	nfsd-2.2.5-3.patch
+	nfsd-2.2.8-1.patch
+	nfsd-2.2.7-iget.diff
+	nfsd-2.2.5-nfsfh.diff
+	nfsd-2.2.5-file.patch
+	nfsd-2.2.7-quota.patch
+	nfsd-2.2.7-mknod.patch
+3. Statd update by Jeff Uphoff <juphoff@transmeta.com>.
+4. netgroups patch from Peter Breitenlohner <peb@mppmu.mpg.de>.
+5. Add option checking to exportfs.
+
+Changes from knfsd 1.3.3b:
+
+1. Add linux-2.2.7-sunrpc.patch for a SMP bug in sunrpc.
+2. Add --port/-P to nfsd/mountd, by Jeff Johnson <jbj@redhat.com>.
+3. Add nfsd.8, mountd.8 and statd.man, by Olaf Kirch
+   <okir@monad.swb.de>.
+4. Update nfsstat.man by Olaf Kirch <okir@monad.swb.de>.
+5. Statd fix by Jeff Uphoff <juphoff@transmeta.com>.
+6. Remove knfsd-nok.patch.
+
+Changes from knfsd 1.3.3a:
+
+1. Fix stdin/stdout/stdout handling in mountd.
+2. nfsd-2.2.7-mknod.patch. A patch for mknod.
+3. nfsd-2.2.7-quota.patch. A patch for quota.
+
+Changes from knfsd 1.3.3:
+
+1. Fix hostname matching for wildcard, subnet and netgroup.
+
+Changes from knfsd 1.3.2:
+
+1. Modified mountd to allow clients without IP address to hostname map.
+
+Changes from knfsd 1.3.1a:
+
+1. nfsd-2.2.5-3.patch. This is the only patch you need for Linux 2.2.5.
+
+Changes from knfsd 1.3.1:
+
+1. A patch for knfsd.spec from Markus Linnala <maage@cs.tut.fi>.
+
+Changes from knfsd 1.3a:
+
+1. nfsd-2.2.8-1.patch. This is the only patch you need for Linux 2.2.8.
+2. nfsd-2.2.7-2.patch. This is the only patch you need for Linux 2.2.7.
+
+Changes from knfsd 1.3:
+
+1. Adding "--no-nfs-version 3" to mountd in knfsd.init from RedHat 6.0.
+
+Changes from knfsd 1.2.2a:
+
+1. Updated knfsd.init from RedHat 6.0.
+2. nfsd-2.2.7-1.patch. This is the only patch you need for Linux 2.2.7.
+3. Misc updates from RedHat 6.0.
+
+Changes from knfsd 1.2.2:
+
+1. Make the default NFS server kernel thread to 8 in the rc script.
+
+Changes from knfsd 1.2:
+
+1. Moved knfsd.spec to knfsd-compat.spec.
+2. Update knfsd.spec from knfsd-981204-3.src.rpm.
+3. Fix the squash_[ug]id parsing in /etc/exports from Anders
+   Hammarquist <iko@cd.chalmers.se>.
+4. nfsd-2.2.5-file.patch to clear the bogus bit for MKDIR and SYMLINK.
+5. nfsd-2.2.5-1.patch. A NFS patch based on nfsd-2.2.3-1.patch for
+   Linux 2.2.5.
+
+Changes from knfsd 1.1:
+
+1. Remove
+	cache-2.1.131-1.patch
+	linux-2.1.1xx.diff
+	lock-2.1.131.diff
+	lock-2.1.1xx.diff
+	nfsd-2.1.127-5.patch
+	nullproc-2.1.1xx.diff
+	procfs-2.1.127.patch
+	quota-2.1.1xx.diff
+	root-2.1.1xx.diff
+	socket-2.1.1xx.diff
+	sunrpc-2.1.123-1.patch
+2. locks-2.2.3.diff. A patch for file lock.
+3. nfsd-2.2.3-1.patch. A NFS patch by "G. Allen Morris III"
+(gam3@acm.org).
+
+Changes from knfsd 1.0:
+
+1. Handle broken /var/lib/nfs/rmtab.
+2. Handle lower/upper cases in wildcard hostnames in /etc/exports.
+
+Changes from knfsd-981204:
+
+1. Modify etc/rc.nfsd to check /var/lib/nfs/rmtab during startup.
+2. Add knfsd.spec for RedHat 5. Need nfs-server-2.2beta37-1.1.src.rpm
+   and initscripts-3.78.1-2.src.rpm.
+3. Add support for "make install prefix=...".
+
+Changes from knfsd-981122:
+
+1. Modify etc/rc.nfsd and etc/rc.nfsfs to handle statd during shutdown.
+2. Remove maximum knfsd count checking.
+3. Clean up mountd.
+4. cache-2.1.131-1.patch from G. Allen Morris III (gam3@acm.org).
+5. lock-2.1.131.diff. A nfsd lock patch for Linux 2.1.131.
+
+Changes from knfsd-981113:
+
+1. procfs-2.1.127.patch from G. Allen Morris III (gam3@acm.org).
+2. Modify etc/rc.nfsd and etc/rc.nfsfs to better handle statd.
+3. Fix the sub-mounted directories.
+
+Changes from knfsd-981022:
+
+1. Fix buffer overruns from Peter Benie <pjb1008@cus.cam.ac.uk>.
+2. Fix hostname matching.
+3. Correctly handle dupilcations in /etc/exports.
+4. Add -F flag to statd.
+5. nfsd-2.1.127-5.patch from G. Allen Morris III (gam3@acm.org).
+
+Changes from knfsd-981014:
+
+1. lock-2.1.1xx.diff. A nfsd lock patch.
+2. nullproc-2.1.1xx.diff. Allow any clients to call the nfsd NULL proc.
+3. Add etc/rc.nfsfs to handle statd.
+3. Update etc/rc.nfsd to handle statd.
+4. nfsd-2.1.125-2.patch from G. Allen Morris III (gam3@acm.org).
+5. Fix inet_ntoa usage in statd.
+
+Changes from knfsd-981010:
+
+1. Check client aliases when matching for wildcard client hostnames.
+2. Fix memory leak in mountd.
+3. Fix filename in nfsd-2.1.125-1.patch.
+
+Changes from knfsd-980930:
+
+1. nfsd-2.1.125-1.patch from G. Allen Morris III (gam3@acm.org) and me.
+2. Fix the hostent bugs in mountd and statd.
+3. Remove "kexportfs -au" for "rc.nfsd stop".
+
+Changes from knfsd-980925:
+
+1. socket-2.1.1xx.diff for creating socket on NFS client.
+2. There is a knsfd root_squash patch for Linux 2.1.1xx,
+   root-2.1.1xx.diff. It is only tested on linux 2.1.123.
+   It also fixes the server side 0711 mode bug.
+3. sunrpc-2.1.123-1.patch from Bill Hawes <whawes@transmeta.com>.
+4. nfsd-2.1.122-3.patch from G. Allen Morris III (gam3@acm.org).
+5. Various buffer overrun changes.
+6. Fix mountd to check the duplicated entry in rmtab.
+7. Change exportfs to ignore warnings for "-r".
+8. Fix showmount -e.
+
+Changes from knfsd-980922:
+
+1. nfsd-2.1.121-4.patch from G. Allen Morris III (gam3@acm.org).
+2. Make async as default for export. It matches the user space NFS
+   server.
+
+Changes from knfsd-980920:
+
+1. Add NFS mount version flags to mountd. Change rc.nfsd to disable
+   NFS V3 for mountd.
+2. Fix client hostname.
+3. rc.nfsd runs kexportfs with -r instead of -a for restart and reload.
+
+Changes from knfsd-980915:
+
+1. There is a knsfd quota patch for Linux 2.1.1xx, quota-2.1.1xx.diff.
+   It is only tested on linux 2.1.122.
+2. The submount pathname is removed from the xtab file.
+3. rc.nfsd runs kexportfs with -r instead of -a for start.
+4. Fix kshowmount -e.
+5. Fix hostname matching.
+6. Fix compiling on libc 5.
+
+Changes from knfsd-980910:
+
+1. nfsd-2.1.121-3.patch from G. Allen Morris III (gam3@acm.org).
+2. A new flag, -r, for exportfs.
+3. Don't put an entry in xtab if kernel rejects it.
+4. Use the official hostname when checking if 2 hostnames are the same.
+5. Allow submounts.
+
+It is available at
+
+ftp://ftp.varesearch.com/pub/support/hjl/knfsd/knfsd-1.4.7.tar.gz
+ftp://ftp.varesearch.com/pub/support/hjl/knfsd/knfsd-1.4.6-1.4.7.diff.gz
+ftp://ftp.kernel.org/pub/linux/devel/gcc/knfsd-1.4.7.tar.gz
+ftp://ftp.kernel.org/pub/linux/devel/gcc/knfsd-1.4.6-1.4.7.diff.gz
+
+You have to apply the patch, locks-2.2.3.diff, to the Linux kernel
+first. It fixes quite some file lock bugs. That patch is against Linux
+2.2.3. If your kernel is different, you have to apply it by hand.
+
+nfsd-2.2.3-1.patch is a new knfsd patch against linux 2.2.3 from
+"G. Allen Morris III" (gam3@acm.org). It works for me on x86 and alpha.
+It is needed for the none-Linux NFS clients. You can get Allen's
+current patch from
+
+http://www.CSUA.Berkeley.EDU/~gam3/knfsd/
+
+nfsd-2.2.7-3.patch is based on nfsd-2.2.3-1.patch for Linux 2.2.7. If
+you use Linux 2.2.7, you should apply nfsd-2.2.7-3.patch instead of
+nfsd-2.2.3-1.patch. Please don't use any other patches included here
+for Linux 2.2.7. For other kernel versions, you may have to apply it
+by hand.
+
+nfsd-2.2.7-2.lockd.patch is also necessary to start lockd independent
+of nfs and nfsd.
+
+To compile, just do
+
+# ./configure
+# make
+
+Makefile will try to determine which C library you are using and compile
+this package accordingly.
+
+# make install
+
+will install the knfsd binaries. You have to install a knfs start up
+script by hand. There is a new rc.nfsd in etc. I use it for both the
+user-space nfsd and the kernel nfsd.
+
+There is one RPM spec file, knfs.spec, which is for a Linux system
+based on Linux 2.2 without support for Linux 2.0. You also need
+knfsd-1.4.6.tar.gz to create the knfsd RPMs.
+
+Thanks.
+
+H.J.
+hjl@lucon.org
+08/14/99

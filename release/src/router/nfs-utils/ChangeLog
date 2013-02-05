@@ -1,0 +1,3324 @@
+Author: Steinar H. Gunderson <sgunderson@bigfoot.com>
+Date:  Wed Sep 13 22:23:23 CEST 2006
+
+    Fix -n option to mountd
+
+    The getopt_long() option string in mountd was having a spurious
+    colon after the 'n', leading to the short form of --no-tcp not
+    being usable (expecting a parameter, contrary to the long form
+    and the documentation). Fix.
+    
+Author: Steinar H. Gunderson <sgunderson@bigfoot.com>
+Date:  Wed Sep 13 22:19:39 CEST 2006
+
+    Document sensitive gids
+
+    The exports(8) man page already mentions that some non-root users,
+    such as bin, might be just as sensitive as root, and that root_squash
+    thus might not be as effective as one could hope for. Update the
+    documentation to also mention that this could be the case for non-root
+    groups, such as staff.
+
+Author: NeilBrown <neilb@cse.unsw.edu.au>
+Date:  Mon Aug  7 16:35:03 AEST 2006
+
+    Set version to 1.0.10
+	Note: 1.0.10 should be used in preference to
+	 1.0.9 especially with kernels 2.6.18 and later
+	 otherwise 'rpc.nfsd N' won't work to change the
+	 number of threads after nfsd has been started.
+	
+Author: NeilBrown <neilb@cse.unsw.edu.au>
+Date:  Mon Aug  7 16:35:03 AEST 2006
+
+    support/nfs/nfssvc.c:  if any ports are already open,
+	   don't try to open any more.  
+	 This means that once nfsd is running
+	     rpc.nfsd  X
+	 will just change the number of threads, not the
+	 ports in use.
+
+Author: NeilBrown <neilb@cse.unsw.edu.au>
+Date:  Mon Aug  7 14:01:35 AEST 2006
+
+    Remove warning if neither 'sync' or 'async' present.
+    Add warning of neither 'subtree_check' or 'no_subtree_check' present.
+	
+commit 7194d7d6320736c14f40d31c3738d40f3119ead5
+Author: Kevin Coffman <kwc@citi.umich.edu>
+Date:   Sat Jul 8 10:01:40 2006 +1000
+
+    Use uid/gid of -1 to indicate the export's anonuid/anongid should be used
+    
+    Kernel routine nfsd_setuser() in fs/nfsd/auth.c checks for the
+    value -1 and defaults the credential's fsuid/fsgid to the
+    correct anonuid/anongid values for the given export.  We should
+    be passing this value (-1) down when a name mapping cannot be found.
+    Thanks to J. Bruce Fields <bfields@fieldses.org> for the reference.
+    
+    Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+    Acked-by: J. Bruce Fields <bfields@fieldses.org>
+
+commit b0604c623f7a98c6061dff19988722d3ae848bd7
+Author: Kevin Coffman <kwc@citi.umich.edu>
+Date:   Sat Jul 8 09:58:03 2006 +1000
+
+    Change svcgssd_LDFLAGS to match gssd_LDFLAGS
+
+commit 99414bd3eecf93f23c378d3bb3d45bc98f364abc
+Author: Neil Brown <neilb@suse.de>
+Date:   Sat Jul 8 09:41:58 2006 +1000
+
+    Disable building/installing mount.nfs by default.
+    
+    mount.nfs does not yet support 'user' option and some others.
+    To make it support this we need to make it setuid-root, and
+    some security isses need to be resolved before that can be done
+    safely.
+
+commit b0c3cbfee702c019dab0a22557bbf38e24dfcee1
+Author: Steve Dickson <steved@redhat.com>
+Date:   Sat Jul 8 09:35:02 2006 +1000
+
+    Call nfssvc_versbits before nfssvc_setfds
+    
+    nfssvc_versbits() has to be called before nfssvc_setfds()
+    for the version processing to work correctly
+
+commit 26fff911b21943f20e3937ae3f2d29a1572d2309
+Author: Neil Brown <neilb@suse.de>
+Date:   Thu Jul 6 13:05:11 2006 +1000
+
+    Only use -rpath for Kerberos libs when actually needed.
+    
+    Avoid usage of -rpath is generally safer, and is required by Debian policy.
+
+commit 28a7603b719f8d35bf22fd3018b610b489fec78f
+Author: Neil Brown <neilb@suse.de>
+Date:   Thu Jul 6 12:28:33 2006 +1000
+
+    Use 65534 instead of -2 in svcgssd_proc.c
+    
+    as this is more consistant across achitectures.
+
+commit 904de920ea4da3ad5604c417f0d784fcda83ed2a
+Author: Shankar Anand <shanand@novell.com>
+Date:   Tue Jul 4 08:50:56 2006 -0600
+
+    This patch adds code to nfsstat to read /proc/net/rpc/nfsd for nfsv4 server statistics and print them.
+    
+    Submitted by: Shankar Anand <shanand@novell.com>
+
+commit 2179c112b9a386ca3d51d0e19390ddfadd745030
+Author: Steinar H. Gunderson <sesse@debian.org>
+Date:   Wed Jul 5 15:55:45 2006 +1000
+
+    Fix typos in various man pages.
+
+commit 3419e37500dfd19cb2c246260dbd2bc0ee4704d4
+Author: Steinar H. Gunderson <sesse@debian.org>
+Date:   Wed Jul 5 15:51:30 2006 +1000
+
+    Use 65534 for anon uid/gid rather than -2
+    
+    This is more consistant across platforms.
+
+commit 65735eef8a9441901245f6047edafc50f2d97c97
+Author: Greg Banks <gnb@chook.melbourne.sgi.com>
+Date:   Wed Jul 5 13:37:21 2006 +1000
+
+    Update rpcdebug to know about new 2.6 debug flags.  Added
+    a manpage and installed rpcdebug (in sbindir).
+
+commit 23b3a9d0284d78cb6bf96b8cd44e9a4662ff60ae
+Author: Greg Banks <gnb@chook.melbourne.sgi.com>
+Date:   Wed Jul 5 12:22:45 2006 +1000
+
+    Ignore new generated files.
+
+commit 89053f3f440b629911cb994a293d5be73bb79bf9
+Author: Greg Banks <gnb@chook.melbourne.sgi.com>
+Date:   Wed Jul 5 12:20:20 2006 +1000
+
+    Add rquota.h to BUILT_SOURCES so rquotad builds on the first try.
+
+commit 66f9d8251c92124e46a209c47e5c0f7d3a0c4e6e
+Author: Neil Brown <neilb@suse.de>
+Date:   Wed Jul 5 11:06:09 2006 +1000
+
+    Generate rquota_xdr.c and rquota.h from rquota.x
+    
+    rquota_svc.c is still by-hand as it contains alot of extras.
+    These should really be moved to rquota_server.c
+
+commit 9f5b40b7a68fe0a2648565ecbd4b08bf60287130
+Author: Neil Brown <neilb@suse.de>
+Date:   Wed Jul 5 10:41:03 2006 +1000
+
+    Remove some files that old, unused, unneeded.
+    
+    	deleted:  support/export/keys.c
+    	deleted:  support/include/rpcdispatch.h
+    	deleted:  support/include/rpcsec.h
+    	deleted:  support/include/version.h
+    	deleted:  support/include/ypupdate.h
+    	deleted:  support/nfs/clients.c
+    	deleted:  support/nfs/keytab.c
+    	deleted:  support/nfs/ypupdate_xdr.c
+    	deleted:  support/rpc/include/Makefile.am
+    	deleted:  tools/rpcdebug/neat_idea.c
+    	deleted:  utils/mountd/mount_xdr.c
+    	deleted:  utils/rquotad/pathnames.h
+
+commit fbb1602bbd34cbe89dd55ca6eaaa19432237db1d
+Author: Neil Brown <neilb@suse.de>
+Date:   Wed Jul 5 10:30:51 2006 +1000
+
+    Avoid error creating an existing symlink
+    
+    Just remove the link first.
+
+commit 0bc710a5a2b695039613a917e009dba3552ab1cc
+Author: kwc@citi.umich.edu <kwc@citi.umich.edu>
+Date:   Mon Jul 3 18:33:54 2006 -0400
+
+    Don't depend on Kerberos headers when checking librpcsecgss in configure
+    
+    Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+    
+    Older versions of MIT Kerberos are missing an OID definition, causing
+    the configure checks for librpcsecgss to fail.  We shouldn't be depending
+    on their libraries during the configure.
+
+commit 5bfa10c94c44f082dc211a5fb431e2202ea9bb35
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Tue Jul 4 18:33:56 2006 +1000
+
+    Eliminate warnings from code generated by rpcgen
+    
+     - unused variable 'buf'
+        - emit a declaration for `buf' on demand.
+     - unused variable 'i'
+        - declare i immediately before use
+     - unused value from IXDR_PUT_
+        - cast to (void)
+     - type-punned pointer reference
+        - cast to (void*) first :-(
+
+commit acae444246635ec2ca8990d53e685c9062d73091
+Author: kwc@citi.umich.edu <kwc@citi.umich.edu>
+Date:   Mon Jul 3 18:34:43 2006 -0400
+
+    Handle mapping failure from get_ids.
+    
+    Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+    
+    Temporary patch to do default mapping if we get an error while trying to
+    map a gss principal to the appropriate uid/gid.  This currently returns
+    hardcoded values.  This may be correct, or we may need to try and figure
+    out the correct values to match the anonuid/anongid for the export.
+
+commit 1f1b05a65ef3dc6597c7bc1e2a38f38ae95bf230
+Author: kwc@citi.umich.edu <kwc@citi.umich.edu>
+Date:   Mon Jul 3 18:34:38 2006 -0400
+
+    Properly report errors in readline() function
+    
+    Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+    
+    Change message priorities for errors and debug messages.
+
+commit ee664fd246d77010af13fb557407c612752a5ea8
+Author: kwc@citi.umich.edu <kwc@citi.umich.edu>
+Date:   Mon Jul 3 18:34:33 2006 -0400
+
+    Change default buffer size increment for readline()
+    
+    Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+    
+    The readline routine expects much smaller messages than we are passing.
+    Change the default initial allocation and increment value from 128
+    to 2048.  This saves many calls to realloc().
+
+commit 3da69ce5c4fac5677e91aa20e60750ab8de2ab97
+Author: kwc@citi.umich.edu <kwc@citi.umich.edu>
+Date:   Mon Jul 3 18:34:27 2006 -0400
+
+    Clean up the printerr() logging function.
+    
+    Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+    
+    Update the printerr() function to:
+    
+    1) Determine whether we'll print the message before going to all the
+       work of formatting it.
+    2) Don't just toss away messages that are too long for the buffer.
+       Print what we can and give an indication of the truncation with
+       "..." at the end.
+    3) Use a single buffer rather than two.
+    4) Messages either go to syslog (with level ERR) or stderr.  Don't
+       send some messages to syslog level DEBUG.
+
+commit 0b2a5b574c7ffd99aa3226d36e1d261826405625
+Author: kwc@citi.umich.edu <kwc@citi.umich.edu>
+Date:   Mon Jul 3 18:34:21 2006 -0400
+
+    Use setfsuid() rather than seteuid() while creating contexts
+    
+    Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+    
+    As suggested by Olaf Kirch <okir@suse.de>, use setfsuid() rather than
+    seteuid() when creating a gss context.  This prevents users from using
+    credentials that do not belong to them, while also preventing them from
+    doing things like killing, renicing, or changing the priority of the
+    gssd process while it is processing the context creation.
+
+commit 0f899e6d862994ffb437ae73e087c4a21ab59723
+Author: kwc@citi.umich.edu <kwc@citi.umich.edu>
+Date:   Mon Jul 3 18:34:16 2006 -0400
+
+    Limit acquire_cred call to to Kerberos only
+    
+    Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+    
+    Specify that the acquire_cred call should only be concerned with returning
+    Kerberos credentials since this is Kerberos-only functionality.
+
+commit 3829bb90e764cd72c0009cb32a8b39d0fab89d81
+Author: kwc@citi.umich.edu <kwc@citi.umich.edu>
+Date:   Mon Jul 3 18:34:10 2006 -0400
+
+    Check that the gssapi library is usable early on.
+    
+    Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+    
+    Do a call to determine mechanisms supported by the gssapi library early.
+    This allows us to discover early in case the gssapi library is somehow
+    misconfigured.  We can bail out early and give a meaningful message
+    rather than getting errors on each attempt at a context negotiation.
+
+commit 119c3e9aafe84c0f7c2846c46ad5e6f5eeece0da
+Author: kwc@citi.umich.edu <kwc@citi.umich.edu>
+Date:   Mon Jul 3 18:34:05 2006 -0400
+
+    Fix problems with 64-bit big-endian machines
+    
+    Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+    
+    Correct the definition of mech_used in the gss context to use gss_OID_desc.
+    This fixes problems on 64-bit machines when referencing the OID.
+    
+    Also updates write_buffer function to use u_int rather than size_t when
+    doing calculations.
+
+commit c3f05548d7b3d586e7eebbdde9339617e88530f3
+Author: kwc@citi.umich.edu <kwc@citi.umich.edu>
+Date:   Mon Jul 3 18:33:59 2006 -0400
+
+    Define CFLAGS for gss_clnt_send_err compile
+    
+    Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+    
+    Add CFLAGS to make sure we find and use the correct gssapi.h when
+    building gss_clnt_send_err
+
+commit 4e9ed06f8f8a0cd9f34a6830c0ff14344a528042
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Mon Jul 3 15:59:54 2006 +1000
+
+    Use socklen_t some more to avoid warnings.
+
+commit 6c40236820fda8960af891f41aa9d53f8bbe50a2
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Mon Jul 3 15:39:41 2006 +1000
+
+    Fix warning about pointer signedness differing.
+
+commit 3bf702b1a914b3867117b74d519c55fa68f4dc28
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Mon Jul 3 15:17:34 2006 +1000
+
+    Include the right header to get xmalloc() declaration.
+
+commit 940c7c304d4a43c00c27529cdddc7c87db6eef87
+Merge: b90d201... a503848...
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Mon Jul 3 14:21:48 2006 +1000
+
+    Merge branch 'master' of git://linux-nfs.org/nfs-utils
+
+commit b90d201551aaa712c011c3d5de900fad714a26a6
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Tue Jun 27 21:30:18 2006 +1000
+
+    Comment out unused variable.
+
+commit 33beb42d3d2cd13a82ddbbdc4275d2a048030ae3
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Tue Jun 27 21:22:59 2006 +1000
+
+    Comment out the decades-old SCCS id strings from the original Sun
+    distribution.  They cause compile warnings, there is no longer any
+    reason to try to build them into the binaries, and gcc seems to be
+    eliding some of them anyway.
+
+commit 3172063ead6b99611d049a59938808a6358f48a4
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Tue Jun 27 20:55:07 2006 +1000
+
+    Detect if glibc provides socklen_t and use that instead
+    of int in those cases which generate compile warnings,
+    e.g. the last argument of recvfrom().
+
+commit a09eeb36c2c45151b9bb89f5015da0c584799716
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Tue Jun 27 20:28:02 2006 +1000
+
+    Replace the deprecated sigblock() with more modern
+    signal functions to avoid compile warnings.
+
+commit 93608a52655abf5ac23404c4b5cc05fe575a9c04
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Thu Jun 22 18:01:10 2006 +1000
+
+    Fix a number of the easier compile warnings: unused variables,
+    unused labels, constness, signedness.
+
+commit a07343ee0da4f0974a23b673ae1b0d482c7426a1
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Thu Jun 22 17:31:24 2006 +1000
+
+    Detect presence of nfs4_set_debug() in libnfsidmap and
+    don't bother calling it if it's missing.
+
+commit dcfcb677b39443b6392db3234fd50498bc158507
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Thu Jun 22 17:19:17 2006 +1000
+
+    Remove useless m4 quoting around args to PKG_CHECK_MODULES().
+
+commit 24d303ffae686192bda0a5996e8590219dcc82e7
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Thu Jun 22 17:16:19 2006 +1000
+
+    Do m4 quoting of AC_MSG_ERROR() and AC_MSG_WARN() as
+    the autoconf people intended.  This avoids errors in
+    autoconf on SLES10.
+
+commit 66a699d953727d3a992cc09ed5304b83d661a737
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Thu Jun 22 16:51:44 2006 +1000
+
+    Add a .gitignore file to suppress the files generated
+    during autogen, configure and build.
+commit 49b164d978ee6266df7ba0bd335cb34337e7c381
+Author: Steve Dickson <SteveD@redhat.com>
+Date:   Mon Jul 3 09:52:00 2006 +1000
+
+    Allow rpc.nfsd to suppress tcp or udp, and listen on a specific address.
+    
+     -T       - will suppressing listening for TCP connection.
+     -U       - will suppress UDP
+     -H host  - will only listen on that local address
+     -p port  - will listen on that port.
+    
+    This requires kernel patches which will hopefully be in 2.6.19 and possibly some
+    earlier test and vendor kernels.
+
+commit fde2ae7794047a698feeaf17963d690a1e660a80
+Author: Steve Dickson <SteveD@redhat.com>
+Date:   Mon Jun 26 15:23:19 2006 +1000
+
+    Add support for suppressing different NFS versions.
+    
+    e.g.  -N 2
+    means that NFSv2 won't be supported, just v3 and v4 (if the kernel
+    supports them).
+
+commit 0523fd513c6baa8dbf45d1a7afea2044262aeb3d
+Author: Neil Brown <neilb@suse.de>
+Date:   Fri Jun 23 17:10:56 2006 +1000
+
+    Further coverity related cleanups.
+    
+    Greg Banks suggested some variations, particularly improved
+    use of xmalloc/xstrdup functions.  Thanks.
+
+commit 2e075a16da4963f54cd556403ca9e15a68de27fd
+Author: Neil Brown <neilb@suse.de>
+Date:   Fri Jun 23 14:38:33 2006 +1000
+
+    Fix various issues discovered by Coverity
+    
+    Thanks to Michael Halcrow for finding them.
+
+commit ff42180930a444cea7f19e55e2cd2bfe6d3f108b
+Author: Neil Brown <neilb@suse.de>
+Date:   Fri Jun 23 14:06:00 2006 +1000
+
+    Fix comment parsing (again)
+    
+    Bruce Fields noticed that I broke comment parsing...
+    
+    as xskip() is always called before xgettok(), that is the
+    best place to put xskipcomment and still maintain proper
+    semantics of xskip and xgettok.
+
+commit bec968578d97eabc63ae4a12bdeb2b33f40baec4
+Author: Amit Gud <agud@redhat.com>
+Date:   Thu Jun 22 12:51:04 2006 -0400
+
+    Change mount configure option to --enable-mount
+    
+    Change the configure option from --with-mount to --enable-mount.
+    
+    Signed-off-by: Amit Gud <agud@redhat.com>
+    Signed-off-by: Steve Dickson <steved@redhat.com>
+
+commit ceeffc1f76485b4084b2c61f4ff3c40e4f51c3b8
+Author: Amit Gud <gud@eth.net>
+Date:   Thu Jun 22 12:49:24 2006 -0400
+
+    Merge nfsmount.x and mount.x into mount.x
+    
+    
+    Merge utils/mount/nfsmount.x and support/export/mount.x into support/export/mount.x.
+    
+    Signed-off-by: Amit Gud <agud@redhat.com>
+    Signed-off-by: Steve Dickson <steved@redhat.com>
+
+commit c2db41e8abb6ddc9d03a0c91c6db043fa0f85a8f
+Author: Neil Brown <neilb@suse.de>
+Date:   Fri Jun 23 13:37:08 2006 +1000
+
+    Try to make sure that clientid used for NFSv4 is reliable.
+    
+    We need to give an IP address to identify this client to the
+    server.
+    The current code does a gethostbyname of the hostname. One
+    some systems this returns 127.0.0.1 or similar, which is not useful.
+    
+    Instead, use getsockname of the sock used to connect to the server
+    to confirm that the server is working.  This gives the address on the
+    interface that was chosen to talk to that server, which is the
+    best address we can find (if there is a NAT in the way, it might
+    still not work, but in that case there is nothing we can do).
+
+commit 11d34d11153df198103a57291937ea9ff8b7356e
+Author: Greg Banks <gnb@melbourne.sgi.com>
+Date:   Wed Jun 14 22:48:10 2006 +1000
+
+    multiple threads for mountd
+    
+    
+    How about the attached patch against nfs-utils tot?  It
+    adds a -t option to set the number of forked workers.
+    Default is 1 thread, i.e. the old behaviour.
+    
+    I've verified that showmount -e, the Ogata mount client,
+    and a real mount from Linux and IRIX boxes work with and
+    without the new option.
+    
+    I've verified that you can manually kill any of the workers
+    without the portmap registration going away, that killing
+    all the workers causes the manager process to wake up and
+    unregister, and killing the manager process causes the
+    workers to be killed and portmap unregistered.
+    
+    I've verified that all the workers have file descriptors
+    for the udp socket and the tcp rendezvous socket, that
+    connections are balanced across all the workers if service
+    times are sufficiently long, and that performance is
+    improved by that parallelism, at least for small numbers
+    of threads.  For example, with 60 parallel MOUNT calls
+    and a testing patch to make DNS lookups take 100 milliseconds
+    time to perform all mounts (averaged over 5 runs) is:
+    
+    num		elapsed
+    threads		time (sec)
+     ------		----------
+    1		13.125
+    2 		 6.859
+    3		 4.836
+    4	 	 3.841
+    5		 3.303
+    6		 3.100
+    7		 3.078
+    8		 3.018
+    
+    Greg.
+    --
+    Greg Banks, R&D Software Engineer, SGI Australian Software Group.
+    I don't speak for SGI.
+
+commit db96d056578338dd1bb0371dc84638973c187ec6
+Author: Neil Brown <neilb@suse.de>
+Date:   Fri Jun 16 13:16:09 2006 +1000
+
+    Remove some temporary files that shouldn't be in 'git'.
+    
+    	deleted:  compile
+    	deleted:  config.guess
+    	deleted:  config.sub
+    	deleted:  depcomp
+    	deleted:  install-sh
+    	deleted:  ltmain.sh
+    	deleted:  missing
+
+commit 82b53188aaffad0e237461f8f1274794166feb3a
+Author: Neil Brown <neilb@suse.de>
+Date:   Fri Jun 16 13:09:26 2006 +1000
+
+    Add support to auto-generate nfsmount* files for new nfs.mount program
+
+commit 4e2bae795e5eaf9922f0b966ab5df64994c836a2
+Author: Amit Gud <agud@redhat.com>
+Date:   Mon Jun 12 19:08:27 2006 -0400
+
+    Move NFS mount code from util-linux to nfs-utils - part 2
+    
+    Adds the support functions needed for mount and umount. This
+    functionality will someday be available in the form of shared mount
+    library.
+    
+    Signed-off-by: Amit Gud <agud@redhat.com>
+    Signed-off-by: Steve Dickson <steved@redhat.com>
+
+commit a0520fa1a41bd33815b331b660b4545f2723495c
+Author: Amit Gud <agud@redhat.com>
+Date:   Mon Jun 12 19:06:36 2006 -0400
+
+    Move NFS mount code from util-linux to nfs-utils - part 1
+    
+    Adds the mount directory and the code to mount and umount the NFS file system.
+    
+    Signed-off-by: Amit Gud <agud@redhat.com>
+    Signed-off-by: Steve Dickson <steved@redhat.com>
+
+2006-06-05 NeilBrown <neilb@suse.de>
+	- Remove debian/ at request of Debian maintainer "Steinar H. Gunderson" <sesse@debian.org>
+	- fix_exportfs_with_multiple_matches.diff: Fixes a problem with exportfs -o
+	  and multiple entries of the same type for the same patch that matches
+	  a given client. The entire rationale and problem description can be found
+	  at http://bugs.debian.org/245449 (fumihiko kakuma <kakmy@mvh.biglobe.ne.jp>)
+        - escape hashes in exports
+	  Makes sure any # signs in the printed-out exports file are
+	  escaped (as with quotes, spaces, etc.), so they won't be treated
+	  as a comment when they're read back in again.
+	        "Steinar H. Gunderson" <sesse@debian.org>
+	- Only treat '#' as starting a comment when at the start of a
+	  token, otherwise '#' in filenames cannot be read.
+	        NeilBrown
+	- document sync option:
+	  Document the 'sync' option in the exports(5) man page -- ATM
+	  only the 'async' option is documented, which is not very
+	  symmetric. :-)  "Steinar H. Gunderson" <sesse@debian.org>
+	- mountd state directory:
+	  Let the user select (via a new parameter) the path to the NFS
+	  state directory for mountd, to match the statd functionality.
+	         "Steinar H. Gunderson" <sesse@debian.org>
+	- fix nhfsrun signal:
+	  nhfsrun is supposed to be able to be signalled with SIGUSR1, but
+	  the signal trapped is number 30, which is something else
+	  entirely (SIGPWR). This patch simply changes it to say "USR1",
+	  which gets it right no matter what the value is.
+	         "Steinar H. Gunderson" <sesse@debian.org>
+	- Minor man page tidy up
+	
+2006-04-12 NeilBrown <neilb@suse.de>
+	Remove **/Makefile.in, aclocal.m4, configure, and
+	 support/include/config.h.in from source control
+	These are auto autogenerated by
+	  aclocal -I aclocal ; autoheader ; automake ; autoconf
+	
+2006-04-12 NeilBrown <neilb@suse.de>
+	utils/statd/rmtcall.c: use HAVE_IFADDRS_H to control compilation
+	of code using ifaddrs.h
+	configure.in: test for present of ifaddrs.h
+
+	Old glibc's don't have ifaddrs.h
+	
+2006-06-12 Amit Gud <agud@redhat.com>
+	Added the mount functionality from util-linux.
+	Added --without-mount configure option.
+
+2006-04-12 NeilBrown <neilb@suse.de>
+	Set version to 1.0.8, 
+	aclocal -I aclocal ; autoheader ; automake ; autoconf
+
+2006-04-10 NeilBrown <neilb@suse.de>
+	Various paranoia checks:
+	gssd_proc.c: pass max_field sizes to sscanf to avoid buffer
+	  overflow
+	svcgssd_proc.c: range_check name.length, to ensure name.length+1
+	  doesn't wrap
+	idmapd.c(nfsdcb): make sure at least one byte is read before
+	 zeroing the last byte that was read, otherwise memory corruption
+	 is possible.
+
+	Found by SuSE security audit.
+	
+2006-04-10 "Kevin Coffman" <kwc@citi.umich.edu>
+	Check for sufficient version of librpcsecgss and libgssapi
+	in configure.in
+
+2006-04-10 "Kevin Coffman" <kwc@citi.umich.edu>
+	Update aclocal/tcp-wrappers.m4 to define HAVE_LIBWRAP and
+	HAVE_TCP_WRAPPERS as appropriate.	
+
+2006-04-10 NeilBrown <neilb@suse.de>
+	Add checking for innetgr back to configure.in
+	
+2006-04-10 kwc@citi.umich.edu
+	Update calls to gss_export_lucid_sec_context()
+	
+	Change the calls to gss_export_lucid_sec_context() to match the corrected
+	interface definition in libgssapi-0.9.
+	
+2006-04-10 kwc@citi.umich.edu
+	Plug memory leaks in svcgssd
+	
+	Various memory leaks in the svcgssd context processing are eliminated.
+	
+2006-04-10 kwc@citi.umich.edu
+	Fix memory leak of the AUTH structure on context negotiations
+	
+	Free AUTH structure after completing context negotiation and sending
+	context information to the kernel.
+	
+2006-04-10 kwc@citi.umich.edu
+	Fix support/include/config.h.in such as would be done be running autoheader.
+	
+2006-03-28 NeilBrown <neilb@suse.de>
+	1.0.8-pre3, aclocal/autoconf/automake
+	
+2006-03-28 kwc@citi.umich.edu
+	Use PKGCONFIG to locate gssapi and rpcsecgss header files
+	
+	Instead of having separate copies of the gssapi and rpcsecgss
+	header files, or depending on the Kerberos gssapi header,
+	locate the headers now installed with the libgssapi and librpcsecgss
+	libraries.
+	
+	Remove local copies of the gssapi and rpcsecgss header files.
+	
+	This depends on the configure_use_autotools patch.
+	
+2006-03-28 kwc@citi.umich.edu
+	Add debugging to better detect negotiation of enctype not supported by kernel
+	
+	Print debugging message indicating the type of encryption keys being sent
+	down to the kernel.  This should make it easier to detect cases where
+	unsupported encryption types are being negotiated.
+	(really this time)
+	
+2006-03-28 kwc@citi.umich.edu
+	
+	Don't close and reopen all pipes on every DNOTIFY signal.
+	
+	From: Vince Busam <vbusam@google.com>
+	Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+	
+	Don't unnecessarily close and re-open all pipes after every DNOTIFY
+	signal.  These unnecessary closes were triggering a kernel Oops.
+	Original patch modified to correct segfault when unmounting last
+	NFSv4 mount.
+	
+2006-03-28 kwc@citi.umich.edu
+	Add option to specify directory to search for credentials cache files
+	
+	
+	From: Vince Busam <vbusam@google.com>
+	Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+	
+	Add command line option to specify which directory should be searched
+	to find credentials caches.
+	(really this time)	
+	
+2006-03-28 kwc@citi.umich.edu
+	Must still use knowledge of the glue context for pre-1.4 versions of MIT krb5
+	
+	We need to get access to the internal krb5 context pointer for
+	older (pre-1.4) versions of MIT Kerberos.  We get a pointer to
+	the gss glue's context.  Get the right pointer before accessing
+	the context information.
+	(really this time)
+	
+2006-03-28 kwc@citi.umich.edu
+	
+	Remove unused groups variable from get_ids() which was causing a compiler warning.
+	(really this time)
+	
+2006-03-28 kwc@citi.umich.edu
+	Update krb5 code to use glue routine lucid context functions
+	
+	
+	
+	The gssd code should not know about the glue layer's context structure.
+	A previous patch added gss_export_lucid_sec_context() and
+	gss_free_lucid_sec_context() functions to the gssapi glue layer.
+	Use these functions rather than calling directly to the Kerberos
+	gssapi code (which requires the Kerberos context handle rather
+	than the glue's context handle).
+	
+	(really this time)
+	
+2006-03-28 kwc@citi.umich.edu
+	
+	Separate out context handling code for MIT Kerberos and SPKM3
+	into their own file.
+	(Really this time)
+	
+2006-03-28 Kevin Coffman <kwc@citi.umich.edu>
+	User-selectable idmapping cache lifetime
+	
+	Read and process new configuration option, Cache-Expiration, and use
+	the value to determine how long idmapping entries are cached.
+	(Really this time)
+	
+2006-03-27 NeilBrown <neilb@suse.de>
+	1.0.8-rc3
+
+2006-03-27 kwc@citi.umich.edu
+	Add debugging to better detect negotiation of enctype not supported by kernel
+
+	Print debugging message indicating the type of encryption keys being sent
+	down to the kernel.  This should make it easier to detect cases where
+	unsupported encryption types are being negotiated.
+	
+2006-03-27
+	Don't close and reopen all pipes on every DNOTIFY signal.
+	
+	Don't unnecessarily close and re-open all pipes after every DNOTIFY
+	signal.  These unnecessary closes were triggering a kernel Oops.
+	Original patch modified to correct segfault when unmounting last
+	NFSv4 mount.
+	
+2006-03-27
+	Add option to specify directory to search for credentials cache files
+	
+	Add command line option to specify which directory should be searched
+	to find credentials caches.
+	
+2006-03-27 kwc@citi.umich.edu
+	Must still use knowledge of the glue context for pre-1.4 versions of MIT krb5
+	
+	We need to get access to the internal krb5 context pointer for
+	older (pre-1.4) versions of MIT Kerberos.  We get a pointer to
+	the gss glue's context.  Get the right pointer before accessing
+	the context information.
+	
+2006-03-27 Kevin Coffman <kwc@citi.umich.edu>
+	Remove unused variable causing compile warning
+	
+	Remove unused groups variable from get_ids() which was causing a compiler warning.
+	
+2006-03-27 kwc@citi.umich.edu
+	Update krb5 code to use glue routine lucid context functions
+	
+	The gssd code should not know about the glue layer's context structure.
+	A previous patch added gss_export_lucid_sec_context() and
+	gss_free_lucid_sec_context() functions to the gssapi glue layer.
+	Use these functions rather than calling directly to the Kerberos
+	gssapi code (which requires the Kerberos context handle rather
+	than the glue's context handle).
+	
+2006-03-27 Kevin Coffman <kwc@citi.umich.edu>
+	Separate out context handling code for MIT Kerberos and SPKM3
+	into their own file.
+	
+2006-03-27 Kevin Coffman <kwc@citi.umich.edu>
+	Consolidate gssd and svcgssd since they share much code
+	
+	Remove directory svcgssd which was only created because the old
+	build system could not handle building two daemons in the same
+	directory.  This eliminates build complications since gssd and
+	svcgssd also share many source files.
+	
+	This patch effectively removes the utils/svcgssd directory, moving
+	all its files to the utils/gssd directory.  File utils/gssd/Makefile.am
+	is modified with directions to build both gssd and svcgssd.
+	
+2006-03-27 Kevin Coffman <kwc@citi.umich.edu>
+	Use PKGCONFIG to locate gssapi and rpcsecgss header files
+	
+	Instead of having separate copies of the gssapi and rpcsecgss
+	header files, or depending on the Kerberos gssapi header,
+	locate the headers now installed with the libgssapi and librpcsecgss
+	libraries.
+	
+	Remove local copies of the gssapi and rpcsecgss header files.
+	
+	This depends on the configure_use_autotools patch.
+	
+2006-03-27 Kevin Coffman <kwc@citi.umich.edu>
+	User-selectable idmapping cache lifetime
+	
+	Read and process new configuration option, Cache-Expiration, and use
+	the value to determine how long idmapping entries are cached.
+	
+2006-03-27 Steve Dickson <steved@redhat.com>
+	Set libnfsidmap library debugging level and logging function.
+
+	This patch adds a call to the new libnfsidmap library function 
+	nfs4_set_debug(), which defines the verbosity level libnfsidmap
+	should use as well as the logging function.
+
+2006-03-27 Kevin Coffman <kwc@citi.umich.edu>
+	Don't close file descriptor until after calling event_del().
+
+	Delete event processing for a file descriptor before closing it.
+	This was causing hangs when used in combination with libevent-1.0b.
+
+2006-03-27 kwc@citi.umich.edu
+	Find krb5-config on SuSE 10
+
+	SuSE 10.0 puts krb5-config in yet another obscure location.
+	Look for it there and use it if found.
+
+2006-03-27 Kevin Coffman <kwc@citi.umich.edu>
+	Update debian package information.
+
+2006-03-27 Kevin Coffman <kwc@citi.umich.edu>
+	Install /var/lib/nfs files using DESTDIR and add rpcsec headers to distribution
+
+	Add "$(DESTDIR)" to the paths for the "$(statedir)" files so they are
+	put in the right place when DESTDIR is defined.
+
+	Add the rpcsec header files to EXTRA_DIST list.
+
+2005-12-21 NeilBrown <neilb@suse.de>
+	*utils/rquotad/rquota_server.c: Detect and handle both old-style
+	(2.4) and new-style(2.6) quotactl.
+	*utils/gssd/gss_destroy_cred: remove dependence on "head -1" which
+	might need to be "head -n 1"
+	*utils/nhfsstone/nhfsrun: convert "tail -1" to "tail -n 1"
+	
+2005-12-20 Kevin Coffman <kwc@citi.umich.edu> NeilBrown <neilb@suse.de>
+	Substantial Makefile/configure rewrite.  
+	Run 'autogen.sh' to create "Makefile.in" etc.
+
+	Also add -D_FILE_OFFSET_BITS=64 to CPP_FLAGS so that mountd can
+	stat and export files larger than 2Gig.
+
+	1.0.8-rc2 released
+
+2005-12-20 NeilBrown <neilb@suse.de>
+	support/nfs/exports.c(getexportent): is a null host name is given,
+	replace it with '*' so we have a non-empty host name for messages
+	etc.
+	utils/exportfs/exportfs.man: Correct documentation about default
+	export options.
+
+2005-12-20 Kevin Coffman <kwc@citi.umich.edu>
+	utils/gssd/gssd_proc.c(create_auth_rpc_client): Use service
+	  portion of clp->servicename rather than hard-coding "nfs". 
+
+2005-12-16 NeilBrown <neilb@suse.de>
+	1.0.8-rc1 released
+
+2005-12-16 Kevin Coffman <kwc@citi.umich.edu>
+	svcgssd needs -lnfs when using new function closeall().
+	
+	---
+	Remove unused argument from nfsdopen()
+	
+	After previous changes, the arguement to nfsdopen() has become unused.
+	Remove it.
+	
+	---
+	Fix idmapd error reporting after call to mydaemon()
+	
+	After call to mydaemon(), calls to err[x] and warn[x] result
+	in the message going nowhere.  Change to using idmapd_*
+	versions of these routines which write to syslog.
+	Original problem reported by Vincent Roqueta <vincent.roqueta@ext.bull.net>
+	with a different patch.
+	
+	---
+	Don't add @domain to names that cannot be mapped.
+	
+	Per rfc3530 section 5.8: when unable to map a uid to a name, don't
+	add the @domain to the "nobody" name.
+	
+	---
+	Fix idmapd for systems where sizeof(uid_t)!=4 and sizeof(gid_t)!=4
+	
+	Fix conversion cases where uid_t and gid_t are not 32 bits.
+	
+	---
+	Don't segfault because mech wasn't filled in because of an error
+	
+	From Kevin Coffman <kwc@citi.umich.edu>
+	
+	Initialize mech to null to avoid segfault if an error occurs
+	and mech is never returned from gss_accept_sec_context.
+	
+	---
+	Remove use of static buffer in do_downcall
+	
+	Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+	
+	Dynamically allocate buffer of the correct length rather
+	than using fixed-length buffer.
+	
+	---
+	Print better error message if rpc routine clnt_create() fails.
+	
+	---
+	Print appropriate error messages after gss calls.
+	
+	Print gss error messages after calls to gss functions, even if they
+	are for Kerberos only.
+	
+	---
+	Update gssd and svcgssd to use the new gss mech glue lucid context calls.
+	
+	Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+	
+	Update gssd and svcgssd to use a lucid context from SPKM3 to send down
+	to the kernel.
+	Update gssd and svcgssd to use the new gss mech glue lucid context calls.
+	Add configure check to see if spkm3 support is available.
+	
+	---
+	Add support for CONTINUE_NEEDED return from gss_accept_sec_context.
+	
+	Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+	
+	Add CONTINUE_INIT handling to svcgssd. Store the partially complete spkm
+	context handle in the out_handle of CONTINUE_INIT messages so that it is
+	returned in the in_handle of subsequent messages.
+	
+	---
+	Replace GSS_C_ANON_FLAG with GSS_C_MUTUAL_FLAG.
+	
+	Signed-off-by: Kevin Coffman <kwc@citi.umich.edu>
+	
+	Specify GSS_C_MUTUAL_FLAG rather than GSS_C_ANON_FLAG for
+	spkm3.
+	
+	NOTE: we need a way to pass the appropriate value rather than
+	hard-coding this flag.
+	
+	---
+	Increase size of rpc send/receive buffers
+	
+	Change the clnt_create() to use routines which allow us to set the
+	send and receive buffer size.  This is needed for larger spkm3
+	exchanges including certificate chains.
+	
+	This has the side-effect of skipping the portmap call since
+	we specify the port (by specifying the service) when getting
+	the server's address information.
+	
+	---
+	Define _LINUX_QUOTA_VERSION to 1
+	
+	The rquotad code is written against the "old" kernel quota interface.
+	Fedora Core 4 is the only platform known to check for different
+	versions, so this should not have any affect on other platforms
+	and fixes the build for FC4.
+	
+	---
+
+2005-12-12 Usha Ketineni <ketineni@us.ibm.com>, NeilBrown <neilb@suse.de>
+	*support/nfs/rpcmisc.c(rpc_init): is stdin is a socket, but
+	is already connected (as e.g. from ssh), don't assume we
+	were started by inetd.
+
+2005-11-03 Steve Dickson <SteveD@redhat.com> NeilBrown <neilb@suse.de>
+	*utils/idmapd/idmaps.c:
+	
+	I've recently updated the nfs-utils in rawhide with the
+	latest patches from the SourceForge CVS tree and the
+	latest CITI patches (1.0.7-4).
+	
+	In testing these patches, I notice that when the server was started
+	and a SIGHUP was sent to rpc.idmapd to open the nfs4.nametoid/channel
+	and nfs4.idtoname/channel files, the second open (the nfs4.idtoname one)
+	failed because the path (i.e. ic->ic_path) was NULL.
+	
+	Now the reason the ic_path was NULL was because it was never set
+	during the call to nfsdopen(). nfsdopen() looks like:
+	nfsdopen(char *path)
+	{
+	     return ((nfsdopenone(&nfsd_ic[IC_NAMEID], IC_NAMEID, path) == 0 &&
+             nfsdopenone(&nfsd_ic[IC_IDNAME], IC_IDNAME, path) == 0) ? 0 
+	       : -1);
+	}
+
+	Note: the call to nfsdopenone() is how the path is set in each nfsd_ic[]
+	entry and nfsdopen() is only called once.
+	
+	So when rpc.idmap comes up and the first call to nfsdopenone() fails
+	(because the server is not running) the path in nfsd_ic[IC_IDNAME] is
+	never filled in because the second nfsdopenone() never happen...
+	
+	Now there was a CITI patche (idmapd_revert_fix_reopen_on_sighup.dif)
+	that tried to address this problem but did seem to fix it.. The
+	attached patch fix the problem by initializing both nfsd_ic[IC_IDNAME]
+	and nfsd_ic[IC_NAMEID] structures with the needed info...
+	I figured since there is no way of changing these paths or filenames
+	by command line args, why not just set them during compile time...
+	so that's what this patch does.
+	
+	This patch also changes how nfsdreopen_one() handles the
+	case where the event has already been set. Unlike the CITI
+	patch (idmapd_revert_fix_reopen_on_sighup.dif) which just
+	just does not register the second event, my patch deletes
+	the old event and the registers the new one. It just seems like
+	the right thing to do since a SIGHUP means a new server just
+	started so we probably should create a new event as well...
+	
+	steved.
+	
+2005-10-14 NeilBrown <neilb@suse.de>
+	*utils/mountd/cache.c(nfsd_fh): Understand type 2 and type 3
+	filesystem identifiers, which are used with device numbers
+	That don't fit into 16 bits.
+
+2005-10-07 Olaf Kirch <okir@suse.de>
+	* utils/mountd/mountd.c(get_exportlist): Without this patch,
+	showmount -e would sometimes display host names that should really
+	have been subsumed under a wildcard entry.
+
+	The problem was that the code in get_exportlist would always
+	skip the next group entry after removing one FQDN.
+
+2005-10-06 Steve Dickson <SteveD@redhat.com> NeilBrown <neilb@suse.de>
+	* support/nfs/export.c: don't warn about sync/async for readonly
+	exports
+	* support/nfs/closeall.c: new file with function to close all 
+	file descriptors from a give minimum upwards.
+	* nfsd/mountd/statd/idmapd/gsssvcd: use closeall.
+	* utils/mountd/mountd.c: Eliminate 3 syslog message that are
+	logged for successful events. 
+	* utils/mountd/mountd.c: make sure the correct hostname is used in
+	the SM_NOTIFY message that is sent from a rebooted server which
+	has multiple network interfaces. (bz 139101)
+
+	Details can be found in:
+	https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=139101
+
+	*utils/idmapd/idmapd.c:Fixed subscripting problem in idmapd (bz
+	158188) This fixes the following problem: 
+         rpc.idmapd: nfsdreopen: Opening '' failed: errno 2 (No such file or directory)
+
+	 Details can be found in:
+	 https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=158188
+
+	*utils/statd/statd.c(drop_privs): clear st_gid as well as st_uid
+	of stat fails.
+	*utils/statd/svc_run.c(my_svc_run): remove usage of undocumented
+	%m format specifier.
+	*utils/statd/montor.c(sm_mon_1_svc): as above
+	*support/nfs/xlog.c(xlog): Changed xlog to use LOG_INFO instead of
+	LOG_DEBUG so debug messages will appear w/out any config changes
+	to syslog.conf. 
+
+	
+2005-09-02 Mike Frysinger <vapier@gentoo.org>
+	* utils/rquotad/rquota_server.c(getquotainfo): use explicit
+	struture-member copying rather than memcpy, as the element
+	sizes are the same on all architectures.
+
+2005-08-26 Kevin Coffman <kwc@citi.umich.edu>
+	Add option to set rpcsec_gss debugging level (if available)
+
+	Changes to allow gssd/svcgssd to build when using Hiemdal Kerberos
+	libraries.  Note that there are still run-time issues preventing
+	this from working when shared libraries for libgssapi and librpcsecgss
+	are used.
+	
+2005-08-26 Kevin Coffman <kwc@citi.umich.edu>
+	Remove the rpcsec_gss code and rely on an external library instead.
+
+2005-08-26 Kevin Coffman <kwc@citi.umich.edu>
+	*utils/mountd/mountd.c:
+	mountd currently always returns AUTH_NULL and AUTH_SYS as the
+	allowable flavors in mount replies.  We want it to also return gss
+	flavors when appropriate. For now as a hack we just have it always
+	return the KRB5 flavors as well. 
+
+	*utils/mountd/cache.c:
+	
+	When attempting to mount an NFSv4 pseudofilesystem (fsid=0) and the
+	actual exported directory does not exist on the server, rpc.mountd
+	doesn't check the directory exists (when fsidtype=1, i.e. using fsid,
+	but does check for fsidtype=0, i.e. using dev/ino).  The non-existent
+	exported directory path with fsid=0 is written to the kernel via
+	/proc/net/rpc/nfsd.export/channel, which leads to path_lookup() to
+	return ENOENT (seems appropriate).  Unfortunately, the new_cache
+	approach ignores errors returned when writing via the channel file so
+	that particular error is lost and the mount request is silently ignored.
+	
+	Assuming it doesn't make sense to revamp the new_cache/up-call method to
+	not ignore returned errors, it seems appropriate to fix the case where
+	rpc.mountd doesn't check for the existence of an exported directory with
+	fsid= semantics.  The following patch does this by moving the stat() up
+	so it is done for both fsidtype's.  I'm not certain whether the other
+	tests need to be executed for fsidtype=1, but it doesn't appear to hurt
+	[Not exactly true: the comparison of inode numbers caused problems so
+	now it's kept for fsidtype=0 only].
+	
+	Would it be also desirable to log a warning for every error, if any,
+	returned by a write to any of the /proc/net/rpc/*/channel files which
+	would otherwise be ignored (maybe under a debug flag)?
+
+	* gssd/mountd/svcgssd: Changes gssd, svcgssd, and mountd to ignore a
+	SIGHUP rather than dying.
+
+	* many: Remove the gssapi code and rely on an external library instead.
+
+2005-08-26 Kevin Coffman <kwc@citi.umich.edu>
+	* utils/exportfs/exports.man: Document the "crossmnt" export export option
+	* utils/gssd/krb5_util.c: 
+	Add better debugging and partially revert the function
+	check for gss_krb5_ccache_name.
+	
+	For MIT Kerberos releases up to and including 1.3.1, we *must*
+	use the routine gss_krb5_ccache_name to get the K5 gssapi code
+	to use a different credentials cache.
+	
+	For releases 1.3.2 and on, we want to use the KRB5CCNAME
+	environment variable to tell it what to use.
+	(A problem was reported where 1.3.5 was being used, our
+	code was using gss_krb5_ccache_name, but the underlying
+	code continued to use the first (or default?) credentials
+	cache.  Switching to using the env variable fixed the problem.
+	I cannot recreate this problem.
+
+	*utils/gssd/krb5_util.c:
+	Andrew Mahone <andrew.mahone@gmail.com> reported that reiser4
+	always has DT_UNKNOWN.  He supplied patch to move the check
+	for regular files after the stat() call to correctly find
+	ccache files in reiser4 filesystem.
+	
+	Also change the name comparison so that the wrong file is
+	not selected when the substring comparison is done.
+
+	*utils/gssd/krb5_util.c:
+	Limit the set of encryption types that can be negotiated by
+	the Kerberos library to those that the kernel code currently
+	supports.
+	
+	This should eventually query the kernel for the list of
+	supported enctypes.
+
+	*utils/gssd/gss_util.c, utils/svcgssd/svcgssd_main_loop.c:
+	Print more information in error messages to help debugging failures.
+
+	*utils/svcgssd/svcgssd_proc.c: Increase token buffer size and
+	update error handling so that a response is always sent.
+
+	*utils/svcgssd/svcgssd_proc.c: Add support to retrieve
+	supplementary groups. 
+	
+	
+2005-08-26 Kevin Coffman <kwc@citi.umich.edu>
+	* configure.in etc
+	Consolidate some of the Kerberos checking instead of repeating
+	the same things for MIT and Heimdal.
+	Also adds more checks to distinguish 32-bit from 64-bit
+	(mainly for gssapi.h)
+	Fix svcgssd Makefile so make TOP=../../ works correctly there.
+	Enable running a modern autoheader.
+	* utils/gssd/gss_oids.c: Use correct OID value for SPKM-3
+	* utils/gssd/gss_util.c: Fix build with older MIT releases that do not define GSS_C_NT_HOSTBASED_SERVICE
+	* utils/gssd/write_bytes.h, support/include/gssapi/gssapi.h:
+	Length of gss_buffer_desc is a size_t which is 64-bits on a
+	64-bit machine.  Kernel code expects 32-bit integer for length.
+	Coerce length value into a 32-bit value when reading from or
+	writing to the kernel.
+	Change gssapi.h to use datatype size values obtained from
+	configure rather than hard-coded values.
+	* utils/idmapd/idmapd.c: The EV_INIT check here was wrong, and was
+	causing idmapd to become unresponsive to server requests after
+	receiving a sighup. 
+	* utils/idmapd/idmapd.c: Idmapd should flush the server id<->name
+	caches when its started. 
+
+2005-04-12  G. Allen Morris III <gam3@gam3.net>
+
+	* All Makefile: added TOP as needed for easier compile.
+
+	* utils/nfsstat/nfsstat.c: added NFS V4 support; added the -m
+	  option; Added -2, -3, and -4 options; changed -a option to -v
+	  option; added long options; changed default output to not
+	  show V2 NFS statistics unless used.
+
+	* utils/nfsstat/nfsstat.man: Documented above changes; changed
+	  authors email address; added BUGS section.
+
+2005-04-07  Chip Salzenberg  <chip@pobox.com>
+
+	* debian/changelog: Version 1.0.7-2.
+
+2005-04-06  Chip Salzenberg  <chip@pobox.com>
+
+	* config.guess, config.sub: Update.
+
+	* support/rpc/svc_auth_gss.c (_svcauth_gss): Avoid using a cast as
+	an lvalue, as it is non-portable.
+
+	* support/nfs/exports.c (parseopts): Accept "acl" option to mean
+	~NFSEXP_NOACL, and "no_acl" to mean NFSEXP_NOACL.
+	(putexportent): Report NFSEXP_NOACL as "no_acl", and ~NFSEXP_NOACL
+	as "acl".
+	* utils/exportfs/exportfs.c (dump): Report NFSEXP_NOACL as
+	"no_acl".
+	* utils/exportfs/exports.man: Document "no_acl".
+
+2005-03-14  NeilBrown <neilb@cse.unsw.edu.au>
+	Denis Vlasenko <vda@ilport.com.ua>
+	* support/export/client.c(client_init and client_gettype):
+	treat N.N.N.N as a special case of MCL_SUBNETWORK instead of 
+	MCL_FQDN
+
+2005-03-06  G. Allen Morris III <gam3@gam3.net>
+	* support/nfs/cacheio.c(readline): Could not read lines greater
+	than 128 bytes. [1157791] 
+	* utils/exportfs/exports.man: Added a SEE ALSO section and
+	fixed 2 typos. [1018450]
+
+2005-02-28  Trond Myklebust <trond.myklebust@fys.uio.no>
+	* utils/statd/rmtcall.c(statd_get_socket): If a port number is
+	explicitly given, make sure to try to bind to that.
+	
+2005-01-11  Chip Salzenberg  <chip@pobox.com>
+
+	* debian/changelog: Version 1.0.7-1.
+	* debian/nfs-common.default (NEED_IDMAPD, NEED_GSSD):
+	Disable by default, on advice of upstream.
+	* debian/nfs-kernel-server.default (NEED_SVCGSSD):
+	Likewise.
+
+	* utils/svcgssd/Makefile (predep): Symbolically link duplicated
+	source files.
+	(distclean): Remove symlinks to duplicated files.
+
+2004-12-17 NeilBrown <neilb@cse.unsw.edu.au>
+	Release 1.0.7
+
+	* config.mk, configure.in: update version number, run autoconf
+	* configure.in: require nfsidmap.h if gss is enabled.
+	
+2004-12-10 NeilBrown <neilb@cse.unsw.edu.au>
+	Release 1.0.7-pre2
+	
+	* config.mk, configure.in: update version number, run autoconf
+	
+2004-12-10 Neil Brown <neilb@cse.unsw.edu.au>
+	* README : note dependancy on kerberos, libevent, and nfsidmap
+	* configure.in : fail if --enable-nfsv4 and libevent or
+	libnfsidmap are missing.
+	* configuyre.in: improve message if krb5 support is missing
+	
+2004-12-06 Paul Clements <paul.clements@steeleye.com>	
+	* support/include/ha-callout.h: get return status from waitpid
+	correctly. 
+	* support/include/ha-callout.h: don't ignore SIGCHLD while waiting
+	for a callout to complete.
+	* utils/statd/statd.c(sigusr): print current start when re-reading
+	notify list due to SIGUSR1
+	* utils/statd/svc_run.c(my_svc_run): call change_state when
+	re-notifying clients.
+	
+2004-12-06 Marc Eshel <eshel@almaden.ibm.com>
+	* utils/statd/svc_run.c(my_svc_run): allow loop to exit when in
+	MODE_NOTIFY_ONLY
+	*utils/statd/rmtcall.c(statd_get_socket): if a hostname is given
+	to statd with -n, prefer it's IP address to the default for
+	listening on.
+	
+2004-12-06 Bruce Allan <bwa@us.ibm.com>
+	* utils/mountd/auth.c(auth_reload)  Clear the "my_client" cache on
+	an auth_reload to avoid old data getting used.
+	
+2004-12-03 NeilBrown <neilb@cse.unsw.edu.au>
+	Release 1.0.7-pre1 for testing
+	
+	* config.mk, configure.in: update version number, run autoconf
+	
+2004-12-03 Trond Myklebust <trond.myklebust@fys.uio.no>
+
+	* utils/statd/statd.c(main): ignore SIGPIPE
+	
+2004-11-22 "J. Bruce Fields" <bfields@fieldses.org>
+
+	* tools/rpcdebug/rpcdebug.c: support aliases "nfsdebug" and
+	"nfsddebug" and update flag names.
+	* configure.in, nodist/* redhat/* nfs-utils.spec*: remove redhat
+	specific files (as no-one actually uses them, especially not
+	redhat), and the nodist /etc files (as they drift out-of-date, and
+	the debian directory provides a suitable example.
+	* utils/svcgssd_proc.c(get_ids): fix memory leak
+	* utils/svcgssd/svcgssd_proc.c: Rely on count of the number of
+	groups instead of using a special guard value to identify the end
+	of the list. 
+	* utils/idmapd/idmapd.c: don't allow Default domain and anon-uid
+	or -gid to be specified on command line.
+	* utils/idmapd/idmapd.c: improve error messages
+	* utils/idmapd/idmapd.c: Reopen nfsd files on sighup.  Allows us
+	to start up client side only (even when nfsd module not loaded),
+	and then sighup later after insmodding nfsd module. 
+	* utils/idmapd/idmapd.c: Make sure we catch all errors on
+	daemonizing by waiting for child to report succesfull startup
+	using a pipe. 
+	* utils/idmapd/idmapd.c: Let libnfsidmapd parse the idmapd.conf
+	file for the default domain, instead of doing that ourselves.
+	* utils/gssd/gssd_proc.c: Make sure we get an error when a gssd
+	downcall fails. 
+	* utils/gssd/gssd_proc.c: We were forgetting to restore the euid
+	on certain failures, which meant gssd could get stuck in a state
+	where it didn't have permissions to read the files in rpc_pipefs
+	that it needed to. 
+	* utils/gssd/gssd_proc.c: Use libnfsidmapd to map gss principals
+	to uids. 
+	* debian/nfs-kernel-server.default: Document the NEED_SVCGSSD
+	variable in /etc/default/nfs-kernel-server. 
+
+	
+2004-11-22 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/exportfs/nfsd.man: corrected typo in .BR macro usage -
+	reported by Eric Raymond
+	
+2004-10-19 "J. Bruce Fields" <bfields@fieldses.org>
+
+	* support/gssapi/* support/rpc/* utils/gssd/* utils/svcgssd/* etc
+	initial support for GSSAPI authentication
+	
+2004-09-15 Neil Brown <neilb@cse.unsw.edu.au>
+
+	* utils/statd/monitor.c(sm_unmon_1_svc): is RESTRICTED_STATD, then
+	check IP address and force my_name to 127.0.0.1 to match 
+	what happens in sm_mon_1_svc.  This avoid spurious "erroneous
+	SM_UNMON" messages.
+	* utils/statd.monitor.c(sm_unmon_all_1_svc): likewise
+	
+2004-09-15 "J. Bruce Fields" <bfields@fieldses.org>	
+
+	* Assorted changes to support "gss/*" style authentication
+	* utils/idmapd: new idmapd daemon for nfsv4 username lookup
+	
+2004-09-06 Trond Myklebust <trond.myklebust@fys.uio.no>
+	Neil Brown <neilb@cse.unsw.edu.au>
+
+	* utils/mountd/auth.c(auth_authenticate_internal): fix
+	uninitialsed variable problem (causes bad error messages).
+
+2004-09-06 Paul Clements <paul.clements@steeleye.com>
+	Neil Brown <neilb@cse.unsw.edu.au>
+
+	* utils/mountd/mountd.c(main): support --ha-callout (-H) for
+	specifying a callout program
+	* utils/mountd/rmtab.c: Call ha_callout on mount/unmount
+	* utils/statd/monitor.c: Call ha_callout on add/del client
+	* utils/statd/rmtcall.c: as above
+	* utils/statd/statd.c: handle --ha-callout (-H)
+	* utils/statd/svc_run.c: call notify_hosts is we have received a
+	sighup
+	* support/include/ha-callout.h: define ha_callout function
+	 
+	
+2004-08-31 NeilBrown <neilb@cse.unsw.edu.au>
+	* utils/mountd/cache.c(cache_process_req): clear fd after
+	processing so as not to confused libc/sunrpc into thinking
+	it need to do something with that fd.
+	
+2004-08-31 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* debian/nfs-kernel-server.init(start,stop) mount the nfsd
+	filesystem, if available, before starting nfs services, and 
+	unmount it afterwards.
+	* etc/nodist/nfs-server: ditto
+	* etc/redhat/nfs.init: likewise
+	* etc/redhat/nfs: add "MOUNT_NFSD" flag to control above.
+	
+2004-06-08 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/exportfs/exportfs.c: Don't rmtab_read if new_cache, it
+	  isn't necessary.
+	* support/nfs/cacheio.c(cache_flush): Change order in which caches
+	  are flushed so that dependancies don't keep things in the cache
+	  too long.
+	
+2004-03-18  Chip Salzenberg  <chip@pobox.com>
+
+	* debian/changelog: Version 1.0.6-2.
+
+2004-02-24 NeilBrown <neilb@cse.unsw.edu.au>
+	from "J. Bruce Fields" <bfields@fieldses.org>
+
+	* utils/mountd/cache.c: call auth_reload to make sure auth data is
+	current before responding to kernel upcall.
+	
+2004-02-24 NeilBrown <neilb@cse.unsw.edu.au>
+	Based on patch from  Greg Banks <gnb@melbourne.sgi.com>
+
+	* utils/exportfs/exports.man: Document fsid= option.
+	
+2003-09-15 NeilBrown <neilb@cse.unsw.edu.au>
+
+	Release 1.0.6
+
+	* rules.mk: Add dep: rule when no OBJS, so "make dep" works in
+	support/include, and depend in "predep"
+	* support/export/Makefile, tools/rpcgen/Makefile,
+	utils/statd/Makefile: add "predep" rule so that "make dep" works.
+	* Makefile: allow a simple "make" to run ./configure and "make dep"
+	if needed.
+	* configure.in, nfs-utils.spec: Update version to 1.0.6
+	* run autoconf
+	
+2003-09-12  Chip Salzenberg  <chip@pobox.com>
+
+	* debian/changelog: Version 1.0.6-1.
+
+2003-09-12 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/mountd/mountd.c(main): Impose FD_SETSIZE as an upper limit
+	for RLIMIT_NOFILE
+	* utils/statd/statd.c(main): Ditto.
+
+	   michael <michael@newdream.net> discovered that svc_setreqsize
+	   in glibc can segfault if RLIMIT_NOFILE is bigger than
+	   FD_SETSIZE, so a simple solution is to impose a hard limit.
+
+2003-09-09  Chip Salzenberg  <chip@pobox.com>
+
+	* debian/changelog: Version 1.0.5-3.
+	* support/export/hostname.c (get_reliable_hostbyaddr): Fix crash
+	on invalid reverse DNS.
+	* utils/showmount/showmount.c (main): Fix inet_ntoa() parameter.
+	* tools/rpcgen/rpc_cout.c (print_header): Remove unused vars.
+	* tools/rpcgen/rpc_parse.c (def_union): Likewise.
+
+2003-08-22  Chip Salzenberg  <chip@pobox.com>
+
+	* utils/statd/{log.h,log.c}: Rename log() to note() and L_* to
+	N_*, to avoid conflict with ISO C built-in log() function.
+	* utils/statd/*.c: Use note().
+
+2003-08-20  Chip Salzenberg  <chip@pobox.com>
+
+	* debian/changelog: Version 1.0.5-2.
+
+2003-08-11 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/mountd/cache.c(cache_get_filehandle): close the filehandle
+	before returning.
+	
+2003-08-04 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/include/nfs/export.h, support/nfs/exports.c,
+	utils/exportfs/exports.c, utils/mountd/mountd.c:  change
+	NFSEXP_CROSSMNT to NFSEXP_CROSSMOUNT to avoid confusion with older
+	meaning. Also remove meaningless
+	NFSEXP_{UIDMAP,KERBEROS,SUNSECURE}
+	
+2003-08-04 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/export/xtab.c, support/include/nfslib.h,
+	support/nfs/cacheio.c, support/nfs/nfssvc.c,
+	utils/exportfs/exportfs.c, utils/exportfs/exportfs.man,
+	utils/exportfs/nfsd.man, utils/mountd/cache.c: support
+	/proc/fs/nfsd/* as a perferred alternate to /proc/fs/nfs/*
+	(nfs-utils-1.0.5-post2)
+	
+2003-08-04 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/nfs/nfsexport.c: open channel file O_WRONLY when
+	only writing.
+	* utils/mountd/cache.c: maintain mountlist when new_cache is
+	active. Also use O_WRONLY for channel files.
+	* utils/mountd/mountd.h: mountlist_{del,add} now take a host name
+	rather than an nfs_export.
+	* utils/mountd/rmtab.c: ditto.
+	(nfs-utils-1.5.0-post1)
+	
+2003-07-24  Chip Salzenberg  <chip@pobox.com>
+
+	* support/nfs/xlog.c (xlog): Revise buffer-overflow fix to
+	use Debian security team's cleaner approach.
+	* debian/changelog: Version 1.0.5-1.
+	* debian/nfs-kernel-server.init: Cosmetic changes.
+
+2003-07-18 NeilBrown <neilb@cse.unsw.edu.au>
+
+	Release 1.0.5:
+	 1.0.4 was a bit of a brown-paper-bag-release because of the extra
+	 'free' in auth.c.  So I'm releasing this just a few days later.
+
+	* support/nfs/cacheio.c(cache_flush): Correct test for 'open
+	failed'
+	* utils/exportfs/exportfs.c(main): If "-f" given as lone option,
+	check if new_cache is enabled, error if not, flush and exit if it
+	is. 
+	* utils/exportfs/exportfs.man: Explain -f option and explain the
+	two different modes that exportfs can work in.
+	* utils/mountd/mountd.c: Do not change RLIMIT_NOFILE if the -o
+	option wasn't given.
+	* utils/mountd/mountd.man: Record the change if default behaviour
+	for RLIMIT_NOFILE.
+	* configure.in, nfs-utils.spec: update version to 1.0.5 and
+	run autoconf
+	
+2003-07-15 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/mountd/mountd.c(main): getopt string fix for 'o'
+	* utils/mountd/auth.c(auth_authenticate): remove extra 'free'
+	* utils/exportfs/exportfs.c(main): make 'exportfs -f' just flush
+	the caches.
+	* support/include/nfs/export.h: Reserve a bit for possible ACL
+	related use.
+	
+2003-07-03 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/exportfs/nfsd.man: new man page for nfsd filesystem. Also
+	assorted changed to cope with section 7 of the manual.
+	* configure.in, nfs-utils.spec: Update version to 1.0.4
+	* run autoconf
+
+	This is a 'pre-release' for 1.1.0  Hopefully 1.1.0 will be the
+	baseline for 2.6 and 2.8.  I.e. it should continue to work right
+	through the 2.8 (or 3.0) kernel series.  Previous releases wont.
+
+2003-07-04 NeilBrown <neilb@cse.unsw.edu.au>	
+	Steve Dickson <SteveD@redhat.com>
+
+	statd cleanup:
+	* utils/statd/statd.c: create a pidfile with pid of statd, and
+	truncate it when statd exists.
+	* utils/statd/statd.c: drop privs by setuid to owner of SM_DIR,
+	and warn if this is root.
+	* utils/statd/statd.c: when statd forks, connect child to parent
+	with a pipe, and send a byte down the pipe once the child is
+	working properly.
+	* Makefile: create and chown sm, sm.bak, state when "make install"
+	* configure.in: add --with-statduser= option which defaults to
+	"rpcuser" or "nobody"
+	* config.mk.in: pass "statduser" through to Makefile
+	
+2003-07-03 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/include/nfs/nfs.h: Make sure correct __kernel_dev_t is
+	used as the size was changed somewhere in 2.5.60-2.5.70.  Without
+	this nfs-utils compiles against 2.6 headers will not work on a
+	2.4 kernel.	
+	
+2003-07-03 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/nfs/nfssvc.c(nfssvc): If /proc/fs/nfs/threads exists,
+	set number of threads by writing to there.  This means it will
+	still work when the syscall interface goes away in 2.7.
+
+2003-07-03 NeilBrown <neilb@cse.unsw.edu.au>
+	fumihiko kakuma <kakmy@mvh.biglobe.ne.jp>
+
+	* utils/exportfs/exportfs.c(unexportfs): improve host comparison
+	so as to only export the wildcard exports that were asked for.
+	* support/export/export.c(export_allowed): changed to return the
+	nfs_export rather than a "struct exportent", as m_changed is
+	needed by called
+	* support/export/rmtab.c(rmtab_read): modified to deal with
+	interface change for export_allowed(), and enhanced to preserve
+	m_changed flag when a wild-card export causes the creation of
+	a non-wildcard export.
+	
+2003-07-02 NeilBrown <neilb@cse.unsw.edu.au>
+	Steve Dickson <SteveD@redhat.com>
+
+	* utils/mountd/mountd.man: Add valid kinds of debugging.
+	* utils/mountd/mountd.c(main): ignore SIGPIPE
+	* utils/nfsstat/nfsstat.c: fine-tune printing of warning so
+	we don't get warnings about unavailable stats that weren't asked
+	for.
+	
+2003-06-24 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/nfs/nfsexport.c(exp_unexp): When unexporting filesystems
+	via /rpc/net/rpc/nfsd*/channel, set the expiry date to 1, not
+	'forever', so things disappear out of the cache rather than just
+	be ignored. 
+	
+2003-06-16  "J. Bruce Fields" <bfields@fieldses.org>
+
+	* utils/mountd/cache.c(nfsd_fh): don't export the export_ent
+	if it wasn't found.
+
+2003-06-16  NeilBrown	<neilb@cse.unsw.edu.au>
+
+	* debian/nfs-kernel-server.init,etc/nodist/nfs-server,
+	etc/redhat/nfs.init: when checking if V3 is supported, make sure
+	nfs server 'knows' about 127.0.0.1 first.
+	
+2003-06-10  Chip Salzenberg  <chip@pobox.com>
+
+	* support/nfs/xlog.c (xlog): Fix off-by-one buffer overflow bug.
+	* debian/changelog: Version 1.0.3-2.
+
+2003-05-30 Michael Griffith <grif@michaelgriffith.com>
+	NeilBrown <neilb@cse.unsw.edu.au>
+
+	utils/nfsstat/nfsstat.c(print_callstats): use unsigned
+	long long to avoid overflow when printing stats.
+	
+2003-05-30  NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/export/export.c, support/include/nfslib.h,
+	support/nfs/export.c, utils/exportfs/exportfs.c,
+	utils/mountd/mountd.c: new export option "mountpoint"
+	If no path is given, then the export point must be a
+	mount point, or it won't be exported.  If a path is 
+	given (e.g. mountpoint=/path) then that path must be
+	a mountpoint or the exportpoint won't be exported.
+	* utils/exportfs/exportfs.man: document mountpoint option.
+	* support/misc/mountpoint.c: New file with is_mountpoint()
+	to determine if something is a mountpoint.
+	
+2003-05-23  NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/mountd/cache.c(cache_get_filehandle): take a separate path
+	argument as we might not be getting the filehandle for the
+	mountpoint.
+	* utils/mountd/mountd.c(get_rootfh): pass real path when calling
+	cache_get_filehandle.
+	* utils/mountd/mountd.c(get_rootfh): check export point and
+	requested directory are on the same filesystem, and complain if
+	not.
+	
+2003-05-22  NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/mountd/auth.c(auth_authenticate_internal): make sure
+	portnumber is still checked when using new cache lookup.
+	
+2003-05-21  NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/exportfs/exportfs.c: Use check_new_cache and cache_flush
+	 Don't actually talk to kernel when new cache is in effect, except
+	 to flush
+	* utils/exportfs/exportfs.c: add -f option to fully flush cache.
+	* support/export/xtab.c: Only rename new xtab into place if it has
+	 changed, thus preserving modify date for exportfs to use when
+	 flushing.
+	* support/nfs/cacheio.c: Add cache_flush
+	* support/export/xtab.c: Only rename new xtab into place if it has
+	 changed, thus preserving modify date for exportfs to use when
+	 flushing.
+	
+2003-05-21  NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/export/client.c: Add client_compose, client_member to
+	handle new composite client names
+	* support/include/exportfs.h: Declare above functions.
+	* utils/mountd/auth.c: use client_compose to determine calling
+	client if new cache is being used.
+	* utils/mountd/auth.c: call cache_export to export a filesystem if
+	new_cache, check if new cache is used, and call my_svc_run instead
+	of svc_run
+	* utils/mountd/svc_run.c: new file defining my_svc_run
+	* utils/mountd/cache.c: new file for handling cache upcalls.
+	* support/nfs/cacheio.c(check_new_cache): new function to check if
+	new cache should be used.
+	
+	
+2003-05-21  NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/include/nfs/export.h: New CROSSMNT distinct from NOHIDE
+	* support/nfs/exports.c: Make CROSSMNT distinct from NOHIDE
+	* utils/exportfs/exportfs.c(dump): ditto
+	
+2003-05-21  NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/export/hostname.c(get_reliable_hostbyaddr): new function
+	to get host name from address with full checking of authenticity.
+	* support/include/misc.h: declare above function
+	* utils/mountd/auth.c(auth_authenticate_internal): remove all
+	logic for authenticating address.
+	* utils/mountd/auth.c(auth_authenticate): call new
+	get_reliable_hostbyaddr to to hostname lookup before calling _internal.
+	
+	
+2003-03-30  NeilBrown <neilb@cse.unsw.edu.au>
+
+	* tools/rpcgen/rpc_main.c(find_cpp): removed
+	* tools/rpcgen/rpc_main.c(open_input): use execvp to find "cpp", 
+	then try hard-coded paths.
+	
+2003-03-26  Chip Salzenberg  <chip@pobox.com>
+
+	* debian/changelog: Version 1.0.3-1.
+
+2003-03-26 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/mountd/rmtab.c (slink_safe_rename): real_newpath should be
+	"const char*", not "char*".
+
+2003-03-26 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* configure.in (VERSION): Set to "1.0.3".
+	* nfs-utils.spec: Likewise.
+	* configure: Regenerated.
+
+2003-03-26 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/nfs/cacheio.c: New File - support for read/writing
+	to export cache in /proc/rpc/*/channel
+	* support/nfs/Makefile: compile cacheio.c
+	* support/include/nfslib.h: declare cacheio.c functions
+	* support/nfs/nfsexport.c: export and unexport through
+	/proc/rpc/*/channel if possible, as old syscall interface
+	may not survive into 2.6 on all architectures.
+	
+2003-02-19 NeilBrown <neilb@cse.unsw.edu.au>	
+	Ben Leslie <benno@sesgroup.net>
+
+	* support/nfs/rpcmisc.c(rpc_init):  change test for ignoring
+	"defport" from (__rpcfdtype == 0) to (__rpcpmstart==0).  The
+	former would incorectly ignore defport if the application 
+	explicitly set __rpcfdtype.  The later is sufficient to avoid the
+	special handling in the case where stdin is an internet socket.
+
+	* utils/mountd/mountd.c(main): Add 'n' to option list in
+	getopt_long as this is a short form of --no-tcp which want being
+	checked.
+	
+2003-02-12  Chip Salzenberg  <chip@pobox.com>
+
+	* debian/changelog: Version 1.0.2-2.
+
+2002-11-27  Chip Salzenberg  <chip@pobox.com>
+
+	* utils/mountd/rmtab.c (slink_safe_rename): Fix off-by-one buffer
+	overflow bug.  Reformat per rest of source file.
+
+2002-11-19  NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/exportfs/exports.man: Correct notes about whether the wild
+	card characters match a period.  They do.
+	
+2002-10-15  Juan Gomez <juang@us.ibm.com>
+
+	* utils/mountd/rmtab.c (slink_safe_rename): New. Support
+	symlink.
+	(mountlist_add): Call slink_safe_rename instead of rename.
+
+2002-10-11  H.J. Lu <hjl@lucon.org>
+
+	* support/include/exportfs.h (export_errno): New.
+
+	* support/nfs/exports.c: Include <errno.h>.
+	(export_errno): New.
+	(getexportent): Set export_errno to EINVAL for bad option.
+	(parseopts): Likewise.
+	Report the location of the default sync/async option.
+
+	* utils/exportfs/exportfs.c (main): Initialize export_errno to
+	0. Return export_errno.
+
+2002-10-11  Juan Gomez  <gomez@cs.sjsu.edu>
+	NeilBrown <neilb@cse.unsw.edu.au>
+
+	utils/statd/statd.c(killer): don't pmap_unset if in notify_only mode
+	utils/statd/statd.c(main): don't pmap_unset if in notify_only mode
+	
+2002-09-16  Chip Salzenberg  <chip@pobox.com>
+
+	* utils/rquotad/rquota_svc.c (main): Use int for value of getopt.
+
+2002-09-15  Chip Salzenberg  <chip@pobox.com>
+
+	* support/nfs/rpcmisc.c (rpc_init): Allow stdin to be a non-INET
+	socket, as occurs when run from sshd.
+	* debian/changelog: Version 1.0.2-1.
+
+2002-09-12  H.J. Lu <hjl@lucon.org>
+
+	* support/nfs/svc_socket.c: Remove HAVE_SVCTCP_SOCKET and
+	HAVE_SVCUDP_SOCKET.
+
+2002-09-12  H.J. Lu <hjl@lucon.org>
+
+	* configure.in: Remove checking svctcp_socket and svcudp_socket.
+	* configure: Regenerated.
+
+	* support/include/config.h.in (HAVE_SVCTCP_SOCKET): Removed.
+	(HAVE_SVCUDP_SOCKET): Removed.
+
+	* support/include/nfslib.h: Undo the last change.
+
+2002-09-12  H.J. Lu <hjl@lucon.org>
+
+	* support/include/nfslib.h (svctcp_socket): Protect it with
+	HAVE_SVCTCP_SOCKET.
+	(svcudp_socket): Protect it with HAVE_SVCUDP_SOCKET.
+
+2002-09-12  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "1.0.2".
+	* configure: Regenerated.
+	* nfs-utils.spec: Likewise.
+
+2002-09-12  H.J. Lu <hjl@lucon.org>
+
+	* configure.in: Check svctcp_socket and svcudp_socket.
+	* configure: Regenerated.
+
+	* support/include/config.h.in (HAVE_SVCTCP_SOCKET): New.
+	(HAVE_SVCUDP_SOCKET): New.
+
+	* support/include/nfslib.h (svctcp_socket): New.
+	(svcudp_socket): New.
+
+	* support/nfs/Makefile (OBJS): Add svc_socket.o.
+
+	* support/nfs/svc_socket.c: New.
+
+	* support/nfs/rpcmisc.c (rpc_init): Call svctcp_socket and
+	svcudp_socket if port is unspecified.
+
+	* utils/nfsd/nfsd.c (main): Call getservbyname for port.
+
+	* utils/rquotad/rquota_svc.c: Include <nfslib.h>.
+	(killer): New. Signal handler to unregister.
+	(main): Use killer. Call svcudp_socket to get the default
+	socket.
+
+2002-09-02 Juan Gomez <juang@us.ibm.com>
+	NeilBrown <neilb@cse.unsw.edu.au>
+
+	Add -N option to statd to run in notify-only mode.
+
+	* utils/statd/statd.h: uncomment MODE_NOTIFY_ONLY
+	* utils/statd/statd.man: document -N
+	* utils/statd/statd.c: enabled -N, largely exists but needed to be
+	uncommented and completed
+	
+2002-09-02 Juan Gomez <juang@us.ibm.com>
+	NeilBrown <neilb@cse.unsw.edu.au>
+
+	statd to have " -P directory" arg to use that directory instead
+	of /var/lib/nfs.  This is useful for fail-over clusters.
+	
+	* utils/statd/statd.h: define SM_DIR etc as var, not const.
+	* utils/statd/statd.c: define "-P" option to set SM_*
+	appropriately.
+	* utils/statd/monitor.c: sprintf to cope with SM_DIR not being
+	a constant any more.
+	* utils/statd/notify.c: ditto.
+	* utils/statd/statd.man: document -P option.
+	
+2002-08-26  Chip Salzenberg  <chip@pobox.com>
+
+	* utils/nfsd/nfsd.man: Fix typo.
+	* debian/changelog: Version 1.0.1-1.
+
+2002-05-29 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* let parseopts know if /etc/exports was being read or not, 
+	and have it only print "no sync or async" warning in that case.
+	
+2002-05-06 Tom McNeal <trmcneal@attbi.com>
+	NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/nfsstat/nfsstat.c: Handle differing format for
+	   /proc/net/rpc/nfsd between pre and post 2.4.0
+	
+2002-04-09  NeilBrown <neilb@cse.unsw.edu.au>
+	James Pearson <james-p@moving-picture.com>
+
+	* support/nfs/rmtab.c(fendrmtabent): sync changes to 
+	storage before returning, as this is critical state
+
+2002-04-08  Sean O'Connell <sean@ee.duke.edu>
+	    H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs: New.
+
+2002-04-08  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init: Updated.
+
+	* nfs-utils.spec.in: Updated.
+	* nfs-utils.spec: Regenerated.
+
+	* utils/mountd/mountd.c (longopts): Fix a typo.
+
+	* utils/mountd/mountd.man: Updated.
+
+2002-04-07  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfslock.init (restart): Just do stop and start.
+
+	* etc/redhat/nfs.init: Fix a typo.
+
+2002-04-07  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "1.0.1".
+	* configure: Regenerated.
+	* nfs-utils.spec: Likewise.
+
+	* README: Updated for 1.0.1.
+
+2002-04-07  Sean O'Connell <sean@ee.duke.edu>
+	    H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init: Read /etc/sysconfig/nfsd for NFS tuning.
+
+2002-02-28   Steven Whitehouse <steve@gw.chygwyn.com>
+	      NeilBrown <neilb@cse.unsw.edu.au>
+
+	Add support for fsid=nn export option so that device
+	numbers don't go in filehandles.
+	* support/export/nfsctl.c(expsetup): if exporting and NFSEXP_FSID
+	is set, pass the fsid in-place of the device number
+	* support/nfs/exports.c: parse and print fsid= option.
+	Also check if efname has been set, and use "command line"
+	instead in error messages.
+	Also, use strtol instead of atoi for anon[ug]id= so that
+	bad numbers cause errors.
+	
+2002-01-17   Adrian Drzewiecki <drze@MissionCriticalLinux.com>
+	     NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/nfs/exports.c: remove NFSEXP_ASYNC as a default
+	flag so that "sync" becomes the default.
+	Check that either "sync" or "async" is given as an option
+	and warn if neither are present
+	* utils/exportfs/exports.man: change documentation for "sync"
+	to be documentation for "async".
+	* utils/exportfs/exportfs.man: note that "sync" is the default
+	rather than "async"
+	
+	
+2002-01-02  Chip Salzenberg  <chip@pobox.com>
+
+	* support/export/nfsctl.c (expsetup): Don't export entries that
+	specify id mappings not supported by the kernel.  No extant kernel
+	supports any significant mapping, only 'identity' (i.e. none).
+	When other mappings are supported, this code will need changing.
+	* debian/changelog: Version 1.0-2.
+
+2001-12-26  Chip Salzenberg  <chip@pobox.com>
+
+	* nfs-utils.spec (Version): Set to "1.0".
+	* configure.in (VERSION): Likewise.
+	* configure: Regenerated.
+	* README: Rewritten.
+	* debian/changelog: Version 1.0-1.
+
+	* utils/exportfs/exports.man: Emphasize the need for options to
+	immediately follow client names.  Explain that wildcards don't
+	usually work on addresses, but may work when reverse DNS fails.
+	Comment out a leftover TP that was TPing our indentation.
+	* utils/mountd/mountd.man, utils/rquotad/rquotad.man,
+	utils/statd/statd.man: Remove refs to non-existent "hosts_allow(5)".
+	* debian/changelog: Version 0.3.3-6.
+
+2001-12-20  NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/export/client.c(client_lookup): If a host has multiple
+	IP addresses, then we must always use the result of a
+	gethostbyname, not that of gethostbyaddr for exporting
+	
+2001-12-20  NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/export/client.c (client_lookup): use strcasecmp when
+	comparing host names
+	* support/nfs/export.c (getexportent): add fromkernel arg and use
+	different defaults as kernels prior to 2.4.11 assume different
+	defaults in /proc/fs/nfs/exports
+	* support/include/nfslib.h, support/export/export.c,
+	support/export/xtab.c:  support extra "fromkernel" arg for
+	getexportent. 
+	
+2001-12-13  Chip Salzenberg  <chip@pobox.com>
+
+	* debian/changelog: Version 0.3.3-5.
+
+2001-11-26  TAKAI Kousuke <takai@vlsi.kuee.kyoto-u.ac.jp>
+
+	* support/nfs/xio.c (xskip): Call `xungetc' instead of
+        `ungetc' to keep x_line more properly.
+
+2001-11-26  Chip Salzenberg  <chip@pobox.com>
+
+	* utils/showmount/showmount.c (main): Don't assume that strings
+	starting with digits are IP addresses.
+	* utils/nfsd/nfsd.c (main): Close all fds and reopen 0,1,2 on
+	/dev/null before nfssvc().  Use syslog to report nfssvc errors.
+	* support/misc/tcpwrapper.c, utils/mountd/mountd.man,
+	utils/rquotad/rquotad.man, utils/statd/statd.man: Fix comments and
+	man pages: We check host names *and* addresses with tcpwrappers.
+	* debian/changelog: Version 0.3.3-4.
+
+2001-11-21  Chip Salzenberg  <chip@pobox.com>
+
+	* support/nfs/clients.c (cfname): Added: current clients file name.
+	(setnfsclntent): Set it.
+	({get,end}nfsclntent, syntaxerr): Use it.
+	* support/nfs/exports.c (efname): Added: current exports file name.
+	(setnfsexportent): Set it.
+	(endnfsexportent, parseopts, getexport, syntaxerr): Use it.
+	(parseopts): Accept old-style "crossmnt" option, for old xtabs.
+	* debian/changelog: Version 0.3.3-3.
+
+2001-10-11  Chip Salzenberg  <chip@pobox.com>
+
+	* utils/mountd/mountd.c (main): Close fds > 2 _before_ RPC init.
+	* debian/changelog: Version 0.3.3-2.
+
+2001-10-08  Chip Salzenberg  <chip@pobox.com>
+
+	* utils/mountd/mountd.c (main): When daemonizing, close all fds > 2.
+	* utils/Makefile.in: Remove old Makefile in target 'distclean'.
+	* utils/mountd/mountd.man: Update paths to /var/lib.
+	* debian/*: Version 0.3.3-1, with Debian-specific fixes.
+
+2001-10-06  Preston Brown <pbrown@redhat.com>
+
+	* utils/nfsstat/nfsstat.man: Updated.
+
+2001-09-24  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.3.3".
+	* configure: Regenerated.
+	* nfs-utils.spec: Likewise.
+
+	* README: Updated for 0.3.3.
+
+2001-09-20 NeilBrown <neilb@cse.unsw.edu.au>
+
+	Arrange that "exportfs -au" never does DNS lookup:
+	
+	* support/export/client.c (client_lookup) : add "canonical"
+	flag which says that the hostname is known to be canonical, so
+	don't do a lookup
+
+	* support/export/export.c (export_create) : add "canonical"
+	flag to be passed down to client_lookup
+	* support/export/export.c (export_lookup) : Likewise
+
+	* support/export/xtab.c (xtab_read) : pass appropriate
+	"canonical" flag to export_lookup and export_create:
+	set if reading list of filesystems currently exports
+	(is_export != 1). 
+
+	* support/export/export.c (export_read) : pass 0 as 
+	"canonical" flag to export_lookup and export_create
+	* support/export/rmtab.s (rmtab_read) : Likewise
+
+	* support/include/exportfs.h : redeclare various routines
+	to have "canonical" flag
+
+	* utils/exportfs/exportfs.c (main) : redo logic for 
+	"-au" to read in what is currently exported, but never even 
+	look at what "should" be exported.
+
+	* utils/exportfs/exportfs.c (unexportall) : remove this
+	routine. Functionality is completely included in
+	exports_update
+
+	* utils/exportfs/exportfs.c (exportfs) : set "canonical"
+	flag to zero in calls to export_lookup and export_create.
+
+	
+2001-09-20 NeilBrown <neilb@cse.unsw.edu.au>
+	    Anne Milicia <milicia@missioncriticallinux.com>
+
+	* support/export/client.c (client_lookup) call gethostbyadd
+	to make sure that we have a canonical hostname, even for
+	dotted-quads
+	* utils/exportfs/exportfs.c (exportfs) Likewise
+	
+2001-09-12 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/nfs/exports.c (putexportent): \octal quote any spaces
+	etc in a path name
+	* support/nfs/xio.c (xgettok): recognise double-quote and
+	\octal quoting in path names
+	* utils/exportfs/exports.man: document quoting conventions
+	for path names
+	
+2001-09-12 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* utils/mountd/auth.c (auth_authenticate_internal): Reverse
+	  change from 2000-08-02:  It causes problems if someone exports
+	  to both a hostname and IP addresses.  nfs-utils must be
+	  consistant about the canonical name that it chooses.
+
+2001-08-17  Ragnar Kjørstad <nfs@ragnark.vestdata.no>
+	    H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfslock.init (STATDARG): New. Pass it to rpc.statd.
+
+	* utils/statd/statd.c (longopts): Add "name".
+	(usage): Add "-n/--name".
+	(main): Set MY_NAME with "-n/--name".
+
+	* utils/statd/state.c (change_state): Set MY_NAME only if it
+	is NULL.
+	
+	* utils/statd/statd.man: Updated for "-n/--name".
+
+2001-07-26  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec (Release): Set to 8.
+
+2001-07-25  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init: Check if rpc.rquotad exists before doing
+	anything about it.
+
+2001-06-27  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init: Run rpc.rquotad only if it exists.
+
+2001-06-27  H.J. Lu <hjl@lucon.org>
+
+	* utils/rquotad/rquota_server.c: Don't call statfs () for
+	the block size. Use BLOCK_SIZE instead.
+
+2001-06-27  H.J. Lu <hjl@lucon.org>
+
+	* config.mk.in (CC_FOR_BUILD): Renamed from BUILD_CC.
+	(CFLAGS_FOR_BUILD): New. Don't use @CFLAGS@.
+
+	* configure.in (enable_nfsv3): Set to yes by default.
+	(--enable-rquotad): Added
+	(AC_PROG_CXX): Removed.
+	(AC_OUTPUT): Add utils/Makefile.
+	(CC_FOR_BUILD): Renamed from BUILD_CC.
+	* configure: Regenerated.
+
+	* utils/Makefile: Removed.
+
+	* utils/Makefile.in: New.
+
+	* nfs-utils.spec.in (rquotad): New. Set to 0 to disable
+	rquotad.
+	(CC_FOR_BUILD): Renamed from BUILD_CC.
+	* nfs-utils.spec: Regenerated.
+
+2001-06-15  Chip Salzenberg  <chip@debian.org>
+
+	* debian/changelog: Version 0.3.2-2.
+	* debian/*.init: Minor fixes.
+
+2001-06-07  Lon H. Hohberger <hohberger@missioncriticallinux.com>
+
+	* etc/nodist/nfs-server: Fixed a bug where the script would
+	disable mounts from NFSv3 clients if NFSv3 is present.
+
+2001-06-05  H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/mountd.c (longopts): Add "descriptors/o".
+	(main): Support --descriptors/-o to set the limit of the number
+	of open file descriptors.
+	(usage): Updated.
+
+	* utils/mountd/mountd.man: Updated for --descriptors/-o.
+
+2001-06-04  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec (Release): Set to 6.
+
+2001-05-28  H.J. Lu <hjl@lucon.org>
+
+	* utils/lockd/lockd.c (main): chdir to NFS_STATEDIR.
+	* utils/mountd/mountd.c (main): Likewise.
+	* utils/nfsd/nfsd.c (main): Likewise.
+	* utils/rquotad/rquota_svc.c (main): Likewise.
+
+2001-05-06  Anne Milicia <milicia@missioncriticallinux.com>
+
+	* support/export/client.c (client_check): Check IP address
+	againet netgroup.
+
+2001-05-06  Neil Brown <neilb@cse.unsw.edu.au>
+
+	* support/export/client.c (client_gettype): Treat `*' as
+	MCL_ANONYMOUS.
+
+2001-04-22  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: Fix a typo.
+	* nfs-utils.spec: Regenerated.
+
+2001-04-21  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: Fix cross build.
+	* nfs-utils.spec: Regenerated.
+	(Release): Set to 5.
+
+2001-04-18  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: Support cross build.
+	* nfs-utils.spec: Regenerated.
+	(Release): Set to 4.
+
+	* config.sub: New.
+	* config.guess: New.
+
+	* config.mk.in (BUILD_CC): New.
+	(CC): Set to $(BUILD_CC) if BUILD is defined.
+	(AR): Set to @AR@.
+	(LD): Set to @LD@.
+	(RANLIB): Set to @RANLIB@.
+
+	* configure.in: Check BUILD_CC, RANLIB, AR and LD.
+	* configure: Regenerated.
+
+	* tools/rpcgen/Makefile (BUILD): Set to true.
+
+2001-04-01  Chip Salzenberg  <chip@valinux.com>
+
+	* tools/rpcgen/rpc_svcout.c (write_timeout_func): Remove
+	redundant, and sometimes broken, declaration of svc_fdset;
+	it may be a macro.
+	* support/nfs/rpcmisc.c (closedown): Likewise.
+	
+2001-03-21  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec: Regenerated.
+	(Release): Set to 3.
+
+2001-03-21  Ion Badulescu  <ionut@cs.columbia.edu>
+
+	* utils/statd/statd.c (main): make sure file descriptors 0-2
+	are open to /dev/null.
+
+2001-03-21  H.J. Lu <hjl@lucon.org>
+
+	* support/nfs/rpcmisc.c: Restore the change made on 2001-03-10.
+	* support/nfs/rpcmisc.c: Likewise.
+	* utils/rquotad/rquota_svc.c: Likewise.
+	* utils/rquotad/rquotad.man: Likewise.
+	* utils/statd/Makefile: Likewise.
+	* utils/statd/rmtcall.c: Likewise.
+	* utils/statd/simulate.c: Likewise.
+	* utils/statd/statd.c: Likewise.
+	* utils/statd/statd.man: Likewise.
+
+2001-03-11  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (RELEASE): New. Default to 1, set by
+	--with-release=XXX. Substitute nfs-utils.spec.
+	* nfs-utils.spec.in (Release): Set to @RELEASE@.
+	* configure: Regenerated.
+	* nfs-utils.spec: Likewise.
+
+2001-03-11  H.J. Lu <hjl@lucon.org>
+
+	* utils/rquotad/rquotad.man: Fix a typo.
+
+2001-03-11  H.J. Lu <hjl@lucon.org>
+
+	* support/include/rpcmisc.h: Undo the change made on 2001-03-10.
+	* support/nfs/rpcmisc.c: Likewise.
+	* utils/rquotad/rquota_svc.c: Likewise.
+	* utils/rquotad/rquotad.man: Likewise.
+	* utils/statd/Makefile: Likewise.
+	* utils/statd/rmtcall.c: Likewise.
+	* utils/statd/simulate.c: Likewise.
+	* utils/statd/statd.c: Likewise.
+	* utils/statd/statd.man: Likewise.
+
+2001-03-10  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.3.2".
+	* configure: Regenerated.
+	* nfs-utils.spec: Likewise.
+
+	* README: Updated for 0.3.2.
+
+2001-03-10  Tavis Barr <tavis@boole.isetr.columbia.edu>
+
+	* utils/rquotad/rquotad.man: Updated for -p.
+	* utils/statd/statd.man: Likewise.
+
+2001-03-10  Ion Badulescu  <ionut@cs.columbia.edu>
+
+	* support/nfs/rpcmisc.c: export makesock()
+
+	* support/include/rpcmisc.h (makesock): Declared.
+
+	* utils/rquotad/rquota_svc.c: added longopts, added support for
+	specifying the port to bind to on the command line.
+
+	* utils/statd/statd.c: ditto, also specify port used for
+	outgoing connections.
+	(do_regist): Removed.
+
+	* utils/statd/rmtcall.c (statd_get_socket): Renamed from
+	get_socket. Make it extern.
+
+	* utils/statd/simulate.c (daemon_simulator): Call rpc_init
+	instead of do_regist.
+
+	* utils/statd/Makefile (LIBS): link with our own libnfs
+
+2001-03-09  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfslock.init: Changed chkconfig line to 60 86.
+	* etc/nodist/nfs-client: Likewise.
+
+2001-02-26  Chip Salzenberg  <chip@valinux.com>
+
+	* debian/changelog: Version 0.3.1-1.
+	* Mention upstream source and license in copyright file.
+	* Add build-Depends for debhelper and libwrap0-dev.
+
+2001-02-20  Lon Hohberger <hohberger@missioncriticallinux.com>
+
+	* etc/nodist/nfs-server: Changed chkconfig line to 60 20
+	* etc/nodist/nfs-client: Likewise.
+
+2001-02-18  Lon Hohberger <hohberger@missioncriticallinux.com>
+
+	* utils/statd/statd.man: Changed /usr/sbin/rpc.statd to
+	/sbin/rpc.statd.
+
+2001-02-17  Patrick J. LoPresti <patl@curl.com>
+
+	* utils/statd/log.c (log_init): Use LOG_DAEMON instead of
+	LOG_LOCAL5.
+
+2001-02-14  H.J. Lu <hjl@lucon.org>
+
+	* utils/statd/rmtcall.c: Include <time.h>.
+	* utils/statd/svc_run.c: Likewise.
+
+2001-02-14  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.3.1".
+	* configure: Regenerated.
+	* nfs-utils.spec: Likewise.
+
+	* README: Updated for 0.3.1.
+
+2001-02-14  H.J. Lu <hjl@lucon.org>
+
+	* support/nfs/rpcmisc.c: Include <time.h>.
+
+2001-02-14  Chip Salzenberg  <chip@valinux.com>
+
+	* debian/control: Change priority of nhfsstone package to 'extra'.
+
+2001-02-12  Chip Salzenberg  <chip@valinux.com>
+
+	* debian/changelog: Version 0.3-2.
+
+2001-02-02  H.J. Lu <hjl@lucon.org>
+
+	* support/include/rpcmisc.h (rpc_init): Remove bufsize.
+	
+	* support/nfs/rpcmisc.c (makesock): Remove socksz and comment
+	out SO_SNDBUF/SO_RCVBUF.
+	(rpc_init): Remove bufsize and remove socksz in calls to
+	makesock ().
+
+	* utils/mountd/mountd.c (main): Remove bufsize in calls to
+	rpc_init ().
+
+2001-01-28  Chip Salzenberg  <chip@valinux.com>
+
+	* debian/changelog: Version 0.3-1.
+
+2001-01-25  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.3".
+	* configure: Regenerated.
+	* nfs-utils.spec: Likewise.
+
+	* README: Updated for 0.3.
+
+2001-01-25  H.J. Lu <hjl@lucon.org>
+
+	* utils/lockd/lockd.c (main): Ignore errno == EINVAL.
+
+2001-01-20  Chip Salzenberg  <chip@valinux.com>
+
+	* support/include/xio.h (xgetc): Declare to return int.
+	* support/nfs/xio.c (xgetc): Return int.
+	(xgettok, xskip, xskipcomment): Use int for value of xgetc.
+	* utils/statd/statd.c (main): Use int for value of getopt.
+	* debian/changelog: Version 0.2.1-5.
+	
+2000-12-10  Chip Salzenberg  <chip@valinux.com>
+
+	* utils/statd/monitor.c (sm_mon_1_svc): Fix buggy check for
+	program and procedure numbers of kernel lockd's callback.  Also,
+	besides the old (and broken) procedure #24, allow #16 per Trond.
+
+2000-12-03  Chip Salzenberg  <chip@valinux.com>
+
+	* support/nfs/xio.c (xfopen): Initialize x_line to one, not zero.
+	* debian/control: Let nhfsstone replace files in nfs-kernel-server.
+	* debian/changelog: Version 0.2.1-4.
+
+2000-11-27  Tobias Ringstrom <tori@tellus.mine.nu>
+
+	* utils/mountd/auth.c (auth_authenticate): Log the bad path
+	warning.
+
+2000-11-24  Neil Brown <neilb@cse.unsw.edu.au>
+
+        * support/nfs/exports.c (getexportent): Check for host name
+	without option, or options without hostname, and print a warning,
+	as this is most likely a typo.
+
+2000-11-19  Chip Salzenberg  <chip@valinux.com>
+
+	* debian/control: Add dependency on portmap.
+	* debian/changelog: Version 0.2.1-3.
+
+2000-11-10  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: Don't use libtool.
+	Add ChangeLog and COPYING to doc.
+	* nfs-utils.spec: Rebuild.
+
+2000-11-09  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init (start): Back out the last change.
+
+2000-11-09  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init (start): Pass --no-tcp to mountd if
+	TCP is not supported by kernel.
+
+	* support/nfs/rpcmisc.c (rpc_init): Don't set _rpcfdtype to 0.
+
+	* utils/mountd/mountd.c (longopts): Add "-n/--no-tcp".
+	(main): Set to _rpcfdtype to SOCK_DGRAM for "-n/--no-tcp".
+
+	* utils/mountd/mountd.man: Updated for "-n/--no-tcp".
+
+2000-10-24  Lon Hohberger <hohberger@missioncriticallinux.com>
+
+	* utils/statd/callback.c: Fix bug preventing callbacks to local lockd.
+	* utils/statd/rmtcall.c: Add some IP address paranoia when doing
+	callbacks to local lockd.
+
+2000-10-18  Scott McDermott <mcdermot@questra.com>
+
+	* utils/exportfs/exports.man: Updated for CIDR netmask.
+
+2000-10-17  Scott McDermott <mcdermot@questra.com>
+
+	* support/export/client.c (client_init): Support CIDR netmask
+	in /etc/exports.
+
+2000-10-11  H.J. Lu <hjl@lucon.org>
+
+	* aclocal.m4 (AC_TCP_WRAPPER): Fix a typo.
+	* configure: Rebuilt.
+
+2000-10-06  Lon Hohberger <hohberger@missioncriticallinux.com>
+
+	* utils/statd/statd.man: Change "/var/lib/nfs/sm/state" to
+	"/var/lib/nfs/state".
+
+2000-10-05  Lon Hohberger <hohberger@missioncriticallinux.com>
+
+	* utils/statd/statd.h (run_mode): New global bitmask of runtime
+	behaviors: fg/bg, logging, etc.
+	* utils/statd/statd.c: New command line options: -V -h -? -d .
+	* utils/statd/statd.man: Update for changes to statd.
+
+	* utils/statd/log.h (log_init): Remove parameter of function; use
+	global variable "name_p" instead.
+	* utils/statd/log.c: Add support for logging to stderr.
+
+	* utils/statd/notlist.c: Partially rewrite notify list handling
+	functions.  Eliminate run-off-end-of-list bug when calling
+	nlist_insert_timer.  Add lots of comments.
+	
+2000-09-27  H.J. Lu <hjl@lucon.org>
+
+	* README: Updated for RedHat 7.0.
+
+2000-09-27  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec: Rebuild.
+
+2000-09-27  H.J. Lu <hjl@lucon.org>
+
+	* README: Updated for 0.2.1.
+
+2000-09-27  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: Updated to use rpm macros and support
+	RedHat 7.0.
+
+2000-09-25  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.2.1".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-09-25  H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/auth.c (auth_authenticate_internal): Make sure a
+	non-NULL hostent is always returned.
+
+2000-09-11  Ion Badulescu  <ionut@cs.columbia.edu>
+
+	* etc/redhat/nfslock.init: don't kill lockd processes that do not
+	have an executable (i.e. kernel threads)
+
+2000-09-01  H.J. Lu <hjl@lucon.org>
+
+	* README: Updated for 0.2.
+
+2000-09-01  Jay Weber <jweber@valinux.com>
+
+	* etc/redhat/nfs.init: Added ability for rpc.mountd to default to
+	supporting version 3 of nfs if available, else it will fall back to
+	version 2 support only.
+
+2000-08-30  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.2".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-08-25  H.J. Lu <hjl@lucon.org>
+
+	* support/misc/tcpwrapper.c (logit): Modify the log output.
+
+2000-08-25  Ion Badulescu  <ionut@cs.columbia.edu>
+
+	* utils/rquotad/rquotad.man, utils/statd/statd.man,
+	utils/mountd/mountd.man: updated
+        
+	* utils/mountd/Makefile (LIBS): added -lmisc $(LIBWRAP) $(LIBNSL)
+	* utils/rquotad/Makefile: fix comment
+
+	* support/misc/tcpwrapper.c (logit): added comment about waiting
+	for the children after fork()
+	
+	* utils/mountd/mountd.c (main): ignore SIGCHLD to prevent leaving
+	zombies behind (from logit()'s fork)
+	* utils/rquotad/rquota_svc.c (main): ditto
+	* utils/statd/statd.c (main): ditto
+
+	* utils/rquotad/rquota_svc.c (rquotaprog_1): pass RQUOTAPROG
+	to check_default instead of 0, for prognum
+
+	* utils/statd/statd.c (sm_prog_1_wrapper): pass SM_PROG
+	to check_default instead of 0, for prognum
+
+	* utils/mountd/mount_dispatch.c: Include "tcpwrapper.h" if
+	HAVE_TCP_WRAPPER is defined.
+	(mount_dispatch): Call check_default () if HAVE_TCP_WRAPPER is
+	defined. Reject an RPC call if check_default () fails.
+
+2000-08-25  H.J. Lu <hjl@lucon.org>
+
+	* support/include/tcpwrapper.h: New for the tcp wrapper
+	support.
+	* support/misc/Makefile: Likewise.
+	* support/misc/from_local.c: Likewise.
+	* support/misc/tcpwrapper.c: Likewise.
+
+	* aclocal.m4 (AC_TCP_WRAPPER): New.
+	* configure.in: Use it. Substitute LIBWRAP.
+	* configure: Rebuilt.
+
+	* config.mk.in (LIBNSL): New.
+	(LIBWRAP): Likewise.
+
+	* support/Makefile (SUBDIRS): Add misc.
+
+	* support/lib/Makefile (LIBS): Add libmisc.a.
+
+	* utils/rquotad/Makefile (LIBS): Add
+	
+		-lmisc $(LIBWRAP) $(LIBNSL)
+
+	* utils/statd/Makefile (LIBS): Likewise.
+
+	* utils/rquotad/rquota_svc.c: Include "tcpwrapper.h" if
+	HAVE_TCP_WRAPPER is defined.
+	(rquotaprog_1): Call check_default () if HAVE_TCP_WRAPPER is
+	defined. Reject an RPC call if check_default () fails.
+
+	* utils/statd/statd.c: Include "tcpwrapper.h" if
+	HAVE_TCP_WRAPPER is defined.
+	(sm_prog_1_wrapper): New. A wrapper for sm_prog_1. Call
+	check_default () before calling sm_prog_1 (). Define it as
+	sm_prog_1_wrapper if HAVE_TCP_WRAPPER is defined.
+
+2000-08-25  Chip Salzenberg  <chip@valinux.com>
+
+	* debian/*: Complete Debian build support.
+	* etc/debian/*: Remove.
+
+2000-08-24  Neil Brown <neilb@cse.unsw.edu.au>
+
+	* support/export/client.c(client_check): removed the "dot+1" as a
+	  ypdomain argument to innetgr as this is entirely bogus.
+	  It should always be NULL.
+	
+2000-08-23  Neil Brown <neilb@cse.unsw.edu.au>
+
+	* support/export/xtab.c(xtab_read): introduce new mode for
+	   reading xtab. i.e. a list of exports that might be known to the
+	   kernel, or might not.  These are flagged as m_exported == -1
+	* support/export/xtab.c(xtab_mount_read):  call xtab_read with new
+	   value "2" for xtab, meaning don't trust this too much.
+	* support/include/exportfs.h(struct mexport): changed m_exported
+	   from one bit to an int so that it can hold new value
+	* utils/exportfs/exportfs.c(exportfs_ipdate): add an export to the
+	   kernel if it is uncertain whether the kernel knows (m_exported == -1)
+	* utils/mountd/mountd.c(get_rootfh): similarly export to kernel if
+	   status is uncertain
+
+	* support/nfs/xio.c(xflock): added O_CREAT when getting
+	   a write lock so that missing files aren't fatal.
+
+	* etc/debian/nfs-common: new file from "potato"
+	* etc/debian/nfs-kernel-server: new file from "potato" plus fixes.
+	 
+2000-08-09  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init: Run /usr/sbin/exportfs first during
+	startup to ensure all existing clients work fine.
+
+	* support/export/xtab.c (xtab_mount_read): Pass 1 instead of 0
+	to xtab_read () for reading _PATH_XTAB.
+
+2000-08-02  H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/auth.c (auth_authenticate_internal): Try to
+	avoid the reverse name lookup.
+
+2000-07-04  H.J. Lu <hjl@lucon.org>
+
+	* utils/statd/log.c: Include <stdlib.h> for exit ().
+
+	* utils/statd/misc.c (xunlink): Add `{' and `}' to quiet the
+	gcc warning.
+
+2000-07-04  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.9.1".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+2000-07-04  Neil Brown  <neilb@cse.unsw.edu.au>
+
+	* support/export/hostname.c (hostent_dup): Handle the NULL
+	h_aliases field.
+
+2000-07-03  H.J. Lu <hjl@lucon.org>
+
+	* README: Update the util-linux requirement.
+
+2000-07-03  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.9".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+2000-07-03  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init: Run /usr/sbin/exportfs last during
+	stop to ensure all clients can still access the server
+	before it is shutdown.
+
+2000-06-30  Jeff Uphoff <juphoff@transmeta.com>
+
+	* tools/rpcgen/rpc_svcout.c (write_msg_out): Generate syslog()
+ 	calls with format string.
+	
+2000-06-28  Chip Salzenberg  <chip@valinux.com>
+
+	* utils/statd/log.c (log): Call syslog with format string.
+
+2000-06-27  H.J. Lu <hjl@lucon.org>
+
+	* utils/statd/statd.c (main): Use sysconf (_SC_OPEN_MAX)
+	instead of OPEN_MAX.
+
+2000-06-27  H.J. Lu <hjl@lucon.org>
+
+	* README: Updated.
+
+2000-06-27  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init: Run /usr/sbin/exportfs last during
+	startup to ensure all existing clients are exported.
+
+	* configure.in (VERSION): Set to "0.1.8.2".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-06-06  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.8.1".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-06-06  H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/mountd.c (mount_dump_1_svc): Cast svc_getcaller
+	to "struct sockaddr_in *" for glibc 2.2.
+	(mount_umnt_1_svc): Likewise.
+	(mount_umntall_1_svc): Likewise.
+	(mount_export_1_svc): Likewise.
+	(mount_exportall_1_svc): Likewise.
+	(mount_pathconf_2_svc): Likewise.
+	(get_rootfh): Likewise.
+
+2000-06-04  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init: Fix a typo in comment.
+
+2000-05-31  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.8".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+2000-05-31  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.7.5".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* support/include/nfslib.h (exportent): Add a new field,
+	r_count, to count the number of mounts from a client.
+	(getrmtabent): Take a new argument for position in file.
+	(putrmtabent): Likewise.
+	(fgetrmtabent): Likewise.
+	(fputrmtabent): Likewise.
+	* support/nfs/rmtab.c (getrmtabent): Handle the new argument
+	for position in file.
+	(fgetrmtabent): Likewise.
+	(putrmtabent): Likewise.
+	(fputrmtabent): Likewise.
+
+	* support/nfs/rmtab.c (fgetrmtabent): Get value for the new
+	field, r_count.
+
+	* support/export/rmtab.c (rmtab_read): Pass NULL as the new
+	argument to getrmtabent (), fgetrmtabent (), putrmtabent ()
+	and fputrmtabent ().
+	* utils/mountd/rmtab.c (mountlist_add): Likewise.
+	(mountlist_del): Likewise.
+	(mountlist_del_all): Likewise.
+	(mountlist_list): Likewise.
+
+	* utils/mountd/rmtab.c (mountlist_add): Increment "r_count"
+	for the existing entry and initialize "r_count" to 1.
+	(mountlist_del): Decrement "r_count".
+
+2000-05-18  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.7.4".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-05-18  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init (restart): Just do stop and start.
+
+2000-05-09  Jay Weber <jweber@valinux.com>
+
+	* utils/rquotad/hasquota.c: added support for ext3 recognition
+	in rquotad.
+	* utils/rquotad/mntent.h: Likewise.
+
+2000-05-01  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.7.3".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-05-01  H.J. Lu <hjl@lucon.org>
+
+	* utils/rquotad/rquota_server.c (getquotainfo): Skip bad
+	mounting poins in /etc/fstab.
+
+2000-05-01  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.7.2".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-05-01  H.J. Lu <hjl@lucon.org>
+
+	* utils/rquotad/rquota_server.c (getquotainfo): Call stat ()
+	to check for the mounting point.
+
+2000-04-29  Chip Salzenberg  <chip@valinux.com>
+	    Neil Brown  <neilb@cse.unsw.edu.au>
+
+	* Really re-use RPC ports.
+	  (Fixes earlier patch.  Sorry, Neil.)
+
+2000-04-26  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.7.1".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-04-26  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfslock.init: Check if lockd exits before killing
+	it.
+
+2000-04-25  H.J. Lu <hjl@lucon.org>
+
+	* README: Require util-linux-2.10f-mount-rpc.patch for mount.
+
+2000-03-21 Michael Weiser <michael@weiser.saale-net.de>
+
+	* support/nfs/exports.c (parsesquash): Correctly set the
+	return pointer.
+
+Tue Mar 21 11:38:48 EST 2000 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/include/nfs/nfs.h: Removed knowledge of internals of
+	     kernel filehandles (which can change) and defined nfs_fh_size
+	     which has variable size
+	
+	* support/nfs/getfh.c: defined getfh_size to use new syscall to
+	     get variable sized file handles, and change getfh{,old} to
+	     use nfs_fh_size	    
+	
+	* utils/mountd/mountd.c: use nfd_fh_size and call getfh_size for
+	     NFSv3 file handles
+
+	* tools/Makefile, tools/nlmtest/nlmtest.c
+	     nlmtest.c depended on internel format of file handles, so now
+	     doesn't work.
+
+	
+2000-03-12  Chip Salzenberg  <chip@valinux.com>
+	    Neil Brown  <neilb@cse.unsw.edu.au>
+
+	* support/nfs/rpcmisc.c (rpc_init): Share transports.
+
+2000-03-13 H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfsd.init: Updated.
+
+	* etc/redhat/nfslock.init: Updated.
+
+	* nfs-utils.spec.in: Updated.
+
+	* configure.in (VERSION): Set to "0.1.7".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+Wed Mar  8 09:42:43 2000 Neil Brown <neilb@cse.unsw.edu.au>
+
+	* utils/exportfs/exportfs.c (dump): Included printing of
+	   nohide, no_subtree_check, and insecure_locks
+
+2000-02-26  Chip Salzenberg  <chip@valinux.com>
+
+	* config.mk.in (INSTALLSUID): Strip ("-s").
+	(INSTALLSCRIPT): Define.
+	* utils/nhfsstone/Makefile: Use it.
+
+2000-02-26  Chip Salzenberg  <chip@valinux.com>
+
+	* utils/lockd/lockd.man: Create.
+	* utils/lockd/Makefile: Install it.
+	* utils/nhfsstone/nhfs{run,nums,graph}.man: Create.
+	* utils/nhfsstone/nhfsstone.man: Change suffix from ".1".
+	* utils/nhfsstone/Makefile: Install the helper scripts and
+	  all four man pages.
+	* utils/exportfs/exports.man: Fix typo.
+
+2000-02-26  Chip Salzenberg  <chip@valinux.com>
+
+	* support/nfs/xio.c (xungetc): Decrement line number when
+	character to unget is newline.  Make first parameter int, so
+	it can distinguish EOF from \377.
+	* support/include/xio.h (xungetc): Adjust prototype.
+
+Fri Feb  4 23:42:23 2000 Neil Brown <neilb@cse.unsw.edu.au>
+
+	* support/include/nfs/export.h: added NFSEXP_NOAUTHNLM
+	* support/nfs/exports.c: added handling for NFSEXP_NOAUTHNLM
+	* utils/exportfs/exports.man: added documentation for no_auth_nlm.
+
+	This is for supporting a new option introduced in 2.3.42
+
+Thu Feb  3 14:55:48 2000 H.J. Lu <hjl@lucon.org>
+
+	* COPYING: Added. GPL.
+
+Thu Feb 03 14:40:40 2000 Cristian Gafton <gafton@redhat.com>
+
+	* utils/rquotad/rquota_server.c (getquotainfo): Call statfs ()
+	to get the block size.
+
+Tue Jan 25 11:04:17 2000 H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: Update ftp site.
+
+Mon Jan 17 11:48:18 2000 H.J. Lu <hjl@lucon.org>
+
+	* README: Update hostnames.
+
+Tue Jan 11 10:06:22 2000 H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.6".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+Mon Jan 10 14:26:33 2000 H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/auth.c (auth_authenticate_internal): Call
+	xstrdup for hostname before passing it to gethostbyname.
+
+	* utils/mountd/mountd.c (get_exportlist): Use xstrdup instead
+	of strdup.
+
+Sun Dec 19 09:35:01 1999  H.J. Lu <hjl@lucon.org>
+
+	* README: Update the mailing list address.
+
+Sun Dec 19 09:22:28 1999  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.5".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+Mon Dec 13 13:40:20 1999  H.J. Lu <hjl@lucon.org>
+
+	* utils/rquotad/hasquota.c (hasquota): Malloc one more char
+	for '/'.
+
+Mon Dec  6 09:42:45 1999  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.4".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+Mon Dec  6 09:28:07 1999  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: New file.
+
+	* config.mk.in (VERSION): Changed to "nfs-utils @VERSION@".
+
+	* configure.in (nfs-utils.spec): Added to AC_OUTPUT.
+
+1999-12-04  Chip Salzenberg  <chip@valinux.com>
+
+	* config.mk.in: Use $(CC) as set by configure.
+
+1999-12-04  Chip Salzenberg  <chip@valinux.com>
+
+	* rules.mk: Call $(MAKE) with $(MFLAGS).
+
+Mon Nov 29 11:17:35 1999  H.J. Lu <hjl@lucon.org>
+
+	* tools/rpcgen/rpc_main.c (h_output): Generate IXDR_GET_INT32,
+	IXDR_PUT_INT32, IXDR_GET_U_INT32 and IXDR_PUT_U_INT32.
+
+Mon Nov 29 11:17:35 1999  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec (Version): Set to 0.1.3.
+
+	* configure.in (VERSION): Set to "nfs-utils 0.1.3".
+	* configure: Regenerated.
+
+	* README: Updated.
+
+Mon Nov 29 11:15:47 1999  H.J. Lu <hjl@lucon.org>
+
+	* utils/rquotad/rquota_server.c (nfsmount_to_devname): Removed.
+	(_PATH_DEV_DSK): Likewise.
+	(getquotainfo): Match the mounting point from /etc/mtab
+	instead of calling nfsmount_to_devname ().
+
+1999-11-24  Chip Salzenberg  <chip@valinux.com>
+
+	* utils/statd/monitor.c (sm_mon_1_svc): Accept lockd callbacks
+	to the new port 24 as well as the historical port 100021.
+
+Tue Nov 23 10:21:34 1999 Neil Brown <neilb@cse.unsw.edu.au>
+
+	* etc/redhat/nfsd.init (stop): moved exportfs -ua after
+	stopping nfsd to stop spurious ESTALE on server shutdown.
+	
+Tue Nov 23 10:13:39 1999  Neil Brown <neilb@cse.unsw.edu.au>
+
+	* support/nfs/exports.c (parseopts): make copy of opt string
+	before 'nul'ing out commas so that
+
+	# exportfs -o option1,option2 hosta:/fs hostb:/fs
+
+        applies both options to both exports.
+
+Thu Oct 28 12:55:42 1999  H.J. Lu <hjl@lucon.org>
+
+	* README: Fix a few typos.
+
+	* tools/rpcgen/rpc_cout.c (print_header): Use int32_t instead
+	of long.
+	* tools/rpcgen/rpc_hout.c (pdefine): Likewise.
+	* tools/rpcgen/rpc_main.c (c_initialize): Likewise.
+	* tools/rpcgen/rpc_parse.c (get_type): Likewise.
+	(unsigned_dec): Likewise.
+	* tools/rpcgen/rpc_scan.c (symbols): Likewise.
+	* tools/rpcgen/rpc_util.c (tokstrings): Likewise.
+
+	* tools/rpcgen/rpc_cout.c (emit_single_in_line): Use INT32
+	instead of LONG.
+	* tools/rpcgen/rpc_parse.c (get_type): Likewise.
+	(unsigned_dec): Likewise.
+	* tools/rpcgen/rpc_scan.c (symbols): Likewise.
+	* tools/rpcgen/rpc_scan.h (tok_kind): Likewise.
+	* tools/rpcgen/rpc_util.c (tokstrings): Likewise.
+
+Thu Oct 28 11:27:51 1999 Neil Brown <neilb@cse.unsw.edu.au>
+
+        * support/include/nfs/export.h addedd NFSEXP_NOSUBTREECHECK
+        * support/nfs/exports.c: added {no_,}subtree_check and changed
+          crossmnt to nohide
+        * utils/exportfs/exports.man: added no_subtree_check and nohide
+          and removed irrelevant stuff from unfsd.
+        * support/export/rmtab.c: rmtab_read didn't quite do the right
+          thing if a pathname from rmtab was a subdirectory of an export-point
+
+Tue Oct 26 17:22:40 1999  H.J. Lu <hjl@lucon.org>
+
+	* README: Updated ftp site.
+
+Mon Oct 25 18:12:45 1999  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec (Version): Set to 0.1.2.
+
+	* configure.in (VERSION): Set to "nfs-utils 0.1.2".
+	* configure: Regenerated.
+
+	* README: Updated.
+
+Mon Oct 25 18:11:21 1999  H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/auth.c (auth_error): Add "no_forward_dns".
+	(auth_authenticate_internal): Check for NULL return on forward
+	DNS lookup.
+	(auth_authenticate): Handle "no_forward_dns".
+
+Thu Oct 21 16:22:06 1999  H.J. Lu <hjl@lucon.org>
+
+	* Version 0.1.1 released.
+
+	* nfs-utils.spec (Version): Set to 0.1.1.
+
+	* configure.in (VERSION): Set to "nfs-utils 0.1.1".
+	* configure: Regenerated.
+
+	* README: Updated.
+
+Mon Oct 18 17:43:29 1999  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec (Obsoletes): Fixed a typo, change knfsd-client
+	to knfsd-clients.
+	(Provides): Likewise.
+
+Mon Oct 18 14:56:22 1999  H.J. Lu <hjl@lucon.org>
+
+	* Initial version 0.1 released.
+
+	* configure.in (VERSION): Set to "nfs-utils 0.1".
+	* configure: Regenerated.
+
+Mon Oct 18 14:54:57 1999  H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/mountd.c (get_exportlist): Cleanup.
+
+	* utils/exportfs/exportfs.c (unexport_all): Unexport from
+	kernel only if the entry is exported to kernel.
+	(unexportfs): Likewise.
+
+Wed Sep 08 16:49:32 1999  Neil Brown <neilb@cse.unsw.edu.au>
+
+1/ utils/mountd/rmtab.c::mountlist_list
+
+     This routine stats the rmtab file to see if it has changed.  It
+     if has, it cleans up it's old copy of the data. But it still
+     always re-read the file, thus returning multiple copies of the
+     data on consecutive calls without intervening changes.
+     "Showmount -a" didn't show this as it appears to sort/unique the
+     data, but 'strace showmount -a' showed that the size of the
+     datagram that it received grew.
+
+     I moved the getrmtabent loop inside the mtime test.
+
+2/ utils/exportfs/exportfs.c
+   
+     Many routines used the m_path field of m_export instead of
+     e_path.
+     According to the comment in nfslib.h, m_path should only
+     be used when processing a mount request (i.e. in mountd)
+     where the mountpoint may be a subdirectory of the export point.
+
+     I changed all occurances of m_path to e_path
+
+
+3/ utils/exportfs/exportfs.c:main
+
+      extra arguments are not meaningful with -a or -r, but
+      exportfs accepted them and then ignored the -a/-r, expect that
+      -r would still unexport everything first.
+
+      I generate an error if there are extra args and f_all
+
+4/ utils/exportfs/exportfs.c:main
+     extract dump out as a special case.
+
+5/ utils/exportfs/exportfs.c
+     made f_reexport a local variable.
+
+
+6/ utils/exportfs/exportfs.c:main,exportall
+
+    support/export/rmtab.c
+       only  mayexport on newly created entries, don't set xtabent at all
+
+7/ support/include/nfslib.h
+
+      add #define _PATH_PROC_EXPORTS to be /proc/fs/nds/exports
+
+8/ support/export/xtab.c
+
+      xtab_mount_read loads data from _PATH_PROC_EXPORTS if it exists,
+      else from xtab
+
+
+9/ support/export/xtab.c
+
+      xtab_mount_read now sets m_exported, and NOT
+	xtabent and mayexport
+
+      removed the append arguement from xtab_write as it was
+	never used.
+
+      added is_export flag to xtab_write similar to xtab_read
+	if is_export, only write entries with m_xtabent or m_addxtab
+	if !is_export, only write entries with m_exported
+     
+10/ support/export/export.c::export_allowed_internal
+
+      added test for exp->m_mayexport, as the export tree
+	may have entries that are no longer allowed to be exported,
+	and so shouldn't caused deduced exported by rmtab_read
+
+11/ utils/exportfs/exportfs.c::main
+	error checking of flags.
+
+12/ utils/exportfs/exportfs.c
+
+	total rewrite of export and unexport logic.
+	We now:
+	-  build an exportslist of valid exports, based on
+	   current etab file  and arguments,
+        -  read rmtab to instantiate relevant wild card entries
+	-  read etab to find out what is currently exported
+	-  synchronise intention with reality
+	-  write out etab and xtab
+
+13/  various
+	discard the m_addxtab flag
+	add m_changed flag so we know what to report in exportfs
+
+14/ utils/mountd/auth.c:auth_authenticate
+
+	the value returned by gethostbyaddr was trusted.
+
+	It now follows this with a call to gethostbyname
+	and checks that the address is in the list.
+
+15/ support/export/nfsctl.c::cltsetup,expsetup
+
+	force client names to lowercase as kernel is
+	sensitive to case
+
+16/ quietened a few compiler warnings
+
+17/ support/export/client:client_lookup
+
+     look for pre-existing client with same name before creating
+	a new one.
+
+18/ support/include/exportfs.h
+
+     The ordering of the MCL_* enum was:
+	ANONYMOUS, FQDN, SUBNETWORK, WILDCARD, NETGROUP
+
+     I moved ANONYMOUS to the end.
+
+     The ordering is significant when an export entry is being searched for to 
+	match a given address.  There are two problems with ANONYMOUS being first.
+
+	1/ if a directory is exported rw to a couple of hosts and ro to everyone else,
+	   then the ro case will always be found first and the privileged hosts won't get
+	   their privilege
+	2/ When mountd gets a request to mount an ANONYMOUSly exported tree, it creates a FQDN
+	   export entry for the specific host, and writes it to xtab.
+	   When another request comes from the same host, the ANONYMOUS entry is found again, 
+	   before the new FQDN entry, so it creates another FQDN entry and writes it to xtab
+	   again.  If causes bloat in xtab.
+
+      Putting ANONYMOUS at the end reflects it's nature as a catch-all
+
+19/ utils/exportfs/exportfs.man
+	many updates to the man page to reflect changes to the code
+
+-----------------------
+
+
+
+TODO:
+
+- allow exportfs to modify rmtab file
+- make sure kernel never gets two clients with same IP address
+    - possible kernel should reject
+    - needs to be some way to lookup client in kernel by IP address
+- maybe get kernel to do case-insensitive comparisons on client names
+- remove unused clients from kernel
+
+- change etab to xtab and xtab to xtab.active
+
+- timestamp and/or statd-stamp in rmtab for removing old entries.
+
+Mon Oct 18 11:48:07 1999  H.J. Lu <hjl@lucon.org>
+
+	* linux-nfs: New directory.
+	* linux-nfs/ChangeLog: Moved from ..
+	* linux-nfs/INSTALL: Likewise.
+	* linux-nfs/KNOWNBUGS: Likewise.
+	* linux-nfs/NEW: Likewise.
+	* linux-nfs/README: Likewise.
+	* linux-nfs/THANKS: Likewise.
+	* linux-nfs/TODO: Likewise.
+
+	* Starting from knfsd 1.4.7.

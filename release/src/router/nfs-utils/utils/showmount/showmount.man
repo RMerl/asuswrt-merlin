@@ -1,0 +1,60 @@
+.\" Copyright 1993 Rick Sladkey <jrs@world.std.com>
+.\" May be distributed under the GNU General Public License
+.TH SHOWMOUNT 8 "6 October 1993"
+.SH NAME
+showmount \- show mount information for an NFS server
+.SH SYNOPSIS
+.B showmount
+.B "[\ \-adehv\ ]"
+.B "[\ \-\-all\ ]"
+.B "[\ \-\-directories\ ]"
+.B "[\ \-\-exports\ ]"
+.B "[\ \-\-help\ ]"
+.B "[\ \-\-version\ ]"
+.B "[\ host\ ]"
+.SH DESCRIPTION
+.B showmount
+queries the mount daemon on a remote host for information about
+the state of the NFS server on that machine.  With no options
+.B showmount
+lists the set of clients who are mounting from that host.
+The output from
+.B showmount
+is designed to
+appear as though it were processed through ``sort \-u''.
+.SH OPTIONS
+.TP
+.BR \-a " or " \-\-all
+List both the client hostname or IP address and mounted directory in
+host:dir format. This info should not be considered reliable. See the notes
+on rmtab in 
+.BR rpc.mountd (8).
+.TP
+.BR \-d " or " \-\-directories
+List only the directories mounted by some client.
+.TP
+.BR \-e " or " \-\-exports
+Show the NFS server's export list.
+.TP
+.BR \-h " or " \-\-help
+Provide a short help summary.
+.TP
+.BR \-v " or " \-\-version
+Report the current version number of the program.
+.TP
+.B \-\-no\-headers
+Suppress the descriptive headings from the output.
+.SH "SEE ALSO"
+.BR rpc.mountd (8),
+.BR rpc.nfsd (8)
+.SH BUGS
+The completeness and accuracy of the information that
+.B showmount
+displays varies according to the NFS server's implementation.
+.P
+Because
+.B showmount
+sorts and uniqs the output, it is impossible to determine from
+the output whether a client is mounting the same directory more than once.
+.SH AUTHOR
+Rick Sladkey <jrs@world.std.com>

@@ -1,0 +1,11 @@
+
+Even though the Makefiles offer a `make install' instruction,
+I would suggest against using it yet. I have run nfsd and the nfs
+client without kernel oopses for a while, but the picture may change
+if you start playing with lockd. Automatic installation may not even
+work for the kernel makefiles yet.
+
+I'd therefore advise that you use a separate Linux box for testing
+if you have one. Use the etc/copy script to copy all modules and
+support programs, and run the ins script to start the show. rmm
+will clean up afterwards (provided you didn't trigger an oops).

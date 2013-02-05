@@ -1,0 +1,197 @@
+.\"
+.\" statd(8)
+.\"
+.\" Copyright (C) 1999 Olaf Kirch <okir@monad.swb.de>
+.\" Modified by Jeffrey A. Uphoff, 1999, 2002, 2005.
+.\" Modified by Lon Hohberger, 2000.
+.\" Modified by Paul Clements, 2004.
+.TH rpc.statd 8 "31 Aug 2004"
+.SH NAME
+rpc.statd \- NSM status monitor
+.SH SYNOPSIS
+.B "rpc.statd [-FNL] [-d] [-?] [-n " name "] [-o " port "] [-p " port "] [-H " prog "] [-V]"
+.SH DESCRIPTION
+The
+.B rpc.statd
+server implements the NSM (Network Status Monitor) RPC protocol.
+This service is somewhat misnamed, since it doesn't actually provide
+active monitoring as one might suspect; instead, NSM implements a
+reboot notification service. It is used by the NFS file locking service,
+.BR rpc.lockd ,
+to implement lock recovery when the NFS server machine crashes and
+reboots.
+.SS Operation
+For each NFS client or server machine to be monitored,
+.B rpc.statd
+creates a file in
+.BR /var/lib/nfs/sm .
+When starting, it normally runs
+.B sm-notify
+to iterate through these files and notify the
+peer
+.B rpc.statd
+on those machines.
+.SH OPTIONS
+.TP
+.B -F
+By default,
+.B rpc.statd
+forks and puts itself in the background when started. The
+.B -F
+argument tells it to remain in the foreground. This option is
+mainly for debugging purposes.
+.TP
+.B -d
+By default,
+.B rpc.statd
+sends logging messages via
+.BR syslog (3)
+to system log.  The
+.B -d
+argument forces it to log verbose output to
+.B stderr
+instead. This option is mainly for debugging purposes, and may only
+be used in conjunction with the
+.B -F
+parameter.
+.TP
+.BI "\-n," "" " \-\-name " name 
+specify a name for
+.B rpc.statd
+to use as the local hostname. By default,
+.BR rpc.statd
+will call
+.BR gethostname (2)
+to get the local hostname. Specifying
+a local hostname may be useful for machines with more than one
+interfaces.
+.TP
+.BI "\-o," "" " \-\-outgoing\-port "  port
+specify a port for
+.B rpc.statd
+to send outgoing status requests from.  By default,
+.BR rpc.statd
+will ask
+.BR portmap (8)
+to assign it a port number.  As of this writing, there is not
+a standard port number that
+.BR portmap
+always or usually assigns.  Specifying
+a port may be useful when implementing a firewall.
+.TP
+.BI "\-p," "" " \-\-port " port
+specify a port for
+.B rpc.statd
+to listen on.  By default,
+.BR rpc.statd
+will ask
+.BR portmap (8)
+to assign it a port number.  As of this writing, there is not
+a standard port number that
+.BR portmap
+always or usually assigns.  Specifying
+a port may be useful when implementing a firewall.
+.TP
+.BI "\-P," "" " \-\-state\-directory\-path "  directory
+specify a directory in which to place statd state information.
+If this option is not specified the default of 
+.BR /var/lib/nfs
+is used.
+.TP
+.B -N
+Causes statd to run in the notify-only mode. When started in this mode, the
+statd program will check its state directory, send notifications to any
+monitored nodes, and exit once the notifications have been sent. This mode is
+used to enable Highly Available NFS implementations (i.e. HA-NFS).
+This mode is deprecated \-
+.B sm-notify
+should be used directly instead.
+.TP
+.BR -L , " --no-notify
+Inhibits the running of
+.BR sm-notify .
+If
+.B sm-notify
+is run by some other script at boot time, there is no need for
+.B statd
+to start sm-notify itself.  This can be appropriate if starting of
+statd needs to be delayed until it is actually need.  In such cases
+.B sm-notify
+should still be run at boot time.
+.TP
+.BI "\-H, " "" " \-\-ha-callout " prog
+Specify a high availability callout program, which will receive callouts
+for all client monitor and unmonitor requests. This allows
+.B rpc.statd
+to be used in a High Availability NFS (HA-NFS) environment. The
+program will be run with 3 arguments:  The first is either
+.B add-client
+or
+.B del-client
+depending on the reason for the callout.
+The second will be the name of the client.
+The third will be the name of the server as known to the client.
+.TP
+.B -?
+Causes
+.B rpc.statd
+to print out command-line help and exit.
+.TP
+.B -V
+Causes
+.B rpc.statd
+to print out version information and exit.
+
+
+
+.SH TCP_WRAPPERS SUPPORT
+This
+.B rpc.statd
+version is protected by the
+.B tcp_wrapper
+library. You have to give the clients access to
+.B rpc.statd
+if they should be allowed to use it. To allow connects from clients of
+the .bar.com domain you could use the following line in /etc/hosts.allow:
+
+statd: .bar.com
+
+You have to use the daemon name 
+.B statd
+for the daemon name (even if the binary has a different name).
+
+For further information please have a look at the
+.BR tcpd (8)
+and
+.BR hosts_access (5)
+manual pages.
+
+.SH SIGNALS
+.BR SIGUSR1
+causes
+.B rpc.statd
+to re-read the notify list from disk
+and send notifications to clients. This can be used in High Availability NFS
+(HA-NFS) environments to notify clients to reacquire file locks upon takeover
+of an NFS export from another server.
+
+.SH FILES
+.BR /var/lib/nfs/state
+.br
+.BR /var/lib/nfs/sm/*
+.br
+.BR /var/lib/nfs/sm.bak/*
+.SH SEE ALSO
+.BR rpc.nfsd(8),
+.BR portmap(8)
+.SH AUTHORS
+.br
+Jeff Uphoff <juphoff@users.sourceforge.net>
+.br
+Olaf Kirch <okir@monad.swb.de>
+.br
+H.J. Lu <hjl@gnu.org>
+.br
+Lon Hohberger <hohberger@missioncriticallinux.com>
+.br
+Paul Clements <paul.clements@steeleye.com>

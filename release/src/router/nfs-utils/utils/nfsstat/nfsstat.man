@@ -1,0 +1,163 @@
+.\"
+.\" nfsstat(8)
+.\" 
+.\" Copyright (C) 1996-2005 Olaf Kirch <okir@suse.de>
+.TH nfsstat 8 "7 Aug 2007"
+.SH NAME
+nfsstat \- list NFS statistics
+.SH SYNOPSIS
+.B nfsstat
+[\fIOPTION\fR]...
+.SH DESCRIPTION
+The
+.B nfsstat
+displays statistics kept about NFS client and server activity.
+.SH OPTIONS
+.TP
+.B \-s, \-\-server
+Print only server-side statistics. The default is to print both server and
+client statistics.
+.TP
+.B \-c, \-\-client
+Print only client-side statistics.
+.TP
+.B \-n, \-\-nfs
+Print only NFS statistics. The default is to print both NFS and RPC
+information.
+.TP
+.B \-2
+Print only NFS v2 statistics. The default is to only print information
+about the versions of \fBNFS\fR that have non-zero counts.
+.TP
+.B \-3
+Print only NFS v3 statistics. 
+.TP
+.B \-4
+Print only NFS v4 statistics. 
+.TP
+.B \-m, \-\-mounts
+Print information about each of the mounted \fBNFS\fR file systems.
+
+If this option is used, all other options are ignored.
+.TP
+.B \-r, \-\-rpc
+Print only RPC statistics.
+.TP
+.BI \-o " facility
+Display statistics for the specified facility, which must be one of:
+.RS
+.TP
+.B nfs
+NFS protocol information, split up by RPC call.
+.TP
+.B rpc
+General RPC information.
+.TP
+.B net
+Network layer statistics, such as the number of received packets, number
+of TCP connections, etc.
+.TP
+.B fh
+Usage information on the server's file handle cache, including the
+total number of lookups, and the number of hits and misses.
+.TP
+.B rc
+Usage information on the server's request reply cache, including the
+total number of lookups, and the number of hits and misses.
+.TP
+.B all
+Display all of the above facilities.
+.RE
+.TP
+.B \-v, \-\-verbose
+This is equivalent to \fB\-o all\fR.
+.TP
+.B \-l, \-\-list
+Print information in list form.
+.TP
+.BI "\-S, \-\-since " file
+Instead of printing current statistics, 
+.B nfsstat
+imports statistics from
+.I file
+and displays the difference between those and the current statistics.
+Valid input
+.IR file "s may be in the form of "
+.B /proc/net/rpc/nfs
+(raw client stats),
+.B /proc/net/rpc/nfsd
+(raw server stats), or saved output from
+.B nfsstat
+itself (client and/or server stats).   Any statistics missing from a saved
+.B nfsstat
+output 
+.I file
+are treated as zeroes.
+.TP
+.B \-Z[interval], \-\-sleep=[interval]
+Instead of printing current statistics and immediately exiting,
+.B nfsstat
+takes a snapshot of the current statistics and pauses until it receives
+.B SIGINT
+(typically from
+.BR Ctrl-C ),
+at which point it takes another snapshot and displays the difference
+between the two.
+If \fIinterval\fR is specified, 
+.B nfsstat
+will print the number of \fBNFS\fR calls made since the previous report.
+Stats will be printed repeatedly every \fIinterval\fR seconds.
+.\" --------------------- EXAMPLES -------------------------------
+.SH EXAMPLES
+.TP
+.B nfsstat \-o all \-234
+Show all information about all versions of \fBNFS\fR.
+.TP
+.B nfsstat \-\-verbose \-234
+Same as above.
+.TP
+.B nfsstat \-o all
+Show all information about active versions of \fBNFS\fR.
+.TP
+.B nfsstat \-\-nfs \-\-server \-3
+Show statistics for \fBNFS\fR version 3 server.
+.TP
+.B nfsstat \-m
+Show information about mounted \fBNFS\fR filesystems.
+.\" --------------------- DISPLAY --------------------------------
+.SH DISPLAY
+The \fBFlags\fR output from the \fB\-m\fR option is the same as the
+flags give to the \fBmount\fR command.
+.\" --------------------- FILES ----------------------------------
+.SH FILES
+.TP
+.B /proc/net/rpc/nfsd
+.BR procfs -based
+interface to kernel NFS server statistics.
+.TP
+.B /proc/net/rpc/nfs
+.BR procfs -based
+interface to kernel NFS client statistics.
+.TP
+.B /proc/mounts
+.BR procfs -based
+interface to the mounted filesystems.
+.\" -------------------- SEE ALSO --------------------------------
+.SH SEE ALSO
+.BR rpc.nfsd (8).
+.BR nfs (5).
+.\" ---------------------- BUGS ----------------------------------
+.SH BUGS
+The default output has been changed.  To get the old default output you must run \fBnfsstat \-\-auto \-2\fR.
+.P
+The function of the \fB\-v\fR and \fB\-a\fR options have changed. The \fB\-a\fR option
+is now reserved for future use. The \fB\-v\fR does what the \fB\-a\fR option used to do,
+and the new \fB\-[234]\fR options replace the \fB\-v\fR option.
+.P
+The \fBDisplay\fR section should be more complete.
+.P
+Further bugs can be found or reported at 
+.BR http://nfs.sf.net/ .
+.\" -------------------- AUTHOR ----------------------------------
+.SH AUTHOR
+Olaf Kirch, <okir@suse.de>

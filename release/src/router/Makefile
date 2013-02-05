@@ -245,6 +245,10 @@ obj-y += ez-ipupdate
 # Merlin addons
 obj-y += wol
 obj-y += netstat-nat
+#obj-$(RTCONFIG_NFS) += nfs-utils
+#obj-$(RTCONFIG_NFS) += portmap
+obj-y += nfs-utils
+obj-y += portmap
 
 obj-clean := $(foreach obj, $(obj-y) $(obj-n) $(obj-), $(obj)-clean)
 obj-install := $(foreach obj,$(obj-y),$(obj)-install)
@@ -2007,6 +2011,31 @@ sd-idle: sd-idle/sd-idle-2.6
 sd-idle-install: sd-idle-2.6
 	install -D sd-idle/sd-idle-2.6 $(INSTALLDIR)/sd-idle/usr/sbin/sd-idle-2.6
 	$(STRIP) -s $(INSTALLDIR)/sd-idle/usr/sbin/sd-idle-2.6
+
+nfs-utils/Makefile: nfs-utils/Makefile.in
+	cd nfs-utils && CPPFLAGS="$(EXTRACFLAGS)" knfsd_cv_bsd_signals=no \
+	$(CONFIGURE) --enable-nfsv3 --disable-nfsv4 --disable-ipv6 \
+	    --disable-uuid --disable-gss --disable-mount \
+		--without-tcp-wrappers
+
+nfs-utils: nfs-utils/Makefile
+	$(MAKE) -C $@
+
+nfs-utils-install:
+	install -D nfs-utils/utils/nfsd/nfsd $(INSTALLDIR)/nfs-utils/usr/sbin/nfsd
+	install -D nfs-utils/utils/mountd/mountd $(INSTALLDIR)/nfs-utils/usr/sbin/mountd
+	install -D nfs-utils/utils/exportfs/exportfs $(INSTALLDIR)/nfs-utils/usr/sbin/exportfs
+	install -D nfs-utils/utils/showmount/showmount $(INSTALLDIR)/nfs-utils/usr/sbin/showmount
+	install -D nfs-utils/utils/statd/statd $(INSTALLDIR)/nfs-utils/usr/sbin/statd
+	install -D nfs-utils/support/lib/libnfs.so $(INSTALLDIR)/nfs-utils/usr/lib/libnfs.so
+	$(STRIP) $(INSTALLDIR)/nfs-utils/usr/sbin/* $(INSTALLDIR)/nfs-utils/usr/lib/libnfs.so
+
+portmap: portmap/Makefile
+	$(MAKE) -C $@  EXTRACFLAGS="$(EXTRACFLAGS)" NO_TCP_WRAPPER=y RPCUSER=rpc
+
+portmap-install:
+	install -D portmap/portmap $(INSTALLDIR)/portmap/usr/sbin/portmap
+	$(STRIP) $(INSTALLDIR)/portmap/usr/sbin/portmap
 
 #
 # Generic rules

@@ -1,0 +1,8 @@
+
+ This directory contains the source for rpcgen.new from Sun TIRPC
+ source distribution. I cleaned it up a little so that it will
+ compile with gcc (without using -traditional), and modified the
+ output to avoid those silly warnings you usually get when compiling
+ an rpcgen-generated C file.
+
+ Olaf Kirch <okir@monad.swb.de> 8 Oct 1996

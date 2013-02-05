@@ -1,0 +1,11 @@
+#!/bin/bash
+
+path=`mount|grep rpc_pipefs|awk '{ print $3;exit }'`
+
+if [ -z "$path" ]; then
+	echo "unable to find rpc_pipefs; is it mounted?"
+	exit 1
+fi;
+
+find "$path" -name 'krb5' -exec gss_clnt_send_err '{}' $* ';'
+
