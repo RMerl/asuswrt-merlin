@@ -2809,10 +2809,10 @@ int start_nfsd(void)
 
 		fprintf(fp, "# automagically generated\n");
 
-       	        nv = nvp = strdup(nvram_safe_get("nfsd_exportlist"));
-               	if (nv) {
-                       	while ((b = strsep(&nvp, "<")) != NULL) {
-       	                        if ((vstrsep(b, ">", &dir, &access, &options) != 3))
+		nv = nvp = strdup(nvram_safe_get("nfsd_exportlist"));
+		if (nv) {
+			while ((b = strsep(&nvp, "<")) != NULL) {
+				if ((vstrsep(b, ">", &dir, &access, &options) != 3))
                	                        continue;
 				fprintf(fp, "%s %s (%s)\n", dir, access, options);
 			}
