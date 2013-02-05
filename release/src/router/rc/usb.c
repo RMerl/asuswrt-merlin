@@ -2258,6 +2258,8 @@ void start_nas_services(int force)
 	start_samba();
 #endif
 
+	start_nfsd();
+
 if (nvram_match("asus_mfg", "0")) {
 #ifdef RTCONFIG_FTP
 	start_ftpd();
@@ -2289,6 +2291,9 @@ void stop_nas_services(int force)
 #ifdef RTCONFIG_SAMBASRV
 	stop_samba();
 #endif
+
+	stop_nfsd();
+
 #ifdef RTCONFIG_WEBDAV
 	//stop_webdav();
 #endif
@@ -2315,12 +2320,16 @@ void restart_sambaftp(int stop, int start)
 #ifdef RTCONFIG_SAMBASRV
 		stop_samba();
 #endif
+
+		stop_nfsd();
+
 #ifdef RTCONFIG_FTP
 		stop_ftpd();
 #endif
 #ifdef RTCONFIG_WEBDAV
 		stop_webdav();
 #endif
+		start_nfsd();
 	}
 	
 	if (start) {
@@ -2328,6 +2337,9 @@ void restart_sambaftp(int stop, int start)
 		create_passwd();
 		start_samba();
 #endif
+
+		start_nfsd();
+
 #ifdef RTCONFIG_FTP
 		start_ftpd();
 #endif
@@ -2766,4 +2778,76 @@ int stop_sd_idle(void) {
 }
 
 #endif
+
+int start_nfsd(void)
+{
+	struct stat	st_buf;
+	FILE 		*fp;
+
+	/* create directories/files */
+	mkdir("/var/lib", 0755);
+	mkdir("/var/lib/nfs", 0755);
+# ifdef LINUX26
+	mkdir("/var/lib/nfs/v4recovery", 0755);
+	mount("nfsd", "/proc/fs/nfsd", "nfsd", MS_MGC_VAL, NULL);
+# endif
+	close(creat("/var/lib/nfs/etab", 0644));
+	close(creat("/var/lib/nfs/xtab", 0644));
+	close(creat("/var/lib/nfs/rmtab", 0644));
+	
+	/* create /etc/exports, if it does not exists yet */
+	if (stat("/etc/exports", &st_buf) != 0) 
+	{
+		int i, count;
+		char tmp[sizeof("usb_nfslist_xXXXXX")];
+		
+		if ((fp = fopen("/etc/exports", "w")) == NULL) {
+			perror("/etc/exports");
+			return 1;
+		}
+		
+		fprintf(fp, "# automagically generated\n");
+
+		for (i = 0, count = nvram_get_int("usb_nfsnum_x"); i < count; i++) 
+		{
+			sprintf(tmp, "usb_nfslist_x%d", i);
+			if (nvram_safe_get(tmp)[0] == '/')
+				fprintf(fp, "%s\n", nvram_safe_get(tmp));
+			else	fprintf(fp, "/tmp/harddisk/%s\n", nvram_safe_get(tmp));
+		}
+		fappend(fp,"/usr/local/etc/exports");
+		fclose(fp);
+	}
+
+	eval("/usr/sbin/portmap");
+	eval("/usr/sbin/statd");
+	eval("/usr/sbin/nfsd");
+	eval("/usr/sbin/mountd");
+	sleep(1);
+	eval("/usr/sbin/exportfs", "-a");
+
+	return 0;	
+}
+
+int restart_nfsd(void)
+{
+	eval("/usr/sbin/exportfs", "-au");
+	eval("/usr/sbin/exportfs", "-a");
+
+	return 0;	
+}
+
+int stop_nfsd(void)
+{
+	killall_tk("mountd");
+	killall("nfsd", SIGKILL);
+	killall_tk("statd");
+	killall_tk("portmap");
+
+#ifdef LINUX26
+	umount("/proc/fs/nfsd");
+#endif
+
+	return 0;
+}
 
