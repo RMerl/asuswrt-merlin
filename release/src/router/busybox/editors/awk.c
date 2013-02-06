@@ -1799,18 +1799,6 @@ static void handle_special(var *v)
 		is_f0_split = FALSE;
 
 	} else if (v == intvar[FS]) {
-		/*
-		 * The POSIX-2008 standard says that changing FS should have no effect on the
-		 * current input line, but only on the next one. The language is:
-		 *
-		 * > Before the first reference to a field in the record is evaluated, the record
-		 * > shall be split into fields, according to the rules in Regular Expressions,
-		 * > using the value of FS that was current at the time the record was read.
-		 *
-		 * So, split up current line before assignment to FS:
-		 */
-		split_f0();
-
 		mk_splitter(getvar_s(v), &fsplitter);
 
 	} else if (v == intvar[RS]) {

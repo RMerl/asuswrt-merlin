@@ -205,11 +205,4 @@ end d
 testing "awk handles empty ()" \
 	"awk 'BEGIN {print()}' 2>&1" "awk: cmd. line:1: Empty sequence\n" "" ""
 
-testing "awk FS assignment" "awk '{FS=\":\"; print \$1}'" \
-	"a:b\ne\n" \
-	"" \
-	"a:b c:d\ne:f g:h"
-
-# testing "description" "command" "result" "infile" "stdin"
-
 exit $FAILCOUNT
