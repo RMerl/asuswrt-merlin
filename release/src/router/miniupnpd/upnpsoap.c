@@ -54,7 +54,6 @@ BuildSendAndCloseSoapResp(struct upnphttp * h,
 	h->res_buflen += sizeof(afterbody) - 1;
 
 	SendResp_upnphttp(h);
-	CloseSocket_upnphttp(h);
 }
 
 static void
@@ -1870,6 +1869,5 @@ SoapError(struct upnphttp * h, int errCode, const char * errDesc)
 	bodylen = snprintf(body, sizeof(body), resp, errCode, errDesc);
 	BuildResp2_upnphttp(h, 500, "Internal Server Error", body, bodylen);
 	SendResp_upnphttp(h);
-	CloseSocket_upnphttp(h);
 }
 
