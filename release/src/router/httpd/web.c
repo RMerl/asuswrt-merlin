@@ -4769,10 +4769,10 @@ void ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
 
 	iptraffic_conntrack_init();
 
-	websWrite(wp, "\n\niptraffic=[");
-	comma = ' ';
-
 	if ((a = fopen("/proc/net/ipt_account/lan", "r")) == NULL) return;
+
+        websWrite(wp, "\n\niptraffic=[");
+        comma = ' ';
 
 	fgets(sa, sizeof(sa), a); // network
 	while (fgets(sa, sizeof(sa), a)) {
