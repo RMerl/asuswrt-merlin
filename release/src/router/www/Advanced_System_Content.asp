@@ -255,7 +255,7 @@ function validForm(){
 	}
 
 	if(checkDuplicateName(document.form.http_username.value, accounts)
-			&& document.form.http_username.value != accounts[0]){
+			&& document.form.http_username.value != decodeURIComponent(accounts[0])){
 		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
 		document.form.http_username.focus();
 		document.form.http_username.select();
