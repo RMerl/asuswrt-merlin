@@ -97,7 +97,7 @@ function populateCache() {
 			var t = s[i].split('>');
 			if (t.length == 7) {
 				if (t[1] != ''){
-					hostnamecache[t[2]] = t[1].split(' ').splice(0,1);
+					hostnamecache[t[2]] = t[1].trim();
 				} else {
 					hostname = retHostName(t[3]);
 					if (hostname != "") hostnamecache[t[2]] = ellipsis(hostname,16);
@@ -117,7 +117,7 @@ function populateCache() {
 			var t = s[i].split('&#62');
 			if ((t.length == 3) || (t.length == 4)) {
 				if (t[2] != '')
-					hostnamecache[t[1]] = t[2].split(' ').splice(0,1);
+					hostnamecache[t[1]] = t[2].trim();
 			}
 		}
 	}
