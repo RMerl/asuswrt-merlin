@@ -55,6 +55,7 @@ function initial(){
 		$("update").style.display = "none";
 	else if('<% nvram_get("webs_state_update"); %>' != '')
 		detect_firmware();
+	if ("<% nvram_get("jffs2_on"); %>" == "1") $("jffs_warning").style.display="";
 }
 
 var exist_firmver="<% nvram_get("firmver"); %>";
@@ -350,6 +351,7 @@ function startDownloading(){
 				<td colspan="2">
 				<strong><#FW_note#></strong>
 				<ol>
+					<li id="jffs_warning" style="display:none;"><span>WARNING: you have JFFS enabled.  Make sure you have a backup of its content, as upgrading your firmware MIGHT overwrite it!</span></li>
 					<li><#FW_n1#></li>
 					<li><#FW_n2#></li>
 				</ol>
