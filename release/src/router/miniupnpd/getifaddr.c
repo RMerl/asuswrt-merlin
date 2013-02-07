@@ -36,6 +36,8 @@ getifaddr(const char * ifname, char * buf, int len)
 	int ifrlen;
 	struct sockaddr_in * addr;
 	ifrlen = sizeof(ifr);
+	int ret = -1;
+
 	if(!ifname || ifname[0]=='\0')
 		return -1;
 	s = socket(PF_INET, SOCK_DGRAM, 0);
@@ -45,20 +47,28 @@ getifaddr(const char * ifname, char * buf, int len)
 		return -1;
 	}
 	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	if(ioctl(s, SIOCGIFFLAGS, &ifr) < 0)
+	{
+		syslog(LOG_DEBUG, "ioctl(s, SIOCGIFFLAGS, ...): %m");
+		goto err;
+	} else
+	if ((ifr.ifr_flags & IFF_UP) == 0)
+		goto err;
 	if(ioctl(s, SIOCGIFADDR, &ifr, &ifrlen) < 0)
 	{
 		syslog(LOG_ERR, "ioctl(s, SIOCGIFADDR, ...): %m");
-		close(s);
-		return -1;
+		goto err;
 	}
 	addr = (struct sockaddr_in *)&ifr.ifr_addr;
 	if(!inet_ntop(AF_INET, &addr->sin_addr, buf, len))
 	{
 		syslog(LOG_ERR, "inet_ntop(): %m");
-		close(s);
-		return -1;
+		goto err;
 	}
 	close(s);
+	ret = 0;
+ err:
+	return ret;
 #else /* ifndef USE_GETIFADDRS */
 	/* Works for all address families (both ip v4 and ip v6) */
 	struct ifaddrs * ifap;
@@ -92,8 +102,9 @@ getifaddr(const char * ifname, char * buf, int len)
 		}
 	}
 	freeifaddrs(ifap);
-#endif
+
 	return 0;
+#endif
 }
 
 #ifdef ENABLE_IPV6
