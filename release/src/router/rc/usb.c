@@ -2814,7 +2814,7 @@ int start_nfsd(void)
 			while ((b = strsep(&nvp, "<")) != NULL) {
 				if ((vstrsep(b, ">", &dir, &access, &options) != 3))
                	                        continue;
-				fprintf(fp, "%s %s(%s)\n", dir, access, options);
+				fprintf(fp, "%s %s(no_root_squash%s%s)\n", dir, access, ((strlen(options) > 0) ? "," : ""), options);
 			}
 			free(nv);
 		}
