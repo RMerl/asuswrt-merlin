@@ -2814,7 +2814,7 @@ int start_nfsd(void)
 			while ((b = strsep(&nvp, "<")) != NULL) {
 				if ((vstrsep(b, ">", &dir, &access, &options) != 3))
                	                        continue;
-				fprintf(fp, "%s %s (%s)\n", dir, access, options);
+				fprintf(fp, "%s %s(%s)\n", dir, access, options);
 			}
 			free(nv);
 		}
