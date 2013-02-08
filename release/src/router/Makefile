@@ -849,13 +849,26 @@ iptables-clean:
 
 upnp: nvram shared iptables
 
-miniupnpd: iptables
+miniupnpd/config.h:
+	cd miniupnpd && ./genconfig.sh --leasefile
+
+miniupnpd: iptables miniupnpd/config.h
 	@$(SEP)
-	cp -f ./shared/version.h miniupnpd/. 
-	$(MAKE) -C miniupnpd -f Makefile.asus
+	$(MAKE) -C $@ -f Makefile.linux EXTRACFLAGS="$(EXTRACFLAGS)" \
+	IPTABLESPATH=$(TOP)/iptables ARCH=$(PLATFORM) \
+	LDFLAGS="-L$(TOP)/iptables -liptc" \
+	miniupnpd
+
+#        @$(SEP)
+#        $(MAKE) -C miniupnpd miniupnpd -f Makefile.linux \
+#        TARGET_OPENWRT="not really" CC=$(CC) \
+#        CFLAGS="-Wall -Os -D_GNU_SOURCE $(EXTRACFLAGS) -I$(TOP)/iptables/include -I$(TOP)/shared" \
+#        LDFLAGS="-L$(TOP)/iptables -liptc" LIBS=""
+
+
 
 miniupnpd-clean:
-	-$(MAKE) -C miniupnpd -f Makefile.asus clean
+	-$(MAKE) -C miniupnpd -f Makefile.linux clean
 
 miniupnpd-install:
 	install -D miniupnpd/miniupnpd $(INSTALLDIR)/miniupnpd/usr/sbin/miniupnpd
