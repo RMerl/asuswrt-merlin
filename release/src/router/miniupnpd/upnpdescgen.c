@@ -1,4 +1,4 @@
-/* $Id: upnpdescgen.c,v 1.67 2012/04/30 14:03:52 nanard Exp $ */
+/* $Id: upnpdescgen.c,v 1.71 2012/10/04 22:08:08 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2012 Thomas Bernard
@@ -202,7 +202,7 @@ static const struct XMLElt rootDesc[] =
 	{"/modelURL", WANDEV_MODELURL},
 	{"/serialNumber", serialnumber},
 	{"/UDN", uuidvalue},
-	{"/UPC", WANDEV_UPC},
+	{"/UPC", WANDEV_UPC},	/* UPC (=12 digit barcode) is optional */
 /* 30 */
 	{"serviceList", INITHELPER(32,1)},
 	{"deviceList", INITHELPER(38,1)},
@@ -230,7 +230,7 @@ static const struct XMLElt rootDesc[] =
 	{"/modelURL", WANCDEV_MODELURL},
 	{"/serialNumber", serialnumber},
 	{"/UDN", uuidvalue},
-	{"/UPC", WANCDEV_UPC},
+	{"/UPC", WANCDEV_UPC},	/* UPC (=12 digit Barcode) is optional */
 #ifdef ENABLE_6FC_SERVICE
 	{"serviceList", INITHELPER(51,2)},
 #else
@@ -423,15 +423,15 @@ static const struct action WANIPCnActions[] =
 	{"SetConnectionType", SetConnectionTypeArgs}, /* R */
 	{"GetConnectionTypeInfo", GetConnectionTypeInfoArgs}, /* R */
 	{"RequestConnection", 0}, /* R */
-	{"RequestTermination", 0}, /* O */
+	/*{"RequestTermination", 0},*/ /* O */
 	{"ForceTermination", 0}, /* R */
 	/*{"SetAutoDisconnectTime", 0},*/ /* O */
 	/*{"SetIdleDisconnectTime", 0},*/ /* O */
 	/*{"SetWarnDisconnectDelay", 0}, */ /* O */
 	{"GetStatusInfo", GetStatusInfoArgs}, /* R */
-	/*GetAutoDisconnectTime*/
-	/*GetIdleDisconnectTime*/
-	/*GetWarnDisconnectDelay*/
+	/*GetAutoDisconnectTime*/ /* O */
+	/*GetIdleDisconnectTime*/ /* O */
+	/*GetWarnDisconnectDelay*/ /* O */
 	{"GetNATRSIPStatus", GetNATRSIPStatusArgs}, /* R */
 	{"GetGenericPortMappingEntry", GetGenericPortMappingEntryArgs}, /* R */
 	{"GetSpecificPortMappingEntry", GetSpecificPortMappingEntryArgs}, /* R */
@@ -465,6 +465,9 @@ static const struct action WANIPCnActions[] =
 	{0, 0}
 };
 /* R=Required, O=Optional */
+
+/* ignore "warning: missing initializer" */
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 static const struct stateVar WANIPCnVars[] =
 {
@@ -1205,7 +1208,11 @@ genEventVars(int * len, const struct serviceDesc * s, const char * servns)
 			case DEFAULTCONNECTIONSERVICE_MAGICALVALUE:
 				/* DefaultConnectionService magical value */
 				str = strcat_str(str, len, &tmplen, uuidvalue);
+#ifdef IGD_V2
+				str = strcat_str(str, len, &tmplen, ":WANConnectionDevice:2,urn:upnp-org:serviceId:WANIPConn1");
+#else
 				str = strcat_str(str, len, &tmplen, ":WANConnectionDevice:1,urn:upnp-org:serviceId:WANIPConn1");
+#endif
 				break;
 			default:
 				str = strcat_str(str, len, &tmplen, upnpallowedvalues[v->ieventvalue]);

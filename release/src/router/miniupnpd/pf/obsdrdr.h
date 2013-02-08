@@ -1,12 +1,12 @@
-/* $Id: obsdrdr.h,v 1.20 2012/03/05 20:36:20 nanard Exp $ */
+/* $Id: obsdrdr.h,v 1.21 2012/09/27 16:02:43 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef __OBSDRDR_H__
-#define __OBSDRDR_H__
+#ifndef OBSDRDR_H_INCLUDED
+#define OBSDRDR_H_INCLUDED
 
 #include "../commonrdr.h"
 

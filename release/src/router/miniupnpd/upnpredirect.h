@@ -1,12 +1,12 @@
-/* $Id: upnpredirect.h,v 1.34 2012/05/01 20:08:23 nanard Exp $ */
+/* $Id: upnpredirect.h,v 1.35 2012/09/27 15:47:15 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef __UPNPREDIRECT_H__
-#define __UPNPREDIRECT_H__
+#ifndef UPNPREDIRECT_H_INCLUDED
+#define UPNPREDIRECT_H_INCLUDED
 
 /* for u_int64_t */
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/* $Id: options.h,v 1.21 2012/06/29 19:26:09 nanard Exp $ */
+/* $Id: options.h,v 1.22 2012/09/27 15:47:15 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * author: Ryan Wagoner
@@ -6,8 +6,8 @@
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef __OPTIONS_H__
-#define __OPTIONS_H__
+#ifndef OPTIONS_H_INCLUDED
+#define OPTIONS_H_INCLUDED
 
 #include "config.h"
 
@@ -74,5 +74,5 @@ extern unsigned int num_options;
 
 #endif /* DISABLE_CONFIG_FILE */
 
-#endif /* __OPTIONS_H__ */
+#endif /* OPTIONS_H_INCLUDED */
 

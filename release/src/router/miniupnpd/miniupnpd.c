@@ -1,7 +1,7 @@
-/* $Id: miniupnpd.c,v 1.168 2012/07/17 19:35:44 nanard Exp $ */
+/* $Id: miniupnpd.c,v 1.173 2013/02/06 10:50:04 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2013 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -384,6 +384,7 @@ write_ctlsockets_list(int fd, struct ctlelem * e)
 	}
 }
 
+#ifndef DISABLE_CONFIG_FILE
 static void
 write_option_list(int fd)
 {
@@ -399,6 +400,7 @@ write_option_list(int fd)
 		write(fd, buffer, len);
 	}
 }
+#endif
 
 static void
 write_command_line(int fd, int argc, char * * argv)
@@ -1323,6 +1325,15 @@ main(int argc, char * * argv)
 		return 0;
 	}
 
+	syslog(LOG_INFO, "Starting%s%swith external interface %s",
+#ifdef ENABLE_NATPMP
+	       GETFLAG(ENABLENATPMPMASK) ? " NAT-PMP " : " ",
+#else
+	       " ",
+#endif
+	       GETFLAG(ENABLEUPNPMASK) ? "UPnP-IGD " : "",
+	       ext_if_name);
+
 	if(GETFLAG(ENABLEUPNPMASK))
 	{
 
@@ -1357,7 +1368,7 @@ main(int argc, char * * argv)
 		sudp = OpenAndConfSSDPReceiveSocket(0);
 		if(sudp < 0)
 		{
-			syslog(LOG_INFO, "Failed to open socket for receiving SSDP. Trying to use MiniSSDPd");
+			syslog(LOG_NOTICE, "Failed to open socket for receiving SSDP. Trying to use MiniSSDPd");
 			if(SubmitServicesToMiniSSDPD(lan_addrs.lh_first->str, v.port) < 0) {
 				syslog(LOG_ERR, "Failed to connect to MiniSSDPd. EXITING");
 				return 1;
@@ -1367,7 +1378,7 @@ main(int argc, char * * argv)
 		sudpv6 = OpenAndConfSSDPReceiveSocket(1);
 		if(sudpv6 < 0)
 		{
-			syslog(LOG_INFO, "Failed to open socket for receiving SSDP (IP v6).");
+			syslog(LOG_WARNING, "Failed to open socket for receiving SSDP (IP v6).");
 		}
 #endif
 
@@ -1661,7 +1672,9 @@ main(int argc, char * * argv)
 				{
 					/*write(ectl->socket, buf, l);*/
 					write_command_line(ectl->socket, argc, argv);
+#ifndef DISABLE_CONFIG_FILE
 					write_option_list(ectl->socket);
+#endif
 					write_permlist(ectl->socket, upnppermlist, num_upnpperm);
 					write_upnphttp_details(ectl->socket, upnphttphead.lh_first);
 					write_ctlsockets_list(ectl->socket, ctllisthead.lh_first);
@@ -1692,13 +1705,21 @@ main(int argc, char * * argv)
 			struct sockaddr_un clientname;
 			struct ctlelem * tmp;
 			socklen_t clientnamelen = sizeof(struct sockaddr_un);
-			//syslog(LOG_DEBUG, "sctl!");
+			/*syslog(LOG_DEBUG, "sctl!");*/
 			s = accept(sctl, (struct sockaddr *)&clientname,
 			           &clientnamelen);
 			syslog(LOG_DEBUG, "sctl! : '%s'", clientname.sun_path);
 			tmp = malloc(sizeof(struct ctlelem));
-			tmp->socket = s;
-			LIST_INSERT_HEAD(&ctllisthead, tmp, entries);
+			if (tmp == NULL)
+			{
+				syslog(LOG_ERR, "Unable to allocate memory for ctlelem in main()");
+				close(s);
+			}
+			else
+			{
+				tmp->socket = s;
+				LIST_INSERT_HEAD(&ctllisthead, tmp, entries);
+			}
 		}
 #endif
 #ifdef ENABLE_EVENTS
@@ -1772,42 +1793,53 @@ main(int argc, char * * argv)
 
 				sockaddr_to_string((struct sockaddr *)&clientname, addr_str, sizeof(addr_str));
 				syslog(LOG_INFO, "HTTP connection from %s", addr_str);
-				/* Create a new upnphttp object and add it to
-				 * the active upnphttp object list */
-				tmp = New_upnphttp(shttp);
-				if(tmp)
+				if(get_lan_for_peer((struct sockaddr *)&clientname) == NULL)
 				{
-#ifdef ENABLE_IPV6
-					if(clientname.ss_family == AF_INET)
-					{
-						tmp->clientaddr = ((struct sockaddr_in *)&clientname)->sin_addr;
-					}
-					else if(clientname.ss_family == AF_INET6)
-					{
-						struct sockaddr_in6 * addr = (struct sockaddr_in6 *)&clientname;
-						if(IN6_IS_ADDR_V4MAPPED(&addr->sin6_addr))
-						{
-							memcpy(&tmp->clientaddr,
-							       &addr->sin6_addr.s6_addr[12],
-							       4);
-						}
-						else
-						{
-							tmp->ipv6 = 1;
-							memcpy(&tmp->clientaddr_v6,
-							       &addr->sin6_addr,
-							       sizeof(struct in6_addr));
-						}
-					}
-#else
-					tmp->clientaddr = clientname.sin_addr;
-#endif
-					LIST_INSERT_HEAD(&upnphttphead, tmp, entries);
+					/* The peer is not a LAN ! */
+					syslog(LOG_WARNING,
+					       "HTTP peer %s is not from a LAN, closing the connection",
+					       addr_str);
+					close(shttp);
 				}
 				else
 				{
-					syslog(LOG_ERR, "New_upnphttp() failed");
-					close(shttp);
+					/* Create a new upnphttp object and add it to
+					 * the active upnphttp object list */
+					tmp = New_upnphttp(shttp);
+					if(tmp)
+					{
+#ifdef ENABLE_IPV6
+						if(clientname.ss_family == AF_INET)
+						{
+							tmp->clientaddr = ((struct sockaddr_in *)&clientname)->sin_addr;
+						}
+						else if(clientname.ss_family == AF_INET6)
+						{
+							struct sockaddr_in6 * addr = (struct sockaddr_in6 *)&clientname;
+							if(IN6_IS_ADDR_V4MAPPED(&addr->sin6_addr))
+							{
+								memcpy(&tmp->clientaddr,
+								       &addr->sin6_addr.s6_addr[12],
+								       4);
+							}
+							else
+							{
+								tmp->ipv6 = 1;
+								memcpy(&tmp->clientaddr_v6,
+								       &addr->sin6_addr,
+								       sizeof(struct in6_addr));
+							}
+						}
+#else
+						tmp->clientaddr = clientname.sin_addr;
+#endif
+						LIST_INSERT_HEAD(&upnphttphead, tmp, entries);
+					}
+					else
+					{
+						syslog(LOG_ERR, "New_upnphttp() failed");
+						close(shttp);
+					}
 				}
 			}
 		}

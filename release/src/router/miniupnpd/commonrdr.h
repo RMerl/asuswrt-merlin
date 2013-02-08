@@ -1,11 +1,11 @@
-/* $Id: commonrdr.h,v 1.7 2011/06/22 20:34:39 nanard Exp $ */
+/* $Id: commonrdr.h,v 1.8 2012/09/27 16:00:44 nanard Exp $ */
 /* MiniUPnP project
  * (c) 2006-2011 Thomas Bernard
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
-#ifndef __COMMONRDR_H__
-#define __COMMONRDR_H__
+#ifndef COMMONRDR_H_INCLUDED
+#define COMMONRDR_H_INCLUDED
 
 #include "config.h"
 

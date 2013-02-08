@@ -1,12 +1,12 @@
-/* $Id: upnppinhole.h,v 1.1 2012/05/01 20:08:22 nanard Exp $ */
+/* $Id: upnppinhole.h,v 1.3 2012/09/27 15:47:15 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef __UPNPPINHOLE_H__
-#define __UPNPPINHOLE_H__
+#ifndef UPNPPINHOLE_H_INCLUDED
+#define UPNPPINHOLE_H_INCLUDED
 
 #include "config.h"
 
@@ -57,7 +57,9 @@ int
 upnp_check_pinhole_working(const char * uid, char * eaddr, char * iaddr, unsigned short * eport, unsigned short * iport, char * protocol, int * rulenum_used);
 #endif
 
-/* ? */
+/* return the number of expired pinhole removed
+ * write timestamp to next pinhole to exprire to next_timestamp
+ * next_timestamp is left untouched if there is no pinhole lest */
 int
 upnp_clean_expired_pinholes(unsigned int * next_timestamp);
 

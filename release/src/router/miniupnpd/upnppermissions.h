@@ -1,12 +1,12 @@
-/* $Id: upnppermissions.h,v 1.8 2012/03/05 20:36:18 nanard Exp $ */
+/* $Id: upnppermissions.h,v 1.9 2012/09/27 16:00:10 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef __UPNPPERMISSIONS_H__
-#define __UPNPPERMISSIONS_H__
+#ifndef UPNPPERMISSIONS_H_INCLUDED
+#define UPNPPERMISSIONS_H_INCLUDED
 
 #include <sys/types.h>
 #include <sys/socket.h>

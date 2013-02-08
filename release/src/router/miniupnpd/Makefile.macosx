@@ -26,7 +26,7 @@ STD_OBJS = miniupnpd.o upnphttp.o upnpdescgen.o upnpsoap.o \
           options.o upnppermissions.o minissdp.o natpmp.o \
 	  upnpevents.o getconnstatus.o upnputils.o
 MAC_OBJS = mac/getifstats.o bsd/ifacewatcher.o
-IPFW_OBJS = ipfw/ipfwrdr.o
+IPFW_OBJS = ipfw/ipfwrdr.o ipfw/ipfwaux.o
 MISC_OBJS = upnpreplyparse.o minixml.o
 
 ALL_OBJS = $(STD_OBJS) $(MISC_OBJS) $(MAC_OBJS) $(IPFW_OBJS)

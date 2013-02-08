@@ -1,16 +1,17 @@
-/* $Id: getroute.h,v 1.1 2012/06/23 22:59:07 nanard Exp $ */
+/* $Id: getroute.h,v 1.3 2013/02/06 10:50:04 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2013 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef  __GETROUTE_H__
-#define  __GETROUTE_H__
+#ifndef  GETROUTE_H_INCLUDED
+#define  GETROUTE_H_INCLUDED
 
 int
 get_src_for_route_to(const struct sockaddr * dst,
-                     void * src, size_t * src_len);
+                     void * src, size_t * src_len,
+                     int * index);
 
 #endif
 

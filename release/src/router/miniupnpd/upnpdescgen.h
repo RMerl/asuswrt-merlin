@@ -1,12 +1,12 @@
-/* $Id: upnpdescgen.h,v 1.23 2012/03/05 20:36:17 nanard Exp $ */
+/* $Id: upnpdescgen.h,v 1.24 2012/09/27 16:00:10 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2011 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef __UPNPDESCGEN_H__
-#define __UPNPDESCGEN_H__
+#ifndef UPNPDESCGEN_H_INCLUDED
+#define UPNPDESCGEN_H_INCLUDED
 
 #include "config.h"
 

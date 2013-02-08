@@ -1,4 +1,4 @@
-/* $Id: iptcrdr.c,v 1.49 2012/04/30 21:08:02 nanard Exp $ */
+/* $Id: iptcrdr.c,v 1.50 2012/10/03 14:49:08 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2011 Thomas Bernard
@@ -995,6 +995,7 @@ list_redirect_rule(const char * ifname)
 	const struct ip_nat_multi_range * mr;
 	const char * target_str;
 	char addr[16], mask[16];
+	(void)ifname;
 
 	h = iptc_init("nat");
 	if(!h)

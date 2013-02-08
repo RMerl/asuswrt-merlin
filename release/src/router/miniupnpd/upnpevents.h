@@ -1,12 +1,12 @@
-/* $Id: upnpevents.h,v 1.9 2011/05/18 22:21:19 nanard Exp $ */
+/* $Id: upnpevents.h,v 1.10 2012/09/27 16:00:10 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2008-2011 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef __UPNPEVENTS_H__
-#define __UPNPEVENTS_H__
+#ifndef UPNPEVENTS_H_INCLUDED
+#define UPNPEVENTS_H_INCLUDED
 
 #include "config.h"
 

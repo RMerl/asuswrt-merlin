@@ -1,12 +1,12 @@
-/* $Id: getifaddr.h,v 1.6 2012/03/05 20:36:16 nanard Exp $ */
+/* $Id: getifaddr.h,v 1.7 2012/09/27 16:00:10 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2011 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef __GETIFADDR_H__
-#define __GETIFADDR_H__
+#ifndef GETIFADDR_H_INCLUDED
+#define GETIFADDR_H_INCLUDED
 
 /* getifaddr()
  * take a network interface name and write the

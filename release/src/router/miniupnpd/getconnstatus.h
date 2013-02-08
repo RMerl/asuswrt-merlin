@@ -1,12 +1,12 @@
-/* $Id: getconnstatus.h,v 1.3 2012/03/05 20:36:16 nanard Exp $ */
+/* $Id: getconnstatus.h,v 1.4 2012/09/27 16:00:10 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2011 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef __GETCONNSTATUS_H__
-#define __GETCONNSTATUS_H__
+#ifndef GETCONNSTATUS_H_INCLUDED
+#define GETCONNSTATUS_H_INCLUDED
 
 /**
  * get the connection status

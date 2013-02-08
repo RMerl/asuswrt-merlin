@@ -1,4 +1,4 @@
-/* $Id: iptpinhole.c,v 1.7 2012/05/08 20:41:45 nanard Exp $ */
+/* $Id: iptpinhole.c,v 1.8 2012/09/18 08:29:17 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2012 Thomas Bernard
@@ -402,7 +402,7 @@ clean_pinhole_list(unsigned int * next_timestamp)
 			p = p->entries.le_next;
 		}
 	}
-	if(next_timestamp)
+	if(next_timestamp && (min_ts != UINT_MAX))
 		*next_timestamp = min_ts;
 	return n;
 }

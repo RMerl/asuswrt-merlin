@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Id: genconfig.sh,v 1.50 2011/07/25 16:03:46 nanard Exp $
+# $Id: genconfig.sh,v 1.61 2012/10/03 21:07:29 nanard Exp $
 # miniupnp daemon
 # http://miniupnp.free.fr or http://miniupnp.tuxfamily.org/
 # (c) 2006-2011 Thomas Bernard
@@ -8,7 +8,7 @@
 
 RM="rm -f"
 CONFIGFILE="config.h"
-CONFIGMACRO="__CONFIG_H__"
+CONFIGMACRO="CONFIG_H_INCLUDED"
 
 # version reported in XML descriptions
 #UPNP_VERSION=20070827
@@ -359,6 +359,18 @@ echo "" >> ${CONFIGFILE}
 echo "/* Enable to make MiniUPnPd more strict about UPnP conformance" >> ${CONFIGFILE}
 echo " * and the messages it receives from control points */" >> ${CONFIGFILE}
 echo "/*#define UPNP_STRICT*/" >> ${CONFIGFILE}
+echo "" >> ${CONFIGFILE}
+
+echo "/* Add the optional Date: header in all HTTP responses */" >> ${CONFIGFILE}
+if [ -n "$STRICT" ] ; then
+	echo "#define ENABLE_HTTP_DATE" >> ${CONFIGFILE}
+else
+	echo "/*#define ENABLE_HTTP_DATE*/" >> ${CONFIGFILE}
+fi
+echo "" >> ${CONFIGFILE}
+
+echo "/* disable reading and parsing of config file (miniupnpd.conf) */" >> ${CONFIGFILE}
+echo "/*#define DISABLE_CONFIG_FILE*/" >> ${CONFIGFILE}
 echo "" >> ${CONFIGFILE}
 
 echo "#endif" >> ${CONFIGFILE}

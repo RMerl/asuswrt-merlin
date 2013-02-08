@@ -1,11 +1,11 @@
-/* $Id: iptpinhole.h,v 1.5 2012/05/08 20:41:45 nanard Exp $ */
+/* $Id: iptpinhole.h,v 1.6 2012/09/27 15:44:10 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
-#ifndef __IPTPINHOLE_H__
-#define __IPTPINHOLE_H__
+#ifndef IPTPINHOLE_H_INCLUDED
+#define IPTPINHOLE_H_INCLUDED
 
 #ifdef ENABLE_6FC_SERVICE
 int add_pinhole(const char * ifname,

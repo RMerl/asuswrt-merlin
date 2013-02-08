@@ -1,12 +1,12 @@
-/* $Id: upnphttp.h,v 1.31 2012/05/28 11:00:44 nanard Exp $ */
+/* $Id: upnphttp.h,v 1.35 2012/10/03 21:03:50 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef __UPNPHTTP_H__
-#define __UPNPHTTP_H__
+#ifndef UPNPHTTP_H_INCLUDED
+#define UPNPHTTP_H_INCLUDED
 
 #include <netinet/in.h>
 #include <sys/queue.h>
@@ -34,6 +34,7 @@
 enum httpStates {
 	EWaitingForHttpRequest = 0,
 	EWaitingForHttpContent,
+	ESendingContinue,
 	ESendingAndClosing,
 	EToDelete = 100
 };
@@ -57,6 +58,7 @@ struct upnphttp {
 	char HttpVer[16];
 	/* request */
 	char * req_buf;
+	char accept_language[8];
 	int req_buflen;
 	int req_contentlen;
 	int req_contentoff;     /* header length */
@@ -70,6 +72,10 @@ struct upnphttp {
 	int req_SIDOff;		/* For UNSUBSCRIBE */
 	int req_SIDLen;
 	const char * res_SID;
+#ifdef UPNP_STRICT
+	int req_NTOff;
+	int req_NTLen;
+#endif
 #endif
 	int respflags;				/* see FLAG_* constants below */
 	/* response */
@@ -84,6 +90,9 @@ struct upnphttp {
 #define FLAG_TIMEOUT	0x01
 /* Include the "SID:" header in response */
 #define FLAG_SID		0x02
+
+/* If set, the POST request included a "Expect: 100-continue" header */
+#define FLAG_CONTINUE	0x40
 
 /* If set, the Content-Type is set to text/xml, otherwise it is text/xml */
 #define FLAG_HTML		0x80
@@ -128,6 +137,9 @@ void
 BuildResp2_upnphttp(struct upnphttp * h, int respcode,
                     const char * respmsg,
                     const char * body, int bodylen);
+
+int
+SendResp_upnphttp(struct upnphttp *);
 
 /* SendRespAndClose_upnphttp() */
 void

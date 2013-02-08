@@ -4,8 +4,8 @@
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef __GETIFSTATS_H__
-#define __GETIFSTATS_H__
+#ifndef GETIFSTATS_H_INCLUDED
+#define GETIFSTATS_H_INCLUDED
 
 struct ifdata {
 	unsigned long opackets;

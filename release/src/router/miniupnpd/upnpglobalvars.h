@@ -1,12 +1,12 @@
-/* $Id: upnpglobalvars.h,v 1.33 2012/04/26 14:01:16 nanard Exp $ */
+/* $Id: upnpglobalvars.h,v 1.34 2012/09/27 15:47:15 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
-#ifndef __UPNPGLOBALVARS_H__
-#define __UPNPGLOBALVARS_H__
+#ifndef UPNPGLOBALVARS_H_INCLUDED
+#define UPNPGLOBALVARS_H_INCLUDED
 
 #include <time.h>
 #include "upnppermissions.h"

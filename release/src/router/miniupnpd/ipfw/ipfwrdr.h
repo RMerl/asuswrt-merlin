@@ -1,4 +1,4 @@
-/* $Id: ipfwrdr.h,v 1.7 2012/03/05 20:36:19 nanard Exp $ */
+/* $Id: ipfwrdr.h,v 1.8 2012/09/27 15:44:10 nanard Exp $ */
 /*
  * MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
@@ -7,8 +7,8 @@
  * in the LICENCE file provided within the distribution
  */
 
-#ifndef __IPFWRDR_H__
-#define __IPFWRDR_H__
+#ifndef IPFWRDR_H_INCLUDED
+#define IPFWRDR_H_INCLUDED
 
 #include "../commonrdr.h"
 
