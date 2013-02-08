@@ -1,7 +1,7 @@
-/* $Id: testobsdrdr.c,v 1.22 2011/06/04 16:45:22 nanard Exp $ */
+/* $Id: testobsdrdr.c,v 1.24 2012/04/18 19:42:03 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2011 Thomas Bernard 
+ * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -16,6 +16,7 @@
 /*int logpackets = 1;*/
 int runtime_flags = 0;
 const char * tag = 0;
+const char * anchor_name = "miniupnpd";
 
 void
 list_rules(void);
@@ -70,6 +71,7 @@ main(int arc, char * * argv)
 {
 	char buf[32];
 	char desc[64];
+	char rhost[64];
 	/*char rhost[32];*/
 	unsigned short iport;
 	unsigned int timestamp;
@@ -82,19 +84,24 @@ main(int arc, char * * argv)
 		fprintf(stderr, "init_redirect() failed\n");
 		return 1;
 	}
-	//add_redirect_rule("ep0", 12123, "192.168.1.23", 1234);
-	//add_redirect_rule2("ep0", 12155, "192.168.1.155", 1255, IPPROTO_TCP);
+#if 0
+	add_redirect_rule("ep0", 12123, "192.168.1.23", 1234);
+	add_redirect_rule2("ep0", 12155, "192.168.1.155", 1255, IPPROTO_TCP);
+#endif
 	add_redirect_rule2("ep0", "8.8.8.8", 12123, "192.168.1.125", 1234,
 	                   IPPROTO_UDP, "test description", 0);
-	//add_redirect_rule2("em0", 12123, "127.1.2.3", 1234,
-	//                   IPPROTO_TCP, "test description tcp");
+#if 0
+	add_redirect_rule2("em0", 12123, "127.1.2.3", 1234,
+	                   IPPROTO_TCP, "test description tcp");
+#endif
 
 	list_rules();
 	list_eports_tcp();
-	
+
 
 	if(get_redirect_rule("xl1", 4662, IPPROTO_TCP,
 	                     buf, sizeof(buf), &iport, desc, sizeof(desc),
+	                     rhost, sizeof(rhost),
 	                     &timestamp,
 	                     &packets, &bytes) < 0)
 		printf("get_redirect_rule() failed\n");
@@ -103,21 +110,23 @@ main(int arc, char * * argv)
 		printf("\n%s:%d '%s' packets=%llu bytes=%llu\n", buf, (int)iport, desc,
 		       packets, bytes);
 	}
+
+	if(delete_redirect_rule("ep0", 12123, IPPROTO_UDP) < 0)
+		printf("delete_redirect_rule() failed\n");
+	else
+		printf("delete_redirect_rule() succeded\n");
+
+	if(delete_redirect_rule("ep0", 12123, IPPROTO_UDP) < 0)
+		printf("delete_redirect_rule() failed\n");
+	else
+		printf("delete_redirect_rule() succeded\n");
+
 #if 0
-	if(delete_redirect_rule("ep0", 12123, IPPROTO_UDP) < 0)
-		printf("delete_redirect_rule() failed\n");
-	else
-		printf("delete_redirect_rule() succeded\n");
+	test_index();
 
-	if(delete_redirect_rule("ep0", 12123, IPPROTO_UDP) < 0)
-		printf("delete_redirect_rule() failed\n");
-	else
-		printf("delete_redirect_rule() succeded\n");
+	clear_redirect_rules();
+	list_rules();
 #endif
-	//test_index();
-
-	//clear_redirect_rules();
-	//list_rules();
 
 	return 0;
 }

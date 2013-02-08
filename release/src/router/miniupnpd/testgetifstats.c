@@ -1,7 +1,7 @@
-/* $Id: testgetifstats.c,v 1.4 2007/02/07 22:14:47 nanard Exp $ */
+/* $Id: testgetifstats.c,v 1.6 2012/06/22 16:11:58 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006 Thomas Bernard 
+ * (c) 2006 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -10,6 +10,11 @@
 #include <syslog.h>
 
 #include "getifstats.h"
+
+#if defined(__sun)
+/* solaris 10 does not define LOG_PERROR */
+#define LOG_PERROR 0
+#endif
 
 int
 main(int argc, char **argv)

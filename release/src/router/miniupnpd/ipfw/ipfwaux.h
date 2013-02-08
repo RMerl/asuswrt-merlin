@@ -1,4 +1,4 @@
-/* $Id: ipfwaux.h,v 1.3 2011/02/20 23:43:41 nanard Exp $ */
+/* $Id: ipfwaux.h,v 1.4 2012/03/05 20:36:19 nanard Exp $ */
 /*
  * MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
@@ -21,7 +21,7 @@
 static int ipfw_exec(int optname, void * optval, uintptr_t optlen) {
 	static int sock = -1;
 	int result;
-	
+
 	switch (optname) {
 		case IP_FW_INIT:
 			if (sock == -1)
@@ -48,14 +48,14 @@ static int ipfw_exec(int optname, void * optval, uintptr_t optlen) {
 			result = getsockopt(sock, IPPROTO_IP, optname, optval, (socklen_t *)optlen);
 			if (result == -1) {
 				syslog(LOG_ERR, "getsockopt(): %m");
-				return -1;				
+				return -1;
 			}
 			break;
 		default:
 			syslog(LOG_ERR, "unhandled option");
 			return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -69,23 +69,23 @@ static void ipfw_free_ruleset(struct ip_fw ** rules) {
 static int ipfw_fetch_ruleset(struct ip_fw ** rules, int * total_fetched, int count) {
 	int fetched;
 	socklen_t size;
-	
+
 	if (rules == NULL || *total_fetched < 0 || count < 1)
 		return -1;
-	
+
 	size = sizeof(struct ip_fw) * (*total_fetched + count);
 	*rules = (struct ip_fw *)realloc(*rules, size);
 	if (*rules == NULL) {
 		syslog(LOG_ERR, "realloc(): %m");
 		return -1;
 	}
-	
+
 	(*rules)->version = IP_FW_CURRENT_API_VERSION;
 	if (ipfw_exec(IP_FW_GET, *rules, (uintptr_t)&size) < 0)
 		return -1;
 	fetched = *total_fetched;
 	*total_fetched = size / sizeof(struct ip_fw);
-	
+
 	return *total_fetched - fetched;
 }
 

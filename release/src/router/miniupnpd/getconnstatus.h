@@ -1,7 +1,7 @@
-/* $Id: getconnstatus.h,v 1.2 2011/05/23 20:22:41 nanard Exp $ */
+/* $Id: getconnstatus.h,v 1.3 2012/03/05 20:36:16 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2011 Thomas Bernard 
+ * (c) 2011 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 

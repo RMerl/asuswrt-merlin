@@ -1,4 +1,4 @@
-/* $Id: ifacewatcher.h,v 1.2 2011/05/20 09:42:49 nanard Exp $ */
+/* $Id: ifacewatcher.h,v 1.3 2012/03/05 20:36:16 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2009 Thomas Bernard
@@ -9,7 +9,7 @@
  * which weren't available during daemon start. It also takes care
  * of interfaces which become unavailable.
  *
- * Copyright (c) 2011, Alexey Osipov <simba@lerlan.ru> 
+ * Copyright (c) 2011, Alexey Osipov <simba@lerlan.ru>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

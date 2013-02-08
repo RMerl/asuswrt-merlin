@@ -1,7 +1,7 @@
-/* $Id: upnpredirect.h,v 1.24 2011/06/22 20:34:39 nanard Exp $ */
+/* $Id: upnpredirect.h,v 1.34 2012/05/01 20:08:23 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2011 Thomas Bernard 
+ * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -17,7 +17,7 @@
 int reload_from_lease_file(void);
 #endif
 
-/* upnp_redirect() 
+/* upnp_redirect()
  * calls OS/fw dependant implementation of the redirection.
  * protocol should be the string "TCP" or "UDP"
  * returns: 0 on success
@@ -26,7 +26,7 @@ int reload_from_lease_file(void);
  *          -3 permission check failed
  */
 int
-upnp_redirect(const char * rhost, unsigned short eport, 
+upnp_redirect(const char * rhost, unsigned short eport,
               const char * iaddr, unsigned short iport,
               const char * protocol, const char * desc,
               unsigned int leaseduration);
@@ -55,7 +55,7 @@ upnp_get_redirection_infos(unsigned short eport, const char * protocol,
 int
 upnp_get_redirection_infos_by_index(int index,
                                     unsigned short * eport, char * protocol,
-                                    unsigned short * iport, 
+                                    unsigned short * iport,
                                     char * iaddr, int iaddrlen,
                                     char * desc, int desclen,
                                     char * rhost, int rhostlen,
@@ -81,7 +81,7 @@ struct rule_state
 	struct rule_state * next;
 	unsigned short eport;
 	unsigned char proto;
-	unsigned char to_remove; 
+	unsigned char to_remove;
 };
 
 /* return a linked list of all rules
@@ -107,60 +107,6 @@ upnp_get_portmappings_in_range(unsigned short startport,
                                unsigned short endport,
                                const char * protocol,
                                unsigned int * number);
-
-#ifdef ENABLE_6FC_SERVICE
-/* function to be used by WANIPv6_FirewallControl implementation */
-
-/* retreive outbound pinhole timeout*/
-int
-upnp_check_outbound_pinhole(int proto, int * timeout);
-
-/* add an inbound pinehole
- * return value :
- *  1 = success
- * -1 = Pinhole space exhausted
- * .. = error */
-int
-upnp_add_inboundpinhole(const char * raddr, unsigned short rport,
-              const char * iaddr, unsigned short iport,
-              const char * protocol, const char * leaseTime, int * uid);
-
-int
-upnp_add_inboundpinhole_internal(const char * raddr, unsigned short rport,
-                       const char * iaddr, unsigned short iport,
-                       const char * proto, int * uid);
-
-/*
- * return values :
- *  -4 not found
- *  -5 in another table
- *  -6 in another chain
- *  -7 in a chain but not a rule. (chain policy)
- * */
-int
-upnp_get_pinhole_info(const char * raddr, unsigned short rport, char * iaddr, unsigned short * iport, char * proto, const char * uid, char * lt);
-
-/* update the lease time */
-int
-upnp_update_inboundpinhole(const char * uid, const char * leasetime);
-
-/* remove the inbound pinhole */
-int
-upnp_delete_inboundpinhole(const char * uid);
-
-/* ... */
-int
-upnp_check_pinhole_working(const char * uid, char * eaddr, char * iaddr, unsigned short * eport, unsigned short * iport, char * protocol, int * rulenum_used);
-
-/* number of packets that went through the pinhole */
-int
-upnp_get_pinhole_packets(const char * uid, int * packets);
-
-/* ? */
-int
-upnp_clean_expiredpinhole(void);
-
-#endif /* ENABLE_6FC_SERVICE */
 
 /* stuff for responding to miniupnpdctl */
 #ifdef USE_MINIUPNPDCTL

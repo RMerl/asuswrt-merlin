@@ -1,7 +1,7 @@
-/* $Id: getifstats.c,v 1.9 2011/05/25 22:22:57 nanard Exp $ */
+/* $Id: getifstats.c,v 1.11 2012/04/06 15:26:45 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2011 Thomas Bernard 
+ * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -92,7 +92,9 @@ getifstats(const char * ifname, struct ifdata * data)
 	f = fopen(fname, "r");
 	if(f) {
 		if(fgets(line, sizeof(line), f)) {
-			data->baudrate = 1000000*atoi(line);
+			i = atoi(line);	/* 65535 means unknown */
+			if(i > 0 && i < 65535)
+				data->baudrate = 1000000*i;
 		}
 		fclose(f);
 	}

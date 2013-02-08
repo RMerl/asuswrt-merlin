@@ -1,7 +1,7 @@
-/* $Id: upnpurns.h,v 1.1 2011/05/13 15:32:53 nanard Exp $ */
+/* $Id: upnpurns.h,v 1.2 2012/03/05 20:36:19 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2011 Thomas Bernard 
+ * (c) 2006-2011 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 

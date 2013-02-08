@@ -1,7 +1,7 @@
-/* $Id: getifaddr.c,v 1.11 2011/05/15 08:59:27 nanard Exp $ */
+/* $Id: getifaddr.c,v 1.15 2012/03/05 20:36:16 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2011 Thomas Bernard 
+ * (c) 2006-2011 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -13,8 +13,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
-#include <arpa/inet.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #if defined(sun)
 #include <sys/sockio.h>
 #endif
@@ -35,8 +35,9 @@ getifaddr(const char * ifname, char * buf, int len)
 	struct ifreq ifr;
 	int ifrlen;
 	struct sockaddr_in * addr;
-	ifrlen = sizeof(ifr);
 	int ret = -1;
+
+	ifrlen = sizeof(ifr);
 
 	if(!ifname || ifname[0]=='\0')
 		return -1;
@@ -65,9 +66,9 @@ getifaddr(const char * ifname, char * buf, int len)
 		syslog(LOG_ERR, "inet_ntop(): %m");
 		goto err;
 	}
-	close(s);
 	ret = 0;
  err:
+	close(s);
 	return ret;
 #else /* ifndef USE_GETIFADDRS */
 	/* Works for all address families (both ip v4 and ip v6) */
@@ -83,8 +84,10 @@ getifaddr(const char * ifname, char * buf, int len)
 	}
 	for(ife = ifap; ife; ife = ife->ifa_next)
 	{
-		/* skip other interfaces */
-		if(0 != strcmp(ifname, ife->ifa_name))
+		/* skip other interfaces if one was specified */
+		if(ifname && (0 != strcmp(ifname, ife->ifa_name)))
+			continue;
+		if(ife->ifa_addr == NULL)
 			continue;
 		switch(ife->ifa_addr->sa_family)
 		{
@@ -148,6 +151,7 @@ find_ipv6_addr(const char * ifname,
 			}
 		}
 	}
+	freeifaddrs(ifap);
 	return r;
 }
 #endif

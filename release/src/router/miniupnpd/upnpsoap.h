@@ -1,7 +1,7 @@
-/* $Id: upnpsoap.h,v 1.8 2007/02/07 22:16:19 nanard Exp $ */
+/* $Id: upnpsoap.h,v 1.9 2012/03/05 20:36:19 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006 Thomas Bernard 
+ * (c) 2006 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -14,7 +14,7 @@ void
 ExecuteSoapAction(struct upnphttp *, const char *, int);
 
 /* SoapError():
- * sends a correct SOAP error with an UPNPError code and 
+ * sends a correct SOAP error with an UPNPError code and
  * description */
 void
 SoapError(struct upnphttp * h, int errCode, const char * errDesc);

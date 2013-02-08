@@ -1,7 +1,7 @@
-/* $Id: ifacewatcher.c,v 1.1 2011/05/20 09:33:07 nanard Exp $ */
+/* $Id: ifacewatcher.c,v 1.7 2012/05/27 22:16:10 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2009 Thomas Bernard
+ * (c) 2006-2012 Thomas Bernard
  *
  * ifacewatcher.c
  *
@@ -9,7 +9,7 @@
  * which weren't available during daemon start. It also takes care
  * of interfaces which become unavailable.
  *
- * Copyright (c) 2011, Alexey Osipov <simba@lerlan.ru> 
+ * Copyright (c) 2011, Alexey Osipov <simba@lerlan.ru>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE. */
 
-
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <linux/netlink.h>
@@ -46,6 +46,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #include "../config.h"
 
@@ -57,7 +58,7 @@
 #include "../upnpglobalvars.h"
 #include "../natpmp.h"
 
-extern volatile int should_send_public_address_change_notif;
+extern volatile sig_atomic_t should_send_public_address_change_notif;
 
 
 int
@@ -76,6 +77,7 @@ OpenAndConfInterfaceWatchSocket(void)
 	memset(&addr, 0, sizeof(addr));
 	addr.nl_family = AF_NETLINK;
 	addr.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR;
+	/*addr.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;*/
 
 	if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0)
 	{
@@ -238,7 +240,7 @@ ProcessInterfaceWatchNotify(int s)
 	struct ifaddrmsg *ifa;
 	int len;
 
-	struct rtattr *rth; //
+	struct rtattr *rth;
 	int rtl;
 
 	unsigned int ext_if_name_index = 0;
@@ -262,47 +264,80 @@ ProcessInterfaceWatchNotify(int s)
 	}
 
 	for (nlhdr = (struct nlmsghdr *) buffer;
-	     NLMSG_OK (nlhdr, len);
+	     NLMSG_OK (nlhdr, (unsigned int)len);
 	     nlhdr = NLMSG_NEXT (nlhdr, len))
 	{
+		int is_del = 0;
+		char address[48];
+		char ifname[IFNAMSIZ];
+		address[0] = '\0';
+		ifname[0] = '\0';
 		if (nlhdr->nlmsg_type == NLMSG_DONE)
 			break;
 		switch(nlhdr->nlmsg_type) {
 		case RTM_DELLINK:
-			ifi = (struct ifinfomsg *) NLMSG_DATA(nlhdr);
-			/*if (ProcessInterfaceDown(ifi) < 0)
-				syslog(LOG_ERR, "ProcessInterfaceDown(ifi) failed");*/
-			break;
+			is_del = 1;
 		case RTM_NEWLINK:
 			ifi = (struct ifinfomsg *) NLMSG_DATA(nlhdr);
-			/*if (ProcessInterfaceUp(ifi) < 0)
-				syslog(LOG_ERR, "ProcessInterfaceUp(ifi) failed");*/
+#if 0
+			if(is_del) {
+				if(ProcessInterfaceDown(ifi) < 0)
+					syslog(LOG_ERR, "ProcessInterfaceDown(ifi) failed");
+			} else {
+				if(ProcessInterfaceUp(ifi) < 0)
+					syslog(LOG_ERR, "ProcessInterfaceUp(ifi) failed");
+			}
+#endif
 			break;
+		case RTM_DELADDR:
+			is_del = 1;
 		case RTM_NEWADDR:
 			/* see /usr/include/linux/netlink.h
 			 * and /usr/include/linux/rtnetlink.h */
 			ifa = (struct ifaddrmsg *) NLMSG_DATA(nlhdr);
-			syslog(LOG_DEBUG, "ProcessInterfaceWatchNotify RTM_NEWADDR");
+			syslog(LOG_DEBUG, "%s %s index=%d fam=%d", "ProcessInterfaceWatchNotify",
+			       is_del ? "RTM_DELADDR" : "RTM_NEWADDR",
+			       ifa->ifa_index, ifa->ifa_family);
 			for(rth = IFA_RTA(ifa), rtl = IFA_PAYLOAD(nlhdr);
 			    rtl && RTA_OK(rth, rtl);
 			    rth = RTA_NEXT(rth, rtl)) {
+				char tmp[128];
+				memset(tmp, 0, sizeof(tmp));
+				switch(rth->rta_type) {
+				case IFA_ADDRESS:
+				case IFA_LOCAL:
+				case IFA_BROADCAST:
+				case IFA_ANYCAST:
+					inet_ntop(ifa->ifa_family, RTA_DATA(rth), tmp, sizeof(tmp));
+					if(rth->rta_type == IFA_ADDRESS)
+						strncpy(address, tmp, sizeof(address));
+					break;
+				case IFA_LABEL:
+					strncpy(tmp, RTA_DATA(rth), sizeof(tmp));
+					strncpy(ifname, tmp, sizeof(ifname));
+					break;
+				case IFA_CACHEINFO:
+					{
+						struct ifa_cacheinfo *cache_info;
+						cache_info = RTA_DATA(rth);
+						snprintf(tmp, sizeof(tmp), "valid=%u prefered=%u",
+						         cache_info->ifa_valid, cache_info->ifa_prefered);
+					}
+					break;
+				default:
+					strncpy(tmp, "*unknown*", sizeof(tmp));
+				}
 				syslog(LOG_DEBUG, " - %u - %s type=%d",
-				       ifa->ifa_index, inet_ntoa(*((struct in_addr *)RTA_DATA(rth))),
+				       ifa->ifa_index, tmp,
 				       rth->rta_type);
 			}
 			if(ifa->ifa_index == ext_if_name_index) {
 				should_send_public_address_change_notif = 1;
 			}
 			break;
-		case RTM_DELADDR:
-			ifa = (struct ifaddrmsg *) NLMSG_DATA(nlhdr);
-			syslog(LOG_DEBUG, "ProcessInterfaceWatchNotify RTM_DELADDR");
-			if(ifa->ifa_index == ext_if_name_index) {
-				should_send_public_address_change_notif = 1;
-			}
-			break;
 		default:
-			syslog(LOG_DEBUG, "ProcessInterfaceWatchNotify type %d ignored", nlhdr->nlmsg_type);
+			syslog(LOG_DEBUG, "%s type %d ignored",
+			       "ProcessInterfaceWatchNotify", nlhdr->nlmsg_type);
 		}
 	}
 

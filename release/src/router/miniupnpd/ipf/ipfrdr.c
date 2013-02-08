@@ -1,4 +1,4 @@
-/* $Id: ipfrdr.c,v 1.11 2009/10/10 18:34:39 nanard Exp $ */
+/* $Id: ipfrdr.c,v 1.13 2012/03/19 21:14:13 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2007 Darren Reed
@@ -131,6 +131,7 @@ struct rdr_desc {
 	struct rdr_desc * next;
 	unsigned short eport;
 	int proto;
+	unsigned int timestamp;
 	char str[];
 };
 
@@ -138,11 +139,12 @@ struct rdr_desc {
 static struct rdr_desc * rdr_desc_list;
 
 static void
-add_redirect_desc(unsigned short eport, int proto, const char * desc)
+add_redirect_desc(unsigned short eport, int proto,
+                  unsigned int timestamp, const char * desc)
 {
 	struct rdr_desc * p;
 	size_t l;
-	
+
 	if (desc != NULL) {
 		l = strlen(desc) + 1;
 		p = malloc(sizeof(struct rdr_desc) + l);
@@ -150,6 +152,7 @@ add_redirect_desc(unsigned short eport, int proto, const char * desc)
 			p->next = rdr_desc_list;
 			p->eport = eport;
 			p->proto = proto;
+			p->timestamp = timestamp;
 			memcpy(p->str, desc, l);
 			rdr_desc_list = p;
 		}
@@ -175,24 +178,26 @@ del_redirect_desc(unsigned short eport, int proto)
 }
 
 static void
-get_redirect_desc(unsigned short eport, int proto, char * desc, int desclen)
+get_redirect_desc(unsigned short eport, int proto, char * desc, int desclen, unsigned int * timestamp)
 {
 	struct rdr_desc * p;
-	
+
 	if (desc == NULL || desclen == 0)
 		return;
 	for (p = rdr_desc_list; p; p = p->next) {
 		if (p->eport == eport && p->proto == proto)
 		{
 			strncpy(desc, p->str, desclen);
+			*timestamp = p->timestamp;
 			return;
 		}
 	}
+	return;
 }
 
 int init_redirect(void)
 {
-	
+
 	dev = open(IPNAT_NAME, O_RDWR);
 	if (dev < 0) {
 		syslog(LOG_ERR, "open(\"%s\"): %m", IPNAT_NAME);
@@ -208,7 +213,7 @@ int init_redirect(void)
 
 void shutdown_redirect(void)
 {
-	
+
 	if (dev >= 0) {
 		close(dev);
 		dev = -1;
@@ -221,9 +226,9 @@ void shutdown_redirect(void)
 }
 
 int
-add_redirect_rule2(const char * ifname, unsigned short eport,
-    const char * iaddr, unsigned short iport, int proto,
-    const char * desc)
+add_redirect_rule2(const char * ifname, const char * rhost,
+    unsigned short eport, const char * iaddr, unsigned short iport,
+    int proto, const char * desc, unsigned int timestamp)
 {
 	struct ipnat ipnat;
 	struct ipfobj obj;
@@ -257,6 +262,12 @@ add_redirect_rule2(const char * ifname, unsigned short eport,
 	}
 #endif
 
+	if(rhost && rhost[0] != '\0' && rhost[0] != '*')
+	{
+		inet_pton(AF_INET, rhost, &ipnat.in_src[0].in4);
+		ipnat.in_src[1].in4.s_addr = 0xffffffff;
+	}
+
 	inet_pton(AF_INET, iaddr, &ipnat.in_in[0].in4);
 	ipnat.in_in[1].in4.s_addr = 0xffffffff;
 
@@ -269,7 +280,7 @@ add_redirect_rule2(const char * ifname, unsigned short eport,
 	if (r == -1)
 		syslog(LOG_ERR, "ioctl(SIOCADNAT): %m");
 	else
-		add_redirect_desc(eport, proto, desc);
+		add_redirect_desc(eport, proto, timestamp, desc);
 	return r;
 }
 
@@ -280,6 +291,8 @@ int
 get_redirect_rule(const char * ifname, unsigned short eport, int proto,
     char * iaddr, int iaddrlen, unsigned short * iport,
     char * desc, int desclen,
+    char * rhost, int rhostlen,
+    unsigned int * timestamp,
     u_int64_t * packets, u_int64_t * bytes)
 {
 	ipfgeniter_t iter;
@@ -322,8 +335,10 @@ get_redirect_rule(const char * ifname, unsigned short eport, int proto,
 				*bytes = 0;
 			if (iport != NULL)
 				*iport = ntohs(ipn.in_pnext);
-			if (desc != NULL)
-				get_redirect_desc(eport, proto, desc, desclen);
+			if ((desc != NULL) && (timestamp != NULL))
+				get_redirect_desc(eport, proto, desc, desclen, timestamp);
+			if ((rhost != NULL) && (rhostlen > 0))
+				inet_ntop(AF_INET, &ipn.in_src[0].in4, rhost, rhostlen);
 			inet_ntop(AF_INET, &ipn.in_in[0].in4, iaddr, iaddrlen);
 			r = 0;
 		}
@@ -337,6 +352,8 @@ get_redirect_rule_by_index(int index,
     char * ifname, unsigned short * eport,
     char * iaddr, int iaddrlen, unsigned short * iport,
     int * proto, char * desc, int desclen,
+    char * rhost, int rhostlen,
+    unsigned int * timestamp,
     u_int64_t * packets, u_int64_t * bytes)
 {
 	ipfgeniter_t iter;
@@ -387,8 +404,10 @@ get_redirect_rule_by_index(int index,
 				*packets = 0;
 			if (bytes != NULL)
 				*bytes = 0;
-			if (desc != NULL)
-				get_redirect_desc(*eport, *proto, desc, desclen);
+			if ((desc != NULL) && (timestamp != NULL))
+				get_redirect_desc(*eport, *proto, desc, desclen, timestamp);
+			if ((rhost != NULL) && (rhostlen > 0))
+				inet_ntop(AF_INET, &ipn.in_src[0].in4, rhost, rhostlen);
 			inet_ntop(AF_INET, &ipn.in_in[0].in4, iaddr, iaddrlen);
 			r = 0;
 		}
@@ -464,8 +483,8 @@ delete_redirect_rule(const char * ifname, unsigned short eport, int proto)
 
 /* thanks to Seth Mos for this function */
 int
-add_filter_rule2(const char * ifname, const char * iaddr,
-    unsigned short eport, unsigned short iport,
+add_filter_rule2(const char * ifname, const char * rhost,
+    const char * iaddr, unsigned short eport, unsigned short iport,
     int proto, const char * desc)
 {
 	ipfobj_t obj;
@@ -505,6 +524,12 @@ add_filter_rule2(const char * ifname, const char * iaddr,
 	if (proto == IPPROTO_TCP) {
 		fr.fr_tcpf = TH_SYN;
 		fr.fr_tcpfm = TH_SYN|TH_ACK|TH_RST|TH_FIN|TH_URG|TH_PUSH;
+	}
+
+	if(rhost && rhost[0] != '\0' && rhost[0] != '*')
+	{
+		inet_pton(AF_INET, rhost, &fr.fr_saddr);
+		fr.fr_smask = 0xffffffff;
 	}
 
 	inet_pton(AF_INET, iaddr, &fr.fr_daddr);
@@ -600,3 +625,72 @@ delete_filter_rule(const char * ifname, unsigned short eport, int proto)
 	return r;
 }
 
+unsigned short *
+get_portmappings_in_range(unsigned short startport, unsigned short endport,
+                          int proto, unsigned int * number)
+{
+	unsigned short * array;
+	unsigned int capacity;
+	unsigned short eport;
+	ipfgeniter_t iter;
+	ipfobj_t obj;
+	ipnat_t ipn;
+
+	*number = 0;
+	if (dev < 0) {
+		syslog(LOG_ERR, "%s not open", IPNAT_NAME);
+		return NULL;
+	}
+	capacity = 128;
+	array = calloc(capacity, sizeof(unsigned short));
+	if(!array)
+	{
+		syslog(LOG_ERR, "get_portmappings_in_range() : calloc error");
+		return NULL;
+	}
+	
+	memset(&obj, 0, sizeof(obj));
+	obj.ipfo_rev = IPFILTER_VERSION;
+	obj.ipfo_ptr = &iter;
+	obj.ipfo_size = sizeof(iter);
+	obj.ipfo_type = IPFOBJ_GENITER;
+
+	iter.igi_type = IPFGENITER_IPNAT;
+#if IPFILTER_VERSION > 4011300
+	iter.igi_nitems = 1;
+#endif
+	iter.igi_data = &ipn;
+
+	do {
+		if (ioctl(dev, SIOCGENITER, &obj) == -1) {
+			syslog(LOG_ERR, "%s:ioctl(SIOCGENITER): %m",
+			    "get_portmappings_in_range");
+			break;
+		}
+		
+		if (strcmp(ipn.in_tag.ipt_tag, group_name) != 0)
+			continue;
+		
+		eport = ntohs(ipn.in_pmin);
+		if( (eport == ntohs(ipn.in_pmax))
+		  && (ipn.in_p == proto)
+		  && (startport <= eport) && (eport <= endport) )
+		{
+			if(*number >= capacity)
+			{
+				/* need to increase the capacity of the array */
+				capacity += 128;
+				array = realloc(array, sizeof(unsigned short)*capacity);
+				if(!array)
+				{
+					syslog(LOG_ERR, "get_portmappings_in_range() : realloc(%lu) error", sizeof(unsigned short)*capacity);
+					*number = 0;
+					return NULL;
+				}
+			}
+			array[*number] = eport;
+			(*number)++;
+		}
+	} while (ipn.in_next != NULL);
+	return array;
+}

@@ -235,7 +235,7 @@ case $OS_NAME in
                 OS_URL=http://www.asus.com/
                 echo "#define USE_NETFILTER 1" >> ${CONFIGFILE}
                 echo "" >> ${CONFIGFILE}
-                echo "#include <tomato_config.h>" >> ${CONFIGFILE}
+#                echo "#include <tomato_config.h>" >> ${CONFIGFILE}
                 echo "" >> ${CONFIGFILE}
                 echo "#ifdef LINUX26" >> ${CONFIGFILE}
                 echo "#define USE_IFACEWATCHER 1" >> ${CONFIGFILE}

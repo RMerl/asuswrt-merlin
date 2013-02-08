@@ -1,7 +1,7 @@
-/* $Id: upnpglobalvars.c,v 1.25 2011/05/27 21:36:22 nanard Exp $ */
+/* $Id: upnpglobalvars.c,v 1.29 2012/04/26 14:01:16 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2010 Thomas Bernard 
+ * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -40,11 +40,13 @@ char uuidvalue[] = "uuid:00000000-0000-0000-0000-000000000000";
 char serialnumber[SERIALNUMBER_MAX_LEN] = "00000000";
 
 char modelnumber[MODELNUMBER_MAX_LEN] = "1";
-char friendly_name[FRIENDLYNAME_MAX_LEN] = "ASUS Router";
 
 /* presentation url :
  * http://nnn.nnn.nnn.nnn:ppppp/  => max 30 bytes including terminating 0 */
 char presentationurl[PRESENTATIONURL_MAX_LEN];
+
+/* friendly name for root devices in XML description */
+char friendly_name[FRIENDLY_NAME_MAX_LEN] = OS_NAME " router";
 
 /* UPnP permission rules : */
 struct upnpperm * upnppermlist = 0;
@@ -63,6 +65,7 @@ unsigned short nextnatpmptoclean_proto = 0;
 unsigned int nextruletoclean_timestamp = 0;
 
 #ifdef USE_PF
+const char * anchor_name = "miniupnpd";
 const char * queue = 0;
 const char * tag = 0;
 #endif
@@ -70,8 +73,12 @@ const char * tag = 0;
 #ifdef USE_NETFILTER
 /* chain name to use, both in the nat table
  * and the filter table */
-const char * miniupnpd_nat_chain = "MINIUPNPD";
-const char * miniupnpd_forward_chain = "MINIUPNPD";
+const char * miniupnpd_nat_chain = "UPNP";
+const char * miniupnpd_forward_chain = "UPNP";
+#ifdef ENABLE_6FC_SERVICE
+const char * miniupnpd_v6_filter_chain = "UPNP";
+#endif
+
 #endif
 #ifdef ENABLE_NFQUEUE
 int nfqueue = -1;

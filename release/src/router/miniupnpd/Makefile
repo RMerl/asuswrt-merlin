@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.59 2011/05/26 22:47:32 nanard Exp $
+# $Id: Makefile,v 1.70 2012/08/24 18:01:43 nanard Exp $
 # MiniUPnP project
 # http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
 # Author: Thomas Bernard
@@ -10,9 +10,20 @@
 # This Makefile is NOT compatible with GNU Make.
 # Linux users, please use Makefile.linux :
 #  make -f Makefile.linux
+#
+# options can be passed to genconfig.sh through CONFIG_OPTIONS :
+# $ CONFIG_OPTIONS="--ipv6 --igd2" make
+#
 
-CFLAGS = -pipe -Wall -Os
-#CFLAGS = -pipe -Wall -O -g -DDEBUG
+CFLAGS ?= -pipe -Os
+#CFLAGS = -pipe -O -g -DDEBUG
+CFLAGS += -ansi
+CFLAGS += -Wall
+CFLAGS += -W
+CFLAGS += -Wstrict-prototypes
+#CFLAGS += -Wdeclaration-after-statement
+#CFLAGS += -Wno-missing-field-initializers
+CFLAGS += -fno-common
 CC ?= gcc
 RM = rm -f
 MV = mv
@@ -31,6 +42,7 @@ FWNAME = ipf
 .endif
 
 # better way to find if we are using ipf or pf
+.if defined(/etc/rc.subr) && defined(/etc/rc.conf)
 .if $(OSNAME) == "FreeBSD"
 FWNAME != . /etc/rc.subr; . /etc/rc.conf; \
           if checkyesno ipfilter_enable; then \
@@ -47,6 +59,7 @@ FWNAME != . /etc/rc.subr; . /etc/rc.conf; \
 FWNAME != . /etc/rc.subr; . /etc/rc.conf; \
           if chechyesno ipfilter; then \
           echo "ipf"; else echo "pf"; fi
+.endif
 .endif
 
 .if $(OSNAME) == "Darwin"
@@ -66,11 +79,12 @@ CFLAGS += -m64 -mcmodel=medlow
 STDOBJS = miniupnpd.o upnphttp.o upnpdescgen.o upnpsoap.o \
           upnpredirect.o getifaddr.o daemonize.o upnpglobalvars.o \
           options.o upnppermissions.o minissdp.o natpmp.o \
-          upnpevents.o upnputils.o getconnstatus.o
+          upnpevents.o upnputils.o getconnstatus.o \
+          upnppinhole.o
 BSDOBJS = bsd/getifstats.o bsd/ifacewatcher.o
 SUNOSOBJS = solaris/getifstats.o bsd/ifacewatcher.o
 MACOBJS = mac/getifstats.o bsd/ifacewatcher.o
-PFOBJS = pf/obsdrdr.o
+PFOBJS = pf/obsdrdr.o pf/pfpinhole.o
 IPFOBJS = ipf/ipfrdr.o
 IPFWOBJS = ipfw/ipfwrdr.o
 MISCOBJS = upnpreplyparse.o minixml.o
@@ -136,7 +150,7 @@ install:	miniupnpd genuuid
 	$(INSTALL) -b miniupnpd.conf $(DESTDIR)$(INSTALLETCDIR)
 	# TODO : install man page correctly
 #	$(INSTALL) -d $(INSTALLMANDIR)
-#	$(INSTALL) miniupnpd.1 $(INSTALLMANDIR)/cat1/miniupnpd.0
+#	$(INSTALL) miniupnpd.8 $(INSTALLMANDIR)/cat8/miniupnpd.0
 
 # genuuid is using the uuid cli tool available under OpenBSD 4.0 in
 # the uuid-1.5.0 package
@@ -183,8 +197,8 @@ testupnppermissions:	config.h $(TESTUPNPPERMISSIONSOBJS)
 # BSDmake :
 #	$(CC) $(CFLAGS) -o $@ $>
 
-config.h:	genconfig.sh
-	./genconfig.sh
+config.h:	genconfig.sh VERSION
+	./genconfig.sh $(CONFIG_OPTIONS)
 
 .SUFFIXES:	.o .c
 .c.o:
@@ -192,4 +206,4 @@ config.h:	genconfig.sh
 
 #	$(CC) $(CFLAGS) -c -o $(.TARGET) $(.IMPSRC)
 
-	
+

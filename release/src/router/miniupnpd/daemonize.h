@@ -1,7 +1,7 @@
-/* $Id: daemonize.h,v 1.6 2008/01/29 13:04:46 nanard Exp $ */
+/* $Id: daemonize.h,v 1.7 2012/03/05 20:36:16 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006 Thomas Bernard 
+ * (c) 2006 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -12,7 +12,7 @@
 
 #ifndef USE_DAEMON
 /* daemonize()
- * "fork" to background, detach from terminal, etc... 
+ * "fork" to background, detach from terminal, etc...
  * returns: pid of the daemon, exits upon failure */
 int
 daemonize(void);

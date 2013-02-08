@@ -1,8 +1,19 @@
 #!/bin/sh
-# $Id: miniupnpd.init.d.script,v 1.2 2007/09/23 16:11:12 nanard Exp $
+# $Id: miniupnpd.init.d.script,v 1.3 2012/03/14 22:09:53 nanard Exp $
 # MiniUPnP project
 # author: Thomas Bernard
 # website: http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
+
+### BEGIN INIT INFO
+# Provides:          miniupnpd
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: MiniUPnPd port-forwarding daemon
+### END INIT INFO
+
+set -e
 
 MINIUPNPD=/usr/sbin/miniupnpd
 ARGS='-f /etc/miniupnpd/miniupnpd.conf'
@@ -15,26 +26,32 @@ test -f $MINIUPNPD || exit 0
 . /lib/lsb/init-functions
 
 case "$1" in
-start)  log_daemon_msg "Starting miniupnpd" "miniupnpd"
-		$IPTABLES_CREATE > /dev/null 2>&1
-        start-stop-daemon --start --quiet --pidfile /var/run/miniupnpd.pid --startas $MINIUPNPD -- $ARGS $LSBNAMES
-        log_end_msg $?
-        ;;
-stop)   log_daemon_msg "Stopping miniupnpd" "miniupnpd"
-        start-stop-daemon --stop --quiet --pidfile /var/run/miniupnpd.pid
-        log_end_msg $?
-        $IPTABLES_REMOVE > /dev/null 2>&1
-        ;;
-restart|reload|force-reload)
-        log_daemon_msg "Restarting miniupnpd" "miniupnpd"
-        start-stop-daemon --stop --retry 5 --quiet --pidfile /var/run/miniupnpd.pid
-        $IPTABLES_REMOVE > /dev/null 2>&1
-		$IPTABLES_CREATE > /dev/null 2>&1
-        start-stop-daemon --start --quiet --pidfile /var/run/miniupnpd.pid --startas $MINIUPNPD -- $ARGS $LSBNAMES
-        log_end_msg $?
-        ;;
-*)      log_action_msg "Usage: /etc/init.d/miniupnpd {start|stop|restart|reload|force-reload}"
-        exit 2
-        ;;
+  start)
+	log_daemon_msg "Starting miniupnpd" "miniupnpd"
+	$IPTABLES_CREATE > /dev/null 2>&1
+	start-stop-daemon --start --quiet --pidfile /var/run/miniupnpd.pid --startas $MINIUPNPD -- $ARGS $LSBNAMES
+	log_end_msg $?
+	;;
+  stop)
+	log_daemon_msg "Stopping miniupnpd" "miniupnpd"
+	start-stop-daemon --stop --quiet --pidfile /var/run/miniupnpd.pid
+	log_end_msg $?
+	$IPTABLES_REMOVE > /dev/null 2>&1
+	;;
+  restart|reload|force-reload)
+	log_daemon_msg "Restarting miniupnpd" "miniupnpd"
+	start-stop-daemon --stop --retry 5 --quiet --pidfile /var/run/miniupnpd.pid
+	$IPTABLES_REMOVE > /dev/null 2>&1
+	$IPTABLES_CREATE > /dev/null 2>&1
+	start-stop-daemon --start --quiet --pidfile /var/run/miniupnpd.pid --startas $MINIUPNPD -- $ARGS $LSBNAMES
+	log_end_msg $?
+	;;
+  status)
+	status_of_proc /usr/sbin/miniupnpd miniupnpd
+	;;
+  *)
+	log_action_msg "Usage: /etc/init.d/miniupnpd {start|stop|restart|reload|force-reload}"
+	exit 2
+	;;
 esac
 exit 0

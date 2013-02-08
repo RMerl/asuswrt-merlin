@@ -1,7 +1,7 @@
-/* $Id: testupnpdescgen.c,v 1.25 2011/05/18 22:22:23 nanard Exp $ */
+/* $Id: testupnpdescgen.c,v 1.29 2012/04/30 21:08:00 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2011 Thomas Bernard 
+ * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -13,15 +13,16 @@
 #include <sys/types.h>
 #include <errno.h>
 
+#include "macros.h"
 #include "config.h"
 #include "upnpdescgen.h"
 
 char uuidvalue[] = "uuid:12345678-0000-0000-0000-00000000abcd";
 char serialnumber[] = "12345678";
 char modelnumber[] = "1";
-char friendly_name[] = "ASUS Router";
 char presentationurl[] = "http://192.168.0.1:8080/";
 /*char presentationurl[] = "";*/
+char friendly_name[] = OS_NAME " router";
 
 char * use_ext_ip_addr = NULL;
 const char * ext_if_name = "eth0";
@@ -33,6 +34,7 @@ int ipv6fc_inbound_pinhole_allowed = 1;
 
 int getifaddr(const char * ifname, char * buf, int len)
 {
+	UNUSED(ifname);
 	strncpy(buf, "1.2.3.4", len);
 	return 0;
 }
@@ -44,6 +46,7 @@ int upnp_get_portmapping_number_of_entries(void)
 
 int get_wan_connection_status(const char * ifname)
 {
+	UNUSED(ifname);
 	return 2;
 }
 
@@ -54,6 +57,7 @@ xml_pretty_print(const char * s, int len, FILE * f)
 	int n = 0, i;
 	int elt_close = 0;
 	int c, indent = 0;
+
 	if(!s)
 		return n;
 	while(len > 0)
@@ -84,7 +88,7 @@ xml_pretty_print(const char * s, int len, FILE * f)
 			if(elt_close==1)
 			{
 				/*fputc('\n', f); n++; */
-				//elt_close = 0;
+				/* elt_close = 0; */
 				if(indent > 0)
 					indent--;
 			}
@@ -121,6 +125,8 @@ main(int argc, char * * argv)
 	char * s;
 	int l;
 	FILE * f;
+	UNUSED(argc);
+	UNUSED(argv);
 
 	if(mkdir("testdescs", 0777) < 0) {
 		if(errno != EEXIST) {

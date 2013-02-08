@@ -1,14 +1,14 @@
-.TH miniupnpd 1
+.TH MINIUPNPD 8
 .SH NAME
 miniupnpd \- UPnP Internet Gateway Device Daemon
 .SH SYNOPSIS
 .B miniupnpd
-[-f file] [-i interface] [-o address]
-[-a address] [-p port] [-d] [-L] [-U]
-[-u uuid] [-s serial] [-m model_number] 
-[-q queue]
-[-t interval] [-P file]
-[-B down up] [-w url]
+[\-f file] [\-i interface] [\-o address]
+[\-a address] [\-p port] [\-d] [\-L] [\-U]
+[\-u uuid] [\-s serial] [\-m model_number]
+[\-q queue]
+[\-t interval] [\-P file]
+[\-B down up] [\-w url]
 .SH DESCRIPTION
 miniupnpd act as a UPnP Internet Gateway Device. It is designed
 to run on the gateway between the internet and a NAT'ed LAN. It provides
@@ -27,7 +27,7 @@ address used to connect to the internet.
 default address of the interface will be used if not specified.
 .TP
 .B \-a address
-address on the LAN. -a option can by used multiple time if LAN is
+address on the LAN. \-a option can by used multiple time if LAN is
 subdivised in several subnetworks.
 .TP
 .B \-p port

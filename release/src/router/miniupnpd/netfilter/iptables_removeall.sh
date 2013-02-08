@@ -1,10 +1,10 @@
 #! /bin/sh
-# $Id: iptables_removeall.sh,v 1.5 2011/05/16 12:11:37 nanard Exp $
+# $Id: iptables_removeall.sh,v 1.6 2012/01/02 09:55:20 nanard Exp $
 IPTABLES=/sbin/iptables
 
 #change this parameters :
 EXTIF=eth0
-EXTIP="`LC_ALL=C /sbin/ifconfig $EXTIF | grep 'inet addr' | awk '{print $2}' | sed -e 's/.*://'`"
+EXTIP="`LC_ALL=C /sbin/ifconfig $EXTIF | grep 'inet ' | awk '{print $2}' | sed -e 's/.*://'`"
 
 #removing the MINIUPNPD chain for nat
 $IPTABLES -t nat -F MINIUPNPD

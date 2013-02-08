@@ -1,11 +1,11 @@
 #! /bin/sh
-# $Id: iptables_init_and_clean.sh,v 1.1 2011/05/13 09:58:47 nanard Exp $
+# $Id: iptables_init_and_clean.sh,v 1.3 2012/03/05 20:36:19 nanard Exp $
 # Improved Miniupnpd iptables init script.
 # Checks for state of filter before doing anything..
 
 EXTIF=eth0
 IPTABLES=/sbin/iptables
-EXTIP="`LC_ALL=C /sbin/ifconfig $EXTIF | grep 'inet addr' | awk '{print $2}' | sed -e 's/.*://'`"
+EXTIP="`LC_ALL=C /sbin/ifconfig $EXTIF | grep 'inet ' | awk '{print $2}' | sed -e 's/.*://'`"
 NDIRTY="`LC_ALL=C /sbin/iptables -t nat -L -n | grep 'MINIUPNPD' | awk '{printf $1}'`"
 FDIRTY="`LC_ALL=C /sbin/iptables -t filter -L -n | grep 'MINIUPNPD' | awk '{printf $1}'`"
 echo "External IP = $EXTIP"
@@ -33,5 +33,5 @@ else
         echo "Filter table clean..initalizing.."
         $IPTABLES -t filter -N MINIUPNPD
         $IPTABLES -t filter -I FORWARD 4 -i $EXTIF ! -o $EXTIF -j MINIUPNPD
-fi 
+fi
 

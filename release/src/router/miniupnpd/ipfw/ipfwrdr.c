@@ -1,9 +1,9 @@
-/* $Id: ipfwrdr.c,v 1.11 2011/07/12 19:17:05 nanard Exp $ */
+/* $Id: ipfwrdr.c,v 1.13 2012/03/05 20:36:19 nanard Exp $ */
 /*
  * MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2009 Jardel Weyrich
- * (c) 2011 Thomas Bernard
+ * (c) 2011-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution
  */
@@ -14,11 +14,11 @@
 #include <sys/types.h>
 #include <sys/file.h>
 
-//
-// This is a workaround for <sys/uio.h> troubles on FreeBSD, HPUX, OpenBSD.
-// Needed here because on some systems <sys/uio.h> gets included by things
-// like <sys/socket.h>
-//
+/*
+This is a workaround for <sys/uio.h> troubles on FreeBSD, HPUX, OpenBSD.
+Needed here because on some systems <sys/uio.h> gets included by things
+like <sys/socket.h>
+*/
 #ifndef _KERNEL
 #  define ADD_KERNEL
 #  define _KERNEL
@@ -170,32 +170,34 @@ int add_redirect_rule2(
 		return -1;
 	if (ipfw_validate_ifname(ifname) < 0)
 		return -1;
-	
+
 	memset(&rule, 0, sizeof(struct ip_fw));
 	rule.version = IP_FW_CURRENT_API_VERSION;
-	//rule.fw_number = 1000; // rule number
-	//rule.context = (void *)desc; // The description is kept in a separate list
-	rule.fw_prot = proto; // protocol
-	rule.fw_flg |= IP_FW_F_IIFACE; // interfaces to check
-	rule.fw_flg |= IP_FW_F_IIFNAME; // interfaces to check by name
-	rule.fw_flg |= (IP_FW_F_IN | IP_FW_F_OUT); // packet direction
-	rule.fw_flg |= IP_FW_F_FWD; // forward action
+#if 0
+	rule.fw_number = 1000; /* rule number */
+	rule.context = (void *)desc; /* The description is kept in a separate list */
+#endif
+	rule.fw_prot = proto; /* protocol */
+	rule.fw_flg |= IP_FW_F_IIFACE; /* interfaces to check */
+	rule.fw_flg |= IP_FW_F_IIFNAME; /* interfaces to check by name */
+	rule.fw_flg |= (IP_FW_F_IN | IP_FW_F_OUT); /* packet direction */
+	rule.fw_flg |= IP_FW_F_FWD; /* forward action */
 #ifdef USE_IFNAME_IN_RULES
 	if (ifname != NULL) {
-		strlcpy(rule.fw_in_if.fu_via_if.name, ifname, IFNAMSIZ); // src interface
+		strlcpy(rule.fw_in_if.fu_via_if.name, ifname, IFNAMSIZ); /* src interface */
 		rule.fw_in_if.fu_via_if.unit = -1;
 	}
 #endif
 	if (inet_aton(iaddr, &rule.fw_out_if.fu_via_ip) == 0) {
 		syslog(LOG_ERR, "inet_aton(): %m");
 		return -1;
-	}	
+	}
 	memcpy(&rule.fw_dst,  &rule.fw_out_if.fu_via_ip, sizeof(struct in_addr));
 	memcpy(&rule.fw_fwd_ip.sin_addr, &rule.fw_out_if.fu_via_ip, sizeof(struct in_addr));
-	rule.fw_dmsk.s_addr = INADDR_BROADCAST;	//TODO check this
-	IP_FW_SETNDSTP(&rule, 1); // number of external ports
-	rule.fw_uar.fw_pts[0] = eport; // external port
-	rule.fw_fwd_ip.sin_port = iport; // internal port
+	rule.fw_dmsk.s_addr = INADDR_BROADCAST;	/* TODO check this */
+	IP_FW_SETNDSTP(&rule, 1); /* number of external ports */
+	rule.fw_uar.fw_pts[0] = eport; /* external port */
+	rule.fw_fwd_ip.sin_port = iport; /* internal port */
 	if (rhost && rhost[0] != '\0') {
 		inet_aton(rhost, &rule.fw_src);
 		rule.fw_smsk.s_addr = htonl(INADDR_NONE);
@@ -214,10 +216,10 @@ int get_redirect_rule(
 	const char * ifname,
 	unsigned short eport,
 	int proto,
-	char * iaddr, 
-	int iaddrlen, 
+	char * iaddr,
+	int iaddrlen,
 	unsigned short * iport,
-	char * desc, 
+	char * desc,
 	int desclen,
 	char * rhost,
 	int rhostlen,
@@ -227,7 +229,7 @@ int get_redirect_rule(
 {
 	int i, count_rules, total_rules = 0;
 	struct ip_fw * rules = NULL;
-	
+
 	if (ipfw_validate_protocol(proto) < 0)
 		return -1;
 	if (ipfw_validate_ifname(ifname) < 0)
@@ -240,7 +242,7 @@ int get_redirect_rule(
 		if (count_rules < 0)
 			goto error;
 	} while (count_rules == 10);
-	
+
 	for (i=0; i<total_rules-1; i++) {
 		const struct ip_fw const * ptr = &rules[i];
 		if (proto == ptr->fw_prot && eport == ptr->fw_uar.fw_pts[0]) {
@@ -252,11 +254,11 @@ int get_redirect_rule(
 				*iport = ptr->fw_fwd_ip.sin_port;
 			if (iaddr != NULL && iaddrlen > 0) {
 				/* looks like fw_out_if.fu_via_ip is zero */
-				//if (inet_ntop(AF_INET, &ptr->fw_out_if.fu_via_ip, iaddr, iaddrlen) == NULL) {
+				/*if (inet_ntop(AF_INET, &ptr->fw_out_if.fu_via_ip, iaddr, iaddrlen) == NULL) {*/
 				if (inet_ntop(AF_INET, &ptr->fw_fwd_ip.sin_addr, iaddr, iaddrlen) == NULL) {
 					syslog(LOG_ERR, "inet_ntop(): %m");
 					goto error;
-				}			
+				}
 			}
 			if (rhost != NULL && rhostlen > 0) {
 				if (ptr->fw_src.s_addr == 0)
@@ -264,9 +266,9 @@ int get_redirect_rule(
 				else if (inet_ntop(AF_INET, &ptr->fw_src.s_addr, rhost, rhostlen) == NULL) {
 					syslog(LOG_ERR, "inet_ntop(): %m");
 					goto error;
-				}			
+				}
 			}
-			// And what if we found more than 1 matching rule?
+			/* And what if we found more than 1 matching rule? */
 			ipfw_free_ruleset(&rules);
 			get_desc_time(eport, proto, desc, desclen, timestamp);
 			return 0;
@@ -275,89 +277,87 @@ int get_redirect_rule(
 
 error:
 	if (rules != NULL)
-		ipfw_free_ruleset(&rules);	
+		ipfw_free_ruleset(&rules);
 	return -1;
 }
 
 int delete_redirect_rule(
 	const char * ifname,
 	unsigned short eport,
-	int proto) 
+	int proto)
 {
 	int i, count_rules, total_rules = 0;
 	struct ip_fw * rules = NULL;
-	
+
 	if (ipfw_validate_protocol(proto) < 0)
 		return -1;
 	if (ipfw_validate_ifname(ifname) < 0)
 		return -1;
-	
+
 	do {
 		count_rules = ipfw_fetch_ruleset(&rules, &total_rules, 10);
 		if (count_rules < 0)
 			goto error;
 	} while (count_rules == 10);
-	
+
 	for (i=0; i<total_rules-1; i++) {
 		const struct ip_fw const * ptr = &rules[i];
 		if (proto == ptr->fw_prot && eport == ptr->fw_uar.fw_pts[0]) {
 			if (ipfw_exec(IP_FW_DEL, (struct ip_fw *)ptr, sizeof(*ptr)) < 0)
 				goto error;
-			// And what if we found more than 1 matching rule?
+			/* And what if we found more than 1 matching rule? */
 			ipfw_free_ruleset(&rules);
 			del_desc_time(eport, proto);
 			return 0;
 		}
 	}
-	
+
 error:
 	if (rules != NULL)
-		ipfw_free_ruleset(&rules);	
+		ipfw_free_ruleset(&rules);
 	return -1;
 }
 
 int add_filter_rule2(
-	const char * ifname, 
+	const char * ifname,
 	const char * rhost,
 	const char * iaddr,
-	unsigned short eport, 
+	unsigned short eport,
 	unsigned short iport,
-	int proto, 
+	int proto,
 	const char * desc)
 {
-	//return -1;
 	return 0; /* nothing to do, always success */
 }
 
 int delete_filter_rule(
-	const char * ifname, 
-	unsigned short eport, 
-	int proto) 
+	const char * ifname,
+	unsigned short eport,
+	int proto)
 {
-	//return -1;
 	return 0; /* nothing to do, always success */
 }
 
 int get_redirect_rule_by_index(
 	int index,
-	char * ifname, 
+	char * ifname,
 	unsigned short * eport,
-	char * iaddr, 
-	int iaddrlen, 
+	char * iaddr,
+	int iaddrlen,
 	unsigned short * iport,
-	int * proto, 
-	char * desc, 
+	int * proto,
+	char * desc,
 	int desclen,
 	char * rhost,
 	int rhostlen,
 	unsigned int * timestamp,
-	u_int64_t * packets, 
+	u_int64_t * packets,
 	u_int64_t * bytes)
 {
 	int total_rules = 0;
 	struct ip_fw * rules = NULL;
 
-	if (index < 0) // TODO shouldn't we also validate the maximum?
+	if (index < 0) /* TODO shouldn't we also validate the maximum? */
 		return -1;
 
 	if(timestamp)
@@ -367,7 +367,7 @@ int get_redirect_rule_by_index(
 
 	if (total_rules > index) {
 		const struct ip_fw const * ptr = &rules[index];
-		if (ptr->fw_prot == 0)	// invalid rule
+		if (ptr->fw_prot == 0)	/* invalid rule */
 			goto error;
 		if (proto != NULL)
 			*proto = ptr->fw_prot;
@@ -385,11 +385,11 @@ int get_redirect_rule_by_index(
 			*iport = ptr->fw_fwd_ip.sin_port;
 		if (iaddr != NULL && iaddrlen > 0) {
 			/* looks like fw_out_if.fu_via_ip is zero */
-			//if (inet_ntop(AF_INET, &ptr->fw_out_if.fu_via_ip, iaddr, iaddrlen) == NULL) {
+			/*if (inet_ntop(AF_INET, &ptr->fw_out_if.fu_via_ip, iaddr, iaddrlen) == NULL) {*/
 			if (inet_ntop(AF_INET, &ptr->fw_fwd_ip.sin_addr, iaddr, iaddrlen) == NULL) {
 				syslog(LOG_ERR, "inet_ntop(): %m");
 				goto error;
-			}			
+			}
 		}
 		if (rhost != NULL && rhostlen > 0) {
 			if (ptr->fw_src.s_addr == 0)
@@ -397,7 +397,7 @@ int get_redirect_rule_by_index(
 			else if (inet_ntop(AF_INET, &ptr->fw_src.s_addr, rhost, rhostlen) == NULL) {
 				syslog(LOG_ERR, "inet_ntop(): %m");
 				goto error;
-			}			
+			}
 		}
 		ipfw_free_ruleset(&rules);
 		get_desc_time(*eport, *proto, desc, desclen, timestamp);
@@ -406,8 +406,8 @@ int get_redirect_rule_by_index(
 
 error:
 	if (rules != NULL)
-		ipfw_free_ruleset(&rules);	
-	return -1;	
+		ipfw_free_ruleset(&rules);
+	return -1;
 }
 
 /* upnp_get_portmappings_in_range()
@@ -423,16 +423,16 @@ get_portmappings_in_range(unsigned short startport,
 	unsigned int capacity = 128;
 	int i, count_rules, total_rules = 0;
 	struct ip_fw * rules = NULL;
-	
+
 	if (ipfw_validate_protocol(proto) < 0)
 		return NULL;
-	
+
 	do {
 		count_rules = ipfw_fetch_ruleset(&rules, &total_rules, 10);
 		if (count_rules < 0)
 			goto error;
 	} while (count_rules == 10);
-	
+
 	array = calloc(capacity, sizeof(unsigned short));
 	if(!array) {
 		syslog(LOG_ERR, "get_portmappings_in_range() : calloc error");
@@ -461,7 +461,7 @@ get_portmappings_in_range(unsigned short startport,
 	}
 error:
 	if (rules != NULL)
-		ipfw_free_ruleset(&rules);	
+		ipfw_free_ruleset(&rules);
 	return array;
 }
 

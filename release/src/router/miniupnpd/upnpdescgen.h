@@ -1,7 +1,7 @@
-/* $Id: upnpdescgen.h,v 1.22 2011/05/18 22:22:24 nanard Exp $ */
+/* $Id: upnpdescgen.h,v 1.23 2012/03/05 20:36:17 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2011 Thomas Bernard 
+ * (c) 2006-2011 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -10,7 +10,7 @@
 
 #include "config.h"
 
-/* for the root description 
+/* for the root description
  * The child list reference is stored in "data" member using the
  * INITHELPER macro with index/nchild always in the
  * same order, whatever the endianness */
@@ -31,7 +31,7 @@ struct action {
 };
 
 struct argument {	/* the name of the arg is obtained from the variable */
-	unsigned char dir;		/* MSB : don't append "New" Flag, 
+	unsigned char dir;		/* MSB : don't append "New" Flag,
 	                         * 5 Medium bits : magic argument name index
 	                         * 2 LSB : 1 = in, 2 = out */
 	unsigned char relatedVar;	/* index of the related variable */
@@ -41,12 +41,12 @@ struct stateVar {
 	const char * name;
 	unsigned char itype;	/* MSB: sendEvent flag, 7 LSB: index in upnptypes */
 	unsigned char idefault;	/* default value */
-	unsigned char iallowedlist;	/* index in allowed values list 
+	unsigned char iallowedlist;	/* index in allowed values list
 	                             * or in allowed range list */
 	unsigned char ieventvalue;	/* fixed value returned or magical values */
 };
 
-/* little endian 
+/* little endian
  * The code has now be tested on big endian architecture */
 #define INITHELPER(i, n) ((char *)(((n)<<16)|(i)))
 

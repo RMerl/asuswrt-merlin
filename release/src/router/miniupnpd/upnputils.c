@@ -1,13 +1,15 @@
-/* $Id: upnputils.c,v 1.3 2011/05/20 09:42:23 nanard Exp $ */
+/* $Id: upnputils.c,v 1.5 2012/05/24 16:51:09 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2011 Thomas Bernard
+ * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
 #include "config.h"
 
 #include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -42,6 +44,11 @@ sockaddr_to_string(const struct sockaddr * addr, char * str, size_t size)
 		n = snprintf(str, size, "%s:%hu", buffer, port);
 		break;
 #ifdef AF_LINK
+#if defined(__sun)
+		/* solaris does not seem to have link_ntoa */
+		/* #define link_ntoa _link_ntoa	*/
+#define link_ntoa(x) "dummy-link_ntoa"
+#endif
 	case AF_LINK:
 		{
 			struct sockaddr_dl * sdl = (struct sockaddr_dl *)addr;
@@ -65,4 +72,14 @@ sockaddr_to_string(const struct sockaddr * addr, char * str, size_t size)
 }
 
 
+int
+set_non_blocking(int fd)
+{
+	int flags = fcntl(fd, F_GETFL);
+	if(flags < 0)
+		return 0;
+	if(fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
+		return 0;
+	return 1;
+}
 

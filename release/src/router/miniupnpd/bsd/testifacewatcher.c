@@ -1,4 +1,4 @@
-/* $Id: testifacewatcher.c,v 1.1 2011/05/20 09:34:25 nanard Exp $ */
+/* $Id: testifacewatcher.c,v 1.2 2012/05/21 08:55:10 nanard Exp $ */
 
 #include <syslog.h>
 
@@ -9,7 +9,7 @@ void
 ProcessInterfaceWatchNotify(int s);
 
 const char * ext_if_name;
-volatile int should_send_public_address_change_notif = 0;
+volatile sig_atomic_t should_send_public_address_change_notif = 0;
 
 int main(int argc, char * * argv)
 {

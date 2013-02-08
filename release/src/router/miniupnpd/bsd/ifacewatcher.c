@@ -1,4 +1,4 @@
-/* $Id: ifacewatcher.c,v 1.3 2011/06/04 16:19:51 nanard Exp $ */
+/* $Id: ifacewatcher.c,v 1.5 2012/05/21 08:55:10 nanard Exp $ */
 /* Project MiniUPnP
  * web : http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2011 Thomas BERNARD
@@ -13,6 +13,7 @@
 #include <net/if.h>
 #include <net/route.h>
 #include <syslog.h>
+#include <signal.h>
 
 #if !defined(SA_LEN)
 #define	SA_LEN(sa)	(sa)->sa_len
@@ -24,7 +25,7 @@
 #include "../upnputils.h"
 #include "../upnpglobalvars.h"
 
-extern volatile int should_send_public_address_change_notif;
+extern volatile sig_atomic_t should_send_public_address_change_notif;
 
 int
 OpenAndConfInterfaceWatchSocket(void)
@@ -69,7 +70,7 @@ ProcessInterfaceWatchNotify(int s)
 	}
 	rtm = (struct rt_msghdr *)buf;
 	syslog(LOG_DEBUG, "%u rt_msg : msglen=%d version=%d type=%d", (unsigned)len,
-	       rtm->rtm_msglen, rtm->rtm_version, rtm->rtm_type);	
+	       rtm->rtm_msglen, rtm->rtm_version, rtm->rtm_type);
 	switch(rtm->rtm_type) {
 	case RTM_IFINFO:	/* iface going up/down etc. */
 		ifm = (struct if_msghdr *)buf;

@@ -1,6 +1,6 @@
-/* $Id: natpmp.c,v 1.26 2011/07/15 07:48:26 nanard Exp $ */
+/* $Id: natpmp.c,v 1.32 2012/05/27 22:36:03 nanard Exp $ */
 /* MiniUPnP project
- * (c) 2007-2010 Thomas Bernard
+ * (c) 2007-2012 Thomas Bernard
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
@@ -8,36 +8,51 @@
 #include <string.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <errno.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include "macros.h"
 #include "config.h"
 #include "natpmp.h"
 #include "upnpglobalvars.h"
 #include "getifaddr.h"
 #include "upnpredirect.h"
 #include "commonrdr.h"
+#include "upnputils.h"
 
 #ifdef ENABLE_NATPMP
 
 int OpenAndConfNATPMPSocket(in_addr_t addr)
 {
 	int snatpmp;
+	int i = 1;
 	snatpmp = socket(PF_INET, SOCK_DGRAM, 0/*IPPROTO_UDP*/);
 	if(snatpmp<0)
 	{
-		syslog(LOG_ERR, "socket(natpmp): %m");
+		syslog(LOG_ERR, "%s: socket(natpmp): %m",
+		       "OpenAndConfNATPMPSocket");
 		return -1;
 	}
-	else
+	if(setsockopt(snatpmp, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i)) < 0)
+	{
+		syslog(LOG_WARNING, "%s: setsockopt(natpmp, SO_REUSEADDR): %m",
+		       "OpenAndConfNATPMPSocket");
+	}
+	if(!set_non_blocking(snatpmp))
+	{
+		syslog(LOG_WARNING, "%s: set_non_blocking(): %m",
+		       "OpenAndConfNATPMPSocket");
+	}
 	{
 		struct sockaddr_in natpmp_addr;
 		memset(&natpmp_addr, 0, sizeof(natpmp_addr));
 		natpmp_addr.sin_family = AF_INET;
 		natpmp_addr.sin_port = htons(NATPMP_PORT);
-		//natpmp_addr.sin_addr.s_addr = INADDR_ANY;
+		/*natpmp_addr.sin_addr.s_addr = INADDR_ANY; */
 		natpmp_addr.sin_addr.s_addr = addr;
 		if(bind(snatpmp, (struct sockaddr *)&natpmp_addr, sizeof(natpmp_addr)) < 0)
 		{
@@ -73,6 +88,7 @@ static void FillPublicAddressResponse(unsigned char * resp, in_addr_t senderaddr
 {
 #ifndef MULTIPLE_EXTERNAL_IP
 	char tmp[16];
+	UNUSED(senderaddr);
 
 	if(use_ext_ip_addr) {
         inet_pton(AF_INET, use_ext_ip_addr, resp+8);
@@ -90,6 +106,7 @@ static void FillPublicAddressResponse(unsigned char * resp, in_addr_t senderaddr
 	}
 #else
 	struct lan_addr_s * lan_addr;
+
 	for(lan_addr = lan_addrs.lh_first; lan_addr != NULL; lan_addr = lan_addr->list.le_next) {
 		if( (senderaddr & lan_addr->mask.s_addr)
 		   == (lan_addr->addr.s_addr & lan_addr->mask.s_addr)) {
@@ -116,7 +133,13 @@ void ProcessIncomingNATPMPPacket(int s)
 	n = recvfrom(s, req, sizeof(req), 0,
 	             (struct sockaddr *)&senderaddr, &senderaddrlen);
 	if(n<0) {
-		syslog(LOG_ERR, "recvfrom(natpmp): %m");
+		/* EAGAIN, EWOULDBLOCK and EINTR : silently ignore (retry next time)
+		 * other errors : log to LOG_ERR */
+		if(errno != EAGAIN &&
+		   errno != EWOULDBLOCK &&
+		   errno != EINTR) {
+			syslog(LOG_ERR, "recvfrom(natpmp): %m");
+		}
 		return;
 	}
 	if(!inet_ntop(AF_INET, &senderaddr.sin_addr,
@@ -209,14 +232,12 @@ void ProcessIncomingNATPMPPacket(int s)
 					}
 				} else {
 					/* To improve the interworking between nat-pmp and
-					 * UPnP, we should check that we remove only NAT-PMP 
+					 * UPnP, we should check that we remove only NAT-PMP
 					 * mappings */
 					r = _upnp_delete_redir(eport, proto);
 					/*syslog(LOG_DEBUG, "%hu %d r=%d", eport, proto, r);*/
 					if(r<0) {
-					//	noisy; removed logging -- zzz
-					//	syslog(LOG_ERR, "Failed to remove NAT-PMP mapping eport %hu, protocol %s",
-					//	       eport, (proto==IPPROTO_TCP)?"TCP":"UDP");
+						//syslog(LOG_ERR, "Failed to remove NAT-PMP mapping eport %hu, protocol %s", eport, (proto==IPPROTO_TCP)?"TCP":"UDP");
 						resp[3] = 2;	/* Not Authorized/Refused */
 					}
 				}
@@ -338,7 +359,7 @@ int CleanExpiredNATPMP()
 		return ScanNATPMPforExpiration();
 	/* check desc - this is important since we keep expiration time as part
 	 * of the desc.
-	 * If the rule is renewed, timestamp and nextnatpmptoclean_timestamp 
+	 * If the rule is renewed, timestamp and nextnatpmptoclean_timestamp
 	 * can be different. In that case, the rule must not be removed ! */
 	if(sscanf(desc, "NAT-PMP %u", &timestamp) == 1) {
 		if(timestamp > nextnatpmptoclean_timestamp)
@@ -401,7 +422,7 @@ void SendNATPMPPublicAddressChangeNotification(int * sockets, int n_sockets)
 		n = sendto(sockets[j], notif, 12, 0,
 		           (struct sockaddr *)&sockname, sizeof(struct sockaddr_in));
 		if(n < 0)
-		{	
+		{
 			syslog(LOG_ERR, "%s: sendto(s_udp=%d): %m",
 			       "SendNATPMPPublicAddressChangeNotification", sockets[j]);
 			return;
@@ -411,7 +432,7 @@ void SendNATPMPPublicAddressChangeNotification(int * sockets, int n_sockets)
 		n = sendto(sockets[j], notif, 12, 0,
 		           (struct sockaddr *)&sockname, sizeof(struct sockaddr_in));
 		if(n < 0)
-		{	
+		{
 			syslog(LOG_ERR, "%s: sendto(s_udp=%d): %m",
 			       "SendNATPMPPublicAddressChangeNotification", sockets[j]);
 			return;

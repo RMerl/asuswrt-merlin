@@ -1,7 +1,7 @@
-/* $Id: upnpdescgen.c,v 1.63 2011/05/27 21:36:50 nanard Exp $ */
+/* $Id: upnpdescgen.c,v 1.67 2012/04/30 14:03:52 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2011 Thomas Bernard 
+ * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -118,15 +118,15 @@ static const char * magicargname[] = {
 	"IsWorking"
 };
 
-static const char xmlver[] = 
+static const char xmlver[] =
 	"<?xml version=\"1.0\"?>\r\n";
 static const char root_service[] =
 	"scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"";
-static const char root_device[] = 
+static const char root_device[] =
 	"root xmlns=\"urn:schemas-upnp-org:device-1-0\"";
 
-/* root Description of the UPnP Device 
- * fixed to match UPnP_IGD_InternetGatewayDevice 1.0.pdf 
+/* root Description of the UPnP Device
+ * fixed to match UPnP_IGD_InternetGatewayDevice 1.0.pdf
  * Needs to be checked with UPnP-gw-InternetGatewayDevice-v2-Device.pdf
  * presentationURL is only "recommended" but the router doesn't appears
  * in "Network connections" in Windows XP if it is not present. */
@@ -145,12 +145,8 @@ static const struct XMLElt rootDesc[] =
 /* 5 */
 	{"/deviceType", DEVICE_TYPE_IGD},
 		/* urn:schemas-upnp-org:device:InternetGatewayDevice:1 or 2 */
-#if 0
-	{"/friendlyName", ROOTDEV_FRIENDLYNAME},	/* required */
-#else
-	{"/friendlyName", friendly_name},		/* required */
-#endif
-	{"/manufacturer", ROOTDEV_MANUFACTURER},	/* required */
+	{"/friendlyName", friendly_name/*ROOTDEV_FRIENDLYNAME*/},	/* required */
+	{"/manufacturer", ROOTDEV_MANUFACTURER},		/* required */
 /* 8 */
 	{"/manufacturerURL", ROOTDEV_MANUFACTURERURL},	/* optional */
 	{"/modelDescription", ROOTDEV_MODELDESCRIPTION}, /* recommended */
@@ -281,7 +277,7 @@ static const struct XMLElt rootDesc[] =
 	{"/SCPDURL", L3F_PATH},
 #endif
 #ifdef ENABLE_DP_SERVICE
-/* InternetGatewayDevice v2 : 
+/* InternetGatewayDevice v2 :
  * it is RECOMMEDED that DeviceProtection service is implemented and applied.
  * If DeviceProtection is not implemented and applied, it is RECOMMENDED
  * that control points are able to access only actions and parameters defined
@@ -359,7 +355,7 @@ static const struct argument GetExternalIPAddressArgs[] =
 	{0, 0}
 };
 
-static const struct argument DeletePortMappingArgs[] = 
+static const struct argument DeletePortMappingArgs[] =
 {
 	{1, 11},
 	{1, 12},
@@ -506,7 +502,7 @@ static const struct stateVar WANIPCnVars[] =
 	{"PortMappingEnabled", 1, 0}, /* Required */
 /* 10 */
 	{"PortMappingLeaseDuration", 3, 2, 1}, /* required */
-	/* TODO : for IGD v2 : 
+	/* TODO : for IGD v2 :
 	 * <stateVariable sendEvents="no">
 	 *   <name>PortMappingLeaseDuration</name>
 	 *   <dataType>ui4</dataType>
@@ -584,14 +580,14 @@ static const struct action WANCfgActions[] =
 static const struct stateVar WANCfgVars[] =
 {
 	{"WANAccessType", 0, 0, 1},
-	/* Allowed Values : DSL / POTS / Cable / Ethernet 
+	/* Allowed Values : DSL / POTS / Cable / Ethernet
 	 * Default value : empty string */
 	{"Layer1UpstreamMaxBitRate", 3, 0},
 	{"Layer1DownstreamMaxBitRate", 3, 0},
 	{"PhysicalLinkStatus", 0|0x80, 0, 6, 6},
-	/*  allowed values : 
+	/*  allowed values :
 	 *      Up / Down / Initializing (optional) / Unavailable (optionnal)
-	 *  no Default value 
+	 *  no Default value
 	 *  Evented */
 	{"TotalBytesSent", 3, 0},	   /* Optional */
 	{"TotalBytesReceived", 3, 0},  /* Optional */
@@ -828,7 +824,7 @@ strcat_int(char * str, int * len, int * tmplen, int i)
 		return str;
 	}
 	j = 0;
-	while(i && j < sizeof(buf)) {
+	while(i && j < (int)sizeof(buf)) {
 		buf[j++] = '0' + (i % 10);
 		i = i / 10;
 	}
@@ -874,8 +870,6 @@ genXML(char * str, int * len, int * tmplen,
 				str = strcat_char(str, len, tmplen, '<');
 				str = strcat_str(str, len, tmplen, eltname);
 				str = strcat_char(str, len, tmplen, '>');
-				str = strcat_char(str, len, tmplen, '\r');
-				str = strcat_char(str, len, tmplen, '\n');
 			}
 			for(;;)
 			{
@@ -893,8 +887,6 @@ genXML(char * str, int * len, int * tmplen,
 					for(c = *s; c > ' '; c = *(++s))
 						str = strcat_char(str, len, tmplen, c);
 					str = strcat_char(str, len, tmplen, '>');
-					str = strcat_char(str, len, tmplen, '\r');
-					str = strcat_char(str, len, tmplen, '\n');
 					top--;
 				}
 				else
@@ -907,8 +899,6 @@ genXML(char * str, int * len, int * tmplen,
 			str = strcat_char(str, len, tmplen, '<');
 			str = strcat_str(str, len, tmplen, eltname);
 			str = strcat_char(str, len, tmplen, '>');
-			str = strcat_char(str, len, tmplen, '\r');
-			str = strcat_char(str, len, tmplen, '\n');
 			k = (unsigned long)p[i].data;
 			i = k & 0xffff;
 			j = i + (k >> 16);
@@ -924,7 +914,7 @@ genXML(char * str, int * len, int * tmplen,
 /* genRootDesc() :
  * - Generate the root description of the UPnP device.
  * - the len argument is used to return the length of
- *   the returned string. 
+ *   the returned string.
  * - tmp_uuid argument is used to build the uuid string */
 char *
 genRootDesc(int * len)
@@ -944,7 +934,7 @@ genRootDesc(int * len)
 }
 
 /* genServiceDesc() :
- * Generate service description with allowed methods and 
+ * Generate service description with allowed methods and
  * related variables. */
 static char *
 genServiceDesc(int * len, const struct serviceDesc * s)
@@ -963,7 +953,7 @@ genServiceDesc(int * len, const struct serviceDesc * s)
 	/*strcpy(str, xmlver); */
 	*len = strlen(xmlver);
 	memcpy(str, xmlver, *len + 1);
-	
+
 	acts = s->actionList;
 	vars = s->serviceStateTable;
 
@@ -1161,7 +1151,7 @@ genEventVars(int * len, const struct serviceDesc * s, const char * servns)
 			str = strcat_str(str, len, &tmplen, "<e:property><s:");
 			str = strcat_str(str, len, &tmplen, v->name);
 			str = strcat_str(str, len, &tmplen, ">");
-			//printf("<e:property><s:%s>", v->name);
+			/*printf("<e:property><s:%s>", v->name);*/
 			switch(v->ieventvalue) {
 			case 0:
 				break;
@@ -1223,14 +1213,16 @@ genEventVars(int * len, const struct serviceDesc * s, const char * servns)
 			str = strcat_str(str, len, &tmplen, "</s:");
 			str = strcat_str(str, len, &tmplen, v->name);
 			str = strcat_str(str, len, &tmplen, "></e:property>");
-			//printf("</s:%s></e:property>\n", v->name);
+			/*printf("</s:%s></e:property>\n", v->name);*/
 		}
 		v++;
 	}
 	str = strcat_str(str, len, &tmplen, "</e:propertyset>");
-	//printf("</e:propertyset>\n");
-	//printf("\n");
-	//printf("%d\n", tmplen);
+#if 0
+	printf("</e:propertyset>\n");
+	printf("\n");
+	printf("%d\n", tmplen);
+#endif
 	str[*len] = '\0';
 	return str;
 }

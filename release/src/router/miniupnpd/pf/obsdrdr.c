@@ -1,7 +1,7 @@
-/* $Id: obsdrdr.c,v 1.67 2011/06/22 21:20:27 nanard Exp $ */
+/* $Id: obsdrdr.c,v 1.74 2012/05/01 09:20:43 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2010 Thomas Bernard 
+ * (c) 2006-2012 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -55,6 +55,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../macros.h"
 #include "../config.h"
 #include "obsdrdr.h"
 #include "../upnpglobalvars.h"
@@ -101,11 +102,8 @@ remove_timestamp_entry(unsigned short eport, int proto)
 	}
 }
 
-/* anchor name */
-static const char anchor_name[] = "miniupnpd";
-
 /* /dev/pf when opened */
-static int dev = -1;
+int dev = -1;
 
 /* shutdown_redirect() :
  * close the /dev/pf device */
@@ -214,13 +212,13 @@ add_redirect_rule2(const char * ifname,
 	if(1)
 	{
 		pcr.rule.direction = PF_IN;
-		//pcr.rule.src.addr.type = PF_ADDR_NONE;
+		/*pcr.rule.src.addr.type = PF_ADDR_NONE;*/
 		pcr.rule.src.addr.type = PF_ADDR_ADDRMASK;
 		pcr.rule.dst.addr.type = PF_ADDR_ADDRMASK;
 		pcr.rule.nat.addr.type = PF_ADDR_NONE;
 		pcr.rule.rdr.addr.type = PF_ADDR_ADDRMASK;
 #endif
-		
+
 		pcr.rule.dst.port_op = PF_OP_EQ;
 		pcr.rule.dst.port[0] = htons(eport);
 		pcr.rule.dst.port[1] = htons(eport);
@@ -247,6 +245,9 @@ add_redirect_rule2(const char * ifname,
 		pcr.rule.log = (GETFLAG(LOGPACKETSMASK))?1:0;	/*logpackets;*/
 #ifdef PFRULE_HAS_RTABLEID
 		pcr.rule.rtableid = -1;	/* first appeared in OpenBSD 4.0 */
+#endif
+#ifdef PFRULE_HAS_ONRDOMAIN
+		pcr.rule.onrdomain = -1;	/* first appeared in OpenBSD 5.0 */
 #endif
 		pcr.rule.quick = 1;
 		pcr.rule.keep_state = PF_STATE_NORMAL;
@@ -327,6 +328,10 @@ add_filter_rule2(const char * ifname,
 				 int proto, const char * desc)
 {
 #ifndef PF_ENABLE_FILTER_RULES
+	UNUSED(ifname);
+	UNUSED(rhost); UNUSED(iaddr);
+	UNUSED(eport); UNUSED(iport);
+	UNUSED(proto); UNUSED(desc);
 	return 0;
 #else
 	int r;
@@ -358,7 +363,7 @@ add_filter_rule2(const char * ifname,
 	if(1)
 	{
 #endif
-		
+
 		pcr.rule.dst.port_op = PF_OP_EQ;
 		pcr.rule.dst.port[0] = htons(eport);
 		pcr.rule.direction = PF_IN;
@@ -376,7 +381,10 @@ add_filter_rule2(const char * ifname,
 		pcr.rule.flags = TH_SYN;
 		pcr.rule.flagset = (TH_SYN|TH_ACK);
 #ifdef PFRULE_HAS_RTABLEID
-		pcr.rule.rtableid = -1;	/* first appeared in OpenBSD 4.0 */ 
+		pcr.rule.rtableid = -1;	/* first appeared in OpenBSD 4.0 */
+#endif
+#ifdef PFRULE_HAS_ONRDOMAIN
+		pcr.rule.onrdomain = -1;	/* first appeared in OpenBSD 5.0 */
 #endif
 		pcr.rule.keep_state = 1;
 		strlcpy(pcr.rule.label, desc, PF_RULE_LABEL_SIZE);
@@ -399,7 +407,7 @@ add_filter_rule2(const char * ifname,
 		TAILQ_INIT(&pcr.rule.rpool.list);
 		inet_pton(AF_INET, iaddr, &a->addr.v.a.addr.v4.s_addr);
 		TAILQ_INSERT_TAIL(&pcr.rule.rpool.list, a, entries);
-		
+
 		/* we have any - any port = # keep state label */
 		/* we want any - iaddr port = # keep state label */
 		/* memcpy(&pcr.rule.dst, a, sizeof(struct pf_pooladdr)); */
@@ -457,6 +465,8 @@ get_redirect_rule(const char * ifname, unsigned short eport, int proto,
 #ifndef PF_NEWSTYLE
 	struct pfioc_pooladdr pp;
 #endif
+	UNUSED(ifname);
+
 	if(dev<0) {
 		syslog(LOG_ERR, "pf device is not open");
 		return -1;
@@ -556,6 +566,8 @@ delete_redirect_rule(const char * ifname, unsigned short eport, int proto)
 {
 	int i, n;
 	struct pfioc_rule pr;
+	UNUSED(ifname);
+
 	if(dev<0) {
 		syslog(LOG_ERR, "pf device is not open");
 		return -1;
@@ -608,6 +620,7 @@ int
 delete_filter_rule(const char * ifname, unsigned short eport, int proto)
 {
 #ifndef PF_ENABLE_FILTER_RULES
+	UNUSED(ifname); UNUSED(eport); UNUSED(proto);
 	return 0;
 #else
 	int i, n;
@@ -865,7 +878,7 @@ list_rules(void)
 			perror("DIOCGETRULE");
 		printf(" %s %s %d:%d -> %d:%d  proto %d keep_state=%d action=%d\n",
 			pr.rule.ifname,
-			inet_ntop(AF_INET, &pr.rule.src.addr.v.a.addr.v4.s_addr, buf, 32);
+			inet_ntop(AF_INET, &pr.rule.src.addr.v.a.addr.v4.s_addr, buf, 32),
 			(int)ntohs(pr.rule.dst.port[0]),
 			(int)ntohs(pr.rule.dst.port[1]),
 #ifndef PF_NEWSTYLE
