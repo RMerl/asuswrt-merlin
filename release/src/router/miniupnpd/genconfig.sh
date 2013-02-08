@@ -240,9 +240,9 @@ case $OS_NAME in
                 echo "#ifdef LINUX26" >> ${CONFIGFILE}
                 echo "#define USE_IFACEWATCHER 1" >> ${CONFIGFILE}
                 echo "#endif" >> ${CONFIGFILE}
-                echo "#ifdef RTCONFIG_IPV6" >> ${CONFIGFILE}
-                echo "#define ENABLE_IPV6" >> ${CONFIGFILE}
-                echo "#endif" >> ${CONFIGFILE}
+#                echo "#ifdef RTCONFIG_IPV6" >> ${CONFIGFILE}
+#                echo "#define ENABLE_IPV6" >> ${CONFIGFILE}
+#                echo "#endif" >> ${CONFIGFILE}
                 FW=netfilter
                 ;;
 	Darwin)
