@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.270.24 (XX-Feb-2013)
-===================================================
+Asuswrt-Merlin - build 3.0.0.4.270.24 Beta 4 (09-Feb-2013)
+==========================================================
 
 About
 -----
@@ -353,46 +353,72 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 
-3.0.0.4.270.24
+3.0.0.4.270.24 Beta 4:
+   - CHANGED: Updated miniupnpd to version 1.8
+   - CHANGED: Display warning about JFFS not guaranteed to survive flashing
+              on the Firmware Upgrade page.
+   - FIXED: Usernames with non-alphanums on the System page would 
+            prevent applying your settings (Asus bug)
+   - FIXED: DHCP names with spaces in them would be truncated
+   - FIXED: Webui would break on the traffic monitor pages if the FW was 
+            unable to load the traffic database.
+   - FIXED: Download Master was unable to update as an awk fix would 
+            break the script expecting broken hebaviour.
+
+
+3.0.0.4.270.24 Beta 3:
    - NEW: Rebased on 3.0.0.4.270.  Notable changes:
       o New driver builds (these are NOT the new major versions that
-        Asus are still working on)
+        Asus are currently developping)
       o NTP-related changes
+   - FIXED: Removed logged warning from miniupnpd (regression from Beta 2)
+   - FIXED: Various timing issues causing some TrafficMonitoring and the Sysinfo
+            pages to often fail loading under IE.
+
+
+3.0.0.4.266.24 Beta 2:
+   - CHANGED: Temperatures on Sysinfo page will now auto-update every 3 seconds.
+   - CHANGED: Connections page now uses Ajax for slightly better rendering
+   - CHANGED: Sysinfo will report if CTF is disabled by user or due to incompatible
+              feature being enabled
+   - CHANGED: Applied a few additional kernel patches that might help with 3 TB support.
+              Full support for HDDs > 2 TB cannot be achieved, as some USB enclosures
+              don't play nice even with a full up-to-date Linux system.
+   - CHANGED: Updated miniupnpd to version 1.6.  NOTE: previous versions were NOT
+              affected by the recent UPNP exploit disclosure.  This is just as
+              an added security precaution.
+   - FIXED: 1-3 seconds delay loading the Sysinfo page due to Ethernet ports query.
+            (regression from beta 1)
+   - FIXED: Temperature on Performance Tuning page would fail to update if a radio
+            was disabled.
+   - FIXED: Ethernet port status would not display under IE.
+   - FIXED: Display of Connections under IE
+   - FIXED: modprobe could get stuck during boot (regression fron Beta 1)
+   - FIXED: Some USB modems failed to load their drivers - insmod would no
+            longer recursively load drivers.  Reverted to 1.17.4's recursive
+            search, as the firmware calls insmod without giving a full path.
+            (regression from Beta 1)
+
+3.0.0.4.266.24 Beta 1:
    - NEW: Report CTF (HW Acceleration) state on Sysinfo page.
    - NEW: Display Ethernet port states on the Sysinfo page.
    - NEW: Replaced Busybox fsck/mkfs tools with those from e2fsprogs, should
           be more reliable.
-   - CHANGED: Temperatures on Sysinfo page will now auto-update every 3 seconds.
-   - CHANGED: Connections page now uses Ajax for slightly better rendering
    - CHANGED: Improved name resolution on traffic monitor page, now uses
               a device's hostname if it reported one.
    - CHANGED: Client List now uses our improved name resolution code,
               will overwrite names with those entered on the DHCP static
               lease page.
    - CHANGED: Updated to OpenVPN 2.3.0 and lzo 2.06.
-   - CHANGED: Updated Busybox to 1.20.2 (with Oleg/wl500g patches re-applied).
+   - CHANGED: Updated Busybox to 1.20.2 (with all oleg/wl500 patches re-applied).
               Lots of fixes, including GPT support in fdisk.
-   - CHANGED: Updated Miniupnpd to version 1.6.  NOTE: previous versions were NOT
-              affected by the recent UPNP exploit disclosure.  This is just as
-              an added security precaution.
-   - FIXED: Temperature on Performance Tuning page would fail to update if a radio
-            was disabled.
-   - FIXED: Various timing issues causing some TrafficMonitoring and the Sysinfo
-            pages to often fail loading under IE.
-   - FIXED: JS error on the Per Device pages if FW failed to load the 
-            traffic history.
    - FIXED: ebtables were still broken, fixed by a complete rebuild.
    - FIXED: Some OpenVPN fields rejected -1 as being valid.
    - FIXED: Hide 5G radio info from Sysinfo page if router is single band (RT-N16)
    - FIXED: Master Browser/WINS would not work if there was no USB disk plugged.
    - FIXED: Samba would bind to the WAN interface while in router mode (Asus bug)
-   - FIXED: Backported various kernel fixes from Oleg/WL500G, Tomato and Kernel.org to 
-            help improve HDD > 2 TB support (still not perfect, some USB enclosures
-			are simply not Linux compatible)
-   - FIXED: Display of Connections under IE
-   - FIXED: Trying to apply settings on the System page with a username containing
-            a non-alphanum would incorrectly assume you just tried to change to
-            an account name that already existed (Asus bug).
+   - FIXED: Backported various kernel fixes from Oleg/WL500G, Tomato and Kernel.org in
+            an attempt to fix large HDD support (STILL NEED TO BE TESTED)
 
 
 3.0.0.4.266.23b:
