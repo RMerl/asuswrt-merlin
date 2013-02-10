@@ -11,3 +11,5 @@ testgetifstats
 testupnpdescgen
 testupnppermissions
 version.h
+config.h
+
