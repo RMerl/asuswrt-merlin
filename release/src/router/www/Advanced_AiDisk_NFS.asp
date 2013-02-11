@@ -692,7 +692,7 @@ function shownfsd_exportlist(){
 					<table width="730px">
 						<tr>
 							<td align="left">
-								<span class="formfonttitle">NSF Exports</span>
+								<span class="formfonttitle">NFS Exports</span>
 							</td>
 							<td align="right">
 								<img onclick="go_setting('/APP_Installation.asp')" align="right" style="cursor:pointer;position:absolute;margin-left:-20px;margin-top:-30px;" title="Back to USB Extension" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
