@@ -2788,7 +2788,7 @@ int start_nfsd(void)
         char *nv, *nvp, *b;
 	char *dir, *access, *options;
 
-//	if (nvram_match("nfsd_enable", "0")) return 0;
+	if (nvram_match("nfsd_enable", "0")) return 0;
 
 	/* create directories/files */
 	mkdir("/var/lib", 0755);
