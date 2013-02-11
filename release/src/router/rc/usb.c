@@ -100,6 +100,8 @@ void tune_bdflush(void)
 #define USBFS		"usbdevfs"
 #endif
 
+#define NFS_EXPORT	"/etc/exports"
+
 #ifdef RTCONFIG_USB_PRINTER
 void
 start_lpd()
@@ -2799,37 +2801,28 @@ int start_nfsd(void)
 	close(creat("/var/lib/nfs/xtab", 0644));
 	close(creat("/var/lib/nfs/rmtab", 0644));
 
-	/* create /etc/exports, if it does not exists yet */
-	if (stat("/etc/exports", &st_buf) != 0)
-	{
-		if ((fp = fopen("/etc/exports", "w")) == NULL) {
-			perror("/etc/exports");
-			return 1;
-		}
-
-		fprintf(fp, "# automagically generated\n");
-
-		nv = nvp = strdup(nvram_safe_get("nfsd_exportlist"));
-		if (nv) {
-			while ((b = strsep(&nvp, "<")) != NULL) {
-				if ((vstrsep(b, ">", &dir, &access, &options) != 3))
-               	                        continue;
-				fprintf(fp, "%s %s(no_root_squash%s%s)\n", dir, access, ((strlen(options) > 0) ? "," : ""), options);
-			}
-			free(nv);
-		}
-/*
-		for (i = 0, count = nvram_get_int("usb_nfsnum_x"); i < count; i++)
-		{
-			sprintf(tmp, "usb_nfslist_x%d", i);
-			if (nvram_safe_get(tmp)[0] == '/')
-				fprintf(fp, "%s\n", nvram_safe_get(tmp));
-			else	fprintf(fp, "/tmp/mnt/%s\n", nvram_safe_get(tmp));
-		}
-*/
-		append_custom_config("exports", fp);
-		fclose(fp);
+	/* (re-)create /etc/exports */
+	if (stat(NFS_EXPORT, &st_buf) == 0)	{
+		unlink(NFS_EXPORT);
 	}
+
+	if ((fp = fopen(NFS_EXPORT, "w")) == NULL) {
+		perror(NFS_EXPORT);
+		return 1;
+	}
+
+	nv = nvp = strdup(nvram_safe_get("nfsd_exportlist"));
+	if (nv) {
+		while ((b = strsep(&nvp, "<")) != NULL) {
+			if ((vstrsep(b, ">", &dir, &access, &options) != 3))
+				continue;
+			fprintf(fp, "%s %s(no_root_squash%s%s)\n", dir, access, ((strlen(options) > 0) ? "," : ""), options);
+		}
+		free(nv);
+	}
+
+	append_custom_config("exports", fp);
+	fclose(fp);
 
 	eval("/usr/sbin/portmap");
 	eval("/usr/sbin/statd");
