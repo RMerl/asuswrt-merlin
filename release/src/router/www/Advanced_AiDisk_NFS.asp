@@ -737,6 +737,8 @@ function shownfsd_exportlist(){
       	</div>
     	</td> 
 	</tr>  
+	<tr><td><div><br><b>Access list:</b> Separate hosts with a space.<br><b>Options:</b> Comma-separated list of export options.</div></td>
+	</tr>
 	<tr>
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 			  	<tr>
