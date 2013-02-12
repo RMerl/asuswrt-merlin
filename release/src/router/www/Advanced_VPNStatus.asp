@@ -29,32 +29,35 @@ pptpdpid = '<% sysinfo("pid.pptpd"); %>';
 
 
 function initial(){
+	var state_r = " - Running";
+	var state_s = " - <span style=\"background-color: transparent; color: white;\">Stopped</span>";
+
 	show_menu();
 
 	if (server1pid > 0)
-		$("server1_Block_Running").innerHTML = " - Running";
+		$("server1_Block_Running").innerHTML = state_r;
 	else
-		$("server1_Block_Running").innerHTML = " - Stopped";
+		$("server1_Block_Running").innerHTML = state_s;
 
 	if (client1pid > 0)
-		$("client1_Block_Running").innerHTML = " - Running";
+		$("client1_Block_Running").innerHTML = state_r;
 	else
-		$("client1_Block_Running").innerHTML = " - Stopped";
+		$("client1_Block_Running").innerHTML = state_s;
 
 	if (server2pid > 0)
-		$("server2_Block_Running").innerHTML = " - Running";
+		$("server2_Block_Running").innerHTML = state_r;
 	else
-		$("server2_Block_Running").innerHTML = " - Stopped";
+		$("server2_Block_Running").innerHTML = state_s;
 
 	if (client2pid > 0)
-		$("client2_Block_Running").innerHTML = " - Running";
+		$("client2_Block_Running").innerHTML = state_r;
 	else
-		$("client2_Block_Running").innerHTML = " - Stopped";
+		$("client2_Block_Running").innerHTML = state_s;
 
 	if (pptpdpid > 0)
-		$("pptp_Block_Running").innerHTML = " - Running";
+		$("pptp_Block_Running").innerHTML = state_r;
 	else
-		$("pptp_Block_Running").innerHTML = " - Stopped";
+		$("pptp_Block_Running").innerHTML = state_s;
 
 	parseStatus(document.form.status_server1.value, "server1_Block");
 	parseStatus(document.form.status_client1.value, "client1_Block");
