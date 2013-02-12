@@ -207,10 +207,7 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "use sendfile = yes\n");
 #endif
 	if (!strcmp(nvram_safe_get("smbd_wins"), "1")) {
-		nv = nvram_safe_get("dhcp_wins_x");
-		if ((*nv == 0) || (strcmp(nv, "0.0.0.0") == 0)) {
-			fprintf(fp, "wins support = yes\n");
-		}
+		fprintf(fp, "wins support = yes\n");
 	}
 
 	if (!strcmp(nvram_safe_get("smbd_master"), "1")) {
