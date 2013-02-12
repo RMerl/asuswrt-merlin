@@ -603,7 +603,7 @@ function shownfsd_exportlist(){
 			code +='<tr id="row'+i+'">';
 			var nfsd_exportlist_col = nfsd_exportlist_row[i].split('&#62');
 				for(var j = 0; j < nfsd_exportlist_col.length; j++){
-					code +='<td width="30%">'+ nfsd_exportlist_col[j] +'</td>';
+					code +='<td width="30%" style="word-break: break-all;">'+ nfsd_exportlist_col[j] +'</td>';
 				}
 				code +='<td width="10%"><!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->';
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
