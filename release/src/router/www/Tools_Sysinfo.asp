@@ -30,6 +30,7 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 hwacc = "<% nvram_get("ctf_disable"); %>";
 hwacc_force = "<% nvram_get("ctf_disable_force"); %>";
 arplist = [<% get_arp_table(); %>];
+etherstate = "<% sysinfo("ethernet"); %>";
 
 var $j = jQuery.noConflict();
 
@@ -39,7 +40,7 @@ function initial(){
 	showbootTime();
 	update_temperatures();
 	hwaccel_state();
-	setTimeout("get_ethernet_states();",100);
+	show_etherstate();
 }
 
 function update_temperatures(){
@@ -56,21 +57,6 @@ function update_temperatures(){
 			}
 			$("temp_td").innerHTML = code;
 			setTimeout("update_temperatures();", 3000);
-		}
-	});
-}
-
-
-function get_ethernet_states(){
-	$j.ajax({
-		url: '/ajax_ethernet.asp',
-		dataType: 'script',
-		error: function(xhr){
-			get_ethernet_states();
-		},
-		success: function(){
-			show_etherstate(etherstate);
-			return 0;
 		}
 	});
 }
@@ -107,13 +93,13 @@ function showbootTime(){
         setTimeout("showbootTime()", 1000);
 }
 
-function show_etherstate(e){
+function show_etherstate(){
 	var state, state2;
 	var hostname, devicename, overlib_str, port;
 	var tmpPort;
 	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th>Port</th><th>Link State</th><th>Last Device Seen</th></tr>';
 
-	var t = e.split('>');
+	var t = etherstate.split('>');
 
 	for (var i = 0; i < t.length; ++i) {
 		var line = t[i].split(/[\s]+/);

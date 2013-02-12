@@ -1,2 +1,0 @@
-etherstate = "<% sysinfo("ethernet"); %>";
-
