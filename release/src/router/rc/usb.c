@@ -2826,8 +2826,15 @@ int start_nfsd(void)
 
 	eval("/usr/sbin/portmap");
 	eval("/usr/sbin/statd");
-	eval("/usr/sbin/nfsd");
-	eval("/usr/sbin/mountd");
+
+	if (nvram_match("nfsd_enable_v2", "1")) {
+		eval("/usr/sbin/mountd");
+		eval("/usr/sbin/nfsd");
+	} else {
+		eval("/usr/sbin/mountd", "-N 2");
+		eval("/usr/sbin/nfsd", "-N 2");
+	}
+
 	sleep(1);
 	eval("/usr/sbin/exportfs", "-a");
 

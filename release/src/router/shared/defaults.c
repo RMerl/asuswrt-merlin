@@ -966,6 +966,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "smbd_bind_wan", "0"},
 
 	{ "nfsd_enable", "0"},
+	{ "nfsd_enable_v2", "0"},
 	{ "nfsd_exportlist", ""},
 
 	{ "log_ipaddr", ""},
