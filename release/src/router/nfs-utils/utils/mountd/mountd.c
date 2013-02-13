@@ -80,10 +80,10 @@ static int nfs_version = -1;
 static void
 unregister_services (void)
 {
-	if (nfs_version & 0x1)
+	if (nfs_version & (0x1 << 1)) {
 		pmap_unset (MOUNTPROG, MOUNTVERS);
-	if (nfs_version & (0x1 << 1))
 		pmap_unset (MOUNTPROG, MOUNTVERS_POSIX);
+	}
 	if (nfs_version & (0x1 << 2))
 		pmap_unset (MOUNTPROG, MOUNTVERS_NFSV3);
 }
@@ -681,8 +681,10 @@ main(int argc, char **argv)
 			usage(argv [0], 1);
 		}
 
-	/* No more arguments allowed. */
-	if (optind != argc || !(nfs_version & 0x7))
+	/* No more arguments allowed.
+	 * Require at least one valid version (2, 3, or 4)
+	 */
+	if (optind != argc || !(nfs_version & 0xE))
 		usage(argv [0], 1);
 
 	if (chdir(state_dir)) {
