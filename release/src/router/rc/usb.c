@@ -2795,7 +2795,7 @@ int start_nfsd(void)
 {
 	struct stat	st_buf;
 	FILE 		*fp;
-        char *nv, *nvp, *b;
+        char *nv, *nvp, *b, *c;
 	char *dir, *access, *options;
 
 	if (nvram_match("nfsd_enable", "0")) return 0;
@@ -2826,7 +2826,13 @@ int start_nfsd(void)
 		while ((b = strsep(&nvp, "<")) != NULL) {
 			if ((vstrsep(b, ">", &dir, &access, &options) != 3))
 				continue;
-			fprintf(fp, "%s %s(no_root_squash%s%s)\n", dir, access, ((strlen(options) > 0) ? "," : ""), options);
+
+			fputs(dir, fp);
+
+			while ((c = strsep(&access, " ")) != NULL) {
+				fprintf(fp, " %s(no_root_squash%s%s)", c, ((strlen(options) > 0) ? "," : ""), options);
+			}
+			fputs("\n", fp);
 		}
 		free(nv);
 	}
