@@ -965,9 +965,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "smbd_simpler_naming", "0"},
 	{ "smbd_bind_wan", "0"},
 
+#ifdef RTCONFIG_NFS
 	{ "nfsd_enable", "0"},
 	{ "nfsd_enable_v2", "0"},
 	{ "nfsd_exportlist", ""},
+#endif
 
 	{ "log_ipaddr", ""},
 	{ "log_port", "514"},

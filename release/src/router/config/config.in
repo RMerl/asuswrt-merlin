@@ -164,6 +164,11 @@ config RTCONFIG_SAMBA3
 	depends on RTCONFIG_SAMBASRV
 	default n
 
+config RTCONFIG_NFS 
+	bool "NFS Support" 
+	depends on RTCONFIG_USB
+	default n
+
 config RTCONFIG_USB_EXTRAS
 	bool "Additional modules and utilities"
 	depends on RTCONFIG_USB

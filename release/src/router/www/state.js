@@ -219,6 +219,8 @@ var nodm_support = rc_support.search("nodm");
 var wimax_support = rc_support.search("wimax");
 var downsize_support = rc_support.search("sfp4m");
 
+var nfsd_support = rc_support.search("nfsd");
+
 var calculate_height = menuL1_link.length+tablink.length-1;
 
 function remove_url(){
@@ -401,6 +403,10 @@ function remove_url(){
 		remove_menu_item(5,"Advanced_OpenVPNClient_Content.asp");
 		remove_menu_item(5,"Advanced_OpenVPN_Keys.asp");
 		remove_menu_item(5,"Advanced_VPNStatus.asp");
+	}
+
+	if(nfsd_support == -1){
+		remove_menu_item(3,"Advanced_AiDisk_NFS.asp")
 	}
 
 	if(SwitchCtrl_support == -1){

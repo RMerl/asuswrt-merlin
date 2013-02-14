@@ -2259,8 +2259,9 @@ void start_nas_services(int force)
 #ifdef RTCONFIG_SAMBASRV
 	start_samba();
 #endif
-
+#ifdef RTCONFIG_NFS
 	start_nfsd();
+#endif
 
 if (nvram_match("asus_mfg", "0")) {
 #ifdef RTCONFIG_FTP
@@ -2294,7 +2295,9 @@ void stop_nas_services(int force)
 	stop_samba();
 #endif
 
+#ifdef RTCONFIG_NFS
 	stop_nfsd();
+#endif
 
 #ifdef RTCONFIG_WEBDAV
 	//stop_webdav();
@@ -2323,7 +2326,9 @@ void restart_sambaftp(int stop, int start)
 		stop_samba();
 #endif
 
+#ifdef RTCONFIG_NFS
 		stop_nfsd();
+#endif
 
 #ifdef RTCONFIG_FTP
 		stop_ftpd();
@@ -2331,7 +2336,9 @@ void restart_sambaftp(int stop, int start)
 #ifdef RTCONFIG_WEBDAV
 		stop_webdav();
 #endif
+#ifdef RTCONFIG_NFS
 		start_nfsd();
+#endif
 	}
 	
 	if (start) {
@@ -2340,7 +2347,9 @@ void restart_sambaftp(int stop, int start)
 		start_samba();
 #endif
 
+#ifdef RTCONFIG_NFS
 		start_nfsd();
+#endif
 
 #ifdef RTCONFIG_FTP
 		start_ftpd();
@@ -2781,6 +2790,7 @@ int stop_sd_idle(void) {
 
 #endif
 
+#ifdef RTCONFIG_NFS
 int start_nfsd(void)
 {
 	struct stat	st_buf;
@@ -2862,4 +2872,6 @@ int stop_nfsd(void)
 
 	return 0;
 }
+
+#endif
 
