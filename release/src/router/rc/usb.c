@@ -2844,11 +2844,11 @@ int start_nfsd(void)
 	eval("/usr/sbin/statd");
 
 	if (nvram_match("nfsd_enable_v2", "1")) {
-		eval("/usr/sbin/mountd");
 		eval("/usr/sbin/nfsd");
+		eval("/usr/sbin/mountd");
 	} else {
-		eval("/usr/sbin/mountd", "-N 2");
 		eval("/usr/sbin/nfsd", "-N 2");
+		eval("/usr/sbin/mountd", "-N 2");
 	}
 
 	sleep(1);
