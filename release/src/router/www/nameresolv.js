@@ -82,7 +82,7 @@ var retHostName = function(_mac){
 /* end */
 
 
-hostnamecache = { };
+hostnamecache = { "ready":0 };
 
 function populateCache() {
 	var s;
@@ -123,7 +123,8 @@ function populateCache() {
 	}
 
 	hostnamecache[fixIP(ntoa(aton(lan_ipaddr) & aton(lan_netmask)))] = 'LAN';
-	return 0;
+	hostnamecache["ready"] = 1;
+	return;
 }
 
 // Botho 06/04/2006 : Function to resolve OUI names
