@@ -82,7 +82,7 @@ var retHostName = function(_mac){
 /* end */
 
 
-hostnamecache = [];
+hostnamecache = { };
 
 function populateCache() {
 	var s;
