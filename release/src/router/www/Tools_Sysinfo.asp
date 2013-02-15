@@ -147,6 +147,8 @@ function show_etherstate(){
 	}
 	code += '</table>';
 	$("etherstate_td").innerHTML = code;
+
+	if (hostnamecache['ready'] == 0) setTimeout(show_etherstate, 500);
 }
 
 </script>
