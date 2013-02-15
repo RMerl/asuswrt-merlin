@@ -156,6 +156,8 @@ function redraw() {
 		grid +='<tr><td style="color:#FFCC00;" colspan="5"><#IPConnection_VSList_Norule#></td></tr>';
 
 	E('bwm-daily-grid').innerHTML = grid + '</table>';
+
+	if (hostnamecache['ready'] == 0) setTimeout(redraw, 500);
 }
 
 function update_display(option, value) {
@@ -328,9 +330,6 @@ function init() {
 	daily_history.sort(cmpDualFields);
 	init_filter_dates(dateselect);
 	redraw();
-// Refresh with resolved names
-	setTimeout("redraw();",1000);
-
 }
 
 

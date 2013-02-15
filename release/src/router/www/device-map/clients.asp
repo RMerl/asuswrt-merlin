@@ -89,7 +89,7 @@ function update_clients(e) {
     success: function(response) {
 			client_list_row = client_list_array.split('<');
 			showclient_list(0);
-			if(networkmap_scanning == 1 || client_list_array == "")
+			if(networkmap_scanning == 1 || client_list_array == "" || hostnamecache["ready" == 0)
 				setTimeout("update_clients();", 2000);
 			_showNextItem(listFlag);
 		}    

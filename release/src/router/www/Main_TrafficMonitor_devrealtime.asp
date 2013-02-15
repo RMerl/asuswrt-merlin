@@ -232,6 +232,8 @@ function redraw() {
 			"");
 
 	E('bwm-details-grid').innerHTML = grid + '</table>';
+
+	if (hostnamecache['ready'] == 0) setTimeout(redraw, 500);
 }
 
 
