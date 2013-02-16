@@ -52,7 +52,12 @@ void start_sshd(void)
 
 	if (!nvram_get_int("sshd_pass")) argv[argc++] = "-s";
 
-	if (nvram_get_int("sshd_forwarding")) argv[argc++] = "-a";
+	if (nvram_get_int("sshd_forwarding")) {
+		argv[argc++] = "-a";
+	} else {
+		argv[argc++] = "-j";
+		argv[argc++] = "-k";
+	}
 
 	if (((p = nvram_get("sshd_rwb")) != NULL) && (*p)) {
 		argv[argc++] = "-W";
