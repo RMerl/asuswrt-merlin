@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
@@ -21,58 +21,9 @@
 <script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/aidisk/AiDisk_folder_tree.js"></script>
 <style type="text/css">
-.nfs_table{
-	height: 790px;
-	width:750px;
-	padding:5px; 
-	padding-top:20px; 
-	margin-top:-17px; 
-	position:relative;
-	background-color:#4d595d;
-	align:left;
-	-webkit-border-top-right-radius: 05px;
-	-webkit-border-bottom-right-radius: 5px;
-	-webkit-border-bottom-left-radius: 5px;
-	-moz-border-radius-topright: 05px;
-	-moz-border-radius-bottomright: 5px;
-	-moz-border-radius-bottomleft: 5px;
-	border-top-right-radius: 05px;
-	border-bottom-right-radius: 5px;
-	border-bottom-left-radius: 5px;
-}
-.line_export{
-	height:20px;
-	width:736px;
-}
-.nfs_button_table{
-	width:730px;
-	background-color:#15191b;
-	margin-top:15px;
-	margin-right:5px;
-}
-.nfs_button_table th{
-	width:300px;
-	height:40px;
-	text-align:left;
-	background-color:#1f2d35;
-	font:Arial, Helvetica, sans-serif;
-	font-size:12px;
-	padding-left:10px;
-	color:#FFFFFF;
-	background: url(/images/general_th.gif) repeat;
-}	
-.nfs_button_table td{
-	width:436px;
-	height:40px;
-	background-color:#475a5f;
-	font:Arial, Helvetica, sans-serif;
-	font-size:12px;
-	padding-left:5px;
-	color:#FFFFFF;
-}	
 /* folder tree */
 .mask_bg{
-	position:absolute;	
+	position:absolute;
 	margin:auto;
 	top:0;
 	left:0;
@@ -89,7 +40,7 @@
 	overflow:hidden;
 }
 .mask_floder_bg{
-	position:absolute;	
+	position:absolute;
 	margin:auto;
 	top:0;
 	left:0;
@@ -133,8 +84,6 @@ window.onresize = cal_panel_block;
 
 var nfsd_enable = '<% nvram_get("nfsd_enable"); %>';
 var nfsd_exportlist_array = '<% nvram_get("nfsd_exportlist"); %>';
-var nfsd_exportlist = '<% nvram_get("nfsd_exportlist"); %>';
-var nfsd_exportlist_row = nfsd_exportlist.split('&#60');
 
 function initial(){
 	show_menu();
@@ -155,7 +104,7 @@ function initial_dir(){
 }
 
 function initial_dir_status(data){
-	if(data != ""){		
+	if(data != ""){
 		get_layer_items("0");
 		eval("var default_dir=" + data);
 	}
@@ -174,12 +123,12 @@ function submit_server(x){
 	else
 		server_type.value = 1;
 
-	document.serverForm.flag.value = "nodetect";	
+	document.serverForm.flag.value = "nodetect";
 	document.serverForm.submit();
 }
 
-// get folder 
-var dm_dir = new Array(); 
+// get folder
+var dm_dir = new Array();
 var WH_INT=0,Floder_WH_INT=0,General_WH_INT=0;
 var folderlist = new Array();
 
@@ -188,17 +137,17 @@ function apply(){
 	var rule_num = $('nfsd_exportlist_table').rows.length;
 	var item_num = $('nfsd_exportlist_table').rows[0].cells.length;
 	var tmp_value = "";
-	
+
 	for(i=0; i<rule_num; i++){
-		tmp_value += "<"		
-		for(j=0; j<item_num-1; j++){	
+		tmp_value += "<"
+		for(j=0; j<item_num-1; j++){
 			tmp_value += $('nfsd_exportlist_table').rows[i].cells[j].innerHTML;
-			if(j != item_num-2)	
+			if(j != item_num-2)
 				tmp_value += ">";
 		}
 	}
 	if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
-		tmp_value = "";	
+		tmp_value = "";
 
 	document.form.nfsd_exportlist.value = tmp_value;
 
@@ -209,7 +158,7 @@ function apply(){
 function get_disk_tree(){
 	if(disk_flag == 1){
 		alert('<#no_usb_found#>');
-		return false;	
+		return false;
 	}
 	cal_panel_block();
 	$j("#folderTree_panel").fadeIn(300);
@@ -235,15 +184,15 @@ function get_tree_items(treeitems){
 	for(var j=0;j<treeitems.length;j++){ // To hide folder 'Download2'
 		array_temp_split[j] = treeitems[j].split("#");
 		if( array_temp_split[j][0].match(/^asusware$/)	){
-			continue;					
+			continue;
 		}
-		
+
 		array_temp.push(treeitems[j]);
 	}
-	this.Items = array_temp;	
+	this.Items = array_temp;
 	if(this.Items && this.Items.length >= 0){
 		BuildTree();
-	}	
+	}
 }
 function BuildTree(){
 	var ItemText, ItemSub, ItemIcon;
@@ -251,16 +200,16 @@ function BuildTree(){
 	var layer;
 	var short_ItemText = "";
 	var shown_ItemText = "";
-	var ItemBarCode ="";		
+	var ItemBarCode ="";
 	var TempObject = "";
-	for(var i = 0; i < this.Items.length; ++i){	
+	for(var i = 0; i < this.Items.length; ++i){
 		this.Items[i] = this.Items[i].split("#");
 		var Item_size = 0;
 		Item_size = this.Items[i].length;
 		if(Item_size > 3){
-			var temp_array = new Array(3);				
+			var temp_array = new Array(3);
 			temp_array[2] = this.Items[i][Item_size-1];
-			temp_array[1] = this.Items[i][Item_size-2];			
+			temp_array[1] = this.Items[i][Item_size-2];
 			temp_array[0] = "";
 			for(var j = 0; j < Item_size-2; ++j){
 				if(j != 0)
@@ -268,7 +217,7 @@ function BuildTree(){
 				temp_array[0] += this.Items[i][j];
 			}
 			this.Items[i] = temp_array;
-		}	
+		}
 		ItemText = (this.Items[i][0]).replace(/^[\s]+/gi,"").replace(/[\s]+$/gi,"");
 		ItemBarCode = this.FromObject+"_"+(this.Items[i][1]).replace(/^[\s]+/gi,"").replace(/[\s]+$/gi,"");
 		ItemSub = parseInt((this.Items[i][2]).replace(/^[\s]+/gi,"").replace(/[\s]+$/gi,""));
@@ -281,16 +230,16 @@ function BuildTree(){
 		}
 		else
 			short_ItemText = ItemText;
-		
+
 		shown_ItemText = showhtmlspace(short_ItemText);
-		
+
 		if(layer == 1)
 			ItemIcon = 'disk';
 		else if(layer == 2)
 			ItemIcon = 'part';
 		else
 			ItemIcon = 'folders';
-		
+
 		SubClick = ' onclick="GetFolderItem(this, ';
 		if(ItemSub <= 0){
 			SubClick += '0);"';
@@ -300,7 +249,7 @@ function BuildTree(){
 			SubClick += '1);"';
 			isSubTree = 's';
 		}
-		
+
 		if(i == this.Items.length-1){
 			vertline = '';
 			isSubTree += '1';
@@ -311,7 +260,7 @@ function BuildTree(){
 		}
 
 		if(layer == 2 && isSubTree == 'n1'){	// Uee to rebuild folder tree if disk without folder, Jieming add at 2012/08/29
-			document.aidiskForm.test_flag.value = 1;			
+			document.aidiskForm.test_flag.value = 1;
 		}
 		TempObject +='<table class="tree_table" id="bug_test">';
 		TempObject +='<tr>';
@@ -319,14 +268,14 @@ function BuildTree(){
 		TempObject +='<td class="vert_line">';
 		TempObject +='<img id="a'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' class="FdRead" src="/images/Tree/vert_line_'+isSubTree+'0.gif">';
 		TempObject +='</td>';
-	
+
 		if(layer == 3){
-		/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/	
-			TempObject +='<td>';		
+		/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/
+			TempObject +='<td>';
 			TempObject +='<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">';
 			TempObject +='</td>';
 			TempObject +='<td>';
-			TempObject +='<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>\n';		
+			TempObject +='<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>\n';
 			TempObject +='</td>';
 		}
 		else if(layer == 2){
@@ -341,10 +290,10 @@ function BuildTree(){
 			TempObject +='</td>';
 			TempObject +='<td></td>';
 			TempObject +='</tr>';
-			TempObject +='</table>';			
+			TempObject +='</table>';
 			TempObject +='</td>';
 			TempObject +='</tr>';
-			TempObject +='<tr><td></td>';			
+			TempObject +='<tr><td></td>';
 			TempObject +='<td colspan=2><div id="e'+ItemBarCode+'" ></div></td>';
 		}
 		else{
@@ -360,7 +309,7 @@ function BuildTree(){
 			TempObject +='<tr><td></td>';
 			TempObject +='<td><div id="e'+ItemBarCode+'" ></div></td>';
 		}
-		
+
 		TempObject +='</tr>';
 	}
 	TempObject +='</table>';
@@ -372,7 +321,7 @@ function get_layer(barcode){
 	while(barcode.indexOf('_') != -1){
 		barcode = barcode.substring(barcode.indexOf('_'), barcode.length);
 		++layer;
-		barcode = barcode.substring(1);		
+		barcode = barcode.substring(1);
 	}
 	return layer;
 }
@@ -385,12 +334,12 @@ function build_array(obj,layer){
 			layer3_path = "/" + $(obj.id).innerHTML;
 			while(layer3_path.indexOf("&nbsp;") != -1)
 				layer3_path = layer3_path.replace("&nbsp;"," ");
-				
+
 			if(obj.id.length >8)
 				layer2_path = "/" + $(obj.id.substring(0,obj.id.length-3)).innerHTML;
 			else
 				layer2_path = "/" + $(obj.id.substring(0,obj.id.length-2)).innerHTML;
-			
+
 			while(layer2_path.indexOf("&nbsp;") != -1)
 				layer2_path = layer2_path.replace("&nbsp;"," ");
 		}
@@ -408,9 +357,9 @@ function build_array(obj,layer){
 function GetFolderItem(selectedObj, haveSubTree){
 	var barcode, layer = 0;
 	showClickedObj(selectedObj);
-	barcode = selectedObj.id.substring(1);	
+	barcode = selectedObj.id.substring(1);
 	layer = get_layer(barcode);
-	
+
 	if(layer == 0)
 		alert("Machine: Wrong");
 	else if(layer == 1){
@@ -431,11 +380,11 @@ function GetFolderItem(selectedObj, haveSubTree){
 		$('createFolderBtn').src = "/images/New_ui/advancesetting/FolderAdd_0.png";
 		$('deleteFolderBtn').src = "/images/New_ui/advancesetting/FolderDel.png";
 		$('modifyFolderBtn').src = "/images/New_ui/advancesetting/FolderMod.png";
-		$('createFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popCreateFolder.asp');};		
+		$('createFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popCreateFolder.asp');};
 		$('deleteFolderBtn').onclick = function(){};
 		$('modifyFolderBtn').onclick = function(){};
 		document.aidiskForm.layer_order.disabled = "disabled";
-		document.aidiskForm.layer_order.value = barcode;		
+		document.aidiskForm.layer_order.value = barcode;
 	}
 	else if(layer == 3){
 		// chose Shared-Folder
@@ -444,7 +393,7 @@ function GetFolderItem(selectedObj, haveSubTree){
 		$('createFolderBtn').src = "/images/New_ui/advancesetting/FolderAdd.png";
 		$('deleteFolderBtn').src = "/images/New_ui/advancesetting/FolderDel_0.png";
 		$('modifyFolderBtn').src = "/images/New_ui/advancesetting/FolderMod_0.png";
-		$('createFolderBtn').onclick = function(){};		
+		$('createFolderBtn').onclick = function(){};
 		$('deleteFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popDeleteFolder.asp');};
 		$('modifyFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popModifyFolder.asp');};
 		document.aidiskForm.layer_order.disabled = "disabled";
@@ -457,7 +406,7 @@ function GetFolderItem(selectedObj, haveSubTree){
 function showClickedObj(clickedObj){
 	if(this.lastClickedObj != 0)
 		this.lastClickedObj.className = "lastfolderClicked";  //this className set in AiDisk_style.css
-	
+
 	clickedObj.className = "folderClicked";
 	this.lastClickedObj = clickedObj;
 }
@@ -465,26 +414,26 @@ function GetTree(layer_order, v){
 	if(layer_order == "0"){
 		this.FromObject = layer_order;
 		$('d'+layer_order).innerHTML = '<span class="FdWait">. . . . . . . . . .</span>';
-		setTimeout('get_layer_items("'+layer_order+'", "gettree")', 1);		
+		setTimeout('get_layer_items("'+layer_order+'", "gettree")', 1);
 		return;
 	}
-	
+
 	if($('a'+layer_order).className == "FdRead"){
 		$('a'+layer_order).className = "FdOpen";
-		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";		
-		this.FromObject = layer_order;		
+		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
+		this.FromObject = layer_order;
 		$('e'+layer_order).innerHTML = '<img src="/images/Tree/folder_wait.gif">';
 		setTimeout('get_layer_items("'+layer_order+'", "gettree")', 1);
 	}
 	else if($('a'+layer_order).className == "FdOpen"){
 		$('a'+layer_order).className = "FdClose";
-		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"0.gif";		
+		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"0.gif";
 		$('e'+layer_order).style.position = "absolute";
 		$('e'+layer_order).style.visibility = "hidden";
 	}
 	else if($('a'+layer_order).className == "FdClose"){
 		$('a'+layer_order).className = "FdOpen";
-		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";		
+		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
 		$('e'+layer_order).style.position = "";
 		$('e'+layer_order).style.visibility = "";
 	}
@@ -507,18 +456,18 @@ function cal_panel_block(){
 		winWidth = window.innerWidth;
 	else if ((document.body) && (document.body.clientWidth))
 		winWidth = document.body.clientWidth;
-		
+
 	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
 		winWidth = document.documentElement.clientWidth;
 	}
 
-	if(winWidth >1050){	
-		winPadding = (winWidth-1050)/2;	
+	if(winWidth >1050){
+		winPadding = (winWidth-1050)/2;
 		winWidth = 1105;
 		blockmarginLeft= (winWidth*0.25)+winPadding;
 	}
 	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
+		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;
 	}
 
 	$("folderTree_panel").style.marginLeft = blockmarginLeft+"px";
@@ -529,19 +478,19 @@ function addRow(obj, head){
 		nfsd_exportlist_array += "&#60"
 	else
 		nfsd_exportlist_array += "&#62"
-			
+
 	nfsd_exportlist_array += obj.value;
 
 	obj.value = "";
 }
 
-function addRow_Group(upper){		
+function addRow_Group(upper){
 	var rule_num = $('nfsd_exportlist_table').rows.length;
-	var item_num = $('nfsd_exportlist_table').rows[0].cells.length;		
+	var item_num = $('nfsd_exportlist_table').rows[0].cells.length;
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
-		return false;	
-	}			
+		return false;
+	}
 
 	if(document.form.nfsd_path_x_0.value==""){
 		alert("You must specify a path to export!");
@@ -549,43 +498,43 @@ function addRow_Group(upper){
 		document.form.nfsd_path_x_0.select();
 		return false;
 	}else {
-		
-		if(item_num >=2){	
-			for(i=0; i<rule_num; i++){	
+
+		if(item_num >=2){
+			for(i=0; i<rule_num; i++){
 				if(document.form.nfsd_path_x_0.value == $('nfsd_exportlist_table').rows[i].cells[0].innerHTML){
 					alert("<#JS_duplicate#>");
 					document.form.nfsd_path_x_0.focus();
 					document.form.nfsd_path_x_0.select();
 					return false;
-				}	
+				}
 			}
 		}
 
 		if(document.form.nfsd_accesslist_x_0.value=="")
 			document.form.nfsd_accesslist_x_0.value="*";
-		
+
 		addRow(document.form.nfsd_path_x_0 ,1);
 		addRow(document.form.nfsd_accesslist_x_0, 0);
 		addRow(document.form.nfsd_mountoptions_x_0, 0);
-		shownfsd_exportlist();		
+		shownfsd_exportlist();
 	}
 }
 
 function del_Row(r){
   var i=r.parentNode.parentNode.rowIndex;
   $('nfsd_exportlist_table').deleteRow(i);
-  
+
   var nfsd_exportlist_value = "";
 	for(k=0; k<$('nfsd_exportlist_table').rows.length; k++){
 		for(j=0; j<$('nfsd_exportlist_table').rows[k].cells.length-1; j++){
-			if(j == 0)	
+			if(j == 0)
 				nfsd_exportlist_value += "&#60";
 			else
 				nfsd_exportlist_value += "&#62";
-			nfsd_exportlist_value += $('nfsd_exportlist_table').rows[k].cells[j].innerHTML;		
+			nfsd_exportlist_value += $('nfsd_exportlist_table').rows[k].cells[j].innerHTML;
 		}
 	}
-	
+
 	nfsd_exportlist_array = nfsd_exportlist_value;
 	if(nfsd_exportlist_array == "")
 		shownfsd_exportlist();
@@ -609,7 +558,7 @@ function shownfsd_exportlist(){
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 		}
 	}
-  code +='</table>';
+	code +='</table>';
 	$("nfsd_exportlist_Block").innerHTML = code;
 }
 </script>
@@ -633,7 +582,7 @@ function shownfsd_exportlist(){
 		<div id="e0" class="folder_tree"></div>
 		<div style="background-image:url(images/Tree/bg_02.png);background-repeat:no-repeat;height:90px;">
 		<input class="button_gen" type="button" style="margin-left:27%;margin-top:18px;" onclick="cancel_folderTree();" value="<#CTL_Cancel#>">
-		<input class="button_gen" type="button"  onclick="confirm_folderTree();" value="<#CTL_ok#>">	
+		<input class="button_gen" type="button"  onclick="confirm_folderTree();" value="<#CTL_ok#>">
 	</div>
 </div>
 <div id="DM_mask_floder" class="mask_floder_bg"></div>
@@ -668,131 +617,133 @@ function shownfsd_exportlist(){
 <input type="hidden" name="action_wait" value="">
 <input type="hidden" name="nfsd_exportlist" value="">
 
-
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
 	<td width="17">&nbsp;</td>
-	
+
 	<!--=====Beginning of Main Menu=====-->
 	<td valign="top" width="202">
 	  <div id="mainMenu"></div>
 	  <div id="subMenu"></div>
 	</td>
-	
-  <td valign="top">
-		<div id="tabMenu" class="submenuBlock"></div>
-		<br>
 
+	<td valign="top">
+		<div id="tabMenu" class="submenuBlock"></div>
 <!--=====Beginning of Main Content=====-->
-<div id="nfs_table" class="nfs_table" align="left" border="0" cellpadding="0" cellspacing="0">
-<table>
-  <tr>
-  	<td>
-				<div style="width:730px">
-					<table width="730px">
+		<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
+	        <tr>
+                <td align="left" valign="top" >
+
+					<table width="760px" border="0" cellpadding="5" cellspacing="0" class="FormTitle" id="FormTitle">
 						<tr>
-							<td align="left">
-								<span class="formfonttitle">NFS Exports</span>
-							</td>
-							<td align="right">
-								<img onclick="go_setting('/APP_Installation.asp')" align="right" style="cursor:pointer;position:absolute;margin-left:-20px;margin-top:-30px;" title="Back to USB Extension" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
+							<td bgcolor="#4D595D" valign="top"  >
+								<div>&nbsp;</div>
+								<div style="width:730px">
+									<table width="730px">
+										<tr>
+											<td align="left">
+												<span class="formfonttitle">NFS Exports</span>
+											</td>
+											<td align="right">
+												<img onclick="go_setting('/APP_Installation.asp')" align="right" style="cursor:pointer;position:absolute;margin-left:-20px;margin-top:-30px;" title="Back to USB Extension" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
+											</td>
+										</tr>
+									</table>
+							  	</div>
+								<div style="margin:5px;"><img src="/images/New_ui/export/line_export.png"></div>
+								<div class="formfontdesc">Export directories from plugged USB disks over NFS.</div>
+
+					   			<table class="FormTable" width="100%" cellspacing="1">
+					   				<tr>
+						    	    	<th>Enable NFSD</th>
+						    	    	<td>
+					        				<div class="left" style="width:94px; position:relative; left:3%;" id="radio_nfsd_enable"></div>
+											<div class="clear"></div>
+											<script type="text/javascript">
+												$j('#radio_nfsd_enable').iphoneSwitch('<% nvram_get("nfsd_enable"); %>',
+													 function() {
+														submit_server(0);
+													 },
+													 function() {
+														submit_server(1);
+													 },
+												 {
+												switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
+											 }
+											);
+											</script>
+					        			</td>
+									</tr>
+									<tr>
+									<th>Enable legacy (NFS V2) support</th>
+										<td>
+											<input type="radio" name="nfsd_enable_v2" class="input" value="1" <% nvram_match_x("", "nfsd_enable_v2", "1", "checked"); %>><#checkbox_Yes#>
+											<input type="radio" name="nfsd_enable_v2" class="input" value="0" <% nvram_match_x("", "nfsd_enable_v2", "0", "checked"); %>><#checkbox_No#>
+										</td>
+									</tr>
+
+								</table>
+
+								<div><br><b>Access list:</b> Separate hosts with a space.  You can use the <b>192.168.1.0/24</b> form for a whole subnet.  <b>*</b> = any host.
+									<br><b>Options:</b> Comma-separated list of options to apply to every hosts within that export.
+								</div>
+
+					   			<table class="FormTable" width="100%" cellspacing="1">
+									<tr>
+										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
+										  	<tr>
+									  			<th>Path</th>
+												<th>Access list</th>
+												<th>Options</th>
+												<th>Add / Delete</th>
+										  	</tr>
+										  	<tr>
+												<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
+
+												<td width="30%">
+													<input id="PATH" type="text" class="input_20_table" style="margin-left:15px;height:25px;" onclick="get_disk_tree();" readonly="readonly" name="nfsd_path_x_0">
+												</td>
+					        	    			<td width="30%">
+					        	    				<input type="text" class="input_20_table" maxlength="128" name="nfsd_accesslist_x_0">
+					        	    			</td>
+					        	    			<td width="30%">
+													<input type="text" class="input_20_table" maxlenght="64" name="nfsd_mountoptions_x_0">
+												</td>
+												<td width="10%">
+													<div>
+														<input type="button" class="add_btn" onClick="addRow_Group(32);" value="">
+													</div>
+					        	    			</td>
+										  	</tr>
+										</table>
+
+										<div id="nfsd_exportlist_Block"></div>
+
+										<!-- manually assigned the nfsd List end-->
+						    	       	<div class="apply_gen">
+						    	       		<input type="button" name="button" class="button_gen" onclick="apply();" value="<#CTL_apply#>"/>
+					        	    	</div>
+
+									</tr>
+								</table>
 							</td>
 						</tr>
 					</table>
-				</div>
-				<div style="margin:5px;"><img src="/images/New_ui/export/line_export.png"></div>
-
-			<div class="formfontdesc">Export directories from plugged USB disks over NFS.</div>
-		</td>
-  </tr>  
-  <!--tr>
-  	<td class="line_export"><img src="images/New_ui/export/line_export.png" /></td>
-  </tr-->
-   
-  <tr>
-   	<td>
-   		<div class="nfs_button_table"> 
-   		<table cellspacing="1">
-   			<tr>
-        	<th>Enable NFSD</th>
-        	<td>
-        			<div class="left" style="width:94px; position:relative; left:3%;" id="radio_nfsd_enable"></div>
-					<div class="clear"></div>
-					<script type="text/javascript">
-							$j('#radio_nfsd_enable').iphoneSwitch('<% nvram_get("nfsd_enable"); %>', 
-								 function() {
-									submit_server(0);
-								 },
-								 function() {
-									submit_server(1);
-								 },
-								 {
-									switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-								 }
-							);
-					</script>
-        		</td>
+				</td>
 			</tr>
-      	</table> 
-      	</div>
-    	</td> 
-	</tr>  
-	<tr><td><div><br><b>Access list:</b> Separate hosts with a space.<br><b>Options:</b> Comma-separated list of export options.</div></td>
-	</tr>
-	<tr>
-			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
-			  	<tr>
-		  			<th>Path</th>
-					<th>Access list</th>
-					<th>Options</th>
-					<th>Add / Delete</th>
-			  	</tr>
-			  	<tr>
-					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
-			  		
-					<td width="30%">
-						<input id="PATH" type="text"  class="input_20_table" style="margin-left:15px;height:25px;" onclick="get_disk_tree();" readonly="readonly"/" name="nfsd_path_x_0">
-					</td>
-            			<td width="30%">
-            				<input type="text" class="input_20_table" maxlength="128" name="nfsd_accesslist_x_0">
-            			</td>
-            			<td width="30%">
-							<input type="text" class="input_20_table" maxlenght="64" name="nfsd_mountoptions_x_0">
-						</td>
-						<td width="10%">
-							<div> 
-								<input type="button" class="add_btn" onClick="addRow_Group(32);" value="">
-							</div>
-            			</td>
-			  	</tr>	 			  
-			  </table>        			
-        			
-			  <div id="nfsd_exportlist_Block"></div>
-        			
-        	<!-- manually assigned the nfsd List end-->		
-           	<div class="apply_gen">
-           		<input type="button" name="button" class="button_gen" onclick="apply();" value="<#CTL_apply#>"/>
-            	</div>
+		</table>
+		<!--=====End of Main Content=====-->
+	</td>
 
-      	  </td>
-		</tr>
-  
+	<td width="20" align="center" valign="top"></td>
+  </tr>
 </table>
-
-<!--=====End of Main Content=====-->
-		</td>
-
-		<td width="20" align="center" valign="top"></td>
-	</tr>
-</table>
-</div>
-
 <div id="footer"></div>
 
 <!-- mask for disabling AiDisk -->
 <div id="OverlayMask" class="popup_bg">
 	<div align="center">
-	<iframe src="" frameborder="0" scrolling="no" id="popupframe" width="400" height="400" allowtransparency="true" style="margin-top:150px;"></iframe>
+		<iframe src="" frameborder="0" scrolling="no" id="popupframe" width="400" height="400" allowtransparency="true" style="margin-top:150px;"></iframe>
 	</div>
 <!--[if lte IE 6.5]><iframe class="hackiframe"></iframe><![endif]-->
 </div>
