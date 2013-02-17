@@ -2020,14 +2020,18 @@ sd-idle-install: sd-idle-2.6
 	install -D sd-idle/sd-idle-2.6 $(INSTALLDIR)/sd-idle/usr/sbin/sd-idle-2.6
 	$(STRIP) -s $(INSTALLDIR)/sd-idle/usr/sbin/sd-idle-2.6
 
-nfs-utils/Makefile: nfs-utils/Makefile.in
-	cd nfs-utils && ./autogen.sh && CPPFLAGS="$(EXTRACFLAGS) -Os" knfsd_cv_bsd_signals=no \
+nfs-utils/stamp-h1:
+	cd nfs-utils && CPPFLAGS="$(EXTRACFLAGS) -Os" knfsd_cv_bsd_signals=no \
 	CC_FOR_BUILD=$(CC) $(CONFIGURE) --enable-nfsv3 --disable-nfsv4 --disable-ipv6 \
-	    --disable-uuid --disable-gss --disable-mount \
-		--without-tcp-wrappers
+	--disable-uuid --disable-gss --disable-mount --without-tcp-wrappers
+	touch nfs-utils/stamp-h1
 
-nfs-utils: nfs-utils/Makefile
+nfs-utils: nfs-utils/stamp-h1
 	$(MAKE) -C $@
+
+nfs-utils-clean:
+	-@$(MAKE) -C nfs-utils distclean
+	@rm -f nfs-utils/stamp-h1
 
 nfs-utils-install:
 	install -D nfs-utils/utils/nfsd/nfsd $(INSTALLDIR)/nfs-utils/usr/sbin/nfsd
