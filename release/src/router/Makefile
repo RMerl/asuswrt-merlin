@@ -2021,8 +2021,8 @@ sd-idle-install: sd-idle-2.6
 	$(STRIP) -s $(INSTALLDIR)/sd-idle/usr/sbin/sd-idle-2.6
 
 nfs-utils/Makefile: nfs-utils/Makefile.in
-	cd nfs-utils && CPPFLAGS="$(EXTRACFLAGS) -Os" knfsd_cv_bsd_signals=no \
-	$(CONFIGURE) --enable-nfsv3 --disable-nfsv4 --disable-ipv6 \
+	cd nfs-utils && ./autogen.sh && CPPFLAGS="$(EXTRACFLAGS) -Os" knfsd_cv_bsd_signals=no \
+	CC_FOR_BUILD=$(CC) $(CONFIGURE) --enable-nfsv3 --disable-nfsv4 --disable-ipv6 \
 	    --disable-uuid --disable-gss --disable-mount \
 		--without-tcp-wrappers
 
