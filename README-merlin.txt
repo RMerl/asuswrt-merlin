@@ -354,6 +354,13 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 
+3.0.0.4.270.25
+   - FIXED: Added missing badblocks program
+   - FIXED: Timing issues under IE where resolved device names would 
+            not display on certain pages (such as the Sysinfo page)
+   - FIXED: VPN client "common name" wasn't getting saved
+
+
 3.0.0.4.270.24
    - NEW: Rebased on 3.0.0.4.270.  Notable changes:
       o New driver builds (these are NOT the new major versions that
