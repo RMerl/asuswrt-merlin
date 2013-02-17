@@ -1662,6 +1662,10 @@ int init_nvram(void)
 #endif
 	//add_rc_support("ruisp");
 
+#ifdef RTCONFIG_NFS
+	add_rc_support("nfsd");
+#endif
+
 	return 0;
 }
 

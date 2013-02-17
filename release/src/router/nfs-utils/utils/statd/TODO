@@ -1,0 +1,13 @@
+Some things still left to do (not a comprehensive list):
+
+* Go through Olaf's extensive changes (especially the list and callback
+  handling, which is the meat of the server) and understand everything
+  that he's done.
+
+* Continue checking for security holes.
+
+* Handle multiple SM_MON requests that are identical save for the "priv"
+  information.  How should I do this?  No spec's...(it's not really
+  supposed to happen).  [Did Olaf already address this?]
+
+* BETTER CODE COMMENTS!

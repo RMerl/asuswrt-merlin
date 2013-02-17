@@ -1,0 +1,86 @@
+.\"
+.\" nfsd(8)
+.\"
+.\" Copyright (C) 1999 Olaf Kirch <okir@monad.swb.de>
+.TH rpc.nfsd 8 "7 Aug 2006"
+.SH NAME
+rpc.nfsd \- NFS server process
+.SH SYNOPSIS
+.BI "/usr/sbin/rpc.nfsd [" options "]" " "nproc
+.SH DESCRIPTION
+The
+.B rpc.nfsd
+program implements the user level part of the NFS service. The
+main functionality is handled by the
+.B nfsd
+kernel module; the user space program merely starts the specified
+number of kernel threads.
+.P
+The
+.B rpc.mountd
+server provides an ancillary service needed to satisfy mount requests
+by NFS clients.
+.SH OPTIONS
+.TP
+.B \-H " or " \-\-host  hostname
+specify a particular hostname (or address) that NFS requests will
+be accepted on. By default,
+.B rpc.nfsd
+will accept NFS requests on all known network addresses.
+Note that
+.B lockd
+(which performs file locking services for NFS) may still accept
+request on all known network addresses.  This may change in future
+releases of the Linux Kernel.
+.TP
+.B \-p " or " \-\-port  port
+specify a diferent port to listen on for NFS requests. By default,
+.B rpc.nfsd
+will listen on port 2049.
+.TP
+.B \-N " or " \-\-no-nfs-version vers
+This option can be used to request that 
+.B rpc.nfsd
+does not offer certain versions of NFS. The current version of
+.B rpc.nfsd
+can support both NFS version 2,3 and the newer version 4.
+.TP
+.B \-T " or " \-\-no-tcp
+Disable 
+.B rpc.nfsd 
+from accepting TCP connections from clients.
+.TP
+.B \-U " or " \-\-no-udp
+Disable
+.B rpc.nfsd
+from accepting UDP connections from clients.
+.TP
+.I nproc
+specify the number of NFS server threads. By default, just one
+thread is started. However, for optimum performance several threads
+should be used. The actual figure depends on the number of and the work
+load created by the NFS clients, but a useful starting point is
+8 threads. Effects of modifying that number can be checked using
+the
+.BR nfsstat (8)
+program.
+.P
+Note that if the NFS server is already running, then the options for
+specifying host, port, and protocol will be ignored.  The number of
+processes given will be the only option considered, and the number of
+active
+.B nfsd
+processes will be increased or decreased to match this number.
+In particular
+.B rpc.nfsd 0
+will stop all threads and thus close any open connections.
+
+.SH SEE ALSO
+.BR rpc.mountd (8),
+.BR exports (5),
+.BR exportfs (8),
+.BR rpc.rquotad (8),
+.BR nfsstat (8).
+.SH AUTHOR
+Olaf Kirch, Bill Hawes, H. J. Lu, G. Allan Morris III,
+and a host of others.

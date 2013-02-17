@@ -1,0 +1,78 @@
+
+Release 0.4.11
+
+ *	Added async writes.
+ *	Fixed bug where two rpciod's would be started when insmod'ing
+	both nfs.o and nfsd.o.
+
+Release 0.4.12
+
+ *	Fixed compile problem after renaming some debug macros.
+ *	Improved readdir cache, which can now hold up to 16 (configurable)
+	readdir replies.
+ *	Fixed async write bug(s)
+ *	client file locking now does at least lock/unlock without
+	crashing the machine
+ *	Started to work on NFS swapping
+ *	nfs_get_super no longer requires the file handle passed by
+	mount but does a straight xprt_create_proto().
+ *	TCP reconnect should work now (not yet tested for long disconnect
+	periods, but it does work if you kill and restart nfsd).
+
+Release 0.4.13
+
+ *	More writeback bugs removed.
+ *	Added a modified (and ansified) tirpc rpcgen to get rid of all
+	the warnings in files generated from *.x descriptions. That old Sun
+	code is a real mess.
+ *	Cleaned up nfsd export handling a bit. All syscalls now
+	take dev/ino rather than the pathname.
+ *	Added sysctl interface to set/get debug flags (see tools/rpcdebug).
+ *	Cleaned up Makefiles.
+ *	(experimental) Gathered writes for nfsd (use the wdelay option in
+	/etc/exports).
+ *	Fixed silly bug in nfs_readdir (the in-place decoding of readdir
+	replies requires a temporary buffer).
+ *	Fixed readdir bug in nfsd (long directories were truncated).
+
+Release 0.4.14
+
+ *	Upgraded to kernel 2.0.23
+ *	Fixed bug in rpcdebug
+ *	readdir still didn't work right in nfsd. Argh!
+ *	nfsd would refuse to create symlinks with slashes in them:-)
+ *	nfsd's RPC reply cache should now work again.
+ *	Heavily modified rpc.statd for more robust callback/notify handling
+
+Release 0.4.17
+
+ *	Upgraded to kernel 2.1.14
+ *	Got lockd working with HPUX in most areas.
+
+Release 0.4.19
+
+ *	RPC server UDP sockets now receive the sk_buff directly rather
+	than going through sock->ops->recvmsg.
+	Also got rid of all those cli/sti's and replaced them with
+	disable_bh/enable_bh calls.
+ *	Fixed a bug in nfsd's handling of rename and friends.
+
+Release 0.4.20
+
+ *	Some bugfixes, esp in the writeback code
+ *	Avoid some unnecessary cli/sti pairs
+ *	Added nhfsstone
+
+Release 0.4.21
+
+ *	Minor bugfixes
+ *	Moved to post-2.1.16 module handling code
+
+Release 0.4.22
+
+ *	Fixed a bug that made rpcinfo -u host nlockmgr provoke a kernel
+	oops.
+ *	Upgraded to mount-2.6b
+ *	Added NFSv3 support to mountd and nfsd
+ *	Made sure it compiles with glibc2.
+

@@ -1,0 +1,214 @@
+@(#) README 1.7 96/07/06 23:06:19
+
+This is the README file for the 5th enhanced portmapper release.
+
+Description
+-----------
+
+This README describes a replacement portmapper that prevents theft of
+NIS (YP), NFS, and other sensitive information via the portmapper.  As
+an option, the program supports access control in the style of the tcp
+wrapper (log_tcp) package.
+
+Like all portmappers, this one is intended to be started at boot time.
+Daemons that offer RPC services tell the portmapper on what port they
+listen. Unlike the well-known services registered with the inetd, RPC
+network port numbers may change each time the system is booted.
+Whenever a client wants to use an RPC service it is supposed to first
+ask the portmapper on what port the corresponding daemon is listening.
+The rpcinfo command can tell you what RPC services your system offers.
+
+As described in the features section below, the replacement portmapper
+can prevent undesirable client-server interactions.  In some cases,
+better or equivalent alternatives are available:
+
+    The SunOS portmap that is provided with patch id 100482-02 should
+    close the same security holes.  In addition, it provides an YPSERV
+    daemon with its own access control list. This is better than just
+    portmapper access control.
+
+    The "securelib" shared library (eecs.nwu.edu:/pub/securelib.tar)
+    implements access control for all kinds of (RPC) services, not
+    just the portmapper.
+
+However, vendors still ship portmap implementations that allow anyone
+to read or modify its tables and that will happily forward any request
+so that it appears to come from the local system.
+
+Features
+--------
+
+- optional: host access control. The local host is always considered
+authorized. Access control requires the libwrap.a library that comes
+with recent tcp wrapper (log_tcp) implementations.
+
+- requests to change the portmap tables are accepted only when they
+come from the local system.
+
+- optional: requests to (un)register services that listen on privileged
+ports (port < 1024) are accepted only when the requests themselves come
+from a privileged port. This feature is optional because of older RPC
+implementations.
+
+- requests that are forwarded by the portmapper will be forwarded
+through an unprivileged port.
+
+- the portmapper refuses to forward requests to rpc daemons that do (or
+should) verify the origin of each request: when the portmapper forwards
+a request it appears to come from the local machine. At present, the
+portmapper refuses to forward all RPC calls to itself, and most RPC
+calls to the NFS mountd/nfsd daemons, and to the NIS daemons.
+
+- the really desperate can harden the portmapper even more by requiring
+that requests to modify its tables arrive via the loopback network
+interface, instead of via the primary network interface that every host
+can talk to. The cost is high: besides changes to the portmapper, this
+requires changes to system libraries, to statically-linked rpc servers,
+to the kernel to disable IP source routing, and perhaps even to system
+startup procedures.  Don't do this unless you're desperate.  Details
+are given in the Makefile.
+
+Restrictions
+------------
+
+Limiting access to the portmapper does not protect you from direct
+attacks on the rpc daemons; the main task of portmap is to maintain a
+table of available RPC services and of the network ports that they are
+listening on. The securelib can be used to protect individual RPC
+daemons, and the latest SunOS portmap+NIS fix already protects the NIS
+daemons and implements limited forwarding.
+
+On the other hand, even though a portmapper with access control only
+makes an attack more difficult, it still provides an excellent early
+warning system.
+
+Origin and portability
+----------------------
+
+The sources in this distribution are derived from code on the second
+BSD networking tape, which was derived from Sun's RPCSRC 4.0 code, and
+from Sun's TIRPC (transport-independent rpc) distribution. 
+
+The code compiles fine with SunOS 4.1.x, Ultrix 4.x, HP-UX 9.x, AIX 3.x
+and AIX 4.x, and Digital UNIX (OSF/1). See the notes in the Makefile.
+
+Solaris 2.x (and other true System V.4 clones) use a different program
+called rpcbind. I have written a replacement for that program, too.
+The primary achive is ftp.win.tue.nl:/pub/security/rpcbind_xx.tar.Z.
+
+Installation
+------------
+
+(1) Follow the instructions in the Makefile, then build the portmap and
+auxiliary executables.
+
+(2) Before killing the present portmap process, save the present
+portmapper tables using the command:
+
+	./pmap_dump >table
+
+If you kill the portmap process without saving its tables you will have
+to reboot the machine.
+
+Note: the information in the portmap tables is dynamic: For example, it
+will be different after each reboot. On a Sun, it even changes each
+time a windowing system is started that uses the selection service.
+
+(3) Kill the running portmap process and start the new portmap
+program.  Then (still as root) initialize the portmap tables with:
+
+	./pmap_set <table
+
+(4) If you get error messages of the form: "not registered: xxxx",
+disable the CHECK_PORT feature in the Makefile, remove pmap_check.o and
+rebuild the portmap program.  Then proceed with step 3.
+
+If the portmapper complains that it cannot find all machine interfaces
+you will have to rebuild it with -DHAS_SA_LEN set (see Makefile). You
+can test this with the "from_local" command (to build: make from_local).
+
+In order to revert to the original portmap daemon, kill off the running
+one, restart the original portmapper and reload its tables using the
+"pmap_set" command as shown above.
+
+Access control:
+---------------
+
+By default, host access control is enabled. However, the host that runs
+the portmapper is always considered authorized. The host access control
+tables are never consulted with requests from the local system itself;
+they are always consulted with requests from other hosts.
+
+In order to avoid deadlocks, the portmap program does not attempt to
+look up the remote host name or user name, nor will it try to match NIS
+netgroups. The upshot of all this is that only network number patterns
+will work for portmap access control.
+
+Sample entries for the host access-control files are:
+
+    /etc/hosts.allow:
+	portmap: your.sub.net.number/your.sub.net.mask
+	portmap: 255.255.255.255 0.0.0.0
+
+    /etc/hosts.deny
+	portmap: ALL: (/some/where/safe_finger -l @%h | mail root) &
+
+The syntax of the access-control files is described in the
+hosts_access.5 manual page that comes with the tcp wrapper (log_tcp)
+sources.  The safe_finger command comes with later wrapper releases.
+
+The first line in the hosts.allow file permits access from all systems
+within your own subnet. Some rpc services rely on broadcasts and will
+contact your portmapper anyway; and once an intruder has access to your
+local network segment you're already in deep trouble.
+
+The second line in the hosts.allow file may be needed if there are
+any PC-NFS systems on your network segment.
+
+For security reasons, the portmap process drops root privilegs after
+initialization. The access control files should therefore be readable
+for group or world.
+
+Testing:
+--------
+
+Normally, only rejected requests will be reported via the syslog
+daemon.  Logging is done in a child process, in order to avoid
+possible deadlock in case the logging code needs assistance from
+the portmapper.
+
+By default, the portmapper will be utterly silent. In fact, the portmap
+daemon is not consulted that often. Sending a SIGINT signal to the
+portmap process will enable the logging of all requests. 
+
+Another way to enable verbose logging is to start the daemon with the
+"-v" option. See above, steps (2) and later, on how to stop and restart
+the portmapper without having to reboot.
+
+Warning:  with some HP-UX and AIX versions, when verbose logging is on,
+the system fills up with zombie processes. This can be fixed by
+compiling with -DIGNORE_SIGCHLD (see instructions in the Makefile).
+
+With verbose logging turned on, requests such as "ypcat" or "rpcinfo
+-p" should show up with log file entries such as:
+
+ MMM dd hh:mm:ss hostname portmap[pid]: connect from x.x.x.x to getport(ypserv)
+ MMM dd hh:mm:ss hostname portmap[pid]: connect from y.y.y.y to dump()	
+
+Send SIGINT to the portmapper to turn the verbose logging off.
+
+Acknowledgements
+----------------
+
+Casper H.S. Dik (casper@fwi.uva.nl) provided valuable information on
+RPC security and tested an intermediate version of the portmapper with
+SunOS 4.1.2.  Lyford D. Rich (rich@ece.nps.navy.mil) was helpful with
+porting the daemon to Ultrix 3.x. Lionel Cons (cons@dxcern.cern.ch)
+solved the HP-UX problem. Fabrice Gonton (Fabrice.Gonton@sagem.fr)
+figured out how to make the program work on AIX 4.1, and Michael
+Matthews took care of the DEC Alpha platform.
+
+	Wietse Venema (wietse@wzv.win.tue.nl)
+	Mathematics and Computing Science
+	Eindhoven University of Technology
+	The Netherlands

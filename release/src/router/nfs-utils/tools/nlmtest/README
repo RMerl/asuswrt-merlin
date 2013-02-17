@@ -1,0 +1,5 @@
+
+This is a simple tool to test your lockd server. This is a very
+primitive program. To use it on your system, you have to edit
+host.h and adjust the inode and device numbers in nltest.c to
+suit your nfs server.

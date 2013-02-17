@@ -1,0 +1,94 @@
+.\"	$OpenBSD: mdoc.template,v 1.6 2001/02/03 08:22:44 niklas Exp $
+.\"
+.\" The following requests are required for all man pages.
+.Dd February 3, 2003
+.Dt RPC.IDMAPD 8
+.Os
+.Sh NAME
+.Nm rpc.idmapd
+.Nd NFSv4 ID <-> Name Mapper
+.Sh SYNOPSIS
+.\" For a program:  program [-abc] file ...
+.Nm rpc.idmapd
+.Op Fl v
+.Op Fl f
+.Op Fl d Ar domain
+.Op Fl p Ar path
+.Op Fl U Ar username
+.Op Fl G Ar groupname
+.Op Fl c Ar path
+.Sh DESCRIPTION
+.Nm
+is the NFSv4 ID <-> name mapping daemon.  It provides functionality to
+the NFSv4 kernel client and server, to which it communicates via
+upcalls, by translating user and group IDs to names, and vice versa.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds_imagedir
+.It Fl v
+Increases the verbosity level (can be specified multiple times).
+.It Fl f
+Runs
+.Nm
+in the foreground and prints all output to the terminal.
+.It Fl d Ar domain
+Set domain to
+.Ar domain .
+This is used internally by NFSv4 and is typically assigned by the
+system administrator.  By default,
+.Ar domain
+is set to be the FQDN of the host, minus the hostname.
+.It Fl p Ar path
+Specifies the location of the RPC pipefs to be
+.Ar path .
+The default value is \&"/var/lib/nfs/rpc_pipefs\&".
+.It Fl U Ar username
+Specifies the NFSv4 nobody user to be
+.Ar username .
+The default value is \&"nobody\&".
+.It Fl G Ar groupname
+Specifies the NFSv4 nobody group to be
+.Ar groupname .
+The default value is \&"nobody\&".
+.It Fl c Ar path
+Use configuration file
+.Ar path .
+.It Fl C
+Client-only: perform no idmapping for any NFS server, even if one is detected.
+.It Fl S
+Server-only: perform no idmapping for any NFS client, even if one is detected.
+.El
+.Sh EXAMPLES
+.Cm rpc.idmapd -d \&"citi.umich.edu\&" -f -vvv
+.Pp
+Runs
+.Nm
+with the domain \&"citi.umich.edu\&" in the foreground, printing all
+messages to console, and with a verbosity level of 3.
+.\" This next request is for sections 2 and 3 function return values only.
+.\" .Sh RETURN VALUES
+.\" The next request is for sections 2 and 3 error and signal handling only.
+.\" .Sh ERRORS
+.\" This next request is for section 4 only.
+.\" .Sh DIAGNOSTICS
+.\" This next request is for sections 1, 6, 7 & 8 only.
+.\" .Sh ENVIRONMENT
+.Sh FILES
+.Pa /etc/idmapd.conf
+.Sh SEE ALSO
+.Xr idmapd.conf 5
+.\".Sh SEE ALSO
+.\".Xr nylon.conf 4
+.\" .Sh COMPATIBILITY
+.\".Sh STANDARDS
+.\".Sh ACKNOWLEDGEMENTS
+.Sh AUTHORS
+The
+.Nm
+software has been developed by Marius Aamodt Eriksen
+.Aq marius@citi.umich.edu .
+.\" .Sh HISTORY
+.\".Sh BUGS
+.\"Please report any bugs to Marius Aamodt Eriksen
+.\".Aq marius@monkey.org .
+.\" .Sh CAVEATS

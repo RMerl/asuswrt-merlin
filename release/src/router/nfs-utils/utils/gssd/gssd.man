@@ -1,0 +1,114 @@
+.\"
+.\" rpc.gssd(8)
+.\"
+.\" Copyright (C) 2003 J. Bruce Fields <bfields@umich.edu>
+.TH rpc.gssd 8 "14 Mar 2007"
+.SH NAME
+rpc.gssd \- rpcsec_gss daemon
+.SH SYNOPSIS
+.B "rpc.gssd [-f] [-n] [-k keytab] [-p pipefsdir] [-v] [-r] [-d ccachedir]"
+.SH DESCRIPTION
+The rpcsec_gss protocol gives a means of using the gss-api generic security
+api to provide security for protocols using rpc (in particular, nfs).  Before
+exchanging any rpc requests using rpcsec_gss, the rpc client must first
+establish a security context.  The linux kernel's implementation of rpcsec_gss
+depends on the userspace daemon
+.B rpc.gssd
+to establish security contexts.  The
+.B rpc.gssd
+daemon uses files in the rpc_pipefs filesystem to communicate with the kernel.
+
+.SH OPTIONS
+.TP
+.B -f
+Runs
+.B rpc.gssd
+in the foreground and sends output to stderr (as opposed to syslogd)
+.TP
+.B -n
+By default,
+.B rpc.gssd
+treats accesses by the user with UID 0 specially, and uses
+"machine credentials" for all accesses by that user which
+require Kerberos authentication.
+With the \-n option, "machine credentials" will not be used
+for accesses by UID 0.  Instead, credentials must be obtained
+manually like all other users.  Use of this option means that
+"root" must manually obtain Kerberos credentials before
+attempting to mount an nfs filesystem requiring Kerberos
+authentication.
+.TP
+.B -k keytab
+Tells
+.B rpc.gssd
+to use the keys found in
+.I keytab
+to obtain "machine credentials".
+The default value is "/etc/krb5.keytab".
+.IP
+Previous versions of
+.B rpc.gssd
+used only "nfs/*" keys found within the keytab.
+To be more consistent with other implementations, we now look for
+specific keytab entries.  The search order for keytabs to be used
+for "machine credentials" is now:
+.br
+  root/<hostname>@<REALM>
+.br
+  nfs/<hostname>@<REALM>
+.br
+  host/<hostname>@<REALM>
+.br
+  root/<anyname>@<REALM>
+.br
+  nfs/<anyname>@<REALM>
+.br
+  host/<anyname>@<REALM>
+.TP
+.B -p path
+Tells
+.B rpc.gssd
+where to look for the rpc_pipefs filesystem.  The default value is
+"/var/lib/nfs/rpc_pipefs".
+.TP
+.B -d directory
+Tells
+.B rpc.gssd
+where to look for Kerberos credential files.  The default value is "/tmp".
+This can also be a colon separated list of directories to be searched
+for Kerberos credential files.  Note that if machine credentials are being
+stored in files, then the first directory on this list is where the
+machine credentials are stored.
+.TP
+.B -v
+Increases the verbosity of the output (can be specified multiple times).
+.TP
+.B -r
+If the rpcsec_gss library supports setting debug level,
+increases the verbosity of the output (can be specified multiple times).
+.TP
+.B -R realm
+Kerberos tickets from this
+.I realm
+will be preferred when scanning available credentials cache files to be
+used to create a context.  By default, the default realm, as configured
+in the Kerberos configuration file, is preferred.
+.TP
+.B -t timeout
+Timeout, in seconds, for kernel gss contexts. This option allows you to force 
+new kernel contexts to be negotiated after
+.I timeout
+seconds, which allows changing Kerberos tickets and identities frequently.
+The default is no explicit timeout, which means the kernel context will live
+the lifetime of the Kerberos service ticket used in its creation.
+.SH SEE ALSO
+.BR rpc.svcgssd(8)
+.SH AUTHORS
+.br
+Dug Song <dugsong@umich.edu>
+.br
+Andy Adamson <andros@umich.edu>
+.br
+Marius Aamodt Eriksen <marius@umich.edu>
+.br
+J. Bruce Fields <bfields@umich.edu>

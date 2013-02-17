@@ -1,0 +1,88 @@
+.\"
+.\" rpcdebug(8)
+.\" 
+.\" By Greg Banks <gnb@melbourne.sgi.com>
+.\" Copyright (c) 2006 Silicon Graphics, Inc.
+.\" Derived from nfsstat.man which bore the message:
+.\" Copyright (C) 1996-2005 Olaf Kirch <okir@suse.de>
+.TH rpcdebug 8 "5 Jul 2006"
+.SH NAME
+rpcdebug \- set and clear NFS and RPC kernel debug flags
+.SH SYNOPSIS
+\fBrpcdebug\fP \fB\-vh\fP
+.br
+\fBrpcdebug\fP \fB\-m\fP \fImodule\fP
+.br
+\fBrpcdebug\fP \fB\-m\fP \fImodule\fP \fB\-s\fP \fIflags\fP...
+.br
+\fBrpcdebug\fP \fB\-m\fP \fImodule\fP \fB\-c\fP \fIflags\fP...
+.br
+.SH DESCRIPTION
+The \fBrpcdebug\fP command allows an administrator to set and clear
+the Linux kernel's NFS client and server debug flags.  Setting these
+flags causes the kernel to emit messages to the system log in response
+to NFS activity; this is typically useful when debugging NFS problems.
+.PP
+The first form in the synopsis can be used to list all available
+debug flags.  The second form shows the currently set debug flags
+for the given module.  The third form sets one or more flags, and
+the fourth form clears one or more flags.
+.PP
+The value \fBall\fP may be used to set or clear all the flags for
+the given module.
+.SH OPTIONS
+.\" -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+.TP
+.B \-c
+Clear the given debug flags.
+.\" -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+.TP
+.B \-h
+Print a help message and exit.  When combined with the \fB\-v\fP
+option, also prints the available debug flags.
+.\" -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+.TP
+.BI \-m " module"
+Specify which module's flags to set or clear.  Available
+modules are:
+.RS
+.TP
+.BR nfsd
+The NFS server.
+.TP
+.BR nfs
+The NFS client.
+.TP
+.BR nlm
+The Network Lock Manager, in either an NFS client or server.
+.TP
+.BR rpc
+The Remote Procedure Call module, in either an NFS client or server.
+.RE
+.\" -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+.TP
+.B \-s
+Set the given debug flags.
+.\" -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+.TP
+.B \-v
+Increase the verbosity of \fBrpcdebug\fP's output.
+.\" -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+.SH FILES
+.TP
+.B /proc/sys/sunrpc/{rpc,nfs,nfsd,nlm}_debug
+procfs\-based interface to kernel debug flags.
+.\" -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+.SH SEE ALSO
+.BR rpc.nfsd (8),
+.BR nfs (5),
+.BR syslogd (8).
+.\" -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+.SH BUGS
+Bugs can be found or reported at
+.BR http://nfs.sf.net/ .
+.\" -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+.SH AUTHOR
+Program by Olaf Kirch <okir@suse.de> and
+<frederic.jolly@bull.ext.net>.
+Manpage by Greg Banks <gnb@melbourne.sgi.com>.

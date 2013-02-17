@@ -100,6 +100,8 @@ void tune_bdflush(void)
 #define USBFS		"usbdevfs"
 #endif
 
+#define NFS_EXPORT	"/etc/exports"
+
 #ifdef RTCONFIG_USB_PRINTER
 void
 start_lpd()
@@ -2257,6 +2259,9 @@ void start_nas_services(int force)
 #ifdef RTCONFIG_SAMBASRV
 	start_samba();
 #endif
+#ifdef RTCONFIG_NFS
+	start_nfsd();
+#endif
 
 if (nvram_match("asus_mfg", "0")) {
 #ifdef RTCONFIG_FTP
@@ -2289,6 +2294,11 @@ void stop_nas_services(int force)
 #ifdef RTCONFIG_SAMBASRV
 	stop_samba();
 #endif
+
+#ifdef RTCONFIG_NFS
+	stop_nfsd();
+#endif
+
 #ifdef RTCONFIG_WEBDAV
 	//stop_webdav();
 #endif
@@ -2315,11 +2325,19 @@ void restart_sambaftp(int stop, int start)
 #ifdef RTCONFIG_SAMBASRV
 		stop_samba();
 #endif
+
+#ifdef RTCONFIG_NFS
+		stop_nfsd();
+#endif
+
 #ifdef RTCONFIG_FTP
 		stop_ftpd();
 #endif
 #ifdef RTCONFIG_WEBDAV
 		stop_webdav();
+#endif
+#ifdef RTCONFIG_NFS
+		start_nfsd();
 #endif
 	}
 	
@@ -2328,6 +2346,11 @@ void restart_sambaftp(int stop, int start)
 		create_passwd();
 		start_samba();
 #endif
+
+#ifdef RTCONFIG_NFS
+		start_nfsd();
+#endif
+
 #ifdef RTCONFIG_FTP
 		start_ftpd();
 #endif
@@ -2763,6 +2786,97 @@ int start_sd_idle(void) {
 int stop_sd_idle(void) {
 	int ret = eval("killall","sd-idle-2.6");
 	return ret;
+}
+
+#endif
+
+#ifdef RTCONFIG_NFS
+int start_nfsd(void)
+{
+	struct stat	st_buf;
+	FILE 		*fp;
+        char *nv, *nvp, *b, *c;
+	char *dir, *access, *options;
+
+	if (nvram_match("nfsd_enable", "0")) return 0;
+
+	/* create directories/files */
+	mkdir("/var/lib", 0755);
+	mkdir("/var/lib/nfs", 0755);
+# ifdef LINUX26
+	mkdir("/var/lib/nfs/v4recovery", 0755);
+	mount("nfsd", "/proc/fs/nfsd", "nfsd", MS_MGC_VAL, NULL);
+# endif
+	close(creat("/var/lib/nfs/etab", 0644));
+	close(creat("/var/lib/nfs/xtab", 0644));
+	close(creat("/var/lib/nfs/rmtab", 0644));
+
+	/* (re-)create /etc/exports */
+	if (stat(NFS_EXPORT, &st_buf) == 0)	{
+		unlink(NFS_EXPORT);
+	}
+
+	if ((fp = fopen(NFS_EXPORT, "w")) == NULL) {
+		perror(NFS_EXPORT);
+		return 1;
+	}
+
+	nv = nvp = strdup(nvram_safe_get("nfsd_exportlist"));
+	if (nv) {
+		while ((b = strsep(&nvp, "<")) != NULL) {
+			if ((vstrsep(b, ">", &dir, &access, &options) != 3))
+				continue;
+
+			fputs(dir, fp);
+
+			while ((c = strsep(&access, " ")) != NULL) {
+				fprintf(fp, " %s(no_root_squash%s%s)", c, ((strlen(options) > 0) ? "," : ""), options);
+			}
+			fputs("\n", fp);
+		}
+		free(nv);
+	}
+
+	append_custom_config("exports", fp);
+	fclose(fp);
+
+	eval("/usr/sbin/portmap");
+	eval("/usr/sbin/statd");
+
+	if (nvram_match("nfsd_enable_v2", "1")) {
+		eval("/usr/sbin/nfsd");
+		eval("/usr/sbin/mountd");
+	} else {
+		eval("/usr/sbin/nfsd", "-N 2");
+		eval("/usr/sbin/mountd", "-N 2");
+	}
+
+	sleep(1);
+	eval("/usr/sbin/exportfs", "-a");
+
+	return 0;
+}
+
+int restart_nfsd(void)
+{
+	eval("/usr/sbin/exportfs", "-au");
+	eval("/usr/sbin/exportfs", "-a");
+
+	return 0;
+}
+
+int stop_nfsd(void)
+{
+	killall_tk("mountd");
+	killall("nfsd", SIGKILL);
+	killall_tk("statd");
+	killall_tk("portmap");
+
+#ifdef LINUX26
+	umount("/proc/fs/nfsd");
+#endif
+
+	return 0;
 }
 
 #endif

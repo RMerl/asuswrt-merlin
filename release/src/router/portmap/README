@@ -1,0 +1,32 @@
+
+portmap-6.0 is the first release in 10 year of portmap based on the code
+from Wietse Venema.
+
+It consolidates patches that various Linux distributions were shipping
+with their versions of portmap, and add some more functionality.
+
+This version is currently maintained by 
+   Neil Brown <neilb@suse.de>
+and can be found at
+    git://neil.brown.name/portmap
+    http://neil.brown.name/git/portmap
+    http://neil.brown.name/portmap/
+
+NeilBrown - 11may2007
+
+There is no "./configure", just use "make".
+
+Some make variable can be used to control compilation.
+
+ NO_TCP_WRAPPER=  if non-empty, doen't use tcp_wrappers
+ USE_DNS=	  if set, tcp_wrappers can check peers based on hostname
+		  as well as IP address.  This should only be used if you
+		  are certain that gethostbyname will never trigger a
+		  called to portmap (as it might if 'nis' is used for hostnames).
+ RPCUSER=	  is set, portmap will use getpwnam to find the user for
+		  that user, and will setuid to that user before listening
+		  for incoming messages
+ DAEMON_UID=	  Can be set to a number to override the default UID
+		  to setuid to.  Default is '1'.
+ DAEMON_GID=	  As above, but for setgid.
+

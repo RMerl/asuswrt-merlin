@@ -137,7 +137,7 @@ var tabtitle = new Array();
 tabtitle[0] = new Array("", "<#menu5_1_1#>", "<#menu5_1_2#>", "<#menu5_1_3#>", "<#menu5_1_4#>", "<#menu5_1_5#>", "<#menu5_1_6#>");
 tabtitle[1] = new Array("", "<#menu5_2_1#>", "<#menu5_2_2#>", "<#menu5_2_3#>", "IPTV", "Switch Control");
 tabtitle[2] = new Array("", "<#menu5_3_1#>", "Dual WAN", "<#menu5_3_3#>", "<#menu5_3_4#>", "<#menu5_3_5#>", "<#menu5_3_6#>", "<#NAT_passthrough_itemname#>", "<#menu5_4_4#>");
-tabtitle[3] = new Array("", "<#UPnPMediaServer#>", "<#menu5_4_1#>", "<#menu5_4_2#>", "<#menu5_4_3#>");
+tabtitle[3] = new Array("", "<#UPnPMediaServer#>", "<#menu5_4_1#>", "NFS Exports" , "<#menu5_4_2#>", "<#menu5_4_3#>");
 tabtitle[4] = new Array("", "IPv6");
 tabtitle[5] = new Array("", "<#BOP_isp_heart_item#>", "<#vpn_Adv#>", "OpenVPN Server Settings", "OpenVPN Client Settings", "OpenVPN Keys", "VPN Status");
 tabtitle[6] = new Array("", "<#menu5_1_1#>", "<#menu5_5_2#>", "<#menu5_5_5#>", "<#menu5_5_3#>", "<#menu5_5_4#>");
@@ -150,7 +150,7 @@ var tablink = new Array();
 tablink[0] = new Array("", "Advanced_Wireless_Content.asp", "Advanced_WWPS_Content.asp", "Advanced_WMode_Content.asp", "Advanced_ACL_Content.asp", "Advanced_WSecurity_Content.asp", "Advanced_WAdvanced_Content.asp");
 tablink[1] = new Array("", "Advanced_LAN_Content.asp", "Advanced_DHCP_Content.asp", "Advanced_GWStaticRoute_Content.asp", "Advanced_IPTV_Content.asp", "Advanced_SwitchCtrl_Content.asp");
 tablink[2] = new Array("", "Advanced_WAN_Content.asp", "Advanced_WANPort_Content.asp", "Advanced_PortTrigger_Content.asp", "Advanced_VirtualServer_Content.asp", "Advanced_Exposed_Content.asp", "Advanced_ASUSDDNS_Content.asp", "Advanced_NATPassThrough_Content.asp", "Advanced_Modem_Content.asp");
-tablink[3] = new Array("", "mediaserver.asp", "Advanced_AiDisk_samba.asp", "Advanced_AiDisk_ftp.asp", "Advanced_AiDisk_others.asp");
+tablink[3] = new Array("", "mediaserver.asp", "Advanced_AiDisk_samba.asp", "Advanced_AiDisk_NFS.asp", "Advanced_AiDisk_ftp.asp", "Advanced_AiDisk_others.asp");
 tablink[4] = new Array("", "Advanced_IPv6_Content.asp");
 tablink[5] = new Array("", "Advanced_PPTP_Content.asp", "Advanced_PPTPAdvanced_Content.asp", "Advanced_OpenVPNServer_Content.asp", "Advanced_OpenVPNClient_Content.asp", "Advanced_OpenVPN_Keys.asp", "Advanced_VPNStatus.asp");
 tablink[6] = new Array("", "Advanced_BasicFirewall_Content.asp", "Advanced_URLFilter_Content.asp", "Advanced_KeywordFilter_Content.asp","Advanced_MACFilter_Content.asp", "Advanced_Firewall_Content.asp");
@@ -218,6 +218,8 @@ var HTTPS_support = rc_support.search("HTTPS");
 var nodm_support = rc_support.search("nodm"); 
 var wimax_support = rc_support.search("wimax");
 var downsize_support = rc_support.search("sfp4m");
+
+var nfsd_support = rc_support.search("nfsd");
 
 var calculate_height = menuL1_link.length+tablink.length-1;
 
@@ -401,6 +403,10 @@ function remove_url(){
 		remove_menu_item(5,"Advanced_OpenVPNClient_Content.asp");
 		remove_menu_item(5,"Advanced_OpenVPN_Keys.asp");
 		remove_menu_item(5,"Advanced_VPNStatus.asp");
+	}
+
+	if(nfsd_support == -1){
+		remove_menu_item(3,"Advanced_AiDisk_NFS.asp")
 	}
 
 	if(SwitchCtrl_support == -1){

@@ -1,0 +1,165 @@
+This is version 1.1.0 of nfs-utils, the Linux NFS utility package.
+
+
+0. PROJECT RESOURCES
+
+Home page:  http://sourceforge.net/projects/nfs/
+
+To use the 'gss' support you must have kerberos-5 development 
+libraries installed.
+Otherwise use  "--disable-gss"
+
+To use nfsv4 support you need libevent and libnfsidmap development
+libraries.  They are available from 
+   http://www.monkey.org/~provos/libevent/
+   http://www.citi.umich.edu/projects/nfsv4/linux/libnfsidmap/
+Otherwise use --disable-nfsv4
+
+
+1. COMPILING
+
+Unpack the sources and run these commands:
+
+    # ./configure
+    # make
+
+To install binaries and documenation, run this command:
+
+    # make install
+
+
+2. COMPILING FROM GIT
+
+Getting nfs-utils for the first time:
+
+	git clone git://linux-nfs.org/nfs-utils
+
+Updating to the latest head after you've already got it.
+
+	git pull
+
+Building requires that autotools be installed.  To invoke them
+simply
+
+	sh autogen.sh
+
+Finally, build as usual as above.
+
+3. DAEMON STARTUP ORDER
+
+This nfs-utils packages does not provide any scripts for starting
+various daemons as most distributions replace them with their own, so
+any scripts we package would not get much testing.
+Instead, we explain the dependencies involved in startup so that
+scripts can be written to work correctly.
+
+3.0   PREREQUISITES 
+
+   Name service (host name lookup) should be working before any
+   NFS services are started.
+
+   "portmap" must be running before any NFS services (server or
+   client) are started.
+   
+   Normally network interfaces should be configured first as well,
+   though this isn't critical for the NFS server (providing name
+   service is handled locally).
+   
+3.1.  SERVER STARTUP
+
+
+   A/  mount -t nfsd /proc/fs/nfsd
+      This filesystem needs to be mount before most daemons,
+      particularly exportfs, mountd, svcgssd, idmapd.
+      It could be mounted once, or the script that starts each daemon
+      could test if it is mounted and mount it if not.
+
+   B/ svcgssd ; idmapd
+       These supply services to nfsd and so should be started before
+       rpc.nfsd.  Where they come between mounting the nfsd filesystem
+       and starting the nfsd server is not important.
+       idmapd is only needed for NFSv4 support.
+       svcgssd is only needed if exportfs NFS filesystem with crypto-
+       security (Kerberos or SPKM3).
+
+   C/ exportfs -av ; rpc.mountd
+       It is important that exportfs be run before mountd so that
+       mountd is working from current information (in
+       /var/lib/nfs/etab).
+       It is also important that both of these are run before
+       rpc.nfsd.
+       If not, any NFS requests that arrive before mountd is started
+       will get replied to with a 'Stale NFS File handle' error.
+
+   D/ rpc.statd --no-notify
+       It is best if statd is started before nfsd though this isn't
+       critical.  Certainly it should be at most a few seconds after
+       nfsd.
+       When nfsd starts it will start lockd. If lockd then receives a
+       lock request it will communicate with statd.  If statd is not
+       running lockd will retry, but it won't wait forever for a
+       reply.
+       Note that if statd is started before nfsd, the --no-notify
+       option must be used.  If notify requests are sent out before
+       nfsd start, clients may try to reclaim locks and, on finding
+       that lockd isn't running, they will give up and never reclaim
+       the lock.
+       rpc.statd is only needed for NFSv2 and NFSv3 support.
+
+   E/ rpc.nfsd
+       Starting nfsd will automatically start lockd.  The nfs server
+       will now be fully active and respond to any requests from
+       clients.
+       
+   F/ sm-notify
+       This will notify any client which might have locks from before
+       a reboot to try to reclaim their locks.  This should start
+       immediately after rpc.nfsd is started so that clients have a
+       chance to reclaim locks within the 90 second grace period.
+       sm-notify is only needed for NFSv2 and NFSv3 support.
+
+
+3.2.  CLIENT STARTUP
+
+   A/ sm-notify
+      This should be run shortly after boot and before any NFS
+      filesystems are mounted with remote-locking support -
+      filesystems can be mounted with "-o nolock" before sm-notify.
+      This is appropriate for '/', '/usr', and '/var'.
+
+   B/ gssd ; idmapd
+      idmapd should be started before mounting any NFSv4 filesystems.
+      gssd should be started before mounting any NFS filesystems
+      securely (with Kerberos of SPKM3).
+
+   C/ statd should be run before any NFSv2 or NFSv3 filesystem is
+      mounted with remote locking (i.e. without -o nolock).
+      'mount' will try to use "/usr/sbin/start-statd" to start statd
+      if it is not already running, so there is no need to explicitly
+      start statd in boot-time scripts.
+
+3.3.  SERVER/CLIENT INTERACTIONS
+
+   A/ sm-notify
+      Both the server and the client need sm-notify to be run.
+      It should be run after the NFS server is started, but before
+      and NFS filesystems are mounted with remote locking.
+
+   B/ rpc.statd
+      Both the server and the client need rpc.statd to be running.
+      Each should try to start when they need it.
+
+   C/ idmapd
+
+      Both the server and client need idmapd to be running.  If idmapd
+      is started (for the client) before starting nfsd the 'nfsd'
+      filesystem is mounted, then idmapd should be sent a HUP signal
+      afterwards to signal that the server channels should be opened.
+
+   
+      
+
+Share And Enjoy!
+
+    --	the nfs-utils developers
+	<linux-nfs@vger.kernel.org>

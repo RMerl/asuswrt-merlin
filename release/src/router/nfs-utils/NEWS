@@ -1,0 +1,63 @@
+Significant changes for nfs-utils 1.1.0 - March/April 2007
+
+ - rpc.lockd is gone.  One 3 old kernel releases need it.
+ - rpc.rquotad is gone.  Use the one from the 'quota' package.
+   Everone else does.
+ - /sbin/{u,}mount.nfs{,4} are now installed so 'mount' will
+   use these to mount nfs filesystems instead of internal code.
+  + mount.nfs will check for 'statd' to be running when mounting
+    a filesystem which requires it.  If it is not running it will
+    run "/usr/sbin/start-statd" to try to start it.
+    If statd is not running and cannot be started, mount.nfs will
+    refuse to mount the filesystem and will suggest the 'nolock'
+    option.
+ - Substantial changes to statd
+  + The 'notify' process that must happen at boot has been split
+    into a separate program "sm-notify".  It ensures that it
+    only runs once even if you restart statd.  This is correct
+    behaviour.
+  + statd stores state in the files in /var/lib/nfs/sm/ so that
+    if you kill and restart it, it will restore that state and
+    continue working correctly.
+  + statd makes more use of DNS lookup and should handle
+    multi-homed peers better.  In particular, files in
+    /var/lib/nfs/sm/ are named with the Full Qualified Domain Name
+    if available.
+ - If you export a directory as 'crossmnt', all filesystems
+   mounted beneath are automatically exported with the same
+   options (unless explicitly exported with different options).
+ - subtree_check is no-longer the default.  The default is now
+   no_subtree_check.
+ - By default the system 'rpcgen' is used while building
+   nfs-utils rather than the internal one.
+ - Exportfs will warn if you try to export a filesystem that does
+   not support NFS export.
+ - Comprehensive notes on startup dependencies have been added
+   to the README file.
+ - Mount and statd now listen on a non-privileged port by default.
+   For maximum safety an upgrade to portmap-6.0 is recommended.
+        http://neil.brown.name/portmap/
+        git://neil.brown.name/portmap
+
+ - This release should work with MIT Kerberos and Heimdal 0.8.1 and later.
+
+ - A new option, -n, was added to rpc.gssd which specifies that
+   accesses by root should not use 'machine credentials' when
+   accessing NFS file systems mounted with Kerberos.  Using this
+   option allows the root user to access the NFS space using any
+   Kerberos principal, rather than always using the machine
+   credentials.  However, its use also requires that root manually
+   authenticate before attempting a mount with Kerberos.
+
+   When rpc.gssd uses machine credentials, the selection algorithm has
+   been changed.  Instead of simply using the first "nfs/*" key in the
+   keytab, the keytab is now searched for keys in the following
+   defined order:
+
+     root/<fqdn>@REALM
+     nfs/<fqdn>@REALM
+     host/<fqdn>@REALM
+     root/<any-name>@REALM
+     nfs/<any-name>@REALM
+     host/<any-name>@REALM
+

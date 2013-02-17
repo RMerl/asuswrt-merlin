@@ -1,0 +1,121 @@
+
+Todo/Status List for Linux-NFS
+
+ *	denotes to be done;
+ o	denotes draft implementation, possibly commented out
+ -	denotes done,
+ +	denotes done and tested
+------------------------------------------------------------------
+
+RPC:
+
+ *	Server-side AUTH_DES authentication
+
+NFS:
+
+ *	stat() calls don't check whether the cached attrs are stil valid
+	(this is a problem in the VFS).
+ -	NFS_ROOT stuff needs fixing.
+ o	Swapping over NFS.
+
+	Issues of swapout:
+	 *	Avoid recursion in low memory situations where
+		kmalloc may call try_to_swap_out etc ad inf.
+	 *	Don't do async I/O on swap files.
+
+	For special-casing related to NFS swap I/O, flag swap file 
+	semantics in inode->i_flags. In swapfile.c, change functions
+	to call readpage/writepage if available, otherwise proceed
+	as usual.
+
+ -	Write-back support.
+ *	Disable page cache invalidation/flushing for locked file
+	regions.
+ -	Directory caching (we now have page-sized dircache entries
+	which could easily be organized into a linked list). These
+	dircache pages come along as a linked list that can be copied
+	almost 1-to-1 into a dirent struct. If this is put into the
+	VFS, other remote fs's will also benefit.
+
+	[Note: I just increased the readdir cache to hold more than
+	one directory. With this, the exclusive lock on readdir goes
+	away, too. With a larger cache, it may also be worth to think
+	about directory readahead...]
+ *	Better lookup caching?
+ *	When a read lock is present, don't time out attr cache or
+	page cache for that region. Likewise, if a write lock is present,
+	be lazy on write-back.
+ *	Implement CTO.
+ -	BUG: Invalidate readdir cache after remove/rename/unlink
+ *	Automatic `mounting' when the server crosses mount points
+	transparently (some IRIX machines seem to do this when
+	using -nohide).
+ *	NFSv3 support. This requires careful design to maximize
+	code sharing between NFSv2 and NFSv3.
+ *	More robust rename handling (see comment before nfs_rename).
+ *	Add Miquel's O_EXCL hack for file creation.
+ *	Performance improvement: When a complete reply is received, and
+	the (async) task is woken up, don't put it on rpciod's scheduling
+	queue, but add it to a `fast scheduler queue.' The fast scheduler
+	could be a special handler that's registered on the tq_scheduler task
+	queue. This queue is fired by the kernel scheduler as soon as
+	the other bottom halves have been run.
+
+	Note that implementing this for sync tasks is even trickier than
+	for async tasks, because you have to make sure you do the right
+	thing in rpc_sleep_on().
+ *	writeback of writable mmaps. Dirty pages are not subject to
+	writeback scheduling. Also, msync should make sure pages are
+	written with O_SYNC on.
+
+
+nfsd:
+
+ *	uid/gid mapping, and rpc.ugidd support
+ -	Don't read/write a file that might have mandatory locks.
+ *	Implement secure/kerberos export options (take care of lockd
+	fopen() calls--most clients seem to use NULL creds for lockd).
+ -	there's a bug in readdir wrt large directories. Try mounting
+	the linux source tree and do an ls on include/linux...
+ *	Support for UNIX socket creation.
+ *	Someone should look over the error return codes. I tend to
+	mix up EPERM and EACCES.
+ *	NFSv3 support.
+ -	Refuse to look up inodes in procfs (security issues).
+ o	Delayed writes (delay syncing of file data when nfsd handles
+	several write requests for the same file concurrently).
+	(Draft - see nfsd_write in fs/nfsd/write.c. Needs benchmarking).
+ *	Faster read operations (single copy): mmap the file region
+	to be read into VM, and pass the VMA to the xdr routines
+	which pass the region's VM address into sock->ops->writemsg.
+	This copies the file data directly from the page cache into
+	the network buffer.
+	Release the vma region after encoding.
+ *	Faster write operations (single copy, with IPv6 net layout):
+	Get the unfragmented UDP datagram, pull the header and
+	do normal processing. Then mmap the file, copy the write data,
+	and release VMA.
+ -	Clear setuid/setgid bit after write().
+ *	Quota support.
+
+lockd:
+
+ *	Server should run on privileged port.
+ *	Testing reclaim support.
+ *	HP lockd accepts our GRANT_MSG callback and passes on the grant
+	to the blocking process, but doesn't reply with a GRANT_RES. 
+	It's not clear to me why it would do this.
+ *	Unregister hosts (SM_UNMON) with rpc.statd when appropriate.
+
+mountd
+
+ *	Unregister service from portmapper upon exit/SIGTERM
+
+mount
+
+ *	If available, use version 3 of the mount protocol and
+	obtain pathconf data (fill in data->bsize).
+
+documentation:
+
+ -	Manpages need to be written

@@ -417,6 +417,10 @@ define RouterOptions
 			sed -i "/RTCONFIG_USB_WEBDAV/d" $(1); \
 			echo "RTCONFIG_USB_WEBDAV=y" >>$(1); \
 		fi; \
+		if [ "$(NFS)" = "y" ]; then \
+			sed -i "/RTCONFIG_NFS/d" $(1); \
+			echo "RTCONFIG_NFS=y" >>$(1); \
+		fi; \
 	else \
 		sed -i "/RTCONFIG_USB\b/d" $(1); \
 		echo "# RTCONFIG_USB is not set" >>$(1); \
@@ -552,6 +556,10 @@ define BusyboxOptions
 		fi; \
 	fi; \
 	if [ "$(USB)" = "USB" ]; then \
+		if [ "$(NFS)" = "y" ]; then \
+			sed -i "/CONFIG_FEATURE_MOUNT_NFS/d" $(1); \
+	                echo "CONFIG_FEATURE_MOUNT_NFS=y" >>$(1); \
+		fi; \
 		if [ "$(USBEXTRAS)" = "y" ]; then \
 			sed -i "/CONFIG_E2FSCK/d" $(1); \
 			echo "CONFIG_E2FSCK=n" >>$(1); \

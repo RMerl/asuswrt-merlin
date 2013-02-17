@@ -1,0 +1,202 @@
+.\"
+.\" mountd(8)
+.\"
+.\" Copyright (C) 1999 Olaf Kirch <okir@monad.swb.de>
+.\" Modified by Paul Clements, 2004.
+.TH rpc.mountd 8 "31 Aug 2004"
+.SH NAME
+rpc.mountd \- NFS mount daemon
+.SH SYNOPSIS
+.BI "/usr/sbin/rpc.mountd [" options "]"
+.SH DESCRIPTION
+The
+.B rpc.mountd
+program implements the NFS mount protocol. When receiving a MOUNT
+request from an NFS client, it checks the request against the list of
+currently exported file systems. If the client is permitted to mount
+the file system,
+.B rpc.mountd
+obtains a file handle for requested directory and returns it to
+the client.
+.SS Exporting NFS File Systems
+Making file systems available to NFS clients is called
+.IR exporting .
+.P
+Usually, a file system and the hosts it should be made available to
+are listed in the
+.B /etc/exports
+file, and invoking
+.B exportfs -a
+whenever the system is booted. The
+.BR exportfs (8)
+command makes export information available to both the kernel NFS
+server module and the
+.B rpc.mountd
+daemon.
+.P
+Alternatively, you can export individual directories temporarily 
+using
+.BR exportfs 's
+.IB host : /directory
+syntax.
+.SS The rmtab File
+For every mount request received from an NFS client,
+.B rpc.mountd
+adds an entry to the
+.B /var/lib/nfs/rmtab
+file. When receiving an unmount request, that entry is removed.
+.P
+However, this file is mostly ornamental. One, the client can continue
+to use the file handle even after calling
+.B rpc.mountd 's
+UMOUNT procedure. And two, if a client reboots without notifying
+.B rpc.mountd ,
+a stale entry will remain in
+.BR rmtab .
+.SH OPTIONS
+.TP
+.B \-d kind " or " \-\-debug kind
+Turn on debugging. Valid kinds are: all, auth, call, general and parse.
+.TP
+.B \-F " or " \-\-foreground
+Run in foreground (do not daemonize)
+.TP
+.B \-f " or " \-\-exports-file
+This option specifies the exports file, listing the clients that this
+server is prepared to serve and parameters to apply to each
+such mount (see
+.BR exports (5)).
+By default, export information is read from
+.IR /etc/exports .
+.TP
+.B \-h " or " \-\-help
+Display usage message.
+.TP
+.B \-o num " or " \-\-descriptors num
+Set the limit of the number of open file descriptors to num. The
+default is to leave the limit unchanged.
+.TP
+.B \-N " or " \-\-no-nfs-version
+This option can be used to request that
+.B rpc.mountd
+do not offer certain versions of NFS. The current version of
+.B rpc.mountd
+can support both NFS version 2 and the newer version 3. If the
+NFS kernel module was compiled without support for NFSv3,
+.B rpc.mountd
+must be invoked with the option
+.B "\-\-no-nfs-version 3" .
+.TP
+.B \-n " or " \-\-no-tcp
+Don't advertise TCP for mount.
+.TP
+.B \-P
+Ignored (compatibility with unfsd??).
+.TP
+.B \-p " or " \-\-port num
+Force
+.B rpc.mountd
+to bind to the specified port num, instead of using the random port
+number assigned by the portmapper.
+.TP
+.B \-H " or " \-\-ha-callout prog
+Specify a high availability callout program, which will receive callouts
+for all client mount and unmount requests. This allows 
+.B rpc.mountd
+to be used in a High Availability NFS (HA-NFS) environment. This callout is not
+needed (and should not be used) with 2.6 and later kernels (instead,
+mount the nfsd filesystem on
+.B /proc/fs/nfsd
+).
+The program will be called with 4 arguments.
+The first will be
+.B mount
+or
+.B unmount
+depending on the reason for the callout.
+The second will be the name of the client performing the mount.
+The third will be the path that the client is mounting.
+The last is the number of concurrent mounts that we believe the client
+has of that path.
+.TP
+.BI "\-s," "" " \-\-state\-directory\-path "  directory
+specify a directory in which to place statd state information.
+If this option is not specified the default of
+.BR /var/lib/nfs
+is used.
+.TP
+.BI "\-r," "" " \-\-reverse\-lookup"
+mountd tracks IP addresses in the rmtab, and when a DUMP request is made (by
+someone running showmount -a, for instance), it returns IP addresses instead
+of hostnames by default. This option causes mountd to do a reverse
+lookup on each IP address and return that hostname instead. Enabling this can
+have a substantial negative effect on performance in some situations.
+.TP
+.BR "\-t N" " or " "\-\-num\-threads=N"
+This option specifies the number of worker threads that rpc.mountd
+spawns.  The default is 1 thread, which is probably enough.  More
+threads are usually only needed for NFS servers which need to handle
+mount storms of hundreds of NFS mounts in a few seconds, or when
+your DNS server is slow or unreliable.
+.TP
+.B \-V " or " \-\-nfs-version
+This option can be used to request that
+.B rpc.mountd
+offer certain versions of NFS. The current version of
+.B rpc.mountd
+can support both NFS version 2 and the newer version 3.
+.TP
+.B \-v " or " \-\-version
+Print the version of
+.B rpc.mountd
+and exit.
+.TP
+.B \-g " or " \-\-manage-gids
+Accept requests from the kernel to map user id numbers into  lists of
+group id numbers for use in access control.  An NFS request will
+normally (except when using Kerberos or other cryptographic
+authentication) contains a user-id and a list of group-ids.  Due to a
+limitation in the NFS protocol, at most 16 groups ids can be listed.
+If you use the
+.B \-g
+flag, then the list of group ids received from the client will be
+replaced by a list of group ids determined by an appropriate lookup on
+the server. Note that the 'primary' group id is not affected so a
+.I newgroup
+command on the client will still be effective.  This function requires
+a Linux Kernel with version at least 2.6.21.
+
+.SH TCP_WRAPPERS SUPPORT
+This
+.B rpc.mountd
+version is protected by the
+.B tcp_wrapper
+library. You have to give the clients access to
+.B rpc.mountd
+if they should be allowed to use it. To allow connects from clients of
+the .bar.com domain you could use the following line in /etc/hosts.allow:
+
+mountd: .bar.com
+
+You have to use the daemon name 
+.B mountd
+for the daemon name (even if the binary has a different name).
+.B Note:
+hostnames used in either access file will be ignored when
+they can not be resolved into IP addresses.
+
+For further information please have a look at the
+.BR tcpd (8)
+and
+.BR hosts_access (5)
+manual pages.
+.SH SEE ALSO
+.BR rpc.nfsd (8),
+.BR exportfs (8),
+.BR exports (5),
+.BR rpc.rquotad (8).
+.SH FILES
+.BR /etc/exports ,
+.BR /var/lib/nfs/xtab .
+.SH AUTHOR
+Olaf Kirch, H. J. Lu, G. Allan Morris III, and a host of others.

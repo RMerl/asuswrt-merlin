@@ -1,0 +1,9 @@
+#!/bin/sh -p
+# nfsmount calls this script when mounting a filesystem with locking
+# enabled, but when statd does not seem to be running (based on
+# /var/run/rpc.statd.pid).
+# It should run run statd with whatever flags are apropriate for this
+# site.
+PATH=/sbin:/usr/sbin
+exec rpc.statd --no-notify
+

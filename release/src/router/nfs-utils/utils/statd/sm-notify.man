@@ -1,0 +1,166 @@
+.\"
+.\" sm-notify(8)
+.\"
+.\" Copyright (C) 2004 Olaf Kirch <okir@suse.de>
+.TH sm-notify 8 "19 Mar 2007
+.SH NAME
+sm-notify \- Send out NSM reboot notifications
+.SH SYNOPSIS
+.BI "/sbin/sm-notify [-dfq] [-m " time "] [-p " port "] [-P " path "] [-v " my_name " ]
+.SH DESCRIPTION
+File locking over NFS (v2 and v3) requires a facility to notify peers in
+case of a reboot, so that clients can reclaim locks after
+a server crash, and/or
+servers can release locks held by the rebooted client.
+.PP
+This is a two-step process: during normal
+operations, a mechanism is required to keep track of which
+hosts need to be informed of a reboot. And of course,
+notifications need to be sent out during reboot.
+The protocol used for this is called NSM, for
+.IR "Network Status Monitor" .
+.PP
+This implementation separates these into separate program.
+.B rpc.statd
+tracks hosts which need to be notified and this
+.B sm-notify
+performs the notification.  When
+.B rpc.statd
+is started it will typically started
+.B sm-notify
+but this is configurable.
+.SS Operation
+For each NFS client or server machine to be monitored,
+.B rpc.statd
+creates a file in
+.BR /var/lib/nfs/sm ", "
+and removes the file if monitoring is no longer required.
+.PP
+When the machine is rebooted,
+.B sm-notify
+iterates through these files and notifies the peer
+.B statd
+server on those machines.
+.PP
+Each machine has an
+.I "NSM state" ,
+which is basically an integer counter that is incremented
+each time the machine reboots. This counter is stored
+in
+.BR /var/lib/nfs/state ,
+and updated by
+.BR sm-notify .
+.SS Security
+.B sm-notify
+has little need for root privileges and so drops them as soon as
+possible.
+It continues to need to make changes to the
+.B sm
+and
+.B sm.bak
+directories so to be able to drop privileges, these must be writable
+by a non-privileged user.  If these directories are owned by a
+non-root user,
+.B sm-notify
+will drop privilege to match that user once it has created sockets for
+sending out request (for which it needs privileged) but before it
+processes any reply (which is the most likely source of possible
+privilege abuse).
+.SH OPTIONS
+.TP
+.BI -m " failtime
+When notifying hosts,
+.B sm-notify
+will try to contact each host for up to 15 minutes,
+and will give up if unable to reach it within this time
+frame.
+.IP
+Using the
+.B -m
+option, you can override this. A value of 0 tells
+sm-notify to retry indefinitely; any other value is
+interpreted as the maximum retry time in minutes.
+.TP
+.BI -v " ipaddr-or-hostname
+This option tells
+.B sm-notify
+to bind to the specified
+.IR ipaddr ,
+(or the ipaddr of the given
+.IR hostname )
+so that all notification packets originate from this address.
+This is useful for NFS failover.  The given name is also used as the
+.I name
+of this host in the NSM request.
+.TP
+.BI -p " port
+instructs
+.B sm-notify
+to bind to the indicated IP
+.IR port
+number. If this option is not given, it will try to bind to
+a randomly chosen privileged port below 1024.
+.TP
+.B -q
+Be quiet. This suppresses all messages except error
+messages while collecting the list of hosts.
+.TP
+.BI -P " /path/to/state/directory
+If
+.B sm-notify
+should look in a no-standard place of state file, the path can be
+given here.  The directories
+.B sm
+and
+.B sm.bak
+and the file
+.B state
+must exist in that directory with the standard names.
+.TP
+.B -f
+If the state path has not been reset with
+.BR -P ,
+.B sm-notify
+will normally create a file in
+.B /var/run
+to indicate that it has been
+run.  If this file is found when
+.B sm-notify
+starts, it will not run again (as it is normally only needed once per
+reboot).
+If
+.B -f
+(for
+.BR force )
+is given,
+.B sm-notify
+will run even if the file in
+.B /var/run
+is present.
+.TP
+.B -n
+Do not update the NSM state. This is for testing only.  Setting this
+flag implies
+.BR -f .
+.TP
+.B -d
+Enables debugging.
+By default,
+.B sm-notify
+forks and puts itself in the background after obtaining the
+list of hosts from
+.BR /var/lib/nfs/sm .
+.SH FILES
+.BR /var/lib/nfs/state
+.br
+.BR /var/lib/nfs/sm/*
+.br
+.BR /var/lib/nfs/sm.bak/*
+.br
+.BR /var/run/sm-notify.pid
+.SH SEE ALSO
+.BR rpc.nfsd(8),
+.BR portmap(8)
+.SH AUTHORS
+.br
+Olaf Kirch <okir@suse.de>

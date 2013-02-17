@@ -1,0 +1,5 @@
+from_local.o: from_local.c
+pmap_check.o: pmap_check.c pmap_check.h
+pmap_dump.o: pmap_dump.c
+pmap_set.o: pmap_set.c
+portmap.o: portmap.c pmap_check.h

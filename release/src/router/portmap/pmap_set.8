@@ -1,0 +1,24 @@
+.TH PMAP_SET 8 "21th June 1997" Linux "Linux Programmer's Manual"
+.SH NAME
+pmap_set \- set the list of registered RPC programs
+.SH SYNOPSIS
+.B pmap_set
+.SH DESCRIPTION
+The
+.B pmap_set
+command can be used to restart a running portmapper or to set
+the list of registered RPC programs on the local host. If you
+want to use the program to restart the portmapper you have to
+redirect the output of
+.B pmap_dump
+to a file. After this you can restart the portmapper and restore
+the list of the registered RPC programs by feeding the output
+of
+.B pmap_dump
+to the
+.B pmap_set
+command.
+.SH SEE ALSO
+.BR pmap_dump (8),
+.BR portmap (8)
+

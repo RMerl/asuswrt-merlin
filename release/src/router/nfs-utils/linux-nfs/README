@@ -1,0 +1,56 @@
+
+This package contains a greatly revised NFS implementation for Linux
+along with the necessary daemons and utilities. There are still several
+features missing that I'd want to include, and there are some recent
+improvements to the Linux NFS kernel client not reflected here (notably
+the attrtimeo fix).
+
+This thing has become much too large for me to handle all alone anymore.
+Originally, I had planned to have most of the NFS implementation running
+stably by August, so I could start to concentrate more on other jobs that
+are currently in the queue (like updating the NAG). As it turned out, it
+was much more work than I anticipated, and I fell short of my time goal.
+I'm therefore looking for volunteers who would like to work with me on
+finishing this package. Otherwise, this project could end up rusting in
+the corner of some FTP site...
+
+Ideally, I would want to hand over parts of the source tree to other
+hackers to maintain/enhance/etc. But that's not a requirement; if you
+feel you don't have that much time, you can also contribute by picking
+up one of the loose ends and finish what needs to be done (take a look
+at the TODO file...) And then, you can also be plainly a tester.
+
+There's currently a mailing list for lockd development at NRAO
+(lockd-statd@linux.nrao.edu --- mail majordomo@linux.nrao.edu to
+subscribe). If Jeff agress, we could turn this into a general linux-nfs
+mailing list.
+
+
+Hope this covers about what I wanted to say,
+Olaf
+
+------------------------------------------------------------------
+
+
+			SOURCE TREE OVERVIEW
+
+
+
+support/	Support libraries for user-space programs
+
+support/nfs	Generic library for nfsd utilities
+support/export	Manipulation of /etc/exports and /var/lib/nfs/{xtab,rmtab}
+
+utils/		Code for various user-space programs.
+utils/exportfs	Management of nfsd export table.
+utils/mount	Modified mount command to support NFS over TCP.
+utils/mountd	New rpc.mountd for kernel nfsd.
+utils/nfsd	New nfsd (just starts kernel nfsd).
+utils/nfsstat	Pretty-print NFS stats from /proc/net/rpc/nfs*
+utils/rquotad	Marco van Wieringen's rquotad
+utils/showmount	Rick Sladkey's showmount client
+utils/statd	Jeff Uphoff's rpc.statd.
+
+tools/		Support tools for developers/debuggers/testers
+tools/rpcdebug	This one sets/gets the debug flags for each of the kernel
+		modules.

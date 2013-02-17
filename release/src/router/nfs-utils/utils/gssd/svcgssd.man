@@ -1,0 +1,49 @@
+.\"
+.\" rpc.svcgssd(8)
+.\"
+.\" Copyright (C) 2003 J. Bruce Fields <bfields@umich.edu>
+.TH rpc.svcgssd 8 "12 Jan 2007"
+.SH NAME
+rpc.svcgssd \- server-side rpcsec_gss daemon
+.SH SYNOPSIS
+.B "rpc.svcgssd [-v] [-r] [-i] [-f] [-p pipefsdir]"
+.SH DESCRIPTION
+The rpcsec_gss protocol gives a means of using the gss-api generic security
+api to provide security for protocols using rpc (in particular, nfs).  Before
+exchanging any rpc requests using rpcsec_gss, the rpc client must first
+establish a security context with the rpc server.  The linux kernel's
+implementation of rpcsec_gss depends on the userspace daemon
+.B rpc.svcgssd
+to handle context establishment on the rpc server.  The
+daemon uses files in the proc filesystem to communicate with
+the kernel.
+
+.SH OPTIONS
+.TP
+.B -f
+Runs
+.B rpc.svcgssd
+in the foreground and sends output to stderr (as opposed to syslogd)
+.TP
+.B -v
+Increases the verbosity of the output (can be specified multiple times).
+.TP
+.B -r
+If the rpcsec_gss library supports setting debug level,
+increases the verbosity of the output (can be specified multiple times).
+.TP
+.B -i
+If the nfsidmap library supports setting debug level,
+increases the verbosity of the output (can be specified multiple times).
+
+.SH SEE ALSO
+.BR rpc.gssd(8),
+.SH AUTHORS
+.br
+Dug Song <dugsong@umich.edu>
+.br
+Andy Adamson <andros@umich.edu>
+.br
+Marius Aamodt Eriksen <marius@umich.edu>
+.br
+J. Bruce Fields <bfields@umich.edu>

@@ -10,7 +10,7 @@ lib-y := ctype.o string.o vsprintf.o cmdline.o \
 lib-$(CONFIG_MMU) += ioremap.o
 lib-$(CONFIG_SMP) += cpumask.o
 
-lib-y	+= kobject.o kref.o kobject_uevent.o klist.o
+lib-y	+= kobject.o kobject_uevent.o  klist.o
 
 obj-y += div64.o sort.o parser.o halfmd4.o debug_locks.o random32.o \
 	 bust_spinlocks.o hexdump.o
