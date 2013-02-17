@@ -3,4 +3,5 @@
 pmap_dump
 pmap_set
 portmap
+portmap.man
 
