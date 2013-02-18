@@ -12,7 +12,7 @@ function delete_sharedfolder_error(error_msg){
 }
 
 function delete_sharedfolder_success(){
-	if(parent.document.form.current_page.value != "mediaserver.asp" && parent.document.form.current_page.value != "cloud_sync.asp")
+	if(parent.document.form.current_page.value != "mediaserver.asp" && parent.document.form.current_page.value != "Advanced_AiDisk_NFS.asp" && parent.document.form.current_page.value != "Tools_OtherSettings.asp" && parent.document.form.current_page.value != "cloud_sync.asp")
 		parent.refreshpage();
 }
 </script>

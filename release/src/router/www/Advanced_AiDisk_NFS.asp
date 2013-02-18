@@ -75,11 +75,11 @@ var dms_status = <% dms_info(); %>;
 var _dms_dir = '<%nvram_get("dms_dir");%>';
 <% get_AiDisk_status(); %>
 <% disk_pool_mapping_info(); %>
+var PROTOCOL = "cifs";
 var _layer_order = "";
 var FromObject = "0";
 var lastClickedObj = 0;
 var disk_flag=0;
-var PROTOCOL = "cifs";
 window.onresize = cal_panel_block;
 
 var nfsd_enable = '<% nvram_get("nfsd_enable"); %>';
@@ -91,6 +91,7 @@ function initial(){
 	$("option5").className = "m5_r";
 
 	shownfsd_exportlist();
+
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
 }
@@ -108,8 +109,9 @@ function initial_dir_status(data){
 		get_layer_items("0");
 		eval("var default_dir=" + data);
 	}
-	else if( (_dms_dir == "/tmp/mnt" && data == "") || data == ""){
-		$("noUSB").style.display = "";
+	else {
+		$("EditExports").style.display = "none";
+		$("NoUSB").style.display = "";
 		disk_flag=1;
 	}
 }
@@ -688,16 +690,18 @@ function shownfsd_exportlist(){
 									<br><b>Options:</b> Comma-separated list of options to apply to every hosts within that export.
 								</div>
 
+								<div><br><span id="NoUSB" style="display:none;color:#FFCC00;">You need to plug a USB disk to your router to be able to export folders!</span><br></div>
+
 					   			<table class="FormTable" width="100%" cellspacing="1">
 									<tr>
-										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
-										  	<tr>
-									  			<th>Path</th>
-												<th>Access list</th>
-												<th>Options</th>
-												<th>Add / Delete</th>
+										<table  width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
+											<tr>
+									  			<th width="30%">Path</th>
+												<th width="30%">Access list</th>
+												<th width="30%">Options</th>
+												<th width="10%">Add / Delete</th>
 										  	</tr>
-										  	<tr>
+										  	<tr  id="EditExports">
 												<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 
 												<td width="30%">
