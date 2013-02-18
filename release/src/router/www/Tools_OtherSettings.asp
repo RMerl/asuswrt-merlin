@@ -85,13 +85,6 @@ var lastClickedObj = 0;
 var disk_flag=0;
 window.onresize = cal_panel_block;
 
-/*** TODO:
- 
- - See if there is some dms stuff that can be removed
- - Make the directory choser default to the current path if there is one
- - Can the dms stuff be removed?
- ***/
- 
 
 function initial() {
 	show_menu();
