@@ -355,6 +355,10 @@ History
 -------
 
 3.0.0.4.270.25
+   - NEW: NFS folder sharing.  Webui can be found on the AiDisk pages, same place
+          where you can manage SMB and FTP shares.
+   - CHANGED: Added a folder picker to the Tools Other Settings page to select
+              a location to store your traffic data files.
    - FIXED: Added missing badblocks program
    - FIXED: Timing issues under IE where resolved device names would 
             not display on certain pages (such as the Sysinfo page)
