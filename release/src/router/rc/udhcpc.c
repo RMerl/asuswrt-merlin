@@ -350,6 +350,9 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 		"-i", wan_ifname,
 		"-p", (snprintf(pid, sizeof(pid), "/var/run/udhcpc%d.pid", unit), pid),
 		"-s", "/tmp/udhcpc",
+		"-t", "2",	/* Two DISC packets max */
+		"-T", "5",	/* 5 seconds between packets */
+		"-A", "120",	/* Wait 120 seconds before trying again */
 		NULL,		/* -b */
 		NULL, NULL,	/* -H wan_hostname */
 		NULL,		/* -Oroutes */
