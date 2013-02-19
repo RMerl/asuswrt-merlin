@@ -145,6 +145,8 @@ certain events occur.  Those scripts must be saved in /jffs/scripts/
 - post-mount:  Just after a partition is mounted
 - unmount: Just before unmounting a partition.  This is a blocking script, so be
   careful with it.  The mount point is passed as an argument to the script.
+- dhcpc-event: Called whenever a DHCP event occurs on the WAN interface.
+               The type of event (bound, release, etc...) is passed as an argument.
 
 Don't forget to set them as executable:
 
@@ -340,6 +342,7 @@ The list of available config overrides:
 * radvd.conf
 * fstab (only fstab supported, remember to create mount point
         through init-start first if it doesn't exist!)
+* group, gshadow, passwd, shadow (only .add versions supported)
 
 
 Source code
@@ -357,12 +360,20 @@ History
 3.0.0.4.270.25
    - NEW: NFS folder sharing.  Webui can be found on the AiDisk pages, same place
           where you can manage SMB and FTP shares.
+   - NEW: dhcpc-event and zcip-event scripts (called on WAN events)
+   - NEW: Ccustom configs: group.add, gshadow.add, passwd.add, shadow.add
    - CHANGED: Added a folder picker to the Tools Other Settings page to select
               a location to store your traffic data files.
    - FIXED: Added missing badblocks program
    - FIXED: Timing issues under IE where resolved device names would 
             not display on certain pages (such as the Sysinfo page)
    - FIXED: VPN client "common name" wasn't getting saved
+   - FIXED: DHCP client will be less aggressive in attempting to obtain
+            a lease (wait 2 mins instead of 20 secs between attempts),
+            should help with ISPs like Charter who will blacklist you 
+            if you send too many Discovery packets in a short period of time.
+   - FIXED: Made profile.add be run after any Optware profile, so the user
+            changes will have priority over anything else.
 
 
 3.0.0.4.270.24
