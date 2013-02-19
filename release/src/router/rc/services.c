@@ -136,6 +136,7 @@ void create_passwd(void)
 #endif
 
 		fappend(f, "/etc/shadow.custom");
+		append_custom_config("shadow", f);
 		fclose(f);
 	}
 	umask(m);
@@ -159,6 +160,9 @@ void create_passwd(void)
 	f_write_string("/etc/passwd", s, 0, 0644);
 	fappend_file("/etc/passwd", "/etc/passwd.custom");
 
+//	append_custom_config() - saves us from opening the file first
+	fappend_file("/etc/passwd", "/jffs/configs/passwd.add");
+
 	sprintf(s,
 		"%s:*:0:\n"
 #ifdef RTCONFIG_SAMBASRV	//!!TB
@@ -168,6 +172,8 @@ void create_passwd(void)
 		http_user);
 	f_write_string("/etc/gshadow", s, 0, 0644);
 	fappend_file("/etc/gshadow", "/etc/gshadow.custom");
+//      append_custom_config();
+        fappend_file("/etc/gshadow", "/jffs/configs/gshadow.add");
 
 	f_write_string("/etc/group",
 		"root:x:0:\n"
@@ -177,6 +183,8 @@ void create_passwd(void)
 		"nobody:x:65534:\n",
 		0, 0644);
 	fappend_file("/etc/group", "/etc/group.custom");
+//      append_custom_config();
+        fappend_file("/etc/group", "/jffs/configs/group.add");
 }
 
 void start_dnsmasq()
