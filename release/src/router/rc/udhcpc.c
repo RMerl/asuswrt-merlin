@@ -322,6 +322,9 @@ int
 udhcpc_wan(int argc, char **argv)
 {
 	_dprintf("%s:: %s\n", __FUNCTION__, argv[1]);
+
+	run_custom_script("dhcpc-event", argv[1]);
+
 	if (!argv[1])
 		return EINVAL;
 	else if (strstr(argv[1], "deconfig"))
@@ -481,6 +484,9 @@ int
 zcip_wan(int argc, char **argv)
 {
 	_dprintf("%s:: %s\n", __FUNCTION__, argv[1]);
+
+        run_custom_script("zcip-event", argv[1]);
+
 	if (!argv[1])
 		return EINVAL;
 	else if (strstr(argv[1], "deconfig"))
@@ -606,6 +612,8 @@ renew_lan(void)
 int
 udhcpc_lan(int argc, char **argv)
 {
+        run_custom_script("dhcpc-event", argv[1]);
+
 	if (!argv[1])
 		return EINVAL;
 	else if (strstr(argv[1], "deconfig"))
