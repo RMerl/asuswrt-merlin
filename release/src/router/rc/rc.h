@@ -268,6 +268,8 @@ extern long fappend(FILE *out, const char *fname);
 extern long fappend_file(const char *path, const char *fname);
 extern void logmessage(char *logheader, char *fmt, ...);
 extern char *trim_r(char *str);
+extern void run_custom_script(char *name, char *args);
+extern void run_custom_script_blocking(char *name, char *args);
 
 
 // ssh.c

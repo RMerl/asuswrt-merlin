@@ -1416,15 +1416,15 @@ void setup_dnsmq(int mode)
 }
 #endif
 
-void run_custom_script(char *name)
+void run_custom_script(char *name, char *args)
 {
 	char script[120];
 
 	sprintf(script, "/jffs/scripts/%s", name);
 
 	if(f_exists(script)) {
-		_dprintf("Script: running %s\n", script);
-		xstart(script);
+		_dprintf("Script: running %s (args: %s)\n", script, args);
+		xstart(script, args);
 	}
 }
 

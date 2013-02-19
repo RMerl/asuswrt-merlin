@@ -1894,7 +1894,7 @@ int init_main(int argc, char *argv[])
 	start_jffs2();
 #endif
 
-	run_custom_script("init-start");
+	run_custom_script("init-start", NULL);
 	use_custom_config("fstab", "/etc/fstab");
 
 	state = SIGUSR2;	/* START */

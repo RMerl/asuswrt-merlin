@@ -2496,7 +2496,7 @@ start_services(void)
 	start_webdav();
 #endif
 
-	run_custom_script("services-start");
+	run_custom_script("services-start", NULL);
 
 	return 0;
 }
@@ -2514,7 +2514,7 @@ void
 stop_services(void)
 {
 
-	run_custom_script("services-stop");
+	run_custom_script("services-stop", NULL);
 
 #ifdef RTCONFIG_WEBDAV
 	stop_webdav();
@@ -3976,7 +3976,7 @@ void start_nat_rules() {
 
 	eval("iptables-restore", NAT_RULES);
 
-	run_custom_script("nat-start");
+	run_custom_script("nat-start", NULL);
 	return;
 }
 
