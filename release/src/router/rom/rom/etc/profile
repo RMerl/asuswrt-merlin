@@ -8,5 +8,5 @@ ldd() {
 	LD_TRACE_LOADED_OBJECTS=1 $*;
 }
 
-[ -f /jffs/configs/profile.add ] && . /jffs/configs/profile.add
 [ -f /opt/etc/profile ] && . /opt/etc/profile
+[ -f /jffs/configs/profile.add ] && . /jffs/configs/profile.add
