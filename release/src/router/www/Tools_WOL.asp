@@ -149,7 +149,7 @@ function del_Row(r){
 
   var wol_list_value = "";
 	for(k=0; k<$('wol_list_table').rows.length; k++){
-		for(j=0; j<$('wol_list_table').rows[k].cells.length-1; j++){
+		for(j=0; j<$('wol_list_table').rows[k].cells.length-2; j++){
 			if(j == 0)
 				wol_list_value += "&#60";
 			else
