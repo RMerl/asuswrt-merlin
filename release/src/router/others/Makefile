@@ -37,4 +37,7 @@ ifeq ($(RTCONFIG_OPENVPN),y)
 	install -m 0700 setuprsa.sh $(INSTALLDIR)/usr/sbin
 endif
 
+# Entware setup script
+	install -m 0700 entware-setup.sh $(INSTALLDIR)/usr/sbin
+
 clean:
