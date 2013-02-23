@@ -1838,7 +1838,7 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	if (ipv6_enabled() && (fp_ipv6=fopen("/tmp/filter_rules_ipv6", "w"))==NULL) return;
 #endif
 
-	fprintf(fp, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:FUPNP - [0:0]\n");
+	fprintf(fp, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT ACCEPT [0:0]\n:FUPNP - [0:0]\n");
 #ifdef RTCONFIG_PARENTALCTRL
 	fprintf(fp, ":PControls - [0:0]\n");
 #else
@@ -2651,6 +2651,8 @@ TRACE_PT("filterstr %s %s\n", timef, filterstr);
 		}
 	}
 #endif
+
+	fprintf(fp, "-A FORWARD -i %s -o %s -j DROP\n", lan_if, wan_if);
 
 	fprintf(fp, "COMMIT\n\n");
 	fclose(fp);
