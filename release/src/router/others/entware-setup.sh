@@ -61,7 +61,7 @@ echo Info: Creating /tmp/opt symlink...
 ln -s $entFolder /tmp/opt
 
 echo Info: Creating /jffs scripts backup...
-tar -cvzf $entPartition/jffs_scripts_backup.tgz /jffs/*
+tar -cvzf $entPartition/jffs_scripts_backup.tgz /jffs/scripts/*
 
 echo "Info: Modifying start scripts..."
 cat > /jffs/scripts/services-start << EOF
