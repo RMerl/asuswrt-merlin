@@ -1,23 +1,30 @@
 #!/bin/sh
 
+BOLD="\033[1m"
+NORM="\033[0m"
+INFO="$BOLD Info: $NORM"
+ERROR="$BOLD *** Error: $NORM"
+WARNING="$BOLD * Warning: $NORM"
+INPUT="$BOLD => $NORM"
+
 i=1 # Will count available partitions (+ 1)
 cd /tmp
 
-echo Info: This script will guide you through the Entware installation.
-echo Info: Script modifies only \"entware\" folder on the chosen drive,
-echo Info: no other data will be touched. Existing installation will be
-echo Info: replaced with this one. Also some start scripts will be installed,
-echo Info: the old ones will be saved to .\entware\jffs_scripts_backup.tgz
+echo -e $INFO This script will guide you through the Entware installation.
+echo -e $INFO Script modifies only \"entware\" folder on the chosen drive,
+echo -e $INFO no other data will be touched. Existing installation will be
+echo -e $INFO replaced with this one. Also some start scripts will be installed,
+echo -e $INFO the old ones will be saved to .\entware\jffs_scripts_backup.tgz
 echo 
 
 if [ ! -d /jffs/scripts ]
 then
-  echo Error: Please enable JFFS partition from web UI, reboot router and
-  echo Error: try again.  Exiting...
+  echo -e "$ERROR Please enable JFFS partition from web UI, reboot router and"
+  echo -e "$ERROR try again.  Exiting..."
   exit 1
 fi
 
-echo Info: Looking for available  partitions...
+echo -e $INFO Looking for available  partitions...
 for mounted in `/bin/mount | grep -E 'ext2|ext3' | cut -d" " -f3`
 do
   isPartitionFound="true"
@@ -28,42 +35,48 @@ done
 
 if [ $i == "1" ]
 then
-  echo Error: No ext2/ext3 partition available. Exiting...
+  echo -e "$ERROR No ext2/ext3 partition available. Exiting..."
   exit 1
 fi
 
-echo "Info: Please enter partition number or 0 to exit [0-`expr $i - 1`]:"
+echo -en "$INPUT Please enter partition number or 0 to exit\n$BOLD[0-`expr $i - 1`]$NORM: "
 read partitionNumber
 if [ "$partitionNumber" == "0" ]
 then
-  echo Info: Exiting...
+  echo -e $INFO Exiting...
   exit 0
 fi
 
+if [ "$partitionNumber" -gt `expr $i - 1` ]                                                           
+then                                                                                       
+  echo -e "$ERROR Invalid partition number!  Exiting..."                                                                 
+  exit 1                                                                                   
+fi
+
 eval entPartition=\$mounts$partitionNumber
-echo "Info: $entPartition selected."
+echo -e "$INFO $entPartition selected.\n"
 entFolder=$entPartition/entware
 
 if [ -d $entFolder ]
 then
-  echo Warning: Found previous installation, deleting...
+  echo -e "$WARNING Found previous installation, deleting..."
   rm -fr $entFolder
 fi
-echo Info: Creating $entFolder folder...
+echo -e $INFO Creating $entFolder folder...
 mkdir $entFolder
 
 if [ -d /tmp/opt ]
 then
-  echo Warning: Deleting old /tmp/opt symlink...
+  echo -e "$WARNING Deleting old /tmp/opt symlink..."
   rm /tmp/opt
 fi
-echo Info: Creating /tmp/opt symlink...
+echo -e $INFO Creating /tmp/opt symlink...
 ln -s $entFolder /tmp/opt
 
-echo Info: Creating /jffs scripts backup...
-tar -cvzf $entPartition/jffs_scripts_backup.tgz /jffs/scripts/*
+echo -e $INFO Creating /jffs scripts backup...
+tar -czf $entPartition/jffs_scripts_backup.tgz /jffs/scripts/* >/dev/nul
 
-echo "Info: Modifying start scripts..."
+echo -e "$INFO Modifying start scripts..."
 cat > /jffs/scripts/services-start << EOF
 #!/bin/sh
 
@@ -90,6 +103,7 @@ EOF
 eval sed -i 's,__Partition__,$entPartition,g' /jffs/scripts/post-mount
 chmod +x /jffs/scripts/post-mount
 
-echo Info: Starting Entware deployment...
+echo -e "$INFO Starting Entware deployment....\n"
 wget http://wl500g-repo.googlecode.com/svn/ipkg/entware_install.sh
 sh ./entware_install.sh
+
