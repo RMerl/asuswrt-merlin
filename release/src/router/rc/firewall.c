@@ -2652,7 +2652,7 @@ TRACE_PT("filterstr %s %s\n", timef, filterstr);
 	}
 #endif
 
-	fprintf(fp, "-A FORWARD -i %s -o %s -j DROP\n", lan_if, wan_if);
+	fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", lan_if, wan_if);
 
 	fprintf(fp, "COMMIT\n\n");
 	fclose(fp);
