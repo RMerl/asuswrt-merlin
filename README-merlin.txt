@@ -45,6 +45,7 @@ System:
    - Cron jobs
    - Customized config files for router services
    - LED control - put your Dark Knight in Stealth Mode by turning off all LEDs
+   - Entware easy setup script (alternative to Optware - the two are mutually exclusive)
 
 Disk sharing:
    - Act as a Master Browser
@@ -330,19 +331,55 @@ your custom config.
 
 The list of available config overrides:
 
-* dnsmasq.conf
-* vsftpd.conf
-* pptpd.conf
-* dhcp6s.conf
-* hosts (for /etc/hosts)
-* smb.conf
-* minidlna.conf
-* profile (shell profile, only profile.add suypported)
-* upnp (for miniupnpd)
-* radvd.conf
-* fstab (only fstab supported, remember to create mount point
+- dnsmasq.conf
+- vsftpd.conf
+- pptpd.conf
+- dhcp6s.conf
+- hosts (for /etc/hosts)
+- smb.conf
+- minidlna.conf
+- profile (shell profile, only profile.add suypported)
+- upnp (for miniupnpd)
+- radvd.conf
+- fstab (only fstab supported, remember to create mount point
         through init-start first if it doesn't exist!)
-* group, gshadow, passwd, shadow (only .add versions supported)
+- group, gshadow, passwd, shadow (only .add versions supported)
+- exports (only exports.add supported)
+
+
+* NFS Exports *
+In addition to SMB and FTP, you can now also share any plugged 
+hard disk through NFS.  The NFS Exports interface can be accessed 
+from the USB Applications section, under Servers Center.  
+Click on the NFS Exports tab.
+
+Select the folder you wish to export by clicking on the Path 
+field.  Under Access List you can enter IPs/Networks to which 
+you wish to give access.  A few examples:
+
+  192.168.1.0/24 - will give access to the whole local network
+  192.168.1.10 192.168.1.11 - will give access to the two IPs (separate with spaces)
+
+Entering nothing will allow anyone to access the export.
+
+Under options you can enter the export options, separated by 
+a comma.  For example:
+
+  rw,sync
+
+For more info, search the web for documentation on the format of the 
+/etc/exports file.  The same syntax for the access list and the options 
+is used by the webui.
+
+You can also manually generate an exports file by creating a file 
+named /jffs/configs/exports.add , and entering your standard exports 
+there.  They will be added to any exports configured on the webui.
+
+Note that by default, only NFSv3 is supported.  You can also 
+enable NFSv2 support from that page, but this is not recommended, 
+unless you are using an old NFS client that doesn't support V3.
+NFSv2 has various filesystem-level limitations.
+
 
 
 Source code
@@ -358,10 +395,12 @@ History
 -------
 
 3.0.0.4.270.25
-   - NEW: NFS folder sharing.  Webui can be found on the AiDisk pages, same place
-          where you can manage SMB and FTP shares.
+   - NEW: NFS folder sharing.  Webui can be found on the USB Applications ->
+          Servers Center page (NFS Exports tab)
    - NEW: dhcpc-event and zcip-event scripts (called on WAN events)
-   - NEW: Ccustom configs: group.add, gshadow.add, passwd.add, shadow.add
+   - NEW: Ccustom configs: group.add, gshadow.add, passwd.add, shadow.add, exports.add
+   - NEW: New script that will setup Entware for you (written by ryzhov_al).
+          Run "entware-setup.sh" through SSH/Telnet to launch the install process.
    - CHANGED: Added a folder picker to the Tools Other Settings page to select
               a location to store your traffic data files.
    - FIXED: Added missing badblocks program
@@ -374,6 +413,7 @@ History
             if you send too many Discovery packets in a short period of time.
    - FIXED: Made profile.add be run after any Optware profile, so the user
             changes will have priority over anything else.
+   - FIXED: WOL list corruption when removing an entry in some browsers
 
 
 3.0.0.4.270.24
