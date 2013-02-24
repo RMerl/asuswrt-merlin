@@ -21,7 +21,7 @@
 struct iface_param {
   struct dhcp_context *current;
   struct in6_addr fallback;
-  int ind;
+  int ind, addr_match;
 };
 
 static int complete_context6(struct in6_addr *local,  int prefix,
@@ -36,14 +36,30 @@ void dhcp6_init(void)
 #if defined(IPV6_TCLASS) && defined(IPTOS_CLASS_CS6)
   int class = IPTOS_CLASS_CS6;
 #endif
-  
+  int oneopt = 1;
+
   if ((fd = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP)) == -1 ||
 #if defined(IPV6_TCLASS) && defined(IPTOS_CLASS_CS6)
       setsockopt(fd, IPPROTO_IPV6, IPV6_TCLASS, &class, sizeof(class)) == -1 ||
 #endif
+      setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &oneopt, sizeof(oneopt)) == -1 ||
       !fix_fd(fd) ||
       !set_ipv6pktinfo(fd))
     die (_("cannot create DHCPv6 socket: %s"), NULL, EC_BADNET);
+  
+  /* When bind-interfaces is set, there might be more than one dnmsasq
+     instance binding port 547. That's OK if they serve different networks.
+     Need to set REUSEADDR to make this posible, or REUSEPORT on *BSD. */
+  if (option_bool(OPT_NOWILD) || option_bool(OPT_CLEVERBIND))
+    {
+#ifdef SO_REUSEPORT
+      int rc = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &oneopt, sizeof(oneopt));
+#else
+      int rc = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &oneopt, sizeof(oneopt));
+#endif
+      if (rc == -1)
+	die(_("failed to set SO_REUSE{ADDR|PORT} on DHCPv6 socket: %s"), NULL, EC_BADNET);
+    }
   
   memset(&saddr, 0, sizeof(saddr));
 #ifdef HAVE_SOCKADDR_SA_LEN
@@ -71,7 +87,6 @@ void dhcp6_packet(time_t now)
     char control6[CMSG_SPACE(sizeof(struct in6_pktinfo))];
   } control_u;
   struct sockaddr_in6 from;
-  struct all_addr dest;
   ssize_t sz; 
   struct ifreq ifr;
   struct iname *tmp;
@@ -98,33 +113,52 @@ void dhcp6_packet(time_t now)
 	p.c = CMSG_DATA(cmptr);
         
 	if_index = p.p->ipi6_ifindex;
-	dest.addr.addr6 = p.p->ipi6_addr;
       }
 
   if (!indextoname(daemon->dhcp6fd, if_index, ifr.ifr_name))
     return;
     
-  if (!iface_check(AF_INET6, (struct all_addr *)&dest, ifr.ifr_name))
-    return;
-  
+  for (tmp = daemon->if_except; tmp; tmp = tmp->next)
+    if (tmp->name && (strcmp(tmp->name, ifr.ifr_name) == 0))
+      return;
+
   for (tmp = daemon->dhcp_except; tmp; tmp = tmp->next)
     if (tmp->name && (strcmp(tmp->name, ifr.ifr_name) == 0))
       return;
  
-  /* unlinked contexts are marked by context->current == context */
-  for (context = daemon->dhcp6; context; context = context->next)
-    {
-      context->current = context;
-      memset(&context->local6, 0, IN6ADDRSZ);
-    }
-
   parm.current = NULL;
   parm.ind = if_index;
+  parm.addr_match = 0;
   memset(&parm.fallback, 0, IN6ADDRSZ);
+
+  for (context = daemon->dhcp6; context; context = context->next)
+    if (IN6_IS_ADDR_UNSPECIFIED(&context->start6) && context->prefix == 0)
+      {
+	/* wildcard context for DHCP-stateless only */
+	parm.current = context;
+	context->current = NULL;
+      }
+    else
+      {
+	/* unlinked contexts are marked by context->current == context */
+	context->current = context;
+	memset(&context->local6, 0, IN6ADDRSZ);
+      }
   
   if (!iface_enumerate(AF_INET6, &parm, complete_context6))
     return;
   
+  if (daemon->if_names || daemon->if_addrs)
+    {
+      
+      for (tmp = daemon->if_names; tmp; tmp = tmp->next)
+	if (tmp->name && (strcmp(tmp->name, ifr.ifr_name) == 0))
+	  break;
+
+      if (!tmp && !parm.addr_match)
+	return;
+    }
+
   lease_prune(NULL, now); /* lose any expired leases */
 
   port = dhcp6_reply(parm.current, if_index, ifr.ifr_name, &parm.fallback, 
@@ -151,15 +185,23 @@ static int complete_context6(struct in6_addr *local,  int prefix,
 {
   struct dhcp_context *context;
   struct iface_param *param = vparam;
-
+  struct iname *tmp;
+ 
   (void)scope; /* warning */
   (void)dad;
-  
+      
   if (if_index == param->ind &&
       !IN6_IS_ADDR_LOOPBACK(local) &&
       !IN6_IS_ADDR_LINKLOCAL(local) &&
       !IN6_IS_ADDR_MULTICAST(local))
     {
+      /* if we have --listen-address config, see if the 
+	 arrival interface has a matching address. */
+      for (tmp = daemon->if_addrs; tmp; tmp = tmp->next)
+	if (tmp->addr.sa.sa_family == AF_INET6 &&
+	    IN6_ARE_ADDR_EQUAL(&tmp->addr.in6.sin6_addr, local))
+	  param->addr_match = 1;
+      
       /* Determine a globally address on the arrival interface, even
 	 if we have no matching dhcp-context, because we're only
 	 allocating on remote subnets via relays. This

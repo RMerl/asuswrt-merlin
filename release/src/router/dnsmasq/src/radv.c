@@ -457,6 +457,7 @@ time_t periodic_ra(time_t now)
   char interface[IF_NAMESIZE+1];
   
   param.now = now;
+  param.iface = 0;
 
   while (1)
     {
@@ -482,13 +483,21 @@ time_t periodic_ra(time_t now)
 	 ever be able to send ra's and satistfy it. */
       if (iface_enumerate(AF_INET6, &param, iface_search))
 	context->ra_time = 0;
-      else if (indextoname(daemon->icmp6fd, param.iface, interface))
-	send_ra(param.iface, interface, NULL); 
-    }
-  
+      else if (param.iface != 0 &&
+	       indextoname(daemon->icmp6fd, param.iface, interface) &&
+	       iface_check(AF_LOCAL, NULL, interface))
+	{
+	  struct iname *tmp;
+	  for (tmp = daemon->dhcp_except; tmp; tmp = tmp->next)
+	    if (tmp->name && (strcmp(tmp->name, interface) == 0))
+	      break;
+	  if (!tmp)
+	    send_ra(param.iface, interface, NULL); 
+	}
+    }      
   return next_event;
 }
-
+  
 static int iface_search(struct in6_addr *local,  int prefix,
 			int scope, int if_index, int dad, void *vparam)
 {
@@ -505,9 +514,11 @@ static int iface_search(struct in6_addr *local,  int prefix,
       if (context->ra_time != 0 && difftime(context->ra_time, param->now) <= 0.0)
 	{
 	  /* found an interface that's overdue for RA determine new 
-	     timeout value and zap other contexts on the same interface 
-	     so they don't timeout independently .*/
-	  param->iface = if_index;
+	     timeout value and arrange for RA to be sent unless interface is
+	     still doing DAD.*/
+
+	  if (!dad)
+	    param->iface = if_index;
 	  
 	  if (difftime(param->now, ra_short_period_start) < 60.0)
 	    /* range 5 - 20 */
@@ -515,6 +526,14 @@ static int iface_search(struct in6_addr *local,  int prefix,
 	  else
 	    /* range 450 - 600 */
 	    context->ra_time = param->now + 450 + (rand16()/440);
+	  
+	  /* zero timers for other contexts on the same subnet, so they don't timeout 
+	     independently */
+	  for (context = context->next; context; context = context->next)
+	    if (prefix == context->prefix &&
+		is_same_net6(local, &context->start6, prefix) &&
+		is_same_net6(local, &context->end6, prefix))
+	      context->ra_time = 0;
 	  
 	  return 0; /* found, abort */
 	}

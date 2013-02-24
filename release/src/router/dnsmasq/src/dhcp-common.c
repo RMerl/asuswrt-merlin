@@ -255,7 +255,7 @@ void dhcp_update_configs(struct dhcp_config *configs)
      in at most one dhcp-host. Since /etc/hosts can be re-read by SIGHUP, 
      restore the status-quo ante first. */
   
-  struct dhcp_config *config;
+  struct dhcp_config *config, *conf_tmp;
   struct crec *crec;
   int prot = AF_INET;
 
@@ -297,7 +297,8 @@ void dhcp_update_configs(struct dhcp_config *configs)
 			config->hostname, daemon->addrbuff);
 	      }
 	    
-	    if (prot == AF_INET && !config_find_by_address(configs, crec->addr.addr.addr.addr4))
+	    if (prot == AF_INET && 
+		(!(conf_tmp = config_find_by_address(configs, crec->addr.addr.addr.addr4)) || conf_tmp == config))
 	      {
 		config->addr = crec->addr.addr.addr.addr4;
 		config->flags |= CONFIG_ADDR | CONFIG_ADDR_HOSTS;
@@ -305,7 +306,8 @@ void dhcp_update_configs(struct dhcp_config *configs)
 	      }
 
 #ifdef HAVE_DHCP6
-	    if (prot == AF_INET6 && !config_find_by_address6(configs, &crec->addr.addr.addr.addr6, 128, 0))
+	    if (prot == AF_INET6 && 
+		(!(conf_tmp = config_find_by_address6(configs, &crec->addr.addr.addr.addr6, 128, 0)) || conf_tmp == config))
 	      {
 		memcpy(&config->addr6, &crec->addr.addr.addr.addr6, IN6ADDRSZ);
 		config->flags |= CONFIG_ADDR6 | CONFIG_ADDR_HOSTS;
@@ -418,7 +420,7 @@ void bindtodevice(int fd)
      SO_BINDTODEVICE is only available Linux. */
   
   struct irec *iface, *found;
-
+  
   for (found = NULL, iface = daemon->interfaces; iface; iface = iface->next)
     if (iface->dhcp_ok)
       {
@@ -433,14 +435,14 @@ void bindtodevice(int fd)
       }
   
   if (found)
-	{
-	  struct ifreq ifr;
-	  strcpy(ifr.ifr_name, found->name);
-	  /* only allowed by root. */
-	  if (setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) == -1 &&
-	      errno != EPERM)
-	    die(_("failed to set SO_BINDTODEVICE on DHCP socket: %s"), NULL, EC_BADNET);
-	}
+    {
+      struct ifreq ifr;
+      strcpy(ifr.ifr_name, found->name);
+      /* only allowed by root. */
+      if (setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) == -1 &&
+	  errno != EPERM)
+	die(_("failed to set SO_BINDTODEVICE on DHCP socket: %s"), NULL, EC_BADNET);
+    }
 }
 #endif
 

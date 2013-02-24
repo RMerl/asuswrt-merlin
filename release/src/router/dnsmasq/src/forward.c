@@ -95,26 +95,19 @@ int send_from(int fd, int nowild, char *packet, size_t len,
 #endif
     }
   
- retry:
-  if (sendmsg(fd, &msg, 0) == -1)
+  while (sendmsg(fd, &msg, 0) == -1)
     {
-      /* certain Linux kernels seem to object to setting the source address in the IPv6 stack
-	 by returning EINVAL from sendmsg. In that case, try again without setting the
-	 source address, since it will nearly alway be correct anyway.  IPv6 stinks. */
-      if (errno == EINVAL && msg.msg_controllen)
-	{
-	  msg.msg_controllen = 0;
-	  goto retry;
-	}
-      
       if (retry_send())
-	goto retry;
+	continue;
+      
+      /* If interface is still in DAD, EINVAL results - ignore that. */
+      if (errno == EINVAL)
+	break;
       
       my_syslog(LOG_ERR, _("failed to send packet: %s"), strerror(errno));
-      
       return 0;
     }
-
+  
   return 1;
 }
           
@@ -841,7 +834,8 @@ unsigned char *tcp_request(int confd, time_t now,
   int norebind = 0;
   int checking_disabled;
   size_t m;
-  unsigned short qtype, gotname;
+  unsigned short qtype;
+  unsigned int gotname;
   unsigned char c1, c2;
   /* Max TCP packet + slop */
   unsigned char *packet = whine_malloc(65536 + MAXDNAME + RRFIXEDSZ);

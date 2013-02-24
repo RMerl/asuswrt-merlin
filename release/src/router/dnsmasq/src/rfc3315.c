@@ -180,7 +180,7 @@ static int dhcp6_no_relay(int msg_type, struct in6_addr *link_address, struct dh
   char *client_hostname= NULL, *hostname = NULL;
   char *domain = NULL, *send_domain = NULL;
   struct dhcp_config *config = NULL;
-  struct dhcp_netid known_id, iface_id;
+  struct dhcp_netid known_id, iface_id, v6_id;
   int done_dns = 0, hostname_auth = 0, do_encap = 0;
   unsigned char *outmsgtypep;
   struct dhcp_opt *opt_cfg;
@@ -193,6 +193,11 @@ static int dhcp6_no_relay(int msg_type, struct in6_addr *link_address, struct dh
   iface_id.net = iface_name;
   iface_id.next = tags;
   tags = &iface_id; 
+
+  /* set tag "dhcpv6" */
+  v6_id.net = "dhcpv6";
+  v6_id.next = tags;
+  tags = &v6_id;
 
   /* copy over transaction-id, and save pointer to message type */
   outmsgtypep = put_opt6(inbuff, 4);
@@ -1005,10 +1010,17 @@ static int dhcp6_no_relay(int msg_type, struct in6_addr *link_address, struct dh
       
     case DHCP6IREQ:
       {
+	/* We can't discriminate contexts based on address, as we don't know it.
+	   If there is only one possible context, we can use its tags */
+	if (context && !context->current)
+	  {
+	    context->netid.next = NULL;
+	    context_tags =  &context->netid;
+	  }
+	log6_packet("DHCPINFORMATION-REQUEST", clid, clid_len, NULL, xid, iface_name, ignore ? "ignored" : hostname);
 	if (ignore)
 	  return 0;
 	*outmsgtypep = DHCP6REPLY;
-	log6_packet("DHCPINFORMATION-REQUEST", clid, clid_len, NULL, xid, iface_name, hostname);
 	break;
       }
       

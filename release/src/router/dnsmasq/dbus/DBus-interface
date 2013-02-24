@@ -137,6 +137,23 @@ Each call to SetServersEx completely replaces the set of servers
 specified by via the DBus, but it leaves any servers specified via the
 command line or /etc/dnsmasq.conf or /etc/resolv.conf alone.
 
+
+SetDomainServers
+----------------
+
+Yes another variation for setting DNS servers, with the capability of
+SetServersEx, but without using arrays of arrays, which are not
+sendable with dbus-send. The arguments are an array of strings which
+are identical to the equivalent arguments --server, so the example
+for SetServersEx is represented as
+
+[
+  "/foobar.com/1.2.3.4"
+  "/eng.mycorp.com/lab.mycorp.com/1003:1234:abcd::1%eth0"
+]
+
+
+
 2. SIGNALS
 ----------
 

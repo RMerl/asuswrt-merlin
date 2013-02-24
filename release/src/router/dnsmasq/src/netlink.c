@@ -371,9 +371,9 @@ static int nl_async(struct nlmsghdr *h)
 	}
       return 0;
     }
-#ifdef HAVE_DHCP6
   else if (h->nlmsg_type == RTM_NEWADDR) 
     {
+#ifdef HAVE_DHCP6
       /* force RAs to sync new network and pick up new interfaces.  */
       if (daemon->ra_contexts)
 	{
@@ -383,9 +383,9 @@ static int nl_async(struct nlmsghdr *h)
 	     iface_enumerate and can't re-enter it now */
 	  send_alarm(0, 0);
 	}
-      return 1; /* clever bind mode - rescan */
-    }
 #endif	 
+      return 1; /* clever bind mode - rescan */
+    }	 
   
   return 0;
 }

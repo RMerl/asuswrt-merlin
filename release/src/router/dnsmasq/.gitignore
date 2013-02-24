@@ -1,2 +1,4 @@
 *.o
 src/dnsmasq
+src/.configured
+

@@ -38,6 +38,9 @@ const char* introspection_xml_template =
 "    <method name=\"SetServers\">\n"
 "      <arg name=\"servers\" direction=\"in\" type=\"av\"/>\n"
 "    </method>\n"
+"    <method name=\"SetDomainServers\">\n"
+"      <arg name=\"servers\" direction=\"in\" type=\"as\"/>\n"
+"    </method>\n"
 "    <method name=\"SetServersEx\">\n"
 "      <arg name=\"servers\" direction=\"in\" type=\"aas\"/>\n"
 "    </method>\n"
@@ -292,12 +295,15 @@ static void dbus_read_servers(DBusMessage *message)
   cleanup_dbus();
 }
 
-static DBusMessage* dbus_read_servers_ex(DBusMessage *message)
+static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
 {
   DBusMessageIter iter, array_iter, string_iter;
   DBusMessage *error = NULL;
   const char *addr_err;
-
+  char *dup = NULL;
+  
+  my_syslog(LOG_INFO, _("setting upstream servers from DBus"));
+  
   if (!dbus_message_iter_init(message, &iter))
     {
       return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
@@ -306,10 +312,10 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message)
 
   /* check that the message contains an array of arrays */
   if ((dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY) ||
-      (dbus_message_iter_get_element_type(&iter) != DBUS_TYPE_ARRAY))
+      (dbus_message_iter_get_element_type(&iter) != (strings ? DBUS_TYPE_STRING : DBUS_TYPE_ARRAY)))
     {
       return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
-                                    "Expected array of string arrays");
+                                    strings ? "Expected array of string" : "Expected array of string arrays");
      }
  
   mark_dbus();
@@ -321,51 +327,91 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message)
       const char *str = NULL;
       union  mysockaddr addr, source_addr;
       char interface[IF_NAMESIZE];
-      char *str_addr;
+      char *str_addr, *str_domain = NULL;
 
-      /* check the types of the struct and its elements */
-      if ((dbus_message_iter_get_arg_type(&array_iter) != DBUS_TYPE_ARRAY) ||
-          (dbus_message_iter_get_element_type(&array_iter) != DBUS_TYPE_STRING))
-        {
-          error = dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
-                                         "Expected inner array of strings");
-          break;
-        }
+      if (strings)
+	{
+	  dbus_message_iter_get_basic(&array_iter, &str);
+	  if (!str || !strlen (str))
+	    {
+	      error = dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+					     "Empty string");
+	      break;
+	    }
+	  
+	  /* dup the string because it gets modified during parsing */
+	  if (!(dup = str_domain = whine_malloc(strlen(str)+1)))
+	    break;
 
-      /* string_iter points to each "s" element in the inner array */
-      dbus_message_iter_recurse(&array_iter, &string_iter);
-      if (dbus_message_iter_get_arg_type(&string_iter) != DBUS_TYPE_STRING)
-        {
-          /* no IP address given */
-          error = dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
-                                         "Expected IP address");
-          break;
-        }
+	  strcpy(str_domain, str);
 
-      dbus_message_iter_get_basic(&string_iter, &str);
-      if (!str || !strlen (str))
-        {
-          error = dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
-                                         "Empty IP address");
-          break;
-        }
+	  /* point to address part of old string for error message */
+	  if ((str_addr = strrchr(str, '/')))
+	    str = str_addr+1;
+	  
+	  if ((str_addr = strrchr(str_domain, '/')))
+	    {
+	      if (*str_domain != '/' || str_addr == str_domain)
+		{
+		  error = dbus_message_new_error_printf(message,
+							DBUS_ERROR_INVALID_ARGS,
+							"No domain terminator '%s'",
+							str);
+		  break;
+		}
+	      *str_addr++ = 0;
+	      str_domain++;
+	    }
+	  else
+	    {
+	      str_addr = str_domain;
+	      str_domain = NULL;
+	    }
+
+	  
+	}
+      else
+	{
+	  /* check the types of the struct and its elements */
+	  if ((dbus_message_iter_get_arg_type(&array_iter) != DBUS_TYPE_ARRAY) ||
+	      (dbus_message_iter_get_element_type(&array_iter) != DBUS_TYPE_STRING))
+	    {
+	      error = dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+					     "Expected inner array of strings");
+	      break;
+	    }
+	  
+	  /* string_iter points to each "s" element in the inner array */
+	  dbus_message_iter_recurse(&array_iter, &string_iter);
+	  if (dbus_message_iter_get_arg_type(&string_iter) != DBUS_TYPE_STRING)
+	    {
+	      /* no IP address given */
+	      error = dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+					     "Expected IP address");
+	      break;
+	    }
+	  
+	  dbus_message_iter_get_basic(&string_iter, &str);
+	  if (!str || !strlen (str))
+	    {
+	      error = dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+					     "Empty IP address");
+	      break;
+	    }
+	  
+	  /* dup the string because it gets modified during parsing */
+	  if (!(dup = str_addr = whine_malloc(strlen(str)+1)))
+	    break;
+	   
+	  strcpy(str_addr, str);
+	}
 
       memset(&addr, 0, sizeof(addr));
       memset(&source_addr, 0, sizeof(source_addr));
       memset(&interface, 0, sizeof(interface));
 
-      /* dup the string because it gets modified during parsing */
-      str_addr = strdup(str);
-      if (!str_addr)
-        {
-          error = dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
-                                         "Out of memory parsing IP address");
-          break;
-        }
-
       /* parse the IP address */
-      addr_err = parse_server(str_addr, &addr, &source_addr, &interface, NULL);
-      free(str_addr);
+      addr_err = parse_server(str_addr, &addr, &source_addr, (char *) &interface, NULL);
 
       if (addr_err)
         {
@@ -375,24 +421,46 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message)
           break;
         }
 
-      /* jump past the address to the domain list (if any) */
-      dbus_message_iter_next (&string_iter);
-
-      /* parse domains and add each server/domain pair to the list */
-      do {
-        str = NULL;
-       if (dbus_message_iter_get_arg_type(&string_iter) == DBUS_TYPE_STRING)
-         dbus_message_iter_get_basic(&string_iter, &str);
-       dbus_message_iter_next (&string_iter);
-
-       add_update_server(&addr, &source_addr, interface, str);
-      } while (dbus_message_iter_get_arg_type(&string_iter) == DBUS_TYPE_STRING);
-
+      if (strings)
+	{
+	  char *p;
+	  
+	  do {
+	    if (str_domain)
+	      {
+		if ((p = strchr(str_domain, '/')))
+		  *p++ = 0;
+	      }
+	    else 
+	      p = NULL;
+	    
+	    add_update_server(&addr, &source_addr, interface, str_domain);
+	  } while ((str_domain = p));
+	}
+      else
+	{
+	  /* jump past the address to the domain list (if any) */
+	  dbus_message_iter_next (&string_iter);
+	  
+	  /* parse domains and add each server/domain pair to the list */
+	  do {
+	    str = NULL;
+	    if (dbus_message_iter_get_arg_type(&string_iter) == DBUS_TYPE_STRING)
+	      dbus_message_iter_get_basic(&string_iter, &str);
+	    dbus_message_iter_next (&string_iter);
+	    
+	    add_update_server(&addr, &source_addr, interface, str);
+	  } while (dbus_message_iter_get_arg_type(&string_iter) == DBUS_TYPE_STRING);
+	}
+	 
       /* jump to next element in outer array */
       dbus_message_iter_next(&array_iter);
     }
 
   cleanup_dbus();
+
+  if (dup)
+    free(dup);
 
   return error;
 }
@@ -403,7 +471,7 @@ DBusHandlerResult message_handler(DBusConnection *connection,
 {
   char *method = (char *)dbus_message_get_member(message);
   DBusMessage *reply = NULL;
-   
+    
   if (dbus_message_is_method_call(message, DBUS_INTERFACE_INTROSPECTABLE, "Introspect"))
     {
       /* string length: "%s" provides space for termination zero */
@@ -432,8 +500,12 @@ DBusHandlerResult message_handler(DBusConnection *connection,
     }
   else if (strcmp(method, "SetServersEx") == 0)
     {
-      my_syslog(LOG_INFO, _("setting upstream servers from DBus"));
-      reply = dbus_read_servers_ex(message);
+      reply = dbus_read_servers_ex(message, 0);
+      check_servers();
+    }
+  else if (strcmp(method, "SetDomainServers") == 0)
+    {
+      reply = dbus_read_servers_ex(message, 1);
       check_servers();
     }
   else if (strcmp(method, "ClearCache") == 0)

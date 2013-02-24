@@ -1,3 +1,14 @@
+version 2.65
+	    Fix regression which broke forwarding of queries sent via
+	    TCP which are not for A and AAAA and which were directed to
+	    non-default servers. Thanks to Niax for the bug report.
+
+	    Fix failure to build with DHCP support excluded. Thanks to 
+	    Gustavo Zacarias for the patch.
+	    
+	    Fix nasty regression in 2.64 which completely broke cacheing.
+
+
 version 2.64
             Handle DHCP FQDN options with all flag bits zero and
             --dhcp-client-update set. Thanks to Bernd Krumbroeck for
@@ -19,13 +30,56 @@ version 2.64
 	    Flag DHCP or DHCPv6 in starup logging. Thanks to 
 	    Vladislav Grishenko for the patch.
 
-	    Add SetServersEX method in DBus interface. Thanks to Dan
+	    Add SetServersEx method in DBus interface. Thanks to Dan
 	    Williams for the patch.
+
+	    Add SetDomainServers method in DBus interface. Thanks to
+	    Roy Marples for the patch.
 
 	    Fix build with later Lua libraries. Thansk to Cristian
 	    Rodriguez for the patch.
 
+	    Add --max-cache-ttl option. Thanks to Dennis Kaarsemaker
+	    for the patch.
+
+	    Fix breakage of --host-record parsing, resulting in
+	    infinte loop at startup. Regression in 2.63. Thanks to
+	    Haim Gelfenbeyn for spotting this.
+
+	    Set SO_REUSEADDRESS and SO_V6ONLY options on the DHCPv6
+	    socket, this allows multiple instances of dnsmasq on a
+	    single machine, in the same way as for DHCPv4. Thanks to
+	    Gene Czarcinski and Vladislav Grishenko for work on this.
+
+	    Fix DHCPv6 to do access control correctly when it's 
+	    configured with --listen-address. Thanks to
+	    Gene Czarcinski for sorting this out. 
+
+	    Add a "wildcard" dhcp-range which works for any IPv6
+	    subnet, --dhcp-range=::,static Useful for Stateless 
+	    DHCPv6. Thanks to Vladislav Grishenko for the patch.
+
+	    Don't include lease-time in DHCPACK replies to DHCPINFORM
+	    queries, since RFC-2131 says we shouldn't. Thanks to
+	    Wouter Ibens for pointing this out.  
+
+	    Makefile tweak to do dependency checking on header files.
+	    Thanks to Johan Peeters for the patch.
+
+	    Check interface for outgoing unsolicited router 
+	    advertisements, rather than relying on interface address 
+	    configuration. Thanks to Gene Czarinski for the patch.
+
+	    Handle better attempts to transmit on interfaces which are
+	    still doing DAD, and specifically do not just transmit
+	    without setting source address and interface, since this
+	    can cause very puzzling effects when a router
+	    advertisement goes astray. Thanks again to Gene Czarinski.
+
+	    Get RA timers right when there is more than one
+	    dhcp-range on a subnet.
 	    
+
 version 2.63
             Do duplicate dhcp-host address check in --test mode.
 
@@ -387,7 +441,7 @@ version 2.58
 
 	    Fix regression in TFTP server on *BSD platforms introduced
 	    in version 2.56, due to confusion with sockaddr
-	    length. Many thanks to Loïc Pefferkorn for finding this.
+	    length. Many thanks to Loic Pefferkorn for finding this.
 
 	    Support scope-ids in IPv6 addresses of nameservers from
 	    /etc/resolv.conf and in --server options. Eg

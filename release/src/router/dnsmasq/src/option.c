@@ -120,6 +120,7 @@ struct myoption {
 #define LOPT_TFTP_LC   309
 #define LOPT_RR        310
 #define LOPT_CLVERBIND 311
+#define LOPT_MAXCTTL   312
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option opts[] =  
@@ -206,7 +207,7 @@ static const struct myoption opts[] =
     { "bridge-interface", 1, 0 , LOPT_BRIDGE },
     { "dhcp-option-force", 1, 0, LOPT_FORCE },
     { "tftp-no-blocksize", 0, 0, LOPT_NOBLOCK },
-    { "log-dhcp", 2, 0, LOPT_LOG_OPTS },
+    { "log-dhcp", 0, 0, LOPT_LOG_OPTS },
     { "log-async", 2, 0, LOPT_MAX_LOGS },
     { "dhcp-circuitid", 1, 0, LOPT_CIRCUIT },
     { "dhcp-remoteid", 1, 0, LOPT_REMOTE },
@@ -223,6 +224,7 @@ static const struct myoption opts[] =
     { "dhcp-broadcast", 2, 0, LOPT_BROADCAST },
     { "neg-ttl", 1, 0, LOPT_NEGTTL },
     { "max-ttl", 1, 0, LOPT_MAXTTL },
+    { "max-cache-ttl", 1, 0, LOPT_MAXCTTL },
     { "dhcp-alternate-port", 2, 0, LOPT_ALTPORT },
     { "dhcp-scriptuser", 1, 0, LOPT_SCRIPTUSR },
     { "min-port", 1, 0, LOPT_MINPORT },
@@ -350,7 +352,7 @@ static struct {
   { LOPT_NOBLOCK, OPT_TFTP_NOBLOCK, NULL, gettext_noop("Disable the TFTP blocksize extension."), NULL },
   { LOPT_TFTP_LC, OPT_TFTP_LC, NULL, gettext_noop("Convert TFTP filenames to lowercase"), NULL },
   { LOPT_TFTPPORTS, ARG_ONE, "<start>,<end>", gettext_noop("Ephemeral port range for use by TFTP transfers."), NULL },
-  { LOPT_LOG_OPTS, ARG_ONE, "[=none]", gettext_noop("Extra or none logging for DHCP."), NULL },
+  { LOPT_LOG_OPTS, OPT_LOG_OPTS, NULL, gettext_noop("Extra logging for DHCP."), NULL },
   { LOPT_MAX_LOGS, ARG_ONE, "[=<integer>]", gettext_noop("Enable async. logging; optionally set queue length."), NULL },
   { LOPT_REBIND, OPT_NO_REBIND, NULL, gettext_noop("Stop DNS rebinding. Filter private IP ranges when resolving."), NULL },
   { LOPT_LOC_REBND, OPT_LOCAL_REBIND, NULL, gettext_noop("Allow rebinding of 127.0.0.0/8, for RBL servers."), NULL },
@@ -621,6 +623,8 @@ static char *set_prefix(char *arg)
    return arg;
 }
 
+#endif
+
 char *parse_server(char *arg, union mysockaddr *addr, union mysockaddr *source_addr, char *interface, int *flags)
 {
   int source_port = 0, serv_port = NAMESERVER_PORT;
@@ -708,6 +712,7 @@ char *parse_server(char *arg, union mysockaddr *addr, union mysockaddr *source_a
   return NULL;
 }
 
+#ifdef HAVE_DHCP
 /* This is too insanely large to keep in-line in the switch */
 static int parse_dhcp_opt(char *errstr, char *arg, int flags)
 {
@@ -1901,13 +1906,6 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	ret_err(gen_err);
       break;  
     
-    case LOPT_LOG_OPTS: /* --log-dhcp */
-      if (arg && strcmp(arg, "none") == 0)
-	set_option_bool(OPT_LOG_QUIET);
-      else
-	set_option_bool(OPT_LOG_OPTS);
-      break;
-
     case LOPT_MAX_LOGS:  /* --log-async */
       daemon->max_logs = LOG_MAX; /* default */
       if (arg && !atoi_check(arg, &daemon->max_logs))
@@ -1937,6 +1935,7 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
     case 'T':         /* --local-ttl */
     case LOPT_NEGTTL: /* --neg-ttl */
     case LOPT_MAXTTL: /* --max-ttl */
+    case LOPT_MAXCTTL: /* --max-cache-ttl */
       {
 	int ttl;
 	if (!atoi_check(arg, &ttl))
@@ -1945,6 +1944,8 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	  daemon->neg_ttl = (unsigned long)ttl;
 	else if (option == LOPT_MAXTTL)
 	  daemon->max_ttl = (unsigned long)ttl;
+	else if (option == LOPT_MAXCTTL)
+	  daemon->max_cache_ttl = (unsigned long)ttl;
 	else
 	  daemon->local_ttl = (unsigned long)ttl;
 	break;
@@ -2117,7 +2118,11 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	  {
 	    new->prefix = 64; /* default */
 	    new->end6 = new->start6;
-
+	    
+	    /* dhcp-range=:: enables DHCP stateless on any interface */
+	    if (IN6_IS_ADDR_UNSPECIFIED(&new->start6))
+	      new->prefix = 0;
+	    
 	    for (leasepos = 1; leasepos < k; leasepos++)
 	      {
 		if (strcmp(a[leasepos], "static") == 0)
@@ -3166,10 +3171,10 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 		    for (tmp = new->names; tmp->next; tmp = tmp->next);
 		    tmp->next = nl;
 		  }
-		
-		arg = comma;
-		comma = split(arg);
 	      }
+	    
+	    arg = comma;
+	    comma = split(arg);
 	  }
 
 	/* Keep list order */

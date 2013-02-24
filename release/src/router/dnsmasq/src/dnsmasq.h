@@ -221,8 +221,7 @@ struct event_desc {
 #define OPT_TFTP_LC        38
 #define OPT_CLEVERBIND     39
 #define OPT_TFTP           40
-#define OPT_LOG_QUIET      41
-#define OPT_LAST           42
+#define OPT_LAST           41
 
 /* extra flags for my_syslog, we use a couple of facilities since they are known 
    not to occupy the same bits as priorities, no matter how syslog.h is set up. */
@@ -752,7 +751,7 @@ extern struct daemon {
   int max_logs;  /* queue limit */
   int cachesize, ftabsize;
   int port, query_port, min_port;
-  unsigned long local_ttl, neg_ttl, max_ttl;
+  unsigned long local_ttl, neg_ttl, max_ttl, max_cache_ttl;
   struct hostsfile *addn_hosts;
   struct dhcp_context *dhcp, *dhcp6, *ra_contexts;
   struct dhcp_config *dhcp_conf;
@@ -892,7 +891,7 @@ void safe_pipe(int *fd, int read_noblock);
 void *whine_malloc(size_t size);
 int sa_len(union mysockaddr *addr);
 int sockaddr_isequal(union mysockaddr *s1, union mysockaddr *s2);
-int hostname_isequal(char *a, char *b);
+int hostname_isequal(const char *a, const char *b);
 time_t dnsmasq_time(void);
 int is_same_net(struct in_addr a, struct in_addr b, struct in_addr mask);
 #ifdef HAVE_IPV6

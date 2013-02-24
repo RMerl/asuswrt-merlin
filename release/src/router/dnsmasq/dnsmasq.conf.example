@@ -480,7 +480,7 @@
 #tftp-no-blocksize
 
 # Set the boot file name only when the "red" tag is set.
-#dhcp-boot=net:red,pxelinux.red-net
+#dhcp-boot=tag:red,pxelinux.red-net
 
 # An example of dhcp-boot with an external TFTP server: the name and IP
 # address of the server are given after the filename.
@@ -621,6 +621,6 @@
 # Log lots of extra information about DHCP transactions.
 #log-dhcp
 
-# Include a another lot of configuration options.
+# Include another lot of configuration options.
 #conf-file=/etc/dnsmasq.more.conf
 #conf-dir=/etc/dnsmasq.d

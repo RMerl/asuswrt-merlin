@@ -371,6 +371,9 @@ struct crec *cache_insert(char *name, struct all_addr *addr,
   int freed_all = flags & F_REVERSE;
   int free_avail = 0;
 
+  if (daemon->max_cache_ttl != 0 && daemon->max_cache_ttl < ttl)
+    ttl = daemon->max_cache_ttl;
+
   /* Don't log keys */
   if (flags & (F_IPV4 | F_IPV6))
     log_query(flags | F_UPSTREAM, name, addr, NULL);

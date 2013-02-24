@@ -71,6 +71,9 @@ maximum TTL will be given to clients instead of the true TTL value if it is
 lower. The true TTL value is however kept in the cache to avoid flooding 
 the upstream DNS servers.
 .TP
+.B --max-cache-ttl=<time>
+Set a maximum TTL value for entries in the cache.
+.TP
 .B \-k, --keep-in-foreground
 Do not go into the background at startup but otherwise run as
 normal. This is intended for use when dnsmasq is run under daemontools
@@ -80,7 +83,9 @@ or launchd.
 Debug mode: don't fork to the background, don't write a pid file,
 don't change user id, generate a complete cache dump on receipt on
 SIGUSR1, log to stderr as well as syslog, don't fork new processes
-to handle TCP queries.
+to handle TCP queries. Note that this option is for use in debugging
+only, to stop dnsmasq daemonising in production, use 
+.B -k.
 .TP
 .B \-q, --log-queries
 Log the results of DNS queries handled by dnsmasq. Enable a full cache dump on receipt of SIGUSR1.
@@ -581,7 +586,11 @@ which tells dnsmasq to enable DHCP for the network specified, but not
 to dynamically allocate IP addresses: only hosts which have static
 addresses given via 
 .B dhcp-host
-or from /etc/ethers will be served. 
+or from /etc/ethers will be served. A static-only subnet with address
+all zeros may be used as a "catch-all" address to enable replies to all
+Information-request packets on a subnet which is provided with
+stateless DHCPv6, ie
+.B --dhcp=range=::,static
 
 For IPv4, the <mode> may be 
 .B proxy

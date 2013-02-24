@@ -1387,6 +1387,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
       
       if (lease)
 	{
+	  lease_set_interface(lease, int_index, now);
 	  if (override.s_addr != 0)
 	    lease->override = override;
 	  else
@@ -1397,16 +1398,6 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
       option_put(mess, end, OPTION_MESSAGE_TYPE, 1, DHCPACK);
       option_put(mess, end, OPTION_SERVER_IDENTIFIER, INADDRSZ, ntohl(server_id(context, override, fallback).s_addr));
       
-      if (lease)
-	{
-	  if (lease->expires == 0)
-	    time = 0xffffffff;
-	  else
-	    time = (unsigned int)difftime(lease->expires, now);
-	  option_put(mess, end, OPTION_LEASE_TIME, 4, time);
-	  lease_set_interface(lease, int_index, now);
-	}
-
       do_options(context, mess, end, req_options, hostname, get_domain(mess->ciaddr),
 		 netid, subnet_addr, fqdn_flags, borken_opt, pxearch, uuid, vendor_class_len, now);
       
@@ -1516,9 +1507,6 @@ static void log_packet(char *type, void *addr, unsigned char *ext_mac,
 {
   struct in_addr a;
  
-  if (type && option_bool(OPT_LOG_QUIET))
-    return;
-
   /* addr may be misaligned */
   if (addr)
     memcpy(&a, addr, sizeof(a));

@@ -247,11 +247,11 @@ void lease_update_file(time_t now)
 
 #ifdef HAVE_LEASEFILE_EXPIRE
 	  ourprintf(&err, "%u ",
-  #ifdef HAVE_BROKEN_RTC
+#ifdef HAVE_BROKEN_RTC
 		    (lease->length == 0) ? 0 :
-  #else
+#else
 		    (lease->expires == 0) ? 0 :
-  #endif
+#endif
 		    (unsigned int)difftime(lease->expires, now));
 #elif defined(HAVE_BROKEN_RTC)
 	  ourprintf(&err, "%u ", lease->length);
@@ -299,11 +299,11 @@ void lease_update_file(time_t now)
 
 #ifdef HAVE_LEASEFILE_EXPIRE
 	      ourprintf(&err, "%u ",
-  #ifdef HAVE_BROKEN_RTC
+#ifdef HAVE_BROKEN_RTC
 			(lease->length == 0) ? 0 :
-  #else
+#else
 			(lease->expires == 0) ? 0 :
-  #endif
+#endif
 			(unsigned int)difftime(lease->expires, now));
 #elif defined(HAVE_BROKEN_RTC)
 	      ourprintf(&err, "%u ", lease->length);

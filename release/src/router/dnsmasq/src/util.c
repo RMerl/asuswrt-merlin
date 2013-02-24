@@ -280,7 +280,7 @@ int sa_len(union mysockaddr *addr)
 }
 
 /* don't use strcasecmp and friends here - they may be messed up by LOCALE */
-int hostname_isequal(char *a, char *b)
+int hostname_isequal(const char *a, const char *b)
 {
   unsigned int c1, c2;
   
