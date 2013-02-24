@@ -26,6 +26,7 @@
 #include <linux/mount.h>
 #include <linux/hash.h>
 #include <linux/module.h>
+#include <linux/exportfs.h>
 
 #include <linux/sunrpc/svc.h>
 #include <linux/nfsd/nfsd.h>
@@ -383,15 +384,13 @@ static int check_export(struct inode *inode, int flags, unsigned char *uuid)
 		dprintk("exp_export: export of non-dev fs without fsid\n");
 		return -EINVAL;
 	}
-	if (!inode->i_sb->s_export_op) {
+
+	if (!inode->i_sb->s_export_op ||
+	    !inode->i_sb->s_export_op->fh_to_dentry) {
 		dprintk("exp_export: export of invalid fs type.\n");
 		return -EINVAL;
 	}
 
-	/* Ok, we can export it */;
-	if (!inode->i_sb->s_export_op->find_exported_dentry)
-		inode->i_sb->s_export_op->find_exported_dentry =
-			find_exported_dentry;
 	return 0;
 
 }
@@ -738,16 +737,18 @@ exp_find_key(svc_client *clp, int fsid_type, u32 *fsidv, struct cache_req *reqp)
 	int err;
 	
 	if (!clp)
-		return NULL;
+		return ERR_PTR(-ENOENT);
 
 	key.ek_client = clp;
 	key.ek_fsidtype = fsid_type;
 	memcpy(key.ek_fsid, fsidv, key_len(fsid_type));
 
 	ek = svc_expkey_lookup(&key);
-	if (ek != NULL)
-		if ((err = cache_check(&svc_expkey_cache, &ek->h, reqp)))
-			ek = ERR_PTR(err);
+	if (ek == NULL)
+		return ERR_PTR(-ENOMEM);
+	err = cache_check(&svc_expkey_cache, &ek->h, reqp);
+	if (err)
+		return ERR_PTR(err);
 	return ek;
 }
 
@@ -808,30 +809,21 @@ exp_get_by_name(svc_client *clp, struct vfsmount *mnt, struct dentry *dentry,
 		struct cache_req *reqp)
 {
 	struct svc_export *exp, key;
+	int err;
 	
 	if (!clp)
-		return NULL;
+		return ERR_PTR(-ENOENT);
 
 	key.ex_client = clp;
 	key.ex_mnt = mnt;
 	key.ex_dentry = dentry;
 
 	exp = svc_export_lookup(&key);
-	if (exp != NULL)  {
-		int err;
-
-		err = cache_check(&svc_export_cache, &exp->h, reqp);
-		switch (err) {
-		case 0: break;
-		case -EAGAIN:
-		case -ETIMEDOUT:
-			exp = ERR_PTR(err);
-			break;
-		default:
-			exp = NULL;
-		}
-	}
-
+	if (exp == NULL)
+		return ERR_PTR(-ENOMEM);
+	err = cache_check(&svc_export_cache, &exp->h, reqp);
+	if (err)
+		return ERR_PTR(err);
 	return exp;
 }
 
@@ -847,7 +839,7 @@ exp_parent(svc_client *clp, struct vfsmount *mnt, struct dentry *dentry,
 	dget(dentry);
 	exp = exp_get_by_name(clp, mnt, dentry, reqp);
 
-	while (exp == NULL && !IS_ROOT(dentry)) {
+	while (PTR_ERR(exp) == -ENOENT && !IS_ROOT(dentry)) {
 		struct dentry *parent;
 
 		parent = dget_parent(dentry);
@@ -900,7 +892,7 @@ static void exp_fsid_unhash(struct svc_export *exp)
 		return;
 
 	ek = exp_get_fsid_key(exp->ex_client, exp->ex_fsid);
-	if (ek && !IS_ERR(ek)) {
+	if (!IS_ERR(ek)) {
 		ek->h.expiry_time = get_seconds()-1;
 		cache_put(&ek->h, &svc_expkey_cache);
 	}
@@ -938,7 +930,7 @@ static void exp_unhash(struct svc_export *exp)
 	struct inode *inode = exp->ex_dentry->d_inode;
 
 	ek = exp_get_key(exp->ex_client, inode->i_sb->s_dev, inode->i_ino);
-	if (ek && !IS_ERR(ek)) {
+	if (!IS_ERR(ek)) {
 		ek->h.expiry_time = get_seconds()-1;
 		cache_put(&ek->h, &svc_expkey_cache);
 	}
@@ -989,13 +981,12 @@ exp_export(struct nfsctl_export *nxp)
 
 	/* must make sure there won't be an ex_fsid clash */
 	if ((nxp->ex_flags & NFSEXP_FSID) &&
-	    (fsid_key = exp_get_fsid_key(clp, nxp->ex_dev)) &&
-	    !IS_ERR(fsid_key) &&
+	    (!IS_ERR(fsid_key = exp_get_fsid_key(clp, nxp->ex_dev))) &&
 	    fsid_key->ek_mnt &&
 	    (fsid_key->ek_mnt != nd.mnt || fsid_key->ek_dentry != nd.dentry) )
 		goto finish;
 
-	if (exp) {
+	if (!IS_ERR(exp)) {
 		/* just a flags/id/fsid update */
 
 		exp_fsid_unhash(exp);
@@ -1104,7 +1095,7 @@ exp_unexport(struct nfsctl_export *nxp)
 	err = -EINVAL;
 	exp = exp_get_by_name(dom, nd.mnt, nd.dentry, NULL);
 	path_release(&nd);
-	if (!exp)
+	if (IS_ERR(exp))
 		goto out_domain;
 
 	exp_do_unexport(exp);
@@ -1149,10 +1140,6 @@ exp_rootfh(svc_client *clp, char *path, struct knfsd_fh *f, int maxsize)
 		err = PTR_ERR(exp);
 		goto out;
 	}
-	if (!exp) {
-		dprintk("nfsd: exp_rootfh export not found.\n");
-		goto out;
-	}
 
 	/*
 	 * fh must be initialized before calling fh_compose
@@ -1176,17 +1163,50 @@ exp_find(struct auth_domain *clp, int fsid_type, u32 *fsidv,
 {
 	struct svc_export *exp;
 	struct svc_expkey *ek = exp_find_key(clp, fsid_type, fsidv, reqp);
-	if (!ek || IS_ERR(ek))
+	if (IS_ERR(ek))
 		return ERR_PTR(PTR_ERR(ek));
 
 	exp = exp_get_by_name(clp, ek->ek_mnt, ek->ek_dentry, reqp);
 	cache_put(&ek->h, &svc_expkey_cache);
 
-	if (!exp || IS_ERR(exp))
+	if (IS_ERR(exp))
 		return ERR_PTR(PTR_ERR(exp));
 	return exp;
 }
 
+/*
+ * Called from functions that handle requests; functions that do work on
+ * behalf of mountd are passed a single client name to use, and should
+ * use exp_get_by_name() or exp_find().
+ */
+struct svc_export *
+rqst_exp_get_by_name(struct svc_rqst *rqstp, struct vfsmount *mnt,
+		struct dentry *dentry)
+{
+	struct auth_domain *clp;
+
+	clp = rqstp->rq_gssclient ? rqstp->rq_gssclient : rqstp->rq_client;
+	return exp_get_by_name(clp, mnt, dentry, &rqstp->rq_chandle);
+}
+
+struct svc_export *
+rqst_exp_find(struct svc_rqst *rqstp, int fsid_type, u32 *fsidv)
+{
+	struct auth_domain *clp;
+
+	clp = rqstp->rq_gssclient ? rqstp->rq_gssclient : rqstp->rq_client;
+	return exp_find(clp, fsid_type, fsidv, &rqstp->rq_chandle);
+}
+
+struct svc_export *
+rqst_exp_parent(struct svc_rqst *rqstp, struct vfsmount *mnt,
+		struct dentry *dentry)
+{
+	struct auth_domain *clp;
+
+	clp = rqstp->rq_gssclient ? rqstp->rq_gssclient : rqstp->rq_client;
+	return exp_parent(rqstp->rq_client, mnt, dentry, &rqstp->rq_chandle);
+}
 
 /*
  * Called when we need the filehandle for the root of the pseudofs,
@@ -1194,8 +1214,7 @@ exp_find(struct auth_domain *clp, int fsid_type, u32 *fsidv,
  * export point with fsid==0
  */
 __be32
-exp_pseudoroot(struct auth_domain *clp, struct svc_fh *fhp,
-	       struct cache_req *creq)
+exp_pseudoroot(struct svc_rqst *rqstp, struct svc_fh *fhp)
 {
 	struct svc_export *exp;
 	__be32 rv;
@@ -1203,11 +1222,11 @@ exp_pseudoroot(struct auth_domain *clp, struct svc_fh *fhp,
 
 	mk_fsid(FSID_NUM, fsidv, 0, 0, 0, NULL);
 
-	exp = exp_find(clp, FSID_NUM, fsidv, creq);
+	exp = rqst_exp_find(rqstp, FSID_NUM, fsidv);
+	if (PTR_ERR(exp) == -ENOENT)
+		return nfserr_perm;
 	if (IS_ERR(exp))
 		return nfserrno(PTR_ERR(exp));
-	if (exp == NULL)
-		return nfserr_perm;
 	rv = fh_compose(fhp, exp, exp->ex_dentry, NULL);
 	exp_put(exp);
 	return rv;

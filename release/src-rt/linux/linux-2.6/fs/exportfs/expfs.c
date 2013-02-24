@@ -1,21 +1,50 @@
-
+/*
+ * Copyright (C) Neil Brown 2002
+ * Copyright (C) Christoph Hellwig 2007
+ *
+ * This file contains the code mapping from inodes to NFS file handles,
+ * and for mapping back from file handles to dentries.
+ *
+ * For details on why we do all the strange and hairy things in here
+ * take a look at Documentation/filesystems/Exporting.
+ */
+#include <linux/exportfs.h>
 #include <linux/fs.h>
 #include <linux/file.h>
 #include <linux/module.h>
+#include <linux/mount.h>
 #include <linux/namei.h>
-
-struct export_operations export_op_default;
-
-#define	CALL(ops,fun) ((ops->fun)?(ops->fun):export_op_default.fun)
 
 #define dprintk(fmt, args...) do{}while(0)
 
+
+static int get_name(struct vfsmount *mnt, struct dentry *dentry, char *name,
+		struct dentry *child);
+
+
+static int exportfs_get_name(struct vfsmount *mnt, struct dentry *dir,
+		char *name, struct dentry *child)
+{
+	const struct export_operations *nop = dir->d_sb->s_export_op;
+
+	if (nop->get_name)
+		return nop->get_name(dir, name, child);
+	else
+		return get_name(mnt, dir, name, child);
+}
+
+/*
+ * Check if the dentry or any of it's aliases is acceptable.
+ */
 static struct dentry *
 find_acceptable_alias(struct dentry *result,
 		int (*acceptable)(void *context, struct dentry *dentry),
 		void *context)
 {
 	struct dentry *dentry, *toput = NULL;
+
+	if (acceptable(context, result))
+		return result;
 
 	spin_lock(&dcache_lock);
 	list_for_each_entry(dentry, &result->d_inode->i_dentry, d_alias) {
@@ -37,123 +66,50 @@ find_acceptable_alias(struct dentry *result,
 	return NULL;
 }
 
-/**
- * find_exported_dentry - helper routine to implement export_operations->decode_fh
- * @sb:		The &super_block identifying the filesystem
- * @obj:	An opaque identifier of the object to be found - passed to
- *		get_inode
- * @parent:	An optional opqaue identifier of the parent of the object.
- * @acceptable:	A function used to test possible &dentries to see if they are
- *		acceptable
- * @context:	A parameter to @acceptable so that it knows on what basis to
- *		judge.
- *
- * find_exported_dentry is the central helper routine to enable file systems
- * to provide the decode_fh() export_operation.  It's main task is to take
- * an &inode, find or create an appropriate &dentry structure, and possibly
- * splice this into the dcache in the correct place.
- *
- * The decode_fh() operation provided by the filesystem should call
- * find_exported_dentry() with the same parameters that it received except
- * that instead of the file handle fragment, pointers to opaque identifiers
- * for the object and optionally its parent are passed.  The default decode_fh
- * routine passes one pointer to the start of the filehandle fragment, and
- * one 8 bytes into the fragment.  It is expected that most filesystems will
- * take this approach, though the offset to the parent identifier may well be
- * different.
- *
- * find_exported_dentry() will call get_dentry to get an dentry pointer from
- * the file system.  If any &dentry in the d_alias list is acceptable, it will
- * be returned.  Otherwise find_exported_dentry() will attempt to splice a new
- * &dentry into the dcache using get_name() and get_parent() to find the
- * appropriate place.
+/*
+ * Find root of a disconnected subtree and return a reference to it.
  */
-
-struct dentry *
-find_exported_dentry(struct super_block *sb, void *obj, void *parent,
-		     int (*acceptable)(void *context, struct dentry *de),
-		     void *context)
+static struct dentry *
+find_disconnected_root(struct dentry *dentry)
 {
-	struct dentry *result = NULL;
-	struct dentry *target_dir;
-	int err;
-	struct export_operations *nops = sb->s_export_op;
-	struct dentry *alias;
-	int noprogress;
+	dget(dentry);
+	spin_lock(&dentry->d_lock);
+	while (!IS_ROOT(dentry) &&
+	       (dentry->d_parent->d_flags & DCACHE_DISCONNECTED)) {
+		struct dentry *parent = dentry->d_parent;
+		dget(parent);
+		spin_unlock(&dentry->d_lock);
+		dput(dentry);
+		dentry = parent;
+		spin_lock(&dentry->d_lock);
+	}
+	spin_unlock(&dentry->d_lock);
+	return dentry;
+}
+
+
+/*
+ * Make sure target_dir is fully connected to the dentry tree.
+ *
+ * It may already be, as the flag isn't always updated when connection happens.
+ */
+static int
+reconnect_path(struct vfsmount *mnt, struct dentry *target_dir)
+{
 	char nbuf[NAME_MAX+1];
+	int noprogress = 0;
+	int err = -ESTALE;
 
 	/*
-	 * Attempt to find the inode.
-	 */
-	result = CALL(sb->s_export_op,get_dentry)(sb,obj);
-	err = -ESTALE;
-	if (result == NULL)
-		goto err_out;
-	if (IS_ERR(result)) {
-		err = PTR_ERR(result);
-		goto err_out;
-	}
-	if (S_ISDIR(result->d_inode->i_mode)) {
-		if (!(result->d_flags & DCACHE_DISCONNECTED)) {
-			if (acceptable(context, result))
-				return result;
-			err = -EACCES;
-			goto err_result;
-		}
-
-		target_dir = dget(result);
-	} else {
-		if (acceptable(context, result))
-			return result;
-
-		alias = find_acceptable_alias(result, acceptable, context);
-		if (alias)
-			return alias;
-
-		if (parent == NULL)
-			goto err_result;
-
-		target_dir = CALL(sb->s_export_op,get_dentry)(sb,parent);
-		if (IS_ERR(target_dir))
-			err = PTR_ERR(target_dir);
-		if (target_dir == NULL || IS_ERR(target_dir))
-			goto err_result;
-	}
-	/*
-	 * Now we need to make sure that target_dir is properly connected.
-	 * It may already be, as the flag isn't always updated when connection
-	 * happens.
-	 * So, we walk up parent links until we find a connected directory,
-	 * or we run out of directories.  Then we find the parent, find
-	 * the name of the child in that parent, and do a lookup.
-	 * This should connect the child into the parent
-	 * We then repeat.
-	 */
-
-	/* it is possible that a confused file system might not let us complete 
+	 * It is possible that a confused file system might not let us complete
 	 * the path to the root.  For example, if get_parent returns a directory
 	 * in which we cannot find a name for the child.  While this implies a
 	 * very sick filesystem we don't want it to cause knfsd to spin.  Hence
 	 * the noprogress counter.  If we go through the loop 10 times (2 is
 	 * probably enough) without getting anywhere, we just give up
 	 */
-	noprogress= 0;
 	while (target_dir->d_flags & DCACHE_DISCONNECTED && noprogress++ < 10) {
-		struct dentry *pd = target_dir;
-
-		dget(pd);
-		spin_lock(&pd->d_lock);
-		while (!IS_ROOT(pd) &&
-				(pd->d_parent->d_flags&DCACHE_DISCONNECTED)) {
-			struct dentry *parent = pd->d_parent;
-
-			dget(parent);
-			spin_unlock(&pd->d_lock);
-			dput(pd);
-			pd = parent;
-			spin_lock(&pd->d_lock);
-		}
-		spin_unlock(&pd->d_lock);
+		struct dentry *pd = find_disconnected_root(target_dir);
 
 		if (!IS_ROOT(pd)) {
 			/* must have found a connected parent - great */
@@ -161,36 +117,47 @@ find_exported_dentry(struct super_block *sb, void *obj, void *parent,
 			pd->d_flags &= ~DCACHE_DISCONNECTED;
 			spin_unlock(&pd->d_lock);
 			noprogress = 0;
-		} else if (pd == sb->s_root) {
+		} else if (pd == mnt->mnt_sb->s_root) {
 			printk(KERN_ERR "export: Eeek filesystem root is not connected, impossible\n");
 			spin_lock(&pd->d_lock);
 			pd->d_flags &= ~DCACHE_DISCONNECTED;
 			spin_unlock(&pd->d_lock);
 			noprogress = 0;
 		} else {
-			/* we have hit the top of a disconnected path.  Try
-			 * to find parent and connect
-			 * note: racing with some other process renaming a
-			 * directory isn't much of a problem here.  If someone
-			 * renames the directory, it will end up properly
-			 * connected, which is what we want
+			/*
+			 * We have hit the top of a disconnected path, try to
+			 * find parent and connect.
+			 *
+			 * Racing with some other process renaming a directory
+			 * isn't much of a problem here.  If someone renames
+			 * the directory, it will end up properly connected,
+			 * which is what we want
+			 *
+			 * Getting the parent can't be supported generically,
+			 * the locking is too icky.
+			 *
+			 * Instead we just return EACCES.  If server reboots
+			 * or inodes get flushed, you lose
 			 */
-			struct dentry *ppd;
+			struct dentry *ppd = ERR_PTR(-EACCES);
 			struct dentry *npd;
 
 			mutex_lock(&pd->d_inode->i_mutex);
-			ppd = CALL(nops,get_parent)(pd);
+			if (mnt->mnt_sb->s_export_op->get_parent)
+				ppd = mnt->mnt_sb->s_export_op->get_parent(pd);
 			mutex_unlock(&pd->d_inode->i_mutex);
 
 			if (IS_ERR(ppd)) {
 				err = PTR_ERR(ppd);
-				dprintk("find_exported_dentry: get_parent of %ld failed, err %d\n",
-					pd->d_inode->i_ino, err);
+				dprintk("%s: get_parent of %ld failed, err %d\n",
+					__FUNCTION__, pd->d_inode->i_ino, err);
 				dput(pd);
 				break;
 			}
-			dprintk("find_exported_dentry: find name of %lu in %lu\n", pd->d_inode->i_ino, ppd->d_inode->i_ino);
-			err = CALL(nops,get_name)(ppd, nbuf, pd);
+
+			dprintk("%s: find name of %lu in %lu\n", __FUNCTION__,
+				pd->d_inode->i_ino, ppd->d_inode->i_ino);
+			err = exportfs_get_name(mnt, ppd, nbuf, pd);
 			if (err) {
 				dput(ppd);
 				dput(pd);
@@ -201,13 +168,14 @@ find_exported_dentry(struct super_block *sb, void *obj, void *parent,
 					continue;
 				break;
 			}
-			dprintk("find_exported_dentry: found name: %s\n", nbuf);
+			dprintk("%s: found name: %s\n", __FUNCTION__, nbuf);
 			mutex_lock(&ppd->d_inode->i_mutex);
 			npd = lookup_one_len(nbuf, ppd, strlen(nbuf));
 			mutex_unlock(&ppd->d_inode->i_mutex);
 			if (IS_ERR(npd)) {
 				err = PTR_ERR(npd);
-				dprintk("find_exported_dentry: lookup failed: %d\n", err);
+				dprintk("%s: lookup failed: %d\n",
+					__FUNCTION__, err);
 				dput(ppd);
 				dput(pd);
 				break;
@@ -220,7 +188,7 @@ find_exported_dentry(struct super_block *sb, void *obj, void *parent,
 			if (npd == pd)
 				noprogress = 0;
 			else
-				printk("find_exported_dentry: npd != pd\n");
+				printk("%s: npd != pd\n", __FUNCTION__);
 			dput(npd);
 			dput(ppd);
 			if (IS_ROOT(pd)) {
@@ -236,63 +204,11 @@ find_exported_dentry(struct super_block *sb, void *obj, void *parent,
 		/* something went wrong - oh-well */
 		if (!err)
 			err = -ESTALE;
-		goto err_target;
+		return err;
 	}
-	/* if we weren't after a directory, have one more step to go */
-	if (result != target_dir) {
-		struct dentry *nresult;
-		err = CALL(nops,get_name)(target_dir, nbuf, result);
-		if (!err) {
-			mutex_lock(&target_dir->d_inode->i_mutex);
-			nresult = lookup_one_len(nbuf, target_dir, strlen(nbuf));
-			mutex_unlock(&target_dir->d_inode->i_mutex);
-			if (!IS_ERR(nresult)) {
-				if (nresult->d_inode) {
-					dput(result);
-					result = nresult;
-				} else
-					dput(nresult);
-			}
-		}
-	}
-	dput(target_dir);
-	/* now result is properly connected, it is our best bet */
-	if (acceptable(context, result))
-		return result;
 
-	alias = find_acceptable_alias(result, acceptable, context);
-	if (alias)
-		return alias;
-
-	/* drat - I just cannot find anything acceptable */
-	dput(result);
-	/* It might be justifiable to return ESTALE here,
-	 * but the filehandle at-least looks reasonable good
-	 * and it just be a permission problem, so returning
-	 * -EACCESS is safer
-	 */
-	return ERR_PTR(-EACCES);
-
- err_target:
-	dput(target_dir);
- err_result:
-	dput(result);
- err_out:
-	return ERR_PTR(err);
+	return 0;
 }
-
-
-
-static struct dentry *get_parent(struct dentry *child)
-{
-	/* get_parent cannot be supported generically, the locking
-	 * is too icky.
-	 * instead, we just return EACCES.  If server reboots or inodes
-	 * get flushed, you lose
-	 */
-	return ERR_PTR(-EACCES);
-}
-
 
 struct getdents_callback {
 	char *name;		/* name that was found. It already points to a
@@ -331,8 +247,8 @@ static int filldir_one(void * __buf, const char * name, int len,
  * calls readdir on the parent until it finds an entry with
  * the same inode number as the child, and returns that.
  */
-static int get_name(struct dentry *dentry, char *name,
-			struct dentry *child)
+static int get_name(struct vfsmount *mnt, struct dentry *dentry,
+		char *name, struct dentry *child)
 {
 	struct inode *dir = dentry->d_inode;
 	int error;
@@ -348,7 +264,7 @@ static int get_name(struct dentry *dentry, char *name,
 	/*
 	 * Open the directory ...
 	 */
-	file = dentry_open(dget(dentry), NULL, O_RDONLY);
+	file = dentry_open(dget(dentry), mntget(mnt), O_RDONLY);
 	error = PTR_ERR(file);
 	if (IS_ERR(file))
 		goto out;
@@ -383,61 +299,6 @@ out:
 	return error;
 }
 
-
-static struct dentry *export_iget(struct super_block *sb, unsigned long ino, __u32 generation)
-{
-
-	/* iget isn't really right if the inode is currently unallocated!!
-	 * This should really all be done inside each filesystem
-	 *
-	 * ext2fs' read_inode has been strengthed to return a bad_inode if
-	 * the inode had been deleted.
-	 *
-	 * Currently we don't know the generation for parent directory, so
-	 * a generation of 0 means "accept any"
-	 */
-	struct inode *inode;
-	struct dentry *result;
-	if (ino == 0)
-		return ERR_PTR(-ESTALE);
-	inode = iget(sb, ino);
-	if (inode == NULL)
-		return ERR_PTR(-ENOMEM);
-	if (is_bad_inode(inode)
-	    || (generation && inode->i_generation != generation)
-		) {
-		/* we didn't find the right inode.. */
-		dprintk("fh_verify: Inode %lu, Bad count: %d %d or version  %u %u\n",
-			inode->i_ino,
-			inode->i_nlink, atomic_read(&inode->i_count),
-			inode->i_generation,
-			generation);
-
-		iput(inode);
-		return ERR_PTR(-ESTALE);
-	}
-	/* now to find a dentry.
-	 * If possible, get a well-connected one
-	 */
-	result = d_alloc_anon(inode);
-	if (!result) {
-		iput(inode);
-		return ERR_PTR(-ENOMEM);
-	}
-	return result;
-}
-
-
-static struct dentry *get_object(struct super_block *sb, void *vobjp)
-{
-	__u32 *objp = vobjp;
-	unsigned long ino = objp[0];
-	__u32 generation = objp[1];
-
-	return export_iget(sb, ino, generation);
-}
-
-
 /**
  * export_encode_fh - default export_operations->encode_fh function
  * @dentry:  the dentry to encode
@@ -450,76 +311,177 @@ static struct dentry *get_object(struct super_block *sb, void *vobjp)
  * can be used to check that it is still valid.  It places them in the
  * filehandle fragment where export_decode_fh expects to find them.
  */
-static int export_encode_fh(struct dentry *dentry, __u32 *fh, int *max_len,
-		   int connectable)
+static int export_encode_fh(struct dentry *dentry, struct fid *fid,
+		int *max_len, int connectable)
 {
 	struct inode * inode = dentry->d_inode;
 	int len = *max_len;
-	int type = 1;
+	int type = FILEID_INO32_GEN;
 	
 	if (len < 2 || (connectable && len < 4))
 		return 255;
 
 	len = 2;
-	fh[0] = inode->i_ino;
-	fh[1] = inode->i_generation;
+	fid->i32.ino = inode->i_ino;
+	fid->i32.gen = inode->i_generation;
 	if (connectable && !S_ISDIR(inode->i_mode)) {
 		struct inode *parent;
 
 		spin_lock(&dentry->d_lock);
 		parent = dentry->d_parent->d_inode;
-		fh[2] = parent->i_ino;
-		fh[3] = parent->i_generation;
+		fid->i32.parent_ino = parent->i_ino;
+		fid->i32.parent_gen = parent->i_generation;
 		spin_unlock(&dentry->d_lock);
 		len = 4;
-		type = 2;
+		type = FILEID_INO32_GEN_PARENT;
 	}
 	*max_len = len;
 	return type;
 }
 
-
-/**
- * export_decode_fh - default export_operations->decode_fh function
- * @sb:  The superblock
- * @fh:  pointer to the file handle fragment
- * @fh_len: length of file handle fragment
- * @acceptable: function for testing acceptability of dentrys
- * @context:   context for @acceptable
- *
- * This is the default decode_fh() function.
- * a fileid_type of 1 indicates that the filehandlefragment
- * just contains an object identifier understood by  get_dentry.
- * a fileid_type of 2 says that there is also a directory
- * identifier 8 bytes in to the filehandlefragement.
- */
-static struct dentry *export_decode_fh(struct super_block *sb, __u32 *fh, int fh_len,
-			      int fileid_type,
-			 int (*acceptable)(void *context, struct dentry *de),
-			 void *context)
+int exportfs_encode_fh(struct dentry *dentry, struct fid *fid, int *max_len,
+		int connectable)
 {
-	__u32 parent[2];
-	parent[0] = parent[1] = 0;
-	if (fh_len < 2 || fileid_type > 2)
-		return NULL;
-	if (fileid_type == 2) {
-		if (fh_len > 2) parent[0] = fh[2];
-		if (fh_len > 3) parent[1] = fh[3];
-	}
-	return find_exported_dentry(sb, fh, parent,
-				   acceptable, context);
+	const struct export_operations *nop = dentry->d_sb->s_export_op;
+	int error;
+
+	if (nop->encode_fh)
+		error = nop->encode_fh(dentry, fid->raw, max_len, connectable);
+	else
+		error = export_encode_fh(dentry, fid, max_len, connectable);
+
+	return error;
 }
+EXPORT_SYMBOL_GPL(exportfs_encode_fh);
 
-struct export_operations export_op_default = {
-	.decode_fh	= export_decode_fh,
-	.encode_fh	= export_encode_fh,
+struct dentry *exportfs_decode_fh(struct vfsmount *mnt, struct fid *fid,
+		int fh_len, int fileid_type,
+		int (*acceptable)(void *, struct dentry *), void *context)
+{
+	const struct export_operations *nop = mnt->mnt_sb->s_export_op;
+	struct dentry *result, *alias;
+	int err;
 
-	.get_name	= get_name,
-	.get_parent	= get_parent,
-	.get_dentry	= get_object,
-};
+	/*
+	 * Try to get any dentry for the given file handle from the filesystem.
+	 */
+	result = nop->fh_to_dentry(mnt->mnt_sb, fid, fh_len, fileid_type);
+	if (!result)
+		result = ERR_PTR(-ESTALE);
+	if (IS_ERR(result))
+		return result;
 
-EXPORT_SYMBOL(export_op_default);
-EXPORT_SYMBOL(find_exported_dentry);
+	if (S_ISDIR(result->d_inode->i_mode)) {
+		/*
+		 * This request is for a directory.
+		 *
+		 * On the positive side there is only one dentry for each
+		 * directory inode.  On the negative side this implies that we
+		 * to ensure our dentry is connected all the way up to the
+		 * filesystem root.
+		 */
+		if (result->d_flags & DCACHE_DISCONNECTED) {
+			err = reconnect_path(mnt, result);
+			if (err)
+				goto err_result;
+		}
+
+		if (!acceptable(context, result)) {
+			err = -EACCES;
+			goto err_result;
+		}
+
+		return result;
+	} else {
+		/*
+		 * It's not a directory.  Life is a little more complicated.
+		 */
+		struct dentry *target_dir, *nresult;
+		char nbuf[NAME_MAX+1];
+
+		/*
+		 * See if either the dentry we just got from the filesystem
+		 * or any alias for it is acceptable.  This is always true
+		 * if this filesystem is exported without the subtreecheck
+		 * option.  If the filesystem is exported with the subtree
+		 * check option there's a fair chance we need to look at
+		 * the parent directory in the file handle and make sure
+		 * it's connected to the filesystem root.
+		 */
+		alias = find_acceptable_alias(result, acceptable, context);
+		if (alias)
+			return alias;
+
+		/*
+		 * Try to extract a dentry for the parent directory from the
+		 * file handle.  If this fails we'll have to give up.
+		 */
+		err = -ESTALE;
+		if (!nop->fh_to_parent)
+			goto err_result;
+
+		target_dir = nop->fh_to_parent(mnt->mnt_sb, fid,
+				fh_len, fileid_type);
+		if (!target_dir)
+			goto err_result;
+		err = PTR_ERR(target_dir);
+		if (IS_ERR(target_dir))
+			goto err_result;
+
+		/*
+		 * And as usual we need to make sure the parent directory is
+		 * connected to the filesystem root.  The VFS really doesn't
+		 * like disconnected directories..
+		 */
+		err = reconnect_path(mnt, target_dir);
+		if (err) {
+			dput(target_dir);
+			goto err_result;
+		}
+
+		/*
+		 * Now that we've got both a well-connected parent and a
+		 * dentry for the inode we're after, make sure that our
+		 * inode is actually connected to the parent.
+		 */
+		err = exportfs_get_name(mnt, target_dir, nbuf, result);
+		if (!err) {
+			mutex_lock(&target_dir->d_inode->i_mutex);
+			nresult = lookup_one_len(nbuf, target_dir,
+						 strlen(nbuf));
+			mutex_unlock(&target_dir->d_inode->i_mutex);
+			if (!IS_ERR(nresult)) {
+				if (nresult->d_inode) {
+					dput(result);
+					result = nresult;
+				} else
+					dput(nresult);
+			}
+		}
+
+		/*
+		 * At this point we are done with the parent, but it's pinned
+		 * by the child dentry anyway.
+		 */
+		dput(target_dir);
+
+		/*
+		 * And finally make sure the dentry is actually acceptable
+		 * to NFSD.
+		 */
+		alias = find_acceptable_alias(result, acceptable, context);
+		if (!alias) {
+			err = -EACCES;
+			goto err_result;
+		}
+
+		return alias;
+	}
+
+ err_result:
+	dput(result);
+	return ERR_PTR(err);
+}
+EXPORT_SYMBOL_GPL(exportfs_decode_fh);
 
 MODULE_LICENSE("GPL");

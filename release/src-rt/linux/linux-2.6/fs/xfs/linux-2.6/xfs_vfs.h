@@ -112,7 +112,7 @@ typedef int	(*vfs_root_t)(bhv_desc_t *, struct bhv_vnode **);
 typedef int	(*vfs_statvfs_t)(bhv_desc_t *, bhv_statvfs_t *,
 				struct bhv_vnode *);
 typedef int	(*vfs_sync_t)(bhv_desc_t *, int, struct cred *);
-typedef int	(*vfs_vget_t)(bhv_desc_t *, struct bhv_vnode **, struct fid *);
+typedef int	(*vfs_vget_t)(bhv_desc_t *, struct bhv_vnode **, struct xfs_fid *);
 typedef int	(*vfs_dmapiops_t)(bhv_desc_t *, caddr_t);
 typedef int	(*vfs_quotactl_t)(bhv_desc_t *, int, int, caddr_t);
 typedef void	(*vfs_init_vnode_t)(bhv_desc_t *,
@@ -183,7 +183,7 @@ extern int vfs_mntupdate(bhv_desc_t *, int *, struct xfs_mount_args *);
 extern int vfs_root(bhv_desc_t *, struct bhv_vnode **);
 extern int vfs_statvfs(bhv_desc_t *, bhv_statvfs_t *, struct bhv_vnode *);
 extern int vfs_sync(bhv_desc_t *, int, struct cred *);
-extern int vfs_vget(bhv_desc_t *, struct bhv_vnode **, struct fid *);
+extern int vfs_vget(bhv_desc_t *, struct bhv_vnode **, struct xfs_fid *);
 extern int vfs_dmapiops(bhv_desc_t *, caddr_t);
 extern int vfs_quotactl(bhv_desc_t *, int, int, caddr_t);
 extern void vfs_init_vnode(bhv_desc_t *, struct bhv_vnode *, bhv_desc_t *, int);

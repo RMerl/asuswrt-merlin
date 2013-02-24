@@ -173,7 +173,7 @@ typedef int	(*vop_readlink_t)(bhv_desc_t *, struct uio *, int,
 typedef int	(*vop_fsync_t)(bhv_desc_t *, int, struct cred *,
 				xfs_off_t, xfs_off_t);
 typedef int	(*vop_inactive_t)(bhv_desc_t *, struct cred *);
-typedef int	(*vop_fid2_t)(bhv_desc_t *, struct fid *);
+typedef int	(*vop_fid2_t)(bhv_desc_t *, struct xfs_fid *);
 typedef int	(*vop_release_t)(bhv_desc_t *);
 typedef int	(*vop_rwlock_t)(bhv_desc_t *, bhv_vrwlock_t);
 typedef void	(*vop_rwunlock_t)(bhv_desc_t *, bhv_vrwlock_t);

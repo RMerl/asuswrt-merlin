@@ -145,7 +145,7 @@ int
 vfs_vget(
 	struct bhv_desc		*bdp,
 	struct bhv_vnode	**vpp,
-	struct fid		*fidp)
+	struct xfs_fid		*fidp)
 {
 	struct bhv_desc		*next = bdp;
 

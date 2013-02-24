@@ -24,6 +24,7 @@
 #include <linux/squashfs_fs.h>
 #include <linux/module.h>
 #include <linux/fs.h>
+#include <linux/exportfs.h>
 #include <linux/squashfs_fs_sb.h>
 #include <linux/squashfs_fs_i.h>
 #include <linux/buffer_head.h>

@@ -3599,27 +3599,18 @@ std_return:
 }
 
 
-/*
- * xfs_fid2
- *
- * A fid routine that takes a pointer to a previously allocated
- * fid structure (like xfs_fast_fid) but uses a 64 bit inode number.
- */
 STATIC int
 xfs_fid2(
 	bhv_desc_t	*bdp,
-	fid_t		*fidp)
+	xfs_fid_t	*xfid)
 {
 	xfs_inode_t	*ip;
-	xfs_fid2_t	*xfid;
 
 	vn_trace_entry(BHV_TO_VNODE(bdp), __FUNCTION__,
 				       (inst_t *)__return_address);
-	ASSERT(sizeof(fid_t) >= sizeof(xfs_fid2_t));
 
-	xfid = (xfs_fid2_t *)fidp;
 	ip = XFS_BHVTOI(bdp);
-	xfid->fid_len = sizeof(xfs_fid2_t) - sizeof(xfid->fid_len);
+	xfid->fid_len = sizeof(xfs_fid_t) - sizeof(xfid->fid_len);
 	xfid->fid_pad = 0;
 	/*
 	 * use memcpy because the inode is a long long and there's no
