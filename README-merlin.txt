@@ -403,6 +403,9 @@ History
           Run "entware-setup.sh" through SSH/Telnet to launch the install process.
    - CHANGED: Added a folder picker to the Tools Other Settings page to select
               a location to store your traffic data files.
+   - CHANGED: Updated dnsmasq to 2.65 (backported from 3.0.0.4.334)
+   - CHANGED: Enabled additional optimizations in openssl for another significant
+              performance increase.
    - FIXED: Added missing badblocks program
    - FIXED: Timing issues under IE where resolved device names would 
             not display on certain pages (such as the Sysinfo page)
@@ -414,6 +417,8 @@ History
    - FIXED: Made profile.add be run after any Optware profile, so the user
             changes will have priority over anything else.
    - FIXED: WOL list corruption when removing an entry in some browsers
+   - FIXED: No longer forward packets with a LAN IP as destination
+            (Asus bug, fixed CDRouter test firewall_2)
 
 
 3.0.0.4.270.24
