@@ -41,6 +41,7 @@
 #include <linux/blkdev.h>
 #include <linux/quotaops.h>
 #include <linux/highmem.h>
+#include <linux/exportfs.h>
 #include <linux/vfs.h>
 #include <linux/mutex.h>
 #include <linux/kthread.h>
@@ -61,7 +62,7 @@ static const struct inode_operations jffs_file_inode_operations;
 static const struct file_operations jffs_dir_operations;
 static const struct inode_operations jffs_dir_inode_operations;
 static const struct address_space_operations jffs_address_operations;
-static struct export_operations jffs_export_ops;
+static const struct export_operations jffs_export_ops;
 
 struct kmem_cache     *node_cache = NULL;
 struct kmem_cache     *fm_cache = NULL;
