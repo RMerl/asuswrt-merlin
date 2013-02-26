@@ -2245,7 +2245,7 @@ void wan6_up(const char *wan_ifname)
 			dbG("WAN IPv6 address is the same as LAN IPv6 address!\n");
 			break;
 		}
-		snprintf(addr6, "%s/%d", nvram_safe_get("ipv6_ipaddr"), nvram_get_int("ipv6_prefix_len_wan"));
+		snprintf(addr6, sizeof(addr6), "%s/%d", nvram_safe_get("ipv6_ipaddr"), nvram_get_int("ipv6_prefix_len_wan"));
 		eval("ip", "-6", "addr", "add", addr6, "dev", (char *)wan_ifname);
 		eval("ip", "-6", "route", "del", "::/0");
 		eval("ip", "-6", "route", "add", "::/0", "via", nvram_safe_get("ipv6_gateway"), "dev", (char *)wan_ifname, "metric", "1");
