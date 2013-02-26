@@ -1788,7 +1788,7 @@ lzo-install: lzo
 openvpn: openvpn/.conf openssl lzo
 
 openvpn/.conf:
-	cd openvpn && CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
+	cd openvpn && CFLAGS="-O3 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
 	LDFLAGS="-L$(TOP)/openssl -L$(TOP)/lzo/src/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	CPPFLAGS="-I$(TOP)/lzo/include -I$(TOP)/openssl/include -L$(TOP)/lzo -L$(TOP)/openssl -L$(TOP)/lzo/src/.libs" \
 	IPROUTE="/usr/sbin/ip" \
