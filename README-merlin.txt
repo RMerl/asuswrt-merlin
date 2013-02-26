@@ -404,8 +404,8 @@ History
    - CHANGED: Added a folder picker to the Tools Other Settings page to select
               a location to store your traffic data files.
    - CHANGED: Updated dnsmasq to 2.65 (backported from 3.0.0.4.334)
-   - CHANGED: Enabled additional optimizations in openssl for another significant
-              performance increase.
+   - CHANGED: Enabled additional optimizations for openssl and openvpn for 
+              a significant performance gain
    - FIXED: Added missing badblocks program
    - FIXED: Timing issues under IE where resolved device names would 
             not display on certain pages (such as the Sysinfo page)
