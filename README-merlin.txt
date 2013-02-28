@@ -406,6 +406,7 @@ History
    - CHANGED: Updated dnsmasq to 2.65 (backported from 3.0.0.4.334)
    - CHANGED: Enabled additional optimizations for openssl and openvpn for 
               a significant performance gain
+   - CHANGED: Reverted wireless driver to build 220 (RT-AC66U only)
    - FIXED: Added missing badblocks program
    - FIXED: Timing issues under IE where resolved device names would 
             not display on certain pages (such as the Sysinfo page)
@@ -419,6 +420,9 @@ History
    - FIXED: WOL list corruption when removing an entry in some browsers
    - FIXED: No longer forward packets with a LAN IP as destination
             (Asus bug, fixed CDRouter test firewall_2)
+   - FIXED: IPv6 WAN would have the wrong prefix length (Asus bug, patch 
+            submitted by PiotrKa)
+
 
 
 3.0.0.4.270.24
