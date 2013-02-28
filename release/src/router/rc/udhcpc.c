@@ -370,7 +370,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 #endif
 		NULL, NULL,	/* -x 61:wan_clientid (non-DSL) */
 		NULL};
-	int index = 7;		/* first NULL */
+	int index = 13;		/* first NULL */
 	int dr_enable;
 
 	/* Use unit */
