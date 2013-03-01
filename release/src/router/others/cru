@@ -6,12 +6,16 @@ N="$F.new"
 L="/var/lock/cron.lock"
 
 if [ $# -gt 1 -a "$1" = "a" -o "$1" = "d" ]; then
-	I=$((($$ % 25) + 5))
-	while ! rm $L 2>/dev/null; do
-		I=$(($I - 1))
-		[ $I -lt 0 ] && break
-		sleep 1
-	done
+
+	if [ -f $L ];
+	then
+		I=$((($$ % 25) + 5))
+		while ! rm $L 2>/dev/null; do
+			I=$(($I - 1))
+			[ $I -lt 0 ] && break
+			sleep 1
+		done
+	fi
 
 	ID=$2
 	grep -v "#$ID#\$" $F >$N 2>/dev/null
