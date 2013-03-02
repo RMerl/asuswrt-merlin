@@ -1507,6 +1507,10 @@ static void log_packet(char *type, void *addr, unsigned char *ext_mac,
 {
   struct in_addr a;
  
+  /* option to reduce excessive logging for DHCP packets */
+  if (option_bool(OPT_QUIET_DHCP) && strncmp(type, "DHCP", 4) == 0)
+    return;
+
   /* addr may be misaligned */
   if (addr)
     memcpy(&a, addr, sizeof(a));

@@ -122,6 +122,8 @@ struct myoption {
 #define LOPT_CLVERBIND 311
 #define LOPT_MAXCTTL   312
 
+#define LOPT_QUIET_DHCP 400
+
 #ifdef HAVE_GETOPT_LONG
 static const struct option opts[] =  
 #else
@@ -247,6 +249,7 @@ static const struct myoption opts[] =
     { "dhcp-duid", 1, 0, LOPT_DUID },
     { "host-record", 1, 0, LOPT_HOST_REC },
     { "bind-dynamic", 0, 0, LOPT_CLVERBIND },
+    { "quiet-dhcp", 0, 0, LOPT_QUIET_DHCP },
     { NULL, 0, 0, 0 }
   };
 
@@ -379,6 +382,7 @@ static struct {
   { LOPT_HOST_REC, ARG_DUP, "<name>,<address>", gettext_noop("Specify host (A/AAAA and PTR) records"), NULL },
   { LOPT_RR, ARG_DUP, "<name>,<RR-number>,[<data>]", gettext_noop("Specify arbitrary DNS resource record"), NULL },
   { LOPT_CLVERBIND, OPT_CLEVERBIND, NULL, gettext_noop("Bind to interfaces in use - check for new interfaces"), NULL},
+  { LOPT_QUIET_DHCP, OPT_QUIET_DHCP, NULL, gettext_noop("Do not log DHCP packets."), NULL },
   { 0, 0, NULL, NULL, NULL }
 }; 
 
