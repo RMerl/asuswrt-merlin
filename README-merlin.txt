@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.270.25 (02-Mar-2013)
+Asuswrt-Merlin - build 3.0.0.4.270.25 (03-Mar-2013)
 ===================================================
 
 About
@@ -393,6 +393,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.270.25b
+   - FIXED: Disabling DHCP logging would cause a syntax error in dnsmasq's configuration
+            (regression from dnsmasq update)
+   - FIXED: Outbound VPN client traffic was dropped (regression from firewall_2 fix)
+
 
 3.0.0.4.270.25
    - NEW: NFS folder sharing.  Webui can be found on the USB Applications ->
