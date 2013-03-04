@@ -1,0 +1,8 @@
+Name: test
+Type: portmap
+References: 0
+Header: from: 0 to: 65535
+Members:
+0
+65535
+

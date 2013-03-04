@@ -1,0 +1,7 @@
+Name: test
+Type: ipporthash
+References: 0
+Header: from: 2.0.0.1 to: 2.1.0.0 hashsize: 1024 probes: 8 resize: 50
+Members:
+2.0.0.1,5
+2.1.0.0,128
