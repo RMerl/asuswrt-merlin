@@ -2054,6 +2054,12 @@ portmap-install:
 ipset:
 	$(MAKE) -C ipset binaries
 
+ipset-install:
+	install -D ipset/ipset $(INSTALLDIR)/ipset/usr/sbin/ipset
+	install -d $(INSTALLDIR)/ipset/usr/lib/
+	install ipset/*.so $(INSTALLDIR)/ipset/usr/lib/
+	$(STRIP) $(INSTALLDIR)/ipset/usr/lib/*
+
 #
 # Generic rules
 #
