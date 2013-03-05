@@ -17,6 +17,7 @@ PF_EXT_SLIB+=tcp tcpmss time tos u32 udp web dscp connbytes webstr string
 PF_EXT_SLIB+=IMQ ipp2p
 PF_EXT_SLIB+=conntrack
 PF_EXT_SLIB+=layer7
+PF_EXT_SLIB+=set
 ifeq ($(CONFIG_LINUX26),y)
 PF_EXT_SLIB+=hashlimit NFQUEUE
 endif
