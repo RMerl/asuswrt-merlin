@@ -2058,7 +2058,9 @@ ipset-install:
 	install -D ipset/ipset $(INSTALLDIR)/ipset/usr/sbin/ipset
 	install -d $(INSTALLDIR)/ipset/usr/lib/
 	install ipset/*.so $(INSTALLDIR)/ipset/usr/lib/
-	$(STRIP) $(INSTALLDIR)/ipset/usr/lib/*
+	$(STRIP) $(INSTALLDIR)/ipset/usr/lib/*.so
+	$(STRIP) $(INSTALLDIR)/ipset/usr/sbin/ipset
+
 
 #
 # Generic rules
