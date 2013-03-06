@@ -827,7 +827,7 @@ function valid_IPorMAC(obj){
 								</td>
 								
 								<td width="8%">
-									<input type="button" class="add_btn" onClick="addRow_Group(32);">
+									<input type="button" class="add_btn" onClick="addRow_Group(128);">
 								</td>
 							</tr>
 							</table>
