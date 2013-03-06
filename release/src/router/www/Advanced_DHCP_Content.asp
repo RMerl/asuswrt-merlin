@@ -641,7 +641,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 			  	<thead>
 			  		<tr>
-						<td colspan="4" id="GWStatic"><#LANHostConfig_ManualDHCPList_groupitemdesc#></td><!--Viz hold on this : &nbsp;&nbsp;(<#List_limit#> 32)-->
+						<td colspan="4" id="GWStatic"><#LANHostConfig_ManualDHCPList_groupitemdesc#></td><!--Viz hold on this : &nbsp;&nbsp;(<#List_limit#> 128)-->
 			  		</tr>
 			  	</thead>
 
@@ -667,7 +667,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 				</td>
 				<td width="19%">
 										<div> 
-											<input type="button" class="add_btn" onClick="addRow_Group(32);" value="">
+											<input type="button" class="add_btn" onClick="addRow_Group(128);" value="">
 										</div>
             			</td>
 			  	</tr>	 			  
