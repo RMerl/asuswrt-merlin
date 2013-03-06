@@ -351,7 +351,7 @@ function trigger_validate_duplicate(o, v, l, off){
               		</select>
             	</td>
 								<td width="16%">
-									<input type="button" class="add_btn" onClick="addRow_Group(32);" name="" value="">
+									<input type="button" class="add_btn" onClick="addRow_Group(128);" name="" value="">
 								</td>
 							</tr>
 							</table>		
