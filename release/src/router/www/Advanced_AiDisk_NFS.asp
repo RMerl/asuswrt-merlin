@@ -715,7 +715,7 @@ function shownfsd_exportlist(){
 												</td>
 												<td width="10%">
 													<div>
-														<input type="button" class="add_btn" onClick="addRow_Group(32);" value="">
+														<input type="button" class="add_btn" onClick="addRow_Group(128);" value="">
 													</div>
 					        	    			</td>
 										  	</tr>
