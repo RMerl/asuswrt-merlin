@@ -64,7 +64,7 @@ Networking:
    - OpenVPN client and server, based on code originally written by
      Keith Moyer for Tomato and reused with his permission. (RT-N66U, RT-AC66U)
    - Option to control Spanning-Tree Protocol support.
-
+   - Netfilter ipset module, for efficient blacklist implemetnation
 
 Web interface:
    - Clicking on the MAC address of an unidentified client will do a lookup in
@@ -393,6 +393,10 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.270.26
+   - NEW: ipset Netfilter support + userspace tool to create ipset lists.
+
+
 3.0.0.4.270.25b
    - FIXED: Disabling DHCP logging would cause a syntax error in dnsmasq's configuration
             (regression from dnsmasq update)
