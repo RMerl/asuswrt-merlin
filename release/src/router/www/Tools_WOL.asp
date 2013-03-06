@@ -408,7 +408,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 				</td>
             			<td width="20%">
 										<div>
-											<input type="button" class="add_btn" onClick="addRow_Group(32);" value="">
+											<input type="button" class="add_btn" onClick="addRow_Group(128);" value="">
 										</div>
             			</td>
 			  	</tr>
