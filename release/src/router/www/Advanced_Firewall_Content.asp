@@ -519,7 +519,7 @@ function check_Timefield_checkbox(){	// To check Date checkbox checked or not an
 								</select>
 	    						</td>
 	    							<td width="15%">
-									<input type="button" class="add_btn" onClick="addRow_Group(32);" name="filter_lwlist2" value="">
+									<input type="button" class="add_btn" onClick="addRow_Group(128);" name="filter_lwlist2" value="">
 								</td>
 									
 							</tr>
