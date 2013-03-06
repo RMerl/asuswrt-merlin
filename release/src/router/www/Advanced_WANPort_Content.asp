@@ -769,7 +769,7 @@ function del_Row(obj){
             			</td>            			
             			<td width="15%">
 										<div> 
-											<input type="button" class="add_btn" onClick="addRow_Group(32);" value="">
+											<input type="button" class="add_btn" onClick="addRow_Group(128);" value="">
 										</div>
             			</td>
 			  	</tr>	 			  
