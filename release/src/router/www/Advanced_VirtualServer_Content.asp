@@ -655,7 +655,7 @@ function changeBgColor(obj, num){
 					</select>
 				</td>
 				<td width="14%">
-					<input type="button" class="add_btn" onClick="addRow_Group(32);" name="vts_rulelist2" value="">
+					<input type="button" class="add_btn" onClick="addRow_Group(128);" name="vts_rulelist2" value="">
 				</td>
 				</tr>
 				</table>		
