@@ -658,7 +658,7 @@ function change_vpn_unit(val){
 								</select>
 							</td>
 						 	<td width="12%">
-						 		<input class="add_btn" type="button" onClick="addRow_Group(32);" name="vpn_clientlist2" value="">
+						 		<input class="add_btn" type="button" onClick="addRow_Group(128);" name="vpn_clientlist2" value="">
 						 	</td>
 						</tr>
 					</table>

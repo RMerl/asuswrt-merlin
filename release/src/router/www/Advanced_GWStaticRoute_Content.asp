@@ -436,7 +436,7 @@ function Ctrl_LANIPList(obj){
 				
 					<td width="12%">
 						<div> 
-							<input type="button" class="add_btn" onClick="addRow_Group(32);" value="">
+							<input type="button" class="add_btn" onClick="addRow_Group(128);" value="">
 						</div>
 					</td>
 			  </tr>
