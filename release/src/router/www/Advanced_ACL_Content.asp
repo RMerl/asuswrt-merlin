@@ -308,7 +308,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 				<input type="text" class="input_15_table" maxlenght="15" onKeypress="return is_alphanum(this,event);" name="wl_macname_x_0">
 			</td>
               		<td width="20%">	
-              			<input type="button" class="add_btn" onClick="addRow(document.form.wl_maclist_x_0, document.form.wl_macname_x_0, 32);" value="">
+              			<input type="button" class="add_btn" onClick="addRow(document.form.wl_maclist_x_0, document.form.wl_macname_x_0, 128);" value="">
               		</td>
           		</tr>      		
         		</table>
