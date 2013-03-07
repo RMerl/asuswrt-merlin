@@ -784,7 +784,7 @@ function hideport(flag){
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="5">
-<input type="hidden" name="action_script" value="restart_time;restart_httpd">
+<input type="hidden" name="action_script" value="restart_time;restart_httpd;restart_upnp">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
