@@ -2264,9 +2264,13 @@ void start_upnp(void)
 
 
 				if (nvram_match("upnp_mnp", "1")) {
-					int https = nvram_get_int("https_enable");
-					fprintf(f, "presentation_url=http%s://%s\n",
-						https ? "s" : "", lanip);
+					int https = nvram_get_int("http_enable");
+					int https_port = nvram_get_int("https_lanport");
+					sprintf(tmp1, ":%d", https_port);
+
+					fprintf(f, "presentation_url=http%s://%s%s\n",
+						(https > 0) ? "s" : "", lanip,
+						((https > 0) && https_port) ? tmp1 : "");
 				}
 				else {
 					// Empty parameters are not included into XML service description
