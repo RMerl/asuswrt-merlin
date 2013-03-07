@@ -22,7 +22,12 @@
 <script type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<script type="text/javascript" src="tmmenu.js"></script>
+<script type="text/javascript" src="nameresolv.js"></script>
 <script>
+
+var client_list_array = '<% get_client_detail_info(); %>';
+
 if(parental2_support != -1){
 	addNewScript("/calendar/fullcalendar.js");
 	addNewScript("/calendar/jquery-ui-1.8.11.custom.min.js");
@@ -93,19 +98,17 @@ function showLANIPList(){
 
 	for(var i = 1; i < client_list_row.length; i++){
 		var client_list_col = client_list_row[i].split('>');
-		if(client_list_col[1] && client_list_col[1].length > 20)
-			show_name = client_list_col[1].substring(0, 16) + "..";
-		else
-			show_name = client_list_col[1];
+		show_name = hostnamecache[client_list_col[2]];
+		client_list_col[1] = show_name;
 
 		if(client_list_col[1])
 			code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_col[1]+'\', \''+client_list_col[3]+'\');"><strong>'+client_list_col[2]+'</strong> ';
 		else
 			code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_col[3]+'\', \''+client_list_col[3]+'\');"><strong>'+client_list_col[2]+'</strong> ';
-			if(show_name && show_name.length > 0)
-				code += '( '+show_name+')';
-			code += ' </div></a>';
-		}
+		if(show_name && show_name.length > 0)
+			code += '('+show_name+')';
+		code += ' </div></a>';
+	}
 	code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
 	$("ClientList_Block_PC").innerHTML = code;
 }
