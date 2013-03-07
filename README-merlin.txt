@@ -395,6 +395,7 @@ History
 -------
 3.0.0.4.270.26
    - NEW: ipset Netfilter support + userspace tool to create ipset lists.
+   - CHANGED: Various webui lists were increased from 32 to 128 entries allowed.
 
 
 3.0.0.4.270.25b
