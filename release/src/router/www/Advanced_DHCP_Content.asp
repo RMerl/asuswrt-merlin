@@ -538,7 +538,11 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
       <div class="formfontdesc"><#LANHostConfig_DHCPServerConfigurable_sectiondesc#></div>
       <div id="router_in_pool" class="formfontdesc" style="color:#FFCC00;display:none;"><#LANHostConfig_DHCPServerConfigurable_sectiondesc2#><span id="LANIP"></span></div>	
       <div id="VPN_conflict" class="formfontdesc" style="color:#FFCC00;display:none;"><span id="VPN_conflict_span"></span></div>
-  
+      <div class="formfontdesc" style="margin-top:-10px;">
+         <br>You can enter up to 128 static DHCP reservations.  If filled, the Name field conent will be pushed to the
+         client as the hostname.  If an invalid name is entered (such as one with spaces), then the name will only
+         be used as a description on the webui itself (for example, "My Laptop").
+      </div>
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 			  <thead>
 			  <tr>
