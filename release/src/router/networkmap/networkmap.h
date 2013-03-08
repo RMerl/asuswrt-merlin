@@ -298,3 +298,4 @@ typedef struct
 } MY_DEVICE_INFO;
 
 int FindAllApp( unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab);
+int FindHostname( P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab);

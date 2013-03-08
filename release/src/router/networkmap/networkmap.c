@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/time.h>
-#include <shutils.h>    // for eval()
+#include "../shared/shutils.h"    // for eval()
 #include <bcmnvram.h>
 #include "networkmap.h"
 #include "endianness.h"
@@ -340,6 +340,8 @@ int main()
 	    //Find All Application of clients
 	    if(p_client_detail_info_tab->detail_info_num < p_client_detail_info_tab->ip_mac_num) {
 		FindAllApp(my_ipaddr, p_client_detail_info_tab);
+		FindHostname(p_client_detail_info_tab);
+
 		#ifdef DEBUG //Fill client detail info table
                 fp_ip=fopen("/var/client_detail_info.txt", "a");
                 if (fp_ip==NULL) {

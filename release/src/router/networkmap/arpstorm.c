@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/time.h>
-#include <shutils.h>    // for eval()
+#include "../shared/shutils.h"    // for eval()
 #include <bcmnvram.h>
 #include "networkmap.h"
 #include "endianness.h"

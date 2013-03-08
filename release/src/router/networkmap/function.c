@@ -8,6 +8,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <bcmnvram.h>
 #include "networkmap.h"
 
 #include <netinet/in.h>
@@ -19,6 +20,7 @@
 #include <semaphore_mfp.h>
 #include "endianness.h"
 #include <iboxcom.h>
+#include "../shared/shutils.h"
 
 extern int scan_count;//from networkmap;
 
@@ -1808,6 +1810,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
         	bzero(SMB_OS, 16);
 	        bzero(SMB_PriDomain, 10);
 		sleep(1);
+
 		spinlock_lock(SPINLOCK_Networkmap);
 		if(!SendSMBReq(dest_ip, &my_dvinfo))
         	{
@@ -1833,6 +1836,35 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
                         NMP_DEBUG("Find: Nothing!\n");
                 }
 		spinlock_unlock(SPINLOCK_Networkmap);
+	}
+
+	return 1;
+}
+
+
+int FindHostname(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab)
+{
+	unsigned char *dest_ip = p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num];
+	char ipaddr[16];
+	sprintf(ipaddr, "%d.%d.%d.%d",(int)*(dest_ip),(int)*(dest_ip+1),(int)*(dest_ip+2),(int)*(dest_ip+3));
+
+	char *nv, *nvp, *b;
+	char *mac, *ip, *name;
+	int vars;
+
+	nv = nvp = strdup(nvram_safe_get("dhcp_staticlist"));
+
+	if(nv) {
+
+		while ((b = strsep(&nvp, "<")) != NULL) {
+			vars = vstrsep(b, ">", &mac, &ip, &name);
+
+			if ((vars == 3) && (strlen(ip) > 0) && (strlen(name) > 0)) {
+				if (!strcmp(ipaddr, ip))
+					strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], name, 15);
+			}
+		}
+		free(nv);
 	}
 
 	return 1;
