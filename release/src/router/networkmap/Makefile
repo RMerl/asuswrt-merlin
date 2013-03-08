@@ -12,7 +12,7 @@ all: $(EXEC) #arpstorm
 $(EXEC): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(CFLAGS)
 
-#arpstorm: shutils.o arpstorm.o
+#arpstorm: ../shared/shutils.o arpstorm.o
 #	$(CC) -o $@ $^ $(LDFLAGS) $(CFLAGS)
 
 install:
