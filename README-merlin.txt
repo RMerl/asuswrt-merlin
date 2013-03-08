@@ -67,8 +67,8 @@ Networking:
    - Netfilter ipset module, for efficient blacklist implemetnation
 
 Web interface:
-   - Clicking on the MAC address of an unidentified client will do a lookup in
-     the OUI database (ported from DD-WRT).
+   - Improved client list, with DHCP hostnames, and clickable MACs to 
+     generate a lookup in the OUI database (the latter ported from DD-WRT).
    - Optionally save traffic stats to disk (USB or JFFS partition)
    - Enhanced traffic monitoring: added monthly, as well as per IP monitoring
    - Display active/tracked network connections
@@ -76,6 +76,8 @@ Web interface:
    - System info summary page
    - Wireless client IP, hostname, rate and rssi on the Wireless Log page
    - Wifi icon reports the state of both radios
+   - The various MAC/IP selection pulldowns will also display hostnames
+     when possible instead of just NetBIOS names
 
 
 A few features that first debuted in Asuswrt-Merlin have since been 
@@ -396,6 +398,10 @@ History
 3.0.0.4.270.26
    - NEW: ipset Netfilter support + userspace tool to create ipset lists.
    - CHANGED: Various webui lists were increased from 32 to 128 entries allowed.
+   - CHANGED: Improved networkmap.  Will now use DHCP lease hostnames and DHCP 
+              static names whenever possible instead of just NetBIOS names.
+   - CHANGED: Various dropdown selectors will display hostname in addition to
+              MAC or IP.
 
 
 3.0.0.4.270.25b
