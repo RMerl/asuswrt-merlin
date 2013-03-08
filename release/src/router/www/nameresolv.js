@@ -87,8 +87,6 @@ hostnamecache = { "ready":0 };
 function populateCache() {
 	var s;
 
-	// First, build a list using NETBIOS or hostname as returned by client.
-
 	var client_list_array = '<% get_client_detail_info(); %>';
 
 	if (client_list_array) {
@@ -98,9 +96,6 @@ function populateCache() {
 			if (t.length == 7) {
 				if (t[1] != ''){
 					hostnamecache[t[2]] = t[1].trim();
-				} else {
-					hostname = retHostName(t[3]);
-					if (hostname != "") hostnamecache[t[2]] = ellipsis(hostname,16);
 				}
 			}
 		}
