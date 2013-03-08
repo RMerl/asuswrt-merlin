@@ -1849,17 +1849,31 @@ int FindHostname(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab)
 	sprintf(ipaddr, "%d.%d.%d.%d",(int)*(dest_ip),(int)*(dest_ip+1),(int)*(dest_ip+2),(int)*(dest_ip+3));
 
 	char *nv, *nvp, *b;
-	char *mac, *ip, *name;
-	int vars;
+	char *mac, *ip, *name, *expire;
+	FILE *fp;
+	char line[256];
+	char *next;
 
+// Get current hostname from DHCP leases
+	if (!nvram_get_int("dhcp_enable_x") || !nvram_match("sw_mode", "1"))
+		return 0;
+
+	if ((fp = fopen("/var/lib/misc/dnsmasq.leases", "r"))) {
+		while ((next = fgets(line, sizeof(line), fp)) != NULL) {
+			if ((vstrsep(next, " ", &expire, &mac, &ip, &name) == 4) && (strlen(name) > 0)) {
+				if (!strcmp(ipaddr, ip))
+					strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], name, 15);
+			}
+		}
+		fclose(fp);
+	}
+
+// Get names from static lease list, overruling anything else
 	nv = nvp = strdup(nvram_safe_get("dhcp_staticlist"));
 
-	if(nv) {
-
+	 if (nv) {
 		while ((b = strsep(&nvp, "<")) != NULL) {
-			vars = vstrsep(b, ">", &mac, &ip, &name);
-
-			if ((vars == 3) && (strlen(ip) > 0) && (strlen(name) > 0)) {
+			if ((vstrsep(b, ">", &mac, &ip, &name) == 3) && (strlen(ip) > 0) && (strlen(name) > 0)) {
 				if (!strcmp(ipaddr, ip))
 					strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], name, 15);
 			}
