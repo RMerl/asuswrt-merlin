@@ -1640,7 +1640,10 @@ start_samba(void)
 		return;
 	}
 
-	if (nvram_match("enable_samba", "0")) return;
+	if ((nvram_match("enable_samba", "0")) &&
+	    (nvram_match("smbd_master", "0")) &&
+	    (nvram_match("smbd_wins", "0")))
+		return;
 
 #ifdef RTCONFIG_GROCTRL
 	enable_gro();
