@@ -118,15 +118,13 @@ function show_etherstate(){
 			} else {
 				overlib_str = "<p><#MAC_Address#></p>" + line[11];
 
-				// Retrieve through lease list, else walk down arp cache and retrieve from hostname cache
+				// Walk down arp cache and retrieve from hostname cache
 				for (var j = 0; j < arplist.length; ++j) {
 					if (arplist[j][3] == line[11].toUpperCase()) {
 						hostname = hostnamecache[arplist[j][0]];
 						break;
 					}
 				}
-
-//				if (hostname == "") hostname = retHostName(line[11]);
 
 				if (hostname != "") {
 					devicename = '<span class="ClientName" onmouseover="return overlib(\''+overlib_str +'\');" onmouseout="nd();">'+ hostname +'</span>';
