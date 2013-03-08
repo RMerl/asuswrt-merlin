@@ -361,7 +361,7 @@ void start_dnsmasq()
 		}
 #ifdef RTCONFIG_SAMBASRV
 		/* Samba will serve as a WINS server */
-		else if (nvram_get_int("smbd_enable") && nvram_invmatch("lan_domain", "") && nvram_get_int("smbd_wins")) {
+		else if (nvram_invmatch("lan_domain", "") && nvram_get_int("smbd_wins")) {
 			fprintf(fp, "dhcp-option=lan,44,0.0.0.0\n"
 			/*	    "dhcp-option=lan,46,8\n"*/);
 		}
