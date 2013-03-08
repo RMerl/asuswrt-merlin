@@ -106,22 +106,6 @@ function populateCache() {
 		}
 	}
 
-	// Retrieve manually entered descriptions in static lease list
-	// We want to override netbios/hostname with these.
-
-	dhcpstaticlist = '<% nvram_get("dhcp_staticlist"); %>';
-
-	if (dhcpstaticlist) {
-		s = dhcpstaticlist.split('&#60');
-		for (var i = 0; i < s.length; ++i) {
-			var t = s[i].split('&#62');
-			if ((t.length == 3) || (t.length == 4)) {
-				if (t[2] != '')
-					hostnamecache[t[1]] = t[2].trim();
-			}
-		}
-	}
-
 	hostnamecache[fixIP(ntoa(aton(lan_ipaddr) & aton(lan_netmask)))] = 'LAN';
 	hostnamecache["ready"] = 1;
 	return;
