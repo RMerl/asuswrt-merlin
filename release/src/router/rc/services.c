@@ -266,10 +266,12 @@ void start_dnsmasq()
 		"pid-file=/var/run/dnsmasq.pid\n"
 		"user=nobody\n"
 		"resolv-file=%s\n"		// the real stuff is here
+		"addn-hosts=%s\n"		// Static names
 		"no-poll\n"			// don't poll resolv file
 		"interface=%s\n"		// dns & dhcp only on LAN interface
 		"min-port=%u\n",		// min port used for random src port
 		dmresolv,
+		dmhosts,
 		lan_ifname,
 		nvram_get_int("dns_minport") ? : 4096);
 
@@ -1349,25 +1351,39 @@ stop_wpsfix()
 
 void write_static_leases(char *file)
 {
-	FILE *fp;
+	FILE *fp, *fp2;
 	char *nv, *nvp, *b;
-	char *mac, *ip;
+	char *mac, *ip, *name;
+	int vars;
 
 	fp=fopen(file, "w");
-
 	if (fp==NULL) return;
+
+	fp2=fopen(dmhosts, "w");
+	if (fp2==NULL) {
+		fclose(fp);
+		return;
+	}
 
 	nv = nvp = strdup(nvram_safe_get("dhcp_staticlist"));
 
 	if(nv) {
 	while ((b = strsep(&nvp, "<")) != NULL) {
-		if((vstrsep(b, ">", &mac, &ip)!=2)) continue;
-		if(strlen(mac)==0||strlen(ip)==0) continue;
-		fprintf(fp, "%s %s\n", mac, ip);
+		vars = vstrsep(b, ">", &mac, &ip, &name);
+		if ((vars == 2) || (vars == 3)) {
+			if(strlen(mac)==0||strlen(ip)==0) continue;
+			fprintf(fp, "%s %s\n", mac, ip);
+			if ((vars == 3) && (strlen(name) > 0) && (is_valid_hostname(name))) {
+				fprintf(fp2, "%s %s\n", ip, name);
+			}
+		} else {
+			continue;
+		}
 	}
 	free(nv);
 	}			
 	fclose(fp);
+	fclose(fp2);
 }
 
 #ifndef RTCONFIG_DNSMASQ
