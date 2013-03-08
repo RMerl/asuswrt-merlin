@@ -1295,9 +1295,7 @@ is_invalid_char_for_hostname(char c)
 {
 	int ret = 0;
 
-	if (c < 0x20)
-		ret = 1;
-	else if (c >= 0x21 && c <= 0x2c)
+	if (c <= 0x2c)
 		ret = 1;
 	else if (c >= 0x2e && c <= 0x2f)
 		ret = 1;
