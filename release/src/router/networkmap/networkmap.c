@@ -339,6 +339,7 @@ int main()
 
 	    //Find All Application of clients
 	    if(p_client_detail_info_tab->detail_info_num < p_client_detail_info_tab->ip_mac_num) {
+		nvram_set("networkmap_status", "1");
 		FindAllApp(my_ipaddr, p_client_detail_info_tab);
 		FindHostname(p_client_detail_info_tab);
 
@@ -359,7 +360,8 @@ int main()
 		#endif
 		p_client_detail_info_tab->detail_info_num++;
 	    }
-
+	    if(p_client_detail_info_tab->detail_info_num == p_client_detail_info_tab->ip_mac_num)
+		nvram_set("networkmap_status", "0");    // Done scanning and resolving
 	} //End of main while loop
 	close(arp_sockfd);
 	return 0;

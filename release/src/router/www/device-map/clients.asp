@@ -75,6 +75,7 @@ var networkmap_scanning;
 var macfilter_rulelist_array = '<% nvram_get("macfilter_rulelist"); %>';
 var macfilter_rulelist_row = macfilter_rulelist_array.split('&#60'); 
 var macfilter_enable =  '<% nvram_get("macfilter_enable_x"); %>';
+var mapscanning = 0;
 
 function update_clients(e) {
   $j.ajax({
@@ -89,9 +90,11 @@ function update_clients(e) {
 			showclient_list(0);
 			if(networkmap_scanning == 1 || client_list_array == "")
 				setTimeout("update_clients();", 2000);
+			$("loadingIcon").style.display = (mapscanning == 1 ? "" : "none");
 			_showNextItem(listFlag);
 		}    
   });
+
 }
 
 function gotoMACFilter(){
@@ -422,6 +425,7 @@ function networkmap_update(){
 <br/>
 <img height="25" id="leftBtn" onclick="showNextItem(0);" style="visibility:hidden;cursor:pointer;margin-left:10px;" src="/images/arrow-left.png">
 <input type="button" id="refresh_list" class="button_gen" onclick="networkmap_update();" value="<#CTL_refresh#>" style="margin-left:70px;">
+<img id="loadingIcon" style="vertical-align:middle;" src="/images/InternetScan.gif">
 <img height="25" id="rightBtn" onclick="showNextItem(1);" style="visibility:hidden;cursor:pointer;margin-left:50px;" src="/images/arrow-right.png">
 </body>
 </html>
