@@ -68,7 +68,7 @@ Networking:
 
 Web interface:
    - Improved client list, with DHCP hostnames, and clickable MACs to 
-     generate a lookup in the OUI database (the latter ported from DD-WRT).
+     generate a lookup in the OUI database (the latter was ported from DD-WRT).
    - Optionally save traffic stats to disk (USB or JFFS partition)
    - Enhanced traffic monitoring: added monthly, as well as per IP monitoring
    - Display active/tracked network connections
@@ -398,10 +398,14 @@ History
 3.0.0.4.270.26
    - NEW: ipset Netfilter support + userspace tool to create ipset lists.
    - CHANGED: Various webui lists were increased from 32 to 128 entries allowed.
-   - CHANGED: Improved networkmap.  Will now use DHCP lease hostnames and DHCP 
-              static names whenever possible instead of just NetBIOS names.
-   - CHANGED: Various dropdown selectors will display hostname in addition to
-              MAC or IP.
+   - CHANGED: Improved networkmap:
+               * Will also use DHCP hostnames and user-defined static
+                 names instead of just NetBIOS names
+               * Clients list will show an animation while networkmap is
+                 still busy scanning and resolving device names
+               * Dropdown menus that use Networkmap to build a list
+                 of devices will also display names
+   - FIXED: Openvpn: Non-CBC ciphers weren't working
 
 
 3.0.0.4.270.25b
