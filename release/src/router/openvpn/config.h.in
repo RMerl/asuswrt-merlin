@@ -36,6 +36,9 @@
 /* Enable deferred authentication */
 #undef ENABLE_DEF_AUTH
 
+/* Allow other crypto modes than CBC */
+#define ALLOW_NON_CBC_CIPHERS
+
 /* Enable support for the eurephia plug-in */
 #undef ENABLE_EUREPHIA
 
