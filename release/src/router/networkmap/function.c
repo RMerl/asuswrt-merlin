@@ -1860,9 +1860,12 @@ int FindHostname(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab)
 
 	if ((fp = fopen("/var/lib/misc/dnsmasq.leases", "r"))) {
 		while ((next = fgets(line, sizeof(line), fp)) != NULL) {
-			if ((vstrsep(next, " ", &expire, &mac, &ip, &name) == 4) && (strlen(name) > 0)) {
-				if (!strcmp(ipaddr, ip))
-					strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], name, 15);
+			if (vstrsep(next, " ", &expire, &mac, &ip, &name) == 4) {
+				if ((!strcmp(ipaddr, ip)) &&
+				    (strlen(name) > 0) &&
+				    (!strchr(name, '*')) &&	// Ensure it's not a clientid in
+				    (!strchr(name, ':')))	// case device didn't have a hostname
+						strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], name, 15);
 			}
 		}
 		fclose(fp);
