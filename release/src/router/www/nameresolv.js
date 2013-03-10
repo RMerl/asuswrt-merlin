@@ -93,11 +93,7 @@ function populateCache() {
 		s = client_list_array.split('<');
 		for (var i = 0; i < s.length; ++i) {
 			var t = s[i].split('>');
-			if (t.length == 7) {
-				if (t[1] != ''){
-					hostnamecache[t[2]] = t[1].trim();
-				}
-			}
+			if (t.length == 7) hostnamecache[t[2]] = t[1].trim();
 		}
 	}
 
