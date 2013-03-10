@@ -5003,6 +5003,8 @@ struct mime_handler mime_handlers[] = {
 	{ "bwm/*.gz", NULL, no_cache, do_html_post_and_get, wo_bwmbackup, do_auth }, // jerry5
 	// end Viz  ^^^^^^^^  
 	{ "ipt/*.gz", NULL, no_cache, do_html_post_and_get, wo_iptbackup, do_auth },
+	{ "**.pac", "application/x-ns-proxy-autoconfig", NULL, NULL, do_file, NULL },
+	{ "wpad.dat", "application/x-ns-proxy-autoconfig", NULL, NULL, do_file, NULL },
 #ifdef TRANSLATE_ON_FLY
 	{ "change_lang.cgi*", "text/html", no_cache_IE7, do_lang_post, do_lang_cgi, do_auth },
 #endif //TRANSLATE_ON_FLY
