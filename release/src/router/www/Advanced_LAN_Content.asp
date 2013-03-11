@@ -419,7 +419,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 			</tr>
             
 		  <tr>
-			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(17,2);"><#ShareNode_DeviceName_itemname#></a></th>
+			<th><#ShareNode_DeviceName_itemname#></a></th>
 			<td>
 			  <input type="text" name="computer_name" id="computer_name" class="input_15_table" maxlength="15" value="<% nvram_get("computer_name"); %>">
 			</td>
