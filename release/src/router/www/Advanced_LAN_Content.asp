@@ -110,6 +110,14 @@ function valid_IP(obj_name, obj_flag){
 }
 
 function validForm(){
+	var computer_name_check = new RegExp('^[a-zA-Z0-9\-\_\.\][a-zA-Z0-9\-\_\.\ ]*[a-zA-Z0-9\-\_]$','gi');      
+	if(!computer_name_check.test(document.form.computer_name.value)){
+		alert("<#JS_validchar#>");               
+		document.form.computer_name.focus();
+		document.form.computer_name.select();
+		return false;
+	}
+
 	if(sw_mode == 2 || sw_mode == 3){
 		if(document.form.lan_dnsenable_x_radio[0].checked == 1)
 			document.form.lan_dnsenable_x.value = 1;
@@ -410,6 +418,12 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 			</td>
 			</tr>
             
+		  <tr>
+			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(17,2);"><#ShareNode_DeviceName_itemname#></a></th>
+			<td>
+			  <input type="text" name="computer_name" id="computer_name" class="input_15_table" maxlength="15" value="<% nvram_get("computer_name"); %>">
+			</td>
+		  </tr>
 		  <tr>
 			<th width="30%">
 			  <a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,1);"><#IPConnection_ExternalIPAddress_itemname#></a>
