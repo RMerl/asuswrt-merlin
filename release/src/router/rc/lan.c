@@ -891,6 +891,8 @@ void start_lan(void)
 		nvram_set("btn_ez_radiotoggle", "0"); // reset to default
 	}
 
+	set_device_hostname();
+
 	convert_routes();
 
 #ifdef CONFIG_BCMWL5
@@ -2888,3 +2890,25 @@ void stop_lan_wlc(void)
 	_dprintf("%s %d\n", __FUNCTION__, __LINE__);
 }
 #endif //RTCONFIG_WIRELESSREPEATER
+
+
+void set_device_hostname(void)
+{
+	FILE *fp;
+	char hostname[32];
+
+	strncpy(hostname, nvram_safe_get("computer_name"), 31);
+
+	if (*hostname == 0) {
+		if (get_productid()) {
+			strncpy(hostname, get_productid(), 31);
+		}
+	}
+
+	if ((fp=fopen("/proc/sys/kernel/hostname", "w+"))) {
+		fputs(hostname, fp);
+		fclose(fp);
+	}
+
+}
+

@@ -67,14 +67,6 @@ void start_sshd(void)
 	argv[argc] = NULL;
 	_eval(argv, NULL, 0, NULL);
 
-	if (get_productid())
-	{
-		if ((fp=fopen("/proc/sys/kernel/hostname", "w+")))
-		{
-			fputs(get_productid(), fp);
-			fclose(fp);
-		}
-	}
 }
 
 void stop_sshd(void)

@@ -382,6 +382,9 @@ extern void set_acs_ifnames();
 #endif
 extern int service_main(int argc, char *argv[]);
 
+// lan.c
+extern void set_device_hostname(void);
+
 #ifdef BTN_SETUP
 enum BTNSETUP_STATE
 {

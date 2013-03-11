@@ -2075,15 +2075,6 @@ start_telnetd()
 	if (pids("telnetd"))
 		killall_tk("telnetd");
 
-	if (get_productid())
-	{
-		if ((fp=fopen("/proc/sys/kernel/hostname", "w+")))
-		{
-			fputs(get_productid(), fp);
-			fclose(fp);
-		}
-	}
-
 	chpass(nvram_safe_get("http_username"), nvram_safe_get("http_passwd"));	// vsftpd also needs
 
 	return xstart("telnetd");
@@ -3296,6 +3287,7 @@ again:
 		}
 		if(action&RC_SERVICE_START) {
 			create_passwd();
+			set_device_hostname();
 			start_samba();
 			start_ftpd();
 		}
