@@ -397,15 +397,22 @@ History
 -------
 3.0.0.4.270.26
    - NEW: ipset Netfilter support + userspace tool to create ipset lists.
+   - CHANGED: Router's hostname is now set all the time, regardless of
+              telnet/ssh states (and including in AP mode)
+   - CHANGED: Added device name field on the LAN page, so AP mode users can
+              also set it.
+   - CHANGED: Router will supply its device name when requesting an IP while
+              in AP mode.
    - CHANGED: Various webui lists were increased from 32 to 128 entries allowed.
    - CHANGED: Improved networkmap:
                * Will also use DHCP hostnames and user-defined static
                  names instead of just NetBIOS names
-               * Clients list will show an animation while networkmap is
+               * Client list will show an animation while networkmap is
                  still busy scanning and resolving device names
                * Dropdown menus that use Networkmap to build a list
-                 of devices will also display names
+                 of devices will also display names in addition to IP/MAC.
    - FIXED: Openvpn: Non-CBC ciphers weren't working
+   - FIXED: Proxy auto-configuration support (Asus bug)
 
 
 3.0.0.4.270.25b
