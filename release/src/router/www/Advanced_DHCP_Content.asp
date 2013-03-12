@@ -84,6 +84,11 @@ var static_enable = '<% nvram_get("dhcp_static_x"); %>';
 var dhcp_staticlists = '<% nvram_get("dhcp_staticlist"); %>';
 var staticclist_row = dhcp_staticlists.split('&#60');
 
+var lan_domain_curr = '<% nvram_get("lan_domain"); %>';
+var dhcp_gateway_curr = '<% nvram_get("dhcp_gateway_x"); %>';
+var dhcp_dns1_curr = '<% nvram_get("dhcp_dns1_x"); %>';
+var dhcp_wins_curr = '<% nvram_get("dhcp_wins_x"); %>';
+
 function initial(){
 	show_menu();
 	load_body();
@@ -245,8 +250,20 @@ function applyRule(){
 
 		document.form.dhcp_staticlist.value = tmp_value;
 
-		if(wl6_support != -1)
-			document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
+		// Only restart the whole network if needed
+		if ((document.form.dhcp_wins_x.value != dhcp_wins_curr) ||
+		    (document.form.dhcp_dns1_x.value != dhcp_dns1_curr) ||
+		    (document.form.dhcp_gateway_x.value != dhcp_gateway_curr) ||
+		    (document.form.lan_domain.value != lan_domain_curr)) {
+
+			document.form.action_script.value = "restart_net_and_phy";
+
+			if(wl6_support != -1)
+				document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
+		} else {
+			document.form.action_script.value = "restart_dnsmasq";
+			document.form.action_wait.value = 5;
+		}
 
 		showLoading();
 		document.form.submit();
@@ -642,7 +659,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 			  	<thead>
 			  		<tr>
-						<td colspan="4" id="GWStatic"><#LANHostConfig_ManualDHCPList_groupitemdesc#></td><!--Viz hold on this : &nbsp;&nbsp;(<#List_limit#> 128)-->
+						<td colspan="4" id="GWStatic">Manually Assigned IP around the DHCP list (list limit:128)</td>
 			  		</tr>
 			  	</thead>
 
