@@ -1173,7 +1173,7 @@ void start_lan(void)
 					"-i", "br0",
 					"-p", "/var/run/udhcpc_lan.pid",
 					"-s", "/tmp/udhcpc_lan",
-					(*hostname != 0 ? "-H" : ""), (*hostname != 0 ? hostname : NULL),
+					(*hostname != 0 ? "-H" : NULL), (*hostname != 0 ? hostname : NULL),
 					NULL };
 		pid_t pid;
 
