@@ -874,6 +874,7 @@ void start_lan(void)
 	char *lan_ifname;
 	struct ifreq ifr;
 	char *lan_ifnames, *ifname, *p;
+	char *hostname;
 	int sfd;
 	uint32 ip;
 	int unit, subunit, sta;
@@ -1166,10 +1167,13 @@ void start_lan(void)
 			unlink("/tmp/udhcpc_lan");
 		}
 
+		hostname = nvram_safe_get("computer_name");
+
 		char *dhcp_argv[] = { "udhcpc",
 					"-i", "br0",
 					"-p", "/var/run/udhcpc_lan.pid",
 					"-s", "/tmp/udhcpc_lan",
+					(*hostname != 0 ? "-H" : ""), (*hostname != 0 ? hostname : NULL),
 					NULL };
 		pid_t pid;
 
