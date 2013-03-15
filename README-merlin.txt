@@ -399,8 +399,9 @@ History
    - NEW: ipset Netfilter support + userspace tool to create ipset lists.
    - CHANGED: Router's hostname is now set all the time, regardless of
               telnet/ssh states (and including in AP mode)
-   - CHANGED: Added device name field on the LAN page, so AP mode users can
-              also set it.
+   - CHANGED: Added device name field on the LAN page, since it's now relevant
+              to the router's hostname (not just SMB).  Left it on the SMB
+              page as well, for those used to see it there.
    - CHANGED: Router will supply its device name when requesting an IP while
               in AP mode.
    - CHANGED: Various webui lists were increased from 32 to 128 entries allowed.
@@ -411,6 +412,8 @@ History
                  still busy scanning and resolving device names
                * Dropdown menus that use Networkmap to build a list
                  of devices will also display names in addition to IP/MAC.
+   - CHANGED: Don't restart the whole network if you only changed DHCP reservations
+              (LAN -> DHCP page)
    - FIXED: Openvpn: Non-CBC ciphers weren't working
    - FIXED: Proxy auto-configuration support (Asus bug)
 
