@@ -517,10 +517,10 @@ function switchPage(page){
 										<td>
 											<div>
 												<label>From:</label>
-												<select name="_f_begin_date" onchange="redraw();" class="input_option" style="width:120px">
+												<select name="_f_begin_date" onchange="redraw();" class="input_option" style="width:120px; vertical-align:middle; margin-right: 3em;">
 												</select>
 												<label>To:</label>
-												<select name="_f_end_date" onchange="redraw();" class="input_option" style="width:120px">
+												<select name="_f_end_date" onchange="redraw();" class="input_option" style="width:120px; vertical-align:middle;">
 												</select>
 											</div>
 										</td>
