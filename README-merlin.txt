@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.270.26 (xx-XXX-2013)
-===================================================
+Asuswrt-Merlin - build 3.0.0.4.270.26 (15-March-2013)
+=====================================================
 
 About
 -----
@@ -48,12 +48,13 @@ System:
    - Entware easy setup script (alternative to Optware - the two are mutually exclusive)
 
 Disk sharing:
-   - Act as a Master Browser
-   - Act as a WINS server
    - Optionally use shorter share names (folder name only)
    - Disk spindown after user-configurable inactivity timeout
+   - NFS sharing (through webui)
 
 Networking:
+   - Act as a Master Browser
+   - Act as a WINS server
    - WakeOnLan web interface (with user-entered preset targets)
    - SSHD
    - Allows tweaking TCP/UDP connection tracking timeouts
@@ -261,7 +262,8 @@ mount \\\\192.168.1.100\\ShareName /cifs1 -t cifs -o "username=User,password=Pas
 
 
 * Dual WAN (EXPERIMENTAL) *
-*** Disabled in regular builds - this feature isn't ready yet ***
+*** Available in separate, experimental builds *** 
+*** This feature is still a work in progress from Asus ***
 
 Asuswrt originally support using a USB 3G/4G modem as a 
 failover Internet connection.  Dual WAN is the next step, also 
@@ -384,6 +386,37 @@ NFSv2 has various filesystem-level limitations.
 
 
 
+* Repeater Mode support (Experimental build only) *
+The RTN16 and RT-N66U experimental build also add  Repeater mode 
+support.  Note that this is a feature that is still a 
+work-in-progress by Asus, and might not be working 100% as 
+expected yet.
+
+
+
+* Easy Entware setup *
+Entware is an alternative to Optware.  They are both online 
+software repositories that let you easily install additional 
+software to your router (such as an Apache web server, or 
+an Asterisk PBX).  The main benefit of Entware over 
+Optware (which is used by Asus for their own Download 
+Master) is it is very actively maintained, with recent 
+software versions.
+
+Entware and Optware cannot be used 
+at the same time however, so you can't use Download Master 
+while using Entware.
+
+There is now a script to make setting up Entware ware easier.  
+Access your router through SSH/Telnet, and run 
+"entware-setup.sh".
+
+Note that Entware requires the JFFS partition to be enabled, 
+and an ext2/ext3 formatted USB disk (NTFS and FAT32 are 
+not supported).
+
+
+
 Source code
 -----------
 The source code with all my modifications can be found 
@@ -414,7 +447,8 @@ History
                  of devices will also display names in addition to IP/MAC.
    - CHANGED: Don't restart the whole network if you only changed DHCP reservations
               (LAN -> DHCP page)
-   - FIXED: Openvpn: Non-CBC ciphers weren't working
+   - FIXED: Openvpn: Non-CBC ciphers weren't working (their use is still not 
+            recommended)
    - FIXED: Proxy auto-configuration support (Asus bug)
 
 
