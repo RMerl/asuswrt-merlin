@@ -1458,3 +1458,44 @@ void append_custom_config(char *config, FILE *fp)
 	sprintf(filename,"/jffs/configs/%s.add", config);
 	fappend(fp, filename);
 }
+
+int
+is_invalid_char_for_volname(char c)
+{
+	int ret = 0;
+
+	if (c < 0x20)
+		ret = 1;
+	else if (c >= 0x21 && c <= 0x2c)
+		ret = 1;
+	else if (c >= 0x2e && c <= 0x2f)
+		ret = 1;
+	else if (c >= 0x3a && c <= 0x40)
+		ret = 1;
+	else if (c >= 0x5b && c <= 0x5e)
+		ret = 1;
+	else if (c == 0x60)
+		ret = 1;
+	else if (c >= 0x7b)
+		ret = 1;
+	return ret;
+}
+
+int
+is_valid_volname(const char *name)
+{
+	int len, i;
+
+	if (!name)
+		return 0;
+
+	len = strlen(name);
+	for (i = 0; i < len ; i++) {
+		if (is_invalid_char_for_volname(name[i])) {
+			len = 0;
+			break;
+		}
+	}
+	return len;
+}
+

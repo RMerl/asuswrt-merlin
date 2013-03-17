@@ -849,7 +849,7 @@ int mount_partition(char *dev_name, int host_num, char *dsc_name, char *pt_name,
 
 	find_label_or_uuid(dev_name, the_label, uuid);
 
-	if(!is_valid_hostname(the_label))
+	if(!is_valid_volname(the_label))
 		memset(the_label, 0, 128);
 
 	run_custom_script_blocking("pre-mount", dev_name);
