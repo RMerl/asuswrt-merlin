@@ -1313,10 +1313,7 @@ get_partition_table_geometry(void)
 static void
 get_geometry(void)
 {
-	int sec_fac;
-
 	get_sectorsize();
-	sec_fac = sector_size / 512;
 #if ENABLE_FEATURE_SUN_LABEL
 	guess_device_type();
 #endif
@@ -1339,7 +1336,7 @@ get_geometry(void)
 	if (dos_compatible_flag)
 		sector_offset = g_sectors;
 
-	g_cylinders = total_number_of_sectors / (g_heads * g_sectors * sec_fac);
+	g_cylinders = total_number_of_sectors / g_heads / g_sectors;
 	if (!g_cylinders)
 		g_cylinders = user_cylinders;
 }
