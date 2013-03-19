@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.270.26 (15-March-2013)
-=====================================================
+Asuswrt-Merlin - build 3.0.0.4.270.27 (xx-XXX-2013)
+===================================================
 
 About
 -----
@@ -77,6 +77,7 @@ Web interface:
    - System info summary page
    - Wireless client IP, hostname, rate and rssi on the Wireless Log page
    - Wifi icon reports the state of both radios
+   - Display the Ethernet port states
    - The various MAC/IP selection pulldowns will also display hostnames
      when possible instead of just NetBIOS names
 
@@ -428,6 +429,15 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.270.27
+   - FIXED: Improved fdisk support for 4KB sector size
+
+
+3.0.0.4.270.26b
+   - FIXED: Volume labels with spaces were rejected (Asus used the same code
+            to validate hostnames and volume labels)
+
+
 3.0.0.4.270.26
    - NEW: ipset Netfilter support + userspace tool to create ipset lists.
    - CHANGED: Router's hostname is now set all the time, regardless of
