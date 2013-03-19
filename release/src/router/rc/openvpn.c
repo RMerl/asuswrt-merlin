@@ -710,12 +710,12 @@ void start_vpnserver(int serverNum)
 
 			sprintf(&buffer[0], "vpn_server%d_ccd_val", serverNum);
 			strcpy(&buffer[0], nvram_safe_get(&buffer[0]));
-			chp = strtok(&buffer[0],">");
+			chp = strtok(&buffer[0],"<");
 			while ( chp != NULL )
 			{
 				nvi = strlen(chp);
 
-				chp[strcspn(chp,"<")] = '\0';
+				chp[strcspn(chp,">")] = '\0';
 				vpnlog(VPN_LOG_EXTRA,"CCD: enabled: %d", atoi(chp));
 				if ( atoi(chp) == 1 )
 				{
@@ -726,7 +726,7 @@ void start_vpnserver(int serverNum)
 					route = NULL;
 					if ( nvi > 0 )
 					{
-						chp[strcspn(chp,"<")] = '\0';
+						chp[strcspn(chp,">")] = '\0';
 						vpnlog(VPN_LOG_EXTRA,"CCD: Common name: %s", chp);
 						ccd = fopen(chp, "w");
 						chmod(chp, S_IRUSR|S_IWUSR);
@@ -734,10 +734,10 @@ void start_vpnserver(int serverNum)
 						nvi -= strlen(chp)+1;
 						chp += strlen(chp)+1;
 					}
-					if ( nvi > 0 && ccd != NULL && strcspn(chp,"<") != strlen(chp) )
+					if ( nvi > 0 && ccd != NULL && strcspn(chp,">") != strlen(chp) )
 					{
-						chp[strcspn(chp,"<")] = ' ';
-						chp[strcspn(chp,"<")] = '\0';
+						chp[strcspn(chp,">")] = ' ';
+						chp[strcspn(chp,">")] = '\0';
 						route = chp;
 						vpnlog(VPN_LOG_EXTRA,"CCD: Route: %s", chp);
 						if ( strlen(route) > 1 )
@@ -753,7 +753,7 @@ void start_vpnserver(int serverNum)
 						fclose(ccd);
 					if ( nvi > 0 && route != NULL )
 					{
-						chp[strcspn(chp,"<")] = '\0';
+						chp[strcspn(chp,">")] = '\0';
 						vpnlog(VPN_LOG_EXTRA,"CCD: Push: %d", atoi(chp));
 						if ( c2c && atoi(chp) == 1 && strlen(route) > 1 )
 							fprintf(fp, "push \"route %s\"\n", route);
@@ -765,7 +765,7 @@ void start_vpnserver(int serverNum)
 					vpnlog(VPN_LOG_EXTRA,"CCD leftover: %d", nvi+1);
 				}
 				// Advance to next entry
-				chp = strtok(NULL, ">");
+				chp = strtok(NULL, "<");
 			}
 			vpnlog(VPN_LOG_EXTRA,"CCD processing complete");
 		}
