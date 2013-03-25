@@ -1189,6 +1189,7 @@ static int scsi_prep_fn(struct request_queue *q, struct request *req)
 {
 	struct scsi_device *sdev = q->queuedata;
 	int ret = BLKPREP_OK;
+	char buf[8];
 
 	/*
 	 * If the device is not in running state we will reject some
@@ -1262,6 +1263,9 @@ static int scsi_prep_fn(struct request_queue *q, struct request *req)
 	switch (ret) {
 	case BLKPREP_KILL:
 		req->errors = DID_NO_CONNECT << 16;
+		memset(buf, 0, 8);
+		sprintf(buf, "%d:%d:%d:%d", sdev->host->host_no, sdev->channel, sdev->id, sdev->lun);
+		notify_device_error("scsi", buf, "10");
 		break;
 	case BLKPREP_DEFER:
 		/*

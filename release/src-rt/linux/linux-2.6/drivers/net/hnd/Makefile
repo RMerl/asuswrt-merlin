@@ -33,7 +33,7 @@ endif
 hnd-objs := $(addprefix $(SHARED)/, $(sort $(WLFILES:.c=.o)))
 HND_OBJS := $(addprefix $(src)/$(SHARED)/, $(sort $(WLFILES:.c=.o)))
 
-EXTRA_CFLAGS += $(WLFLAGS) -DBCM5354 -DLINUX_HYBRID_POSTPROCESSING_REMOVAL -DPKTC
+EXTRA_CFLAGS += $(WLFLAGS) -DBCM5354 -DLINUX_HYBRID_POSTPROCESSING_REMOVAL
 
 ifneq ($(CONFIG_BCM947XX),y)
 HND_OBJS += $(src)/$(SHARED)/nvramstubs.o

@@ -30,6 +30,8 @@ void fat_fs_panic(struct super_block *s, const char *fmt, ...)
 	if (!(s->s_flags & MS_RDONLY)) {
 		s->s_flags |= MS_RDONLY;
 		printk(KERN_ERR "    File system has been set read-only\n");
+
+		notify_device_error("filesystem", s->s_id, "1");
 	}
 }
 

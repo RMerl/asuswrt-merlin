@@ -93,7 +93,7 @@
  *
  ************************************************************/
 #include <linux/crc32.h>
-#include <asm/div64.h>
+#include <linux/math64.h>
 #include "check.h"
 #include "efi.h"
 
@@ -150,7 +150,8 @@ last_lba(struct block_device *bdev)
 {
 	if (!bdev || !bdev->bd_inode)
 		return 0;
-	return div64_64(bdev->bd_inode->i_size, bdev_hardsect_size(bdev)) - 1ULL;
+	return div_u64(bdev->bd_inode->i_size,
+			bdev_hardsect_size(bdev)) - 1ULL;
 }
 
 static inline int
@@ -352,6 +353,12 @@ is_gpt_valid(struct block_device *bdev, u64 lba,
 		Dprintk("GPT: last_usable_lba incorrect: %lld > %lld\n",
 			(unsigned long long)le64_to_cpu((*gpt)->last_usable_lba),
 			(unsigned long long)lastlba);
+		goto fail;
+	}
+
+	/* Check that sizeof_partition_entry has the correct value */
+	if (le32_to_cpu((*gpt)->sizeof_partition_entry) != sizeof(gpt_entry)) {
+		pr_debug("GUID Partitition Entry Size check failed.\n");
 		goto fail;
 	}
 
@@ -637,10 +644,7 @@ efi_partition(struct parsed_partitions *state, struct block_device *bdev)
 		if (!is_pte_valid(&ptes[i], last_lba(bdev)))
 			continue;
 
-		put_partition(state, i+1, le64_to_cpu(ptes[i].starting_lba)*n,
-				(le64_to_cpu(ptes[i].ending_lba) -
-				le64_to_cpu(ptes[i].starting_lba) +
-				1ULL)*n);
+		put_partition(state, i+1, start * ssz, size * ssz);
 
 		/* If this is a RAID volume, tell md */
 		if (!efi_guidcmp(ptes[i].partition_type_guid,

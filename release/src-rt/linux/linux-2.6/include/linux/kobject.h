@@ -259,6 +259,7 @@ extern int __must_check subsys_create_file(struct kset *,
 					struct subsys_attribute *);
 
 #if defined(CONFIG_HOTPLUG)
+int notify_device_error(char *type, char *device, char *flag);
 int kobject_uevent(struct kobject *kobj, enum kobject_action action);
 int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
 			char *envp[]);
@@ -268,6 +269,8 @@ int add_uevent_var(char **envp, int num_envp, int *cur_index,
 			const char *format, ...)
 	__attribute__((format (printf, 7, 8)));
 #else
+static inline int notify_device_error(char *type, char *device, char *flag)
+{ return 0; }
 static inline int kobject_uevent(struct kobject *kobj, enum kobject_action action)
 { return 0; }
 static inline int kobject_uevent_env(struct kobject *kobj,

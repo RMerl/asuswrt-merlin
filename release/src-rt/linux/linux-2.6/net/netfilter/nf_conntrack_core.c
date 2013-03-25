@@ -40,11 +40,33 @@
 
 #define NF_CONNTRACK_VERSION	"0.5.0"
 
-#if 0
-#define DEBUGP printk
+#ifdef HNDCTF
+#include <linux/if.h>
+#include <linux/if_vlan.h>
+#include <linux/if_pppox.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+
+#ifdef CONFIG_IPV6
+#include <linux/ipv6.h>
+#include <net/ipv6.h>
+#include <net/ip6_route.h>
+#define IPVERSION_IS_4(ipver)		((ipver) == 4)
 #else
+#define IPVERSION_IS_4(ipver)		1
+#endif /* CONFIG_IPV6 */
+
+#include <net/ip.h>
+#include <net/route.h>
+#include <typedefs.h>
+#include <osl.h>
+#include <ctf/hndctf.h>
+
+#define NFC_CTF_ENABLED	(1 << 31)
+#endif /* HNDCTF */
+
 #define DEBUGP(format, args...)
-#endif
 
 DEFINE_RWLOCK(nf_conntrack_lock);
 EXPORT_SYMBOL_GPL(nf_conntrack_lock);
@@ -78,7 +100,501 @@ DEFINE_PER_CPU(struct ip_conntrack_stat, nf_conntrack_stat);
 EXPORT_PER_CPU_SYMBOL(nf_conntrack_stat);
 
 #ifdef HNDCTF
-extern int ip_conntrack_ipct_delete(struct nf_conn *ct, int ct_timeout);
+bool
+ip_conntrack_is_ipc_allowed(struct sk_buff *skb, u_int32_t hooknum)
+{
+	struct net_device *dev;
+
+	if (!CTF_ENAB(kcih))
+		return FALSE;
+
+	if (hooknum == NF_IP_PRE_ROUTING || hooknum == NF_IP_POST_ROUTING) {
+		dev = skb->dev;
+		if (dev->priv_flags & IFF_802_1Q_VLAN)
+			dev = VLAN_DEV_INFO(dev)->real_dev;
+
+		/* Add ipc entry if packet is received on ctf enabled interface
+		 * and the packet is not a defrag'd one.
+		 */
+		if (ctf_isenabled(kcih, dev) && (skb->len <= dev->mtu))
+			skb->nfcache |= NFC_CTF_ENABLED;
+	}
+
+	/* Add the cache entries only if the device has registered and
+	 * enabled ctf.
+	 */
+	if (skb->nfcache & NFC_CTF_ENABLED)
+		return TRUE;
+
+	return FALSE;
+}
+
+void
+ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
+                      struct nf_conn *ct, enum ip_conntrack_info ci,
+                      struct nf_conntrack_tuple *manip)
+{
+	ctf_ipc_t ipc_entry;
+	struct hh_cache *hh;
+	struct ethhdr *eth;
+	struct iphdr *iph;
+	struct tcphdr *tcph;
+	struct rtable *rt;
+	struct nf_conn_help *help;
+	enum ip_conntrack_dir dir;
+	uint8 ipver, protocol;
+#ifdef CONFIG_IPV6
+	struct ipv6hdr *ip6h = NULL;
+#endif /* CONFIG_IPV6 */
+	uint32 nud_flags;
+
+	if ((skb == NULL) || (ct == NULL))
+		return;
+
+	/* Check CTF enabled */
+	if (!ip_conntrack_is_ipc_allowed(skb, hooknum))
+		return;
+	/* We only add cache entires for non-helper connections and at
+	 * pre or post routing hooks.
+	 */
+	help = nfct_help(ct);
+	if ((help && help->helper) || (ct->ctf_flags & CTF_FLAGS_EXCLUDED) ||
+	    ((hooknum != NF_IP_PRE_ROUTING) && (hooknum != NF_IP_POST_ROUTING)))
+		return;
+
+	iph = ip_hdr(skb);
+	ipver = iph->version;
+
+	/* Support both IPv4 and IPv6 */
+	if (ipver == 4) {
+		tcph = ((struct tcphdr *)(((__u8 *)iph) + (iph->ihl << 2)));
+		protocol = iph->protocol;
+	}
+#ifdef CONFIG_IPV6
+	else if (ipver == 6) {
+		ip6h = (struct ipv6hdr *)iph;
+		tcph = (struct tcphdr *)ctf_ipc_lkup_l4proto(kcih, ip6h, &protocol);
+		if (tcph == NULL)
+			return;
+	}
+#endif /* CONFIG_IPV6 */
+	else
+		return;
+
+	/* Only TCP and UDP are supported */
+	if (protocol == IPPROTO_TCP) {
+		/* Add ipc entries for connections in established state only */
+		if ((ci != IP_CT_ESTABLISHED) && (ci != (IP_CT_ESTABLISHED+IP_CT_IS_REPLY)))
+			return;
+
+		if (ct->proto.tcp.state >= TCP_CONNTRACK_FIN_WAIT &&
+			ct->proto.tcp.state <= TCP_CONNTRACK_TIME_WAIT)
+			return;
+	}
+	else if (protocol != IPPROTO_UDP)
+		return;
+
+	dir = CTINFO2DIR(ci);
+	if (ct->ctf_flags & (1 << dir))
+		return;
+
+	/* Do route lookup for alias address if we are doing DNAT in this
+	 * direction.
+	 */
+	if (skb->dst == NULL) {
+		/* Find the destination interface */
+		if (IPVERSION_IS_4(ipver)) {
+			u_int32_t daddr;
+
+			if ((manip != NULL) && (HOOK2MANIP(hooknum) == IP_NAT_MANIP_DST))
+				daddr = manip->dst.u3.ip;
+			else
+				daddr = iph->daddr;
+			ip_route_input(skb, daddr, iph->saddr, iph->tos, skb->dev);
+		}
+#ifdef CONFIG_IPV6
+		else
+			ip6_route_input(skb);
+#endif /* CONFIG_IPV6 */
+	}
+
+	/* Ensure the packet belongs to a forwarding connection and it is
+	 * destined to an unicast address.
+	 */
+	rt = (struct rtable *)skb->dst;
+
+	nud_flags = NUD_PERMANENT | NUD_REACHABLE | NUD_STALE | NUD_DELAY | NUD_PROBE;
+#if defined(CTF_PPPOE) || defined(CTF_PPTP) || defined(CTF_L2TP)
+	if ((skb->dst != NULL) && (skb->dst->dev != NULL) &&
+	    (skb->dst->dev->flags & IFF_POINTOPOINT))
+		nud_flags |= NUD_NOARP;
+#endif /* CTF_PPPOE | CTF_PPTP | CTF_L2TP */
+
+	if ((rt == NULL) || (
+#ifdef CONFIG_IPV6
+			!IPVERSION_IS_4(ipver) ?
+			 ((rt->u.dst.input != ip6_forward) ||
+			  !(ipv6_addr_type(&ip6h->daddr) & IPV6_ADDR_UNICAST)) :
+#endif /* CONFIG_IPV6 */
+			 ((rt->u.dst.input != ip_forward) || (rt->rt_type != RTN_UNICAST))) ||
+			(rt->u.dst.neighbour == NULL) ||
+			((rt->u.dst.neighbour->nud_state & nud_flags) == 0))
+		return;
+
+	memset(&ipc_entry, 0, sizeof(ipc_entry));
+
+	/* Init the neighboring sender address */
+	memcpy(ipc_entry.sa.octet, eth_hdr(skb)->h_source, ETH_ALEN);
+
+	/* If the packet is received on a bridge device then save
+	 * the bridge cache entry pointer in the ip cache entry.
+	 * This will be referenced in the data path to update the
+	 * live counter of brc entry whenever a received packet
+	 * matches corresponding ipc entry matches.
+	 */
+	if ((skb->dev != NULL) && ctf_isbridge(kcih, skb->dev))
+		ipc_entry.brcp = ctf_brc_lkup(kcih, eth_hdr(skb)->h_source);
+
+	hh = skb->dst->hh;
+	if (hh != NULL) {
+		eth = (struct ethhdr *)(((unsigned char *)hh->hh_data) + 2);
+		memcpy(ipc_entry.dhost.octet, eth->h_dest, ETH_ALEN);
+		memcpy(ipc_entry.shost.octet, eth->h_source, ETH_ALEN);
+	} else {
+		memcpy(ipc_entry.dhost.octet, rt->u.dst.neighbour->ha, ETH_ALEN);
+		memcpy(ipc_entry.shost.octet, skb->dst->dev->dev_addr, ETH_ALEN);
+	}
+
+	/* Add ctf ipc entry for this direction */
+	if (IPVERSION_IS_4(ipver)) {
+		ipc_entry.tuple.sip[0] = iph->saddr;
+		ipc_entry.tuple.dip[0] = iph->daddr;
+#ifdef CONFIG_IPV6
+	}	else {
+		memcpy(ipc_entry.tuple.sip, &ip6h->saddr, sizeof(ipc_entry.tuple.sip));
+		memcpy(ipc_entry.tuple.dip, &ip6h->daddr, sizeof(ipc_entry.tuple.dip));
+#endif /* CONFIG_IPV6 */
+	}
+	ipc_entry.tuple.proto = protocol;
+	ipc_entry.tuple.sp = tcph->source;
+	ipc_entry.tuple.dp = tcph->dest;
+
+	ipc_entry.next = NULL;
+
+	/* For vlan interfaces fill the vlan id and the tag/untag actions */
+	if (skb->dst->dev->priv_flags & IFF_802_1Q_VLAN) {
+		ipc_entry.txif = (void *)(VLAN_DEV_INFO(skb->dst->dev)->real_dev);
+		ipc_entry.vid = VLAN_DEV_INFO(skb->dst->dev)->vlan_id;
+		ipc_entry.action = ((VLAN_DEV_INFO(skb->dst->dev)->flags & 1) ?
+		                    CTF_ACTION_TAG : CTF_ACTION_UNTAG);
+	} else {
+		ipc_entry.txif = skb->dst->dev;
+		ipc_entry.action = CTF_ACTION_UNTAG;
+	}
+
+#if defined(CTF_PPPOE) || defined(CTF_PPTP) || defined(CTF_L2TP)
+	if ((skb->dst->dev->flags & IFF_POINTOPOINT) || (skb->dev->flags & IFF_POINTOPOINT) ){
+		int pppunit = 0;
+		struct net_device  *pppox_tx_dev=NULL;
+		ctf_ppp_t ctfppp;	
+
+		/* For pppoe interfaces fill the session id and header add/del actions */
+		if (skb->dst->dev->flags & IFF_POINTOPOINT) {
+			ipc_entry.ppp_ifp = skb->dst->dev;
+
+		} else if (skb->dev->flags & IFF_POINTOPOINT)  {
+			ipc_entry.ppp_ifp = skb->dev;
+		}
+		else{
+			ipc_entry.ppp_ifp = NULL;
+			ipc_entry.pppoe_sid = 0xffff;
+		}
+
+		if (ipc_entry.ppp_ifp){
+			pppunit = simple_strtol(((struct net_device *)ipc_entry.ppp_ifp)->name + 3, NULL, 10);
+			if (ppp_get_conn_pkt_info(pppunit,&ctfppp)){
+#if 0
+				if(ctfppp.psk.pppox_protocol == PX_PROTO_OL2TP){
+					if (skb->dst->dev->flags & IFF_POINTOPOINT) {
+						ipc_entry.pppoe_sid = 0xffff;
+						//control path for outgoing data will change ipc_entry.pppoe_sid back to zero
+					} else if (skb->dev->flags & IFF_POINTOPOINT )  {
+						ipc_entry.action |= CTF_ACTION_L2TP_DEL;
+					}					
+
+					goto ipcp_add;
+				}
+				else
+#endif
+					return;
+			}
+			else {
+				if(ctfppp.psk.pppox_protocol == PX_PROTO_OE){
+
+					if (skb->dst->dev->flags & IFF_POINTOPOINT){
+						ipc_entry.action |= CTF_ACTION_PPPOE_ADD;
+						pppox_tx_dev = ctfppp.psk.po->pppoe_dev; 
+						memcpy(ipc_entry.dhost.octet, ctfppp.psk.dhost.octet, ETH_ALEN);	
+						memcpy(ipc_entry.shost.octet, ctfppp.psk.po->pppoe_dev->dev_addr, ETH_ALEN);
+					}
+					else{
+						ipc_entry.action |= CTF_ACTION_PPPOE_DEL;
+					}
+					ipc_entry.pppoe_sid = ctfppp.pppox_id;
+				}
+#if 0
+#ifdef CTF_PPTP				
+				else if (ctfppp.psk.pppox_protocol == PX_PROTO_PPTP){
+					struct pptp_opt *opt;
+					if(ctfppp.psk.po == NULL) 
+						return;
+					opt=&ctfppp.psk.po->proto.pptp;
+					if (skb->dst->dev->flags & IFF_POINTOPOINT){
+						ipc_entry.action |= CTF_ACTION_PPTP_ADD;
+
+						/* For PPTP, to get rt information*/
+						if ((manip != NULL) && (HOOK2MANIP(hooknum) == IP_NAT_MANIP_SRC)){
+							struct flowi fl = { .oif = 0,
+							    .nl_u = { .ip4_u =
+								      { .daddr = opt->dst_addr.sin_addr.s_addr,
+									.saddr = opt->src_addr.sin_addr.s_addr,
+									.tos = RT_TOS(0) } },
+							    .proto = IPPROTO_GRE };
+							if (ip_route_output_key(&rt, &fl) ) {
+								return;
+							}
+							if (rt==NULL ) 
+								return;
+
+							if (skb->dst->hh == NULL) {
+								memcpy(ipc_entry.dhost.octet, rt->u.dst.neighbour->ha, ETH_ALEN);
+							}
+							
+
+						}
+						
+						pppox_tx_dev = rt->u.dst.dev;
+						memcpy(ipc_entry.shost.octet, rt->u.dst.dev->dev_addr, ETH_ALEN);
+						ipc_entry.pptp.rt_dst_mtrc_lock_fgoff = dst_metric(&rt->u.dst, RTAX_LOCK)&(1<<RTAX_MTU);//for ip header fragment offset
+						ipc_entry.pptp.rt_dst_mtrc_hoplmt = dst_metric(&rt->u.dst, RTAX_HOPLIMIT);//for ip header ttl
+					}
+					else{
+						ipc_entry.action |= CTF_ACTION_PPTP_DEL;
+					}
+					ipc_entry.pptp.pptpopt = &ctfppp.psk.po->proto.pptp;
+				}
+#endif /*CTF_PPTP*/
+#endif
+				else
+					return;
+
+ppp_tx_dev:			
+			/* For vlan interfaces fill the vlan id and the tag/untag actions */
+			if(pppox_tx_dev){
+				if (pppox_tx_dev ->priv_flags & IFF_802_1Q_VLAN) {
+					ipc_entry.txif = (void *)(VLAN_DEV_INFO(pppox_tx_dev )->real_dev);
+					ipc_entry.vid = VLAN_DEV_INFO(pppox_tx_dev )->vlan_id;
+					ipc_entry.action |= ((VLAN_DEV_INFO(pppox_tx_dev)->flags & 1) ?
+				                   		CTF_ACTION_TAG : CTF_ACTION_UNTAG);
+				} else {
+					ipc_entry.txif = pppox_tx_dev;
+					ipc_entry.action |= CTF_ACTION_UNTAG;
+				}
+			}
+			
+			}
+		}		
+	}
+#endif /* CTF_PPPOE | CTF_PPTP | CTF_L2TP */
+ipcp_add:
+	/* Update the manip ip and port */
+	if (manip != NULL) {
+		if (HOOK2MANIP(hooknum) == IP_NAT_MANIP_SRC) {
+			ipc_entry.nat.ip = manip->src.u3.ip;
+			ipc_entry.nat.port = manip->src.u.tcp.port;
+			ipc_entry.action |= CTF_ACTION_SNAT;
+		} else {
+			ipc_entry.nat.ip = manip->dst.u3.ip;
+			ipc_entry.nat.port = manip->dst.u.tcp.port;
+			ipc_entry.action |= CTF_ACTION_DNAT;
+		}
+	}
+
+	/* Do bridge cache lookup to determine outgoing interface
+	 * and any vlan tagging actions if needed.
+	 */
+	if (ctf_isbridge(kcih, ipc_entry.txif)) {
+		ctf_brc_t *brcp;
+
+		brcp = ctf_brc_lkup(kcih, ipc_entry.dhost.octet);
+
+		if (brcp == NULL)
+			return;
+		else {
+			ipc_entry.action |= brcp->action;
+			ipc_entry.txif = brcp->txifp;
+			ipc_entry.vid = brcp->vid;
+		}
+	}
+
+#ifdef DEBUG
+	if (IPVERSION_IS_4(ipver))
+		printk("%s: Adding ipc entry for [%d]%u.%u.%u.%u:%u - %u.%u.%u.%u:%u\n", __FUNCTION__,
+			ipc_entry.tuple.proto,
+			NIPQUAD(ipc_entry.tuple.sip[0]), ntohs(ipc_entry.tuple.sp),
+			NIPQUAD(ipc_entry.tuple.dip[0]), ntohs(ipc_entry.tuple.dp));
+#ifdef CONFIG_IPV6
+	else
+		printk("\n%s: Adding ipc entry for [%d]\n"
+			"%08x.%08x.%08x.%08x:%u => %08x.%08x.%08x.%08x:%u\n",
+			__FUNCTION__, ipc_entry.tuple.proto,
+			ntohl(ipc_entry.tuple.sip[0]), ntohl(ipc_entry.tuple.sip[1]),
+			ntohl(ipc_entry.tuple.sip[2]), ntohl(ipc_entry.tuple.sip[3]),
+			ntohs(ipc_entry.tuple.sp),
+			ntohl(ipc_entry.tuple.dip[0]), ntohl(ipc_entry.tuple.dip[1]),
+			ntohl(ipc_entry.tuple.dip[2]), ntohl(ipc_entry.tuple.dip[3]),
+			ntohs(ipc_entry.tuple.dp));
+#endif /* CONFIG_IPV6 */
+	printk("sa %02x:%02x:%02x:%02x:%02x:%02x\n",
+			ipc_entry.shost.octet[0], ipc_entry.shost.octet[1],
+			ipc_entry.shost.octet[2], ipc_entry.shost.octet[3],
+			ipc_entry.shost.octet[4], ipc_entry.shost.octet[5]);
+	printk("da %02x:%02x:%02x:%02x:%02x:%02x\n",
+			ipc_entry.dhost.octet[0], ipc_entry.dhost.octet[1],
+			ipc_entry.dhost.octet[2], ipc_entry.dhost.octet[3],
+			ipc_entry.dhost.octet[4], ipc_entry.dhost.octet[5]);
+	printk("[%d] vid: %d action %x\n", hooknum, ipc_entry.vid, ipc_entry.action);
+	if (manip != NULL)
+		printk("manip_ip: %u.%u.%u.%u manip_port %u\n",
+			NIPQUAD(ipc_entry.nat.ip), ntohs(ipc_entry.nat.port));
+	printk("txif: %s\n", ((struct net_device *)ipc_entry.txif)->name);
+	if (ipc_entry.ppp_ifp) printk("pppif: %s\n", ((struct net_device *)ipc_entry.ppp_ifp)->name);
+#endif
+
+	ctf_ipc_add(kcih, &ipc_entry, !IPVERSION_IS_4(ipver));
+
+	/* Update the attributes flag to indicate a CTF conn */
+	ct->ctf_flags |= (CTF_FLAGS_CACHED | (1 << dir));
+}
+
+int
+ip_conntrack_ipct_delete(struct nf_conn *ct, int ct_timeout)
+{
+	ctf_ipc_t *ipct;
+	struct nf_conntrack_tuple *orig, *repl;
+	ctf_ipc_t orig_ipct, repl_ipct;
+	int ipaddr_sz;
+	bool v6;
+
+	if (!CTF_ENAB(kcih))
+		return (0);
+
+	orig = &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple;
+
+	if ((orig->dst.protonum != IPPROTO_TCP) && (orig->dst.protonum != IPPROTO_UDP))
+		return (0);
+
+	repl = &ct->tuplehash[IP_CT_DIR_REPLY].tuple;
+
+#ifdef CONFIG_IPV6
+	v6 = (orig->src.l3num == AF_INET6);
+	ipaddr_sz = (v6) ? sizeof(struct in6_addr) : sizeof(struct in_addr);
+#else
+	v6 = FALSE;
+	ipaddr_sz = sizeof(struct in_addr);
+#endif /* CONFIG_IPV6 */
+
+	memset(&orig_ipct, 0, sizeof(orig_ipct));
+	memcpy(orig_ipct.tuple.sip, &orig->src.u3.ip, ipaddr_sz);
+	memcpy(orig_ipct.tuple.dip, &orig->dst.u3.ip, ipaddr_sz);
+	orig_ipct.tuple.proto = orig->dst.protonum;
+	orig_ipct.tuple.sp = orig->src.u.tcp.port;
+	orig_ipct.tuple.dp = orig->dst.u.tcp.port;
+
+	memset(&repl_ipct, 0, sizeof(repl_ipct));
+	memcpy(repl_ipct.tuple.sip, &repl->src.u3.ip, ipaddr_sz);
+	memcpy(repl_ipct.tuple.dip, &repl->dst.u3.ip, ipaddr_sz);
+	repl_ipct.tuple.proto = repl->dst.protonum;
+	repl_ipct.tuple.sp = repl->src.u.tcp.port;
+	repl_ipct.tuple.dp = repl->dst.u.tcp.port;
+
+	/* If the refresh counter of ipc entry is non zero, it indicates
+	 * that the packet transfer is active and we should not delete
+	 * the conntrack entry.
+	 */
+	if (ct_timeout) {
+		ipct = ctf_ipc_lkup(kcih, &orig_ipct, v6);
+
+		/* Postpone the deletion of ct entry if there are frames
+		 * flowing in this direction.
+		 */
+		if ((ipct != NULL) && (ipct->live > 0)) {
+			ipct->live = 0;
+			ct->timeout.expires = jiffies + ct->expire_jiffies;
+			add_timer(&ct->timeout);
+			return (-1);
+		}
+
+		ipct = ctf_ipc_lkup(kcih, &repl_ipct, v6);
+
+		if ((ipct != NULL) && (ipct->live > 0)) {
+			ipct->live = 0;
+			ct->timeout.expires = jiffies + ct->expire_jiffies;
+			add_timer(&ct->timeout);
+			return (-1);
+		}
+	}
+
+	/* If there are no packets over this connection for timeout period
+	 * delete the entries.
+	 */
+	ctf_ipc_delete(kcih, &orig_ipct, v6);
+
+	ctf_ipc_delete(kcih, &repl_ipct, v6);
+
+#ifdef DEBUG
+	printk("%s: Deleting the tuple %x %x %d %d %d\n",
+	       __FUNCTION__, orig->src.u3.ip, orig->dst.u3.ip, orig->dst.protonum,
+	       orig->src.u.tcp.port, orig->dst.u.tcp.port);
+	printk("%s: Deleting the tuple %x %x %d %d %d\n",
+	       __FUNCTION__, repl->dst.u3.ip, repl->src.u3.ip, repl->dst.protonum,
+	       repl->dst.u.tcp.port, repl->src.u.tcp.port);
+#endif
+
+	return (0);
+}
+#ifdef CTF_L2TP
+/* 
+ * Sniffing outgoing l2tp data packets transmitted by user 
+ * space daemon (l2tpd). If skb carried L2TP data packet then
+ * function will look whether there is an entry in CTF's ip 
+ * connection cache table which corresponds to the
+ * encapsulated ip packet. If the entry found then the L2TP 
+ * tunnel/session information will be associated with that
+ * connection entry.
+ */
+void
+ip_conntrack_l2tp_lookup(struct sk_buff *skb, u_int32_t hooknum,
+                      struct nf_conn *ct, enum ip_conntrack_info ci)
+{
+	struct nf_conntrack_tuple *orig;
+	enum ip_conntrack_dir dir;
+
+	if (!CTF_ENAB(kcih))
+		return;
+
+	dir = CTINFO2DIR(ci);
+	orig = &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple;
+
+	if (!(hooknum == NF_IP_POST_ROUTING && 
+		dir == IP_CT_DIR_ORIGINAL && 
+		orig->dst.protonum == IPPROTO_UDP))
+		return;
+
+	ctf_l2tp_lookup(kcih, (void*)skb);
+}
+#endif /*CTF_L2TP */
+
 #endif /* HNDCTF */
 
 /*

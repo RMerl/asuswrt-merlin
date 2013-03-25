@@ -215,6 +215,9 @@ struct sk_buff *__alloc_skb(unsigned int size, gfp_t gfp_mask,
 	skb->nfcache = 0;
 #endif
 #ifdef HNDCTF
+#ifdef PKTC
+	skb->tstamp.tv64 = 0;
+#endif
         skb->mac_len = 0;
         skb->hdr_len = 0;
 #endif
@@ -426,6 +429,9 @@ void kfree_skb(struct sk_buff *skb)
 static void BCMFASTPATH_HOST __copy_skb_header(struct sk_buff *new, const struct sk_buff *old)
 {
 	new->tstamp		= old->tstamp;
+#if defined(HNDCTF) && defined(PKTC)
+	new->ctf_tstamp		= old->ctf_tstamp;
+#endif
 	new->dev		= old->dev;
 	new->transport_header	= old->transport_header;
 	new->network_header	= old->network_header;
@@ -467,6 +473,9 @@ static void BCMFASTPATH_HOST __copy_skb_header(struct sk_buff *new, const struct
 static void __copy_skb_header(struct sk_buff *new, const struct sk_buff *old)
 {
 	new->tstamp		= old->tstamp;
+#if defined(HNDCTF) && defined(PKTC)
+	new->ctf_tstamp		= old->ctf_tstamp;
+#endif
 	new->dev		= old->dev;
 	new->transport_header	= old->transport_header;
 	new->network_header	= old->network_header;

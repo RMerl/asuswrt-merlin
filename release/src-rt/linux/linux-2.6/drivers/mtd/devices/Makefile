@@ -18,5 +18,10 @@ obj-$(CONFIG_MTD_BLOCK2MTD)	+= block2mtd.o
 obj-$(CONFIG_MTD_DATAFLASH)	+= mtd_dataflash.o
 obj-$(CONFIG_MTD_DATAFLASH26)	+= at91_dataflash26.o
 obj-$(CONFIG_MTD_M25P80)	+= m25p80.o
+ifeq ($(CONFIG_MTD_NFLASH),y)
 obj-$(CONFIG_MTD_SFLASH)	+= sflash.o
 obj-$(CONFIG_MTD_NFLASH)        += bcm_nflash.o
+else
+obj-$(CONFIG_MTD_SFLASH)	+= sflash-nonand.o
+obj-$(CONFIG_MTD_NFLASH)	+= bcm_nflash-nonand.o
+endif

@@ -532,14 +532,18 @@ CFLAGS += $(call cc-option,-Wdeclaration-after-statement,)
 CFLAGS += $(call cc-option,-Wno-pointer-sign,)
 
 ifneq ($(CONFIG_BCM_CTF),)
-CFLAGS += -DHNDCTF -DCTFPOOL -DCTFMAP
+CFLAGS += -DHNDCTF -DCTFPOOL -DCTFMAP -DPKTC -DCTF_PPPOE -DCTF_PPTP
 ifneq ($(CONFIG_WL_USBAP),)
 CFLAGS += -DCTFPOOL_SPINLOCK
+endif
+ifneq ($(CONFIG_IPV6),)
+CFLAGS += -DCTF_IPV6
 endif
 endif
 
 ifdef CONFIG_PLC
 CFLAGS += -DPLC
+CFLAGS += -DET_PLC_NO_VLAN_TAG_RX -DWL_PLC_NO_VLAN_TAG_TX -DWL_PLC_NO_VLAN_TAG_RX
 endif
 
 ifeq ($(CONFIG_MTD_NFLASH),y)

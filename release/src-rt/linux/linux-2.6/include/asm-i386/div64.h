@@ -48,5 +48,4 @@ div_ll_X_l_rem(long long divs, long div, long *rem)
 
 }
 
-extern uint64_t div64_64(uint64_t dividend, uint64_t divisor);
 #endif

@@ -224,13 +224,12 @@ static unsigned int ipv6_conntrack_in(unsigned int hooknum,
 				      int (*okfn)(struct sk_buff *))
 {
 	struct sk_buff *reasm = (*pskb)->nfct_reasm;
+	unsigned int ret;
 
 	/* This packet is fragmented and has reassembled packet. */
 	if (reasm) {
 		/* Reassembled packet isn't parsed yet ? */
 		if (!reasm->nfct) {
-			unsigned int ret;
-
 			ret = nf_conntrack_in(PF_INET6, hooknum, &reasm);
 			if (ret != NF_ACCEPT)
 				return ret;
@@ -241,7 +240,19 @@ static unsigned int ipv6_conntrack_in(unsigned int hooknum,
 		return NF_ACCEPT;
 	}
 
-	return nf_conntrack_in(PF_INET6, hooknum, pskb);
+	ret = nf_conntrack_in(PF_INET6, hooknum, pskb);
+
+#if defined(HNDCTF)
+	if (ret == NF_ACCEPT) {
+		struct nf_conn *ct;
+		enum ip_conntrack_info ctinfo;
+
+		ct = nf_ct_get(*pskb, &ctinfo);
+		ip_conntrack_ipct_add(*pskb, hooknum, ct, ctinfo, NULL);
+	}
+#endif /* HNDCTF */
+
+	return ret;
 }
 
 static unsigned int ipv6_conntrack_local(unsigned int hooknum,

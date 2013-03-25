@@ -99,7 +99,7 @@ int fat_generic_ioctl(struct inode *inode, struct file *filp,
 			if (attr & ATTR_SYS)
 				inode->i_flags |= S_IMMUTABLE;
 			else
-				inode->i_flags &= S_IMMUTABLE;
+				inode->i_flags &= ~S_IMMUTABLE;
 		}
 
 		MSDOS_I(inode)->i_attrs = attr & ATTR_UNUSED;
@@ -136,6 +136,7 @@ const struct file_operations fat_file_operations = {
 	.splice_read	= generic_file_splice_read,
 };
 
+#if 0
 static int fat_cont_expand(struct inode *inode, loff_t size)
 {
 	struct address_space *mapping = inode->i_mapping;
@@ -153,6 +154,7 @@ static int fat_cont_expand(struct inode *inode, loff_t size)
 out:
 	return err;
 }
+#endif
 
 /* Free all clusters after the skip'th cluster. */
 static int fat_free(struct inode *inode, int skip)

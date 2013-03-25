@@ -104,6 +104,11 @@ extern int cond_resched(void);
 		(__x < 0) ? -__x : __x;		\
 	})
 
+#define abs64(x) ({				\
+		s64 __x = (x);			\
+		(__x < 0) ? -__x : __x;		\
+	})
+
 extern struct atomic_notifier_head panic_notifier_list;
 extern long (*panic_blink)(long time);
 NORET_TYPE void panic(const char * fmt, ...)

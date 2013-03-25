@@ -42,7 +42,11 @@ obj-y				+= cdrom/
 obj-y				+= auxdisplay/
 obj-$(CONFIG_MTD)		+= mtd/
 obj-y				+= nvram_linux.o
+ifeq ($(CONFIG_MTD_NFLASH),y)
 nvram_linux-objs := ../arch/mips/brcm-boards/bcm947xx/nvram_linux.o
+else
+nvram_linux-objs := ../arch/mips/brcm-boards/bcm947xx/nvram_linux-nonand.o
+endif
 obj-$(CONFIG_SPI)		+= spi/
 obj-$(CONFIG_PCCARD)		+= pcmcia/
 obj-$(CONFIG_DIO)		+= dio/

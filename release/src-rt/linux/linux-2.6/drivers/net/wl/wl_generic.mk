@@ -32,7 +32,6 @@ ifeq ($(REBUILD_WL_MODULE),1)
     ifdef CONFIG_DPSTA
         DPSTA=1
     endif
-    PKTC=1
     include $(WLCFGDIR)/$(WLCONFFILE)
     include $(WLCFGDIR)/wl.mk
 
@@ -47,7 +46,6 @@ ifeq ($(REBUILD_WL_MODULE),1)
     
     ifeq ($(WLCLMAPI),1)
     $(call WLAN_GenClmCompilerRule,$(src)/$(SRCBASE)/wl/clm/src,$(src)/$(SRCBASE),--ccrev all)
-    clean-files += $(SRCBASE)/wl/clm/src/wlc_clm_data.c
     endif
     
     # need -I. to pick up wlconf.h in build directory

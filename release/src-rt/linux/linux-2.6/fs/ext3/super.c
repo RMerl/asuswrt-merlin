@@ -171,6 +171,7 @@ static void ext3_handle_error(struct super_block *sb)
 	if (test_opt (sb, ERRORS_RO)) {
 		printk (KERN_CRIT "Remounting filesystem read-only\n");
 		sb->s_flags |= MS_RDONLY;
+		notify_device_error("filesystem", sb->s_id, "1");
 	}
 	ext3_commit_super(sb, es, 1);
 	if (test_opt(sb, ERRORS_PANIC))
@@ -280,6 +281,7 @@ void ext3_abort (struct super_block * sb, const char * function,
 	printk(KERN_CRIT "Remounting filesystem read-only\n");
 	EXT3_SB(sb)->s_mount_state |= EXT3_ERROR_FS;
 	sb->s_flags |= MS_RDONLY;
+	notify_device_error("filesystem", sb->s_id, "1");
 	EXT3_SB(sb)->s_mount_opt |= EXT3_MOUNT_ABORT;
 	journal_abort(EXT3_SB(sb)->s_journal, -EIO);
 }
@@ -1116,6 +1118,7 @@ static int ext3_setup_super(struct super_block *sb, struct ext3_super_block *es,
 		printk (KERN_ERR "EXT3-fs warning: revision level too high, "
 			"forcing read-only mode\n");
 		res = MS_RDONLY;
+		notify_device_error("filesystem", sb->s_id, "1");
 	}
 	if (read_only)
 		return res;
@@ -2365,6 +2368,7 @@ static int ext3_remount (struct super_block * sb, int * flags, char * data)
 			 * to disable replay of the journal when we next remount
 			 */
 			sb->s_flags |= MS_RDONLY;
+			notify_device_error("filesystem", sb->s_id, "1");
 
 			/*
 			 * OK, test if we are remounting a valid rw partition

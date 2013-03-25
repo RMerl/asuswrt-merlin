@@ -39,8 +39,6 @@ EXTRA_CFLAGS	+= -DET_ALL_PASSIVE
 endif
 endif	# /* CONFIG_ET_ALL_PASSIVE_ON */
 
-EXTRA_CFLAGS	+= -DPKTC
-
 # Search for sources under src/et/sys or objects under src/et/linux
 ifneq ($(wildcard $(src)/$(ETSRCDIR)/sys),)
 EXTRA_CFLAGS	+= -I$(src)/$(ETSRCDIR)/sys

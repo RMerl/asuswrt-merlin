@@ -1,7 +1,7 @@
 /*
  * Broadcom NAND flash controller interface
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -53,6 +53,7 @@ typedef enum
 struct brcmnand_mtd {
 	si_t *sih;
 	chipcregs_t *cc;
+	hndnand_t *nfl;
 	struct mtd_info mtd;
 	struct nand_chip chip;
 #ifdef CONFIG_MTD_PARTITIONS

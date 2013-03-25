@@ -245,7 +245,11 @@ struct sk_buff {
 	struct sk_buff		*prev;
 
 	struct sock		*sk;
+#if defined(HNDCTF) && defined(PKTC)
+	ktime_t			ctf_tstamp;     /* This field is used by Broadcom CTF driver! */
+#else
 	ktime_t			tstamp;
+#endif
 	struct net_device	*dev;
 	int			iif;
 	/* 4 byte hole on 64 bit*/
@@ -308,6 +312,9 @@ struct sk_buff {
 	__u32			nfcache;
 #endif
 #ifdef HNDCTF
+#ifdef PKTC
+	ktime_t			tstamp;
+#endif
         __u16                   mac_len,
                                 hdr_len;
 #endif

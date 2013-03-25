@@ -31,6 +31,9 @@ bcm57xx-objs := $(B57SRCDIR)/linux/bcm57xx.o
 
 endif
 
+# Set in linux-2.6 makefile
+#EXTRA_CFLAGS += -DPKTC
+
 ifneq ($(KERNELRELEASE),)
 # kbuild part of makefile
 else

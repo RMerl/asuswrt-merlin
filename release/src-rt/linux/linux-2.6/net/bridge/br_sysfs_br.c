@@ -329,41 +329,46 @@ static DEVICE_ATTR(flush, S_IWUSR, NULL, store_flush);
 
 #ifdef CONFIG_INET_GSO
 static ssize_t show_gso(struct device *d,
-			   struct device_attribute *attr,
-			   const char *buf, size_t len)
+			struct device_attribute *attr, char *buf)
 {
 	struct net_bridge *br = to_bridge(d);
 	struct net_device *gso_dev = br->dev;
+	int state;
 
-	if ((br->feature_mask & NETIF_F_GSO) && (gso_dev->features & NETIF_F_GSO))
-		printk("%s: gso on\n", br->dev->name);
-	else
-		printk("%s: gso off\n", br->dev->name);
-	return len;
+	state = (br->feature_mask & NETIF_F_GSO) && (gso_dev->features & NETIF_F_GSO);
+	printk("%s: gso %s\n", br->dev->name, state ? "on" : "off");
+	return sprintf(buf, "%s\n", state ? "on" : "off");
 }
 
 static ssize_t store_gso(struct device *d,
-				struct device_attribute *attr,
-				const char *buf, size_t len)
+			 struct device_attribute *attr,
+			 const char *buf, size_t len)
 {
 	struct net_bridge *br = to_bridge(d);
 	struct net_device *gso_dev = br->dev;
+	int state;
 
-	if (!strncmp(buf, "on", 2)) {
+	if (strncmp(buf, "on", 2) == 0)
+		state = 1;
+	else if (strncmp(buf, "off", 3) == 0)
+		state = 0;
+	else {
+		printk("%s: invalid argument\n", br->dev->name);
+		return -EINVAL;
+	}
+	printk("%s: gso %s\n", br->dev->name, state ? "on" : "off");
+	spin_lock_bh(&br->lock);
+	if (state) {
 		br->feature_mask |= NETIF_F_GSO;
 		gso_dev->features |= NETIF_F_GSO;
-		printk("%s: gso on\n", br->dev->name);
-	}
-	else if (!strncmp(buf, "off", 3)) {
+	} else {
 		br->feature_mask &= ~NETIF_F_GSO;
-		gso_dev->features &= ~NETIF_F_GSO;		
-		printk("%s: gso off\n", br->dev->name);
+		gso_dev->features &= ~NETIF_F_GSO;
 	}
-	else
-		printk("%s: invalid argument\n", br->dev->name);
-	
+	spin_unlock_bh(&br->lock);
 	return len;
 }
+
 static DEVICE_ATTR(gso, S_IRUGO | S_IWUSR, show_gso, store_gso);
 #endif /* CONFIG_INET_GSO */
 

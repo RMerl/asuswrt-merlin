@@ -1,7 +1,7 @@
 /*
  * Broadcom SiliconBackplane chipcommon serial flash interface
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,8 +43,7 @@
 #include <nflash.h>
 
 #ifdef CONFIG_MTD_PARTITIONS
-extern struct mtd_partition *
-init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size);
+extern struct mtd_partition * init_nflash_mtd_partitions(struct mtd_info *mtd, size_t size);
 
 struct mtd_partition *nflash_parts;
 #endif
@@ -54,7 +53,6 @@ extern struct mutex *partitions_mutex_init(void);
 struct nflash_mtd {
 	si_t *sih;
 	chipcregs_t *cc;
-	hndnand_t *nfl;
 	struct mtd_info mtd;
 	struct mtd_erase_region_info region;
 	unsigned char *map;
@@ -152,8 +150,7 @@ _nflash_mtd_read(struct mtd_info *mtd, struct mtd_partition *part,
 			off = offset + skip_bytes;
 		}
 
-		if ((bytes = hndnand_read(nflash->nfl,
-			off, NFL_SECTOR_SIZE, ptr)) < 0) {
+		if ((bytes = nflash_read(nflash->sih, nflash->cc, off, NFL_SECTOR_SIZE, ptr)) < 0) {
 			ret = bytes;
 			goto done;
 		}
@@ -267,8 +264,8 @@ nflash_mtd_write(struct mtd_info *mtd, loff_t to, size_t len, size_t *retlen, co
 		}
 		off = (uint) from + skip_bytes;
 		/* Erase block */
-		if ((ret = hndnand_erase(nflash->nfl, off)) < 0) {
-				hndnand_mark_badb(nflash->nfl, off);
+		if ((ret = nflash_erase(nflash->sih, nflash->cc, off)) < 0) {
+				nflash_mark_badb(nflash->sih, nflash->cc, off);
 				nflash->map[blk_idx] = 1;
 				skip_bytes += blocksize;
 				docopy = 0;
@@ -278,10 +275,10 @@ nflash_mtd_write(struct mtd_info *mtd, loff_t to, size_t len, size_t *retlen, co
 			write_ptr = block;
 			write_len = blocksize;
 			while (write_len) {
-				if ((bytes = hndnand_write(nflash->nfl,
-				(uint)from + skip_bytes, (uint)write_len,
-				(uchar *)write_ptr)) < 0) {
-					hndnand_mark_badb(nflash->nfl, off);
+				if ((bytes = nflash_write(nflash->sih, nflash->cc,
+				(uint) from + skip_bytes, (uint) write_len,
+				(uchar *) write_ptr)) < 0) {
+					nflash_mark_badb(nflash->sih, nflash->cc, off);
 					nflash->map[blk_idx] = 1;
 					skip_bytes += blocksize;
 					docopy = 0;
@@ -395,8 +392,8 @@ nflash_mtd_erase(struct mtd_info *mtd, struct erase_info *erase)
 			continue;
 		}
 
-		if ((ret = hndnand_erase(nflash->nfl, i)) < 0) {
-			hndnand_mark_badb(nflash->nfl, i);
+		if ((ret = nflash_erase(nflash->sih, nflash->cc, i)) < 0) {
+			nflash_mark_badb(nflash->sih, nflash->cc, i);
 			nflash->map[i / blocksize] = 1;
 		} else {
 			erase_blknum--;
@@ -428,7 +425,7 @@ static int __init
 nflash_mtd_init(void)
 {
 	int ret = 0;
-	hndnand_t *info;
+	struct nflash *info;
 	struct pci_dev *dev = NULL;
 #ifdef CONFIG_MTD_PARTITIONS
 	struct mtd_partition *parts;
@@ -464,12 +461,11 @@ nflash_mtd_init(void)
 	}
 
 	/* Initialize serial flash access */
-	if (!(info = hndnand_init(nflash.sih))) {
+	if (!(info = nflash_init(nflash.sih, nflash.cc))) {
 		printk(KERN_ERR "nflash: found no supported devices\n");
 		ret = -ENODEV;
 		goto fail;
 	}
-	nflash.nfl = info;
 
 	/* Setup region info */
 	nflash.region.offset = 0;
@@ -502,14 +498,14 @@ nflash_mtd_init(void)
 	/* Scan bad block */
 	mutex_lock(nflash.mtd.mutex);
 	for (i = 0; i < info->numblocks; i++) {
-		if (hndnand_checkbadb(nflash.nfl, (i * info->blocksize)) != 0) {
+		if (nflash_checkbadb(nflash.sih, nflash.cc, (i * info->blocksize)) != 0) {
 			nflash.map[i] = 1;
 		}
 	}
 	mutex_unlock(nflash.mtd.mutex);
 
 #ifdef CONFIG_MTD_PARTITIONS
-	parts = init_nflash_mtd_partitions(info, &nflash.mtd, nflash.mtd.size);
+	parts = init_nflash_mtd_partitions(&nflash.mtd, nflash.mtd.size);
 	if (!parts)
 		goto fail;
 	for (i = 0; parts[i].name; i++);

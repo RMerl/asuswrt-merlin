@@ -66,6 +66,7 @@ void ext2_error (struct super_block * sb, const char * function,
 	if (test_opt(sb, ERRORS_RO)) {
 		printk("Remounting filesystem read-only\n");
 		sb->s_flags |= MS_RDONLY;
+		notify_device_error("filesystem", sb->s_id, "1");
 	}
 }
 
@@ -526,6 +527,7 @@ static int ext2_setup_super (struct super_block * sb,
 		printk ("EXT2-fs warning: revision level too high, "
 			"forcing read-only mode\n");
 		res = MS_RDONLY;
+		notify_device_error("filesystem", sb->s_id, "1");
 	}
 	if (read_only)
 		return res;

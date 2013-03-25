@@ -1,7 +1,7 @@
 /*
  * Broadcom NAND flash controller interface
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -126,8 +126,8 @@ static struct nand_ecclayout brcmnand_oob_128 = {
 		 */
 		{.offset = 2, .length = 4},
 		{.offset = 9, .length = 13},
-		/* First slice {9,7} 2nd slice {16,6}are combined */ 
-		/* ST uses 6th byte (offset=5) as Bad Block Indicator, 
+		/* First slice {9,7} 2nd slice {16,6}are combined */
+		/* ST uses 6th byte (offset=5) as Bad Block Indicator,
 		 * in addition to the 1st byte, and will be adjusted at run time
 		 */
 		{.offset = 25, .length = 13}, /* 2nd slice */
@@ -157,8 +157,8 @@ static struct nand_ecclayout brcmnand_oob_64 = {
 		 */
 		{.offset = 2, .length = 4},
 		{.offset = 9, .length = 13},
-		/* First slice {9,7} 2nd slice {16,6}are combined */ 
-		/* ST uses 6th byte (offset=5) as Bad Block Indicator, 
+		/* First slice {9,7} 2nd slice {16,6}are combined */
+		/* ST uses 6th byte (offset=5) as Bad Block Indicator,
 		 * in addition to the 1st byte, and will be adjusted at run time
 		 */
 		{.offset = 25, .length = 13}, /* 2nd slice */
@@ -199,7 +199,7 @@ static struct nand_ecclayout brcmnand_oob_bch4_512 = {
  * 2K page SLC/MLC with BCH-4 ECC, uses 7 ECC bytes per 512B ECC step
  */
 static struct nand_ecclayout brcmnand_oob_bch4_2k = {
-	.eccbytes = 7 * 8, /* 7 * 8 = 56 bytes */
+	.eccbytes = 7 * 4, /* 7 * 4 = 28 bytes */
 	.eccpos =
 	{
 		9, 10, 11, 12, 13, 14, 15,
@@ -209,7 +209,7 @@ static struct nand_ecclayout brcmnand_oob_bch4_2k = {
 	},
 	.oobfree =
 	{
-		/* 0 used for BBT and/or manufacturer bad block marker, 
+		/* 0 used for BBT and/or manufacturer bad block marker,
 		 * first slice loses 1 byte for BBT
 		 */
 		{.offset = 1, .length = 8}, /* 1st slice loses byte 0 */
@@ -351,7 +351,7 @@ int brcmnand_spare_is_valid(struct mtd_info *mtd, struct nand_chip *chip, int st
  */
 static void brcmnand_release_device(struct mtd_info *mtd)
 {
-	nflash_enable(brcmnand_info.sih, 0);
+	hndnand_enable(brcmnand_info.nfl, 0);
 	mutex_unlock(mtd->mutex);
 }
 
@@ -366,7 +366,7 @@ static void brcmnand_release_device(struct mtd_info *mtd)
 static int brcmnand_get_device(struct nand_chip *chip, struct mtd_info *mtd, int new_state)
 {
 	mutex_lock(mtd->mutex);
-	nflash_enable(brcmnand_info.sih, 1);
+	hndnand_enable(brcmnand_info.nfl, 1);
 	return 0;
 }
 
@@ -1128,14 +1128,14 @@ out:
 	return;
 }
 
-/* 
+/*
  * brcmnand_posted_write_oob - [BrcmNAND Interface] Write the spare area
  * @mtd:	    MTD data structure
  * @chip:	    nand chip info structure
  * @oob:	    Spare area, pass NULL if not interested.  Must be able to
  *                  hold mtd->oobsize (16) bytes.
  * @offset:	    offset to write to, and must be 512B aligned
- * 
+ *
  */
 static int brcmnand_posted_write_oob(struct mtd_info *mtd, struct nand_chip *chip,
 	uint8_t *oob, uint32_t offset)
@@ -1714,8 +1714,8 @@ static int brcmnand_default_block_markbad(struct mtd_info *mtd, loff_t ofs)
 	/* According to the HW guy, even if the write fails, the controller have
 	 * written a 0 pattern that certainly would have written a non 0xFF value
 	 * into the BI marker.
-	 * 
-	 * Ignoring ret.  Even if we fail to write the BI bytes, just ignore it, 
+	 *
+	 * Ignoring ret.  Even if we fail to write the BI bytes, just ignore it,
 	 * and mark the block as bad in the BBT
 	 */
 	ret = brcmnand_update_bbt(mtd, ofs);
@@ -1790,13 +1790,13 @@ struct mtd_partition *init_brcmnand_mtd_partitions(struct mtd_info *mtd, size_t 
 	int bootflags = boot_flags();
 	int j = 0;
 	int offset = 0;
-	unsigned int image_first_offset=0;
+	unsigned int image_first_offset = 0;
 	int jffssize;
 #ifdef CONFIG_FAILSAFE_UPGRADE
 	char *img_boot = nvram_get(BOOTPARTITION);
 	char *imag_1st_offset = nvram_get(IMAGE_FIRST_OFFSET);
 	char *imag_2nd_offset = nvram_get(IMAGE_SECOND_OFFSET);
-	unsigned int image_second_offset=0;
+	unsigned int image_second_offset = 0;
 	char dual_image_on = 0;
 
 	/* The image_1st_size and image_2nd_size are necessary if the Flash does not have any
@@ -1811,8 +1811,8 @@ struct mtd_partition *init_brcmnand_mtd_partitions(struct mtd_info *mtd, size_t 
 			image_second_offset);
 
 	}
-#endif
-	
+#endif	/* CONFIG_FAILSAFE_UPGRADE */
+
 	offset = image_first_offset;
 	if ((bootflags & FLASH_KERNEL_NFLASH) == FLASH_KERNEL_NFLASH) {
 		brcmnand_parts[j].name = "trx";
@@ -1928,7 +1928,7 @@ brcmnand_hwcontrol(struct mtd_info *mtd, int cmd, unsigned int ctrl)
 		}
 	}
 
-	/* nCS is not needed for reset command */ 
+	/* nCS is not needed for reset command */
 	if (cmd != NAND_CMD_RESET)
 		val |= NFC_CSA;
 
@@ -2376,7 +2376,7 @@ static int __init
 brcmnand_mtd_init(void)
 {
 	int ret = 0;
-	struct nflash *info;
+	hndnand_t *info;
 	struct pci_dev *dev = NULL;
 	struct nand_chip *chip;
 	struct mtd_info *mtd;
@@ -2414,11 +2414,12 @@ brcmnand_mtd_init(void)
 	}
 
 	/* Initialize serial flash access */
-	if (!(info = nflash_init(brcmnand_info.sih, brcmnand_info.cc))) {
+	if (!(info = hndnand_init(brcmnand_info.sih))) {
 		printk(KERN_ERR "brcmnand: found no supported devices\n");
 		ret = -ENODEV;
 		goto fail;
 	}
+	brcmnand_info.nfl = info;
 
 	if (CHIPID(brcmnand_info.sih->chip) == BCM4706_CHIP_ID) {
 		mtd = &brcmnand_info.mtd;

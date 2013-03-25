@@ -117,7 +117,9 @@
  */
 
 typedef __u8 byte_t;
+#ifndef _TYPEDEFS_H_
 typedef __u32 int32;
+#endif
 
 /*
  * "state" data for each active tcp conversation on the wire.  This is

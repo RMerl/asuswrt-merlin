@@ -1,20 +1,31 @@
 #
 # Makefile for Broadcom BCM947XX boards
 #
-# Copyright (C) 2009, Broadcom Corporation
-# All Rights Reserved.
+# Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
 # 
-# THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
-# KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
-# SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
-# FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
-# $Id: Makefile,v 1.7 2009/11/06 03:08:27 Exp $
+# $Id: Makefile,v 1.8 2010-09-17 04:51:19 $
 #
 
 SHARED := ../../../../../../../$(SRCBASEDIR)/shared
 
-BCM947XX_OBJS = $(addprefix $(SHARED)/, hndmips.o hndchipc.o linux_gpio.o sflash.o)
+BCM947XX_OBJS = $(addprefix $(SHARED)/, hndmips.o hndchipc.o linux_gpio.o)
+ifeq ($(CONFIG_MTD_NFLASH),y)
+BCM947XX_OBJS += $(addprefix $(SHARED)/, hndsflash.o ccsflash.o)
+else
+BCM947XX_OBJS += $(addprefix $(SHARED)/, sflash.o)
+endif
 BCM947XX_OBJS += $(addprefix $(SHARED)/, nvram.o)
 
 EXTRA_CFLAGS += -DLINUX_HYBRID_POSTPROCESSING_REMOVAL
@@ -24,6 +35,7 @@ BCM947XX_OBJS += $(addprefix $(SHARED)/, hndpci.o) pcibios.o
 endif
 
 ifeq ($(CONFIG_MTD_NFLASH),y)
+BCM947XX_OBJS += $(addprefix $(SHARED)/, hndnand.o)
 BCM947XX_OBJS += $(addprefix $(SHARED)/, nflash.o)
 endif
 

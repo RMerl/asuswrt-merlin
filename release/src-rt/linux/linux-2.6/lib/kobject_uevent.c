@@ -66,6 +66,48 @@ static char *action_to_string(enum kobject_action action)
 	}
 }
 
+int notify_device_error(char *type, char *device, char *flag){
+	char *argv[] = { "/sbin/disk_remove", NULL };
+	char **envp;
+	char *buffer;
+	char *scratch;
+	int i = 0;
+	int retval = 0;
+
+	/* environment index */
+	envp = kzalloc(NUM_ENVP * sizeof (char *), GFP_KERNEL);
+	if(!envp)
+		return -ENOMEM;
+
+	/* environment values */
+	buffer = kmalloc(BUFFER_SIZE, GFP_KERNEL);
+	if(!buffer){
+		retval = -ENOMEM;
+		goto exit_notify;
+	}
+
+	/* event environemnt for helper process only */
+	envp[i++] = "HOME=/";
+	envp[i++] = "PATH=/sbin:/bin:/usr/sbin:/usr/bin";
+
+	scratch = buffer;
+	envp [i++] = scratch;
+	scratch += sprintf(scratch, "SUBSYSTEM=%s", type)+1;
+	envp [i++] = scratch;
+	scratch += sprintf(scratch, "DEVICE=%s", device)+1;
+	envp [i++] = scratch;
+	scratch += sprintf(scratch, "FLAG=%s", flag)+1;
+
+	call_usermodehelper(argv[0], argv, envp, 1);
+
+exit_notify:
+	kfree(buffer);
+	kfree(envp);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(notify_device_error);
+
 /**
  * kobject_uevent_env - send an uevent with environmental data
  *
