@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <bcmnvram.h>
 #include <shutils.h>
 #include <rtconfig.h>
@@ -31,6 +32,33 @@
 #include <linux/version.h>
 
 #define SAMBA_CONF "/etc/smb.conf"
+
+/* @return:
+ * 	If mount_point is equal to one of partition of all disks case-insensitivity, return true.
+ */
+static int check_mount_point_icase(const disk_info_t *d_info, const partition_info_t *p_info, const disk_info_t *disk, const u32 part_nr, const char *m_point)
+{
+	int v = 0;
+	const disk_info_t *d;
+	const partition_info_t *p;
+
+	if (!d_info || !p_info || !disk || part_nr > 15 || !m_point || *m_point == '\0')
+		return 0;
+
+	for (d = d_info; !v && d != NULL; d = d->next) {
+		for (p = d->partitions; !v && p != NULL; p = p->next) {
+			if (!p->mount_point || (d == disk && p->partition_order == part_nr))
+				continue;
+
+			if (strcasecmp(p->mount_point, m_point))
+				continue;
+
+			v = 1;
+		}
+	}
+
+	return v;
+}
 
 int
 is_invalid_char_for_hostname(char c)
@@ -91,7 +119,41 @@ ENDERR:
 	return ret;
 }
 
-int check_existed_share(const char *string){
+/* For NETBIOS name,
+ * 1. NetBIOS names are a sequence of alphanumeric characters.
+ * 2. The hyphen ("-") and full-stop (".") characters may also be used
+ *     in the NetBIOS name, but not as the first or last character.
+ * 3. The NetBIOS name is 16 ASCII characters, however Microsoft limits
+ *     the host name to 15 characters and reserves the 16th character
+ *     as a NetBIOS Suffix
+ */
+int
+is_valid_netbios_name(const char *name)
+{
+	int i, valid = 1;
+	size_t len;
+
+	if (!name)
+		return 0;
+
+	len = strlen(name);
+	if (!len || len > 15)
+		return 0;
+
+	for (i = 0; valid && i < len; ++i) {
+		if (isalnum(name[i]))
+			continue;
+		else if ((name[i] == '-' || name[i] == '.') && (i > 0 && i < (len - 1)))
+			continue;
+
+		valid = 0;
+	}
+
+	return valid;
+}
+
+int check_existed_share(const char *string)
+{
 	FILE *tp;
 	char buf[PATH_MAX], target[256];
 
@@ -116,7 +178,17 @@ int check_existed_share(const char *string){
 	return 0;
 }
 
-int main(int argc, char *argv[]) {
+int get_list_strings_count(char **list, int size, char *str)
+{
+	int i, count = 0;
+
+	for (i = 0; i < size; i++)
+		if (strcmp(list[i], str) == 0) count++;
+	return count;
+}
+
+int main(int argc, char *argv[])
+{
 	FILE *fp;
 	char *nv;
 	int n=0;
@@ -129,6 +201,8 @@ int main(int argc, char *argv[]) {
 	char **folder_list = NULL;
 	int acc_num;
 	char **account_list;
+	int dup, same_m_pt = 0;
+	char unique_share_name[PATH_MAX];
 	
 	unlink("/var/log.samba");
 	
@@ -150,7 +224,7 @@ int main(int argc, char *argv[]) {
 		fprintf(fp, "server string = %s\n", nvram_safe_get("computer_name"));
 	}
 #else
-	p_computer_name = nvram_get("computer_name") && is_valid_hostname(nvram_get("computer_name")) ? nvram_get("computer_name") : get_productid();
+	p_computer_name = nvram_get("computer_name") && is_valid_netbios_name(nvram_get("computer_name")) ? nvram_get("computer_name") : get_productid();
 	if (p_computer_name) {
 		fprintf(fp, "netbios name = %s\n", p_computer_name);
 		fprintf(fp, "server string = %s\n", p_computer_name);
@@ -189,7 +263,7 @@ int main(int argc, char *argv[]) {
 	if (strcmp(nvram_safe_get("st_max_user"), "") != 0)
 		fprintf(fp, "max connections = %s\n", nvram_safe_get("st_max_user"));
 	
-	fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE SO_RCVBUF=32768 SO_SNDBUF=32768\n");
+	fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE SO_RCVBUF=65536 SO_SNDBUF=65536\n");
 	fprintf(fp, "obey pam restrictions = no\n");
 	fprintf(fp, "use spne go = no\n");		// ASUS add
 	fprintf(fp, "client use spnego = no\n");	// ASUS add
@@ -201,7 +275,7 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "bind interfaces only = yes\n");	// ASUS add
 	fprintf(fp, "interfaces = lo br0 %s\n", ( ( (!nvram_match("sw_mode", "3") && !nvram_match("sw_mode", "1")) || (!strcmp(nvram_safe_get("smbd_bind_wan"), "1")) ) ? nvram_safe_get("wan0_ifname") : "") );
 	//	fprintf(fp, "dns proxy = no\n");				// J--
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,0,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
 	fprintf(fp, "use sendfile = no\n");
 #else
 	fprintf(fp, "use sendfile = yes\n");
@@ -253,7 +327,13 @@ int main(int argc, char *argv[]) {
 				if (follow_partition->mount_point == NULL)
 					continue;
 				
-				mount_folder = strrchr(follow_partition->mount_point, '/')+1;
+				strcpy(unique_share_name, follow_partition->mount_point);
+				do {
+					dup = check_mount_point_icase(disks_info, follow_partition, follow_disk, follow_partition->partition_order, unique_share_name);
+					if (dup)
+						sprintf(unique_share_name, "%s(%d)", follow_partition->mount_point, ++same_m_pt);
+				} while (dup);
+				mount_folder = strrchr(unique_share_name, '/')+1;
 				
 				fprintf(fp, "[%s]\n", mount_folder);
 				fprintf(fp, "comment = %s's %s\n", follow_disk->tag, mount_folder);
@@ -270,7 +350,13 @@ int main(int argc, char *argv[]) {
 				if (follow_partition->mount_point == NULL)
 					continue;
 				
-				mount_folder = strrchr(follow_partition->mount_point, '/')+1;
+				strcpy(unique_share_name, follow_partition->mount_point);
+				do {
+					dup = check_mount_point_icase(disks_info, follow_partition, follow_disk, follow_partition->partition_order, unique_share_name);
+					if (dup)
+						sprintf(unique_share_name, "%s(%d)", follow_partition->mount_point, ++same_m_pt);
+				} while (dup);
+				mount_folder = strrchr(unique_share_name, '/')+1;
 				
 				node_layer = get_permission(NULL, follow_partition->mount_point, NULL, "cifs");
 				if(node_layer == 3){
@@ -293,7 +379,8 @@ int main(int argc, char *argv[]) {
 							samba_right = DEFAULT_SAMBA_RIGHT;
 						
 						if(samba_right > 0){
-							if (!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) {
+							int count = get_list_strings_count(folder_list, sh_num, folder_list[n]);
+							if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1)) {
 								fprintf(fp, "[%s]\n", folder_list[n]);
 							} else {
 								fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
@@ -344,7 +431,8 @@ int main(int argc, char *argv[]) {
 						fprintf(fp, "path = %s\n", follow_partition->mount_point);
 					}
 					else{
-						if (!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) {
+						int count = get_list_strings_count(folder_list, sh_num, folder_list[n]);
+						if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1) {
 							fprintf(fp, "[%s]\n", folder_list[n]);
 						} else {
 							fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
@@ -459,7 +547,8 @@ int main(int argc, char *argv[]) {
 				for (n = 0; n < sh_num; ++n) {
 					int i, first;
 					
-					if (!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) {
+					int count = get_list_strings_count(folder_list, sh_num, folder_list[n]);
+					if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1) {
 						fprintf(fp, "[%s]\n", folder_list[n]);
 					} else {
 						fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
