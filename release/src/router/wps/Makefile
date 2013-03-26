@@ -187,7 +187,8 @@ clean:
 	find . \( -name '*.[od]' -o -name '*.tmp' \) -type f -print | xargs rm -f
 	find -name obj | xargs rm -rf
 	rm -rf lib
-	find -name wps_monitor | xargs rm -f
+#	find -name wps_monitor | xargs rm -f
+	rm wps_monitor
 
 # install
 install: all
