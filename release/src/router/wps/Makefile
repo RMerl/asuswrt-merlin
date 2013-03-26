@@ -188,7 +188,7 @@ clean:
 	find -name obj | xargs rm -rf
 	rm -rf lib
 #	find -name wps_monitor | xargs rm -f
-	rm wps_monitor
+	rm -f wps_monitor
 
 # install
 install: all
