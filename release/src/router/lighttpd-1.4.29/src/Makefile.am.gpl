@@ -65,6 +65,7 @@ copy-prebuild:
 		cp ../prebuild/mod_smbdav.so.l .libs/mod_smbdav.so; \
 		cp ../prebuild/mod_aidisk_access.so.l .libs/mod_aidisk_access.so; \
 		cp ../prebuild/mod_sharelink.so.l .libs/mod_sharelink.so; \
+		cp ../prebuild/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
 	fi
 
 BUILT_SOURCES = parsers versionstamp 
