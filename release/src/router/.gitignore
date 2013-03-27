@@ -12,6 +12,7 @@
 .config
 .config.old
 config_
+config_current
 mipsel-uclibc
 config.log
 config.status
