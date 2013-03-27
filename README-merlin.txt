@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.270.27 (xx-XXX-2013)
+Asuswrt-Merlin - build 3.0.0.4.354.27 (xx-XXX-2013)
 ===================================================
 
 About
@@ -36,7 +36,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on the 3.0.0.4.270 source release from Asus
+   - Based on the 3.0.0.4.354 source release from Asus
    - Various bugfixes (like the crash on VPN/NAT Loopback access of LAN devices)
    - Some components were updated to their latest versions, for improved stability
      and security
@@ -48,14 +48,13 @@ System:
    - Entware easy setup script (alternative to Optware - the two are mutually exclusive)
 
 Disk sharing:
-   - Optionally use shorter share names (folder name only)
+   - Enable/disable the use of shorter share names
    - Disk spindown after user-configurable inactivity timeout
    - NFS sharing (through webui)
 
 Networking:
    - Act as a Master Browser
    - Act as a WINS server
-   - WakeOnLan web interface (with user-entered preset targets)
    - SSHD
    - Allows tweaking TCP/UDP connection tracking timeouts
    - CIFS client support (for mounting remote SMB share on the router)
@@ -68,8 +67,7 @@ Networking:
    - Netfilter ipset module, for efficient blacklist implemetnation
 
 Web interface:
-   - Improved client list, with DHCP hostnames, and clickable MACs to 
-     generate a lookup in the OUI database (the latter was ported from DD-WRT).
+   - Improved client list, with DHCP hostnames
    - Optionally save traffic stats to disk (USB or JFFS partition)
    - Enhanced traffic monitoring: added monthly, as well as per IP monitoring
    - Display active/tracked network connections
@@ -88,7 +86,10 @@ integrated/enabled in the official firmware:
 - 64K NVRAM (RT-N66U)
 - HTTPS
 - Turning WPS button into a radio on/off toggle
-
+- Use shorter share names (folder name only)
+- WakeOnLan web interface (with user-entered preset targets)
+- clickable MACs on the client list for lookup in the
+  OUI database
 
 
 Installation
@@ -429,8 +430,20 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.270.27
+3.0.0.4.354.27
+   - NEW: Merged with 3.0.0.4.354.  Notable changes:
+      * New wireless driver
+      * New Network Tools
+      * WOL (Under Network Tools; will replace our former implementation)
+      * HW acceleration support for PPPoE
+      * DHCP Normal/aggressive behaviour.  Similar to the 270.25 implementation,
+        except it can be enabled/disabled
+   - CHANGED: Removed WOL webui - replaced with Asus's own.  You will have
+              to re-add your WOL entries.
+   - FIXED: Avoid duplicate shares when using simpler share naming (using
+            Asus's code from 354)
    - FIXED: Improved fdisk support for 4KB sector size
+   - FIXED: openvpn: Client-specific entries weren't properly parsed
 
 
 3.0.0.4.270.26b
