@@ -16,6 +16,7 @@ config_current
 mipsel-uclibc
 config.log
 config.status
+kernel_header
 
 #
 # asuswrt test
@@ -28,3 +29,4 @@ Makefile.org
 Makefile.orig
 Makefile_20111026
 stamp-h1
+
