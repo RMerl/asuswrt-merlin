@@ -1,0 +1,4 @@
+*.lo
+*.la
+src/.libs
+
